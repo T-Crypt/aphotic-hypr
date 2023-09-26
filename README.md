@@ -1,0 +1,2 @@
+# myDOTS
+Arch Hyprland Dotfiles
