@@ -1,4 +1,4 @@
-# myDOTS
+# dotfiles
 
 My Dot files you can use with arch linux 
 
