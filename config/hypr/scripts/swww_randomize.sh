@@ -8,7 +8,7 @@
 
 if [[ $# -lt 1 ]] || [[ ! -d $1   ]]; then
 	echo "Usage:
-	$0 <dir containing images>"
+	$0 ~/.config/swww/wallpapers"
 	exit 1
 fi
 
