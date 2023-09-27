@@ -1,0 +1,220 @@
+// for future me reference https://gist.github.com/dharmx/24d7c69bb7ebc7cca72f0855a9f00117 legendary
+// also gtk3 is pain
+@use 'css/animations';
+@use 'css/colors';
+
+.w_glance {
+    @include animations.flyin("&", "top");
+
+    .layout-box {
+        margin: 20px;
+    }
+
+    .weather {
+        @include animations.fade("&:hover", colors.$color1, colors.$accent);
+        @include animations.fade("&:active", colors.$accent, colors.$color1);
+
+        & > box {
+            padding: 10px {
+                right: 20px
+            }
+        }
+
+        border-radius: 10px;
+        background-color: colors.$color1;
+
+        .description {
+            font-size: 1.5em;
+            font-weight: bolder;
+        }
+
+        .temperature {
+            font-size: 1.25em;
+        }
+    }
+
+    .battery {
+        padding: 10px {
+            left: 20px
+        }
+
+        border-radius: 10px;
+        background-color: colors.$color1;
+
+        .glyph {
+            font-size: 3em;
+        }
+
+        .status {
+            font-size: 1.5em;
+            font-weight: bolder;
+        }
+    }
+
+    .quick-settings {
+        .schedule {
+            padding: 10px;
+
+            .header {
+                .event-incoming {
+                    background-color: colors.$secondary;
+                    border-radius: 20px;
+                    padding: 2px 10px;
+                }
+
+                .event-add {
+                    @include animations.fade("&:hover", colors.$secondary, colors.$good, $property: "background-color");
+
+                    background-color: colors.$secondary;
+                    padding: 0px 10px;
+                    border-radius: 20px;
+
+                    label {
+                        font-size: 1.5em;
+                    }
+                }
+
+            }
+
+            .entry {
+                background-color: colors.$secondary;
+                padding: 10px;
+                border-radius: 10px;
+
+                .event-name {
+                    padding: 0px 5px;
+                    font-size: 1.25em;
+                }
+
+                .footer {
+                    margin-top: 2px;
+                    label {
+                        font-size: 0.8em;
+                    }
+                }
+
+                .event-remove {
+                    @include animations.fade("&:hover label", colors.$text, colors.$bad, $property: "color");
+                    padding-left: 5px;
+                }
+
+                .event-time {
+                    background-color: colors.$color1;
+                    border-radius: 20px;
+                    padding: 0px 10px;
+                }
+            }
+
+
+
+            .seperator {
+                margin: 2px;
+                padding: 2.5px;
+                border-radius: 10px;
+                background-color: colors.$color4;
+            }
+        }
+        .time {
+            background-color: colors.$color1;
+            padding: 10px 0px;
+            border-radius: 20px;
+
+            .clock {
+                font-size: 2em;
+                font-weight: bolder;
+                padding: 5px;
+            }
+
+            .controls {
+                padding-right: 0px;
+
+                button {
+                    @include animations.fade("&:hover label", colors.$text, colors.$accent, $property: "color");
+                    @include animations.fade("&:active label", colors.$accent, colors.$text, $property: "color");
+                    label {
+                        padding: 0px;
+                    }
+                }
+            }
+
+            calendar {
+                padding: 10px;
+                color: colors.$text;
+                font-weight: bold;
+
+                &:hover {
+                    color: white;
+                }
+
+                &:selected {
+                    color: white;
+                    font-weight: bolder;
+                }
+
+                &:indeterminate {
+                    color: #888888;
+                }
+            }
+        }
+
+        .battery .profile {
+            background-color: colors.$color1;
+            border-radius: 10px;
+
+            .glyph {
+                font-size: 7em;
+            }
+
+            .status {
+                font-size: 3em;
+            }
+        }
+
+        .bluetooth, .wifi {
+            background-color: colors.$color1;
+            border-radius: 10px;
+            padding: 10px;
+            .entry {
+                @include animations.fade("&:hover", colors.$secondary, colors.$accent);
+                @include animations.fade("&:active", colors.$accent, colors.$secondary);
+
+                border-radius: 10px;
+                background-color: colors.$secondary;
+
+                label {
+                    font-size: 1.5em;
+                }
+
+                .icon {
+                    font-size: 3em;
+                    padding: 10px 20px;
+                }
+            }
+        }
+
+        .controls {
+            padding: 20px;
+            border-radius: 20px;
+            background-color: colors.$color1;
+
+            & > widget {
+                @include animations.fade("&:hover label", colors.$text, colors.$accent, $property: "color");
+                @include animations.fade("&:active label", colors.$accent, colors.$text, $property: "color");
+
+                @include animations.fade("&:hover circular-progress", colors.$text, colors.$accent, $property: "color");
+                @include animations.fade("&:active circular-progress", colors.$accent, colors.$text, $property: "color");
+            }
+
+
+            label {
+                padding: 20px;
+                font-size: 1.25em;
+            }
+
+            circular-progress {
+                background-color: colors.$color4;
+                color: colors.$text;
+            }
+        }
+    }
+}
