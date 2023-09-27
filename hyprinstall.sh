@@ -194,8 +194,9 @@ if check_nvidia_gpu; then
     echo "[Attention] Type 'reboot' at the prompt and press Enter when ready."
 fi
 
-if confirm_action "[Action] Start Hyprland now"; then
-    exec sudo systemctl start sddm
+read -n1 -rep 'Would you like to start Hyprland now? (y,n)' HYP
+if [[ $HYP == "Y" || $HYP == "y" ]]; then
+    exec Hyprland
 else
     exit
 fi
