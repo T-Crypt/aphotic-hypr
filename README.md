@@ -9,7 +9,7 @@ sudo pacman -S --needed --noconfirm \
     base-devel git zsh acpi acpid wget \
     networkmanager dhcpcd bluez bluez-utils blueman \
     pipewire pipewire-alsa pipewire-audio pipewire-jack pipewire-pulse wireplumber \
-    python python-pybluez python-dotenv python-pip python-pywal \
+    python python-pybluez python-dotenv python-pip \
     qt5ct qt5-imageformats qt5-wayland qt6-wayland kvantum \
     rofi rofi-calc dunst hyprland xdg-desktop-portal-hyprland \
     brightnessctl playerctl pamixer tlp jq swayidle \
