@@ -1,6 +1,6 @@
 # dotfiles
 
-My Dot files you can use with arch linux 
+My dotfiles you can use with arch linux 
 
 # Pacman Dependencies 
 
