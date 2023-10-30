@@ -13,7 +13,7 @@ WALLPAPERS=("$WALLPAPER_DIR"/*.jpg "$WALLPAPER_DIR"/*.png)
 NEXT_INDEX=$(($(($RANDOM % ${#WALLPAPERS[@]})) - 1))
 
 # Set the next wallpaper using swww img with the full path
-swww img "${WALLPAPERS[$NEXT_INDEX]}"
+swww img "${WALLPAPERS[$NEXT_INDEX]}" --transition-type wipe --transition-angle 30 --transition-step 90
 
 # Copy the currently set wallpaper to current_wallpaper.rofi
 cp "${WALLPAPERS[$NEXT_INDEX]}" "$CURRENT_WALLPAPER_FILE"
