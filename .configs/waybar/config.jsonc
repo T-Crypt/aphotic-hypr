@@ -18,7 +18,6 @@
   ],
   "modules-center": ["hyprland/workspaces"],
   "modules-right": [
-    "custom/spotify",
     "tray",
     "battery",
     "network",
