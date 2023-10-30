@@ -9,7 +9,7 @@ makepkg -si
 ```
 
 
-### Dependencies 
+### 🗄️ Dependencies 
 
 ```
 yay -S hyprland-bin kitty waybar-hyprland \
@@ -21,7 +21,7 @@ yay -S hyprland-bin kitty waybar-hyprland \
     dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git
 ```
 
-### Install
+### 💻 Install
 
 ```
 git clone https://github.com/T-Crypt/dots && cd dots
