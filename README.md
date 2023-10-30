@@ -44,8 +44,6 @@ sudo systemctl start sddm.service
 
 </details>
 
-
-
 ### 🐜 ScreenShots
 
 ![](./assets/swappy-20231030_113753.png)
@@ -64,3 +62,27 @@ You need to edit the wttr-in.py script to change city location
 Current Location: Denver, CO
 
 `.config/waybar/scripts/waybar-wttr.py`
+
+
+<details> 
+  <summary><h2> KeyBindings </h2></summary>
+
+| Keys | Action |
+| :--  | :-- |
+| <kbd>Super</kbd> + <kbd>Q</kbd> | quit active/focused window
+| <kbd>Super</kbd> + <kbd>W</kbd> | Change Wallpaper
+| <kbd>Super</kbd> + <kbd>T</kbd> | launch kitty terminal
+| <kbd>Super</kbd> + <kbd>E</kbd> | launch Thunar
+| <kbd>Super</kbd> + <kbd>C</kbd> | launch vscode
+| <kbd>Super</kbd> + <kbd>F</kbd> | launch firefox
+| <kbd>Super</kbd> + <kbd>A</kbd> | launch desktop applications (rofi)
+| <kbd>Super</kbd> + <kbd>L</kbd> | lock screen
+| <kbd>Super</kbd> + <kbd>V</kbd> | Toggle Floating
+| <kbd>Super</kbd> + <kbd>J</kbd> | Toggle Split
+| <kbd>Super</kbd> + <kbd>S</kbd> | Print Screen Tool
+| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>P</kbd> | print current screen
+| <kbd>Super</kbd> + <kbd>MouseScroll</kbd> | cycle through workspaces
+| <kbd>Super</kbd> + <kbd>[0-9]</kbd> | switch to workspace [0-9]
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>[0-9]</kbd> | move active window to workspace [0-9]
+
+</details>
