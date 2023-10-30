@@ -18,7 +18,8 @@ yay -S hyprland-bin kitty waybar-hyprland \
     polkit-gnome python-requests swww starship \
     swappy grim slurp pamixer brightnessctl gvfs \
     bluez bluez-utils neofetch lxappearance xfce4-settings \
-    dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git
+    dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git \
+    python python-pyamdgpuinfo jq 
 ```
 
 ### 💻 Install
