@@ -8,7 +8,7 @@
   </p>
 
 
-**NOTE: Yay must be installed 
+**NOTE: Yay must be installed // Install script coming soon
 
 ```
 git clone https://aur.archlinux.org/yay.git
