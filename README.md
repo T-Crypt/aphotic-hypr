@@ -18,4 +18,4 @@ yay -S hyprland-bin kitty waybar-hyprland \
 
 ### 🐜 ScreenShot
 
-![](assets/)
+![](./assets/swappy-20231030_104105.png)
