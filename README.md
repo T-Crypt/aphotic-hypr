@@ -17,7 +17,7 @@ yay -S hyprland-bin kitty waybar-hyprland \
     ttf-jetbrains-mono-nerd thunar-archive-plugin file-roller noto-fonts-emoji \
     polkit-gnome python-requests swww starship \
     swappy grim slurp pamixer brightnessctl gvfs \
-    bluez bluez-utils lxappearance xfce4-settings \
+    bluez bluez-utils neofetch lxappearance xfce4-settings \
     dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git
 ```
 
