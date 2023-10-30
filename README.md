@@ -1,4 +1,4 @@
-# dotfiles
+# Hyprland Dotfiles
 
 **NOTE: Yay must be installed 
 
@@ -9,7 +9,7 @@ makepkg -si
 ```
 
 
-Dependencies 
+### Dependencies 
 
 ```
 yay -S hyprland-bin kitty waybar-hyprland \
@@ -24,3 +24,12 @@ yay -S hyprland-bin kitty waybar-hyprland \
 ### 🐜 ScreenShot
 
 ![](./assets/swappy-20231030_104105.png)
+
+
+### Changes to Make
+
+You need to edit the wttr-in.py script to change city location
+
+Current Location: Denver, CO
+
+`.config/waybar/scripts/waybar-wttr.py`
