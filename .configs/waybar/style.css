@@ -51,10 +51,10 @@ tooltip {
 
 #custom-weather,
 #custom-spotify,
+#custom-gpu,
 #clock,
 #cpu,
 #memory,
-#disk,
 #temperature,
 #battery,
 #pulseaudio,
@@ -118,7 +118,7 @@ tooltip {
     color: @green;
 }
 
-#disk {
+#custom-gpu {
     color: @blue;
 }
 
