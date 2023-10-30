@@ -21,9 +21,12 @@ yay -S hyprland-bin kitty waybar-hyprland \
     dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git
 ```
 
-### 🐜 ScreenShot
+### 🐜 ScreenShots
 
 ![](./assets/swappy-20231030_113753.png)
+![](./assets/swappy-20231030_122656.png)
+
+
 
 
 ### Changes to Make
