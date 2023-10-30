@@ -13,7 +13,7 @@ makepkg -si
 
 ```
 yay -S hyprland-bin kitty waybar-hyprland \
-    swaybg swaylock-effects rofi sddm wlogout mako thunar \
+    swaybg swaylock-effects rofi sddm-git wlogout mako thunar \
     ttf-jetbrains-mono-nerd thunar-archive-plugin file-roller noto-fonts-emoji \
     polkit-gnome python-requests swww starship \
     swappy grim slurp pamixer brightnessctl gvfs \
