@@ -101,7 +101,7 @@
   },
   "disk": {
     "interval": 1,
-    "format": "󰋊 {percentage_used}%",
+    "format": "󰋊  {percentage_used}%",
     "path": "/",
     "format-alt-click": "click-right",
     "format-alt": "󰋊 {percentage_used}%",
