@@ -30,6 +30,11 @@ sudo systemctl enable sddm.service
 sudo systemctl start sddm.service
 ```
 
+<details> 
+  <summary><h2>🏷️ Additional Packages </h2></summary>
+
+</details>
+
 
 
 ### 🐜 ScreenShots
