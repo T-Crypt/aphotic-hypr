@@ -21,6 +21,15 @@ yay -S hyprland-bin kitty waybar-hyprland \
     dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git
 ```
 
+### Install
+
+```
+git clone https://github.com/T-Crypt/dots && cd dots
+cp -R .config/* ~/.config/
+```
+
+
+
 ### 🐜 ScreenShots
 
 ![](./assets/swappy-20231030_113753.png)
