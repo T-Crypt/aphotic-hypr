@@ -37,6 +37,9 @@ yay -S hyprland-bin kitty waybar-hyprland \
 ```
 git clone https://github.com/T-Crypt/dots && cd dots
 cp -R .configs/* ~/.config/
+cd .configs
+cp .zshrc $HOME
+cp .pk10.zsh $HOME
 sudo systemctl enable sddm.service
 sudo systemctl start sddm.service
 ```
