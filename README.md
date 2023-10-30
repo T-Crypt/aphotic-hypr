@@ -1,4 +1,12 @@
-# Hyprland Dotfiles
+#  Hyprland Dotfiles
+
+<p align="center">
+  <img src="https://img.shields.io/github/stars/T-Crypt/dots?style=for-the-badge&color=7DCFFF">
+  <img src="https://img.shields.io/github/issues/T-Crypt/dots?&style=for-the-badge&color=E0AF68">
+  <img src="https://img.shields.io/github/forks/T-Crypt/dots?&style=for-the-badge&color=F7768E">
+  <img alt="GitHub last commit (by committer)" src="https://img.shields.io/github/last-commit/T-Crypt/dots?style=for-the-badge&color=AD8EE6">
+  </p>
+
 
 **NOTE: Yay must be installed 
 
