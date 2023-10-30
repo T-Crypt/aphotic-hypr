@@ -27,7 +27,8 @@ yay -S hyprland-bin kitty waybar-hyprland \
     swappy grim slurp pamixer brightnessctl gvfs \
     bluez bluez-utils neofetch lxappearance xfce4-settings \
     dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git \
-    python python-pyamdgpuinfo jq network-manager-applet blueman
+    python python-pyamdgpuinfo jq network-manager-applet blueman \
+    oh-my-zsh-git zsh-autosuggestions zsh-synxtax-highlighting
 ```
 
 ### 💻 Install
