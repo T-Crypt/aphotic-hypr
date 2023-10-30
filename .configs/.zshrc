@@ -154,6 +154,3 @@ alias vc='code' # gui code editor
 
 #Display specs
 #neofetch
-
-#Display random gifs
-#kitten icat --align left $(find $HOME/.config/neofetch/gifs/ -name "*.gif" | sort -R | head -1)
