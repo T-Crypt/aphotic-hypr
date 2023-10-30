@@ -53,13 +53,13 @@ sudo systemctl start sddm.service
 
 ### 🐜 ScreenShots
 
-![](./assets/swappy-20231030_113753.png)
+![](./assets/swappy1.png)
 
-![](./assets/swappy-20231030_122656.png)
+![](./assets/swappy2.png)
 
-![](./assets/swappy-20231030_123719.png)
+![](./assets/swappy3.png)
 
-![](./assets/swappy-20231030_123804.png)
+![](./assets/swappy4.png)
 
 
 ### Changes to Make
