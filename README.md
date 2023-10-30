@@ -28,7 +28,8 @@ yay -S hyprland-bin kitty waybar-hyprland \
     bluez bluez-utils neofetch lxappearance xfce4-settings \
     dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git \
     python python-pyamdgpuinfo jq network-manager-applet blueman \
-    oh-my-zsh-git zsh-autosuggestions zsh-synxtax-highlighting
+    oh-my-zsh-git zsh-autosuggestions zsh-synxtax-highlighting \
+    zsh-theme-powerlevel10k-git eza 
 ```
 
 ### 💻 Install
