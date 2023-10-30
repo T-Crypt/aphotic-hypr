@@ -23,7 +23,7 @@ yay -S hyprland-bin kitty waybar-hyprland \
 
 ### 🐜 ScreenShot
 
-![](./assets/swappy-20231030_104105.png)
+![](./assets/swappy-20231030_113753.png)
 
 
 ### Changes to Make
