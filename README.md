@@ -1,4 +1,4 @@
-#  Hyprland Dotfiles
+                                                   Hyprland Dotfiles
 
 <p align="center">
   <img src="https://img.shields.io/github/stars/T-Crypt/dots?style=for-the-badge&color=7DCFFF">
