@@ -63,6 +63,9 @@ sudo systemctl start sddm.service
 
 ![](./assets/swappy4.png)
 
+![](./assets/swappy5.png)
+
+
 
 ### Changes to Make
 
