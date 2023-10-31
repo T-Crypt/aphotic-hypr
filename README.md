@@ -78,7 +78,7 @@ Current Location: Denver, CO
 
 `.config/waybar/scripts/waybar-wttr.py`
 
-2. Copy the icomoon-feather.ttf to .local fonts
+2. Copy the icomoon-feather.ttf to .local fonts from src folder
 
 `cp iconmoon-feather.ttf ~/.local/share/fonts/`
 or
