@@ -7,9 +7,7 @@
   <img alt="GitHub last commit (by committer)" src="https://img.shields.io/github/last-commit/T-Crypt/dots?style=for-the-badge&color=AD8EE6">
   </p>
 
-
 **NOTE: Yay must be installed // Install script coming soon
-
 ```
 git clone https://aur.archlinux.org/yay.git
 cd yay
@@ -78,6 +76,23 @@ sudo systemctl start sddm.service
 * Wallpaper Manager - [Swww](https://github.com/Horus645/swww)
 
 <details> 
+  <summary><h2> Features </h2></summary>
+
+- Pywall Theming
+  - Rofi Themed
+  - Kitty Themed
+  - Waybar Themed
+  - Mako Themed
+  - Swaylock Themed
+  - Cava Themed
+  - GTK Themed (Soon) 
+
+- Thunar "Set as Theme" option for custom theming 
+- SDDM Wallpaper script (custom backgrounds for SDDM)
+</details>
+
+
+<details> 
   <summary><h2> Additional Screenshots </h2></summary>
 
 ![](./assets/swappy3.png)
@@ -111,6 +126,7 @@ or
 3. Change the pywall script username - Line 5 on wallswticher.py 
 
 `wallpath = r"/home/CHANGEME/.config/swww"`
+
 
 <details> 
   <summary><h2> KeyBindings </h2></summary>
