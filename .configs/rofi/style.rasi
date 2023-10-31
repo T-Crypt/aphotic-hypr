@@ -18,14 +18,9 @@ configuration {
 }
 
 /*****----- Global Properties -----*****/
+@import                          "colors/colors-rofi.rasi"
 * {
     font:                        "JetBrains Mono Nerd Font 10";
-    background:                  #D0D0D0;
-    background-alt:              #E9E9E9;
-    foreground:                  #161616;
-    selected:                    #BEBEBE;
-    active:                      #999999;
-    urgent:                      #808080;
 }
 
 /*****----- Main Window -----*****/
