@@ -65,7 +65,7 @@
 | Keys | Action |
 | :--  | :-- |
 | <kbd>Super</kbd> + <kbd>Q</kbd> | quit active/focused window
-| <kbd>Super</kbd> + <kbd>W</kbd> | Change Wallpaper
+| <kbd>Super</kbd> + <kbd>W</kbd> | Change Wallpaper / Change Theme
 | <kbd>Super</kbd> + <kbd>T</kbd> | launch kitty terminal
 | <kbd>Super</kbd> + <kbd>E</kbd> | launch Thunar
 | <kbd>Super</kbd> + <kbd>C</kbd> | launch vscode
