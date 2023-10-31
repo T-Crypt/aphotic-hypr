@@ -111,7 +111,7 @@ tooltip {
 }
 
 #memory {
-    color: @color3;
+    color: @color2;
 }
 
 #cpu {
