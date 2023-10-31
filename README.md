@@ -52,21 +52,27 @@ sudo systemctl start sddm.service
      yay -S firefox visual-studio-code-bin 
    </code>
  </pre>
-
-
 </details>
 
-### 🐜 ScreenShots
+### ScreenShots
 
 ![](./assets/swappy1.png)
 
 ![](./assets/swappy2.png)
+
+
+<details> 
+  <summary><h2> Additional Screenshots </h2></summary>
 
 ![](./assets/swappy3.png)
 
 ![](./assets/swappy4.png)
 
 ![](./assets/swappy6.png)
+
+![](./assets/swappy7.png)
+
+</details>
 
 
 
