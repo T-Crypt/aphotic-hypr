@@ -106,10 +106,6 @@ tooltip {
     color: @blue;
 }
 
-#pulseaudio.microphone {
-    color: @mauve;
-}
-
 #memory {
     color: @yellow;
 }
