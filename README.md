@@ -7,12 +7,6 @@
   <img alt="GitHub last commit (by committer)" src="https://img.shields.io/github/last-commit/T-Crypt/dots?style=for-the-badge&color=AD8EE6">
   </p>
 
-### ScreenShots
-
-![](./assets/swappy1.png)
-
-![](./assets/swappy2.png)
-
 * Window Manager - [Hyprland](https://github.com/hyprwm/Hyprland)
 * Panel - [Waybar](https://github.com/Alexays/Waybar)
 * Terminal - [Kitty](https://github.com/kovidgoyal/kitty)
@@ -37,6 +31,21 @@
 - Thunar "Set as Theme" option for custom theming 
 - SDDM Wallpaper script (custom backgrounds for SDDM)
 </details>
+
+### ScreenShots
+
+![](./assets/swappy1.png)
+
+![](./assets/swappy2.png)
+
+* Window Manager - [Hyprland](https://github.com/hyprwm/Hyprland)
+* Panel - [Waybar](https://github.com/Alexays/Waybar)
+* Terminal - [Kitty](https://github.com/kovidgoyal/kitty)
+* Notifications - [Mako](https://github.com/emersion/mako)
+* Launcher - [Rofi](https://github.com/davatorium/rofi) with [Custom Launchers](https://github.com/adi1090x/rofi)
+* File Manager - [Thunar](https://github.com/xfce-mirror/thunar)
+* Shell - [ZSH](https://sourceforge.net/projects/zsh/) with [Starship](https://github.com/starship/starship)
+* Wallpaper Manager - [Swww](https://github.com/Horus645/swww)
 
 
 <details> 
