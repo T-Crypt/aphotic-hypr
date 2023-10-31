@@ -21,7 +21,7 @@ makepkg -si
 
 ```
 yay -S hyprland-bin kitty waybar-hyprland \
-    swaybg swaylock-effects rofi sddm-git wlogout mako thunar \
+    swaybg swaylock-effects sddm-git wlogout mako thunar \
     ttf-jetbrains-mono-nerd thunar-archive-plugin file-roller noto-fonts-emoji \
     polkit-gnome python-requests swww starship \
     swappy grim slurp pamixer brightnessctl gvfs \
@@ -29,7 +29,7 @@ yay -S hyprland-bin kitty waybar-hyprland \
     dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git \
     python python-pyamdgpuinfo jq network-manager-applet blueman \
     oh-my-zsh-git zsh-autosuggestions zsh-synxtax-highlighting \
-    zsh-theme-powerlevel10k-git eza
+    zsh-theme-powerlevel10k-git eza rofi-lbonn-wayland-git
 ```
 
 ### 💻 Install
