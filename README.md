@@ -29,7 +29,8 @@ yay -S hyprland-bin kitty waybar-hyprland \
     dracula-gtk-theme dracula-icons-git xdg-desktop-portal-hyprland-git \
     python python-pyamdgpuinfo jq network-manager-applet blueman \
     oh-my-zsh-git zsh-autosuggestions zsh-synxtax-highlighting \
-    zsh-theme-powerlevel10k-git eza rofi-lbonn-wayland-git
+    zsh-theme-powerlevel10k-git eza rofi-lbonn-wayland-git \
+    nwg-look
 ```
 
 ### Theming Packages 
