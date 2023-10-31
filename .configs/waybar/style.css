@@ -50,8 +50,8 @@ tooltip {
 }
 
 #custom-weather,
-#custom-spotify,
 #custom-gpu,
+#custom-wallpaper,
 #clock,
 #cpu,
 #memory,
@@ -136,9 +136,7 @@ tooltip {
     margin-left: 10px;
 }
 
-#custom-spotify {
-    color: @green;
+#custom-wallpaper {
     border-radius: 10px;
-    margin-right: 10px;
     margin-left: 10px;
 }
