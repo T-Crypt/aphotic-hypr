@@ -5,6 +5,7 @@
  **/
 
 /*****----- Configuration -----*****/
+@import           "colors/colors-rofi.rasi"
 configuration {
 	modi:                       "drun,run,filebrowser,window";
     show-icons:                 true;
