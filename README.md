@@ -100,6 +100,7 @@ or
 | <kbd>Super</kbd> + <kbd>V</kbd> | Toggle Floating
 | <kbd>Super</kbd> + <kbd>J</kbd> | Toggle Split
 | <kbd>Super</kbd> + <kbd>S</kbd> | Print Screen Tool
+| <kbd>Super</kbd> + <kbd>backspace</kbd> | Rofi Powermenu
 | <kbd>Super</kbd> + <kbd>MouseScroll</kbd> | cycle through workspaces
 | <kbd>Super</kbd> + <kbd>[0-9]</kbd> | switch to workspace [0-9]
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>[0-9]</kbd> | move active window to workspace [0-9]
