@@ -12,13 +12,13 @@ if [ -n "$IMAGE_PATH" ]; then
     IMAGE_FILENAME=$(basename "$IMAGE_PATH")
 
     # Copy the image to the SDDM backgrounds directory
-    sudo cp "$IMAGE_PATH" /usr/share/sddm/themes/corners/backgrounds/
+    sudo cp "$IMAGE_PATH" /usr/share/sddm/themes/sugar-candy/backgrounds/
 
     # Update the theme.conf file with the new background image path
-    sudo sed -i "/^Background=/s|.*$|Background=\"backgrounds/$IMAGE_FILENAME\"|" /usr/share/sddm/themes/corners/theme.conf
+    sudo sed -i "/^Background=/s|.*$|Background=\"backgrounds/$IMAGE_FILENAME\"|" /usr/share/sddm/themes/sugar-candy/theme.conf
 
     echo "Current wallpaper copied to SDDM backgrounds directory."
-    echo "Updated /usr/share/sddm/themes/corners/theme.conf with the new background image."
+    echo "Updated Sugar-Candy with the new background image."
 else
     echo "Error: Unable to fetch current wallpaper information using swww query."
 fi
