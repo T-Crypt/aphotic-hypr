@@ -32,6 +32,10 @@
 - SDDM Wallpaper script (custom backgrounds for SDDM)
 </details>
 
+### Install
+
+[Install Wiki](https://github.com/T-Crypt/dots/wiki/Install-Instructions)
+
 ### ScreenShots
 
 ![](./assets/swappy1.png)
