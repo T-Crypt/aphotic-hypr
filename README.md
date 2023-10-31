@@ -32,6 +32,13 @@ yay -S hyprland-bin kitty waybar-hyprland \
     zsh-theme-powerlevel10k-git eza rofi-lbonn-wayland-git
 ```
 
+### Theming Packages 
+
+```
+yay -S pywal-git python-pywalfox python-pywayland
+```
+
+
 ### 💻 Install
 
 ```
