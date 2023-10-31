@@ -28,18 +28,22 @@ def change_wallpaper(folder_path):
     #generate wallpaper.rofi 
     os.system(f'cp {image_path} ~/.config/swww/wallpaper.rofi')
     # Make a hard copy of the colorscheme
-    os.system(f'cp ~/.cache/wal/colors-cava ~/.config/cava/config')  # cava
+    # cava
+    os.system(f'cp ~/.cache/wal/colors-cava ~/.config/cava/config')  
     # hyprland
     os.system(f'cp ~/.cache/wal/colors-hyprland.conf ~/.config/hypr/colors-hyprland.conf')
-    os.system(f'cp ~/.cache/wal/colors-waybar.css ~/.config/waybar/')  # waybar
+    # waybar
+    os.system(f'cp ~/.cache/wal/colors-waybar.css ~/.config/waybar/')  
     # kitty also needed to apply the colorscheme to all new windows after wallpaper change
     os.system(f'cp ~/.cache/wal/colors-kitty.conf ~/.config/kitty/')
     # swaylock
     os.system(f'cp ~/.cache/wal/colors-swaylock ~/.config/swaylock/config')
-    # rofi 
-    os.system(
-        f'cp ~/.cache/wal/colors-rofi.rasi ~/.config/rofi/colors/colors-rofi.rasi')  
-    os.system(f'pywalfox update')  # firefox
+    # mako
+    os.system(f'cp ~/.cache/wal/colors-mako ~/.config/mako/config')
+     # rofi 
+    os.system(f'cp ~/.cache/wal/colors-rofi.rasi ~/.config/rofi/colors/colors-rofi.rasi')  
+     # firefox
+    os.system(f'pywalfox update')
     # Reload waybar to apply colorscheme
     os.system(f'killall -SIGUSR2 waybar')  # reload waybar to update theme
     # Send a notification
