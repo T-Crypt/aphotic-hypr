@@ -1,8 +1,10 @@
+#!/usr/bin/env python
+
 import os
 import random
 
 # full path to your wallpaper folder
-wallpath = r"/home/rokno/Pictures/Wallpapers"
+wallpath = r"/home/tindall/.config/swww"
 
 
 def change_wallpaper(folder_path):
@@ -23,29 +25,20 @@ def change_wallpaper(folder_path):
     os.system(f'swww img -t wipe --transition-duration 3 {image_path}')
     # Generarte Pywal colorscheme
     os.system(f'wal -i {image_path}')
+    #generate wallpaper.rofi 
+    os.system(f'cp {image_path} ~/.config/swww/wallpaper.rofi')
     # Make a hard copy of the colorscheme
-    os.system(f'cp ~/.cache/wal/colors-dunst ~/.config/dunst/dunstrc')  # dunst
+    os.system(f'cp ~/.cache/wal/colors-cava ~/.config/cava/config')  # cava
     # hyprland
     os.system(f'cp ~/.cache/wal/colors-hyprland.conf ~/.config/hypr/colors-hyprland.conf')
-    # restart dunst to apply new theme
-    os.system(f'killall dunst && dunst & disown')
     os.system(f'cp ~/.cache/wal/colors-waybar.css ~/.config/waybar/')  # waybar
     # kitty also needed to apply the colorscheme to all new windows after wallpaper change
     os.system(f'cp ~/.cache/wal/colors-kitty.conf ~/.config/kitty/')
-    # wlogout
-    os.system(
-        f'cp ~/.cache/wal/colors-waybar.css ~/.config/wlogout/color-wlogout.css')
     # swaylock
     os.system(f'cp ~/.cache/wal/colors-swaylock ~/.config/swaylock/config')
-    os.system(f'cp ~/.cache/wal/colors-cava ~/.config/cava/config')  # cava
+    # rofi 
     os.system(
-        f'cp ~/.cache/wal/colors-rofi.rasi ~/.config/rofi/colors/colors-rofi.rasi')  # rofi
-    # spotify
-    os.system(
-        f'cp ~/.cache/wal/colors-spicetify.ini ~/.config/spicetify/Themes/wal/color.ini')
-    os.system(f'spicetify apply')  # apply spotify theme
-    os.system(
-        f'cp ~/.cache/wal/colors-btop.theme ~/.config/btop/themes/wal.theme')  # btop
+        f'cp ~/.cache/wal/colors-rofi.rasi ~/.config/rofi/colors/colors-rofi.rasi')  
     os.system(f'pywalfox update')  # firefox
     # Reload waybar to apply colorscheme
     os.system(f'killall -SIGUSR2 waybar')  # reload waybar to update theme

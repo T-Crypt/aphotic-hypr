@@ -148,7 +148,7 @@
   },
   "custom/wallpaper": {
     "format": "󰌢 ",
-    "on-click": "~/.config/hypr/scripts/swww.sh",
+    "on-click": "~/.config/hypr/scripts/wallswitcher.py",
     "tooltip": false,
   },
   "custom/weather": {
