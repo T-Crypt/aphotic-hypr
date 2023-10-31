@@ -1,9 +1,3 @@
-/**
- *
- * Rofi Theme File
- * Rofi Version: 1.7.3
- **/
-
 /*****----- Configuration -----*****/
 configuration {
     show-icons:                 false;
@@ -12,12 +6,12 @@ configuration {
 /*****----- Global Properties -----*****/
 * {
     font:                        "JetBrains Mono Nerd Font 10";
-    background:                  #2D1B14;
-    background-alt:              #462D23;
-    foreground:                  #FFFFFF;
-    selected:                    #E25F3E;
-    active:                      #716251;
-    urgent:                      #934A1C;
+    background:                  #D0D0D0;
+    background-alt:              #E9E9E9;
+    foreground:                  #161616;
+    selected:                    #BEBEBE;
+    active:                      #999999;
+    urgent:                      #808080;
 }
 
 /*
