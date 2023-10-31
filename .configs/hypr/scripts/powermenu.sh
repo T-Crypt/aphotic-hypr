@@ -7,7 +7,7 @@ theme='style'
 # CMDs
 lastlogin="`last $USER | head -n1 | tr -s ' ' | cut -d' ' -f5,6,7`"
 uptime="`uptime -p | sed -e 's/up //g'`"
-host=`hostname`
+host=`hostnamectl --static`
 
 # Options
 hibernate=''
