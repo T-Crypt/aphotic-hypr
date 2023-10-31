@@ -97,6 +97,10 @@ Current Location: Denver, CO
 or
 `mkdir ~/.local/share/fonts && cp icomoon-feather.ttf ~/.local/share/fonts`
 
+3. Change the pywall script username - Line 5 on wallswticher.py 
+
+`wallpath = r"/home/CHANGEME/.config/swww"`
+
 <details> 
   <summary><h2> KeyBindings </h2></summary>
 
