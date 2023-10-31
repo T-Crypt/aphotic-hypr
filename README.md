@@ -72,12 +72,17 @@ sudo systemctl start sddm.service
 
 ### Changes to Make
 
-You need to edit the wttr-in.py script to change city location
+1. You need to edit the wttr-in.py script to change city location
 
 Current Location: Denver, CO
 
 `.config/waybar/scripts/waybar-wttr.py`
 
+2. Copy the icomoon-feather.ttf to .local fonts
+
+`cp iconmoon-feather.ttf ~/.local/share/fonts/`
+or
+`mkdir ~/.local/share/fonts && cp icomoon-feather.ttf ~/.local/share/fonts`
 
 <details> 
   <summary><h2> KeyBindings </h2></summary>
