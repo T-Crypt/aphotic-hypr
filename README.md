@@ -29,7 +29,7 @@
   - GTK Themed (Soon) 
 
 - Thunar "Set as Theme" option for custom theming 
-- SDDM Wallpaper script (custom backgrounds for SDDM)
+- SDDM Wallpaper script (Sync Current wallpaper to SDDM)
 </details>
 
 ### Install
