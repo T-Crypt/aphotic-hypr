@@ -46,7 +46,7 @@ tooltip {
   outline: 0;
 }
 
-#custom-language, #custom-updates, #custom-caffeine, #custom-power, #clock, #battery, #pulseaudio, #network, #workspaces, #tray, #backlight {
+#custom-power, #clock, #battery, #pulseaudio, #network, #workspaces, #tray, #backlight {
   background: @background;
   padding: 0px 10px;
   margin: 3px 0px;
