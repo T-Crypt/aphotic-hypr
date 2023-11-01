@@ -26,10 +26,12 @@
   - Mako Themed
   - Swaylock Themed
   - Cava Themed
+  - Firefox Themed
+  - VScode Themed
   - GTK Themed (Soon) 
 
 - Thunar "Set as Theme" option for custom theming 
-- SDDM Wallpaper script (Sync Current wallpaper to SDDM)
+- SDDM Wallpaper script (Sync current wallpaper to SDDM)
 </details>
 
 ### Install
