@@ -42,7 +42,7 @@ install_stage=(
     zsh-theme-powerlevel10k-git
     zsh-autosuggestions
     oh-my-zsh-git
-    zsh-synxtax-highlighting
+    zsh-syntax-highlighting
     xdg-desktop-portal-hyprland
     dracula-gtk-theme
     dracula-icons-git
