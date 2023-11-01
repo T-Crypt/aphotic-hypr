@@ -102,7 +102,7 @@ tooltip {
   color: @color1;
 }
 #custom-power{
-  color: #a6adc8;
+  color: @color1;
   background: @background;
   border-radius: 0 10px 10px 0;
   margin-right: 5px;
