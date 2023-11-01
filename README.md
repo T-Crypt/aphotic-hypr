@@ -7,6 +7,12 @@
   <img alt="GitHub last commit (by committer)" src="https://img.shields.io/github/last-commit/T-Crypt/dots?style=for-the-badge&color=AD8EE6">
   </p>
 
+
+
+https://github.com/T-Crypt/dots/assets/132922589/ff0b4522-6023-4550-902f-52255147f0dd
+
+
+
 * Window Manager - [Hyprland](https://github.com/hyprwm/Hyprland)
 * Panel - [Waybar](https://github.com/Alexays/Waybar)
 * Terminal - [Kitty](https://github.com/kovidgoyal/kitty)
