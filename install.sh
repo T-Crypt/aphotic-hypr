@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# The follwoing will attempt to install all needed packages to run Hyprland
+# T-Cryp Dots
 
 # Define the software that would be inbstalled 
 prep_stage=(
@@ -214,7 +214,6 @@ if [ ! -f /sbin/yay ]; then
 fi
 
 
-
 ### Install all of the above pacakges ####
 read -rep $'[\e[1;33mACTION\e[0m] - Would you like to install the packages? (y,n) ' INST
 if [[ $INST == "Y" || $INST == "y" ]]; then
@@ -320,6 +319,9 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     
     # stage the .desktop file
     sudo cp src/hyprland.desktop /usr/share/wayland-sessions/
+
+    # add VScode extensions
+    tar -xf src/extensions.tar.gz -C ~/.vscode/
 
     # Font install for Rofi 
     sudo mkdir $HOME/.local/share/fonts
