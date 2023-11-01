@@ -101,7 +101,7 @@
   },
   "custom/power": {
     "format": "⏻",
-    "on-click": "wlogout"
+    "on-click": "~/.config/hypr/scripts/powermenu.sh"
   }
 }
 
