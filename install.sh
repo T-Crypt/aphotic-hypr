@@ -97,7 +97,19 @@ CAC="[\e[1;33mACTION\e[0m]"
 INSTLOG="install.log"
 
 ######
-# functions go here
+
+# function for custom apps to install
+custom_apps() {
+    local app_list="./custom_apps.lst"
+    if [[ -f "$app_list" ]]; then
+        echo -e "$CNT - Installing custom applications from $app_list..."
+        while IFS= read -r app; do
+            install_software "$app"
+        done < "$app_list"
+    else
+        echo -e "$CER - Custom applications list not found: $app_list"
+    fi
+}
 
 # function that would show a progress bar to the user
 show_progress() {
@@ -268,6 +280,11 @@ if [[ $INST == "Y" || $INST == "y" ]]; then
     # Clean out other portals
     echo -e "$CNT - Cleaning out conflicting xdg portals..."
     yay -R --noconfirm xdg-desktop-portal-gnome xdg-desktop-portal-gtk &>> $INSTLOG
+fi
+
+read -rep $'[\e[1;33mACTION\e[0m] - Would you like to install custom applications from a list? (y,n) ' CUSTOM_APPS
+if [[ $CUSTOM_APPS == "Y" || $CUSTOM_APPS == "y" ]]; then
+    custom_apps
 fi
 
 ### Copy Config Files ###
