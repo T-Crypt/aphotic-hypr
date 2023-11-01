@@ -65,19 +65,6 @@ tooltip {
   margin-left: 5px;
 }
 
-#custom-caffein10pxe {
-  color: #89dceb;
-
-}
-
-#custom-language {
-  color: #f38ba8;
-}
-
-#custom-updates {
-  color: #f5c2e7;
-}
-
 #clock {
   color: @color1;
   border-radius: 10px;
