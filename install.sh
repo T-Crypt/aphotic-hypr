@@ -345,6 +345,7 @@ if [[ $ZSH == "Y" || $ZSH == "y" ]]; then
     # copy zsh and pk10
     cp .configs/.p10k.zsh $HOME
     cp .configs/.zshrc $HOME
+    chsh -s $(which zsh)
 fi
 
 ### Script is done ###
