@@ -42,6 +42,8 @@ chmod +x install.sh
 ./install.sh
 ```
 
+You can select Y or N to install custom apps by modifying the custom_apps.lst in the root directory.
+
 **Note: You need to install pywalfox extensions for firefox theme to work!
 [Pywalfox](https://addons.mozilla.org/en-US/firefox/addon/pywalfox/)
 
