@@ -277,7 +277,7 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     echo -e "$CNT - Copying config files..."
 
     # copy the configs directory
-    cp -R .configs ~/.config/
+    cp -R .configs/* ~/.config/
 
     # Setup each appliaction
     # check for existing config folders and backup 
