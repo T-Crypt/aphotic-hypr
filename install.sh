@@ -1,14 +1,8 @@
 #!/bin/bash
 
-# HyprV4 By SolDoesTech - https://www.youtube.com/@SolDoesTech
-# License..? - You may copy, edit and ditribute this script any way you like, enjoy! :)
-
 # The follwoing will attempt to install all needed packages to run Hyprland
-# This is a quick and dirty script there are some error checking
-# IMPORTANT - This script is meant to run on a clean fresh Arch install on physical hardware
 
 # Define the software that would be inbstalled 
-#Need some prep work
 prep_stage=(
     qt5-wayland 
     qt5ct
@@ -44,11 +38,17 @@ install_stage=(
     waybar
     swww 
     swaylock-effects 
-    wofi 
-    wlogout 
+    rofi-lbonn-wayland-git
+    zsh-theme-powerlevel10k-git
+    zsh-autosuggestions
+    oh-my-zsh-git
+    zsh-synxtax-highlighting
     xdg-desktop-portal-hyprland 
     swappy 
+    eza
+    nwg-look
     grim 
+    python-pyamdgpuinfo
     slurp 
     thunar 
     btop
@@ -60,8 +60,13 @@ install_stage=(
     brightnessctl 
     bluez 
     bluez-utils 
-    blueman 
-    network-manager-applet 
+    blueman
+    pywal-git
+    python-pywalfox
+    python-pywayland
+    network-manager-applet
+    visual-studio-code-bin
+    firefox
     gvfs 
     thunar-archive-plugin 
     file-roller
@@ -127,8 +132,7 @@ install_software() {
 clear
 
 # set some expectations for the user
-echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland.
-Please note that Hyprland is still in Beta."
+echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland."
 sleep 1
 
 # attempt to discover if this is a VM or not
@@ -142,8 +146,7 @@ if [[ $ISVM == *"vm"* ]]; then
 fi
 
 # let the user know that we will use sudo
-echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password.
-If you are worried about entering your password then you may want to review the content of the script."
+echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password."
 sleep 1
 
 # give the user an option to exit out
@@ -271,23 +274,11 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     echo -e "$CNT - Copying config files..."
 
     # copy the HyprV directory
-    cp -R HyprV ~/.config/
-
-    #set the measuring unit
-    echo -e "$CNT - Attempring to set mesuring unit..."
-    if locale -a | grep -q ^en_US; then
-        echo -e "$COK - Setting mesuring system to imperial..."
-        ln -sf ~/.config/HyprV/waybar/conf/mesu-imp.jsonc ~/.config/HyprV/waybar/conf/mesu.jsonc
-        sed -i 's/SET_MESU=""/SET_MESU="I"/' ~/.config/HyprV/hyprv.conf
-    else
-        echo -e "$COK - Setting mesuring system to metric..."
-        sed -i 's/SET_MESU=""/SET_MESU="M"/' ~/.config/HyprV/hyprv.conf
-        ln -sf ~/.config/HyprV/waybar/conf/mesu-met.jsonc ~/.config/HyprV/waybar/conf/mesu.jsonc
-    fi
+    cp -R .configs ~/.config/
 
     # Setup each appliaction
     # check for existing config folders and backup 
-    for DIR in hypr kitty mako swaylock waybar wlogout wofi 
+    for DIR in hypr kitty mako swaylock waybar rofi cava nwglook neofetch swww Thunar gtk-3.0 wal/templates
     do 
         DIRPATH=~/.config/$DIR
         if [ -d "$DIRPATH" ]; then 
@@ -300,18 +291,6 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
         mkdir -p $DIRPATH &>> $INSTLOG
     done
 
-    # link up the config files
-    echo -e "$CNT - Setting up the new config..." 
-    cp ~/.config/HyprV/hypr/* ~/.config/hypr/
-    ln -sf ~/.config/HyprV/kitty/kitty.conf ~/.config/kitty/kitty.conf
-    ln -sf ~/.config/HyprV/mako/conf/config-dark ~/.config/mako/config
-    ln -sf ~/.config/HyprV/swaylock/config ~/.config/swaylock/config
-    ln -sf ~/.config/HyprV/waybar/conf/v4-config.jsonc ~/.config/waybar/config.jsonc
-    ln -sf ~/.config/HyprV/waybar/style/v4-style-dark.css ~/.config/waybar/style.css
-    ln -sf ~/.config/HyprV/wlogout/layout ~/.config/wlogout/layout
-    ln -sf ~/.config/HyprV/wofi/config ~/.config/wofi/config
-    ln -sf ~/.config/HyprV/wofi/style/v4-style-dark.css ~/.config/wofi/style.css
-
 
     # add the Nvidia env file to the config (if needed)
     if [[ "$ISNVIDIA" == true ]]; then
@@ -320,10 +299,10 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
 
     # Copy the SDDM theme
     echo -e "$CNT - Setting up the login screen."
-    sudo cp -R Extras/sdt /usr/share/sddm/themes/
-    sudo chown -R $USER:$USER /usr/share/sddm/themes/sdt
+    sudo tar -xf src/sugar-candy.tar.gz -C /usr/share/sddm/themes/
+    sudo chown -R $USER:$USER /usr/share/sddm/themes/sugar-candy
     sudo mkdir /etc/sddm.conf.d
-    echo -e "[Theme]\nCurrent=sdt" | sudo tee -a /etc/sddm.conf.d/10-theme.conf &>> $INSTLOG
+    echo -e "[Theme]\nCurrent=sugar-candy" | sudo tee -a /etc/sddm.conf.d/10-theme.conf &>> $INSTLOG
     WLDIR=/usr/share/wayland-sessions
     if [ -d "$WLDIR" ]; then
         echo -e "$COK - $WLDIR found"
@@ -333,55 +312,28 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     fi 
     
     # stage the .desktop file
-    sudo cp Extras/hyprland.desktop /usr/share/wayland-sessions/
+    sudo cp src/hyprland.desktop /usr/share/wayland-sessions/
+
+    # Font install for Rofi 
+    sudo mkdir $HOME/.local/share/fonts
+    sudo cp src/Icomoon-Feather.ttf $HOME/.local/share/fonts
 
     # setup the first look and feel as dark
     xfconf-query -c xsettings -p /Net/ThemeName -s "Adwaita-dark"
     xfconf-query -c xsettings -p /Net/IconThemeName -s "Papirus-Dark"
     gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
     gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
-    cp -f ~/.config/HyprV/backgrounds/v4-background-dark.jpg /usr/share/sddm/themes/sdt/wallpaper.jpg
 fi
 
 ### Install the starship shell ###
 read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate the starship shell? (y,n) ' STAR
 if [[ $STAR == "Y" || $STAR == "y" ]]; then
     # install the starship shell
-    echo -e "$CNT - Hansen Crusher, Engage!"
+    echo -e "$CNT - Starship, Engage!"
     echo -e "$CNT - Updating .bashrc..."
     echo -e '\neval "$(starship init bash)"' >> ~/.bashrc
     echo -e "$CNT - copying starship config file to ~/.config ..."
-    cp Extras/starship.toml ~/.config/
-fi
-
-### Install software for Asus ROG laptops ###
-read -rep $'[\e[1;33mACTION\e[0m] - For ASUS ROG Laptops - Would you like to install Asus ROG software support? (y,n) ' ROG
-if [[ $ROG == "Y" || $ROG == "y" ]]; then
-    echo -e "$CNT - Adding Keys..."
-    sudo pacman-key --recv-keys 8F654886F17D497FEFE3DB448B15A6B0E9A3FA35 &>> $INSTLOG
-    sudo pacman-key --finger 8F654886F17D497FEFE3DB448B15A6B0E9A3FA35 &>> $INSTLOG
-    sudo pacman-key --lsign-key 8F654886F17D497FEFE3DB448B15A6B0E9A3FA35 &>> $INSTLOG
-    sudo pacman-key --finger 8F654886F17D497FEFE3DB448B15A6B0E9A3FA35 &>> $INSTLOG
-
-    LOC="/etc/pacman.conf"
-    echo -e "$CNT - Updating $LOC with g14 repo."
-    echo -e "\n[g14]\nServer = https://arch.asus-linux.org" | sudo tee -a $LOC &>> $INSTLOG
-    echo -e "$CNT - Update the system..."
-    sudo pacman -Suy --noconfirm &>> $INSTLOG
-
-    echo -e "$CNT - Installing ROG pacakges..."
-    install_software asusctl
-    install_software supergfxctl
-    install_software rog-control-center
-
-    echo -e "$CNT - Activating ROG services..."
-    sudo systemctl enable --now power-profiles-daemon.service &>> $INSTLOG
-    sleep 2
-    sudo systemctl enable --now supergfxd &>> $INSTLOG
-    sleep 2
-
-    # add the ROG keybinding file to the config
-    echo -e "\nsource = ~/.config/hypr/rog-g15-strix-2021-binds.conf" >> ~/.config/hypr/hyprland.conf
+    cp src/starship.toml ~/.config/
 fi
 
 ### Script is done ###
