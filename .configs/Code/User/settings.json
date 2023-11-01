@@ -1,4 +1,7 @@
 {
     "workbench.colorTheme": "Wal",
     "window.menuBarVisibility": "toggle"
+    "security.workspace.trust.untrustedFiles": "newWindow",
+    "security.workspace.trust.startupPrompt": "never",
+    "security.workspace.trust.enabled": false
 }
