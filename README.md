@@ -13,7 +13,7 @@
 * Notifications - [Mako](https://github.com/emersion/mako)
 * Launcher - [Rofi](https://github.com/davatorium/rofi) with [Custom Launchers](https://github.com/adi1090x/rofi)
 * File Manager - [Thunar](https://github.com/xfce-mirror/thunar)
-* Shell - [ZSH](https://sourceforge.net/projects/zsh/) with [Starship](https://github.com/starship/starship)
+* Shell - [ZSH](https://sourceforge.net/projects/zsh/) or [Starship](https://github.com/starship/starship)
 * Wallpaper Manager - [Swww](https://github.com/Horus645/swww)
 
 <details> 
