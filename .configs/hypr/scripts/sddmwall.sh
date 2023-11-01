@@ -15,7 +15,7 @@ if [ -n "$IMAGE_PATH" ]; then
     sudo cp "$IMAGE_PATH" /usr/share/sddm/themes/sugar-candy/Backgrounds/
 
     # Update the theme.conf file with the new background image path
-    sudo sed -i "/^Background=/s|.*$|Background=\"backgrounds/$IMAGE_FILENAME\"|" /usr/share/sddm/themes/sugar-candy/theme.conf
+    sudo sed -i "/^Background=/s|.*$|Background=\"Backgrounds/$IMAGE_FILENAME\"|" /usr/share/sddm/themes/sugar-candy/theme.conf
 
     echo "Current wallpaper copied to SDDM backgrounds directory."
     echo "Updated Sugar-Candy with the new background image."
