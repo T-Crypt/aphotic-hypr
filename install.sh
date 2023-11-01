@@ -329,8 +329,10 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     cp src/pywalfox@frewacom.org.xpi ~/.mozilla/firefox/*.default-release/extensions/
 
     # Font install for Rofi 
+    echo -e "$CNT - Adding Fonts for Rofi"
     sudo mkdir $HOME/.local/share/fonts
     sudo cp src/Icomoon-Feather.ttf $HOME/.local/share/fonts
+    fc-cache -fv
 fi
 
 ### Install the starship shell ###
