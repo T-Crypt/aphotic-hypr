@@ -4,7 +4,7 @@
   "position": "top", 
   "height": 32,
   
-  "modules-left":   ["clock"],
+  "modules-left":   ["clock", "cpu", "memory", "custom/gpu"],
   "modules-center": ["hyprland/workspaces"],
   "modules-right":  ["tray", "network", "backlight", "pulseaudio","battery", "custom/power"],
 
@@ -79,21 +79,25 @@
       "default": ["", "", "󰕾", ""]
     }
   },
-  "custom/notification": {
-    "tooltip": false,
-    "format": "{icon}",
-    "format-icons": {
-      "notification": "<span foreground='red'><sup></sup></span>",
-      "none": "",
-      "dnd-notification": "<span foreground='red'><sup></sup></span>",
-      "dnd-none": ""
-    },
+ "memory": {
+    "interval": 1,
+    "format": "  {}%",
+    "tooltip": true,
+    "tooltip-format": "Memory - {used:0.1f}GB used",
+    "on-click": "kitty --start-as=fullscreen --title bpytop sh -c 'bpytop'"
+  },
+  "cpu": {
+    "interval": 1,
+    "format": "  {usage}%",
+    "on-click": "kitty --start-as=fullscreen --title bpytop sh -c 'bpytop'"
+  },
+  "custom/gpu": {
+    "exec": " ~/.config/hypr/scripts/gpuinfo.sh",
     "return-type": "json",
-    "exec-if": "which swaync-client",
-    "exec": "swaync-client -swb",
-    "on-click": "swaync-client -t -sw",
-    "on-click-right": "swaync-client -d -sw",
-    "escape": true
+    "format": " {}",
+    "interval": 5, // once every 5 seconds
+    "tooltip": true,
+    "max-length": 1000
   },
   "custom/power": {
     "format": "⏻",
