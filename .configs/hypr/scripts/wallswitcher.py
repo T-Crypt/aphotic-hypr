@@ -4,7 +4,7 @@ import os
 import random
 
 # full path to your wallpaper folder
-wallpath = r"/home/tindall/.config/swww"
+wallpath = os.path.expanduser("~/.config/swww")
 
 
 def change_wallpaper(folder_path):
