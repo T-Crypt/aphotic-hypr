@@ -49,14 +49,13 @@ install_stage=(
     bibata-cursor-theme
     swappy 
     eza
-    nwg-look
     grim 
     python-pyamdgpuinfo
     slurp 
     thunar 
+    cava
     btop
     firefox
-    thunderbird
     mpv
     pamixer 
     pavucontrol 
@@ -70,6 +69,7 @@ install_stage=(
     network-manager-applet
     visual-studio-code-bin
     firefox
+    neofetch
     gvfs 
     thunar-archive-plugin 
     file-roller
@@ -297,7 +297,7 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
 
     # add the Nvidia env file to the config (if needed)
     if [[ "$ISNVIDIA" == true ]]; then
-        echo -e "\nsource = ~/.config/hypr/env_var_nvidia.conf" >> ~/.config/hypr/hyprland.conf
+        echo -e "\nsource = ~/.config/hypr/nvidia.conf" >> ~/.config/hypr/hyprland.conf
     fi
 
     # Copy the SDDM theme
@@ -331,6 +331,16 @@ if [[ $STAR == "Y" || $STAR == "y" ]]; then
     echo -e '\neval "$(starship init bash)"' >> ~/.bashrc
     echo -e "$CNT - copying starship config file to ~/.config ..."
     cp src/starship.toml ~/.config/
+fi
+
+read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate zsh shell? (y,n) ' ZSH
+if [[ $ZSH == "Y" || $ZSH == "y" ]]; then
+    # install zsh shell
+    echo -e "$CNT - ZSH, Engage!"
+    echo -e "$CNT - copying zsh and p10k config file to HOME ..."
+    # copy zsh and pk10
+    cp .configs/.p10k.zsh $HOME
+    cp .configs/.zshrc $HOME
 fi
 
 ### Script is done ###
