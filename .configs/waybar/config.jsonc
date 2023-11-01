@@ -55,11 +55,14 @@
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
   },
   "network": {
-    "format-wifi": "󰖩 {essid}",
-    "format-ethernet": " {essid}",
-    "format-linked": "{ifname} (No IP) ",
-    "format-disconnected": " Disconnected",
-    "tooltip-format-wifi": "Signal Strenght: {signalStrength}% | Down Speed: {bandwidthDownBits}, Up Speed: {bandwidthUpBits}"
+    // "interface": "wlan0", (optional) to focus on the interface
+    "format-wifi": "  {signalStrength}%",
+    "format-ethernet": "  {ipaddr}/{cidr}",
+    "tooltip-format": "{essid} - {ifname} via {gwaddr} ",
+    "format-linked": "{ifname} (No IP) ",
+    "format-disconnected": "Disconnected ⚠",
+    "format-alt": "{ifname}:{essid} {ipaddr}/{cidr}",
+    "max-length": 50
   },
   "pulseaudio": {
     "format": "{icon} {volume}%",
