@@ -1,3 +1,5 @@
+@import 'colors-waybar.css';
+
 * {
   border: none;
   border-radius: 0;
@@ -13,7 +15,7 @@ window#waybar {
 }
 
 tooltip {
-  background: #1e1e2e;
+  background: @foreground;
   border-radius: 10px;
   border-width: 2px;
   border-style: solid;
@@ -45,7 +47,7 @@ tooltip {
 }
 
 #custom-language, #custom-updates, #custom-caffeine, #custom-power, #clock, #battery, #pulseaudio, #network, #workspaces, #tray, #backlight {
-  background: #1e1e2e;
+  background: @foreground;
   padding: 0px 10px;
   margin: 3px 0px;
 }
@@ -56,7 +58,7 @@ tooltip {
 }
 
 #workspaces {
-  background: #1e1e2e;
+  background: @foreground;
   border-radius: 10px;
   padding-right: 0px;
   padding-left: 5px;
@@ -101,7 +103,7 @@ tooltip {
 }
 #custom-power{
   color: #a6adc8;
-  background: #1e1e2e;
+  background: @foreground;
   border-radius: 0 10px 10px 0;
   margin-right: 5px;
 }
