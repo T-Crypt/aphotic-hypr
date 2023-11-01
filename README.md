@@ -61,7 +61,7 @@ You can select Y or N to install custom apps by modifying the custom_apps.lst in
 
 ![](./assets/swappy2.png)
 
-![](./assets/swappy5.png)
+![](./assets/swappy4.png)
 
 ![](./assets/swappy6.png)
 
