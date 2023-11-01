@@ -279,6 +279,10 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     # copy the configs directory
     cp -R .configs/* ~/.config/
 
+    # make files exec
+    chmod +x ~/.config/hypr/scripts/*
+    chmod +x ~/.config/waybar/scripts/*
+
     # Setup each appliaction
     # check for existing config folders and backup 
     for DIR in hypr kitty mako swaylock waybar rofi cava nwglook neofetch swww Thunar gtk-3.0 wal/templates
