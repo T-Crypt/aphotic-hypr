@@ -46,7 +46,7 @@ tooltip {
   outline: 0;
 }
 
-#custom-power, #clock, #battery, #pulseaudio, #network, #workspaces, #tray, #backlight {
+#custom-power, #clock, #battery, #pulseaudio, #network, #workspaces, #tray, #backlight, #custom-gpu, #cpu, #memory {
   background: @background;
   padding: 0px 10px;
   margin: 3px 0px;
@@ -82,12 +82,24 @@ tooltip {
 
 #battery{
   color:  @color1;
+}
 
+#memory{
+  color:  @color1;
+}
+
+#cpu{
+  color:  @color1;
 }
 
 #backlight{
   color: @color1;
 }
+
+#custom-gpu{
+  color:  @color1;
+}
+
 #custom-power{
   color: @color1;
   background: @background;
