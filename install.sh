@@ -298,22 +298,7 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     # make files exec
     chmod +x ~/.config/hypr/scripts/*
     chmod +x ~/.config/waybar/scripts/*
-
-    # Setup each appliaction
-    # check for existing config folders and backup 
-    for DIR in hypr kitty mako swaylock waybar rofi cava nwglook neofetch swww Thunar gtk-3.0 wal/templates
-    do 
-        DIRPATH=~/.config/$DIR
-        if [ -d "$DIRPATH" ]; then 
-            echo -e "$CAT - Config for $DIR located, backing up."
-            mv $DIRPATH $DIRPATH-back &>> $INSTLOG
-            echo -e "$COK - Backed up $DIR to $DIRPATH-back."
-        fi
-
-        # make new empty folders
-        mkdir -p $DIRPATH &>> $INSTLOG
-    done
-
+    
 
     # add the Nvidia env file to the config (if needed)
     if [[ "$ISNVIDIA" == true ]]; then
