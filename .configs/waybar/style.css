@@ -11,11 +11,11 @@
 
 window#waybar {
   background: transparent;
-  color: @foreground;
+  color: @color1;
 }
 
 tooltip {
-  background: @foreground;
+  background: @background;
   border-radius: 10px;
   border-width: 2px;
   border-style: solid;
@@ -24,23 +24,23 @@ tooltip {
 
 #workspaces button {
   padding: 5px;
-  color: @foreground;
+  color: @color1;
   margin-right: 5px;
 }
 
 #workspaces button.active {
-  color: @foreground;
+  color: @color1;
 }
 
 #workspaces button.urgent {
-  color: @foreground;
+  color: @color1;
   background: @background;
   border-radius: 10px;
 }
 
 #workspaces button:hover {
   background: @background;
-  color: @foreground;
+  color: @color1;
   border-radius: 0;
   border: 0;
   outline: 0;
@@ -79,27 +79,27 @@ tooltip {
 }
 
 #clock {
-  color: @foreground;
+  color: @color1;
   border-radius: 10px;
 }
 
 #network {
-  color: @foreground;
+  color: @color1;
   border-radius: 10px 0px 0px 10px;
   padding-right: 12px;
 }
 
 #pulseaudio {
-  color: @foreground;
+  color: @color1;
 }
 
 #battery{
-  color:  @foreground;
+  color:  @color1;
 
 }
 
 #backlight{
-  color: @foreground;
+  color: @color1;
 }
 #custom-power{
   color: #a6adc8;
