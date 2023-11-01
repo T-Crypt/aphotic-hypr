@@ -27,14 +27,13 @@ def change_wallpaper(folder_path):
     os.system(f'wal -i {image_path}')
     #generate wallpaper.rofi 
     os.system(f'cp {image_path} ~/.config/swww/wallpaper.rofi')
-    # Make a hard copy of the colorscheme
     # cava
     os.system(f'cp ~/.cache/wal/colors-cava ~/.config/cava/config')  
     # hyprland
     os.system(f'cp ~/.cache/wal/colors-hyprland.conf ~/.config/hypr/colors-hyprland.conf')
     # waybar
     os.system(f'cp ~/.cache/wal/colors-waybar.css ~/.config/waybar/')  
-    # kitty also needed to apply the colorscheme to all new windows after wallpaper change
+    # kitty 
     os.system(f'cp ~/.cache/wal/colors-kitty.conf ~/.config/kitty/')
     # swaylock
     os.system(f'cp ~/.cache/wal/colors-swaylock ~/.config/swaylock/config')
@@ -45,7 +44,7 @@ def change_wallpaper(folder_path):
      # firefox
     os.system(f'pywalfox update')
     # Reload waybar to apply colorscheme
-    os.system(f'killall -SIGUSR2 waybar')  # reload waybar to update theme
+    os.system(f'killall -SIGUSR2 waybar') 
     # Send a notification
     os.system(
         f'notify-send -h string:x-canonical-private-synchronous:hypr-cfg -u low "Wallpaper changed to {random_image}"')
