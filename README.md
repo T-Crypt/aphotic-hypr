@@ -42,6 +42,9 @@ chmod +x install.sh
 ./install.sh
 ```
 
+**Note: You need to install pywalfox extensions for firefox theme to work!
+[Pywalfox](https://addons.mozilla.org/en-US/firefox/addon/pywalfox/)
+
 ### ScreenShots
 
 ![](./assets/swappy1.png)
