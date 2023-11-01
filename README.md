@@ -50,23 +50,23 @@ You can select Y or N to install custom apps by modifying the custom_apps.lst in
 
 ### ScreenShots
 
-![](./assets/swappy1.png)
+![](./assets/swappy10.png)
 
-![](./assets/swappy5.png)
+![](./assets/swappy50.png)
 
 
 <details> 
   <summary><h2> Additional Screenshots </h2></summary>
 
-![](./assets/swappy3.png)
+![](./assets/swappy30.png)
 
-![](./assets/swappy2.png)
+![](./assets/swappy20.png)
 
-![](./assets/swappy4.png)
+![](./assets/swappy40.png)
 
-![](./assets/swappy6.png)
+![](./assets/swappy60.png)
 
-![](./assets/swappy7.png)
+![](./assets/swappy70.png)
 
 </details>
 
