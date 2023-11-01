@@ -43,7 +43,10 @@ install_stage=(
     zsh-autosuggestions
     oh-my-zsh-git
     zsh-synxtax-highlighting
-    xdg-desktop-portal-hyprland 
+    xdg-desktop-portal-hyprland
+    dracula-gtk-theme
+    dracula-icons-git
+    bibata-cursor-theme
     swappy 
     eza
     nwg-look
@@ -273,7 +276,7 @@ read -rep $'[\e[1;33mACTION\e[0m] - Would you like to copy config files? (y,n) '
 if [[ $CFG == "Y" || $CFG == "y" ]]; then
     echo -e "$CNT - Copying config files..."
 
-    # copy the HyprV directory
+    # copy the configs directory
     cp -R .configs ~/.config/
 
     # Setup each appliaction
@@ -317,12 +320,6 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     # Font install for Rofi 
     sudo mkdir $HOME/.local/share/fonts
     sudo cp src/Icomoon-Feather.ttf $HOME/.local/share/fonts
-
-    # setup the first look and feel as dark
-    xfconf-query -c xsettings -p /Net/ThemeName -s "Adwaita-dark"
-    xfconf-query -c xsettings -p /Net/IconThemeName -s "Papirus-Dark"
-    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita-dark"
-    gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
 fi
 
 ### Install the starship shell ###
