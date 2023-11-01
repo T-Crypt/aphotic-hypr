@@ -34,7 +34,11 @@
 
 ### Install
 
-[Install Wiki](https://github.com/T-Crypt/dots/wiki/Install-Instructions)
+```
+git clone https://github.com/T-Crypt/dots && cd dots
+chmod +x install.sh
+./install.sh
+```
 
 ### ScreenShots
 
