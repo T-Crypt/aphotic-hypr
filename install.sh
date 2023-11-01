@@ -321,7 +321,12 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
     sudo cp src/hyprland.desktop /usr/share/wayland-sessions/
 
     # add VScode extensions
+    echo -e "$CNT - Adding VScode Extensions"
     tar -xf src/extensions.tar.gz -C ~/.vscode/
+
+    # add firefox plugin 
+    echo -e "$CNT - Adding Firefox Extension"
+    cp src/pywalfox@frewacom.org.xpi ~/.mozilla/firefox/*.default-release/extensions/
 
     # Font install for Rofi 
     sudo mkdir $HOME/.local/share/fonts
