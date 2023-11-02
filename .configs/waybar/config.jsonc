@@ -2,7 +2,7 @@
 
   "layer": "top",
   "position": "top",
-  "mod": "dock,
+  "mod": "dock",
   "height": 28,
   "exclusive": true,
   "passthrough": false,
