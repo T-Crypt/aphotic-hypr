@@ -93,3 +93,9 @@ You can select Y or N to install custom apps by modifying the custom_apps.lst in
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>[0-9]</kbd> | move active window to workspace [0-9]
 
 </details>
+
+### Credit!
+
+Big Shoutout to Tittu for the inspiration -- basically just a minimalist install / inspiration off his dotfiles that I contribute to!
+
+[Tittu](https://github.com/prasanthrangan)
