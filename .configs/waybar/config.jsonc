@@ -48,10 +48,10 @@
     "min-length": 6 
   },
   "custom/button": {
-          "format": "󰣇",
-          "interval": "once",
-          "on-click": "~/.config/hypr/scripts/launcher.sh",
-          "tooltip": false
+    "format": "󰣇",
+    "interval": "once",
+    "on-click": "~/.config/hypr/scripts/launcher.sh",
+    "tooltip": false
   },
   "battery": {
     "states": {
