@@ -4,9 +4,9 @@
   "position": "top", 
   "height": 28,
   
-  "modules-left":   ["clock", "cpu", "memory", "custom/gpu"],
-  "modules-center": ["hyprland/workspaces"],
-  "modules-right":  ["tray", "network", "backlight", "pulseaudio","battery", "custom/power"],
+  "modules-left":   ["custom/padd","custom/l_end","clock", "cpu", "memory", "custom/gpu","custom/r_end","custom/padd"],
+  "modules-center": ["custom/padd","custom/l_end","hyprland/workspaces","custom/r_end","custom/padd"],
+  "modules-right":  ["custom/padd","custom/l_end","tray", "network", "backlight", "pulseaudio","battery", "custom/power","custom/r_end","custom/padd"],
 
   "hyprland/workspaces": {
     "disable-scroll": true,
@@ -102,6 +102,49 @@
   "custom/power": {
     "format": "⏻",
     "on-click": "~/.config/hypr/scripts/powermenu.sh"
-  }
+  },
+
+  "custom/l_end": {
+        "format": " ",
+        "interval" : "once",
+        "tooltip": false
+    },
+
+    "custom/r_end": {
+        "format": " ",
+        "interval" : "once",
+        "tooltip": false
+    },
+
+    "custom/sl_end": {
+        "format": " ",
+        "interval" : "once",
+        "tooltip": false
+    },
+
+    "custom/sr_end": {
+        "format": " ",
+        "interval" : "once",
+        "tooltip": false
+    },
+
+    "custom/rl_end": {
+        "format": " ",
+        "interval" : "once",
+        "tooltip": false
+    },
+
+    "custom/rr_end": {
+        "format": " ",
+        "interval" : "once",
+        "tooltip": false
+    },
+
+    "custom/padd": {
+        "format": "  ",
+        "interval" : "once",
+        "tooltip": false
+    }
 }
+
 
