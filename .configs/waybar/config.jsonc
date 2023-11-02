@@ -8,7 +8,7 @@
   "passthrough": false,
   "gtk-layer-shell": true,
   
-  "modules-left":   ["custom/padd","custom/l_end","clock","custom/r_end","custom/l_end","cpu", "memory", "custom/gpu","custom/r_end","custom/padd"],
+  "modules-left":   ["custom/padd","custom/l_end","custom/button","custom/r_end","custom/l_end","clock","custom/r_end","custom/l_end","cpu", "memory", "custom/gpu","custom/r_end","custom/padd"],
   "modules-center": ["custom/padd","custom/l_end","hyprland/workspaces","hyprland/window","custom/r_end","custom/padd"],
   "modules-right":  ["custom/padd","custom/l_end","tray", "network", "backlight", "pulseaudio","battery", "custom/power","custom/r_end","custom/padd"],
 
@@ -46,6 +46,12 @@
     "on-scroll-up": "brightnessctl set 1%+",
     "on-scroll-down": "brightnessctl set 1%-",
     "min-length": 6 
+  },
+  "custom/button": {
+          "format": "󰣇",
+          "interval": "once",
+          "on-click": "~/.config/hypr/scripts/launcher.sh"
+          "tooltip": false
   },
   "battery": {
     "states": {
