@@ -33,10 +33,9 @@ window {
     width:                       1000px;
     x-offset:                    0px;
     y-offset:                    0px;
-
-    /* properties for all widgets */
     enabled:                     true;
-    border-radius:               15px;
+    border-radius:               40px;
+    border-color:                @foreground;
     cursor:                      "default";
     background-color:            @background;
 }
