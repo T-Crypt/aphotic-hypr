@@ -324,6 +324,7 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
 
     # add VScode extensions
     echo -e "$CNT - Adding VScode Extensions"
+    mkdir ~/.vscode/
     tar -xf src/extensions.tar.gz -C ~/.vscode/
 
     # Font install for Rofi 
