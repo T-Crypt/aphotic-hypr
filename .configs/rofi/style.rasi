@@ -35,7 +35,7 @@ window {
     y-offset:                    0px;
     enabled:                     true;
     border-radius:               40px;
-    border-color:                @foreground;
+    border-color:                @background-alt;
     cursor:                      "default";
     background-color:            @background;
 }
