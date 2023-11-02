@@ -31,7 +31,8 @@
   - VScode Themed
   - GTK Themed (Soon) 
 
-- Thunar "Set as Theme" option for custom theming 
+- Thunar "Set as Theme" option for custom theming
+   - Has to be in $HOME/Pictures (no special characters in front the directory path)
 - SDDM Wallpaper script (Sync current wallpaper to SDDM)
 </details>
 
