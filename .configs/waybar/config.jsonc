@@ -1,8 +1,12 @@
 {
 
   "layer": "top",
-  "position": "top", 
+  "position": "top",
+  "mod": "dock,
   "height": 28,
+  "exclusive": true,
+  "passthrough": false,
+  "gtk-layer-shell": true,
   
   "modules-left":   ["custom/padd","custom/l_end","clock", "cpu", "memory", "custom/gpu","custom/r_end","custom/padd"],
   "modules-center": ["custom/padd","custom/l_end","hyprland/workspaces","custom/r_end","custom/padd"],
