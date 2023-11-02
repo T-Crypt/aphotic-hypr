@@ -50,7 +50,7 @@
   "custom/button": {
     "format": "󰣇",
     "interval": "once",
-    "on-click": "~/.config/hypr/scripts/launcher.sh",
+    "on-click": "sleep 0.1 && ~/.config/hypr/scripts/launcher.sh",
     "tooltip": false
   },
   "battery": {
