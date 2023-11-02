@@ -297,9 +297,7 @@ if [[ $CFG == "Y" || $CFG == "y" ]]; then
 
     # make files exec
     chmod +x ~/.config/hypr/scripts/*
-    chmod +x ~/.config/waybar/scripts/*
     
-
     # add the Nvidia env file to the config (if needed)
     if [[ "$ISNVIDIA" == true ]]; then
         echo -e "\nsource = ~/.config/hypr/nvidia.conf" >> ~/.config/hypr/hyprland.conf
