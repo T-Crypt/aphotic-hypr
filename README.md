@@ -85,6 +85,7 @@ You can select Y or N to install custom apps by modifying the custom_apps.lst in
 | <kbd>Super</kbd> + <kbd>F</kbd> | launch firefox
 | <kbd>Super</kbd> + <kbd>A</kbd> | launch desktop applications (rofi)
 | <kbd>Super</kbd> + <kbd>L</kbd> | lock screen
+| <kbd>Super</kbd> + <kbd>B</kbd> | Toggle waybar
 | <kbd>Super</kbd> + <kbd>V</kbd> | Toggle Floating
 | <kbd>Super</kbd> + <kbd>J</kbd> | Toggle Split
 | <kbd>Super</kbd> + <kbd>S</kbd> | Print Screen Tool
