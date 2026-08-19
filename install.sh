@@ -1,370 +1,263 @@
 #!/bin/bash
+# install.sh
 
-# T-Cryp Dots
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$ROOT_DIR/lib/install/python.sh"
+source "$ROOT_DIR/lib/install/aur.sh"
+source "$ROOT_DIR/lib/install/backup.sh"
+source "$ROOT_DIR/lib/install/wizard.sh"
+# sourced libs each set -euo pipefail, which otherwise leaks into this
+# script's shell options since `set` is not scoped to the sourced file
+set +euo pipefail
 
-# Define the software that would be inbstalled 
-prep_stage=(
-    qt5-wayland 
-    qt5ct
-    qt6-wayland 
-    qt6ct
-    qt5-svg
-    qt5-quickcontrols2
-    qt5-graphicaleffects
-    gtk3 
-    polkit-gnome 
-    pipewire 
-    wireplumber 
-    jq 
-    wl-clipboard 
-    cliphist 
-    python-requests 
-    pacman-contrib
-)
-
-#software for nvidia GPU only
-nvidia_stage=(
-    linux-headers 
-    nvidia-dkms 
-    nvidia-settings 
-    libva 
-    libva-nvidia-driver-git
-)
-
-#the main packages
-install_stage=(
-    kitty 
-    mako 
-    waybar
-    swww 
-    swaylock-effects 
-    rofi-lbonn-wayland-git
-    zsh-theme-powerlevel10k-git
-    zsh-autosuggestions
-    oh-my-zsh-git
-    zsh-syntax-highlighting
-    xdg-desktop-portal-hyprland
-    dracula-gtk-theme
-    dracula-icons-git
-    bibata-cursor-theme
-    swappy 
-    eza
-    grim 
-    python-pyamdgpuinfo
-    slurp 
-    thunar 
-    cava
-    btop
-    firefox
-    mpv
-    pamixer 
-    pavucontrol 
-    brightnessctl 
-    bluez 
-    bluez-utils 
-    blueman
-    pywal-git
-    python-pywalfox
-    python-pywayland
-    network-manager-applet
-    visual-studio-code-bin
-    firefox
-    neofetch
-    gvfs 
-    thunar-archive-plugin 
-    file-roller
-    starship 
-    papirus-icon-theme 
-    ttf-jetbrains-mono-nerd 
-    noto-fonts-emoji 
-    lxappearance 
-    xfce4-settings
-    nwg-look-bin
-    sddm
-)
-
-for str in ${myArray[@]}; do
-  echo $str
-done
-
-# set some colors
 CNT="[\e[1;36mNOTE\e[0m]"
 COK="[\e[1;32mOK\e[0m]"
 CER="[\e[1;31mERROR\e[0m]"
-CAT="[\e[1;37mATTENTION\e[0m]"
 CWR="[\e[1;35mWARNING\e[0m]"
+CAT="[\e[1;37mATTENTION\e[0m]"
 CAC="[\e[1;33mACTION\e[0m]"
 INSTLOG="install.log"
+NOCTIS_TOML="$ROOT_DIR/noctis.toml"
 
-######
+DRY_RUN=0
+NO_BACKUP=0
+KEEP_BACKUPS=5
+PROFILE=""
+LAYERS=""
+THEME=""
+BAR_POSITION=""
 
-# function for custom apps to install
-custom_apps() {
-    local app_list="./custom_apps.lst"
-    if [[ -f "$app_list" ]]; then
-        echo -e "$CNT - Installing custom applications from $app_list..."
-        while IFS= read -r app; do
-            install_software "$app"
-        done < "$app_list"
-    else
-        echo -e "$CER - Custom applications list not found: $app_list"
-    fi
+print_help() {
+  cat <<'EOF'
+Usage: ./install.sh [options]
+
+  --profile <minimal|full>     Select base profile (skips wizard prompt)
+  --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai
+  --theme <name>                Theme preset name
+  --bar-position <top|left>     Initial waybar position
+  --dry-run                     Print planned actions, change nothing
+  --no-backup                   Skip backing up existing configs
+  --keep-backups <N>             Backups to retain (default: 5)
+  -h, --help                     Show this help
+EOF
 }
 
-# function that would show a progress bar to the user
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --profile) PROFILE="$2"; shift 2 ;;
+    --with) LAYERS="$2"; shift 2 ;;
+    --theme) THEME="$2"; shift 2 ;;
+    --bar-position) BAR_POSITION="$2"; shift 2 ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    --no-backup) NO_BACKUP=1; shift ;;
+    --keep-backups) KEEP_BACKUPS="$2"; shift 2 ;;
+    -h|--help) print_help; exit 0 ;;
+    *) echo -e "$CER - Unknown option: $1"; print_help; exit 1 ;;
+  esac
+done
+export DRY_RUN
+PYTHON_BIN=$(resolve_python_bin)
+
 show_progress() {
-    while ps | grep $1 &> /dev/null;
-    do
-        echo -n "."
-        sleep 2
-    done
-    echo -en "Done!\n"
+  while ps | grep "$1" &> /dev/null; do
+    echo -n "."
     sleep 2
+  done
+  echo -en "Done!\n"
+  sleep 2
 }
 
-# function that will test for a package and if not found it will attempt to install it
 install_software() {
-    # First lets see if the package is there
-    if yay -Q $1 &>> /dev/null ; then
-        echo -e "$COK - $1 is already installed."
-    else
-        # no package found so installing
-        echo -en "$CNT - Now installing $1 ."
-        yay -S --noconfirm $1 &>> $INSTLOG &
-        show_progress $!
-        # test to make sure package installed
-        if yay -Q $1 &>> /dev/null ; then
-            echo -e "\e[1A\e[K$COK - $1 was installed."
-        else
-            # if this is hit then a package is missing, exit to review log
-            echo -e "\e[1A\e[K$CER - $1 install had failed, please check the install.log"
-            exit
-        fi
-    fi
+  if "$AUR_HELPER" -Q "$1" &>> /dev/null ; then
+    echo -e "$COK - $1 is already installed."
+    return 0
+  fi
+  if [[ "$DRY_RUN" == "1" ]]; then
+    echo -e "$CNT - [dry-run] would install $1"
+    return 0
+  fi
+  echo -en "$CNT - Now installing $1 ."
+  "$AUR_HELPER" -S --noconfirm "$1" &>> "$INSTLOG" &
+  show_progress $!
+  if "$AUR_HELPER" -Q "$1" &>> /dev/null ; then
+    echo -e "\e[1A\e[K$COK - $1 was installed."
+  else
+    echo -e "\e[1A\e[K$CER - $1 install had failed, please check the install.log"
+    exit 1
+  fi
 }
 
-# clear the screen
-clear
+detect_nvidia() {
+  if lspci -k | grep -A 2 -E "(VGA|3D)" | grep -iq nvidia; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
 
-# set some expectations for the user
-echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland."
-sleep 1
+resolve_config() {
+  if [[ -f "$NOCTIS_TOML" && -z "$PROFILE" && -z "$LAYERS" ]]; then
+    local existing_profile existing_layers
+    existing_profile=$("$PYTHON_BIN" -c "import tomllib; print(tomllib.load(open('$NOCTIS_TOML','rb'))['install']['profile'])")
+    existing_layers=$("$PYTHON_BIN" -c "import tomllib; print(','.join(tomllib.load(open('$NOCTIS_TOML','rb'))['install']['layers']))")
+    echo -e "$CNT - Existing config found (profile=$existing_profile, layers=$existing_layers)."
+    read -rep $'[\e[1;33mACTION\e[0m] - Reinstall same config? (Y,n) ' REUSE
+    if [[ "$REUSE" != "n" && "$REUSE" != "N" ]]; then
+      PROFILE="$existing_profile"
+      LAYERS="$existing_layers"
+    fi
+  fi
 
-# attempt to discover if this is a VM or not
-echo -e "$CNT - Checking for Physical or VM..."
-ISVM=$(hostnamectl | grep Chassis)
-echo -e "Using $ISVM"
-if [[ $ISVM == *"vm"* ]]; then
-    echo -e "$CWR - Please note that VMs are not fully supported and if you try to run this on
-    a Virtual Machine there is a high chance this will fail."
-    sleep 1
-fi
+  [[ -z "$PROFILE" ]] && PROFILE=$(prompt_profile)
+  [[ -z "$LAYERS" ]] && LAYERS=$(prompt_layers)
+  [[ -z "$THEME" ]] && THEME=$(prompt_theme)
+  [[ -z "$BAR_POSITION" ]] && BAR_POSITION=$(prompt_bar_position)
+}
 
-# let the user know that we will use sudo
-echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password."
-sleep 1
+main() {
+  clear
+  echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland."
 
-# give the user an option to exit out
-read -rep $'[\e[1;33mACTION\e[0m] - Would you like to continue with the install (y,n) ' CONTINST
-if [[ $CONTINST == "Y" || $CONTINST == "y" ]]; then
-    echo -e "$CNT - Setup starting..."
-    sudo touch /tmp/hyprv.tmp
-else
-    echo -e "$CNT - This script will now exit, no changes were made to your system."
-    exit
-fi
+  echo -e "$CNT - Checking for Physical or VM..."
+  ISVM=$(hostnamectl | grep Chassis || true)
+  echo -e "Using $ISVM"
+  if [[ "$ISVM" == *"vm"* ]]; then
+    echo -e "$CWR - Please note that VMs are not fully supported and if you try to run this on a Virtual Machine there is a high chance this will fail."
+  fi
 
-# find the Nvidia GPU
-if lspci -k | grep -A 2 -E "(VGA|3D)" | grep -iq nvidia; then
-    ISNVIDIA=true
-else
-    ISNVIDIA=false
-fi
+  resolve_config
 
-### Disable wifi powersave mode ###
-read -rep $'[\e[1;33mACTION\e[0m] - Would you like to disable WiFi powersave? (y,n) ' WIFI
-if [[ $WIFI == "Y" || $WIFI == "y" ]]; then
+  local layer_paths=()
+  if [[ -n "$LAYERS" ]]; then
+    IFS=',' read -ra layer_names <<< "$LAYERS"
+    for name in "${layer_names[@]}"; do
+      layer_paths+=("$ROOT_DIR/profiles/layers/$name.toml")
+    done
+  fi
+  local layer_args=""
+  if [[ ${#layer_paths[@]} -gt 0 ]]; then
+    layer_args=$(IFS=,; echo "${layer_paths[*]}")
+  fi
+
+  local main_pkgs prep_pkgs
+  main_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --custom-apps "$ROOT_DIR/profiles/custom_apps.lst" --field main)
+  prep_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --field prep)
+
+  ISNVIDIA=$(detect_nvidia)
+
+  if [[ "$DRY_RUN" == "1" ]]; then
+    echo -e "$CNT - [dry-run] plan:"
+    echo "  profile: $PROFILE"
+    echo "  layers: $LAYERS"
+    echo "  nvidia: $ISNVIDIA"
+    echo "  prep packages:"
+    echo "$prep_pkgs" | sed 's/^/    - /'
+    echo "  main packages:"
+    echo "$main_pkgs" | sed 's/^/    - /'
+    if [[ "$ISNVIDIA" == "true" ]]; then
+      echo "  would install hyprland-nvidia"
+    else
+      echo "  would install hyprland"
+    fi
+    exit 0
+  fi
+
+  echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password."
+
+  read -rep $'[\e[1;33mACTION\e[0m] - Would you like to disable WiFi powersave? (y,n) ' WIFI
+  if [[ "$WIFI" == "Y" || "$WIFI" == "y" ]]; then
     LOC="/etc/NetworkManager/conf.d/wifi-powersave.conf"
-    echo -e "$CNT - The following file has been created $LOC.\n"
-    echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a $LOC &>> $INSTLOG
-    echo -en "$CNT - Restarting NetworkManager service, Please wait."
-    sleep 2
-    sudo systemctl restart NetworkManager &>> $INSTLOG
-    
-    #wait for services to restore (looking at you DNS)
-    for i in {1..6} 
-    do
-        echo -n "."
-        sleep 1
-    done
-    echo -en "Done!\n"
-    sleep 2
-    echo -e "\e[1A\e[K$COK - NetworkManager restart completed."
-fi
+    echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a "$LOC" &>> "$INSTLOG"
+    sudo systemctl restart NetworkManager &>> "$INSTLOG"
+  fi
 
-#### Check for package manager ####
-if [ ! -f /sbin/yay ]; then  
-    echo -en "$CNT - Configuering yay."
-    git clone https://aur.archlinux.org/yay.git &>> $INSTLOG
-    cd yay
-    makepkg -si --noconfirm &>> ../$INSTLOG &
-    show_progress $!
-    if [ -f /sbin/yay ]; then
-        echo -e "\e[1A\e[K$COK - yay configured"
-        cd ..
-        
-        # update the yay database
-        echo -en "$CNT - Updating yay."
-        yay -Suy --noconfirm &>> $INSTLOG &
-        show_progress $!
-        echo -e "\e[1A\e[K$COK - yay updated."
-    else
-        # if this is hit then a package is missing, exit to review log
-        echo -e "\e[1A\e[K$CER - yay install failed, please check the install.log"
-        exit
+  AUR_HELPER=$(ensure_aur_helper)
+
+  if [[ "$NO_BACKUP" != "1" ]]; then
+    TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    snapshot_config "$TIMESTAMP" hypr waybar kitty mako
+    prune_backups "$KEEP_BACKUPS"
+  fi
+
+  while IFS= read -r pkg; do
+    [[ -n "$pkg" ]] && install_software "$pkg"
+  done <<< "$prep_pkgs"
+
+  if [[ "$ISNVIDIA" == "true" ]]; then
+    sudo sed -i 's/MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
+    sudo mkinitcpio --config /etc/mkinitcpio.conf --generate /boot/initramfs-custom.img
+    echo -e "options nvidia-drm modeset=1" | sudo tee -a /etc/modprobe.d/nvidia.conf &>> "$INSTLOG"
+
+    if "$AUR_HELPER" -Q hyprland &>> /dev/null ; then
+      "$AUR_HELPER" -R --noconfirm hyprland &>> "$INSTLOG"
     fi
-fi
+    install_software hyprland-nvidia
+  else
+    install_software hyprland
+  fi
 
+  while IFS= read -r pkg; do
+    [[ -n "$pkg" ]] && install_software "$pkg"
+  done <<< "$main_pkgs"
 
-### Install all of the above pacakges ####
-read -rep $'[\e[1;33mACTION\e[0m] - Would you like to install the packages? (y,n) ' INST
-if [[ $INST == "Y" || $INST == "y" ]]; then
+  sudo systemctl enable --now bluetooth.service &>> "$INSTLOG"
+  sudo systemctl enable sddm &>> "$INSTLOG"
+  "$AUR_HELPER" -R --noconfirm xdg-desktop-portal-gnome xdg-desktop-portal-gtk &>> "$INSTLOG" || true
 
-    # Prep Stage - Bunch of needed items
-    echo -e "$CNT - Prep Stage - Installing needed components, this may take a while..."
-    for SOFTWR in ${prep_stage[@]}; do
-        install_software $SOFTWR 
-    done
-
-    # Setup Nvidia if it was found
-    if [[ "$ISNVIDIA" == true ]]; then
-        echo -e "$CNT - Nvidia GPU support setup stage, this may take a while..."
-        for SOFTWR in ${nvidia_stage[@]}; do
-            install_software $SOFTWR
-        done
-    
-        # update config
-        sudo sed -i 's/MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
-        sudo mkinitcpio --config /etc/mkinitcpio.conf --generate /boot/initramfs-custom.img
-        echo -e "options nvidia-drm modeset=1" | sudo tee -a /etc/modprobe.d/nvidia.conf &>> $INSTLOG
-    fi
-
-    # Install the correct hyprland version
-    echo -e "$CNT - Installing Hyprland, this may take a while..."
-    if [[ "$ISNVIDIA" == true ]]; then
-        #check for hyprland and remove it so the -nvidia package can be installed
-        if yay -Q hyprland &>> /dev/null ; then
-            yay -R --noconfirm hyprland &>> $INSTLOG &
-        fi
-        install_software hyprland-nvidia
-    else
-        install_software hyprland
-    fi
-
-    # Stage 1 - main components
-    echo -e "$CNT - Installing main components, this may take a while..."
-    for SOFTWR in ${install_stage[@]}; do
-        install_software $SOFTWR 
-    done
-
-    # Start the bluetooth service
-    echo -e "$CNT - Starting the Bluetooth Service..."
-    sudo systemctl enable --now bluetooth.service &>> $INSTLOG
-    sleep 2
-
-    # Enable the sddm login manager service
-    echo -e "$CNT - Enabling the SDDM Service..."
-    sudo systemctl enable sddm &>> $INSTLOG
-    sleep 2
-    
-    # Clean out other portals
-    echo -e "$CNT - Cleaning out conflicting xdg portals..."
-    yay -R --noconfirm xdg-desktop-portal-gnome xdg-desktop-portal-gtk &>> $INSTLOG
-fi
-
-read -rep $'[\e[1;33mACTION\e[0m] - Would you like to install custom applications from a list? (y,n) ' CUSTOM_APPS
-if [[ $CUSTOM_APPS == "Y" || $CUSTOM_APPS == "y" ]]; then
-    custom_apps
-fi
-
-### Copy Config Files ###
-read -rep $'[\e[1;33mACTION\e[0m] - Would you like to copy config files? (y,n) ' CFG
-if [[ $CFG == "Y" || $CFG == "y" ]]; then
+  read -rep $'[\e[1;33mACTION\e[0m] - Would you like to copy config files? (y,n) ' CFG
+  if [[ "$CFG" == "Y" || "$CFG" == "y" ]]; then
     echo -e "$CNT - Copying config files..."
+    cp -R "$ROOT_DIR/.configs/"* "$HOME/.config/"
+    chmod +x "$HOME/.config/hypr/scripts/"*
 
-    # copy the configs directory
-    cp -R .configs/* ~/.config/
-
-    # make files exec
-    chmod +x ~/.config/hypr/scripts/*
-    
-    # add the Nvidia env file to the config (if needed)
-    if [[ "$ISNVIDIA" == true ]]; then
-        echo -e "\nsource = ~/.config/hypr/nvidia.conf" >> ~/.config/hypr/hyprland.conf
+    if [[ "$ISNVIDIA" == "true" ]]; then
+      echo -e "\nsource = ~/.config/hypr/nvidia.conf" >> "$HOME/.config/hypr/hyprland.conf"
     fi
 
-    # Copy the SDDM theme
     echo -e "$CNT - Setting up the login screen."
-    sudo tar -xf src/sugar-candy.tar.gz -C /usr/share/sddm/themes/
-    sudo chown -R $USER:$USER /usr/share/sddm/themes/sugar-candy
-    sudo mkdir /etc/sddm.conf.d
-    echo -e "[Theme]\nCurrent=sugar-candy" | sudo tee -a /etc/sddm.conf.d/10-theme.conf &>> $INSTLOG
+    sudo tar -xf "$ROOT_DIR/src/sugar-candy.tar.gz" -C /usr/share/sddm/themes/
+    sudo chown -R "$USER:$USER" /usr/share/sddm/themes/sugar-candy
+    sudo mkdir -p /etc/sddm.conf.d
+    echo -e "[Theme]\nCurrent=sugar-candy" | sudo tee -a /etc/sddm.conf.d/10-theme.conf &>> "$INSTLOG"
     WLDIR=/usr/share/wayland-sessions
-    if [ -d "$WLDIR" ]; then
-        echo -e "$COK - $WLDIR found"
-    else
-        echo -e "$CWR - $WLDIR NOT found, creating..."
-        sudo mkdir $WLDIR
-    fi 
-    
-    # stage the .desktop file
-    sudo cp src/hyprland.desktop /usr/share/wayland-sessions/
+    [[ -d "$WLDIR" ]] || sudo mkdir -p "$WLDIR"
+    sudo cp "$ROOT_DIR/src/hyprland.desktop" /usr/share/wayland-sessions/
 
-    # add VScode extensions
     echo -e "$CNT - Adding VScode Extensions"
-    mkdir ~/.vscode
-    tar -xf src/extensions.tar.gz -C ~/.vscode/
+    mkdir -p "$HOME/.vscode"
+    tar -xf "$ROOT_DIR/src/extensions.tar.gz" -C "$HOME/.vscode/"
 
-    # Font install for Rofi 
     echo -e "$CNT - Adding Fonts for Rofi"
-    sudo mkdir $HOME/.local/share/fonts
-    sudo cp src/Icomoon-Feather.ttf $HOME/.local/share/fonts
+    mkdir -p "$HOME/.local/share/fonts"
+    cp "$ROOT_DIR/src/Icomoon-Feather.ttf" "$HOME/.local/share/fonts"
     fc-cache -fv
-fi
+  fi
 
-### Install the starship shell ###
-read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate the starship shell? (y,n) ' STAR
-if [[ $STAR == "Y" || $STAR == "y" ]]; then
-    # install the starship shell
-    echo -e "$CNT - Starship, Engage!"
-    echo -e "$CNT - Updating .bashrc..."
-    echo -e '\neval "$(starship init bash)"' >> ~/.bashrc
-    echo -e "$CNT - copying starship config file to ~/.config ..."
-    cp src/starship.toml ~/.config/
-fi
+  read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate the starship shell? (y,n) ' STAR
+  if [[ "$STAR" == "Y" || "$STAR" == "y" ]]; then
+    echo -e '\neval "$(starship init bash)"' >> "$HOME/.bashrc"
+    cp "$ROOT_DIR/src/starship.toml" "$HOME/.config/"
+  fi
 
-read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate zsh shell? (y,n) ' ZSH
-if [[ $ZSH == "Y" || $ZSH == "y" ]]; then
-    # install zsh shell
-    echo -e "$CNT - ZSH, Engage!"
-    echo -e "$CNT - copying zsh and p10k config file to HOME ..."
-    # copy zsh and pk10
-    cp .configs/.p10k.zsh $HOME
-    cp .configs/.zshrc $HOME
-    chsh -s $(which zsh)
-fi
+  read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate zsh shell? (y,n) ' ZSH
+  if [[ "$ZSH" == "Y" || "$ZSH" == "y" ]]; then
+    cp "$ROOT_DIR/.configs/.p10k.zsh" "$HOME"
+    cp "$ROOT_DIR/.configs/.zshrc" "$HOME"
+    chsh -s "$(which zsh)"
+  fi
 
-### Script is done ###
-echo -e "$CNT - Script had completed!"
-if [[ "$ISNVIDIA" == true ]]; then 
-    echo -e "$CAT - Since we attempted to setup an Nvidia GPU the script will now end and you should reboot.
-    Please type 'reboot' at the prompt and hit Enter when ready."
-    exit
-fi
+  write_noctis_toml "$NOCTIS_TOML" "$PROFILE" "$LAYERS" "$THEME" "$BAR_POSITION" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)"
+  echo -e "$COK - Install complete. Config written to noctis.toml."
 
-read -rep $'[\e[1;33mACTION\e[0m] - Would you like to start Hyprland now? (y,n) ' HYP
-if [[ $HYP == "Y" || $HYP == "y" ]]; then
-    exec sudo systemctl start sddm &>> $INSTLOG
-else
-    exit
-fi
+  if [[ "$ISNVIDIA" == "true" ]]; then
+    echo -e "$CAT - Since we attempted to setup an Nvidia GPU the script will now end and you should reboot."
+    exit 0
+  fi
+
+  read -rep $'[\e[1;33mACTION\e[0m] - Would you like to start Hyprland now? (y,n) ' HYP
+  if [[ "$HYP" == "Y" || "$HYP" == "y" ]]; then
+    exec sudo systemctl start sddm &>> "$INSTLOG"
+  fi
+}
+
+main "$@"
