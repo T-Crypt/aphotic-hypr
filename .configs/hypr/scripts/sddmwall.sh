@@ -1,13 +1,17 @@
 #!/bin/bash
 
-# Fetch the current wallpaper information using awww query
-# NOTE: awww's query output format is not fully documented upstream —
-# if this doesn't find the wallpaper, run `awww query` manually and
-# adjust the awk pattern below to match its actual output.
-WALLPAPER_INFO=$(awww query)
-
-# Extract the image path from the awww query output using awk
-IMAGE_PATH=$(echo "$WALLPAPER_INFO" | awk -F ": image: " '{print $2}' | sort | uniq | head -n 1)
+# Fetch the current wallpaper path from awww's JSON query output.
+# Format: {"NAMESPACE": [{"name":..., "displaying": {"image": "<path>"}}]}
+IMAGE_PATH=$(awww query -j | python3 -c '
+import json, sys
+data = json.load(sys.stdin)
+for outputs in data.values():
+    for output in outputs:
+        image = output.get("displaying", {}).get("image")
+        if image:
+            print(image)
+            sys.exit(0)
+')
 
 # Check if the image path is not empty
 if [ -n "$IMAGE_PATH" ]; then
