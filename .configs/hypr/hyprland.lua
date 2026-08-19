@@ -61,7 +61,6 @@ hl.config({
 
         shadow = {
             enabled      = true,
-            ignore_window = true,
             offset       = { 1, 2 },
             range        = 10,
             render_power = 2,
@@ -79,7 +78,6 @@ hl.config({
     },
 
     dwindle = {
-        pseudotile = true,
         preserve_split = true,
     },
 

@@ -22,7 +22,7 @@ hl.window_rule({ name = "opacity-sysmon",    match = { title = "^(System Monitor
 
 -- Position / floating
 hl.window_rule({ name = "float-lutris",       match = { class = "^(lutris)$" },        float = true })
-hl.window_rule({ name = "center-lutris",      match = { class = "^(lutris)$" },        move  = "center" })
+hl.window_rule({ name = "center-lutris",      match = { class = "^(lutris)$" },        move  = "50% 50%" })
 hl.window_rule({ name = "float-pavucontrol",  match = { class = "^(pavucontrol)$" },   float = true })
 hl.window_rule({ name = "float-fileprogress", match = { class = "file_progress" },     float = true })
 hl.window_rule({ name = "float-confirm",      match = { class = "confirm" },           float = true })
