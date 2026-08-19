@@ -62,7 +62,15 @@ if ! [[ "$KEEP_BACKUPS" =~ ^[0-9]+$ ]]; then
 fi
 
 export DRY_RUN
-PYTHON_BIN=$(resolve_python_bin)
+
+if ! command -v python3 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1; then
+  echo -e "$CNT - Python not found; installing it now (required before package lists can be resolved)."
+  if [[ "$DRY_RUN" != "1" ]]; then
+    sudo pacman -S --needed --noconfirm python || { echo -e "$CER - Failed to install python. Install it manually: sudo pacman -S python"; exit 1; }
+  fi
+fi
+
+PYTHON_BIN=$(resolve_python_bin) || { echo -e "$CER - Python is required but was not found. Install it first: sudo pacman -S python"; exit 1; }
 
 show_progress() {
   while ps | grep "$1" &> /dev/null; do
