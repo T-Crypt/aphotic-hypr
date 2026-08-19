@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Noctis — logo concept</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Parisienne&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0b0d12;
+    color: #d6c8ff;
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 20px 80px;
+    gap: 64px;
+  }
+
+  .label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #6d7bff;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* --- Mark: crescent moon fused with a tiling-window corner bracket --- */
+  svg { display: block; }
+
+  .lockup {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+
+  .wordmark {
+    font-family: 'Parisienne', cursive;
+    font-size: 64px;
+    line-height: 1;
+    background: linear-gradient(135deg, #9baaff, #d6c8ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .tagline {
+    font-size: 12px;
+    color: #6a6f8a;
+    letter-spacing: 0.04em;
+    margin-top: 10px;
+  }
+
+  .swatches {
+    display: flex;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  .swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .row {
+    display: flex;
+    gap: 56px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .small-mark { width: 56px; height: 56px; }
+</style>
+</head>
+<body>
+
+  <div class="block">
+    <div class="label">Primary lockup</div>
+    <div class="lockup">
+      <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+        <defs>
+          <linearGradient id="moonGrad" x1="0" y1="0" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#9baaff"/>
+            <stop offset="1" stop-color="#d6c8ff"/>
+          </linearGradient>
+        </defs>
+        <!-- corner bracket, tiling-window style -->
+        <path d="M14 60 L14 74 L28 74" stroke="#6d7bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55"/>
+        <path d="M74 28 L74 14 L60 14" stroke="#6d7bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55"/>
+        <!-- crescent -->
+        <path d="M56 20 A26 26 0 1 0 56 68 A20 20 0 1 1 56 20 Z" fill="url(#moonGrad)"/>
+      </svg>
+      <div class="wordmark">Noctis</div>
+    </div>
+    <div class="tagline">hyprland dotfiles, after dark</div>
+  </div>
+
+  <div class="block">
+    <div class="label">Palette</div>
+    <div class="swatches">
+      <div class="swatch" style="background:#0b0d12"></div>
+      <div class="swatch" style="background:#6d7bff"></div>
+      <div class="swatch" style="background:#9baaff"></div>
+      <div class="swatch" style="background:#d6c8ff"></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="label">Small / monogram marks — CLI icon, favicon, app grid</div>
+    <div class="row">
+      <svg class="small-mark" viewBox="0 0 88 88" fill="none">
+        <rect x="2" y="2" width="84" height="84" rx="18" fill="#12141c"/>
+        <path d="M52 24 A20 20 0 1 0 52 64 A15 15 0 1 1 52 24 Z" fill="url(#moonGrad)"/>
+      </svg>
+      <svg class="small-mark" viewBox="0 0 88 88" fill="none">
+        <rect x="2" y="2" width="84" height="84" rx="18" fill="#12141c"/>
+        <path d="M20 58 L20 68 L30 68" stroke="#6d7bff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M68 30 L68 20 L58 20" stroke="#6d7bff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M50 26 A18 18 0 1 0 50 62 A13.5 13.5 0 1 1 50 26 Z" fill="url(#moonGrad)"/>
+      </svg>
+    </div>
+  </div>
+
+</body>
+</html>
