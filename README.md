@@ -49,7 +49,20 @@ chmod +x install.sh
 ./install.sh
 ```
 
-You can select Y or N to install custom apps by modifying the custom_apps.lst in the root directory.
+Running with no flags launches a short wizard: profile (minimal/full),
+optional layers (gaming/dev/ai), theme, and bar position.
+
+Skip the wizard with flags, e.g.:
+
+```
+./install.sh --profile full --with gaming,dev --dry-run
+```
+
+Run `./install.sh --help` for the full flag list. Re-running `install.sh`
+detects your last saved config in `noctis.toml` and offers to reuse it.
+
+You can still select custom apps by editing `profiles/custom_apps.lst`
+(or the root `custom_apps.lst` symlink) before installing.
 
 **Note: You need to install pywalfox extensions for firefox theme to work!
 [Pywalfox](https://addons.mozilla.org/en-US/firefox/addon/pywalfox/)
