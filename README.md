@@ -14,14 +14,17 @@
 </p>
 
 <p align="center">
-  <a href="#install">Install</a> ·
-  <a href="#profiles--layers">Profiles</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#theming">Theming</a> ·
-  <a href="#keybindings">Keybindings</a> ·
-  <a href="#roadmap">Roadmap</a> ·
-  <a href="#faq">FAQ</a>
+  <a href="#install"><code>Install</code></a> ·
+  <a href="#profiles--layers"><code>Profiles</code></a> ·
+  <a href="#architecture"><code>Architecture</code></a> ·
+  <a href="#theming"><code>Theming</code></a> ·
+  <a href="#in-motion"><code>Screenshots</code></a> ·
+  <a href="#keybindings"><code>Keybindings</code></a> ·
+  <a href="#roadmap"><code>Roadmap</code></a> ·
+  <a href="#faq"><code>FAQ</code></a>
 </p>
+
+<sub><a id="-top"></a></sub>
 
 <br>
 
@@ -40,6 +43,8 @@
 | Lock Screen | [Swaylock (effects fork)](https://github.com/jirutka/swaylock-effects) |
 | Audio Visualizer | [Cava](https://github.com/karlstav/cava) |
 
+<div align="right"><a href="#-top">🡅 back to top</a></div>
+
 <br>
 
 ## Why Noctis
@@ -54,9 +59,14 @@ Most rices are a snapshot — a config someone tuned once and stopped touching, 
 
 None of this is unique in isolation, but it's what turns a rice from something you install once into something you can actually keep living in.
 
+<div align="right"><a href="#-top">🡅 back to top</a></div>
+
 <br>
 
 ## Install
+
+> [!IMPORTANT]
+> Noctis assumes an Arch/AUR base. It hasn't been tested on other distros and no distro branching is planned — see the [FAQ](#faq).
 
 ```
 git clone https://github.com/T-Crypt/Noctis-Hypr && cd Noctis-Hypr
@@ -66,11 +76,11 @@ chmod +x install.sh
 
 Running with no flags launches a short wizard — profile, optional layers, theme, bar position — and writes your choices to `noctis.toml`, which becomes the source of truth for every re-run after that.
 
-Prefer to skip the prompts entirely:
-
-```
-./install.sh --profile full --with gaming,dev --dry-run
-```
+> [!TIP]
+> Prefer to skip the prompts entirely:
+> ```
+> ./install.sh --profile full --with gaming,dev --dry-run
+> ```
 
 | Flag | Effect |
 |---|---|
@@ -83,11 +93,33 @@ Prefer to skip the prompts entirely:
 | `--keep-backups <N>` | How many timestamped backups to retain before pruning. Defaults to 5. |
 | `-h`, `--help` | Full flag reference. |
 
-`--dry-run` is checked before anything else runs — no `sudo` prompt, no package installs, no filesystem writes happen ahead of it. Re-running `install.sh` later detects your last saved config in `noctis.toml` and offers to reuse it without repeating the wizard.
-
-Something went sideways? `./uninstall.sh` restores your most recent backup — no manual archaeology through `~/.config-backup/`. Pass `--purge-packages` if you also want it to remove everything your profile installed (behind its own separate confirmation).
+> [!NOTE]
+> `--dry-run` is checked before anything else runs — no `sudo` prompt, no package installs, no filesystem writes happen ahead of it. Re-running `install.sh` later detects your last saved config in `noctis.toml` and offers to reuse it without repeating the wizard.
 
 Custom apps live in `profiles/custom_apps.lst` (still readable at the repo root as a symlink, for anyone on an older clone) and are folded into the resolved package list automatically — no separate prompt needed.
+
+### Updating
+
+```
+cd Noctis-Hypr
+git pull
+./install.sh
+```
+
+Noctis detects your saved `noctis.toml` and re-resolves your profile/layers against any changes upstream, snapshotting your current configs first exactly as a fresh install would.
+
+### Uninstalling
+
+> [!CAUTION]
+> Something went sideways? `./uninstall.sh` restores your most recent backup — no manual archaeology through `~/.config-backup/`.
+
+```
+./uninstall.sh
+```
+
+Pass `--purge-packages` if you also want it to remove everything your profile installed (behind its own separate confirmation).
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
 
@@ -107,6 +139,8 @@ A **profile** is the base package set. A **layer** is an optional add-on merged 
 | `ai` | Ollama, as a local AI backend — package-layer only for now; workflow integration is a later roadmap phase. |
 
 Layers are additive and dedupe against the base and each other, so `--with gaming,dev,ai` on top of `full` merges cleanly with no duplicate installs. Combine whatever fits: a `minimal` install with just `dev` is a lean coding box; `full` with `gaming` and `dev` is closer to a daily driver that also game-modes on demand.
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
 
@@ -130,12 +164,11 @@ Noctis-Hypr/
 
 `install.sh` never hardcodes a package list — it resolves one at runtime by merging `profiles/base/<profile>.toml` with each selected `profiles/layers/<layer>.toml`, deduplicating as it goes. Everything downstream (backups, AUR helper choice, config copying) reads from that single resolved plan.
 
-<br>
-
-<details>
-<summary><h3 id="theming">Theming</h3></summary>
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
+
+## Theming
 
 Wallpaper-driven color generation, applied consistently across the stack:
 
@@ -149,9 +182,10 @@ Wallpaper-driven color generation, applied consistently across the stack:
 - VS Code
 - GTK — in progress
 
-Thunar has a right-click **Set as Theme** action for building a theme straight from an image in `$HOME/Pictures` (avoid special characters at the front of the path). An SDDM sync script keeps your login screen's wallpaper matched to whatever's currently active.
+> [!TIP]
+> Thunar has a right-click **Set as Theme** action for building a theme straight from an image in `$HOME/Pictures` (avoid special characters at the front of the path). An SDDM sync script keeps your login screen's wallpaper matched to whatever's currently active.
 
-</details>
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
 
@@ -159,36 +193,24 @@ Thunar has a right-click **Set as Theme** action for building a theme straight f
 
 <a id="screenshots"></a>
 
+**Desktop**
+
 <p align="center">
-  <img src="./assets/swappy10.png" width="49%">
-  <img src="./assets/swappy50.png" width="49%">
+  <img src="./assets/swappy-20260819_162846.png" width="98%">
 </p>
 
-<details>
-<summary><h3>More Screenshots</h3></summary>
+**Launcher — re-themed automatically per wallpaper**
+
+<p align="center">
+  <img src="./assets/swappy-20260819_162907.png" width="49%">
+  <img src="./assets/swappy-20260819_162929.png" width="49%">
+</p>
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
 
-<p align="center">
-  <img src="./assets/swappy30.png" width="49%">
-  <img src="./assets/swappy20.png" width="49%">
-</p>
-<p align="center">
-  <img src="./assets/swappy40.png" width="49%">
-  <img src="./assets/swappy60.png" width="49%">
-</p>
-<p align="center">
-  <img src="./assets/swappy70.png" width="98%">
-</p>
-
-</details>
-
-<br>
-
-<details open>
-<summary><h3 id="keybindings">Keybindings</h3></summary>
-
-<br>
+## Keybindings
 
 | Keys | Action |
 | :-- | :-- |
@@ -213,7 +235,7 @@ Thunar has a right-click **Set as Theme** action for building a theme straight f
 | <kbd>Super</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Switch to workspace |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Move window to workspace |
 
-</details>
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
 
@@ -228,6 +250,8 @@ Noctis is being built in phases, on top of the manifest-driven installer already
 - **Maintenance tooling** — versioning, `noctis doctor`, migrations, and CI.
 
 Longer-term, once the roadmap phases land, the plan is a full wiki — install walkthroughs, theme authoring docs, and a troubleshooting reference — rather than trying to cram everything into this README forever.
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
 
@@ -256,6 +280,18 @@ Start from <code>minimal</code> and add only the layers you want, or edit <code>
 <br>
 Install the <a href="https://addons.mozilla.org/en-US/firefox/addon/pywalfox/">Pywalfox</a> extension — Firefox theming depends on it and won't apply without it.
 </details>
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
+
+<br>
+
+## Star History
+
+<p align="center">
+  <a href="https://star-history.com/#T-Crypt/Noctis-Hypr&Date">
+    <img src="https://api.star-history.com/svg?repos=T-Crypt/Noctis-Hypr&type=Date" width="600">
+  </a>
+</p>
 
 <br>
 
