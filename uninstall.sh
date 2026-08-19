@@ -47,7 +47,7 @@ if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
   exit 0
 fi
 
-restore_latest_backup
+restore_latest_backup || exit 1
 
 if [[ "$PURGE_PACKAGES" == "1" ]]; then
   AUR_HELPER=$("$PYTHON_BIN" -c "import tomllib; print(tomllib.load(open('$NOCTIS_TOML','rb'))['system']['aur_helper'])")
