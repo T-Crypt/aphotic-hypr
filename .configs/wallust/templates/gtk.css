@@ -1,0 +1,23 @@
+@define-color window_bg_color {background.strip};
+@define-color window_fg_color {foreground.strip};
+@define-color view_bg_color {background.strip};
+@define-color view_fg_color {foreground.strip};
+@define-color accent_bg_color {color4.strip};
+@define-color accent_fg_color {background.strip};
+@define-color accent_color {color4.strip};
+@define-color destructive_bg_color {color1.strip};
+@define-color destructive_fg_color {foreground.strip};
+@define-color success_bg_color {color2.strip};
+@define-color warning_bg_color {color3.strip};
+@define-color error_bg_color {color1.strip};
+@define-color headerbar_bg_color {color0.strip};
+@define-color headerbar_fg_color {foreground.strip};
+@define-color popover_bg_color {color0.strip};
+@define-color popover_fg_color {foreground.strip};
+@define-color selected_bg_color {color4.strip};
+@define-color selected_fg_color {background.strip};
+
+*:selected {
+  background-color: {color4.strip};
+  color: {background.strip};
+}
