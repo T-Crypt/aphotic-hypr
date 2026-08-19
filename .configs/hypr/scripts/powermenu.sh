@@ -66,7 +66,7 @@ run_cmd() {
 			systemctl suspend
 		elif [[ $1 == '--logout' ]]; then
 			if [[ "$DESKTOP_SESSION" == 'hyprland' ]]; then
-				hyprctl dispatch exit
+				hyprctl dispatch 'hl.dsp.exit()'
 			fi
 		fi
 	else
