@@ -185,6 +185,11 @@ main() {
     sudo systemctl restart NetworkManager &>> "$INSTLOG"
   fi
 
+  if ! command -v fakeroot >/dev/null 2>&1; then
+    echo -e "$CNT - base-devel not found; installing it now (required to build AUR packages)."
+    sudo pacman -S --needed --noconfirm base-devel &>> "$INSTLOG" || { echo -e "$CER - Failed to install base-devel. Install it manually: sudo pacman -S base-devel"; exit 1; }
+  fi
+
   AUR_HELPER=$(ensure_aur_helper)
 
   if [[ "$NO_BACKUP" != "1" ]]; then
