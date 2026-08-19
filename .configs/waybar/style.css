@@ -65,7 +65,10 @@ tooltip {
 }
 
 /* ------------------------------------------------------------------ */
-/* Modules: transparent by default, the parent group paints the bg.    */
+/* Modules: baseline spacing. Multi-module pills (pill-right, leaf)    */
+/* additionally get their own mini-pill background per module below,  */
+/* so grouped widgets read as distinct pieces instead of one blurred   */
+/* block of text and icons.                                            */
 /* ------------------------------------------------------------------ */
 
 #custom-power,
@@ -87,34 +90,96 @@ tooltip {
     color: @color2;
     background: transparent;
     opacity: 1;
-    margin: 3px 0px 3px 0px;
-    padding-left: 8px;
-    padding-right: 8px;
+    margin: 5px 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 10pt;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 #workspaces,
 #tray {
     padding: 0px;
+    margin: 5px 4px;
 }
 
-#custom-media {
-    color: @foreground;
+/* Mini-pill background, tinted to match each module's own accent color */
+/* (not a flat white overlay — that was too faint to read against the   */
+/* already-dark island background). Each chip now visibly reads as its  */
+/* own piece instead of blending into its neighbors.                    */
+#cpu {
+    color: @color2;
+    background-color: alpha(@color2, 0.20);
+}
+
+#memory {
+    color: @color4;
+    background-color: alpha(@color4, 0.20);
+}
+
+#custom-gpu {
+    color: @color5;
+    background-color: alpha(@color5, 0.20);
+}
+
+#clock {
+    background-color: alpha(@foreground, 0.14);
 }
 
 #custom-updates {
     color: @color1;
+    background-color: alpha(@color1, 0.20);
+}
+
+#network {
+    color: @color6;
+    background-color: alpha(@color6, 0.20);
+}
+
+#pulseaudio {
+    color: @color2;
+    background-color: alpha(@color2, 0.20);
+}
+
+#battery {
+    color: @color4;
+    background-color: alpha(@color4, 0.20);
+}
+
+#backlight {
+    background-color: alpha(@foreground, 0.14);
+}
+
+#custom-media {
+    color: @color3;
 }
 
 #idle_inhibitor {
     color: @color4;
-    margin-left: 4px;
-    padding-left: 10px;
-    padding-right: 10px;
+    margin-left: 6px;
     font-size: 15px;
+    background-color: alpha(@color4, 0.20);
 }
 
 #idle_inhibitor.activated {
     color: @color6;
+    background-color: alpha(@color6, 0.25);
+}
+
+/* Hover feedback on everything clickable — a static bar with no       */
+/* interactive affordance reads as unfinished; this fixes that.        */
+#cpu:hover,
+#memory:hover,
+#custom-gpu:hover,
+#custom-updates:hover,
+#network:hover,
+#pulseaudio:hover,
+#battery:hover,
+#backlight:hover,
+#idle_inhibitor:hover,
+#custom-media:hover,
+#tray:hover {
+    background-color: alpha(@foreground, 0.16);
 }
 
 /* Launcher button: circular icon-button (end-4 "full" = 9999px radius) */
@@ -127,6 +192,11 @@ tooltip {
     padding-left: 10px;
     padding-right: 10px;
     font-size: 16px;
+    transition: background 0.2s ease;
+}
+
+#custom-button:hover {
+    background-color: shade(@color5, 1.15);
 }
 
 /* Power button: matching circular accent at the opposite end of the bar. */
@@ -137,6 +207,11 @@ tooltip {
     margin: 4px 6px 4px 6px;
     padding-left: 8px;
     padding-right: 8px;
+    transition: background 0.2s ease;
+}
+
+#custom-power:hover {
+    background-color: shade(@color6, 1.15);
 }
 
 #tray {
