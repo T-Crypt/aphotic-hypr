@@ -2,6 +2,8 @@
     background: #0c0a14;
     background-alt: #5D59A9;
     foreground: #8ddae9;
+    foreground-alt: #6E8A93;
+    border: #7C6FC4;
     selected: #A366B1;
     active: #5D59A9;
     urgent: #CF75B8;

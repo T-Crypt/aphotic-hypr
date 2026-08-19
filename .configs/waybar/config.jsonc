@@ -7,10 +7,35 @@
   "exclusive": true,
   "passthrough": false,
   "gtk-layer-shell": true,
-  
-  "modules-left":   ["custom/padd","custom/l_end","custom/button","custom/r_end","custom/l_end","clock","custom/r_end","custom/l_end","cpu", "memory", "custom/gpu","custom/r_end","custom/padd"],
-  "modules-center": ["custom/padd","custom/l_end","hyprland/workspaces","custom/media","hyprland/window","custom/r_end","custom/padd"],
-  "modules-right":  ["custom/padd","custom/l_end","tray", "custom/updates", "network", "backlight", "pulseaudio","battery", "custom/power","custom/r_end","custom/padd"],
+
+  "modules-left":   ["group/leaf-inverse"],
+  "modules-center": ["group/pill-left", "group/pill-center", "group/pill-right"],
+  "modules-right":  ["group/leaf"],
+
+  "group/leaf-inverse": {
+    "orientation": "horizontal",
+    "modules": ["custom/button", "hyprland/workspaces", "hyprland/window"]
+  },
+
+  "group/pill-left": {
+    "orientation": "horizontal",
+    "modules": ["custom/media"]
+  },
+
+  "group/pill-center": {
+    "orientation": "horizontal",
+    "modules": ["clock", "custom/updates"]
+  },
+
+  "group/pill-right": {
+    "orientation": "horizontal",
+    "modules": ["cpu", "memory", "custom/gpu", "idle_inhibitor"]
+  },
+
+  "group/leaf": {
+    "orientation": "horizontal",
+    "modules": ["tray", "network", "backlight", "pulseaudio", "battery", "custom/power"]
+  },
 
   "hyprland/workspaces": {
     "disable-scroll": true,
@@ -31,7 +56,7 @@
     }
   },
 "hyprland/window": {
-        "format": "  {}",
+        "format": "  {}",
         "separate-outputs": true,
         "max-length": 1000
     },
@@ -45,13 +70,23 @@
     "format-icons": ["󰃞","󰃟","󰃠"],
     "on-scroll-up": "brightnessctl set 1%+",
     "on-scroll-down": "brightnessctl set 1%-",
-    "min-length": 6 
+    "min-length": 6
   },
   "custom/button": {
     "format": "󰣇",
     "interval": "once",
     "on-click": "sleep 0.1 && ~/.config/hypr/scripts/launcher.sh",
     "tooltip": false
+  },
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+      "activated": "󰈈",
+      "deactivated": "󰈉"
+    },
+    "tooltip": true,
+    "tooltip-format-activated": "Idle inhibitor: on (screen will stay awake)",
+    "tooltip-format-deactivated": "Idle inhibitor: off"
   },
   "battery": {
     "states": {
@@ -60,56 +95,56 @@
       "critical": 20
     },
     "format": "{icon} {capacity}%",
-    "format-charging": " {capacity}%",
-    "format-plugged": " {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
     "format-alt": "{time} {icon}",
     "format-icons": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
   },
   "clock": {
-   "format": " {:%I:%M %p}   {:%d/%m}",
+   "format": " {:%I:%M %p    %d/%m}",
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
   },
   "network": {
       // "interface": "wlp2*", // (Optional) To force the use of this interface
       "format-wifi": "󰤨 {essid}",
       "format-ethernet": "󱘖 Wired",
-      "tooltip-format": "󱘖 {ipaddr}  {bandwidthUpBytes}  {bandwidthDownBytes}",
+      "tooltip-format": "󱘖 {ipaddr}  {bandwidthUpBytes}  {bandwidthDownBytes}",
       "format-linked": "󱘖 {ifname} (No IP)",
-      "format-disconnected": " Disconnected",
+      "format-disconnected": " Disconnected",
       "format-alt": "󰤨 {signalStrength}%",
       "interval": 5
   },
   "pulseaudio": {
     "format": "{icon} {volume}%",
-    "format-muted": " Muted",
+    "format-muted": " Muted",
     "scroll-step": 1,
     "on-click": "pavucontrol",
     "format-icons": {
-      "headphone": "",
-      "hands-free": "",
-      "headset": "",
-      "phone": "",
-      "portable": "",
-      "car": "",
-      "default": ["", "", "󰕾", ""]
+      "headphone": "",
+      "hands-free": "",
+      "headset": "",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": ["", "", "󰕾", ""]
     }
   },
  "memory": {
     "interval": 1,
-    "format": "  {}%",
+    "format": "  {}%",
     "tooltip": true,
     "tooltip-format": "Memory - {used:0.1f}GB used",
     "on-click": "kitty --start-as=fullscreen --title bpytop sh -c 'bpytop'"
   },
   "cpu": {
     "interval": 1,
-    "format": "  {usage}%",
+    "format": "  {usage}%",
     "on-click": "kitty --start-as=fullscreen --title bpytop sh -c 'bpytop'"
   },
   "custom/gpu": {
     "exec": " ~/.config/hypr/scripts/gpuinfo.sh",
     "return-type": "json",
-    "format": " {}",
+    "format": " {}",
     "interval": 5, // once every 5 seconds
     "tooltip": true,
     "max-length": 1000
@@ -137,49 +172,5 @@
     "format": "󰚰 {}",
     "on-click": "kitty -e sh -c 'checkupdates; read -p \"Press enter to close\"'",
     "tooltip-format": "Pending package updates"
-  },
-
-  "custom/l_end": {
-        "format": " ",
-        "interval" : "once",
-        "tooltip": false
-    },
-
-    "custom/r_end": {
-        "format": " ",
-        "interval" : "once",
-        "tooltip": false
-    },
-
-    "custom/sl_end": {
-        "format": " ",
-        "interval" : "once",
-        "tooltip": false
-    },
-
-    "custom/sr_end": {
-        "format": " ",
-        "interval" : "once",
-        "tooltip": false
-    },
-
-    "custom/rl_end": {
-        "format": " ",
-        "interval" : "once",
-        "tooltip": false
-    },
-
-    "custom/rr_end": {
-        "format": " ",
-        "interval" : "once",
-        "tooltip": false
-    },
-
-    "custom/padd": {
-        "format": "  ",
-        "interval" : "once",
-        "tooltip": false
-    }
+  }
 }
-
-

@@ -21,6 +21,120 @@ tooltip {
     border-width: 0px;
 }
 
+/* ------------------------------------------------------------------ */
+/* Island groups                                                       */
+/* Each "group/<name>" module in config.jsonc renders as ONE widget    */
+/* with CSS id #group-<name>. Individual modules inside stay           */
+/* transparent (see below) so only the group itself paints the         */
+/* pill/leaf background — this is what turns the bar into separated    */
+/* rounded islands instead of one flat strip.                          */
+/* ------------------------------------------------------------------ */
+
+#group-leaf-inverse,
+#group-pill-left,
+#group-pill-center,
+#group-pill-right,
+#group-leaf {
+    background-color: @background;
+    border-width: 0;
+    opacity: 1;
+}
+
+/* Center pills: fully rounded, floating with a gap on both sides. */
+#group-pill-left,
+#group-pill-center,
+#group-pill-right {
+    border-radius: 10pt;
+    margin: 3px 8px;
+}
+
+/* Edge leaves: touch the screen edge, so only the two corners that    */
+/* DON'T touch the edge get rounded (asymmetric, mirrored L/R).        */
+#group-leaf-inverse {
+    border-radius: 0 10pt 0 10pt;
+    margin: 3px 8px 3px 0px;
+}
+
+#group-leaf {
+    border-radius: 10pt 0 10pt 0;
+    margin: 3px 0px 3px 8px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Modules: transparent by default, the parent group paints the bg.    */
+/* ------------------------------------------------------------------ */
+
+#custom-power,
+#clock,
+#battery,
+#pulseaudio,
+#network,
+#workspaces,
+#tray,
+#backlight,
+#custom-gpu,
+#custom-media,
+#custom-updates,
+#custom-button,
+#window,
+#cpu,
+#memory,
+#idle_inhibitor {
+    color: @color2;
+    background: transparent;
+    opacity: 1;
+    margin: 3px 0px 3px 0px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+#workspaces,
+#tray {
+    padding: 0px;
+}
+
+#custom-media {
+    color: @foreground;
+}
+
+#custom-updates {
+    color: @color1;
+}
+
+#idle_inhibitor {
+    color: @color4;
+}
+
+#idle_inhibitor.activated {
+    color: @color6;
+}
+
+/* Launcher button: circular icon-button (end-4 "full" = 9999px radius) */
+/* so it reads as a distinct round menu button, not part of the pill.   */
+#custom-button {
+    background-color: @color5;
+    color: @background;
+    border-radius: 9999px;
+    margin: 3px 2px 3px 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 16px;
+}
+
+/* Power button: matching circular accent at the opposite end of the bar. */
+#custom-power {
+    background-color: @color6;
+    color: @background;
+    border-radius: 9999px;
+    margin: 3px 3px 3px 2px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+#tray {
+    margin-left: 6px;
+}
+
 #workspaces button {
     box-shadow: none;
 	text-shadow: none;
@@ -30,7 +144,7 @@ tooltip {
     margin-bottom: 2px;
     padding-left: 2px;
     padding-right: 2px;
-    color: @main-fg;
+    color: @foreground;
     animation: gradient_f 20s ease-in infinite;
     transition: all 0.5s cubic-bezier(.55,-0.68,.48,1.682);
 }
@@ -53,83 +167,4 @@ tooltip {
     padding-right: 2px;
     animation: gradient_f 20s ease-in infinite;
     transition: all 0.3s cubic-bezier(.55,-0.68,.48,1.682);
-}
-
-#custom-power,
-#clock,
-#battery,
-#pulseaudio,
-#network,
-#workspaces,
-#tray,
-#backlight,
-#custom-gpu,
-#custom-media,
-#custom-updates,
-#custom-button,
-#window,
-#cpu,
-#memory,
-#custom-l_end, 
-#custom-r_end,
-#custom-r_end,
-#custom-sl_end,
-#custom-sr_end,
-#custom-rl_end,
-#custom-rr_end {
-    color: @color2;
-    background: @background;
-    opacity: 1;
-    margin: 3px 0px 3px 0px;
-    padding-left: 4px;
-    padding-right: 4px;
-}
-
-#custom-media {
-    color: @foreground;
-}
-
-#custom-updates {
-    color: @color1;
-}
-
-#workspaces,
-#tray {
-    padding: 0px;
-}
-
-#custom-r_end {
-    border-radius: 0px 19px 19px 0px;
-    margin-right: 8px;
-    padding-right: 0px;
-}
-
-#custom-l_end {
-    border-radius: 19px 0px 0px 19px;
-    margin-left: 8px;
-    padding-left: 0px;
-}
-
-#custom-sr_end {
-    border-radius: 0px;
-    margin-right: 8px;
-    padding-right: 0px;
-}
-
-#custom-sl_end {
-    border-radius: 0px;
-    margin-left: 8px;
-    padding-left: 0px;
-}
-
-#custom-rr_end {
-    border-radius: 0px 7px 7px 0px;
-    margin-right: 8px;
-    padding-right: 0px;
-}
-
-#custom-rl_end {
-    border-radius: 7px 0px 0px 7px;
-    margin-left: 8px;
-    padding-left: 0px;
 }
