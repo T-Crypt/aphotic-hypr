@@ -180,9 +180,13 @@ main() {
 
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to disable WiFi powersave? (y,n) ' WIFI
   if [[ "$WIFI" == "Y" || "$WIFI" == "y" ]]; then
-    LOC="/etc/NetworkManager/conf.d/wifi-powersave.conf"
-    echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a "$LOC" &>> "$INSTLOG"
-    sudo systemctl restart NetworkManager &>> "$INSTLOG"
+    if systemctl list-unit-files NetworkManager.service &>/dev/null; then
+      LOC="/etc/NetworkManager/conf.d/wifi-powersave.conf"
+      echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a "$LOC" &>> "$INSTLOG"
+      sudo systemctl restart NetworkManager &>> "$INSTLOG"
+    else
+      echo -e "$CWR - NetworkManager isn't installed; skipping WiFi powersave config."
+    fi
   fi
 
   if ! command -v fakeroot >/dev/null 2>&1; then
@@ -229,12 +233,12 @@ main() {
     cp -R "$ROOT_DIR/.configs/"* "$HOME/.config/"
     chmod +x "$HOME/.config/hypr/scripts/"*
 
-    KVARCDARKER_SVG="/usr/share/Kvantum/KvArcDarker/KvArcDarker.svg"
+    KVARCDARK_SVG="/usr/share/Kvantum/KvArcDark/KvArcDark.svg"
     mkdir -p "$HOME/.config/Kvantum/Noctis"
-    if [[ -f "$KVARCDARKER_SVG" ]]; then
-      cp "$KVARCDARKER_SVG" "$HOME/.config/Kvantum/Noctis/Noctis.svg"
+    if [[ -f "$KVARCDARK_SVG" ]]; then
+      cp "$KVARCDARK_SVG" "$HOME/.config/Kvantum/Noctis/Noctis.svg"
     else
-      echo -e "$CWR - kvantum-theme-arcdarker-git assets not found at $KVARCDARKER_SVG; Kvantum will fall back to its default style until wallust generates Noctis.kvconfig on your first wallpaper change."
+      echo -e "$CWR - KvArcDark theme assets not found at $KVARCDARK_SVG (should ship with the kvantum package); Kvantum will fall back to its default style."
     fi
 
     if [[ "$ISNVIDIA" == "true" ]]; then
