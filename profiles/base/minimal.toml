@@ -3,5 +3,5 @@ name = "minimal"
 description = "Bare Hyprland + Waybar, no extras"
 
 [packages]
-prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcontrols2", "qt5-graphicaleffects", "gtk3", "polkit-gnome", "pipewire", "wireplumber", "jq", "wl-clipboard", "cliphist", "python-requests", "pacman-contrib", "kvantum", "kvantum-qt5", "kvarcdark"]
+prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcontrols2", "qt5-graphicaleffects", "gtk3", "polkit-gnome", "pipewire", "wireplumber", "jq", "wl-clipboard", "cliphist", "python-requests", "pacman-contrib", "kvantum", "kvantum-qt5", "kvantum-theme-arcdarker-git"]
 main = ["waybar", "kitty", "mako", "swww", "rofi-lbonn-wayland-git", "xdg-desktop-portal-hyprland"]
