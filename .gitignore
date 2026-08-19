@@ -1,7 +1,12 @@
 # Claude Code working docs (specs, roadmap) - not part of the shipped rice
 CLAUDE_ROADMAP.md
 docs/superpowers/
+.claude/
 
 noctis.toml
 install.log
 __pycache__/
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
