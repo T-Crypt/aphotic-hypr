@@ -1,0 +1,6 @@
+[meta]
+name = "fixture-base"
+
+[packages]
+prep = ["alpha", "beta"]
+main = ["hyprland", "waybar"]
