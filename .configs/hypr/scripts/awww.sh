@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Directory containing wallpapers
-WALLPAPER_DIR="$HOME/.config/swww/"
+WALLPAPER_DIR="$HOME/.config/awww/"
 
 # File to store the current wallpaper path
 CURRENT_WALLPAPER_FILE="$WALLPAPER_DIR/wallpaper.rofi"
@@ -12,8 +12,8 @@ WALLPAPERS=("$WALLPAPER_DIR"/*.jpg "$WALLPAPER_DIR"/*.png)
 # Find the index of the next wallpaper in the array
 NEXT_INDEX=$(($(($RANDOM % ${#WALLPAPERS[@]})) - 1))
 
-# Set the next wallpaper using swww img with the full path
-swww img "${WALLPAPERS[$NEXT_INDEX]}" --transition-type wipe --transition-angle 30 --transition-step 90
+# Set the next wallpaper using awww img with the full path
+awww img "${WALLPAPERS[$NEXT_INDEX]}" --transition-type left --transition-step 90 --transition-fps 60
 
 # Copy the currently set wallpaper to current_wallpaper.rofi
 cp "${WALLPAPERS[$NEXT_INDEX]}" "$CURRENT_WALLPAPER_FILE"

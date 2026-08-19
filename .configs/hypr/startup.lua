@@ -8,7 +8,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("waybar")
     hl.exec_cmd("blueman-applet")
     hl.exec_cmd("nm-applet --indicator")
-    hl.exec_cmd("sleep 1 && swww init")
+    hl.exec_cmd("sleep 1 && awww-daemon")
 
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Ice 20")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme 'Bibata-Modern-Ice'")

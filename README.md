@@ -35,7 +35,7 @@
 | Launcher | [Rofi](https://github.com/davatorium/rofi) with [custom launcher themes](https://github.com/adi1090x/rofi) |
 | Notifications | [Mako](https://github.com/emersion/mako) |
 | File Manager | [Thunar](https://github.com/xfce-mirror/thunar) |
-| Wallpaper Engine | [Swww](https://github.com/Horus645/swww) |
+| Wallpaper Engine | [awww](https://codeberg.org/LGFae/awww) |
 | Shell | [ZSH](https://sourceforge.net/projects/zsh/) or [Starship](https://github.com/starship/starship) |
 | Lock Screen | [Swaylock (effects fork)](https://github.com/jirutka/swaylock-effects) |
 | Audio Visualizer | [Cava](https://github.com/karlstav/cava) |
@@ -97,7 +97,7 @@ A **profile** is the base package set. A **layer** is an optional add-on merged 
 
 | Profile | What you get |
 |---|---|
-| `minimal` | Hyprland, Waybar, Kitty, Mako, Swww, Rofi — the bare tiling desktop, nothing else. |
+| `minimal` | Hyprland, Waybar, Kitty, Mako, awww, Rofi — the bare tiling desktop, nothing else. |
 | `full` | Everything in `minimal`, plus the complete Noctis experience: theming (Pywal, Pywalfox, Dracula GTK/icons), shell tooling (ZSH, Powerlevel10k, Starship), media (mpv, Cava, Swappy), file management (Thunar plus archive/GVFS plugins), Bluetooth, SDDM, and more. |
 
 | Layer | Adds |
