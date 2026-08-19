@@ -1,0 +1,9 @@
+[meta]
+name = "gaming"
+description = "Performance profile + launcher polish"
+
+[packages]
+main = ["gamemode", "lib32-gamemode", "mangohud", "lib32-mangohud", "steam"]
+
+[gaming]
+enabled_by_default = true
