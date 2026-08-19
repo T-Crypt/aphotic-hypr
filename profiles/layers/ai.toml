@@ -1,0 +1,6 @@
+[meta]
+name = "ai"
+description = "Local AI CLI backend (Phase D wires the actual workflow integration)"
+
+[packages]
+main = ["ollama"]

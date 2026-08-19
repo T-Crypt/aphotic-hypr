@@ -1,0 +1,6 @@
+[meta]
+name = "dev"
+description = "Terminal + editor polish"
+
+[packages]
+main = ["neovim", "tmux", "fzf", "ripgrep", "fd", "lazygit"]
