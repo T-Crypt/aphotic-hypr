@@ -42,7 +42,7 @@ def test_multiple_layers_and_custom_apps_all_merge():
         ],
         custom_apps_path=str(ROOT / "profiles/custom_apps.lst"),
     )
-    for pkg in ["gamemode", "neovim", "ollama", "spotify", "youtube-desktop"]:
+    for pkg in ["gamemode", "neovim", "ollama", "spotify", "youtube-app-bin"]:
         assert pkg in result["main"]
 
 
