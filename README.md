@@ -199,6 +199,9 @@ Thunar has a right-click **Set as Theme** action for building a theme straight f
 | <kbd>Super</kbd> + <kbd>C</kbd> | Launch VS Code |
 | <kbd>Super</kbd> + <kbd>F</kbd> | Launch Firefox |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle fullscreen |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Wallpaper picker (Rofi) |
+| <kbd>Super</kbd> + <kbd>,</kbd> | Clipboard history (Rofi) |
+| <kbd>Super</kbd> + <kbd>.</kbd> | Emoji picker (Rofi) |
 | <kbd>Super</kbd> + <kbd>A</kbd> | Application launcher (Rofi) |
 | <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
 | <kbd>Super</kbd> + <kbd>B</kbd> | Toggle Waybar |

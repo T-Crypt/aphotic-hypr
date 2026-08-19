@@ -64,6 +64,8 @@ tooltip {
 #tray,
 #backlight,
 #custom-gpu,
+#custom-media,
+#custom-updates,
 #custom-button,
 #window,
 #cpu,
@@ -81,6 +83,14 @@ tooltip {
     margin: 3px 0px 3px 0px;
     padding-left: 4px;
     padding-right: 4px;
+}
+
+#custom-media {
+    color: @foreground;
+}
+
+#custom-updates {
+    color: @color1;
 }
 
 #workspaces,
