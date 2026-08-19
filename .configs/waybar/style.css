@@ -24,38 +24,40 @@ tooltip {
 /* ------------------------------------------------------------------ */
 /* Island groups                                                       */
 /* Each "group/<name>" module in config.jsonc renders as ONE widget    */
-/* with CSS id #group-<name>. Individual modules inside stay           */
+/* with CSS id #<name> (NOT #group-<name> — Waybar's actual behavior   */
+/* differs from what its own naming convention implies, see            */
+/* github.com/Alexays/Waybar/issues/4378). Individual modules stay     */
 /* transparent (see below) so only the group itself paints the         */
 /* pill/leaf background — this is what turns the bar into separated    */
 /* rounded islands instead of one flat strip.                          */
 /* ------------------------------------------------------------------ */
 
-#group-leaf-inverse,
-#group-pill-left,
-#group-pill-center,
-#group-pill-right,
-#group-leaf {
+#leaf-inverse,
+#pill-left,
+#pill-center,
+#pill-right,
+#leaf {
     background-color: @background;
     border-width: 0;
     opacity: 1;
 }
 
 /* Center pills: fully rounded, floating with a gap on both sides. */
-#group-pill-left,
-#group-pill-center,
-#group-pill-right {
+#pill-left,
+#pill-center,
+#pill-right {
     border-radius: 10pt;
     margin: 3px 8px;
 }
 
 /* Edge leaves: touch the screen edge, so only the two corners that    */
 /* DON'T touch the edge get rounded (asymmetric, mirrored L/R).        */
-#group-leaf-inverse {
+#leaf-inverse {
     border-radius: 0 10pt 0 10pt;
     margin: 3px 8px 3px 0px;
 }
 
-#group-leaf {
+#leaf {
     border-radius: 10pt 0 10pt 0;
     margin: 3px 0px 3px 8px;
 }
