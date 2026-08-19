@@ -18,7 +18,7 @@ def test_minimal_profile_excludes_extras():
 
 def test_full_profile_has_expected_packages():
     result = merge_packages(str(ROOT / "profiles/base/full.toml"), [])
-    for pkg in ["waybar", "firefox", "starship", "sddm", "wallust"]:
+    for pkg in ["waybar", "firefox", "starship", "sddm", "wallust-git"]:
         assert pkg in result["main"], f"{pkg} missing from full profile"
     assert result["main"].count("firefox") == 1
 
