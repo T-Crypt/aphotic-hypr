@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="280" viewBox="0 0 900 280" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="900" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b0d12"/>
+      <stop offset="1" stop-color="#14121f"/>
+    </linearGradient>
+    <linearGradient id="moonGrad" x1="0" y1="0" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9baaff"/>
+      <stop offset="1" stop-color="#d6c8ff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#6d7bff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#6d7bff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="900" height="280" fill="url(#bgGrad)"/>
+  <circle cx="450" cy="120" r="220" fill="url(#glow)"/>
+
+  <g fill="#d6c8ff" opacity="0.7">
+    <circle cx="60" cy="40" r="1.4"/>
+    <circle cx="120" cy="90" r="1"/>
+    <circle cx="90" cy="160" r="1.2"/>
+    <circle cx="180" cy="50" r="1"/>
+    <circle cx="220" cy="130" r="1.4"/>
+    <circle cx="150" cy="220" r="1"/>
+    <circle cx="760" cy="45" r="1.2"/>
+    <circle cx="820" cy="100" r="1"/>
+    <circle cx="700" cy="170" r="1.4"/>
+    <circle cx="840" cy="200" r="1"/>
+    <circle cx="780" cy="230" r="1.2"/>
+    <circle cx="640" cy="60" r="1"/>
+  </g>
+
+  <g transform="translate(60, 76)">
+    <g transform="scale(1.45)">
+      <path d="M14 60 L14 74 L28 74" stroke="#6d7bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+      <path d="M74 28 L74 14 L60 14" stroke="#6d7bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+      <path d="M56 20 A26 26 0 1 0 56 68 A20 20 0 1 1 56 20 Z" fill="url(#moonGrad)"/>
+    </g>
+  </g>
+
+  <text x="255" y="148" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-size="66" fill="url(#moonGrad)">Noctis</text>
+  <text x="258" y="180" font-family="'Courier New',Consolas,monospace" font-size="14" letter-spacing="2" fill="#6a6f8a">HYPRLAND DOTFILES, AFTER DARK</text>
+
+  <line x1="60" y1="220" x2="840" y2="220" stroke="#232433" stroke-width="1"/>
+  <text x="60" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" letter-spacing="0.5" fill="#4d5170">HYPRLAND</text>
+  <text x="185" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" fill="#3a3c4d">/</text>
+  <text x="200" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" letter-spacing="0.5" fill="#4d5170">WAYBAR</text>
+  <text x="290" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" fill="#3a3c4d">/</text>
+  <text x="305" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" letter-spacing="0.5" fill="#4d5170">KITTY</text>
+  <text x="380" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" fill="#3a3c4d">/</text>
+  <text x="395" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" letter-spacing="0.5" fill="#4d5170">ROFI</text>
+  <text x="455" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" fill="#3a3c4d">/</text>
+  <text x="470" y="248" font-family="'Courier New',Consolas,monospace" font-size="12" letter-spacing="0.5" fill="#4d5170">MAKO</text>
+</svg>
