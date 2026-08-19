@@ -1,9 +1,14 @@
+import sys
 import tomllib
 
 
 def _load(path):
-    with open(path, "rb") as f:
-        return tomllib.load(f)
+    try:
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        print(f"malformed {path}: {exc}", file=sys.stderr)
+        sys.exit(1)
 
 
 def _dedup(seq):

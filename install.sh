@@ -44,17 +44,23 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --profile) PROFILE="$2"; shift 2 ;;
-    --with) LAYERS="$2"; shift 2 ;;
-    --theme) THEME="$2"; shift 2 ;;
-    --bar-position) BAR_POSITION="$2"; shift 2 ;;
+    --profile) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; PROFILE="$2"; shift 2 ;;
+    --with) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; LAYERS="$2"; shift 2 ;;
+    --theme) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; THEME="$2"; shift 2 ;;
+    --bar-position) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; BAR_POSITION="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
-    --keep-backups) KEEP_BACKUPS="$2"; shift 2 ;;
+    --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
     -h|--help) print_help; exit 0 ;;
     *) echo -e "$CER - Unknown option: $1"; print_help; exit 1 ;;
   esac
 done
+
+if ! [[ "$KEEP_BACKUPS" =~ ^[0-9]+$ ]]; then
+  echo -e "$CER - --keep-backups requires a non-negative integer, got: $KEEP_BACKUPS"
+  exit 1
+fi
+
 export DRY_RUN
 PYTHON_BIN=$(resolve_python_bin)
 
@@ -98,8 +104,8 @@ detect_nvidia() {
 resolve_config() {
   if [[ -f "$NOCTIS_TOML" && -z "$PROFILE" && -z "$LAYERS" ]]; then
     local existing_profile existing_layers
-    existing_profile=$("$PYTHON_BIN" -c "import tomllib; print(tomllib.load(open('$NOCTIS_TOML','rb'))['install']['profile'])")
-    existing_layers=$("$PYTHON_BIN" -c "import tomllib; print(','.join(tomllib.load(open('$NOCTIS_TOML','rb'))['install']['layers']))")
+    existing_profile=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["install"]["profile"])' "$NOCTIS_TOML")
+    existing_layers=$("$PYTHON_BIN" -c 'import sys, tomllib; print(",".join(tomllib.load(open(sys.argv[1], "rb"))["install"]["layers"]))' "$NOCTIS_TOML")
     echo -e "$CNT - Existing config found (profile=$existing_profile, layers=$existing_layers)."
     read -rep $'[\e[1;33mACTION\e[0m] - Reinstall same config? (Y,n) ' REUSE
     if [[ "$REUSE" != "n" && "$REUSE" != "N" ]]; then
@@ -140,8 +146,8 @@ main() {
   fi
 
   local main_pkgs prep_pkgs
-  main_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --custom-apps "$ROOT_DIR/profiles/custom_apps.lst" --field main)
-  prep_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --field prep)
+  main_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --custom-apps "$ROOT_DIR/profiles/custom_apps.lst" --field main) || { echo -e "$CER - Failed to resolve package list (check --profile/--with values)"; exit 1; }
+  prep_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --field prep) || { echo -e "$CER - Failed to resolve package list (check --profile/--with values)"; exit 1; }
 
   ISNVIDIA=$(detect_nvidia)
 

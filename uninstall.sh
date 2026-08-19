@@ -50,11 +50,11 @@ fi
 restore_latest_backup || exit 1
 
 if [[ "$PURGE_PACKAGES" == "1" ]]; then
-  AUR_HELPER=$("$PYTHON_BIN" -c "import tomllib; print(tomllib.load(open('$NOCTIS_TOML','rb'))['system']['aur_helper'])")
+  AUR_HELPER=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["system"]["aur_helper"])' "$NOCTIS_TOML")
   read -rep $"This will run $AUR_HELPER -R against every package this profile installed (including custom_apps.lst entries). Continue? (y,n) " PURGE_CONFIRM
   if [[ "$PURGE_CONFIRM" == "y" || "$PURGE_CONFIRM" == "Y" ]]; then
-    PROFILE=$("$PYTHON_BIN" -c "import tomllib; print(tomllib.load(open('$NOCTIS_TOML','rb'))['install']['profile'])")
-    LAYERS=$("$PYTHON_BIN" -c "import tomllib; print(','.join(tomllib.load(open('$NOCTIS_TOML','rb'))['install']['layers']))")
+    PROFILE=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["install"]["profile"])' "$NOCTIS_TOML")
+    LAYERS=$("$PYTHON_BIN" -c 'import sys, tomllib; print(",".join(tomllib.load(open(sys.argv[1], "rb"))["install"]["layers"]))' "$NOCTIS_TOML")
     layer_args=""
     if [[ -n "$LAYERS" ]]; then
       IFS=',' read -ra layer_names <<< "$LAYERS"
