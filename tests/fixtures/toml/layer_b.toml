@@ -1,0 +1,5 @@
+[meta]
+name = "fixture-layer-b"
+
+[packages]
+main = ["hyprland", "neovim"]

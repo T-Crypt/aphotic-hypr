@@ -1,0 +1,6 @@
+[meta]
+name = "fixture-layer-a"
+
+[packages]
+prep = ["beta", "gamma"]
+main = ["gamemode"]
