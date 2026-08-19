@@ -5,4 +5,4 @@
  * 
  **/
 
-@import "~/.cache/wal/colors-rofi.rasi"
+@import "~/.config/rofi/colors/colors-rofi.rasi"
