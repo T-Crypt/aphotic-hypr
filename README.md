@@ -198,6 +198,7 @@ Thunar has a right-click **Set as Theme** action for building a theme straight f
 | <kbd>Super</kbd> + <kbd>E</kbd> | Launch Thunar |
 | <kbd>Super</kbd> + <kbd>C</kbd> | Launch VS Code |
 | <kbd>Super</kbd> + <kbd>F</kbd> | Launch Firefox |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle fullscreen |
 | <kbd>Super</kbd> + <kbd>A</kbd> | Application launcher (Rofi) |
 | <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
 | <kbd>Super</kbd> + <kbd>B</kbd> | Toggle Waybar |

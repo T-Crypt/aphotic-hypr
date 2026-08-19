@@ -216,8 +216,16 @@ main() {
     cp -R "$ROOT_DIR/.configs/"* "$HOME/.config/"
     chmod +x "$HOME/.config/hypr/scripts/"*
 
+    KVARCDARK_SVG="/usr/share/Kvantum/KvArcDark/KvArcDark.svg"
+    mkdir -p "$HOME/.config/Kvantum/Noctis"
+    if [[ -f "$KVARCDARK_SVG" ]]; then
+      cp "$KVARCDARK_SVG" "$HOME/.config/Kvantum/Noctis/Noctis.svg"
+    else
+      echo -e "$CWR - kvarcdark theme assets not found at $KVARCDARK_SVG; Kvantum will fall back to its default style until wallust generates Noctis.kvconfig on your first wallpaper change."
+    fi
+
     if [[ "$ISNVIDIA" == "true" ]]; then
-      echo -e "\nsource = ~/.config/hypr/nvidia.conf" >> "$HOME/.config/hypr/hyprland.conf"
+      echo -e '\nrequire("nvidia")' >> "$HOME/.config/hypr/hyprland.lua"
     fi
 
     echo -e "$CNT - Setting up the login screen."
