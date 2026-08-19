@@ -8,7 +8,7 @@ args = vars(ap.parse_args())
 image_path = args["image"]
 
 # Change the wallpaper
-os.system(f'awww img --transition-type left --transition-step 90 --transition-fps 60 {image_path}')
+os.system(f'awww img --transition-type wipe --transition-duration 3 {image_path}')
 # Generate the wallust colorscheme; templates write straight to their targets (see wallust.toml)
 os.system(f'wallust run {image_path}')
 # generate wallpaper.rofi
