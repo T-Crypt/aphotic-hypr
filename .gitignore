@@ -4,3 +4,4 @@ docs/superpowers/
 
 noctis.toml
 install.log
+__pycache__/
