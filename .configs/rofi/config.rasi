@@ -8,7 +8,7 @@
 
 configuration {
 	/*---------- General setting ----------*/
-	modi: "drun,run,filebrowser,window";
+	modi: "combi,drun,run,filebrowser,window";
 	case-sensitive: false;
 	cycle: true;
 	filter: "";
@@ -62,8 +62,10 @@ configuration {
 	window-thumbnail: false;
 
 	/*---------- Combi settings ----------*/
-/*	combi-modi: "window,run";*/
-/*	combi-hide-mode-prefix: false;*/
+	/* Unified "everything" launcher: apps + open windows + shell commands
+	 * in one list, so there's no separate mode-switch step. */
+	combi-modi: "drun,window,run";
+	combi-hide-mode-prefix: true;
 /*	combi-display-format: "{mode} {text}";*/
 
 	/*---------- History and Sorting ----------*/
