@@ -16,6 +16,7 @@ install_yay() {
     echo "[dry-run] would clone and build yay from AUR"
     return 0
   fi
+  rm -rf /tmp/yay-bootstrap
   git clone https://aur.archlinux.org/yay.git /tmp/yay-bootstrap
   (cd /tmp/yay-bootstrap && makepkg -si --noconfirm)
 }
