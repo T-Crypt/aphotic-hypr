@@ -17,7 +17,10 @@ install_yay() {
     return 0
   fi
   rm -rf /tmp/yay-bootstrap
-  git clone https://aur.archlinux.org/yay.git /tmp/yay-bootstrap
+  git clone https://aur.archlinux.org/yay.git /tmp/yay-bootstrap || {
+    echo "Failed to clone yay from AUR" >&2
+    exit 1
+  }
   (cd /tmp/yay-bootstrap && makepkg -si --noconfirm)
 }
 
