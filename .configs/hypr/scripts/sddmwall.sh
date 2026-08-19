@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# Fetch the current wallpaper information using swww query
-WALLPAPER_INFO=$(swww query)
+# Fetch the current wallpaper information using awww query
+# NOTE: awww's query output format is not fully documented upstream —
+# if this doesn't find the wallpaper, run `awww query` manually and
+# adjust the awk pattern below to match its actual output.
+WALLPAPER_INFO=$(awww query)
 
-# Extract the image path from the swww query output using awk
+# Extract the image path from the awww query output using awk
 IMAGE_PATH=$(echo "$WALLPAPER_INFO" | awk -F ": image: " '{print $2}' | sort | uniq | head -n 1)
 
 # Check if the image path is not empty
@@ -20,5 +23,5 @@ if [ -n "$IMAGE_PATH" ]; then
     echo "Current wallpaper copied to SDDM backgrounds directory."
     echo "Updated Sugar-Candy with the new background image."
 else
-    echo "Error: Unable to fetch current wallpaper information using swww query."
+    echo "Error: Unable to fetch current wallpaper information using awww query."
 fi

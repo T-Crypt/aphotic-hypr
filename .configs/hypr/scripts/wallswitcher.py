@@ -4,7 +4,7 @@ import os
 import random
 
 # full path to your wallpaper folder
-wallpath = os.path.expanduser("~/.config/swww")
+wallpath = os.path.expanduser("~/.config/awww")
 
 
 def change_wallpaper(folder_path):
@@ -22,11 +22,11 @@ def change_wallpaper(folder_path):
     image_path = os.path.join(folder_path, random_image)
 
     # Change the wallpaper
-    os.system(f'swww img -t wipe --transition-duration 3 {image_path}')
+    os.system(f'awww img --transition-type left --transition-step 90 --transition-fps 60 {image_path}')
     # Generate the wallust colorscheme; templates write straight to their targets (see wallust.toml)
     os.system(f'wallust run {image_path}')
     # generate wallpaper.rofi
-    os.system(f'cp {image_path} ~/.config/swww/wallpaper.rofi')
+    os.system(f'cp {image_path} ~/.config/awww/wallpaper.rofi')
     # firefox
     os.system(f'pywalfox update')
     # Reload waybar to apply colorscheme
