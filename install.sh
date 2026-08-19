@@ -229,12 +229,12 @@ main() {
     cp -R "$ROOT_DIR/.configs/"* "$HOME/.config/"
     chmod +x "$HOME/.config/hypr/scripts/"*
 
-    KVARCDARK_SVG="/usr/share/Kvantum/KvArcDark/KvArcDark.svg"
+    KVARCDARKER_SVG="/usr/share/Kvantum/KvArcDarker/KvArcDarker.svg"
     mkdir -p "$HOME/.config/Kvantum/Noctis"
-    if [[ -f "$KVARCDARK_SVG" ]]; then
-      cp "$KVARCDARK_SVG" "$HOME/.config/Kvantum/Noctis/Noctis.svg"
+    if [[ -f "$KVARCDARKER_SVG" ]]; then
+      cp "$KVARCDARKER_SVG" "$HOME/.config/Kvantum/Noctis/Noctis.svg"
     else
-      echo -e "$CWR - kvarcdark theme assets not found at $KVARCDARK_SVG; Kvantum will fall back to its default style until wallust generates Noctis.kvconfig on your first wallpaper change."
+      echo -e "$CWR - kvantum-theme-arcdarker-git assets not found at $KVARCDARKER_SVG; Kvantum will fall back to its default style until wallust generates Noctis.kvconfig on your first wallpaper change."
     fi
 
     if [[ "$ISNVIDIA" == "true" ]]; then
