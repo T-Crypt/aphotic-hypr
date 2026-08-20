@@ -27,7 +27,7 @@ QtObject {
             readonly property bool background: false
             readonly property bool recolour: false
             readonly property bool compact: false
-            readonly property var iconSubs: []
+            readonly property var iconSubs: GlobalConfig.bar.tray.iconSubs
             readonly property var hiddenIcons: GlobalConfig.bar.tray.hiddenIcons
         }
 
@@ -68,8 +68,8 @@ QtObject {
             readonly property string occupiedLabel: "󰮯"
             readonly property string activeLabel: "󰮯"
             readonly property string capitalisation: "preserve"
-            readonly property var specialWorkspaceIcons: []
-            readonly property var windowIcons: []
+            readonly property var specialWorkspaceIcons: GlobalConfig.bar.workspaces.specialWorkspaceIcons
+            readonly property var windowIcons: GlobalConfig.bar.workspaces.windowIcons
         }
 
         readonly property QtObject statusIcons: QtObject {

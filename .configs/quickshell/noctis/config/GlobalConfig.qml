@@ -10,8 +10,13 @@ QtObject {
     readonly property QtObject bar: QtObject {
         readonly property QtObject workspaces: QtObject {
             readonly property bool perMonitorWorkspaces: false
+            readonly property var specialWorkspaceIcons: []
+            readonly property var windowIcons: [
+                { regex: "steam(_app_(default|[0-9]+))?", icon: "sports_esports" }
+            ]
         }
         readonly property QtObject tray: QtObject {
+            readonly property var iconSubs: []
             readonly property var hiddenIcons: []
         }
     }
