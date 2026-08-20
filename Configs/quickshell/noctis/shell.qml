@@ -5,6 +5,7 @@ import qs.modules.bar
 import qs.modules.launcher
 import qs.modules.notifications
 import qs.modules.osd
+import qs.modules.lock
 
 ShellRoot {
     id: root
@@ -14,6 +15,8 @@ ShellRoot {
 
         BarWindow {}
     }
+
+    Lock {}
 
     Variants {
         model: Quickshell.screens
