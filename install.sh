@@ -230,8 +230,11 @@ main() {
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to copy config files? (y,n) ' CFG
   if [[ "$CFG" == "Y" || "$CFG" == "y" ]]; then
     echo -e "$CNT - Copying config files..."
-    cp -R "$ROOT_DIR/.configs/"* "$HOME/.config/"
+    cp -R "$ROOT_DIR/Configs/"* "$HOME/.config/"
     chmod +x "$HOME/.config/hypr/scripts/"*
+
+    mkdir -p "$HOME/.local/bin"
+    ln -sf "$ROOT_DIR/Configs/.local/bin/noctis" "$HOME/.local/bin/noctis"
 
     KVARCDARK_SVG="/usr/share/Kvantum/KvArcDark/KvArcDark.svg"
     mkdir -p "$HOME/.config/Kvantum/Noctis"
@@ -272,8 +275,8 @@ main() {
 
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate zsh shell? (y,n) ' ZSH
   if [[ "$ZSH" == "Y" || "$ZSH" == "y" ]]; then
-    cp "$ROOT_DIR/.configs/.p10k.zsh" "$HOME"
-    cp "$ROOT_DIR/.configs/.zshrc" "$HOME"
+    cp "$ROOT_DIR/Configs/.p10k.zsh" "$HOME"
+    cp "$ROOT_DIR/Configs/.zshrc" "$HOME"
     chsh -s "$(which zsh)"
   fi
 

@@ -159,7 +159,10 @@ Noctis-Hypr/
 │   ├── base/                    minimal.toml, full.toml
 │   └── layers/                  gaming.toml, dev.toml, ai.toml
 ├── themes/                      Swappable theme presets (THEME_SPEC.md documents the contract)
-└── .configs/                    Mirrors ~/.config — the configs that actually land on disk
+└── Configs/                     Mirrors ~/.config — the configs that actually land on disk
+    └── .local/
+        ├── bin/noctis            noctis CLI entry point, symlinked onto PATH by install.sh
+        └── lib/noctis/           noctis CLI internals (commands/, globalcontrol.sh)
 ```
 
 `install.sh` never hardcodes a package list — it resolves one at runtime by merging `profiles/base/<profile>.toml` with each selected `profiles/layers/<layer>.toml`, deduplicating as it goes. Everything downstream (backups, AUR helper choice, config copying) reads from that single resolved plan.

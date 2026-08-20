@@ -19,24 +19,35 @@ PanelWindow {
     }
     readonly property BarPopouts.Wrapper popouts: popouts
 
+    readonly property int barWidth: Tokens.sizes.bar.innerWidth + Config.border.thickness * 2
+
     WlrLayershell.namespace: "noctis-bar"
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.exclusionMode: ExclusionMode.Auto
+    WlrLayershell.exclusionMode: ExclusionMode.Normal
+    WlrLayershell.exclusiveZone: barWidth
     color: "transparent"
 
     anchors.top: true
     anchors.bottom: true
     anchors.left: true
 
-    implicitWidth: Tokens.sizes.bar.innerWidth + Config.border.thickness * 2
+    // Wider than barWidth to give the popout flyout (drawn to the right of
+    // the bar strip, see popouts/Wrapper.qml) real surface to paint into —
+    // Wayland layer-shell surfaces clip anything outside their own bounds.
+    // exclusionZone above stays pinned to barWidth so this extra space
+    // doesn't reserve desktop area.
+    implicitWidth: barWidth + Tokens.spacing.small * 2 + 160
 
     BarPopouts.Wrapper {
         id: popouts
         screen: root.screen
+        barWidth: root.barWidth
     }
 
     BarWrapper {
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
         screen: root.screen
         screenState: root.screenState
         popouts: root.popouts

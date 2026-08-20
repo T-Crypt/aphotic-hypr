@@ -90,12 +90,13 @@ QtObject {
 
     // Simplified stand-in for the native FontBuilder/QFont variable-axis
     // system (plugin/src/Caelestia/Config/fontbuilder.cpp) — no real
-    // variable font is vendored (Google Sans Flex / Material Symbols
-    // aren't installed on this system), so vaxes()/fill()/grade()/width()
-    // are harmless no-ops here rather than real variable-axis writes.
-    // family is left empty (system default sans) until a real font is
-    // chosen; only the specific sizes actually read by vendored bar
-    // components are populated with real point sizes.
+    // variable font is vendored (Google Sans Flex isn't installed on this
+    // system, so body/title/etc. still fall back to system default sans),
+    // so vaxes()/fill()/grade()/width() are harmless no-ops here rather
+    // than real variable-axis writes. Material Symbols Rounded IS
+    // installed (ttf-material-symbols-variable) and set as the icon
+    // font's family below; only the specific sizes actually read by
+    // vendored bar components are populated with real point sizes.
     function _fontBuilder(pointSize, weight, family) {
         const state = {
             family: family ?? "",
@@ -143,16 +144,22 @@ QtObject {
         readonly property var label: _fontStyle(fontSize.small, fontSize.smaller, fontSize.normal)
         readonly property var mono: _fontStyle(fontSize.small, fontSize.normal, fontSize.larger)
         readonly property var icon: {
-            const b = _fontBuilder(fontSize.normal);
-            b.small = _fontBuilder(fontSize.small).build();
-            b.medium = _fontBuilder(fontSize.normal).build();
-            b.large = _fontBuilder(fontSize.larger).build();
-            b.extraLarge = _fontBuilder(fontSize.extraLarge).build();
+            // Matches caelestia's real default (appearanceconfig.hpp:
+            // `m_icon->setDefaultFamily(QStringLiteral("Material Symbols
+            // Rounded"))`) — now installed on this system
+            // (ttf-material-symbols-variable), so icon glyph names render
+            // as real glyphs instead of literal fallback text.
+            const iconFamily = "Material Symbols Rounded";
+            const b = _fontBuilder(fontSize.normal, undefined, iconFamily);
+            b.small = _fontBuilder(fontSize.small, undefined, iconFamily).build();
+            b.medium = _fontBuilder(fontSize.normal, undefined, iconFamily).build();
+            b.large = _fontBuilder(fontSize.larger, undefined, iconFamily).build();
+            b.extraLarge = _fontBuilder(fontSize.extraLarge, undefined, iconFamily).build();
             b.builders = {
-                small: _fontBuilder(fontSize.small),
-                medium: _fontBuilder(fontSize.normal),
-                large: _fontBuilder(fontSize.larger),
-                extraLarge: _fontBuilder(fontSize.extraLarge)
+                small: _fontBuilder(fontSize.small, undefined, iconFamily),
+                medium: _fontBuilder(fontSize.normal, undefined, iconFamily),
+                large: _fontBuilder(fontSize.larger, undefined, iconFamily),
+                extraLarge: _fontBuilder(fontSize.extraLarge, undefined, iconFamily)
             };
             return b;
         }
