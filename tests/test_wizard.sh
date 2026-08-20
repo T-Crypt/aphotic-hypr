@@ -18,16 +18,12 @@ result=$(printf "y\nn\ny\n" | prompt_layers)
 result=$(echo "" | prompt_theme)
 [[ "$result" == "default" ]] || fail "expected 'default', got '$result'"
 
-result=$(echo "" | prompt_bar_position)
-[[ "$result" == "top" ]] || fail "expected 'top', got '$result'"
-
 WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
-write_noctis_toml "$WORKDIR/noctis.toml" "full" "gaming,dev" "default" "top" "true" "yay" "2026-08-18T10:00:00"
+write_noctis_toml "$WORKDIR/noctis.toml" "full" "gaming,dev" "default" "true" "yay" "2026-08-18T10:00:00"
 
 grep -q 'profile = "full"' "$WORKDIR/noctis.toml" || fail "profile not written"
 grep -q 'layers = \["gaming", "dev"\]' "$WORKDIR/noctis.toml" || fail "layers not written correctly"
-grep -q 'position = "top"' "$WORKDIR/noctis.toml" || fail "bar position not written"
 
 python -c "import tomllib; tomllib.load(open('$WORKDIR/noctis.toml','rb'))" || fail "generated noctis.toml is not valid TOML"
 
