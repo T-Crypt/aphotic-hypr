@@ -1,0 +1,6 @@
+module qs.modules.dashboard
+DashCalendar 1.0 DashCalendar.qml
+DashDateTime 1.0 DashDateTime.qml
+DashMedia 1.0 DashMedia.qml
+DashboardContent 1.0 DashboardContent.qml
+DashboardWindow 1.0 DashboardWindow.qml

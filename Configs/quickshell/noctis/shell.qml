@@ -7,6 +7,7 @@ import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.lock
 import qs.modules.session
+import qs.modules.dashboard
 
 ShellRoot {
     id: root
@@ -15,6 +16,13 @@ ShellRoot {
         model: Quickshell.screens
 
         BarWindow {}
+    }
+
+    Variants {
+        id: dashboardWindows
+        model: Quickshell.screens
+
+        DashboardWindow {}
     }
 
     Lock {}
@@ -62,6 +70,16 @@ ShellRoot {
             const win = sessionWindows.instances[0];
             if (win)
                 win.screenState.session = !win.screenState.session;
+        }
+    }
+
+    IpcHandler {
+        target: "dashboard"
+
+        function toggle(): void {
+            const win = dashboardWindows.instances[0];
+            if (win)
+                win.screenState.dashboard = !win.screenState.dashboard;
         }
     }
 }
