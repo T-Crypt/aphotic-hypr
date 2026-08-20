@@ -34,8 +34,14 @@ Item {
         return mode === "apps" ? t.trim().toLowerCase() : t.slice(1).trim().toLowerCase();
     }
 
+    // Rofi-parity sizing: the wallpaper preview strip behind the search
+    // bar (matching style.rasi's `inputbar { background-image: url(...) }`)
+    // is its own fixed-height band above the results panel, not blended
+    // into the same surface.
+    readonly property int previewHeight: 140
+
     implicitWidth: Tokens.sizes.launcher.width
-    implicitHeight: search.implicitHeight + Tokens.padding.large * 3 + list.height
+    implicitHeight: previewHeight + list.height + Tokens.padding.large
 
     visible: opacity > 0
     opacity: screenState.launcher ? 1 : 0
@@ -61,64 +67,119 @@ Item {
             wallpaperProc.running = true;
     }
 
-    StyledRect {
+    StyledClippingRect {
         anchors.fill: parent
-        radius: Tokens.rounding.large
+        radius: Tokens.rounding.extraLarge
         color: Colours.palette.m3surfaceContainerHigh
-    }
+        border.width: Config.border.thickness
+        border.color: Colours.palette.m3outlineVariant
 
-    Column {
-        anchors.fill: parent
-        anchors.margins: Tokens.padding.large
-        spacing: Tokens.padding.large
+        Column {
+            anchors.fill: parent
+            spacing: 0
 
-        Item {
-            width: parent.width
-            height: search.implicitHeight
+            // Wallpaper preview strip -- a real live crop of the current
+            // desktop wallpaper, the same source Rofi's inputbar reads
+            // (~/.config/awww/wallpaper.rofi via the Wallpapers service).
+            Item {
+                id: previewStrip
 
-            TextInput {
-                id: search
-
-                anchors.left: parent.left
-                anchors.right: parent.right
+                width: parent.width
+                height: root.previewHeight
                 clip: true
 
-                font: Tokens.font.body.large
-                color: Colours.palette.m3onSurface
+                Image {
+                    anchors.fill: parent
+                    source: Wallpapers.current
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: false
+                }
 
-                Keys.onEscapePressed: root.screenState.launcher = false
-                Keys.onReturnPressed: {
-                    if (list.currentItem) {
-                        list.currentItem.execute();
-                        root.screenState.launcher = false;
+                StyledRect {
+                    anchors.fill: parent
+                    color: Colours.palette.m3shadow
+                    opacity: 0.25
+                }
+
+                Item {
+                    anchors.centerIn: parent
+                    width: parent.width - Tokens.padding.large * 2
+                    height: search.implicitHeight
+
+                    StyledRect {
+                        anchors.fill: parent
+                        anchors.margins: -Tokens.padding.small
+                        radius: Tokens.rounding.full
+                        color: Colours.palette.m3surfaceContainerHigh
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: Tokens.padding.medium
+                            spacing: Tokens.spacing.medium
+
+                            MaterialIcon {
+                                id: searchIcon
+
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: "search"
+                                fontStyle: Tokens.font.icon.medium
+                                color: Colours.palette.m3onSurfaceVariant
+                            }
+
+                            Item {
+                                width: parent.width - parent.spacing - searchIcon.width
+                                height: search.implicitHeight
+
+                                TextInput {
+                                    id: search
+
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    clip: true
+
+                                    font: Tokens.font.body.large
+                                    color: Colours.palette.m3onSurface
+
+                                    Keys.onEscapePressed: root.screenState.launcher = false
+                                    Keys.onReturnPressed: {
+                                        if (list.currentItem) {
+                                            list.currentItem.execute();
+                                            root.screenState.launcher = false;
+                                        }
+                                    }
+                                    Keys.onDownPressed: list.incrementCurrentIndex()
+                                    Keys.onUpPressed: list.decrementCurrentIndex()
+                                }
+
+                                StyledText {
+                                    anchors.left: search.left
+                                    anchors.right: search.right
+                                    anchors.verticalCenter: search.verticalCenter
+                                    elide: Text.ElideRight
+                                    text: {
+                                        switch (root.mode) {
+                                        case "clipboard":
+                                            return qsTr("Clipboard history…");
+                                        case "emoji":
+                                            return qsTr("Search emoji…");
+                                        case "windows":
+                                            return qsTr("Switch window…");
+                                        case "wallpaper":
+                                            return qsTr("Choose wallpaper…");
+                                        default:
+                                            return qsTr("Search apps… (> clip, : emoji, / windows, ~ wallpaper)");
+                                        }
+                                    }
+                                    font: search.font
+                                    color: Colours.palette.m3onSurfaceVariant
+                                    visible: search.text.length === 0
+                                }
+                            }
+                        }
                     }
                 }
-                Keys.onDownPressed: list.incrementCurrentIndex()
-                Keys.onUpPressed: list.decrementCurrentIndex()
             }
-
-            StyledText {
-                anchors.left: search.left
-                anchors.verticalCenter: search.verticalCenter
-                text: {
-                    switch (root.mode) {
-                    case "clipboard":
-                        return qsTr("Clipboard history…");
-                    case "emoji":
-                        return qsTr("Search emoji…");
-                    case "windows":
-                        return qsTr("Switch window…");
-                    case "wallpaper":
-                        return qsTr("Choose wallpaper…");
-                    default:
-                        return qsTr("Search apps… (> clip, : emoji, / windows, ~ wallpaper)");
-                    }
-                }
-                font: search.font
-                color: Colours.palette.m3onSurfaceVariant
-                visible: search.text.length === 0
-            }
-        }
 
         ListView {
             id: list
@@ -126,7 +187,11 @@ Item {
             readonly property int shown: Math.min(Tokens.sizes.launcher.maxShown, count)
 
             width: parent.width
-            height: Tokens.sizes.launcher.itemHeight * shown + Tokens.spacing.small * Math.max(0, shown - 1)
+            height: Tokens.sizes.launcher.itemHeight * shown + Tokens.spacing.small * Math.max(0, shown - 1) + Tokens.padding.large * 2
+            topMargin: Tokens.padding.large
+            bottomMargin: Tokens.padding.large
+            leftMargin: Tokens.padding.large
+            rightMargin: Tokens.padding.large
             clip: true
             spacing: Tokens.spacing.small
             currentIndex: 0
@@ -229,6 +294,7 @@ Item {
                     }
                 }
             }
+        }
         }
     }
 

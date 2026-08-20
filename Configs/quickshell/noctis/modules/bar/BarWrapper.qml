@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.components
+import qs.services
 import qs.utils
 import qs.modules.bar.popouts as BarPopouts
 
@@ -70,6 +71,19 @@ Item {
             }
         }
     ]
+
+    StyledRect {
+        id: background
+
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        width: root.implicitWidth
+
+        radius: Tokens.rounding.full
+        color: Colours.tPalette.m3surfaceContainer
+        visible: root.shouldBeVisible
+    }
 
     Loader {
         id: content

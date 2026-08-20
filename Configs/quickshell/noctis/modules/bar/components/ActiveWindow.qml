@@ -41,7 +41,7 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.full
-        color: Colours.tPalette.m3surfaceContainer
+        color: Colours.palette.m3surfaceContainerHigh
     }
 
     Loader {

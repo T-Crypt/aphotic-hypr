@@ -34,7 +34,7 @@ StyledRect {
     implicitWidth: Tokens.sizes.bar.innerWidth
     implicitHeight: nonAnimHeight
 
-    color: Qt.alpha(Colours.tPalette.m3surfaceContainer, (Config.bar.tray.background && items.count > 0) ? Colours.tPalette.m3surfaceContainer.a : 0)
+    color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, items.count > 0 ? 1 : 0)
     radius: Tokens.rounding.full
 
     Column {
