@@ -9,6 +9,7 @@ import qs.modules.osd
 import qs.modules.lock
 import qs.modules.session
 import qs.modules.dashboard
+import qs.modules.background
 
 ShellRoot {
     id: root
@@ -33,6 +34,12 @@ ShellRoot {
         model: Quickshell.screens
 
         ScreenState {}
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        BackgroundWindow {}
     }
 
     Variants {
