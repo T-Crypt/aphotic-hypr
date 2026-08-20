@@ -44,7 +44,7 @@ Item {
 
                     sourceComponent: HeroCard {
                         icon: "memory"
-                        title: SystemUsage.cpuName ? `CPU - ${SystemUsage.cpuName}` : qsTr("CPU")
+                        title: SystemUsage.cpuName ? `CPU - ${root.shortHwName(SystemUsage.cpuName)}` : qsTr("CPU")
                         mainValue: `${Math.round(SystemUsage.cpuPerc * 100)}%`
                         mainLabel: qsTr("Usage")
                         secondaryValue: root.displayTemp(SystemUsage.cpuTemp)
@@ -63,7 +63,7 @@ Item {
 
                     sourceComponent: HeroCard {
                         icon: "desktop_windows"
-                        title: SystemUsage.gpuName ? `GPU - ${SystemUsage.gpuName}` : qsTr("GPU")
+                        title: SystemUsage.gpuName ? `GPU - ${root.shortHwName(SystemUsage.gpuName)}` : qsTr("GPU")
                         mainValue: `${Math.round(SystemUsage.gpuPerc * 100)}%`
                         mainLabel: qsTr("Usage")
                         secondaryValue: root.displayTemp(SystemUsage.gpuTemp)
@@ -171,6 +171,15 @@ Item {
     // Function to display temperature with proper unit conversion
     function displayTemp(temp: real): string {
         return `${Math.ceil(Config.services.useFahrenheitPerformance ? temp * 1.8 + 32 : temp)}°${Config.services.useFahrenheitPerformance ? "F" : "C"}`;
+    }
+
+    // /proc/cpuinfo's "model name" (and most GPU name strings) are far too
+    // long for a compact card header -- e.g. "11th Gen Intel(R) Core(TM)
+    // i7-1195G7 @ 2.90GHz". Strip the marketing cruft real monitors also
+    // drop (register-mark suffixes, clock speed) rather than relying on
+    // mid-word ellipsis to hide it.
+    function shortHwName(name: string): string {
+        return name.replace(/\(R\)|\(TM\)|\(C\)/g, "").replace(/\s*@\s*[\d.]+\s*[GM]Hz/i, "").replace(/\s+/g, " ").trim();
     }
 
     // Components for dashboard cards
@@ -400,6 +409,8 @@ Item {
             }
 
             RowLayout {
+                id: statRow
+
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: Tokens.spacing.medium
@@ -442,10 +453,11 @@ Item {
         }
 
         Column {
+            id: mainStatColumn
+
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.margins: Tokens.padding.large
             anchors.rightMargin: 32
+            y: statRow.mapToItem(heroCard, 0, statRow.height / 2).y - height / 2
             spacing: 0
 
             StyledText {
@@ -919,6 +931,9 @@ Item {
                 }
 
                 StyledText {
+                    Layout.maximumWidth: 90
+                    elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignRight
                     text: {
                         const fmt = NetworkUsage.formatBytes(NetworkUsage.downloadSpeed ?? 0);
                         return fmt ? `${fmt.value.toFixed(1)} ${fmt.unit}` : "0.0 B/s";
@@ -951,6 +966,9 @@ Item {
                 }
 
                 StyledText {
+                    Layout.maximumWidth: 90
+                    elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignRight
                     text: {
                         const fmt = NetworkUsage.formatBytes(NetworkUsage.uploadSpeed ?? 0);
                         return fmt ? `${fmt.value.toFixed(1)} ${fmt.unit}` : "0.0 B/s";
@@ -983,6 +1001,9 @@ Item {
                 }
 
                 StyledText {
+                    Layout.maximumWidth: 110
+                    elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignRight
                     text: {
                         const down = NetworkUsage.formatBytesTotal(NetworkUsage.downloadTotal ?? 0);
                         const up = NetworkUsage.formatBytesTotal(NetworkUsage.uploadTotal ?? 0);
