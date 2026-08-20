@@ -25,6 +25,14 @@ QtObject {
         readonly property real defaultExpireTimeout: 5000
     }
 
+    // NetworkUsage.qml (vendored under Task 4) has always read
+    // GlobalConfig.dashboard.resourceUpdateInterval, but nothing wired
+    // the dashboard in until tonight, so this gap went unnoticed until
+    // Dashboard.qml's first real load surfaced it live.
+    readonly property QtObject dashboard: QtObject {
+        readonly property int resourceUpdateInterval: 2000
+    }
+
     readonly property QtObject services: QtObject {
         readonly property real brightnessIncrement: 0.1
         readonly property real audioIncrement: 0.1

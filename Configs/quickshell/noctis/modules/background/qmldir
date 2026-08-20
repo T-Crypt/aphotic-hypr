@@ -1,0 +1,4 @@
+module qs.modules.background
+BackgroundWindow 1.0 BackgroundWindow.qml
+DesktopClock 1.0 DesktopClock.qml
+Wallpaper 1.0 Wallpaper.qml
