@@ -102,7 +102,7 @@ ColumnLayout {
         }
     }
 
-    spacing: Tokens.spacing.medium
+    spacing: Tokens.spacing.extraSmall
 
     Repeater {
         id: repeater

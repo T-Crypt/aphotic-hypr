@@ -40,7 +40,7 @@ StyledRect {
         return false;
     }
 
-    color: Colours.tPalette.m3surfaceContainer
+    color: Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 
     clip: true
