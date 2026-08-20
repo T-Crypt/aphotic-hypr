@@ -63,6 +63,73 @@ Item {
             elide: Text.ElideRight
         }
 
+        // Seek bar
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 6
+            visible: Players.active?.length > 0
+
+            StyledRect {
+                anchors.fill: parent
+                radius: height / 2
+                color: Colours.tPalette.m3surfaceContainer
+            }
+
+            StyledRect {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                radius: parent.height / 2
+                width: Players.active?.length > 0 ? parent.width * Math.min(1, Players.active.position / Players.active.length) : 0
+                color: Colours.palette.m3primary
+
+                Behavior on width {
+                    enabled: !dashSeekArea.pressed
+                    Anim {}
+                }
+            }
+
+            MouseArea {
+                id: dashSeekArea
+
+                anchors.fill: parent
+                enabled: Players.active?.canSeek ?? false
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+                function seekToX(x: real): void {
+                    if (Players.active?.canSeek)
+                        Players.active.position = Math.min(1, Math.max(0, x / width)) * Players.active.length;
+                }
+
+                onPressed: mouse => seekToX(mouse.x)
+                onPositionChanged: mouse => {
+                    if (pressed)
+                        seekToX(mouse.x);
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: Players.active?.length > 0
+
+            StyledText {
+                text: root.formatTime(Players.active?.position ?? 0)
+                font: Tokens.font.label.small
+                color: Colours.palette.m3onSurfaceVariant
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            StyledText {
+                text: root.formatTime(Players.active?.length ?? 0)
+                font: Tokens.font.label.small
+                color: Colours.palette.m3onSurfaceVariant
+            }
+        }
+
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: Tokens.spacing.large
@@ -111,5 +178,40 @@ Item {
                 onClicked: Players.active?.next()
             }
         }
+
+        // Player switcher -- only shown when more than one MPRIS source is
+        // active (e.g. Spotify + a browser tab).
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            spacing: Tokens.spacing.small
+            visible: Players.list.length > 1
+
+            Repeater {
+                model: Players.list
+
+                Item {
+                    id: dot
+
+                    required property var modelData
+
+                    implicitWidth: 8
+                    implicitHeight: 8
+
+                    StateLayer {
+                        anchors.fill: parent
+                        radius: 4
+                        color: dot.modelData === Players.active ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
+                        onClicked: Players.manualActive = dot.modelData
+                    }
+                }
+            }
+        }
+    }
+
+    function formatTime(seconds: real): string {
+        const s = Math.max(0, Math.floor(seconds));
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        return `${m}:${r < 10 ? "0" : ""}${r}`;
     }
 }
