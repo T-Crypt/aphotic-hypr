@@ -13,10 +13,7 @@ PanelWindow {
     required property var modelData
     screen: modelData
 
-    readonly property ScreenState screenState: ScreenState {
-        modelData: root.screen
-        bar: true
-    }
+    required property ScreenState screenState
     readonly property BarPopouts.Wrapper popouts: popouts
 
     readonly property int barWidth: Tokens.sizes.bar.innerWidth + Config.border.thickness * 2

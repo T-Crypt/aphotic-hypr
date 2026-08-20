@@ -35,8 +35,14 @@ Item {
     property Title current: text1
 
     clip: true
-    implicitWidth: Math.max(icon.implicitWidth, current.implicitHeight)
-    implicitHeight: icon.implicitHeight + current.implicitWidth + current.anchors.topMargin
+    implicitWidth: Tokens.sizes.bar.innerWidth
+    implicitHeight: icon.implicitHeight + current.implicitWidth + current.anchors.topMargin + Tokens.padding.small * 2
+
+    StyledRect {
+        anchors.fill: parent
+        radius: Tokens.rounding.full
+        color: Colours.tPalette.m3surfaceContainer
+    }
 
     Loader {
         asynchronous: true
@@ -68,6 +74,8 @@ Item {
         id: icon
 
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: Tokens.padding.small
 
         animate: true
         text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")

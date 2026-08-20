@@ -160,6 +160,7 @@ ColumnLayout {
                 delegate: EntryWrapper {
                     Clock {
                         objectName: "taskbarClock"
+                        screenState: root.screenState
                     }
                 }
             }
