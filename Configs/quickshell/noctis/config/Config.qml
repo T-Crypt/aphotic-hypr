@@ -42,6 +42,7 @@ QtObject {
             readonly property bool statusIcons: true
             readonly property bool tray: true
             readonly property bool activeWindow: true
+            readonly property bool media: true
         }
 
         readonly property QtObject activeWindow: QtObject {
@@ -92,6 +93,7 @@ QtObject {
                 { id: "spacer", enabled: true },
                 { id: "activeWindow", enabled: true },
                 { id: "spacer", enabled: true },
+                { id: "media", enabled: true },
                 { id: "tray", enabled: true },
                 { id: "clock", enabled: true },
                 { id: "statusIcons", enabled: true },
