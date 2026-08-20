@@ -1,6 +1,7 @@
 # Claude Code working docs (specs, roadmap) - not part of the shipped rice
 CLAUDE_ROADMAP.md
 docs/superpowers/
+.superpowers/
 .claude/
 
 noctis.toml
