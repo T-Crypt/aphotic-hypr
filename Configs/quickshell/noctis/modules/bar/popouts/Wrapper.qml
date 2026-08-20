@@ -7,6 +7,7 @@ Item {
     id: root
 
     required property var screen
+    required property int barWidth
     property bool hasCurrent: false
     property string currentName: ""
     property real currentCenter: 0
@@ -23,7 +24,7 @@ Item {
     StyledRect {
         id: flyout
         visible: root.hasCurrent
-        x: -width - Tokens.spacing.small
+        x: root.barWidth + Tokens.spacing.small
         y: Math.max(0, root.currentCenter - height / 2)
         width: 160
         height: label.implicitHeight + Tokens.padding.medium * 2
