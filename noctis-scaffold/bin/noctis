@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# noctis — Noctis CLI dispatcher
+# @name: noctis
+# @short: Noctis dotfiles & shell control
+# @ver: 0.1.0
+# @usage: noctis <command> [args]
+#
+# Modeled on hyde-shell's dispatch/discovery pattern and caelestia's IPC
+# verbs. Each subcommand lives in its own file under lib/noctis/commands/
+# as cmd_<name>.sh and defines a single function noctis_cmd_<name>().
+# Adding a command = adding a file. This dispatcher should not need edits
+# for new subcommands, only for new top-level aliases.
+
+set -euo pipefail
+
+# ---------------------------------------------------------------------
+# Resolve BIN_DIR / LIB_DIR relative to this script's real location, so
+# `noctis` works whether it's symlinked onto PATH from ~/.local/bin or
+# run straight out of a cloned repo.
+# ---------------------------------------------------------------------
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    EXECUTABLE="${BASH_SOURCE[0]}"
+else
+    EXECUTABLE="$0"
+fi
+BIN_DIR="$(cd "$(dirname "$(readlink -f "$EXECUTABLE")")" && pwd)"
+LIB_DIR="$(cd "${BIN_DIR}/../lib/noctis" && pwd)"
+COMMANDS_DIR="${LIB_DIR}/commands"
+export BIN_DIR LIB_DIR COMMANDS_DIR
+
+# ---------------------------------------------------------------------
+# Shared env + helper functions (logging, XDG paths, confirm prompts).
+# ---------------------------------------------------------------------
+if [[ -r "${LIB_DIR}/globalcontrol.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "${LIB_DIR}/globalcontrol.sh"
+else
+    echo "noctis: cannot find ${LIB_DIR}/globalcontrol.sh — broken install?" >&2
+    exit 1
+fi
+
+_noctis_list_commands() {
+    [[ -d "$COMMANDS_DIR" ]] || return 0
+    find "$COMMANDS_DIR" -maxdepth 1 -type f -name 'cmd_*.sh' -exec basename {} \; \
+        | sed -e 's/^cmd_//' -e 's/\.sh$//' \
+        | sort
+}
+
+_noctis_usage() {
+    local _R=$'\e[0m' _B=$'\e[1m' _D=$'\e[2m' _C=$'\e[36m'
+    local ncmds
+    ncmds="$(_noctis_list_commands | wc -l | tr -d ' ')"
+    cat <<EOF
+
+${_B}noctis${_R} ${_D}v${NOCTIS_VERSION}${_R} — Noctis dotfiles & shell control
+
+${_B}USAGE${_R}
+    noctis ${_C}<command>${_R} ${_D}[args]${_R}
+
+${_B}CORE${_R}
+    ${_C}shell${_R} [-d|<ipc-call> ...]   Start the quickshell daemon, or pass an IPC call through
+    ${_C}reload${_R} [--full]             Hot-reload shell modules (--full also reloads Hyprland)
+    ${_C}doctor${_R}                      Check dependencies and report version drift
+
+${_B}CONFIG${_R}
+    ${_C}config${_R} get|set|edit ...     Read/write ${NOCTIS_CONFIG_FILE}
+    ${_C}theme${_R} list|set|next|prev
+    ${_C}wallpaper${_R} -f <path>|--random|--next
+    ${_C}scheme${_R} set -n <name>
+
+${_B}LIFECYCLE${_R}
+    ${_C}backup${_R} create|list|revert|clean
+    ${_C}restore${_R} [--populate|--overwrite]
+    ${_C}update${_R} [--dots-only]
+
+${_B}AI${_R}
+    ${_C}ai${_R} status|profile <name>
+
+${_B}BUILD${_R}
+    ${_C}iso${_R} build [--live|--installer]
+
+Run ${_C}noctis <command> --help${_R} for details on a specific command.
+${_D}${ncmds} command(s) discovered in ${COMMANDS_DIR}${_R}
+
+EOF
+}
+
+_noctis_dispatch() {
+    local cmd="$1"; shift || true
+    local script="${COMMANDS_DIR}/cmd_${cmd}.sh"
+    if [[ -r "$script" ]]; then
+        # shellcheck source=/dev/null
+        source "$script"
+        local fn="noctis_cmd_${cmd}"
+        if declare -F "$fn" >/dev/null; then
+            "$fn" "$@"
+        else
+            noctis_err "cmd_${cmd}.sh does not define ${fn}() — see lib/noctis/commands/README.md"
+            exit 1
+        fi
+    else
+        noctis_err "unknown command '${cmd}'"
+        echo "Run 'noctis --help' to see available commands." >&2
+        exit 127
+    fi
+}
+
+case "${1:-}" in
+    ""|-h|--help|help)
+        _noctis_usage
+        ;;
+    -v|--version|version)
+        echo "noctis ${NOCTIS_VERSION}"
+        ;;
+    -s|commands)
+        _noctis_list_commands
+        ;;
+    *)
+        cmd="$1"; shift
+        _noctis_dispatch "$cmd" "$@"
+        ;;
+esac
