@@ -1,6 +1,7 @@
 module qs.services
 singleton Audio 1.0 Audio.qml
 singleton Brightness 1.0 Brightness.qml
+singleton Colours 1.0 Colours.qml
 singleton Hypr 1.0 Hypr.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
