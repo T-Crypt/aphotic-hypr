@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell
-import qs.config
+import qs.modules.bar
 
 ShellRoot {
     id: root
@@ -8,22 +8,6 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        PanelWindow {
-            required property var modelData
-            screen: modelData
-
-            anchors.top: true
-            anchors.bottom: true
-            anchors.left: true
-
-            implicitWidth: 48
-            color: "#202020"
-
-            Text {
-                anchors.centerIn: parent
-                text: "noctis"
-                color: "white"
-            }
-        }
+        BarWindow {}
     }
 }
