@@ -126,3 +126,7 @@ hl.animation({ leaf = "fade",        enabled = true, speed = 10, bezier = "defau
 hl.animation({ leaf = "workspaces",  enabled = true, speed = 5,  bezier = "wind" })
 
 -- install.sh appends `require("nvidia")` below this line when an Nvidia GPU is detected.
+
+-- Loaded last so it can override anything above. install.sh never
+-- overwrites the real ~/.config/hypr/custom.lua once it exists.
+require("custom")

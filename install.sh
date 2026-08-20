@@ -34,7 +34,7 @@ Usage: ./install.sh [options]
   --profile <minimal|full>     Select base profile (skips wizard prompt)
   --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai
   --theme <name>                Theme preset name
-  --bar-position <top|left>     Initial waybar position
+  --bar-position <top|left>     Initial bar position
   --dry-run                     Print planned actions, change nothing
   --no-backup                   Skip backing up existing configs
   --keep-backups <N>             Backups to retain (default: 5)
@@ -198,7 +198,7 @@ main() {
 
   if [[ "$NO_BACKUP" != "1" ]]; then
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-    snapshot_config "$TIMESTAMP" hypr waybar kitty mako
+    snapshot_config "$TIMESTAMP" hypr quickshell kitty
     prune_backups "$KEEP_BACKUPS"
   fi
 
@@ -230,8 +230,21 @@ main() {
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to copy config files? (y,n) ' CFG
   if [[ "$CFG" == "Y" || "$CFG" == "y" ]]; then
     echo -e "$CNT - Copying config files..."
+    CUSTOM_LUA="$HOME/.config/hypr/custom.lua"
+    CUSTOM_LUA_BACKUP=""
+    if [[ -f "$CUSTOM_LUA" ]]; then
+      CUSTOM_LUA_BACKUP=$(mktemp)
+      cp "$CUSTOM_LUA" "$CUSTOM_LUA_BACKUP"
+    fi
+
     cp -R "$ROOT_DIR/Configs/"* "$HOME/.config/"
     chmod +x "$HOME/.config/hypr/scripts/"*
+
+    if [[ -n "$CUSTOM_LUA_BACKUP" ]]; then
+      cp "$CUSTOM_LUA_BACKUP" "$CUSTOM_LUA"
+      rm -f "$CUSTOM_LUA_BACKUP"
+      echo -e "$CNT - Preserved your existing hypr/custom.lua"
+    fi
 
     mkdir -p "$HOME/.local/bin"
     ln -sf "$ROOT_DIR/Configs/.local/bin/noctis" "$HOME/.local/bin/noctis"
