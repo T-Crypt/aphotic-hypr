@@ -1,0 +1,4 @@
+module qs.config
+singleton Tokens 1.0 Tokens.qml
+singleton Config 1.0 Config.qml
+singleton GlobalConfig 1.0 GlobalConfig.qml
