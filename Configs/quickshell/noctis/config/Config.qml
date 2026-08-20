@@ -24,7 +24,7 @@ QtObject {
         readonly property var excludedScreens: []
 
         readonly property QtObject tray: QtObject {
-            readonly property bool background: false
+            readonly property bool background: true
             readonly property bool recolour: false
             readonly property bool compact: false
             readonly property var iconSubs: GlobalConfig.bar.tray.iconSubs
@@ -32,7 +32,7 @@ QtObject {
         }
 
         readonly property QtObject clock: QtObject {
-            readonly property bool background: false
+            readonly property bool background: true
             readonly property bool showDate: false
             readonly property bool showIcon: true
         }
