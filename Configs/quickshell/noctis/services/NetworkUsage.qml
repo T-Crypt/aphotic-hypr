@@ -8,8 +8,6 @@ import qs.config
 Singleton {
     id: root
 
-    property int refCount: 0
-
     // Current speeds in bytes per second
     readonly property real downloadSpeed: _downloadSpeed
     readonly property real uploadSpeed: _uploadSpeed
@@ -155,7 +153,7 @@ Singleton {
 
     Timer {
         interval: GlobalConfig.dashboard.resourceUpdateInterval
-        running: root.refCount > 0
+        running: true
         repeat: true
         triggeredOnStart: true
 
