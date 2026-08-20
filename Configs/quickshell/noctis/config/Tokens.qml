@@ -52,6 +52,11 @@ QtObject {
             readonly property int itemHeight: 56
             readonly property int maxShown: 8
         }
+
+        readonly property QtObject notifs: QtObject {
+            readonly property int width: 380
+            readonly property int image: 40
+        }
     }
 
     readonly property QtObject fontSize: QtObject {

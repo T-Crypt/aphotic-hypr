@@ -21,6 +21,10 @@ QtObject {
         }
     }
 
+    readonly property QtObject notifs: QtObject {
+        readonly property real defaultExpireTimeout: 5000
+    }
+
     readonly property QtObject services: QtObject {
         readonly property real brightnessIncrement: 0.1
         readonly property real audioIncrement: 0.1
