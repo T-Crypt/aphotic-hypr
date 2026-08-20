@@ -6,6 +6,7 @@ import qs.modules.launcher
 import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.lock
+import qs.modules.session
 
 ShellRoot {
     id: root
@@ -17,6 +18,13 @@ ShellRoot {
     }
 
     Lock {}
+
+    Variants {
+        id: sessionWindows
+        model: Quickshell.screens
+
+        SessionWindow {}
+    }
 
     Variants {
         model: Quickshell.screens
@@ -44,6 +52,16 @@ ShellRoot {
             const win = launcherWindows.instances[0];
             if (win)
                 win.screenState.launcher = !win.screenState.launcher;
+        }
+    }
+
+    IpcHandler {
+        target: "session"
+
+        function toggle(): void {
+            const win = sessionWindows.instances[0];
+            if (win)
+                win.screenState.session = !win.screenState.session;
         }
     }
 }

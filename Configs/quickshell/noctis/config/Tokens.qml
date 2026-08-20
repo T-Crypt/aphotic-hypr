@@ -62,6 +62,10 @@ QtObject {
             readonly property int sliderWidth: 260
             readonly property int sliderHeight: 44
         }
+
+        readonly property QtObject session: QtObject {
+            readonly property int button: 96
+        }
     }
 
     readonly property QtObject fontSize: QtObject {
