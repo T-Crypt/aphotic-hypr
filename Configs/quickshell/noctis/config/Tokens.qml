@@ -46,6 +46,12 @@ QtObject {
         readonly property QtObject bar: QtObject {
             readonly property int innerWidth: 48
         }
+
+        readonly property QtObject launcher: QtObject {
+            readonly property int width: 640
+            readonly property int itemHeight: 56
+            readonly property int maxShown: 8
+        }
     }
 
     readonly property QtObject fontSize: QtObject {
