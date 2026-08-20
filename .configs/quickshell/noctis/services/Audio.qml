@@ -4,9 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
-import Caelestia
 import qs.config
-import Caelestia.Services
 
 Singleton {
     id: root
