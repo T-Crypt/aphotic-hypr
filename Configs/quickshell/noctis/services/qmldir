@@ -5,6 +5,8 @@ singleton Colours 1.0 Colours.qml
 singleton Hypr 1.0 Hypr.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
+NotifData 1.0 NotifData.qml
+singleton Notifs 1.0 Notifs.qml
 singleton Players 1.0 Players.qml
 singleton Time 1.0 Time.qml
 singleton Toaster 1.0 Toaster.qml

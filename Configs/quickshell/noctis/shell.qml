@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.bar
 import qs.modules.launcher
+import qs.modules.notifications
 
 ShellRoot {
     id: root
@@ -11,6 +12,12 @@ ShellRoot {
         model: Quickshell.screens
 
         BarWindow {}
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        NotificationsWindow {}
     }
 
     Variants {
