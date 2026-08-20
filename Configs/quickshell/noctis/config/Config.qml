@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import qs.config
 
 // bar.* defaults below match caelestia-dots/shell's native plugin
@@ -153,5 +154,10 @@ QtObject {
             readonly property bool showStorage: true
             readonly property bool showNetwork: true
         }
+    }
+
+    readonly property QtObject launcher: QtObject {
+        readonly property string emojiListPath: `${Quickshell.env("HOME")}/.config/rofi/emoji.txt`
+        readonly property string wallpaperDir: `${Quickshell.env("HOME")}/.config/awww`
     }
 }

@@ -15,9 +15,6 @@ hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("python3 ~/.config/hypr/scripts/walls
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("killall qs || qs -c noctis"))
 hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("firefox"))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code"))
-hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("~/.config/hypr/scripts/rofi-clipboard.sh"))
-hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("~/.config/hypr/scripts/rofi-emoji.sh"))
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/.config/hypr/scripts/rofi-wallpaper.sh"))
 
 -- Window binds
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))

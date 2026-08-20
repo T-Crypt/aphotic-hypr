@@ -10,6 +10,7 @@ import qs.modules.lock
 import qs.modules.session
 import qs.modules.dashboard
 import qs.modules.background
+import qs.modules.areapicker
 
 ShellRoot {
     id: root
@@ -120,4 +121,6 @@ ShellRoot {
                 win.screenState.dashboard = !win.screenState.dashboard;
         }
     }
+
+    AreaPicker {}
 }

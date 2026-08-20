@@ -24,6 +24,15 @@ Singleton {
 
     property string lastSpecialWorkspace: ""
 
+    // hyprctl's own IPC (Quickshell.Hyprland) has no keyboard-device API at
+    // all -- these three were referenced by StatusIcons.qml already (kbLayout
+    // display, lockStatus collapse check) but never defined here, a
+    // pre-existing dead reference. Backed by `hyprctl devices -j` since
+    // that's the only source for capsLock/numLock/active layout.
+    property string kbLayout: ""
+    property bool capsLock: false
+    property bool numLock: false
+
     signal configReloaded
 
     function dispatch(request: string): void {
@@ -85,6 +94,8 @@ Singleton {
             } else if (["openwindow", "closewindow", "movewindow"].includes(n)) {
                 Hyprland.refreshToplevels();
                 Hyprland.refreshWorkspaces();
+            } else if (n === "activelayout") {
+                root.refreshKeyboardState();
             } else if (n.includes("mon")) {
                 Hyprland.refreshMonitors();
             } else if (n.includes("workspace")) {
@@ -95,6 +106,38 @@ Singleton {
         }
 
         target: Hyprland
+    }
+
+    function refreshKeyboardState(): void {
+        keyboardStateProc.running = true;
+    }
+
+    Process {
+        id: keyboardStateProc
+        command: ["hyprctl", "-j", "devices"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const devices = JSON.parse(text);
+                    const kb = devices.keyboards?.find(k => k.main) ?? devices.keyboards?.[0];
+                    if (kb) {
+                        root.kbLayout = kb.active_keymap ?? "";
+                        root.capsLock = !!kb.capsLock;
+                        root.numLock = !!kb.numLock;
+                    }
+                } catch (e) {
+                    // Malformed/empty output from a transient hyprctl failure -- keep last known state.
+                }
+            }
+        }
+    }
+
+    Timer {
+        interval: 2000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root.refreshKeyboardState()
     }
 
     Connections {

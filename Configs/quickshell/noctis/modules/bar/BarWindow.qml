@@ -33,7 +33,7 @@ PanelWindow {
     // Wayland layer-shell surfaces clip anything outside their own bounds.
     // exclusionZone above stays pinned to barWidth so this extra space
     // doesn't reserve desktop area.
-    implicitWidth: barWidth + Tokens.spacing.small * 2 + 160
+    implicitWidth: barWidth + Tokens.spacing.small * 2 + 320
 
     BarPopouts.Wrapper {
         id: popouts

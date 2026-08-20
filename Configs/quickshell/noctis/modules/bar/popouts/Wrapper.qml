@@ -11,30 +11,84 @@ Item {
     property bool hasCurrent: false
     property string currentName: ""
     property real currentCenter: 0
+    property var currentTrayItem: null
 
-    readonly property string content: {
-        switch (currentName) {
-        case "statusIcons": return "Status";
-        case "tray": return "Tray";
-        case "activeWindow": return "Window";
-        default: return currentName.startsWith("traymenu") ? "Tray item" : "";
-        }
-    }
+    readonly property string category: currentName.startsWith("traymenu") ? "tray" : currentName
 
     StyledRect {
         id: flyout
-        visible: root.hasCurrent
+
+        visible: root.hasCurrent && loader.item
         x: root.barWidth + Tokens.spacing.small
         y: Math.max(0, root.currentCenter - height / 2)
-        width: 160
-        height: label.implicitHeight + Tokens.padding.medium * 2
+        width: loader.item ? loader.item.implicitWidth + Tokens.padding.medium * 2 : 0
+        height: loader.item ? loader.item.implicitHeight + Tokens.padding.medium * 2 : 0
         radius: Tokens.rounding.medium
         color: Colours.palette.m3surfaceContainerHigh
 
-        StyledText {
-            id: label
+        Loader {
+            id: loader
+
             anchors.centerIn: parent
-            text: root.content
+            active: root.hasCurrent
+
+            sourceComponent: {
+                switch (root.category) {
+                case "audio":
+                    return audioComp;
+                case "network":
+                    return networkComp;
+                case "bluetooth":
+                    return bluetoothComp;
+                case "battery":
+                    return batteryComp;
+                case "activewindow":
+                    return windowComp;
+                case "kblayout":
+                    return kbLayoutComp;
+                case "lockstatus":
+                    return lockStatusComp;
+                case "tray":
+                    return trayComp;
+                default:
+                    return null;
+                }
+            }
+        }
+    }
+
+    Component {
+        id: audioComp
+        AudioPopout {}
+    }
+    Component {
+        id: networkComp
+        NetworkPopout {}
+    }
+    Component {
+        id: bluetoothComp
+        BluetoothPopout {}
+    }
+    Component {
+        id: batteryComp
+        BatteryPopout {}
+    }
+    Component {
+        id: windowComp
+        WindowPopout {}
+    }
+    Component {
+        id: kbLayoutComp
+        KbLayoutPopout {}
+    }
+    Component {
+        id: lockStatusComp
+        LockStatusPopout {}
+    }
+    Component {
+        id: trayComp
+        TrayPopout {
+            trayItem: root.currentTrayItem
         }
     }
 }
