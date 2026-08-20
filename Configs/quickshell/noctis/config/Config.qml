@@ -103,4 +103,13 @@ QtObject {
         readonly property real brightnessIncrement: GlobalConfig.services.brightnessIncrement
         readonly property bool useTwelveHourClock: GlobalConfig.services.useTwelveHourClock
     }
+
+    // Matches caelestia-dots/shell's OsdConfig defaults
+    // (plugin/src/Caelestia/Config/osdconfig.hpp).
+    readonly property QtObject osd: QtObject {
+        readonly property bool enabled: true
+        readonly property int hideDelay: 2000
+        readonly property bool enableBrightness: true
+        readonly property bool enableMicrophone: false
+    }
 }

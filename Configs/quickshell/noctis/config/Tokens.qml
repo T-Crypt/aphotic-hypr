@@ -57,6 +57,11 @@ QtObject {
             readonly property int width: 380
             readonly property int image: 40
         }
+
+        readonly property QtObject osd: QtObject {
+            readonly property int sliderWidth: 260
+            readonly property int sliderHeight: 44
+        }
     }
 
     readonly property QtObject fontSize: QtObject {
