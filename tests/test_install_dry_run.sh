@@ -8,7 +8,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 rm -f noctis.toml
 
-output=$(bash install.sh --dry-run --profile full --with gaming,dev,ai --theme default --bar-position top 2>&1)
+output=$(bash install.sh --dry-run --profile full --with gaming,dev,ai --theme default 2>&1)
 status=$?
 [[ "$status" -eq 0 ]] || fail "install.sh --dry-run exited $status"
 

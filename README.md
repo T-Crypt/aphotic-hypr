@@ -114,7 +114,7 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Running with no flags launches a short wizard — profile, optional layers, theme, bar position — and writes your choices to `noctis.toml`, which becomes the source of truth for every re-run after that.
+Running with no flags launches a short wizard — profile, optional layers, theme — and writes your choices to `noctis.toml`, which becomes the source of truth for every re-run after that.
 
 > [!TIP]
 > Prefer to skip the prompts entirely:
@@ -127,7 +127,6 @@ Running with no flags launches a short wizard — profile, optional layers, them
 | `--profile <minimal\|full>` | Selects the base package set. Skips the profile prompt. |
 | `--with <layer,layer,...>` | Comma-separated layers to merge in: `gaming`, `dev`, `ai`. Skips the layer prompts. |
 | `--theme <name>` | Pre-selects a theme. Skips the theme prompt. |
-| `--bar-position <top\|left>` | Recorded in `noctis.toml`; not yet consumed by Quickshell's bar, which is currently fixed to the left. Skips the prompt. |
 | `--dry-run` | Prints the full resolved install plan and exits — nothing is installed, backed up, or written. |
 | `--no-backup` | Skips the pre-install config snapshot. Off by default; use with intent. |
 | `--keep-backups <N>` | How many timestamped backups to retain before pruning. Defaults to 5. |
