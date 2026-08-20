@@ -17,6 +17,7 @@
   <a href="#install"><code>Install</code></a> ·
   <a href="#profiles--layers"><code>Profiles</code></a> ·
   <a href="#architecture"><code>Architecture</code></a> ·
+  <a href="#quickshell-shell"><code>Quickshell</code></a> ·
   <a href="#theming"><code>Theming</code></a> ·
   <a href="#in-motion"><code>Screenshots</code></a> ·
   <a href="#keybindings"><code>Keybindings</code></a> ·
@@ -33,15 +34,33 @@
 | Layer | Choice |
 |---|---|
 | Window Manager | [Hyprland](https://github.com/hyprwm/Hyprland) |
-| Panel | [Waybar](https://github.com/Alexays/Waybar) |
+| Shell (bar, launcher, notifications, OSD, lock, power menu, dashboard) | [Quickshell](https://quickshell.org) — hand-vendored, visually cloned from [caelestia-dots/shell](https://github.com/caelestia-dots/shell) |
 | Terminal | [Kitty](https://github.com/kovidgoyal/kitty) |
-| Launcher | [Rofi](https://github.com/davatorium/rofi) with [custom launcher themes](https://github.com/adi1090x/rofi) |
-| Notifications | [Mako](https://github.com/emersion/mako) |
+| Secondary launcher (clipboard, emoji, wallpaper pickers) | [Rofi](https://github.com/davatorium/rofi) |
 | File Manager | [Thunar](https://github.com/xfce-mirror/thunar) |
 | Wallpaper Engine | [awww](https://codeberg.org/LGFae/awww) |
-| Shell | [ZSH](https://sourceforge.net/projects/zsh/) or [Starship](https://github.com/starship/starship) |
-| Lock Screen | [Swaylock (effects fork)](https://github.com/jirutka/swaylock-effects) |
+| Terminal shell | [ZSH](https://sourceforge.net/projects/zsh/) or [Starship](https://github.com/starship/starship) |
 | Audio Visualizer | [Cava](https://github.com/karlstav/cava) |
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
+
+<br>
+
+## Quickshell Shell
+
+Waybar, Mako, and Swaylock have been fully retired in favor of one hand-vendored [Quickshell](https://quickshell.org) shell — visually cloned from [caelestia-dots/shell](https://github.com/caelestia-dots/shell) (GPL-3.0), not an installed dependency: the QML is checked into `Configs/quickshell/noctis/`, with no native C++ plugin required. Color comes from `wallust` the same as everything else — Quickshell doesn't bring its own theming engine.
+
+| Module | Replaces | Notes |
+|---|---|---|
+| Bar | Waybar | Left-side vertical bar — workspaces, active window, tray, clock, status icons, power button |
+| Launcher | Rofi's drun mode | App search + launch (`SUPER+A` / `SUPER+SPACE`); Rofi stays installed for clipboard/emoji/wallpaper pickers, which the launcher doesn't cover yet |
+| Notifications | Mako | Popup toasts, top-right |
+| OSD | — (new) | Volume/mic/brightness popups on change |
+| Lock screen | Swaylock | Real `ext-session-lock-v1` + real PAM auth via the system's own `/etc/pam.d/swaylock` service — `SUPER+L` |
+| Session/power menu | Rofi's powermenu | Lock, suspend, log out, hibernate, reboot, shut down — `SUPER+Backspace` |
+| Dashboard | — (new) | Clock, calendar, now-playing media — `qs -c noctis ipc call dashboard toggle` |
+
+Every module is a thin, deliberately-scoped-down rewrite of its caelestia counterpart, not a faithful port — things needing caelestia's own native plugin (fingerprint/face auth, a calculator, Material-You scheme switching, weather, resource meters) were left out in favor of what Noctis actually needs.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -87,7 +106,7 @@ Running with no flags launches a short wizard — profile, optional layers, them
 | `--profile <minimal\|full>` | Selects the base package set. Skips the profile prompt. |
 | `--with <layer,layer,...>` | Comma-separated layers to merge in: `gaming`, `dev`, `ai`. Skips the layer prompts. |
 | `--theme <name>` | Pre-selects a theme. Skips the theme prompt. |
-| `--bar-position <top\|left>` | Sets Waybar's initial position. Skips the bar-position prompt. |
+| `--bar-position <top\|left>` | Recorded in `noctis.toml`; not yet consumed by Quickshell's bar, which is currently fixed to the left. Skips the prompt. |
 | `--dry-run` | Prints the full resolved install plan and exits — nothing is installed, backed up, or written. |
 | `--no-backup` | Skips the pre-install config snapshot. Off by default; use with intent. |
 | `--keep-backups <N>` | How many timestamped backups to retain before pruning. Defaults to 5. |
@@ -129,7 +148,7 @@ A **profile** is the base package set. A **layer** is an optional add-on merged 
 
 | Profile | What you get |
 |---|---|
-| `minimal` | Hyprland, Waybar, Kitty, Mako, awww, Rofi — the bare tiling desktop, nothing else. |
+| `minimal` | Hyprland, Quickshell, Kitty, awww, Rofi — the bare tiling desktop, nothing else. |
 | `full` | Everything in `minimal`, plus the complete Noctis experience: theming (Pywal, Pywalfox, Dracula GTK/icons), shell tooling (ZSH, Powerlevel10k, Starship), media (mpv, Cava, Swappy), file management (Thunar plus archive/GVFS plugins), Bluetooth, SDDM, and more. |
 
 | Layer | Adds |
@@ -160,12 +179,20 @@ Noctis-Hypr/
 │   └── layers/                  gaming.toml, dev.toml, ai.toml
 ├── themes/                      Swappable theme presets (THEME_SPEC.md documents the contract)
 └── Configs/                     Mirrors ~/.config — the configs that actually land on disk
+    ├── quickshell/noctis/        Hand-vendored Quickshell shell (see below)
+    │   ├── config/                Tokens/Config/GlobalConfig singletons (hand-written, no native plugin)
+    │   ├── services/               Colours (wallust-generated), Audio, Hypr, Players, Notifs, ...
+    │   ├── components/             Shared UI primitives (StyledText, MaterialIcon, StateLayer, ...)
+    │   └── modules/                bar/, launcher/, notifications/, osd/, lock/, session/, dashboard/
+    ├── hypr/                     hyprland.lua, keybinds.lua, custom.lua (never overwritten, see below)
     └── .local/
         ├── bin/noctis            noctis CLI entry point, symlinked onto PATH by install.sh
         └── lib/noctis/           noctis CLI internals (commands/, globalcontrol.sh)
 ```
 
 `install.sh` never hardcodes a package list — it resolves one at runtime by merging `profiles/base/<profile>.toml` with each selected `profiles/layers/<layer>.toml`, deduplicating as it goes. Everything downstream (backups, AUR helper choice, config copying) reads from that single resolved plan.
+
+`~/.config/hypr/custom.lua` is the one file `install.sh` never touches once it exists — put your own Hyprland tweaks there and a re-run or `noctis update` won't clobber them, the same idea as ML4W's protected `custom.conf`.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -177,9 +204,7 @@ Wallpaper-driven color generation, applied consistently across the stack:
 
 - Rofi
 - Kitty
-- Waybar
-- Mako
-- Swaylock
+- Quickshell (bar, launcher, notifications, OSD, lock, session menu, dashboard)
 - Cava
 - Firefox — requires the [Pywalfox extension](https://addons.mozilla.org/en-US/firefox/addon/pywalfox/)
 - VS Code
@@ -227,13 +252,13 @@ Wallpaper-driven color generation, applied consistently across the stack:
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Wallpaper picker (Rofi) |
 | <kbd>Super</kbd> + <kbd>,</kbd> | Clipboard history (Rofi) |
 | <kbd>Super</kbd> + <kbd>.</kbd> | Emoji picker (Rofi) |
-| <kbd>Super</kbd> + <kbd>A</kbd> | Application launcher (Rofi) |
-| <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
-| <kbd>Super</kbd> + <kbd>B</kbd> | Toggle Waybar |
+| <kbd>Super</kbd> + <kbd>A</kbd> / <kbd>Super</kbd> + <kbd>Space</kbd> | Application launcher (Quickshell) |
+| <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen (Quickshell) |
+| <kbd>Super</kbd> + <kbd>B</kbd> | Toggle Quickshell |
 | <kbd>Super</kbd> + <kbd>V</kbd> | Toggle floating |
 | <kbd>Super</kbd> + <kbd>J</kbd> | Toggle split direction |
 | <kbd>Super</kbd> + <kbd>S</kbd> | Screenshot tool |
-| <kbd>Super</kbd> + <kbd>Backspace</kbd> | Power menu (Rofi) |
+| <kbd>Super</kbd> + <kbd>Backspace</kbd> | Session / power menu (Quickshell) |
 | <kbd>Super</kbd> + Scroll | Cycle workspaces |
 | <kbd>Super</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Switch to workspace |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Move window to workspace |
@@ -246,11 +271,12 @@ Wallpaper-driven color generation, applied consistently across the stack:
 
 Noctis is being built in phases, on top of the manifest-driven installer already shipped:
 
-- **Identity** — a modern wallpaper-driven color engine (replacing the archived Pywal), multiple palette algorithms, and a live bar-position toggle.
-- **Gaming profile** — a real performance-mode toggle, MangoHud Waybar integration, Proton/Steam polish.
+- ~~**Identity** — a live bar-position toggle.~~ Superseded: wallust already replaced Pywal as the color engine, and the bar is now Quickshell's own fixed left-side layout rather than a repositionable Waybar.
+- **Quickshell shell** — ✅ done. Waybar, Mako, and Swaylock retired in favor of one hand-vendored Quickshell shell (bar, launcher, notifications, OSD, lock, session menu, dashboard) — see [Quickshell Shell](#quickshell-shell) above.
+- **Gaming profile** — a real performance-mode toggle, MangoHud bar integration, Proton/Steam polish.
 - **Dev environment** — deeper terminal and editor tooling, AI CLI workflow integration on top of the `ai` layer.
-- **Settings CLI** — a `noctis` command unifying theme, wallpaper, and bar-position switching from one place.
-- **Maintenance tooling** — versioning, `noctis doctor`, migrations, and CI.
+- **Settings CLI** — in progress. The `noctis` command already covers theme/wallpaper/scheme switching, backups, and shell control (`noctis shell <ipc-call>` reaches every Quickshell module's IPC surface directly); still to come: a real `noctis doctor` drift check and an optional GTK4 welcome window.
+- **Maintenance tooling** — versioning, migrations, and CI.
 
 Longer-term, once the roadmap phases land, the plan is a full wiki — install walkthroughs, theme authoring docs, and a troubleshooting reference — rather than trying to cram everything into this README forever.
 

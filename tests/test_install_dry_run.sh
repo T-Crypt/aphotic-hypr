@@ -12,7 +12,7 @@ output=$(bash install.sh --dry-run --profile full --with gaming,dev,ai --theme d
 status=$?
 [[ "$status" -eq 0 ]] || fail "install.sh --dry-run exited $status"
 
-for pkg in waybar gamemode mangohud neovim ollama spotify; do
+for pkg in quickshell gamemode mangohud neovim ollama spotify; do
   echo "$output" | grep -q -- "$pkg" || fail "expected '$pkg' in dry-run plan"
 done
 

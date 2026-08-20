@@ -15,8 +15,8 @@ os.system(f'wallust run {image_path}')
 os.system(f'cp {image_path} ~/.config/awww/wallpaper.rofi')
 # firefox
 os.system(f'pywalfox update')
-# Reload waybar to apply colorscheme
-os.system(f'killall -SIGUSR2 waybar')
+# Reload the shell to apply colorscheme
+os.system(f'noctis reload')
 # Send a notification
 os.system(
     f'notify-send -h string:x-canonical-private-synchronous:hypr-cfg -u low "Wallpaper changed to {os.path.basename(image_path)}"')
