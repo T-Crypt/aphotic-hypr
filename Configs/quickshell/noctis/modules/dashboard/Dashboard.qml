@@ -55,21 +55,24 @@ Item {
                     }
                 }
 
-                // GPU Card
+                // GPU Card -- always rendered when enabled, even with no
+                // GPU detected or no vendor stats tool installed, so the
+                // grid never reflows depending on what's available: shows
+                // "N/A" for usage/temp instead of hiding the card.
                 Loader {
                     id: gpuCard
 
-                    active: Config.dashboard.performance.showGpu && SystemUsage.gpuType !== "NONE"
+                    active: Config.dashboard.performance.showGpu
 
                     sourceComponent: HeroCard {
                         icon: "desktop_windows"
-                        title: SystemUsage.gpuName ? `GPU - ${root.shortHwName(SystemUsage.gpuName)}` : qsTr("GPU")
-                        mainValue: `${Math.round(SystemUsage.gpuPerc * 100)}%`
+                        title: SystemUsage.gpuDetected ? `GPU - ${root.shortHwName(SystemUsage.gpuName)}` : qsTr("GPU")
+                        mainValue: SystemUsage.gpuStatsAvailable ? `${Math.round(SystemUsage.gpuPerc * 100)}%` : qsTr("N/A")
                         mainLabel: qsTr("Usage")
-                        secondaryValue: root.displayTemp(SystemUsage.gpuTemp)
+                        secondaryValue: SystemUsage.gpuStatsAvailable ? root.displayTemp(SystemUsage.gpuTemp) : qsTr("N/A")
                         secondaryLabel: qsTr("Temp")
-                        usage: SystemUsage.gpuPerc
-                        temperature: SystemUsage.gpuTemp
+                        usage: SystemUsage.gpuStatsAvailable ? SystemUsage.gpuPerc : 0
+                        temperature: SystemUsage.gpuStatsAvailable ? SystemUsage.gpuTemp : 0
                         accentColor: Colours.palette.m3secondary
                     }
                 }

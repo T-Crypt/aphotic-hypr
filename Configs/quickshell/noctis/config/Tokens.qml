@@ -119,31 +119,42 @@ QtObject {
     // installed (ttf-material-symbols-variable) and set as the icon
     // font's family below; only the specific sizes actually read by
     // vendored bar components are populated with real point sizes.
-    function _fontBuilder(pointSize, weight, family) {
+    // Each mutator returns a BRAND NEW builder over a copy of state, rather
+    // than mutating shared closure state in place. This matters because
+    // `_fontStyle`'s `builders.*` entries are `readonly property` objects
+    // created once and shared across every consumer -- if a mutator like
+    // `scale()` mutated shared state instead, every re-evaluation of a
+    // binding that calls it (e.g. driven by Time.hourStr ticking every
+    // second) would compound the mutation forever on the same shared
+    // object, permanently ballooning that property for every other
+    // consumer too. This was a real bug: DashDateTime.qml's clock digits
+    // grew without bound because they called
+    // `Tokens.font.headline.builders.large.scale(1.3)...` every second.
+    function _fontBuilder(pointSize, weight, family, italic, letterSpacing) {
         const state = {
             family: family ?? "Inter",
             pointSize: pointSize ?? 13,
             weight: weight ?? Font.Normal,
-            italic: false,
-            letterSpacing: 0
+            italic: italic ?? false,
+            letterSpacing: letterSpacing ?? 0
         };
-        const builder = {
-            family: f => { state.family = f; return builder; },
-            size: pt => { state.pointSize = pt; return builder; },
-            weight: w => { state.weight = w; return builder; },
-            italic: on => { state.italic = on; return builder; },
-            stretch: () => builder,
-            letterSpacing: amt => { state.letterSpacing = amt; return builder; },
-            capitalisation: () => builder,
-            vaxis: () => builder,
-            vaxes: () => builder,
-            fill: () => builder,
-            grade: () => builder,
-            width: () => builder,
-            scale: factor => { state.pointSize = Math.max(1, Math.round(state.pointSize * factor)); return builder; },
+        const next = patch => _fontBuilder(patch.pointSize ?? state.pointSize, patch.weight ?? state.weight, patch.family ?? state.family, patch.italic ?? state.italic, patch.letterSpacing ?? state.letterSpacing);
+        return {
+            family: f => next({ family: f }),
+            size: pt => next({ pointSize: pt }),
+            weight: w => next({ weight: w }),
+            italic: on => next({ italic: on }),
+            stretch: () => next({}),
+            letterSpacing: amt => next({ letterSpacing: amt }),
+            capitalisation: () => next({}),
+            vaxis: () => next({}),
+            vaxes: () => next({}),
+            fill: () => next({}),
+            grade: () => next({}),
+            width: () => next({}),
+            scale: factor => next({ pointSize: Math.max(1, Math.round(state.pointSize * factor)) }),
             build: () => ({ family: state.family, pointSize: state.pointSize, weight: state.weight, italic: state.italic, letterSpacing: state.letterSpacing })
         };
-        return builder;
     }
 
     function _fontStyle(smallPt, mediumPt, largePt, family) {
