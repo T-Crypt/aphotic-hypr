@@ -11,30 +11,123 @@ Item {
     property bool hasCurrent: false
     property string currentName: ""
     property real currentCenter: 0
+    property var currentTrayItem: null
 
-    readonly property string content: {
-        switch (currentName) {
-        case "statusIcons": return "Status";
-        case "tray": return "Tray";
-        case "activeWindow": return "Window";
-        default: return currentName.startsWith("traymenu") ? "Tray item" : "";
-        }
+    readonly property string category: currentName.startsWith("traymenu") ? "tray" : currentName
+
+    // Keeps the loader (and thus popout content) alive through the
+    // fade-out animation below -- deactivating it the instant hasCurrent
+    // goes false would collapse width/height to 0 immediately and cut the
+    // fade short instead of shrinking smoothly.
+    property bool showContent: root.hasCurrent
+    onHasCurrentChanged: {
+        if (hasCurrent)
+            showContent = true;
+        else
+            closeTimer.start();
+    }
+
+    Timer {
+        id: closeTimer
+        interval: Tokens.anim.durations.large
+        onTriggered: root.showContent = false
     }
 
     StyledRect {
         id: flyout
-        visible: root.hasCurrent
+
+        visible: opacity > 0
+        opacity: root.hasCurrent && loader.item ? 1 : 0
+        scale: opacity
+        transformOrigin: Item.Left
         x: root.barWidth + Tokens.spacing.small
         y: Math.max(0, root.currentCenter - height / 2)
-        width: 160
-        height: label.implicitHeight + Tokens.padding.medium * 2
+        width: loader.item ? loader.item.implicitWidth + Tokens.padding.medium * 2 : 0
+        height: loader.item ? loader.item.implicitHeight + Tokens.padding.medium * 2 : 0
         radius: Tokens.rounding.medium
         color: Colours.palette.m3surfaceContainerHigh
 
-        StyledText {
-            id: label
+        Behavior on opacity {
+            Anim {
+                type: Anim.Emphasized
+            }
+        }
+
+        Behavior on scale {
+            Anim {
+                type: Anim.Emphasized
+            }
+        }
+
+        Loader {
+            id: loader
+
             anchors.centerIn: parent
-            text: root.content
+            active: root.showContent
+
+            sourceComponent: {
+                switch (root.category) {
+                case "audio":
+                    return audioComp;
+                case "network":
+                    return networkComp;
+                case "bluetooth":
+                    return bluetoothComp;
+                case "battery":
+                    return batteryComp;
+                case "activewindow":
+                    return windowComp;
+                case "kblayout":
+                    return kbLayoutComp;
+                case "lockstatus":
+                    return lockStatusComp;
+                case "media":
+                    return mediaComp;
+                case "tray":
+                    return trayComp;
+                default:
+                    return null;
+                }
+            }
+        }
+    }
+
+    Component {
+        id: audioComp
+        AudioPopout {}
+    }
+    Component {
+        id: networkComp
+        NetworkPopout {}
+    }
+    Component {
+        id: bluetoothComp
+        BluetoothPopout {}
+    }
+    Component {
+        id: batteryComp
+        BatteryPopout {}
+    }
+    Component {
+        id: windowComp
+        WindowPopout {}
+    }
+    Component {
+        id: kbLayoutComp
+        KbLayoutPopout {}
+    }
+    Component {
+        id: lockStatusComp
+        LockStatusPopout {}
+    }
+    Component {
+        id: mediaComp
+        MediaPopout {}
+    }
+    Component {
+        id: trayComp
+        TrayPopout {
+            trayItem: root.currentTrayItem
         }
     }
 }

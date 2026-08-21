@@ -4,20 +4,17 @@ local mainMod = "SUPER"
 
 -- Main binds
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("kitty"))
-hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("swaylock"))
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("qs -c noctis ipc call lock engage"))
 hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("wlogout --protocol layer-shell"))
-hl.bind(mainMod .. " + backspace", hl.dsp.exec_cmd("~/.config/hypr/scripts/powermenu.sh"))
+hl.bind(mainMod .. " + backspace", hl.dsp.exec_cmd("qs -c noctis ipc call session toggle"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"))
-hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("~/.config/hypr/scripts/rofi-combi.sh"))
+hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("qs -c noctis ipc call launcher toggle"))
 hl.bind(mainMod .. " + space", hl.dsp.exec_cmd("qs -c noctis ipc call launcher toggle"))
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("python3 ~/.config/hypr/scripts/wallswitcher.py"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("killall qs || qs -c noctis"))
 hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("firefox"))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code"))
-hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("~/.config/hypr/scripts/rofi-clipboard.sh"))
-hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("~/.config/hypr/scripts/rofi-emoji.sh"))
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("~/.config/hypr/scripts/rofi-wallpaper.sh"))
 
 -- Window binds
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))

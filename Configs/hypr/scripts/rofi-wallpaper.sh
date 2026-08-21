@@ -15,5 +15,5 @@ awww img --transition-type wipe --transition-duration 3 "$image_path"
 wallust run "$image_path"
 cp "$image_path" "$WALLPAPER_DIR/wallpaper.rofi"
 pywalfox update
-killall -SIGUSR2 waybar
+noctis reload
 notify-send -h string:x-canonical-private-synchronous:hypr-cfg -u low "Wallpaper changed to $selected"

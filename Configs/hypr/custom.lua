@@ -1,0 +1,7 @@
+-- Your own Hyprland tweaks go here.
+--
+-- install.sh never overwrites this file once it exists at
+-- ~/.config/hypr/custom.lua — a re-run or `noctis update` preserves
+-- whatever you put here instead of clobbering it, same idea as ML4W's
+-- protected custom.conf. Anything valid in hyprland.lua/keybinds.lua is
+-- valid here too; it's loaded last, so it can override earlier settings.

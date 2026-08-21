@@ -1,4 +1,8 @@
 module qs.modules.launcher
 AppItem 1.0 AppItem.qml
+ClipboardItem 1.0 ClipboardItem.qml
+EmojiItem 1.0 EmojiItem.qml
 Launcher 1.0 Launcher.qml
 LauncherWindow 1.0 LauncherWindow.qml
+WallpaperItem 1.0 WallpaperItem.qml
+WindowItem 1.0 WindowItem.qml

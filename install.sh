@@ -25,7 +25,35 @@ KEEP_BACKUPS=5
 PROFILE=""
 LAYERS=""
 THEME=""
-BAR_POSITION=""
+
+TOTAL_STAGES=7
+STAGE_COLORS=(35 36 33 34 32 36 35)
+
+print_banner() {
+  [[ -t 1 ]] || return 0
+  echo -e "\e[1;35m"
+  cat <<'EOF'
+ ███╗   ██╗ ██████╗  ██████╗████████╗██╗███████╗
+ ████╗  ██║██╔═══██╗██╔════╝╚══██╔══╝██║██╔════╝
+ ██╔██╗ ██║██║   ██║██║        ██║   ██║███████╗
+ ██║╚██╗██║██║   ██║██║        ██║   ██║╚════██║
+ ██║ ╚████║╚██████╔╝╚██████╗   ██║   ██║███████║
+ ╚═╝  ╚═══╝ ╚═════╝  ╚═════╝   ╚═╝   ╚═╝╚══════╝
+        ██╗  ██╗██╗   ██╗██████╗ ██████╗
+        ██║  ██║╚██╗ ██╔╝██╔══██╗██╔══██╗
+        ███████║ ╚████╔╝ ██████╔╝██████╔╝
+        ██╔══██║  ╚██╔╝  ██╔══██╗██╔══██╗
+        ██║  ██║   ██║   ██║  ██║██║  ██║
+        ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝
+EOF
+  echo -e "\e[0m"
+}
+
+print_stage() {
+  local num="$1" name="$2"
+  local color="${STAGE_COLORS[$(((num - 1) % ${#STAGE_COLORS[@]}))]}"
+  echo -e "\n\e[1;${color}m── [$num/$TOTAL_STAGES] $name ──\e[0m"
+}
 
 print_help() {
   cat <<'EOF'
@@ -34,7 +62,6 @@ Usage: ./install.sh [options]
   --profile <minimal|full>     Select base profile (skips wizard prompt)
   --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai
   --theme <name>                Theme preset name
-  --bar-position <top|left>     Initial waybar position
   --dry-run                     Print planned actions, change nothing
   --no-backup                   Skip backing up existing configs
   --keep-backups <N>             Backups to retain (default: 5)
@@ -47,7 +74,6 @@ while [[ $# -gt 0 ]]; do
     --profile) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; PROFILE="$2"; shift 2 ;;
     --with) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; LAYERS="$2"; shift 2 ;;
     --theme) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; THEME="$2"; shift 2 ;;
-    --bar-position) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; BAR_POSITION="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
     --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
@@ -73,12 +99,22 @@ fi
 PYTHON_BIN=$(resolve_python_bin) || { echo -e "$CER - Python is required but was not found. Install it first: sudo pacman -S python"; exit 1; }
 
 show_progress() {
-  while ps | grep "$1" &> /dev/null; do
-    echo -n "."
-    sleep 2
-  done
-  echo -en "Done!\n"
-  sleep 2
+  local pid="$1"
+  if [[ -t 1 ]]; then
+    local frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    local i=0
+    while ps | grep "$pid" &> /dev/null; do
+      printf "\r\e[K%s" "${frames:i++%${#frames}:1}"
+      sleep 0.1
+    done
+    printf "\r\e[K"
+  else
+    echo -n "working..."
+    while ps | grep "$pid" &> /dev/null; do
+      sleep 2
+    done
+    echo ""
+  fi
 }
 
 install_software() {
@@ -90,7 +126,7 @@ install_software() {
     echo -e "$CNT - [dry-run] would install $1"
     return 0
   fi
-  echo -en "$CNT - Now installing $1 ."
+  echo -en "$CNT - Now installing $1 "
   "$AUR_HELPER" -S --noconfirm "$1" &>> "$INSTLOG" &
   show_progress $!
   if "$AUR_HELPER" -Q "$1" &>> /dev/null ; then
@@ -125,11 +161,13 @@ resolve_config() {
   [[ -z "$PROFILE" ]] && PROFILE=$(prompt_profile)
   [[ -z "$LAYERS" ]] && LAYERS=$(prompt_layers)
   [[ -z "$THEME" ]] && THEME=$(prompt_theme)
-  [[ -z "$BAR_POSITION" ]] && BAR_POSITION=$(prompt_bar_position)
 }
 
 main() {
   clear
+  print_banner
+
+  print_stage 1 "Preflight"
   echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland."
 
   echo -e "$CNT - Checking for Physical or VM..."
@@ -139,6 +177,7 @@ main() {
     echo -e "$CWR - Please note that VMs are not fully supported and if you try to run this on a Virtual Machine there is a high chance this will fail."
   fi
 
+  print_stage 2 "Configuration"
   resolve_config
 
   local layer_paths=()
@@ -178,9 +217,11 @@ main() {
 
   echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password."
 
+  print_stage 3 "System prep"
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to disable WiFi powersave? (y,n) ' WIFI
   if [[ "$WIFI" == "Y" || "$WIFI" == "y" ]]; then
     if systemctl list-unit-files NetworkManager.service &>/dev/null; then
+      echo -e "$CNT - Disabling WiFi powersave..."
       LOC="/etc/NetworkManager/conf.d/wifi-powersave.conf"
       echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a "$LOC" &>> "$INSTLOG"
       sudo systemctl restart NetworkManager &>> "$INSTLOG"
@@ -194,19 +235,28 @@ main() {
     sudo pacman -S --needed --noconfirm base-devel &>> "$INSTLOG" || { echo -e "$CER - Failed to install base-devel. Install it manually: sudo pacman -S base-devel"; exit 1; }
   fi
 
+  echo -e "$CNT - Resolving AUR helper..."
   AUR_HELPER=$(ensure_aur_helper)
+  echo -e "$COK - Using AUR helper: $AUR_HELPER"
 
+  print_stage 4 "Backup"
   if [[ "$NO_BACKUP" != "1" ]]; then
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-    snapshot_config "$TIMESTAMP" hypr waybar kitty mako
+    echo -e "$CNT - Snapshotting existing configs..."
+    snapshot_config "$TIMESTAMP" hypr quickshell kitty
     prune_backups "$KEEP_BACKUPS"
+    echo -e "$COK - Backup saved under $(backup_root)/$TIMESTAMP"
+  else
+    echo -e "$CWR - Skipping backup (--no-backup)."
   fi
 
+  print_stage 5 "Installing packages"
   while IFS= read -r pkg; do
     [[ -n "$pkg" ]] && install_software "$pkg"
   done <<< "$prep_pkgs"
 
   if [[ "$ISNVIDIA" == "true" ]]; then
+    echo -e "$CNT - Configuring Nvidia modules..."
     sudo sed -i 's/MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
     sudo mkinitcpio --config /etc/mkinitcpio.conf --generate /boot/initramfs-custom.img
     echo -e "options nvidia-drm modeset=1" | sudo tee -a /etc/modprobe.d/nvidia.conf &>> "$INSTLOG"
@@ -223,15 +273,34 @@ main() {
     [[ -n "$pkg" ]] && install_software "$pkg"
   done <<< "$main_pkgs"
 
+  echo -e "$CNT - Enabling bluetooth service..."
   sudo systemctl enable --now bluetooth.service &>> "$INSTLOG"
+  echo -e "$CNT - Enabling display manager (sddm)..."
   sudo systemctl enable sddm &>> "$INSTLOG"
+  echo -e "$CNT - Removing conflicting desktop portals..."
   "$AUR_HELPER" -R --noconfirm xdg-desktop-portal-gnome xdg-desktop-portal-gtk &>> "$INSTLOG" || true
 
+  print_stage 6 "Deploying configs"
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to copy config files? (y,n) ' CFG
+  CFG_COPIED=0
   if [[ "$CFG" == "Y" || "$CFG" == "y" ]]; then
+    CFG_COPIED=1
     echo -e "$CNT - Copying config files..."
+    CUSTOM_LUA="$HOME/.config/hypr/custom.lua"
+    CUSTOM_LUA_BACKUP=""
+    if [[ -f "$CUSTOM_LUA" ]]; then
+      CUSTOM_LUA_BACKUP=$(mktemp)
+      cp "$CUSTOM_LUA" "$CUSTOM_LUA_BACKUP"
+    fi
+
     cp -R "$ROOT_DIR/Configs/"* "$HOME/.config/"
     chmod +x "$HOME/.config/hypr/scripts/"*
+
+    if [[ -n "$CUSTOM_LUA_BACKUP" ]]; then
+      cp "$CUSTOM_LUA_BACKUP" "$CUSTOM_LUA"
+      rm -f "$CUSTOM_LUA_BACKUP"
+      echo -e "$CNT - Preserved your existing hypr/custom.lua"
+    fi
 
     mkdir -p "$HOME/.local/bin"
     ln -sf "$ROOT_DIR/Configs/.local/bin/noctis" "$HOME/.local/bin/noctis"
@@ -248,7 +317,7 @@ main() {
       echo -e '\nrequire("nvidia")' >> "$HOME/.config/hypr/hyprland.lua"
     fi
 
-    echo -e "$CNT - Setting up the login screen."
+    echo -e "$CNT - Setting up the login screen..."
     sudo tar -xf "$ROOT_DIR/src/sugar-candy.tar.gz" -C /usr/share/sddm/themes/
     sudo chown -R "$USER:$USER" /usr/share/sddm/themes/sugar-candy
     sudo mkdir -p /etc/sddm.conf.d
@@ -257,31 +326,43 @@ main() {
     [[ -d "$WLDIR" ]] || sudo mkdir -p "$WLDIR"
     sudo cp "$ROOT_DIR/src/hyprland.desktop" /usr/share/wayland-sessions/
 
-    echo -e "$CNT - Adding VScode Extensions"
+    echo -e "$CNT - Adding VScode Extensions..."
     mkdir -p "$HOME/.vscode"
     tar -xf "$ROOT_DIR/src/extensions.tar.gz" -C "$HOME/.vscode/"
 
-    echo -e "$CNT - Adding Fonts for Rofi"
+    echo -e "$CNT - Adding Fonts for Rofi..."
     mkdir -p "$HOME/.local/share/fonts"
     cp "$ROOT_DIR/src/Icomoon-Feather.ttf" "$HOME/.local/share/fonts"
     fc-cache -fv
   fi
 
+  print_stage 7 "Shell setup"
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate the starship shell? (y,n) ' STAR
   if [[ "$STAR" == "Y" || "$STAR" == "y" ]]; then
+    echo -e "$CNT - Activating starship..."
     echo -e '\neval "$(starship init bash)"' >> "$HOME/.bashrc"
     cp "$ROOT_DIR/src/starship.toml" "$HOME/.config/"
   fi
 
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate zsh shell? (y,n) ' ZSH
   if [[ "$ZSH" == "Y" || "$ZSH" == "y" ]]; then
+    echo -e "$CNT - Activating zsh..."
     cp "$ROOT_DIR/Configs/.p10k.zsh" "$HOME"
     cp "$ROOT_DIR/Configs/.zshrc" "$HOME"
     chsh -s "$(which zsh)"
   fi
 
-  write_noctis_toml "$NOCTIS_TOML" "$PROFILE" "$LAYERS" "$THEME" "$BAR_POSITION" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)"
-  echo -e "$COK - Install complete. Config written to noctis.toml."
+  write_noctis_toml "$NOCTIS_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)"
+
+  echo -e "\n\e[1;32m── Install summary ──\e[0m"
+  echo -e "  Profile:       $PROFILE"
+  echo -e "  Layers:        ${LAYERS:-none}"
+  echo -e "  Theme:         $THEME"
+  echo -e "  AUR helper:    $AUR_HELPER"
+  echo -e "  Nvidia:        $ISNVIDIA"
+  echo -e "  Configs copied: $([[ "$CFG_COPIED" == "1" ]] && echo yes || echo no)"
+  echo -e "  Config saved:  $NOCTIS_TOML"
+  echo -e "$COK - Install complete."
 
   if [[ "$ISNVIDIA" == "true" ]]; then
     echo -e "$CAT - Since we attempted to setup an Nvidia GPU the script will now end and you should reboot."
