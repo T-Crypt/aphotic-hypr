@@ -7,13 +7,19 @@ import qs.services
 ColumnLayout {
     id: root
 
-    // Fixed width so Layout.fillWidth + elide on the CPU/disk secondary
-    // lines actually constrain their text instead of reporting their
-    // full unelided implicitWidth upward -- with no width imposed here,
-    // a long CPU model name grew the whole popout wider than
-    // BarWindow.qml's fixed popout-flyout budget and got clipped by the
-    // layer-shell surface's own bounds (real bug, not hypothetical).
-    width: 280
+    // Fixed implicitWidth (not width!) so Layout.fillWidth + elide on the
+    // CPU/disk secondary lines actually constrain their text instead of
+    // reporting their full unelided implicitWidth upward. This has to be
+    // implicitWidth specifically: popouts/Wrapper.qml sizes the flyout
+    // container from loader.item.implicitWidth, not .width -- setting
+    // plain `width:` left implicitWidth still driven by the longest
+    // unconstrained child (a long CPU model name), so the container
+    // rendered at a mismatched implicit size while this ColumnLayout's
+    // actual content was squeezed into the explicit width, clipping text
+    // at both edges. QtQuick's default `width: implicitWidth` binding
+    // (unset here) keeps both in sync. 300 matches SettingsPopout's own
+    // row width convention.
+    implicitWidth: 300
 
     spacing: Tokens.spacing.medium
 
