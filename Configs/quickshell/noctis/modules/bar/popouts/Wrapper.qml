@@ -90,6 +90,8 @@ Item {
                     return bluetoothComp;
                 case "battery":
                     return batteryComp;
+                case "resources":
+                    return resourcesComp;
                 case "activewindow":
                     return windowComp;
                 case "kblayout":
@@ -124,6 +126,10 @@ Item {
     Component {
         id: batteryComp
         BatteryPopout {}
+    }
+    Component {
+        id: resourcesComp
+        ResourcesPopout {}
     }
     Component {
         id: windowComp

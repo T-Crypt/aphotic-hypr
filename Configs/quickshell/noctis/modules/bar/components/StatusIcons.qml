@@ -156,6 +156,14 @@ StyledRect {
                         }
                     }
                 }
+                DelegateChoice {
+                    roleValue: "resources"
+                    delegate: EntryWrapper {
+                        ResourcesStatus {
+                            colour: root.colour
+                        }
+                    }
+                }
             }
         }
     }
