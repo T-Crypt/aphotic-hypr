@@ -31,17 +31,28 @@ Singleton {
     // engine mode (see themes/THEME_SPEC.md) for wallpapers that need
     // something other than Configs/wallust/wallust.toml's own defaults --
     // both are optional, an empty string means "let wallust use its own
-    // configured default" rather than forcing a value.
-    function setWallpaper(path: string, backend: var, palette: var): void {
+    // configured default" rather than forcing a value. colorscheme is a
+    // different engine mode entirely: a fixed palette read from
+    // Configs/wallust/colorschemes/<name>.json instead of derived from
+    // the wallpaper image, for themes with a real brand palette (e.g.
+    // HackTheBox) that shouldn't drift with whatever art the default
+    // wallpaper happens to contain -- when set, backend/palette (image-
+    // generation-only knobs) are ignored, mirroring cmd_theme.sh's
+    // _noctis_theme_apply so the CLI and this QML path stay in sync.
+    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var): void {
         Quickshell.execDetached(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
         Quickshell.execDetached(["cp", path, root.path]);
 
-        const cmd = ["wallust", "run", path];
-        if (backend)
-            cmd.push("-b", backend);
-        if (palette)
-            cmd.push("-p", palette);
-        Quickshell.execDetached(cmd);
+        if (colorscheme) {
+            Quickshell.execDetached(["wallust", "cs", colorscheme, "--format", "pywal"]);
+        } else {
+            const cmd = ["wallust", "run", path];
+            if (backend)
+                cmd.push("-b", backend);
+            if (palette)
+                cmd.push("-p", palette);
+            Quickshell.execDetached(cmd);
+        }
 
         // Best-effort — see cmd_sddm.sh; no-ops without passwordless sudo.
         Quickshell.execDetached(["noctis", "sddm", "sync"]);

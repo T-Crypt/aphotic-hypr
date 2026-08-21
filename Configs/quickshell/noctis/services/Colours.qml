@@ -75,19 +75,41 @@ QtObject {
         return contrastRatio(surface, blended) >= minBodyContrast ? blended : contrastOn(surface);
     }
 
+    // Several bar modules (Clock, Media, StatusIcons, ActiveWindow) use a
+    // raw accent role (m3primary/m3secondary/m3tertiary) directly as their
+    // icon+text colour, for per-module visual variety rather than flat
+    // neutral text everywhere. That's fine as long as the accent itself
+    // reads clearly against the dark pill it sits on -- but wallust can
+    // hand back a dark, desaturated accent for some wallpapers (this was a
+    // real bug: near-illegible dark-green title text on the HackTheBox
+    // theme), and unlike onPrimary/onTertiary/onSurface, nothing was
+    // contrast-checking the accent against the surface it's actually
+    // rendered on. legibleAccent leaves already-legible accents untouched
+    // (preserving the intended per-module hue) and only pulls a failing
+    // one toward the winning contrastOn() text colour, just enough to
+    // clear the same WCAG AA floor mutedOn() already enforces elsewhere.
+    function legibleAccent(accent: color, surface: color): color {
+        if (contrastRatio(accent, surface) >= minBodyContrast)
+            return accent;
+        return Qt.tint(accent, Qt.alpha(contrastOn(surface), 0.6));
+    }
+
     readonly property QtObject palette: QtObject {
-        readonly property color m3primary: "#508B6A"
+        readonly property color m3primary: "#004CFF"
         readonly property color m3onPrimary: root.contrastOn(m3primary)
-        readonly property color m3secondary: "#FCDC5D"
-        readonly property color m3tertiary: "#377374"
+        readonly property color m3primaryOnSurface: root.legibleAccent(m3primary, m3surfaceContainerHigh)
+        readonly property color m3secondary: "#FFFFFF"
+        readonly property color m3secondaryOnSurface: root.legibleAccent(m3secondary, m3surfaceContainerHigh)
+        readonly property color m3tertiary: "#9FEF00"
         readonly property color m3onTertiary: root.contrastOn(m3tertiary)
-        readonly property color m3error: "#6A4533"
+        readonly property color m3tertiaryOnSurface: root.legibleAccent(m3tertiary, m3surfaceContainerHigh)
+        readonly property color m3error: "#FF3E3E"
         readonly property color m3onError: root.contrastOn(m3error)
         readonly property color m3onSurface: root.contrastOn(m3surfaceContainer)
         readonly property color m3onSurfaceVariant: root.mutedOn(m3surfaceContainer, m3onSurface, 0.35)
-        readonly property color m3outlineVariant: "#303030"
-        readonly property color m3surfaceContainer: "#1A1A1A"
-        readonly property color m3surfaceContainerHigh: "#363636"
+        readonly property color m3outlineVariant: "#666666"
+        readonly property color m3surfaceContainer: "#192130"
+        readonly property color m3surfaceContainerHigh: "#353D4B"
         readonly property color m3shadow: "#000000"
     }
 

@@ -18,7 +18,7 @@ Singleton {
     readonly property string awwwDir: `${Quickshell.env("HOME")}/.config/awww`
     readonly property string statePath: `${Quickshell.env("HOME")}/.local/state/noctis/theme.json`
 
-    // Each entry: { name, displayName, description, backend, palette,
+    // Each entry: { name, displayName, description, backend, palette, colorscheme,
     // defaultWallpaper, wallpapers: [...] }
     property list<var> themes: []
     property string activeTheme: ""
@@ -84,7 +84,7 @@ Singleton {
         root.activeWallpaper = file;
 
         const fullPath = `${root.awwwDir}/${themeName}/${file}`;
-        Wallpapers.setWallpaper(fullPath, info.backend ?? "", info.palette ?? "");
+        Wallpapers.setWallpaper(fullPath, info.backend ?? "", info.palette ?? "", info.colorscheme ?? "");
         root._saveState();
     }
 
@@ -236,6 +236,7 @@ Singleton {
                         description: toml.theme?.description ?? "",
                         backend: toml.engine?.backend ?? "",
                         palette: toml.engine?.palette ?? "",
+                        colorscheme: toml.engine?.colorscheme ?? "",
                         defaultWallpaper: toml.wallpaper?.default ?? (t.wallpapers[0] ?? ""),
                         wallpapers: t.wallpapers.sort()
                     };

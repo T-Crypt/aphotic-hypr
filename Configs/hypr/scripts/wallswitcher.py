@@ -61,8 +61,9 @@ def parse_engine_pin(theme):
     toml_path = os.path.join(awww_dir, theme, "theme.toml")
     backend = ""
     palette = ""
+    colorscheme = ""
     if not os.path.isfile(toml_path):
-        return backend, palette
+        return backend, palette, colorscheme
     section = ""
     with open(toml_path) as f:
         for raw in f:
@@ -81,7 +82,9 @@ def parse_engine_pin(theme):
                 backend = value
             elif key == "palette":
                 palette = value
-    return backend, palette
+            elif key == "colorscheme":
+                colorscheme = value
+    return backend, palette, colorscheme
 
 
 def notify(message):
@@ -98,13 +101,19 @@ def apply_wallpaper(theme, wallpaper):
 
     subprocess.run(["awww", "img", "--transition-type", "wipe", "--transition-duration", "3", image_path])
 
-    backend, palette = parse_engine_pin(theme)
-    wallust_cmd = ["wallust", "run", image_path]
-    if backend:
-        wallust_cmd += ["-b", backend]
-    if palette:
-        wallust_cmd += ["-p", palette]
-    subprocess.run(wallust_cmd)
+    backend, palette, colorscheme = parse_engine_pin(theme)
+    if colorscheme:
+        # Fixed palette pin -- see cmd_theme.sh's _noctis_theme_apply for
+        # why some themes (HackTheBox's real green/navy scheme) pin an
+        # exact colorscheme file instead of deriving from the image.
+        subprocess.run(["wallust", "cs", colorscheme, "--format", "pywal"])
+    else:
+        wallust_cmd = ["wallust", "run", image_path]
+        if backend:
+            wallust_cmd += ["-b", backend]
+        if palette:
+            wallust_cmd += ["-p", palette]
+        subprocess.run(wallust_cmd)
     subprocess.run(["cp", image_path, os.path.join(awww_dir, "wallpaper.rofi")])
 
     # State is the source other tools (Quickshell's Themes.qml) read back,
