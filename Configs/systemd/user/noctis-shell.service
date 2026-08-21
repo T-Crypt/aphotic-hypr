@@ -1,0 +1,15 @@
+[Unit]
+Description=Noctis Quickshell desktop shell
+After=graphical-session.target
+PartOf=graphical-session.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/qs -c noctis
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

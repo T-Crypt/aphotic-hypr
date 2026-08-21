@@ -15,7 +15,7 @@ hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("python3 ~/.config/hypr/scripts/walls
 hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("qs -c noctis ipc call launcher openWallpapers"))
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("noctis theme prev"))
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("noctis theme next"))
-hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("killall qs || qs -c noctis"))
+hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("systemctl --user restart noctis-shell.service"))
 hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("firefox"))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code"))
 

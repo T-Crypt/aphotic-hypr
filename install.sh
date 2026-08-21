@@ -335,6 +335,11 @@ main() {
     mkdir -p "$HOME/.local/bin"
     ln -sf "$ROOT_DIR/Configs/.local/bin/noctis" "$HOME/.local/bin/noctis"
 
+    echo -e "$CNT - Enabling the Noctis shell restart-supervision unit..."
+    mkdir -p "$HOME/.config/systemd/user"
+    systemctl --user daemon-reload &>> "$INSTLOG"
+    systemctl --user enable noctis-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable noctis-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
+
     # Make sure `noctis` (and anything else under ~/.local/bin) resolves on
     # PATH without relying on the optional zsh-activation step below, since
     # bash users need this too and Configs/.zshrc only lands on disk if they
