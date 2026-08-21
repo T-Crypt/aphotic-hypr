@@ -23,6 +23,7 @@ description = "Neon purples and blues, city-at-night palette."
 name = "wallust"        # "wallust" | "matugen" (matugen not wired yet — Phase 3)
 backend = "fastresize"  # wallust -b: full | resized | wal | thumb | fastresize
 palette = "kmeans"      # wallust -p: salience | ansi | kmeans
+colorscheme = "hackthebox"  # fixed palette, see below — mutually exclusive with backend/palette
 
 [wallpaper]
 default = "wallpaper-one.jpg"   # shown first when the theme is selected
@@ -52,6 +53,22 @@ returning to a theme resumes where you left it rather than resetting to
 `[overrides]` is reserved for Phase 3's per-app override story — not
 consumed by anything yet. A theme author can still write entries now;
 they're simply ignored until that lands.
+
+### Fixed colorschemes (`[engine].colorscheme`)
+
+`backend`/`palette` both assume the palette is *derived* from the
+theme's wallpaper image (`wallust run`). Some themes have a real brand
+palette that shouldn't drift with whatever art ships as the default
+wallpaper — HackTheBox is the example already in this repo. For those,
+set `[engine].colorscheme` to a name under
+`Configs/wallust/colorschemes/<name>.json` (pywal format: a `special`
+object with `background`/`foreground`/`cursor`, and a `colors` object
+with `color0`–`color15`) instead. All three call sites that apply a
+theme (`cmd_theme.sh`, `Wallpapers.qml`'s `setWallpaper`, and
+`wallswitcher.py`) check for this key first and run `wallust cs <name>
+--format pywal` instead of `wallust run <image>` when it's set —
+`backend`/`palette` are ignored in that case, since they're
+image-generation-only knobs.
 
 ## Minimal valid theme
 

@@ -100,18 +100,30 @@ _noctis_theme_apply() {
     fi
 
     local image_path="${dir}/${wallpaper_file}"
-    local backend palette
+    local backend palette colorscheme
     backend="$(_noctis_toml_get "${dir}/theme.toml" engine backend)"
     palette="$(_noctis_toml_get "${dir}/theme.toml" engine palette)"
+    colorscheme="$(_noctis_toml_get "${dir}/theme.toml" engine colorscheme)"
 
     noctis_require awww || return 1
     awww img "$image_path" --transition-type wipe --transition-angle 30 --transition-step 90
 
     if command -v wallust >/dev/null 2>&1; then
-        local wallust_cmd=(wallust run "$image_path")
-        [[ -n "$backend" ]] && wallust_cmd+=(-b "$backend")
-        [[ -n "$palette" ]] && wallust_cmd+=(-p "$palette")
-        "${wallust_cmd[@]}"
+        if [[ -n "$colorscheme" ]]; then
+            # Fixed palette pin (theme.toml's [engine].colorscheme) --
+            # reads Configs/wallust/colorschemes/<name>.json instead of
+            # deriving colors from the wallpaper image, for themes with a
+            # real brand palette (e.g. HackTheBox's own green/navy scheme)
+            # that shouldn't drift with whatever art ships as the default
+            # wallpaper. backend/palette are image-generation-only knobs
+            # and don't apply here.
+            wallust cs "$colorscheme" --format pywal
+        else
+            local wallust_cmd=(wallust run "$image_path")
+            [[ -n "$backend" ]] && wallust_cmd+=(-b "$backend")
+            [[ -n "$palette" ]] && wallust_cmd+=(-p "$palette")
+            "${wallust_cmd[@]}"
+        fi
     else
         noctis_warn "wallust not found, skipping palette regeneration"
     fi

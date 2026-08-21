@@ -3,8 +3,12 @@ display_name = "HackTheBox"
 description = "Dark, tech/sci-fi accents."
 
 [engine]
-backend = "fastresize"
-palette = "kmeans"
+# Fixed brand palette (see Configs/wallust/colorschemes/hackthebox.json,
+# sourced from https://github.com/audibleblink/hackthebox.vim's kitty
+# scheme) instead of deriving from circuit.jpg -- HackTheBox's own
+# green/navy identity shouldn't drift with whatever the default
+# wallpaper's dominant colors happen to be.
+colorscheme = "hackthebox"
 
 [wallpaper]
 default = "circuit.jpg"
