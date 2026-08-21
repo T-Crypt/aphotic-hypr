@@ -2,6 +2,7 @@
 # noctis restore — deploy Noctis's own default dotfiles into place.
 # @cmd: restore
 # @cmd.desc: Deploy upstream Noctis dotfiles (populate/overwrite semantics)
+# @cmd.group: LIFECYCLE
 # @cmd.opt: --populate  | Only write files that don't already exist (safe, default)
 # @cmd.opt: --overwrite | Back up current files then overwrite with defaults
 #

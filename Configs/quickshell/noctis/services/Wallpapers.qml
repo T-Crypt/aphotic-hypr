@@ -42,5 +42,8 @@ Singleton {
         if (palette)
             cmd.push("-p", palette);
         Quickshell.execDetached(cmd);
+
+        // Best-effort — see cmd_sddm.sh; no-ops without passwordless sudo.
+        Quickshell.execDetached(["noctis", "sddm", "sync"]);
     }
 }

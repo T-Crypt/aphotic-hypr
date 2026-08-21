@@ -16,7 +16,7 @@ PanelWindow {
     required property ScreenState screenState
     readonly property BarPopouts.Wrapper popouts: popouts
 
-    readonly property int barWidth: Tokens.sizes.bar.innerWidth + Config.border.thickness * 2
+    readonly property int barWidth: Tokens.sizes.bar.innerWidth + Math.max(Tokens.padding.small, Config.border.thickness) * 2
 
     WlrLayershell.namespace: "noctis-bar"
     WlrLayershell.layer: WlrLayer.Top

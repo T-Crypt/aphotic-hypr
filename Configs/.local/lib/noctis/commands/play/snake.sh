@@ -26,7 +26,7 @@ noctis_cmd_play_snake() {
     local score=0
 
     # Initialize game
-    local init_game() {
+    init_game() {
         # Clear screen and hide cursor
         echo -ne "$clear_screen$hide_cursor$cursor_home"
 
@@ -42,7 +42,7 @@ noctis_cmd_play_snake() {
     }
 
     # Place food at random location
-    local place_food() {
+    place_food() {
         local valid_position=true
         local x=0
         local y=0
@@ -67,7 +67,7 @@ noctis_cmd_play_snake() {
     }
 
     # Draw game board
-    local draw_board() {
+    draw_board() {
         echo -ne "$cursor_home"
 
         # Top border
@@ -116,7 +116,7 @@ noctis_cmd_play_snake() {
     }
 
     # Move snake
-    local move_snake() {
+    move_snake() {
         # Save tail position (to remove it when snake grows)
         local tail_x=${snake_x[$((snake_length-1))]}
         local tail_y=${snake_y[$((snake_length-1))]}
@@ -170,7 +170,7 @@ noctis_cmd_play_snake() {
     }
 
     # Handle input
-    local handle_input() {
+    handle_input() {
         local input=""
 
         # Read input without waiting for Enter

@@ -2,6 +2,7 @@
 # noctis shell — start the quickshell daemon or pass through an IPC call.
 # @cmd: shell
 # @cmd.desc: Start the quickshell daemon, or forward an IPC call to it
+# @cmd.group: CORE
 # @cmd.opt: -d, --daemon    | Start in daemon mode (backgrounded)
 # @cmd.opt: <ipc-call> ...  | Forward args to `qs -c noctis ipc call ...`
 

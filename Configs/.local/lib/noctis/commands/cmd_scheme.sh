@@ -2,6 +2,7 @@
 # noctis scheme — colour scheme control (static or matugen-style dynamic).
 # @cmd: scheme
 # @cmd.desc: Set the active colour scheme
+# @cmd.group: CONFIG
 # @cmd.opt: set -n <name> | Apply a named scheme
 #
 # Reads the active theme/wallpaper from the shared theme.json (the

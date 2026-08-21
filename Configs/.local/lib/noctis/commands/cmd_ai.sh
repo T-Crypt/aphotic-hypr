@@ -2,6 +2,7 @@
 # noctis ai — status and profile switching for the Claude Code / Ollama panel.
 # @cmd: ai
 # @cmd.desc: Check AI backend status, switch the active provider profile
+# @cmd.group: AI
 # @cmd.opt: status         | Show reachability of Claude Code / Ollama, loaded models
 # @cmd.opt: profile <name> | Switch the shell's AI-panel provider/model config
 

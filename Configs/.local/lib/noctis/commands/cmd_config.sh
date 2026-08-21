@@ -2,6 +2,7 @@
 # noctis config — read/write shell.json, trigger a live reload on write.
 # @cmd: config
 # @cmd.desc: Get, set, or edit Noctis shell configuration
+# @cmd.group: CONFIG
 # @cmd.opt: get <key>          | Print a config value (dot.path notation)
 # @cmd.opt: set <key> <value>  | Write a value and trigger a reload
 # @cmd.opt: edit                | Open NOCTIS_CONFIG_FILE in $EDITOR, validate on save

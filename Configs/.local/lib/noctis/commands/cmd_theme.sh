@@ -2,6 +2,7 @@
 # noctis theme — switch between installed Noctis themes.
 # @cmd: theme
 # @cmd.desc: List, set, or cycle themes
+# @cmd.group: CONFIG
 # @cmd.opt: list        | List installed themes
 # @cmd.opt: set <name>  | Apply a theme by name
 # @cmd.opt: next|prev   | Cycle to the next/previous theme
@@ -119,6 +120,10 @@ _noctis_theme_apply() {
 
     _noctis_theme_write_state "$theme_name" "$wallpaper_file"
     noctis_json_set "theme.active" "$theme_name"
+
+    # Best-effort — see cmd_sddm.sh; silently no-ops without passwordless
+    # sudo rather than blocking a theme switch on a password prompt.
+    source "${COMMANDS_DIR}/cmd_sddm.sh" && _noctis_sddm_sync
 
     # Quickshell hot-reloads Themes.qml's state via FileView watchChanges
     # on theme.json — no explicit reload needed for the shell to pick

@@ -7,8 +7,30 @@ This directory contains the individual command implementations for the `noctis` 
 To add a new command:
 1. Create a file named `cmd_<name>.sh` following the existing pattern
 2. The file should define a function named `noctis_cmd_<name>()`
-3. Include proper documentation with @cmd, @cmd.desc, and @cmd.opt annotations
-4. The dispatcher will automatically discover and load the command
+3. Include proper documentation with @cmd, @cmd.desc, @cmd.group, and @cmd.opt annotations
+4. The dispatcher will automatically discover and load the command, *and*
+   `noctis --help`/`noctis`'s summary screen is generated entirely from
+   these annotations — nothing else needs editing for a new command to
+   show up there correctly grouped.
+
+`@cmd.group` picks which heading it's grouped under in `noctis --help`
+(`CORE`, `CONFIG`, `LIFECYCLE`, `AI`, `BUILD`, `FUN`, or a new group name
+of your choosing — unknown groups just render as their own heading,
+appended after the known ones). Omitting it puts the command under
+`OTHER` rather than dropping it from the list.
+
+## Grouped Subcommands
+
+The dispatcher only auto-discovers files matching `cmd_*.sh` directly inside
+this directory (`-maxdepth 1`), and treats *every* match as its own
+top-level command — `cmd_foo_bar.sh` becomes a real, callable `noctis
+foo_bar`, whether or not that's what you meant. If a command has its own
+sub-verbs (`noctis play hangman`, `noctis play snake`, ...), put the
+sub-verb implementations in a subdirectory named after the command
+(`commands/play/hangman.sh`, `commands/play/snake.sh` — no `cmd_` prefix)
+and have the top-level `cmd_<name>.sh` `source` them explicitly by path.
+That keeps them out of discovery and out of `noctis`'s command list, while
+the top-level file still dispatches to them normally.
 
 ## Command Structure
 
@@ -27,6 +49,26 @@ Each command file should:
 - `noctis_err(message)` - Log an error message with red prefix
 - `noctis_confirm(prompt)` - Prompt user for confirmation
 - `noctis_require(binary)` - Check if a binary exists on PATH
+
+## `noctis sddm sync` and passwordless sudo
+
+`cmd_sddm.sh` copies the current wallpaper into the SDDM theme and
+rewrites its `Background=` line, so the login screen tracks whatever
+wallpaper is active. It's called automatically (best-effort) from
+`noctis theme`/`wallpaper`, `wallswitcher.py`, and the QML wallpaper
+picker — but those `cp`/`sed` calls need root, so without passwordless
+sudo for exactly that pair of commands, the hook just warns and no-ops
+instead of blocking on a password prompt. To enable full automatic
+sync, add a sudoers drop-in (`sudo visudo -f /etc/sudoers.d/noctis-sddm`)
+scoped narrowly to those two commands, e.g.:
+
+```
+your_user ALL=(root) NOPASSWD: /usr/bin/cp * /usr/share/sddm/themes/sugar-candy/Backgrounds/, /usr/bin/sed -i * /usr/share/sddm/themes/sugar-candy/theme.conf
+```
+
+Without it, run `noctis sddm sync` manually (or `sudo -v` once per
+session before switching themes) whenever you want the login background
+refreshed.
 
 ## Environment Variables
 

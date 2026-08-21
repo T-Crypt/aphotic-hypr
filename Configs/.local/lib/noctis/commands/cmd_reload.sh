@@ -2,6 +2,7 @@
 # noctis reload — hot-reload the shell, optionally the full session.
 # @cmd: reload
 # @cmd.desc: Reload Noctis shell modules, optionally the full session
+# @cmd.group: CORE
 # @cmd.opt: --full          | Also reload Hyprland config
 # @cmd.opt: --modules-only  | Reload only quickshell modules (default)
 

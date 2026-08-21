@@ -42,7 +42,7 @@
 | Audio Visualizer | [Cava](https://github.com/karlstav/cava) |
 
 > [!NOTE]
-> Rofi shipped as the app launcher, clipboard/emoji/wallpaper pickers, and power menu through the earlier Waybar-based setup. All four are now covered natively by the Quickshell launcher (`SUPER+A`) — see [Launcher modes](#quickshell-shell) below. Rofi is no longer wired into any keybind.
+> Rofi shipped as the app launcher, clipboard/emoji/wallpaper pickers, and power menu through the earlier Waybar-based setup. All four are now covered natively by the Quickshell launcher (`SUPER+A`) — see [Launcher modes](#quickshell-shell) below. Rofi isn't installed by either profile anymore; nothing in this repo launches it.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -74,7 +74,7 @@ Every module is a thin, deliberately-scoped-down rewrite of its caelestia counte
 |:--:|---|---|
 | *(nothing)* | Search & launch installed apps | Desktop entries |
 | `>` | Clipboard history | `cliphist` |
-| `:` | Emoji picker | `Configs/rofi/emoji.txt` |
+| `:` | Emoji picker | `Configs/quickshell/noctis/data/emoji.txt` |
 | `/` | Switch to an open window | Hyprland's own window list |
 | `~` | Change wallpaper | Files in `~/.config/awww` |
 
@@ -168,7 +168,7 @@ A **profile** is the base package set. A **layer** is an optional add-on merged 
 
 | Profile | What you get |
 |---|---|
-| `minimal` | Hyprland, Quickshell, Kitty, awww, Rofi — the bare tiling desktop, nothing else. |
+| `minimal` | Hyprland, Quickshell, Kitty, awww, plus the binaries the always-loaded Quickshell shell itself needs (wallust, grim/slurp/swappy, brightnessctl, swaylock-effects) — the bare tiling desktop, nothing else. |
 | `full` | Everything in `minimal`, plus the complete Noctis experience: theming (Pywal, Pywalfox, Dracula GTK/icons), shell tooling (ZSH, Powerlevel10k, Starship), media (mpv, Cava, Swappy), file management (Thunar plus archive/GVFS plugins), Bluetooth, SDDM, and more. |
 
 | Layer | Adds |
@@ -223,7 +223,6 @@ Noctis-Hypr/
 
 Wallpaper-driven color generation, applied consistently across the stack:
 
-- Rofi
 - Kitty
 - Quickshell (bar, launcher, notifications, OSD, lock, session menu, dashboard)
 - Cava
@@ -238,6 +237,7 @@ Wallpaper-driven color generation, applied consistently across the stack:
 
 Noctis now features a complete theming system with:
 - CLI commands for theme management (`noctis theme list`, `set`, `next`, `prev`)
+- <kbd>Super</kbd> + <kbd>,</kbd> / <kbd>Super</kbd> + <kbd>.</kbd> keybinds to cycle themes without leaving the keyboard
 - Automatic palette regeneration when schemes change
 - State tracking for current theme and wallpaper
 - Integration with Quickshell's color system via wallust engine
@@ -313,6 +313,8 @@ All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/ke
 | <kbd>Super</kbd> + <kbd>F</kbd> | Launch Firefox |
 | <kbd>Super</kbd> + <kbd>S</kbd> | Screenshot — region select via `grim`/`slurp`/`swappy`. The Quickshell picker (drag-select with client snapping + freeze preview) is available via `qs -c noctis ipc call picker open` |
 | <kbd>Super</kbd> + <kbd>W</kbd> | Change wallpaper (random pick) — open the launcher and type `~` to pick a specific one instead |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>W</kbd> | Open the launcher's wallpaper picker directly |
+| <kbd>Super</kbd> + <kbd>,</kbd> / <kbd>Super</kbd> + <kbd>.</kbd> | Cycle to the previous/next theme — same as `noctis theme prev`/`next` |
 
 **Shell (Quickshell)**
 

@@ -223,7 +223,9 @@ main() {
     if systemctl list-unit-files NetworkManager.service &>/dev/null; then
       echo -e "$CNT - Disabling WiFi powersave..."
       LOC="/etc/NetworkManager/conf.d/wifi-powersave.conf"
-      echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a "$LOC" &>> "$INSTLOG"
+      if ! sudo grep -qF "wifi.powersave = 2" "$LOC" 2>/dev/null; then
+        echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a "$LOC" &>> "$INSTLOG"
+      fi
       sudo systemctl restart NetworkManager &>> "$INSTLOG"
     else
       echo -e "$CWR - NetworkManager isn't installed; skipping WiFi powersave config."
@@ -243,7 +245,11 @@ main() {
   if [[ "$NO_BACKUP" != "1" ]]; then
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
     echo -e "$CNT - Snapshotting existing configs..."
-    snapshot_config "$TIMESTAMP" hypr quickshell kitty
+    # Derived from Configs/ itself (rather than a hardcoded dir list) so this
+    # snapshot always covers everything stage 6's `cp -R Configs/* ~/.config/`
+    # is about to overwrite, even as new Configs/ subdirs are added later.
+    mapfile -t CONFIG_DIRS < <(find "$ROOT_DIR/Configs" -maxdepth 1 -mindepth 1 -not -name '.*' -exec basename {} \;)
+    snapshot_config "$TIMESTAMP" "${CONFIG_DIRS[@]}"
     prune_backups "$KEEP_BACKUPS"
     echo -e "$COK - Backup saved under $(backup_root)/$TIMESTAMP"
   else
@@ -259,7 +265,9 @@ main() {
     echo -e "$CNT - Configuring Nvidia modules..."
     sudo sed -i 's/MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
     sudo mkinitcpio --config /etc/mkinitcpio.conf --generate /boot/initramfs-custom.img
-    echo -e "options nvidia-drm modeset=1" | sudo tee -a /etc/modprobe.d/nvidia.conf &>> "$INSTLOG"
+    if ! sudo grep -qF "options nvidia-drm modeset=1" /etc/modprobe.d/nvidia.conf 2>/dev/null; then
+      echo -e "options nvidia-drm modeset=1" | sudo tee -a /etc/modprobe.d/nvidia.conf &>> "$INSTLOG"
+    fi
 
     if "$AUR_HELPER" -Q hyprland &>> /dev/null ; then
       "$AUR_HELPER" -R --noconfirm hyprland &>> "$INSTLOG"
@@ -305,6 +313,18 @@ main() {
     mkdir -p "$HOME/.local/bin"
     ln -sf "$ROOT_DIR/Configs/.local/bin/noctis" "$HOME/.local/bin/noctis"
 
+    # Make sure `noctis` (and anything else under ~/.local/bin) resolves on
+    # PATH without relying on the optional zsh-activation step below, since
+    # bash users need this too and Configs/.zshrc only lands on disk if they
+    # opt in.
+    for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+      [[ "$rc" == "$HOME/.zshrc" && ! -f "$rc" ]] && continue
+      touch "$rc"
+      if ! grep -qF '.local/bin' "$rc"; then
+        printf '\n# Added by noctis install.sh so ~/.local/bin (noctis CLI) is on PATH\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$rc"
+      fi
+    done
+
     KVARCDARK_SVG="/usr/share/Kvantum/KvArcDark/KvArcDark.svg"
     mkdir -p "$HOME/.config/Kvantum/Noctis"
     if [[ -f "$KVARCDARK_SVG" ]]; then
@@ -321,7 +341,9 @@ main() {
     sudo tar -xf "$ROOT_DIR/src/sugar-candy.tar.gz" -C /usr/share/sddm/themes/
     sudo chown -R "$USER:$USER" /usr/share/sddm/themes/sugar-candy
     sudo mkdir -p /etc/sddm.conf.d
-    echo -e "[Theme]\nCurrent=sugar-candy" | sudo tee -a /etc/sddm.conf.d/10-theme.conf &>> "$INSTLOG"
+    if ! sudo grep -qF "Current=sugar-candy" /etc/sddm.conf.d/10-theme.conf 2>/dev/null; then
+      echo -e "[Theme]\nCurrent=sugar-candy" | sudo tee -a /etc/sddm.conf.d/10-theme.conf &>> "$INSTLOG"
+    fi
     WLDIR=/usr/share/wayland-sessions
     [[ -d "$WLDIR" ]] || sudo mkdir -p "$WLDIR"
     sudo cp "$ROOT_DIR/src/hyprland.desktop" /usr/share/wayland-sessions/
@@ -329,18 +351,15 @@ main() {
     echo -e "$CNT - Adding VScode Extensions..."
     mkdir -p "$HOME/.vscode"
     tar -xf "$ROOT_DIR/src/extensions.tar.gz" -C "$HOME/.vscode/"
-
-    echo -e "$CNT - Adding Fonts for Rofi..."
-    mkdir -p "$HOME/.local/share/fonts"
-    cp "$ROOT_DIR/src/Icomoon-Feather.ttf" "$HOME/.local/share/fonts"
-    fc-cache -fv
   fi
 
   print_stage 7 "Shell setup"
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to activate the starship shell? (y,n) ' STAR
   if [[ "$STAR" == "Y" || "$STAR" == "y" ]]; then
     echo -e "$CNT - Activating starship..."
-    echo -e '\neval "$(starship init bash)"' >> "$HOME/.bashrc"
+    if ! grep -qF 'starship init bash' "$HOME/.bashrc" 2>/dev/null; then
+      echo -e '\neval "$(starship init bash)"' >> "$HOME/.bashrc"
+    fi
     cp "$ROOT_DIR/src/starship.toml" "$HOME/.config/"
   fi
 

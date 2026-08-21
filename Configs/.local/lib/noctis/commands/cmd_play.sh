@@ -2,6 +2,7 @@
 # noctis play — Play terminal games like hangman, snake, and number guessing
 # @cmd: play
 # @cmd.desc: Play terminal games like hangman, snake, and number guessing
+# @cmd.group: FUN
 # @cmd.opt: hangman         | Play hangman game
 # @cmd.opt: snake           | Play snake game
 # @cmd.opt: guess           | Play number guessing game
@@ -11,15 +12,15 @@ noctis_cmd_play() {
 
     case "$game" in
         hangman)
-            source "${COMMANDS_DIR}/cmd_play_hangman.sh"
+            source "${COMMANDS_DIR}/play/hangman.sh"
             noctis_cmd_play_hangman
             ;;
         snake)
-            source "${COMMANDS_DIR}/cmd_play_snake.sh"
+            source "${COMMANDS_DIR}/play/snake.sh"
             noctis_cmd_play_snake
             ;;
         guess)
-            source "${COMMANDS_DIR}/cmd_play_guess.sh"
+            source "${COMMANDS_DIR}/play/guess.sh"
             noctis_cmd_play_guess
             ;;
         ""|-h|--help)
