@@ -38,5 +38,6 @@ PanelWindow {
 
     DashboardContent {
         anchors.centerIn: parent
+        screenState: root.screenState
     }
 }
