@@ -109,17 +109,19 @@ QtObject {
     }
 
     // Simplified stand-in for the native FontBuilder/QFont variable-axis
-    // system (plugin/src/Caelestia/Config/fontbuilder.cpp) — no real
-    // variable font is vendored (Google Sans Flex isn't installed on this
-    // system, so body/title/etc. still fall back to system default sans),
-    // so vaxes()/fill()/grade()/width() are harmless no-ops here rather
-    // than real variable-axis writes. Material Symbols Rounded IS
+    // system (plugin/src/Caelestia/Config/fontbuilder.cpp) -- still no
+    // real variable-font axis plumbing (vaxes()/fill()/grade()/width()
+    // remain harmless no-ops), but body/title/label now resolve to a
+    // real installed UI face (Inter, ttf inter-font) instead of falling
+    // back to whatever the system default sans happens to be, so
+    // font.weight actually selects a real designed weight face rather
+    // than relying on synthetic bolding. Material Symbols Rounded IS
     // installed (ttf-material-symbols-variable) and set as the icon
     // font's family below; only the specific sizes actually read by
     // vendored bar components are populated with real point sizes.
     function _fontBuilder(pointSize, weight, family) {
         const state = {
-            family: family ?? "",
+            family: family ?? "Inter",
             pointSize: pointSize ?? 13,
             weight: weight ?? Font.Normal,
             italic: false,
@@ -144,15 +146,15 @@ QtObject {
         return builder;
     }
 
-    function _fontStyle(smallPt, mediumPt, largePt) {
+    function _fontStyle(smallPt, mediumPt, largePt, family) {
         return {
-            small: _fontBuilder(smallPt).build(),
-            medium: _fontBuilder(mediumPt).build(),
-            large: _fontBuilder(largePt).build(),
+            small: _fontBuilder(smallPt, undefined, family).build(),
+            medium: _fontBuilder(mediumPt, undefined, family).build(),
+            large: _fontBuilder(largePt, undefined, family).build(),
             builders: {
-                small: _fontBuilder(smallPt),
-                medium: _fontBuilder(mediumPt),
-                large: _fontBuilder(largePt)
+                small: _fontBuilder(smallPt, undefined, family),
+                medium: _fontBuilder(mediumPt, undefined, family),
+                large: _fontBuilder(largePt, undefined, family)
             }
         };
     }
@@ -162,7 +164,11 @@ QtObject {
         readonly property var title: _fontStyle(fontSize.normal, fontSize.larger, fontSize.large)
         readonly property var body: _fontStyle(fontSize.small, fontSize.normal, fontSize.larger)
         readonly property var label: _fontStyle(fontSize.small, fontSize.smaller, fontSize.normal)
-        readonly property var mono: _fontStyle(fontSize.small, fontSize.normal, fontSize.larger)
+        // Real monospace family (JetBrainsMono Nerd Font Mono, already
+        // installed for terminal use) -- previously fell through to the
+        // same default as body/title/label, so "mono" wasn't actually
+        // monospace.
+        readonly property var mono: _fontStyle(fontSize.small, fontSize.normal, fontSize.larger, "JetBrainsMono Nerd Font Mono")
         readonly property var icon: {
             // Matches caelestia's real default (appearanceconfig.hpp:
             // `m_icon->setDefaultFamily(QStringLiteral("Material Symbols
