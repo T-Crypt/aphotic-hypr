@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="320" viewBox="0 0 900 320" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="900" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b0d12"/>
+      <stop offset="1" stop-color="#14121f"/>
+    </linearGradient>
+    <linearGradient id="moonGrad" x1="0" y1="0" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9baaff"/>
+      <stop offset="1" stop-color="#d6c8ff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#6d7bff" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#6d7bff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="900" height="320" fill="url(#bgGrad)"/>
+  <circle cx="450" cy="150" r="230" fill="url(#glow)"/>
+
+  <g fill="#d6c8ff" opacity="0.6">
+    <circle cx="70" cy="40" r="1.2"/>
+    <circle cx="140" cy="270" r="1"/>
+    <circle cx="800" cy="50" r="1.2"/>
+    <circle cx="830" cy="240" r="1"/>
+    <circle cx="60" cy="200" r="1"/>
+    <circle cx="820" cy="150" r="1.4"/>
+  </g>
+
+  <!-- orbit rings: the shell daemon (moon) with docked module nodes -->
+  <g transform="translate(450,150)">
+    <circle r="95" fill="none" stroke="#3a3c56" stroke-width="1" stroke-dasharray="3 6" opacity="0.8"/>
+    <circle r="140" fill="none" stroke="#2a2b3f" stroke-width="1" stroke-dasharray="3 7" opacity="0.6"/>
+
+    <!-- connecting threads from core to each module node -->
+    <line x1="0" y1="0" x2="0" y2="-95" stroke="#4d5170" stroke-width="1" opacity="0.5"/>
+    <line x1="0" y1="0" x2="82" y2="47" stroke="#4d5170" stroke-width="1" opacity="0.5"/>
+    <line x1="0" y1="0" x2="-82" y2="47" stroke="#4d5170" stroke-width="1" opacity="0.5"/>
+    <line x1="0" y1="0" x2="121" y2="-70" stroke="#3a3c56" stroke-width="1" opacity="0.35"/>
+    <line x1="0" y1="0" x2="-121" y2="-70" stroke="#3a3c56" stroke-width="1" opacity="0.35"/>
+
+    <!-- module nodes -->
+    <g fill="#12141c" stroke="#6d7bff" stroke-width="1.5">
+      <circle cx="0" cy="-95" r="8"/>
+      <circle cx="82" cy="47" r="8"/>
+      <circle cx="-82" cy="47" r="8"/>
+      <circle cx="121" cy="-70" r="5.5"/>
+      <circle cx="-121" cy="-70" r="5.5"/>
+    </g>
+
+    <!-- crescent moon core -->
+    <g transform="scale(1.35)">
+      <path d="M-30 25 L-30 39 L-16 39" stroke="#6d7bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+      <path d="M30 -25 L30 -39 L16 -39" stroke="#6d7bff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+      <path d="M12 -30 A26 26 0 1 0 12 18 A20 20 0 1 1 12 -30 Z" fill="url(#moonGrad)"/>
+    </g>
+  </g>
+
+  <text x="450" y="290" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-size="30" fill="url(#moonGrad)" text-anchor="middle">Noctis</text>
+  <text x="450" y="308" font-family="'Courier New',Consolas,monospace" font-size="11" letter-spacing="2" fill="#6a6f8a" text-anchor="middle">HYPRLAND | QUICKSHELL</text>
+</svg>
