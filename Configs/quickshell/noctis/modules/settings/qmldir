@@ -8,3 +8,5 @@ OsdPane 1.0 panes/OsdPane.qml
 SettingsPanel 1.0 SettingsPanel.qml
 SettingsWindow 1.0 SettingsWindow.qml
 SystemPane 1.0 panes/SystemPane.qml
+WallpaperPicker 1.0 panes/WallpaperPicker.qml
+WallpaperTile 1.0 panes/WallpaperTile.qml
