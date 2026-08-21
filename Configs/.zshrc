@@ -83,6 +83,14 @@ source $ZSH/oh-my-zsh.sh
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
+# zsh-autosuggestions defaults to fg=8 (terminal color8), which wallust
+# generates dynamically per-theme -- on some themes (e.g. HackTheBox's
+# kmeans-derived palette, color8 #1F201F against background #060907)
+# that lands nearly invisible. Pinned to a fixed 256-color mid-gray
+# instead of the theme-dependent ANSI slot so suggestions stay legible
+# regardless of which theme is active.
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=244'
+
 # User configuration
 # export MANPATH="/usr/local/man:$MANPATH"
 
