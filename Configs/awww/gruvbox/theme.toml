@@ -1,0 +1,9 @@
+[theme]
+display_name = "Gruvbox"
+description = "Warm retro earth tones."
+
+[icons]
+papirus_color = "orange"
+
+[wallpaper]
+default = "sunset.jpg"

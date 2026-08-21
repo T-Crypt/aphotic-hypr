@@ -1,0 +1,9 @@
+[theme]
+display_name = "Lofi"
+description = "Soft glowing pastels, cozy low-fi art."
+
+[icons]
+papirus_color = "pink"
+
+[wallpaper]
+default = "cozy-window.jpg"

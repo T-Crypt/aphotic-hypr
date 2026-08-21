@@ -1,0 +1,21 @@
+module qs.services
+singleton Audio 1.0 Audio.qml
+singleton Brightness 1.0 Brightness.qml
+singleton Colours 1.0 Colours.qml
+singleton EmojiList 1.0 EmojiList.qml
+singleton Hypr 1.0 Hypr.qml
+singleton NetworkUsage 1.0 NetworkUsage.qml
+singleton Nmcli 1.0 Nmcli.qml
+singleton Settings 1.0 Settings.qml
+singleton SystemUsage 1.0 SystemUsage.qml
+singleton Themes 1.0 Themes.qml
+NotifData 1.0 NotifData.qml
+singleton Notifs 1.0 Notifs.qml
+singleton Players 1.0 Players.qml
+singleton Time 1.0 Time.qml
+singleton Toaster 1.0 Toaster.qml
+singleton Wallpapers 1.0 Wallpapers.qml
+CavaProvider 1.0 CavaProvider.qml
+BeatTracker 1.0 BeatTracker.qml
+CircularBuffer 1.0 CircularBuffer.qml
+CustomShortcut 1.0 CustomShortcut.qml

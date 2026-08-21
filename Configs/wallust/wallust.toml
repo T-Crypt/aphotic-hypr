@@ -1,0 +1,26 @@
+backend = "fastresize"
+palette = "kmeans"
+# Ensures readable contrast against the background for every generated
+# color, not just the fixed "on"-role text wired up in Colours.qml --
+# without this, a dark/desaturated wallpaper region can produce an
+# ANSI color (color8 dim-gray is the common offender) that's nearly
+# invisible against the background, which is exactly what made `ls`
+# output hard to read on some themes.
+check_contrast = true
+
+[templates]
+# Pywal-compatible templates: single-brace {color0} syntax. Only safe for
+# files with no OTHER literal `{ }` characters in them — pywal-compat mode
+# treats every single `{` as a substitution token start.
+cava = { template = "colors-cava", target = "~/.config/cava/config", pywal = true }
+kitty = { template = "colors-kitty.conf", target = "~/.config/kitty/colors-kitty.conf", pywal = true }
+swaylock = { template = "colors-swaylock", target = "~/.config/swaylock/config", pywal = true }
+kvantum = { template = "Noctis.kvconfig", target = "~/.config/Kvantum/Noctis/Noctis.kvconfig", pywal = true }
+
+# Native Jinja2 templates: double-brace {{ color0 }} syntax, required for
+# files that have their own literal `{ }` (Lua tables, CSS rule blocks) —
+# Jinja2 only triggers on double braces, so those pass through untouched.
+hyprland = { template = "colors-hyprland.lua", target = "~/.config/hypr/colors.lua" }
+gtk = { template = "gtk.css", target = "~/.config/gtk-3.0/gtk.css" }
+gtk4 = { template = "gtk.css", target = "~/.config/gtk-4.0/gtk.css" }
+quickshell = { template = "colors-quickshell-colours.qml", target = "~/.config/quickshell/noctis/services/Colours.qml" }
