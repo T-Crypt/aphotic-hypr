@@ -23,7 +23,7 @@ description = "Neon purples and blues, city-at-night palette."
 name = "wallust"        # "wallust" | "matugen" (matugen not wired yet — Phase 3)
 backend = "fastresize"  # wallust -b: full | resized | wal | thumb | fastresize
 palette = "kmeans"      # wallust -p: salience | ansi | kmeans
-colorscheme = "hackthebox"  # fixed palette, see below — mutually exclusive with backend/palette
+colorscheme = "some-name"  # fixed palette, see below — mutually exclusive with backend/palette
 
 [wallpaper]
 default = "wallpaper-one.jpg"   # shown first when the theme is selected
@@ -59,8 +59,11 @@ they're simply ignored until that lands.
 `backend`/`palette` both assume the palette is *derived* from the
 theme's wallpaper image (`wallust run`). Some themes have a real brand
 palette that shouldn't drift with whatever art ships as the default
-wallpaper — HackTheBox is the example already in this repo. For those,
-set `[engine].colorscheme` to a name under
+wallpaper. None of the 8 shipped themes currently use this (HackTheBox
+briefly did, but its dynamically-derived look was preferred and it was
+reverted back to image-derivation) — the mechanism is still real and
+tested, just unused for now. For a theme that wants it, set
+`[engine].colorscheme` to a name under
 `Configs/wallust/colorschemes/<name>.json` (pywal format: a `special`
 object with `background`/`foreground`/`cursor`, and a `colors` object
 with `color0`–`color15`) instead. All three call sites that apply a
