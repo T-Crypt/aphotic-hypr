@@ -33,13 +33,18 @@ PanelWindow {
     // Wider than barWidth to give the popout flyout (drawn on the side of
     // the bar strip facing away from the docked screen edge, see
     // popouts/Wrapper.qml) real surface to paint into -- Wayland
-    // layer-shell surfaces clip anything outside their own bounds.
-    // exclusionZone above stays pinned to barWidth so this extra space
-    // doesn't reserve desktop area. Anchoring right instead of left just
-    // flips which screen edge implicitWidth grows away from -- the strip
-    // itself stays flush against whichever edge is docked (see
-    // BarWrapper.qml's anchor mirroring below).
-    implicitWidth: barWidth + Tokens.spacing.small * 2 + 320
+    // layer-shell surfaces clip anything outside their own bounds, a hard
+    // boundary no amount of internal QML sizing can exceed. 400 (was 320,
+    // a real bug: ResourcesPopout's ~300px content + padding + spacing
+    // needed ~332px against a 328px budget, silently clipping its right
+    // edge regardless of the popout's own implicitWidth) leaves real
+    // headroom for both that and the drop shadow's blur bleed around the
+    // flyout's edge. exclusionZone above stays pinned to barWidth so this
+    // extra space doesn't reserve desktop area. Anchoring right instead
+    // of left just flips which screen edge implicitWidth grows away from
+    // -- the strip itself stays flush against whichever edge is docked
+    // (see BarWrapper.qml's anchor mirroring below).
+    implicitWidth: barWidth + Tokens.spacing.small * 2 + 400
 
     BarPopouts.Wrapper {
         id: popouts
