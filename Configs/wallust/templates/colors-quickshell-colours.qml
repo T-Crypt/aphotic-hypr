@@ -75,12 +75,34 @@ QtObject {
         return contrastRatio(surface, blended) >= minBodyContrast ? blended : contrastOn(surface);
     }
 
+    // Several bar modules (Clock, Media, StatusIcons, ActiveWindow) use a
+    // raw accent role (m3primary/m3secondary/m3tertiary) directly as their
+    // icon+text colour, for per-module visual variety rather than flat
+    // neutral text everywhere. That's fine as long as the accent itself
+    // reads clearly against the dark pill it sits on -- but wallust can
+    // hand back a dark, desaturated accent for some wallpapers (this was a
+    // real bug: near-illegible dark-green title text on the HackTheBox
+    // theme), and unlike onPrimary/onTertiary/onSurface, nothing was
+    // contrast-checking the accent against the surface it's actually
+    // rendered on. legibleAccent leaves already-legible accents untouched
+    // (preserving the intended per-module hue) and only pulls a failing
+    // one toward the winning contrastOn() text colour, just enough to
+    // clear the same WCAG AA floor mutedOn() already enforces elsewhere.
+    function legibleAccent(accent: color, surface: color): color {
+        if (contrastRatio(accent, surface) >= minBodyContrast)
+            return accent;
+        return Qt.tint(accent, Qt.alpha(contrastOn(surface), 0.6));
+    }
+
     readonly property QtObject palette: QtObject {
         readonly property color m3primary: "{{ color4 }}"
         readonly property color m3onPrimary: root.contrastOn(m3primary)
+        readonly property color m3primaryOnSurface: root.legibleAccent(m3primary, m3surfaceContainerHigh)
         readonly property color m3secondary: "{{ color7 }}"
+        readonly property color m3secondaryOnSurface: root.legibleAccent(m3secondary, m3surfaceContainerHigh)
         readonly property color m3tertiary: "{{ color2 }}"
         readonly property color m3onTertiary: root.contrastOn(m3tertiary)
+        readonly property color m3tertiaryOnSurface: root.legibleAccent(m3tertiary, m3surfaceContainerHigh)
         readonly property color m3error: "{{ color1 }}"
         readonly property color m3onError: root.contrastOn(m3error)
         readonly property color m3onSurface: root.contrastOn(m3surfaceContainer)
