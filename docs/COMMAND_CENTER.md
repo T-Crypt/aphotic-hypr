@@ -10,6 +10,21 @@ are resolved one way or the other.
   assumed this; no rewrite needed.
 - Open Conflict #4 (what "Claude" means) — **corrected, see the rewritten
   §4 below.** The real mechanism is simpler than this doc first assumed.
+- Open Conflict #2 (Workspaces tab scope) — **resolved, see the rewritten
+  §2 below.** A workspace overview: every Hyprland workspace with its open
+  windows, click to focus, built on the existing `Hypr.qml` service.
+- Open Conflict #3 (clock-click behavior) — **resolved: always opens to
+  the Dashboard tab**, no new hover-preview surface. Matches current
+  click-to-open-Dashboard muscle memory; can revisit if that's missed in
+  practice.
+- Open Conflict #6 (API key storage location) — **resolved: separate
+  `~/.config/noctis/ai-keys.json`, `chmod 600`**, per §4's recommendation.
+  Not folded into `shell.json`.
+
+Only #5 (phase/versioning, informational — already answered in practice:
+reuse `Anim.Emphasized` by name) and #7 (roadmap accuracy, already fixed
+independently) remain, neither of which blocks implementation. **All
+implementation-blocking conflicts are now resolved.**
 
 ## 0. The one finding that reframes everything else
 
@@ -109,8 +124,27 @@ Proposed tabs, mapped against what already exists:
 |---|---|---|
 | **Dashboard** | Exists today, needs no new content | `DashDateTime`, `DashCalendar`, `DashMedia` — currently the top `RowLayout` in `DashboardContent.qml` |
 | **Performance** | Exists today, needs extraction from the flat layout | `Dashboard.qml`'s `HeroCard`/`GaugeCard`/`StorageGaugeCard`/`NetworkCard` (CPU/GPU/memory/storage/network), already reading `SystemUsage`/`NetworkUsage` |
-| **Workspaces** | New | Nothing exists. Scope needs defining — see Open Conflict #2. |
+| **Workspaces** | New, scoped below | Built on the existing `Hypr.qml` service |
 | **AI Chat** | New | See §3/§4 below |
+
+### Workspaces tab (resolved scope)
+
+A workspace overview, not a full window-thumbnail switcher (no live window
+previews/screenshots — that's real added complexity this doesn't need for
+a first cut): one card per entry in `Hypr.workspaces`, each listing the
+windows on it (grouped from `Hypr.toplevels` by `workspace.id`, one row per
+window with its app icon via `Icons.getAppCategoryIcon` — the same
+resolution `ActiveWindow.qml` already uses — and title text), the
+currently-focused workspace visually distinguished (reuse the bar's own
+`Workspace.qml`/`ActiveIndicator.qml` active-state styling for consistency
+rather than inventing a second "this one's active" treatment). Clicking a
+workspace card or a specific window row calls `Hypr.dispatch("workspace
+<id>")` (or the window-specific focus dispatch, matching what
+`Workspaces.qml`'s own click handling already does in the bar) and closes
+Command Center. No drag-to-move-window-between-workspaces in v1 — that's
+real added interaction complexity (drag handling, drop targets, Hyprland
+dispatch for window-to-workspace moves) worth deferring until the simple
+read-and-jump version is in use.
 
 Mechanically: replace `DashboardContent.qml`'s `ColumnLayout` (currently:
 top row of 3 cards, then a `Loader` for the big `Dashboard` performance
@@ -133,24 +167,11 @@ animation curve.
   being asked (open the surface from the calendar bar module).
 - The global hotkey (`qs -c noctis ipc call dashboard toggle`) also stays
   as-is — same flag, already a second trigger path, nothing to add.
-- New: which tab opens by default. Two reasonable options: always open to
-  "Dashboard" (simplest, matches current click-to-open-dashboard muscle
-  memory), or remember the last-viewed tab in `ScreenState` (richer, but
-  another piece of state to keep in sync). Recommend starting with "always
-  Dashboard tab" and only adding memory if it's actually missed in use —
-  matches this repo's general bias toward not building state-tracking that
-  isn't clearly needed yet.
-
-**Open Conflict #3** (see checklist): the brief asks to flag whether the
-click should open Command Center "instead of, or in addition to" the
-current date/time popout. As established in §0, there is no existing
-separate date/time popout to preserve — so this reduces to: should clicking
-the clock open straight to a specific tab (e.g. jump straight to
-"Dashboard" tab, which already shows date/time), or should there be a
-*new*, narrower hover-preview on the clock (matching the Battery/Network/
-Bluetooth status-icon pattern) as a quick-glance layer *in front of*
-opening the full Command Center? That would be new scope not currently
-implied by anything else in the brief.
+- **Resolved**: always opens to the "Dashboard" tab, no last-viewed-tab
+  memory and no new hover-preview surface on the clock. Matches current
+  click-to-open-Dashboard muscle memory, and avoids adding state-tracking
+  (`ScreenState` growing a `lastCommandCenterTab` field) before it's clear
+  that's actually missed in practice.
 
 ## 4. AI provider abstraction
 
@@ -304,13 +325,12 @@ was so future motion work doesn't reinvent it per-surface.
 1. ~~**Command Center vs. Dashboard**~~ — **RESOLVED**: confirmed
    replace-in-place / an upgrade of the current Dashboard. §0/§1's "reuse
    what exists" reasoning stands as written.
-2. **Workspaces tab scope**: completely undefined by the brief beyond the
-   caelestia reference naming it. Workspace switcher? Per-workspace window
-   list? Something else? Needs a concrete spec before it can be built —
-   right now it's a label with no content plan.
-3. **Clock-click behavior**: jump straight into a specific Command Center
-   tab, or add a new narrower hover-preview on the clock in front of it
-   (new scope, not currently implied elsewhere)?
+2. ~~**Workspaces tab scope**~~ — **RESOLVED**: a workspace overview (one
+   card per `Hypr.workspaces` entry, windows grouped from `Hypr.toplevels`,
+   click to jump via `Hypr.dispatch`), no live window thumbnails and no
+   drag-to-move in v1. See the rewritten §2.
+3. ~~**Clock-click behavior**~~ — **RESOLVED**: always opens straight to
+   the Dashboard tab, no new hover-preview surface. See §3.
 4. ~~**"Claude" the provider**~~ — **RESOLVED**: it's one `claude` CLI
    subprocess call, env-var-switched between an Ollama-pointed preset and a
    real-Anthropic-key preset (mirroring the user's existing
@@ -334,9 +354,9 @@ was so future motion work doesn't reinvent it per-surface.
    this grows from). Recommend adding it as a new named entry under
    Feature updates once scope is settled, rather than trying to retrofit
    phase numbering that the current doc has already moved past.
-6. **API key storage location**: `shell.json` (as literally stated in the
-   brief) vs. a separate `600`-permissioned `ai-keys.json` (this doc's
-   recommendation, §4). Real security tradeoff, not a style choice.
+6. ~~**API key storage location**~~ — **RESOLVED**: separate
+   `600`-permissioned `~/.config/noctis/ai-keys.json`, not folded into
+   `shell.json`. See §4.
 7. **`CLAUDE_ROADMAP.md` accuracy**: independent of Command Center, the
    roadmap's "Dashboard v2" feature-update entry is stale (describes
    `SystemUsage`/performance cards as unbuilt when they exist and are
