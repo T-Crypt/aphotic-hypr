@@ -62,8 +62,9 @@ def parse_engine_pin(theme):
     backend = ""
     palette = ""
     colorscheme = ""
+    papirus_color = ""
     if not os.path.isfile(toml_path):
-        return backend, palette, colorscheme
+        return backend, palette, colorscheme, papirus_color
     section = ""
     with open(toml_path) as f:
         for raw in f:
@@ -73,18 +74,21 @@ def parse_engine_pin(theme):
             if line.startswith("[") and line.endswith("]"):
                 section = line[1:-1]
                 continue
-            if section != "engine" or "=" not in line:
+            if "=" not in line:
                 continue
             key, _, value = line.partition("=")
             key = key.strip()
             value = value.strip().strip('"')
-            if key == "backend":
-                backend = value
-            elif key == "palette":
-                palette = value
-            elif key == "colorscheme":
-                colorscheme = value
-    return backend, palette, colorscheme
+            if section == "engine":
+                if key == "backend":
+                    backend = value
+                elif key == "palette":
+                    palette = value
+                elif key == "colorscheme":
+                    colorscheme = value
+            elif section == "icons" and key == "papirus_color":
+                papirus_color = value
+    return backend, palette, colorscheme, papirus_color
 
 
 def notify(message):
@@ -101,7 +105,7 @@ def apply_wallpaper(theme, wallpaper):
 
     subprocess.run(["awww", "img", "--transition-type", "wipe", "--transition-duration", "3", image_path])
 
-    backend, palette, colorscheme = parse_engine_pin(theme)
+    backend, palette, colorscheme, papirus_color = parse_engine_pin(theme)
     if colorscheme:
         # Fixed palette pin -- see cmd_theme.sh's _noctis_theme_apply for
         # why some themes (HackTheBox's real green/navy scheme) pin an
@@ -115,6 +119,13 @@ def apply_wallpaper(theme, wallpaper):
             wallust_cmd += ["-p", palette]
         subprocess.run(wallust_cmd)
     subprocess.run(["cp", image_path, os.path.join(awww_dir, "wallpaper.rofi")])
+
+    if papirus_color:
+        # Folder-icon accent pin -- see cmd_theme.sh's _noctis_theme_apply
+        # for why this needs passwordless sudo and only no-ops silently
+        # (same best-effort class as the sddm sync call below) rather
+        # than blocking on a password prompt.
+        run_optional(["sudo", "-n", "papirus-folders", "-C", papirus_color, "--theme", "Papirus-Dark", "-u"])
 
     # State is the source other tools (Quickshell's Themes.qml) read back,
     # so it's saved right after the actual wallpaper+color change lands --

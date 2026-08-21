@@ -39,7 +39,7 @@ Singleton {
     // wallpaper happens to contain -- when set, backend/palette (image-
     // generation-only knobs) are ignored, mirroring cmd_theme.sh's
     // _noctis_theme_apply so the CLI and this QML path stay in sync.
-    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var): void {
+    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, papirusColor: var): void {
         Quickshell.execDetached(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
         Quickshell.execDetached(["cp", path, root.path]);
 
@@ -53,6 +53,12 @@ Singleton {
                 cmd.push("-p", palette);
             Quickshell.execDetached(cmd);
         }
+
+        // Folder-icon accent pin -- see cmd_theme.sh's _noctis_theme_apply
+        // for why this needs sudo and only no-ops silently (same class of
+        // best-effort call as sddm sync below) rather than blocking.
+        if (papirusColor)
+            Quickshell.execDetached(["sudo", "-n", "papirus-folders", "-C", papirusColor, "--theme", "Papirus-Dark", "-u"]);
 
         // Best-effort — see cmd_sddm.sh; no-ops without passwordless sudo.
         Quickshell.execDetached(["noctis", "sddm", "sync"]);

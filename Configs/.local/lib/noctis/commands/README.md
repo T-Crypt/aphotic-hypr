@@ -70,6 +70,22 @@ Without it, run `noctis sddm sync` manually (or `sudo -v` once per
 session before switching themes) whenever you want the login background
 refreshed.
 
+## `papirus-folders` and passwordless sudo
+
+Same story as sddm sync above, for a different reason: `cmd_theme.sh`
+runs `papirus-folders -C <color> --theme Papirus-Dark -u` when a theme
+declares `[icons].papirus_color` (see `themes/THEME_SPEC.md`), which
+writes under `/usr/share/icons/` and so also needs root. Add a second
+sudoers drop-in scoped to just that command:
+
+```
+your_user ALL=(root) NOPASSWD: /usr/bin/papirus-folders
+```
+
+Without it, folder icons keep whatever color they were last set to
+manually (or Papirus's default) and the theme switch just warns instead
+of blocking on a password prompt.
+
 ## Environment Variables
 
 The following variables are available:

@@ -2,5 +2,8 @@
 display_name = "Rose Pine"
 description = "Muted rose, gold, and pine-green."
 
+[icons]
+papirus_color = "magenta"
+
 [wallpaper]
 default = "pine-moon.jpg"

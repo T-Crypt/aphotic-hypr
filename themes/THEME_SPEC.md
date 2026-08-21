@@ -25,6 +25,9 @@ backend = "fastresize"  # wallust -b: full | resized | wal | thumb | fastresize
 palette = "kmeans"      # wallust -p: salience | ansi | kmeans
 colorscheme = "some-name"  # fixed palette, see below — mutually exclusive with backend/palette
 
+[icons]
+papirus_color = "green"  # one of `papirus-folders --list`, see below
+
 [wallpaper]
 default = "wallpaper-one.jpg"   # shown first when the theme is selected
 
@@ -49,6 +52,27 @@ for the first time. After that, Noctis remembers which wallpaper within
 the theme you last had active (`~/.local/state/noctis/theme.json`), so
 returning to a theme resumes where you left it rather than resetting to
 `default`.
+
+### Folder-icon accent (`[icons].papirus_color`)
+
+Real per-icon recoloring isn't possible with a normal icon theme —
+each icon's colors are baked into its own file, unlike wallust's
+CSS/terminal-escape color output. The icon theme is
+[Papirus](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme)
+specifically because its companion
+[papirus-folders](https://github.com/PapirusDevelopmentTeam/papirus-folders)
+tool can swap its *folder* icons between ~16 preset colors (run
+`papirus-folders --list` for the current set) to roughly match a
+theme's accent — individual file-type icons stay Papirus's fixed
+style regardless. All three theme-apply call sites (`cmd_theme.sh`,
+`Wallpapers.qml`/`Themes.qml`, `wallswitcher.py`) run `papirus-folders
+-C <color> --theme Papirus-Dark` when a theme declares this key.
+`papirus-folders` writes under `/usr/share/icons/`, so — like
+`cmd_sddm.sh`'s login-background sync — it needs passwordless sudo to
+apply automatically from a theme switch; without it, this step just
+no-ops rather than blocking on a password prompt (see
+`commands/README.md` for the sudoers snippet convention). Omitting
+`[icons]` entirely just leaves the current folder color as-is.
 
 `[overrides]` is reserved for Phase 3's per-app override story — not
 consumed by anything yet. A theme author can still write entries now;
