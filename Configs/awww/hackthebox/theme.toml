@@ -7,4 +7,4 @@ backend = "fastresize"
 palette = "kmeans"
 
 [wallpaper]
-default = "planets.png"
+default = "circuit.jpg"
