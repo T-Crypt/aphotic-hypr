@@ -6,5 +6,8 @@ description = "Dark, tech/sci-fi accents."
 backend = "fastresize"
 palette = "kmeans"
 
+[icons]
+papirus_color = "green"
+
 [wallpaper]
 default = "circuit.jpg"

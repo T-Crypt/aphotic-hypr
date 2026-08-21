@@ -100,10 +100,11 @@ _noctis_theme_apply() {
     fi
 
     local image_path="${dir}/${wallpaper_file}"
-    local backend palette colorscheme
+    local backend palette colorscheme papirus_color
     backend="$(_noctis_toml_get "${dir}/theme.toml" engine backend)"
     palette="$(_noctis_toml_get "${dir}/theme.toml" engine palette)"
     colorscheme="$(_noctis_toml_get "${dir}/theme.toml" engine colorscheme)"
+    papirus_color="$(_noctis_toml_get "${dir}/theme.toml" icons papirus_color)"
 
     noctis_require awww || return 1
     awww img "$image_path" --transition-type wipe --transition-angle 30 --transition-step 90
@@ -129,6 +130,22 @@ _noctis_theme_apply() {
     fi
 
     cp "$image_path" "${NOCTIS_AWWW_DIR}/wallpaper.rofi" 2>/dev/null || true
+
+    # Folder-icon accent pin (theme.toml's [icons].papirus_color) -- real
+    # per-icon recoloring isn't possible with a normal icon theme (each
+    # icon's colors are baked into its file), so this swaps Papirus's
+    # folder icons between its ~16 preset colors to roughly match the
+    # theme instead. papirus-folders writes under /usr/share/icons/, so
+    # like cmd_sddm.sh's sync, it needs passwordless sudo to run
+    # non-interactively from a theme switch -- warns and no-ops rather
+    # than blocking on a password prompt if that's not set up.
+    if [[ -n "$papirus_color" ]] && command -v papirus-folders >/dev/null 2>&1; then
+        if sudo -n true 2>/dev/null; then
+            sudo papirus-folders -C "$papirus_color" --theme Papirus-Dark -u 2>/dev/null || true
+        else
+            noctis_warn "papirus-folders needs passwordless sudo to run automatically (see commands/README.md); run 'sudo papirus-folders -C ${papirus_color} --theme Papirus-Dark' manually, or 'sudo -v' first"
+        fi
+    fi
 
     _noctis_theme_write_state "$theme_name" "$wallpaper_file"
     noctis_json_set "theme.active" "$theme_name"
