@@ -32,6 +32,15 @@ def test_gaming_layer_adds_packages():
         assert pkg in result["main"]
 
 
+def test_exploit_layer_adds_packages():
+    result = merge_packages(
+        str(ROOT / "profiles/base/full.toml"),
+        [str(ROOT / "profiles/layers/exploit.toml")],
+    )
+    for pkg in ["nmap", "dirbuster", "sqlmap"]:
+        assert pkg in result["main"]
+
+
 def test_multiple_layers_and_custom_apps_all_merge():
     result = merge_packages(
         str(ROOT / "profiles/base/full.toml"),
@@ -50,5 +59,6 @@ if __name__ == "__main__":
     test_minimal_profile_excludes_extras()
     test_full_profile_has_expected_packages()
     test_gaming_layer_adds_packages()
+    test_exploit_layer_adds_packages()
     test_multiple_layers_and_custom_apps_all_merge()
     print("PASS: real profile merge tests")
