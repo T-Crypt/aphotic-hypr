@@ -39,21 +39,31 @@ RowLayout {
     }
 
     StyledRect {
+        id: paneSurface
+
         Layout.fillHeight: true
         Layout.fillWidth: true
         Layout.leftMargin: Tokens.spacing.medium
         radius: Tokens.rounding.extraLarge
         color: Colours.tPalette.m3surfaceContainer
+        clip: true
+
+        property int _prevCategoryIndex: 0
 
         Loader {
             id: paneLoader
 
-            anchors.fill: parent
-            anchors.margins: Tokens.padding.large
+            y: Tokens.padding.large
+            width: parent.width - Tokens.padding.large * 2
+            height: parent.height - Tokens.padding.large * 2
+            x: Tokens.padding.large
             opacity: 1
 
             Behavior on opacity {
                 Anim { type: Anim.DefaultEffects }
+            }
+            Behavior on x {
+                Anim { type: Anim.Emphasized }
             }
 
             sourceComponent: {
@@ -74,14 +84,22 @@ RowLayout {
             }
 
             onSourceComponentChanged: {
+                const newIndex = root.categories.findIndex(c => c.id === root.currentCategory);
+                const direction = newIndex >= paneSurface._prevCategoryIndex ? 1 : -1;
+                paneSurface._prevCategoryIndex = newIndex;
+
                 opacity = 0;
-                fadeInTimer.restart();
+                x = Tokens.padding.large + direction * 24;
+                slideInTimer.restart();
             }
 
             Timer {
-                id: fadeInTimer
+                id: slideInTimer
                 interval: 1
-                onTriggered: paneLoader.opacity = 1
+                onTriggered: {
+                    paneLoader.opacity = 1;
+                    paneLoader.x = Tokens.padding.large;
+                }
             }
         }
     }

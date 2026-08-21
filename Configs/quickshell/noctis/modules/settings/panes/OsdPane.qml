@@ -7,7 +7,12 @@ import qs.services
 ColumnLayout {
     id: root
 
-    readonly property var timeoutPresets: [1000, 2000, 3000, 5000]
+    readonly property var timeoutPresets: [
+        { value: 1000, label: qsTr("1s") },
+        { value: 2000, label: qsTr("2s") },
+        { value: 3000, label: qsTr("3s") },
+        { value: 5000, label: qsTr("5s") }
+    ]
 
     spacing: Tokens.spacing.medium
 
@@ -41,53 +46,13 @@ ColumnLayout {
         onToggled: state => Settings.osdEnableMicrophone = state
     }
 
-    RowLayout {
+    SettingsPresetRow {
         Layout.fillWidth: true
-        spacing: Tokens.spacing.medium
-
-        StyledText {
-            Layout.fillWidth: true
-            text: qsTr("OSD hide delay")
-            font: Tokens.font.body.medium
-        }
-
-        RowLayout {
-            spacing: Tokens.spacing.small
-
-            Repeater {
-                model: root.timeoutPresets
-
-                StyledRect {
-                    id: presetPill
-
-                    required property int modelData
-                    readonly property bool active: presetPill.modelData === Settings.osdHideDelay
-
-                    Layout.preferredHeight: 28
-                    Layout.preferredWidth: presetLabel.implicitWidth + Tokens.padding.medium * 2
-                    radius: Tokens.rounding.full
-                    color: presetPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
-
-                    StyledText {
-                        id: presetLabel
-                        anchors.centerIn: parent
-                        text: qsTr("%1s").arg(presetPill.modelData / 1000)
-                        color: presetPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
-                        font: Tokens.font.label.small
-                    }
-
-                    StateLayer {
-                        anchors.fill: parent
-                        radius: parent.radius
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: Settings.osdHideDelay = presetPill.modelData
-                    }
-                }
-            }
-        }
+        icon: "timer"
+        label: qsTr("OSD hide delay")
+        presets: root.timeoutPresets
+        value: Settings.osdHideDelay
+        onSelected: value => Settings.osdHideDelay = value
     }
 
     StyledText {
@@ -97,52 +62,12 @@ ColumnLayout {
         font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
     }
 
-    RowLayout {
+    SettingsPresetRow {
         Layout.fillWidth: true
-        spacing: Tokens.spacing.medium
-
-        StyledText {
-            Layout.fillWidth: true
-            text: qsTr("Notification timeout")
-            font: Tokens.font.body.medium
-        }
-
-        RowLayout {
-            spacing: Tokens.spacing.small
-
-            Repeater {
-                model: root.timeoutPresets
-
-                StyledRect {
-                    id: notifPresetPill
-
-                    required property int modelData
-                    readonly property bool active: notifPresetPill.modelData === Settings.notifExpireTimeout
-
-                    Layout.preferredHeight: 28
-                    Layout.preferredWidth: notifPresetLabel.implicitWidth + Tokens.padding.medium * 2
-                    radius: Tokens.rounding.full
-                    color: notifPresetPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
-
-                    StyledText {
-                        id: notifPresetLabel
-                        anchors.centerIn: parent
-                        text: qsTr("%1s").arg(notifPresetPill.modelData / 1000)
-                        color: notifPresetPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
-                        font: Tokens.font.label.small
-                    }
-
-                    StateLayer {
-                        anchors.fill: parent
-                        radius: parent.radius
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: Settings.notifExpireTimeout = notifPresetPill.modelData
-                    }
-                }
-            }
-        }
+        icon: "notifications_active"
+        label: qsTr("Notification timeout")
+        presets: root.timeoutPresets
+        value: Settings.notifExpireTimeout
+        onSelected: value => Settings.notifExpireTimeout = value
     }
 }

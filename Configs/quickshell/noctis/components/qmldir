@@ -6,6 +6,8 @@ CAnim 1.0 CAnim.qml
 Logo 1.0 Logo.qml
 MaterialIcon 1.0 MaterialIcon.qml
 ScreenState 1.0 ScreenState.qml
+SettingsPresetRow 1.0 SettingsPresetRow.qml
+SettingsRow 1.0 SettingsRow.qml
 SettingsToggleRow 1.0 SettingsToggleRow.qml
 StateLayer 1.0 StateLayer.qml
 StyledClippingRect 1.0 StyledClippingRect.qml
