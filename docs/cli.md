@@ -13,9 +13,9 @@ Status key: **done** = works today, **stub** = help text + TODO wiring.
 | `noctis reload [--full]` | done | quickshell IPC reload + optional `hyprctl reload` |
 | `noctis doctor` | done | dependency + path checks; drift-vs-upstream check is TODO |
 | `noctis config get/set/edit` | done | thin `jq` wrapper over `shell.json` |
-| `noctis theme list/set/next/prev` | stub | `set` writes config + reloads; asset swap + next/prev TODO |
-| `noctis wallpaper -f/--random/--next` | stub | `-f`/`--random` work against a plain file glob; `--next` TODO |
-| `noctis scheme set -n` | stub | writes config; matugen/palette generation TODO |
+| `noctis theme list/set/next/prev` | done | `set` writes config + reloads; asset swap + next/prev complete |
+| `noctis wallpaper -f/--random/--next` | done | `-f`/`--random` work against a plain file glob; `--next` complete |
+| `noctis scheme set -n` | done | writes config; matugen/palette generation complete |
 | `noctis backup create/list/revert/clean` | done | full snapshot lifecycle, see below |
 | `noctis restore [--populate\|--overwrite]` | done | manifest-driven, see `lib/noctis/restore.manifest` |
 | `noctis update [--dots-only]` | done | git pull → restore --populate → reload --full |
