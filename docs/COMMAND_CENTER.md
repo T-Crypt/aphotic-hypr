@@ -4,6 +4,13 @@ Status: **draft, not implemented.** Per the brief this responds to: nothing in
 Steps 2–5 gets built until this doc is reviewed and the open conflicts below
 are resolved one way or the other.
 
+**Resolved since first draft:**
+- Open Conflict #1 (Command Center vs. Dashboard) — **confirmed
+  replace-in-place / upgrade of the current Dashboard.** §0/§1 below already
+  assumed this; no rewrite needed.
+- Open Conflict #4 (what "Claude" means) — **corrected, see the rewritten
+  §4 below.** The real mechanism is simpler than this doc first assumed.
+
 ## 0. The one finding that reframes everything else
 
 Before window strategy or tabs: **a large fraction of what's being asked for
@@ -159,34 +166,44 @@ to follow). Profile *definitions* are an explicit `TODO` in that file
 today. This is the right foundation to build the QML-side provider
 abstraction against, not a parallel system.
 
-### Open Conflict #4 — "Claude" means two different things here
+### Open Conflict #4 — resolved: it's one CLI, env-var-switched, not two providers
 
-The brief lists providers as "Ollama, Claude, Gemini, ChatGPT (all via API
-key)". But `cmd_ai.sh` already treats **Claude Code** (the `claude` CLI —
-what this assistant *is*, run via subprocess, authenticated through the
-user's existing Claude Code login/subscription, agentic and stateful) as a
-first-class citizen alongside Ollama, explicitly distinct from a raw API-key
-integration. A "Claude" entry in the AI Chat tab's provider list could mean
-either:
+First draft of this doc treated "Claude Code CLI" and "Claude API" as two
+separate integration shapes (subprocess vs. HTTP client) needing two
+distinct code paths. **That's wrong** — confirmed against the user's actual
+working setup:
 
-- **Shell out to the `claude` CLI** — no API key needed, reuses the user's
-  existing Claude Code auth, but is a CLI-subprocess integration (spawn,
-  parse output, no true token-level streaming the way an SDK stream gives
-  you) rather than a clean HTTP chat-completions call.
-- **A real Anthropic API call** with a separately-configured API key,
-  architecturally identical to the Gemini/ChatGPT entries.
+The `claude` CLI itself is redirected between backends purely via
+environment variables it already reads: `ANTHROPIC_BASE_URL` and
+`ANTHROPIC_API_KEY`. Two existing shell functions (`claude-ollama`,
+`claude-anthropic` — live in the user's interactive shell setup, not
+currently in this repo's `Configs/.zshrc`) toggle between:
 
-These aren't the same feature, and conflating them under one "Claude"
-pill would misrepresent which one the user is actually talking to (and
-which billing/auth path is in play). This needs an explicit decision
-before §4 code exists — not something to default silently. Given the
-project's own stated identity ("Claude Code + Ollama as first-class
-citizens", `cmd_ai.sh` already codifying that split), the more consistent
-reading is: **Ollama and Claude Code are the two first-class, no-separate-
-API-key providers** (Ollama via local HTTP, Claude Code via CLI
-subprocess), and Anthropic API / Gemini / ChatGPT are the optional,
-API-key-gated tier — i.e. four visible entries, but two different
-integration shapes underneath, not four uniform HTTP clients.
+- **`claude-ollama`**: `ANTHROPIC_BASE_URL` pointed at the local/LAN Ollama
+  host (`http://0.0.0.0:11434`-style address, whatever the actual Ollama
+  host is on the network), `ANTHROPIC_API_KEY` unset/blank — the same
+  `claude` binary now talks to Ollama instead of Anthropic.
+- **`claude-anthropic`**: unsets `ANTHROPIC_BASE_URL` (falls back to the
+  real Anthropic endpoint) and sets a real `ANTHROPIC_API_KEY`.
+
+So there's **one integration** (subprocess to `claude`), not two — "Ollama"
+and "Claude" (Anthropic) in the provider pill are two *presets* of the same
+pair of environment variables passed to the same CLI call, not two
+different code paths. This is a real simplification: Gemini and ChatGPT are
+still genuinely separate (neither speaks the Anthropic API), so those stay
+real HTTP clients with their own API keys — but the "Ollama ⇄ Claude"
+toggle the brief is actually asking for is just which env vars get set
+before invoking `claude`, exactly matching the two-pill end-4 reference
+(Provider pill picks the preset; the Ollama-model pill only makes sense
+when the Ollama preset is active).
+
+**Implementation-time check, not assumed as fact here**: this relies on
+`claude` CLI actually respecting `ANTHROPIC_BASE_URL` to redirect to an
+Ollama-compatible endpoint successfully end-to-end (request/response shape
+compatibility between what `claude` sends and what Ollama's server
+understands at that URL) — confirm this works in practice with the current
+`claude` CLI version before building the QML side around it, rather than
+taking the env-var toggle on faith.
 
 ### Proposed shape
 
@@ -201,15 +218,21 @@ per concern, not a monolith):
 - Backend implementations as `Process`-based QML (matching how
   `SystemUsage.qml`/`Wallpapers.qml` already shell out via
   `Quickshell.Io.Process`/`execDetached`), not a native plugin:
-  - **Ollama**: local HTTP against `localhost:11434`'s
-    `/api/chat` (streaming NDJSON), no key. First-class, default-selected
-    provider per project identity.
-  - **Claude Code**: subprocess (`claude -p "<prompt>" --output-format
-    stream-json` or equivalent), parsed incrementally. First-class,
-    no key (reuses existing CLI auth).
-  - **Anthropic API / Gemini / ChatGPT**: real HTTP clients, each gated on
-    an API key. Greyed out in the provider pill row when no key is
+  - **Ollama preset**: subprocess to `claude`, with `ANTHROPIC_BASE_URL`
+    set to the configured Ollama host and `ANTHROPIC_API_KEY` unset/blank
+    (mirroring the `claude-ollama` shell function). First-class,
+    default-selected provider per project identity, no key needed.
+  - **Claude (Anthropic) preset**: subprocess to `claude` with
+    `ANTHROPIC_BASE_URL` unset and a real `ANTHROPIC_API_KEY` passed
+    through (mirroring `claude-anthropic`). Same binary, same code path as
+    the Ollama preset above — only the env vars passed to the `Process`
+    differ.
+  - **Gemini / ChatGPT**: real, separate HTTP clients, each gated on their
+    own API key. Greyed out in the provider pill row when no key is
     configured, exactly as the brief asks.
+  - The Ollama-model sub-pill (which local model to request) reads from
+    `ollama list` against the configured host, same enumeration
+    `cmd_ai.sh status` already does.
 
 ### API key storage — a real decision, not a detail
 
@@ -223,23 +246,29 @@ read access to `~/.config/noctis/shell.json` (any user process, any future
 `noctis` subcommand that does a broad `jq` dump for debugging) gets the
 keys too.
 
-**Recommendation**: keys live in their own file,
+**Recommendation**: real secrets — the Anthropic key used by the Claude
+preset, plus Gemini/ChatGPT keys — live in their own file,
 `~/.config/noctis/ai-keys.json`, created `chmod 600`, read only by
 `cmd_ai.sh`/the QML AI service — not folded into `shell.json`. Still
 jq-wrapped (same `noctis_json_get`/`set`-style helpers, just pointed at a
 different, tightly-permissioned file) so it doesn't introduce a second
 config *format*, just a second config *file* for the one category of data
-that actually needs isolation. This should be confirmed before
-implementation, not assumed.
+that actually needs isolation. The Ollama host address is not a secret and
+can stay in regular `shell.json` config alongside the active-provider
+selection. This should be confirmed before implementation, not assumed.
 
 ### UI
 
 Two-pill row per the brief's end-4 reference: **Provider** (Ollama /
-Claude Code / Claude API / Gemini / ChatGPT) and, conditionally, a second
-pill for **Ollama model** (only shown when Ollama is the active provider,
-populated from `ollama list` — `cmd_ai.sh`'s `status` subcommand already
-knows how to enumerate these). Disabled/greyed provider entries for
-anything API-key-gated with no key configured, per the brief.
+Claude / Gemini / ChatGPT — where "Ollama" and "Claude" are the two
+env-var presets around the same `claude` CLI call described above) and,
+conditionally, a second pill for **Ollama model** (only shown when the
+Ollama preset is active, populated from `ollama list` against the
+configured host — `cmd_ai.sh`'s `status` subcommand already knows how to
+enumerate these). Disabled/greyed provider entries for anything
+API-key-gated with no key configured, per the brief — for Claude that
+means greyed out only when no Anthropic key is on file *and* Ollama isn't
+reachable either, since Claude/Ollama share the one enable path.
 
 ## 5. Theme consistency
 
@@ -272,10 +301,9 @@ was so future motion work doesn't reinvent it per-surface.
 
 ## Open conflicts checklist (resolve before Step 2)
 
-1. **Command Center vs. Dashboard**: replace-in-place (this doc's working
-   assumption) or a genuinely separate second surface? If separate, most of
-   §0/§1's "reuse what exists" reasoning doesn't apply and this doc needs a
-   rewrite of those sections.
+1. ~~**Command Center vs. Dashboard**~~ — **RESOLVED**: confirmed
+   replace-in-place / an upgrade of the current Dashboard. §0/§1's "reuse
+   what exists" reasoning stands as written.
 2. **Workspaces tab scope**: completely undefined by the brief beyond the
    caelestia reference naming it. Workspace switcher? Per-workspace window
    list? Something else? Needs a concrete spec before it can be built —
@@ -283,9 +311,13 @@ was so future motion work doesn't reinvent it per-surface.
 3. **Clock-click behavior**: jump straight into a specific Command Center
    tab, or add a new narrower hover-preview on the clock in front of it
    (new scope, not currently implied elsewhere)?
-4. **"Claude" the provider**: Claude Code CLI (no key, first-class) vs.
-   Anthropic API (key-gated, same tier as Gemini/ChatGPT) — these need to
-   both exist as distinct entries, not be conflated into one.
+4. ~~**"Claude" the provider**~~ — **RESOLVED**: it's one `claude` CLI
+   subprocess call, env-var-switched between an Ollama-pointed preset and a
+   real-Anthropic-key preset (mirroring the user's existing
+   `claude-ollama`/`claude-anthropic` shell functions), not two separate
+   integration paths. See the rewritten §4. Still needs an implementation-
+   time check that `ANTHROPIC_BASE_URL` redirection to Ollama actually
+   round-trips correctly with the current `claude` CLI version.
 5. **Phase/versioning mismatch**: the brief references "Phase 3.6 Task 8"
    for the popout animation work to reuse. The current `CLAUDE_ROADMAP.md`
    (v4) doesn't use phase/task numbering at all anymore — it's organized as
