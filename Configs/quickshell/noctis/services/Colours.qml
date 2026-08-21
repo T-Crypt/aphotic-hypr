@@ -76,18 +76,18 @@ QtObject {
     }
 
     readonly property QtObject palette: QtObject {
-        readonly property color m3primary: "#A778CA"
+        readonly property color m3primary: "#508B6A"
         readonly property color m3onPrimary: root.contrastOn(m3primary)
-        readonly property color m3secondary: "#ECECF8"
-        readonly property color m3tertiary: "#6B6794"
+        readonly property color m3secondary: "#FCDC5D"
+        readonly property color m3tertiary: "#377374"
         readonly property color m3onTertiary: root.contrastOn(m3tertiary)
-        readonly property color m3error: "#663469"
+        readonly property color m3error: "#6A4533"
         readonly property color m3onError: root.contrastOn(m3error)
         readonly property color m3onSurface: root.contrastOn(m3surfaceContainer)
         readonly property color m3onSurfaceVariant: root.mutedOn(m3surfaceContainer, m3onSurface, 0.35)
-        readonly property color m3outlineVariant: "#513E6E"
-        readonly property color m3surfaceContainer: "#362551"
-        readonly property color m3surfaceContainerHigh: "#514169"
+        readonly property color m3outlineVariant: "#303030"
+        readonly property color m3surfaceContainer: "#1A1A1A"
+        readonly property color m3surfaceContainerHigh: "#363636"
         readonly property color m3shadow: "#000000"
     }
 

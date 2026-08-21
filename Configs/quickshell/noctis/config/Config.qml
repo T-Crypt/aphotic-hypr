@@ -161,7 +161,7 @@ QtObject {
     }
 
     readonly property QtObject launcher: QtObject {
-        readonly property string emojiListPath: `${Quickshell.env("HOME")}/.config/rofi/emoji.txt`
+        readonly property string emojiListPath: `${Quickshell.env("HOME")}/.config/quickshell/noctis/data/emoji.txt`
         readonly property string wallpaperDir: `${Quickshell.env("HOME")}/.config/awww`
     }
 }

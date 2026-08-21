@@ -2,6 +2,7 @@
 # noctis doctor — dependency + version drift check.
 # @cmd: doctor
 # @cmd.desc: Check dependencies and report version/config drift
+# @cmd.group: CORE
 
 _noctis_doctor_check() {
     local bin="$1"

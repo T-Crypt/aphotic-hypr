@@ -46,43 +46,50 @@ _noctis_list_commands() {
         | sort
 }
 
+# Built entirely from each command file's `@cmd`/`@cmd.desc`/`@cmd.group`
+# header annotations (see commands/README.md) — adding a command file
+# with those annotations is enough to show up here correctly grouped,
+# no edits to this dispatcher required. `@cmd.group` is optional; an
+# ungrouped command lands under OTHER rather than being silently
+# dropped from the list.
 _noctis_usage() {
     local _R=$'\e[0m' _B=$'\e[1m' _D=$'\e[2m' _C=$'\e[36m'
-    local ncmds
-    ncmds="$(_noctis_list_commands | wc -l | tr -d ' ')"
-    cat <<EOF
+    local group_order=(CORE CONFIG LIFECYCLE AI BUILD FUN)
+    local -A group_lines=()
+    local file name desc group line ncmds=0
 
-${_B}noctis${_R} ${_D}v${NOCTIS_VERSION}${_R} — Noctis dotfiles & shell control
+    for file in "$COMMANDS_DIR"/cmd_*.sh; do
+        [[ -f "$file" ]] || continue
+        ncmds=$((ncmds + 1))
+        name="$(sed -n 's/^# @cmd: *//p' "$file" | head -n1)"
+        [[ -n "$name" ]] || name="$(basename "$file" .sh | sed 's/^cmd_//')"
+        desc="$(sed -n 's/^# @cmd\.desc: *//p' "$file" | head -n1)"
+        group="$(sed -n 's/^# @cmd\.group: *//p' "$file" | head -n1)"
+        [[ -n "$group" ]] || group="OTHER"
 
-${_B}USAGE${_R}
-    noctis ${_C}<command>${_R} ${_D}[args]${_R}
+        line="$(printf '    %s%-12s%s %s' "$_C" "$name" "$_R" "$desc")"
+        if [[ -z "${group_lines[$group]:-}" ]]; then
+            group_lines[$group]="$line"
+        else
+            group_lines[$group]+=$'\n'"$line"
+        fi
+    done
 
-${_B}CORE${_R}
-    ${_C}shell${_R} [-d|<ipc-call> ...]   Start the quickshell daemon, or pass an IPC call through
-    ${_C}reload${_R} [--full]             Hot-reload shell modules (--full also reloads Hyprland)
-    ${_C}doctor${_R}                      Check dependencies and report version drift
+    printf '\n%snoctis%s %sv%s%s — Noctis dotfiles & shell control\n\n' "$_B" "$_R" "$_D" "$NOCTIS_VERSION" "$_R"
+    printf '%sUSAGE%s\n    noctis %s<command>%s %s[args]%s\n\n' "$_B" "$_R" "$_C" "$_R" "$_D" "$_R"
 
-${_B}CONFIG${_R}
-    ${_C}config${_R} get|set|edit ...     Read/write ${NOCTIS_CONFIG_FILE}
-    ${_C}theme${_R} list|set|next|prev
-    ${_C}wallpaper${_R} -f <path>|--random|--next
-    ${_C}scheme${_R} set -n <name>
+    local g
+    for g in "${group_order[@]}"; do
+        [[ -n "${group_lines[$g]:-}" ]] || continue
+        printf '%s%s%s\n%s\n\n' "$_B" "$g" "$_R" "${group_lines[$g]}"
+        unset 'group_lines[$g]'
+    done
+    for g in "${!group_lines[@]}"; do
+        printf '%s%s%s\n%s\n\n' "$_B" "$g" "$_R" "${group_lines[$g]}"
+    done
 
-${_B}LIFECYCLE${_R}
-    ${_C}backup${_R} create|list|revert|clean
-    ${_C}restore${_R} [--populate|--overwrite]
-    ${_C}update${_R} [--dots-only]
-
-${_B}AI${_R}
-    ${_C}ai${_R} status|profile <name>
-
-${_B}BUILD${_R}
-    ${_C}iso${_R} build [--live|--installer]
-
-Run ${_C}noctis <command> --help${_R} for details on a specific command.
-${_D}${ncmds} command(s) discovered in ${COMMANDS_DIR}${_R}
-
-EOF
+    printf 'Run %snoctis <command> --help%s for details on a specific command.\n' "$_C" "$_R"
+    printf '%s%s command(s) discovered in %s%s\n\n' "$_D" "$ncmds" "$COMMANDS_DIR" "$_R"
 }
 
 _noctis_dispatch() {

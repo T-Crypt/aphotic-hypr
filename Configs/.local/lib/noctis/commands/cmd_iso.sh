@@ -2,6 +2,7 @@
 # noctis iso — build a live/installer image (archiso-based).
 # @cmd: iso
 # @cmd.desc: Build a Noctis live or installer ISO
+# @cmd.group: BUILD
 # @cmd.opt: build --live       | Build a bootable live ISO
 # @cmd.opt: build --installer  | Build an installer ISO
 

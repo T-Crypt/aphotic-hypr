@@ -7,7 +7,6 @@ palette = "kmeans"
 # treats every single `{` as a substitution token start.
 cava = { template = "colors-cava", target = "~/.config/cava/config", pywal = true }
 kitty = { template = "colors-kitty.conf", target = "~/.config/kitty/colors-kitty.conf", pywal = true }
-rofi = { template = "colors-rofi.rasi", target = "~/.config/rofi/colors/colors-rofi.rasi", pywal = true }
 swaylock = { template = "colors-swaylock", target = "~/.config/swaylock/config", pywal = true }
 kvantum = { template = "Noctis.kvconfig", target = "~/.config/Kvantum/Noctis/Noctis.kvconfig", pywal = true }
 

@@ -30,7 +30,7 @@ default = "wallpaper-one.jpg"   # shown first when the theme is selected
 [overrides]
 # Optional per-app config snippets this theme wants layered on top of the
 # normal wallust-generated output. Keys are template names matching
-# Configs/wallust/wallust.toml's [templates] table (kitty, gtk, rofi, ...).
+# Configs/wallust/wallust.toml's [templates] table (kitty, gtk, swaylock, ...).
 # Empty/omitted table = no overrides, just use wallust's own output.
 ```
 

@@ -49,6 +49,16 @@ fi
 
 restore_latest_backup || exit 1
 
+if [[ -L "$HOME/.local/bin/noctis" ]]; then
+  rm -f "$HOME/.local/bin/noctis"
+  echo "Removed ~/.local/bin/noctis"
+fi
+
+for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+  [[ -f "$rc" ]] || continue
+  sed -i '/# Added by noctis install.sh so ~\/.local\/bin (noctis CLI) is on PATH/,+1d' "$rc"
+done
+
 if [[ "$PURGE_PACKAGES" == "1" ]]; then
   AUR_HELPER=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["system"]["aur_helper"])' "$NOCTIS_TOML")
   read -rep $"This will run $AUR_HELPER -R against every package this profile installed (including custom_apps.lst entries). Continue? (y,n) " PURGE_CONFIRM

@@ -15,7 +15,6 @@ hl.window_rule({ name = "opacity-discord",   match = { class = "^(discord|WebCor
 hl.window_rule({ name = "opacity-pavucontrol", match = { class = "^(pavucontrol)$" },         opacity = "0.80 0.80" })
 hl.window_rule({ name = "opacity-polkit",    match = { class = "^(org.kde.polkit-kde-authentication-agent-1)$" }, opacity = "0.80 0.70" })
 hl.window_rule({ name = "opacity-telegram",  match = { class = "^(org.telegram.desktop)$" },  opacity = "0.80 0.80" })
-hl.window_rule({ name = "opacity-rofi",      match = { class = "^(Rofi)$" },                  opacity = "0.80 0.80" })
 hl.window_rule({ name = "opacity-weather",   match = { title = "^(Weather)$" },               opacity = "0.80 0.80" })
 hl.window_rule({ name = "opacity-sysmon",    match = { title = "^(System Monitor)$" },        opacity = "0.80 0.80" })
 
@@ -34,7 +33,6 @@ hl.window_rule({ name = "float-confirmreset", match = { class = "confirmreset" }
 hl.window_rule({ name = "float-openfile",     match = { title = "Open File" },         float = true })
 hl.window_rule({ name = "float-branchdialog", match = { title = "branchdialog" },      float = true })
 hl.window_rule({ name = "float-lxappearance", match = { class = "Lxappeara" },         float = true })
-hl.window_rule({ name = "float-rofi",         match = { class = "Rofi" },              float = true, no_anim = true })
 hl.window_rule({ name = "float-viewnior",     match = { class = "^(Viewnior|viewnior)$" }, float = true })
 hl.window_rule({ name = "float-feh",          match = { class = "feh" },               float = true })
 hl.window_rule({ name = "float-pavucontrolqt",match = { class = "pavucontrol-qt" },    float = true })

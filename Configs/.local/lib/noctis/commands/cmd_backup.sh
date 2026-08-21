@@ -2,6 +2,7 @@
 # noctis backup — snapshot lifecycle for the dotfiles noctis manages.
 # @cmd: backup
 # @cmd.desc: Snapshot, list, revert, or prune dotfile backups
+# @cmd.group: LIFECYCLE
 # @cmd.opt: create [--label <name>] | Snapshot current dotfiles state
 # @cmd.opt: list                     | List available snapshots
 # @cmd.opt: revert <id>              | Restore a specific snapshot

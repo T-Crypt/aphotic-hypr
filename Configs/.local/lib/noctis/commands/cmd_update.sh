@@ -2,6 +2,7 @@
 # noctis update — pull the dots repo, re-run restore, reload.
 # @cmd: update
 # @cmd.desc: Update the dots repo and re-deploy config
+# @cmd.group: LIFECYCLE
 # @cmd.opt: --dots-only | Only git-pull, skip restore + reload
 
 noctis_cmd_update() {

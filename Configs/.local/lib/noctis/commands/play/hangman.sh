@@ -69,6 +69,8 @@ noctis_cmd_play_hangman() {
             continue
         fi
 
+        letter="${letter,,}"
+
         # Check if already guessed
         if [[ "$guessed" == *"$letter"* ]]; then
             echo "You already guessed that letter!"

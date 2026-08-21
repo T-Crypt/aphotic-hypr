@@ -2,6 +2,7 @@
 # noctis wallpaper — set/cycle the wallpaper within the active theme.
 # @cmd: wallpaper
 # @cmd.desc: Set, randomize, or cycle the wallpaper
+# @cmd.group: CONFIG
 # @cmd.opt: -f, --file <path> | Set a specific wallpaper (must live under a theme folder)
 # @cmd.opt: --random          | Pick a random wallpaper from the active theme
 # @cmd.opt: --next            | Advance to another wallpaper in the active theme

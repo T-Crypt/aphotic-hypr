@@ -116,6 +116,7 @@ def apply_wallpaper(theme, wallpaper):
 
     run_optional(["pywalfox", "update"])
     run_optional(["noctis", "reload"])
+    run_optional(["noctis", "sddm", "sync"])
     notify(f"Wallpaper changed to {theme}/{wallpaper}")
 
 
