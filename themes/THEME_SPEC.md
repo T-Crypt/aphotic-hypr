@@ -24,6 +24,7 @@ name = "wallust"        # "wallust" | "matugen" (matugen not wired yet — Phase
 backend = "fastresize"  # wallust -b: full | resized | wal | thumb | fastresize
 palette = "kmeans"      # wallust -p: salience | ansi | kmeans
 colorscheme = "some-name"  # fixed palette, see below — mutually exclusive with backend/palette
+style = "light"         # wallust -S: dark | light — omit for dark (the default for every theme but Latte)
 
 [icons]
 papirus_color = "green"  # one of `papirus-folders --list`, see below
@@ -96,6 +97,27 @@ theme (`cmd_theme.sh`, `Wallpapers.qml`'s `setWallpaper`, and
 --format pywal` instead of `wallust run <image>` when it's set —
 `backend`/`palette` are ignored in that case, since they're
 image-generation-only knobs.
+
+### Readable contrast and light themes
+
+`Configs/wallust/wallust.toml` sets `check_contrast = true` globally,
+which is wallust's own built-in fix for a real bug: without it, a
+dark/desaturated wallpaper region can generate an ANSI color (`color8`
+dim-gray was the actual offender) with barely any contrast against the
+background, making things like `ls` output or zsh-autosuggestions text
+nearly invisible. This applies automatically to every `wallust run`
+call across all three theme-apply sites — no per-theme opt-in needed.
+
+`[engine].style` (`"dark"` or `"light"`) controls which side of that
+contrast check wallust generates for — light-background/dark-foreground
+instead of the default dark/light. Latte is the only shipped theme
+that sets it (`style = "light"`); every other theme omits it and gets
+wallust's own default (`dark`). This only affects wallust's own
+image-derived generation — it doesn't touch `Colours.qml`'s separate,
+currently-hardcoded `light: false`, which drives a couple of
+Quickshell-side visual tweaks (icon weight, desktop clock inversion)
+independently and would need its own theme.toml-driven wiring to
+actually flip for Latte.
 
 ## Minimal valid theme
 

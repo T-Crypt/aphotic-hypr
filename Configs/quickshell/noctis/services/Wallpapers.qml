@@ -39,7 +39,7 @@ Singleton {
     // wallpaper happens to contain -- when set, backend/palette (image-
     // generation-only knobs) are ignored, mirroring cmd_theme.sh's
     // _noctis_theme_apply so the CLI and this QML path stay in sync.
-    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, papirusColor: var): void {
+    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var): void {
         Quickshell.execDetached(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
         Quickshell.execDetached(["cp", path, root.path]);
 
@@ -51,6 +51,8 @@ Singleton {
                 cmd.push("-b", backend);
             if (palette)
                 cmd.push("-p", palette);
+            if (style)
+                cmd.push("-S", style);
             Quickshell.execDetached(cmd);
         }
 
