@@ -25,6 +25,9 @@ prompt_layers() {
   read -rp "Enable ai layer? [y/N]: " answer
   [[ "$answer" =~ ^[Yy]$ ]] && layers+=("ai")
 
+  read -rp "Enable exploit layer? Adds the BlackArch repo -- less stable than Arch's official repos, see docs/exploit-layer.md [y/N]: " answer
+  [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit")
+
   local IFS=","
   echo "${layers[*]}"
 }

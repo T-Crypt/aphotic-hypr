@@ -12,8 +12,11 @@ result=$(echo "" | prompt_profile)
 result=$(echo "minimal" | prompt_profile)
 [[ "$result" == "minimal" ]] || fail "expected 'minimal', got '$result'"
 
-result=$(printf "y\nn\ny\n" | prompt_layers)
+result=$(printf "y\nn\ny\nn\n" | prompt_layers)
 [[ "$result" == "gaming,ai" ]] || fail "expected 'gaming,ai', got '$result'"
+
+result=$(printf "n\nn\nn\ny\n" | prompt_layers)
+[[ "$result" == "exploit" ]] || fail "expected 'exploit', got '$result'"
 
 result=$(echo "" | prompt_theme)
 [[ "$result" == "default" ]] || fail "expected 'default', got '$result'"

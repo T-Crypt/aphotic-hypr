@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <em>A Hyprland setup built for three identities at once — developer environment, gaming rig, and AI-assisted workflow — without losing the minimalist bones it started from.</em>
+  <em>A Hyprland setup built for four identities at once — developer environment, gaming rig, AI-assisted workflow, and security research box — without losing the minimalist bones it started from.</em>
 </p>
 
 <p align="center">
@@ -92,7 +92,7 @@ Every module is a thin, deliberately-scoped-down rewrite of its caelestia counte
 Most rices are a snapshot — a config someone tuned once and stopped touching, distributed as a pile of dotfiles you copy over your own and hope for the best. Noctis is built to keep moving. Underneath the visuals is a small, deliberate piece of infrastructure:
 
 - **Declarative, not hardcoded.** Package sets live as data (`profiles/*.toml`), not as bash arrays buried in an install script. Changing what ships means editing a TOML file, not surgery on `install.sh`.
-- **Composable, not monolithic.** A base profile (`minimal` or `full`) plus any combination of layers (`gaming`, `dev`, `ai`) resolve into one merged package list at install time. Add a layer without touching the base; add a base without touching the layers.
+- **Composable, not monolithic.** A base profile (`minimal` or `full`) plus any combination of layers (`gaming`, `dev`, `ai`, `exploit`) resolve into one merged package list at install time. Add a layer without touching the base; add a base without touching the layers.
 - **Safe to run twice.** Every install is snapshotted to a timestamped backup before anything changes, and the resolved choice is written to `noctis.toml` so a re-run can detect and reuse it instead of asking the same questions again.
 - **Honest about what it will do.** `--dry-run` prints the entire install plan — every package, every layer, every detected system fact — and touches nothing. No surprises, no `sudo` running until you've actually agreed to something.
 - **Reversible.** `./uninstall.sh` restores your most recent backup on request. Trying Noctis was never supposed to mean burning your current setup down first.
@@ -125,7 +125,7 @@ Running with no flags launches a short wizard — profile, optional layers, them
 | Flag | Effect |
 |---|---|
 | `--profile <minimal\|full>` | Selects the base package set. Skips the profile prompt. |
-| `--with <layer,layer,...>` | Comma-separated layers to merge in: `gaming`, `dev`, `ai`. Skips the layer prompts. |
+| `--with <layer,layer,...>` | Comma-separated layers to merge in: `gaming`, `dev`, `ai`, `exploit`. Skips the layer prompts. |
 | `--theme <name>` | Pre-selects a theme. Skips the theme prompt. |
 | `--dry-run` | Prints the full resolved install plan and exits — nothing is installed, backed up, or written. |
 | `--no-backup` | Skips the pre-install config snapshot. Off by default; use with intent. |
@@ -176,6 +176,7 @@ A **profile** is the base package set. A **layer** is an optional add-on merged 
 | `gaming` | GameMode, MangoHud (both with 32-bit variants), Steam. |
 | `dev` | Neovim, tmux, fzf, ripgrep, fd, lazygit. |
 | `ai` | Ollama, as a local AI backend — package-layer only for now; workflow integration is a later roadmap phase. |
+| `exploit` | `nmap`, `dirbuster`, `gobuster`, `ffuf`, `nikto`, `whatweb`, `sqlmap`, `hydra`, `john` — offensive-security/CTF tooling via the BlackArch repo. **Enables the BlackArch repo**, which is less stable than Arch's official repos; `install.sh` prints a warning and asks for explicit confirmation before touching `/etc/pacman.conf`. See [`docs/exploit-layer.md`](docs/exploit-layer.md) for the stability tradeoffs and how to recover if a package breaks. |
 
 Layers are additive and dedupe against the base and each other, so `--with gaming,dev,ai` on top of `full` merges cleanly with no duplicate installs. Combine whatever fits: a `minimal` install with just `dev` is a lean coding box; `full` with `gaming` and `dev` is closer to a daily driver that also game-modes on demand.
 
@@ -196,7 +197,7 @@ Noctis-Hypr/
 │   └── toml/                    Profile + layer merge logic
 ├── profiles/
 │   ├── base/                    minimal.toml, full.toml
-│   └── layers/                  gaming.toml, dev.toml, ai.toml
+│   └── layers/                  gaming.toml, dev.toml, ai.toml, exploit.toml
 ├── themes/                      Swappable theme presets (THEME_SPEC.md documents the contract)
 └── Configs/                     Mirrors ~/.config — the configs that actually land on disk
     ├── quickshell/noctis/        Hand-vendored Quickshell shell (see below)

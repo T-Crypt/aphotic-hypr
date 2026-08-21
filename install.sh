@@ -6,6 +6,7 @@ source "$ROOT_DIR/lib/install/python.sh"
 source "$ROOT_DIR/lib/install/aur.sh"
 source "$ROOT_DIR/lib/install/backup.sh"
 source "$ROOT_DIR/lib/install/wizard.sh"
+source "$ROOT_DIR/lib/install/blackarch.sh"
 # sourced libs each set -euo pipefail, which otherwise leaks into this
 # script's shell options since `set` is not scoped to the sourced file
 set +euo pipefail
@@ -60,7 +61,9 @@ print_help() {
 Usage: ./install.sh [options]
 
   --profile <minimal|full>     Select base profile (skips wizard prompt)
-  --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai
+  --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai,exploit
+                                (exploit enables the BlackArch repo -- see
+                                docs/exploit-layer.md)
   --theme <name>                Theme preset name
   --dry-run                     Print planned actions, change nothing
   --no-backup                   Skip backing up existing configs
@@ -182,6 +185,15 @@ main() {
   print_stage 2 "Configuration"
   resolve_config
 
+  if [[ ",$LAYERS," == *",exploit,"* && "$DRY_RUN" != "1" ]]; then
+    print_blackarch_warning
+    read -rep $'[\e[1;33mACTION\e[0m] - Continue enabling the exploit layer / BlackArch repo? (y,N) ' EXPLOIT_OK
+    if [[ "$EXPLOIT_OK" != "y" && "$EXPLOIT_OK" != "Y" ]]; then
+      echo -e "$CWR - Skipping the exploit layer."
+      LAYERS=$(echo ",$LAYERS," | sed 's/,exploit,/,/' | sed 's/^,//; s/,$//')
+    fi
+  fi
+
   local layer_paths=()
   if [[ -n "$LAYERS" ]]; then
     IFS=',' read -ra layer_names <<< "$LAYERS"
@@ -214,6 +226,9 @@ main() {
     else
       echo "  would install hyprland"
     fi
+    if [[ ",$LAYERS," == *",exploit,"* ]]; then
+      ensure_blackarch_repo
+    fi
     exit 0
   fi
 
@@ -242,6 +257,11 @@ main() {
   echo -e "$CNT - Resolving AUR helper..."
   AUR_HELPER=$(ensure_aur_helper)
   echo -e "$COK - Using AUR helper: $AUR_HELPER"
+
+  if [[ ",$LAYERS," == *",exploit,"* ]]; then
+    echo -e "$CNT - Enabling the BlackArch repo for the exploit layer..."
+    ensure_blackarch_repo || { echo -e "$CER - Failed to enable the BlackArch repo; exploit-layer packages will fail to install. See docs/exploit-layer.md."; }
+  fi
 
   print_stage 4 "Backup"
   if [[ "$NO_BACKUP" != "1" ]]; then
