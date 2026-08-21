@@ -1,0 +1,12 @@
+[theme]
+display_name = "Latte"
+description = "Light theme, soft cream tones with a latte-art motif."
+
+[engine]
+style = "light"
+
+[icons]
+papirus_color = "brown"
+
+[wallpaper]
+default = "latte-art.jpg"

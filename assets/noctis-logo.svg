@@ -5,8 +5,11 @@
       <stop offset="1" stop-color="#d6c8ff"/>
     </linearGradient>
   </defs>
-  <rect x="2" y="2" width="84" height="84" rx="18" fill="#12141c"/>
+  <rect x="2" y="2" width="84" height="84" rx="42" fill="#12141c"/>
   <path d="M20 58 L20 68 L30 68" stroke="#6d7bff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   <path d="M68 30 L68 20 L58 20" stroke="#6d7bff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <path d="M50 26 A18 18 0 1 0 50 62 A13.5 13.5 0 1 1 50 26 Z" fill="url(#moonGrad)"/>
+  <path fill-rule="evenodd" fill="url(#moonGrad)" d="
+    M 26,44 a 18,18 0 1,0 36,0 a 18,18 0 1,0 -36,0 Z
+    M 36.5,44 a 13.5,13.5 0 1,0 27,0 a 13.5,13.5 0 1,0 -27,0 Z
+  "/>
 </svg>

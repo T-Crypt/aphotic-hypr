@@ -1,0 +1,3 @@
+module qs.modules.osd
+OsdSlider 1.0 OsdSlider.qml
+OsdWindow 1.0 OsdWindow.qml

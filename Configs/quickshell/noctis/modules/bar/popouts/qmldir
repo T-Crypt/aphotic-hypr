@@ -1,0 +1,13 @@
+module qs.modules.bar.popouts
+AudioPopout 1.0 AudioPopout.qml
+BatteryPopout 1.0 BatteryPopout.qml
+BluetoothPopout 1.0 BluetoothPopout.qml
+KbLayoutPopout 1.0 KbLayoutPopout.qml
+LockStatusPopout 1.0 LockStatusPopout.qml
+MediaPopout 1.0 MediaPopout.qml
+NetworkPopout 1.0 NetworkPopout.qml
+ResourcesPopout 1.0 ResourcesPopout.qml
+SettingsPopout 1.0 SettingsPopout.qml
+TrayPopout 1.0 TrayPopout.qml
+Wrapper 1.0 Wrapper.qml
+WindowPopout 1.0 WindowPopout.qml

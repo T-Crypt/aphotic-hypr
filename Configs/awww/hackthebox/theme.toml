@@ -1,0 +1,13 @@
+[theme]
+display_name = "HackTheBox"
+description = "Dark, tech/sci-fi accents."
+
+[engine]
+backend = "fastresize"
+palette = "kmeans"
+
+[icons]
+papirus_color = "green"
+
+[wallpaper]
+default = "circuit.jpg"

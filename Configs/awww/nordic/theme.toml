@@ -1,0 +1,12 @@
+[theme]
+display_name = "Nordic"
+description = "Cool blue-gray tones."
+
+[engine]
+palette = "ansi"
+
+[icons]
+papirus_color = "nordic"
+
+[wallpaper]
+default = "aurora.jpg"

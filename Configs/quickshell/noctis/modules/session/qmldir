@@ -1,0 +1,4 @@
+module qs.modules.session
+SessionButton 1.0 SessionButton.qml
+SessionContent 1.0 SessionContent.qml
+SessionWindow 1.0 SessionWindow.qml

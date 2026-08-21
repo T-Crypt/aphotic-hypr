@@ -1,0 +1,9 @@
+[theme]
+display_name = "Tokyo Night"
+description = "Neon purples and blues, city-at-night palette."
+
+[icons]
+papirus_color = "indigo"
+
+[wallpaper]
+default = "neon-skyline.jpg"
