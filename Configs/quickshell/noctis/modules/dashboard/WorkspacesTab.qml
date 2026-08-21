@@ -62,7 +62,7 @@ StyledRect {
 
                     StyledText {
                         text: wsCard.modelData.id
-                        color: wsCard.active ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                        color: wsCard.active ? Colours.legibleAccent(Colours.palette.m3primary, wsCard.color) : Colours.palette.m3onSurface
                         font: Tokens.font.title.builders.medium.weight(Font.Medium).build()
                     }
 

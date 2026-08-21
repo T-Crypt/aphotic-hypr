@@ -29,7 +29,7 @@ ColumnLayout {
     StyledText {
         textFormat: Text.RichText
         text: `<a href="${root.repoUrl}">${root.repoUrl}</a>`
-        color: Colours.palette.m3primary
+        color: Colours.legibleAccent(Colours.palette.m3primary, Colours.tPalette.m3surfaceContainer)
         font: Tokens.font.body.medium
         onLinkActivated: link => Qt.openUrlExternally(link)
 

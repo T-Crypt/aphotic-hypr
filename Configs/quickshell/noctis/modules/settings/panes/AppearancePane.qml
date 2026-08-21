@@ -51,7 +51,7 @@ ColumnLayout {
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     text: themeCard.modelData.displayName
-                    color: themeCard.active ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                    color: themeCard.active ? Colours.legibleAccent(Colours.palette.m3primary, themeCard.color) : Colours.palette.m3onSurface
                     font: Tokens.font.body.medium
                 }
 
