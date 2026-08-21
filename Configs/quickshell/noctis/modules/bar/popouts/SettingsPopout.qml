@@ -42,4 +42,22 @@ ColumnLayout {
         checked: Settings.desktopClockEnabled
         onToggled: state => Settings.desktopClockEnabled = state
     }
+
+    SettingsToggleRow {
+        Layout.fillWidth: true
+        Layout.preferredWidth: 300
+        icon: "dock_to_right"
+        label: qsTr("Dock bar to right edge")
+        checked: Settings.barPositionRight
+        onToggled: state => Settings.barPositionRight = state
+    }
+
+    SettingsToggleRow {
+        Layout.fillWidth: true
+        Layout.preferredWidth: 300
+        icon: "density_small"
+        label: qsTr("Compact bar")
+        checked: Settings.barCompact
+        onToggled: state => Settings.barCompact = state
+    }
 }

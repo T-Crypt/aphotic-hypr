@@ -44,7 +44,7 @@ StyledRect {
     radius: Tokens.rounding.full
 
     clip: true
-    implicitWidth: Tokens.sizes.bar.innerWidth
+    implicitWidth: Settings.barInnerWidth
     implicitHeight: iconColumn.implicitHeight + Tokens.padding.medium * 2
 
     ColumnLayout {
@@ -152,14 +152,6 @@ StyledRect {
                     roleValue: "battery"
                     delegate: EntryWrapper {
                         BatteryStatus {
-                            colour: root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "resources"
-                    delegate: EntryWrapper {
-                        ResourcesStatus {
                             colour: root.colour
                         }
                     }

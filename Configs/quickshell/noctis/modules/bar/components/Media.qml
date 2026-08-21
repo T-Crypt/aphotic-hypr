@@ -16,7 +16,7 @@ StyledRect {
     readonly property bool active: Players.active !== null
 
     clip: true
-    implicitWidth: active ? Tokens.sizes.bar.innerWidth : 0
+    implicitWidth: active ? Settings.barInnerWidth : 0
     implicitHeight: active ? icon.implicitHeight + Tokens.padding.small * 2 : 0
     visible: implicitHeight > 0
 
