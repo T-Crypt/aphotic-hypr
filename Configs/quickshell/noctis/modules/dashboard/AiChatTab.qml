@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import Quickshell
 import qs.config
@@ -78,8 +79,25 @@ ColumnLayout {
                 StateLayer {
                     anchors.fill: parent
                     radius: parent.radius
-                    disabled: !providerPill.available
-                    onClicked: AiConfig.activeProvider = providerPill.modelData.id
+                    showHoverBackground: providerPill.available
+                }
+
+                // A StateLayer's own MouseArea goes `enabled: false` when
+                // disabled (so the hover/ripple visuals correctly turn
+                // off), and a disabled MouseArea does not accept the
+                // click -- it falls through to whatever is behind it,
+                // which here is DashboardWindow's full-screen click-
+                // outside-to-dismiss MouseArea. That silently closed the
+                // whole dashboard instead of just no-opping on an
+                // unavailable pill. This plain MouseArea stays enabled
+                // regardless of availability so it always absorbs the
+                // click; it only acts on it when the provider is usable.
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        if (providerPill.available)
+                            AiConfig.activeProvider = providerPill.modelData.id;
+                    }
                 }
             }
         }
@@ -89,6 +107,8 @@ ColumnLayout {
         }
 
         StyledRect {
+            id: modelPill
+
             visible: AiConfig.activeProvider === "ollama"
             Layout.preferredHeight: 32
             Layout.preferredWidth: modelLabel.implicitWidth + Tokens.padding.large * 2
@@ -98,11 +118,130 @@ ColumnLayout {
             StyledText {
                 id: modelLabel
                 anchors.centerIn: parent
-                text: AiConfig.ollamaModel
+                text: AiConfig.ollamaHostConfigured ? (AiConfig.ollamaModel || qsTr("Select model")) : qsTr("Set host…")
                 color: Colours.palette.m3onSurfaceVariant
                 font: Tokens.font.label.small
             }
+
+            StateLayer {
+                anchors.fill: parent
+                radius: parent.radius
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: modelMenu.open()
+            }
+
+            Popup {
+                id: modelMenu
+
+                y: modelPill.height + Tokens.spacing.small
+                width: 220
+                padding: Tokens.padding.small
+                background: StyledRect {
+                    radius: Tokens.rounding.medium
+                    color: Colours.tPalette.m3surfaceContainer
+                }
+
+                contentItem: ColumnLayout {
+                    spacing: Tokens.spacing.extraSmall
+
+                    // Host isn't configured yet -- let the user type one
+                    // in directly rather than only pointing them at a
+                    // config file. AiConfig persists whatever is entered.
+                    RowLayout {
+                        visible: !AiConfig.ollamaHostConfigured
+                        Layout.fillWidth: true
+                        spacing: Tokens.spacing.extraSmall
+
+                        StyledRect {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 32
+                            radius: Tokens.rounding.small
+                            color: Colours.tPalette.m3surfaceContainerHigh
+
+                            TextInput {
+                                id: hostInput
+                                anchors.fill: parent
+                                anchors.margins: Tokens.padding.small
+                                font: Tokens.font.label.small
+                                color: Colours.palette.m3onSurface
+                                clip: true
+
+                                StyledText {
+                                    visible: hostInput.text.length === 0
+                                    anchors.fill: parent
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: qsTr("http://host:11434")
+                                    color: Colours.palette.m3onSurfaceVariant
+                                    font: Tokens.font.label.small
+                                }
+
+                                Keys.onReturnPressed: {
+                                    if (hostInput.text.trim().length > 0) {
+                                        AiConfig.ollamaHost = hostInput.text.trim();
+                                        AiProviders.refreshOllamaModels();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    StyledText {
+                        visible: AiConfig.ollamaHostConfigured && AiProviders.ollamaModels.length === 0
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        text: qsTr("No models found on this host")
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.small
+                    }
+
+                    Repeater {
+                        model: AiProviders.ollamaModels
+
+                        StyledRect {
+                            id: modelOption
+
+                            required property string modelData
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 32
+                            radius: Tokens.rounding.small
+                            color: modelOption.modelData === AiConfig.ollamaModel ? Colours.palette.m3primary : "transparent"
+
+                            StyledText {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.margins: Tokens.padding.small
+                                anchors.verticalCenter: parent.verticalCenter
+                                elide: Text.ElideRight
+                                text: modelOption.modelData
+                                color: modelOption.modelData === AiConfig.ollamaModel ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface
+                                font: Tokens.font.label.small
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    AiConfig.ollamaModel = modelOption.modelData;
+                                    modelMenu.close();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    StyledText {
+        visible: AiConfig.activeProvider === "ollama" && !AiConfig.ollamaHostConfigured
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: qsTr("⚠ No Ollama host configured. Click the pill above to set one, or set OLLAMA_BASE_URL.")
+        color: Colours.palette.m3error
+        font: Tokens.font.label.small
     }
 
     StyledRect {
@@ -208,7 +347,11 @@ ColumnLayout {
                 StateLayer {
                     anchors.fill: parent
                     radius: parent.radius
-                    disabled: AiProviders.busy
+                    showHoverBackground: !AiProviders.busy
+                }
+
+                MouseArea {
+                    anchors.fill: parent
                     onClicked: root._send()
                 }
             }

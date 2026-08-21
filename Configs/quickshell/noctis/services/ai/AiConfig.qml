@@ -14,9 +14,15 @@ Singleton {
 
     readonly property string configPath: `${Quickshell.env("HOME")}/.config/noctis/ai-config.json`
 
+    // Blank by default -- deliberately NOT a real address. Every machine's
+    // Ollama host is different (or absent entirely); baking in one user's
+    // LAN IP would silently point everyone else's shell at somebody
+    // else's server. See ollamaHostConfigured / the AI Chat tab's warning.
     property string activeProvider: "ollama"
-    property string ollamaHost: "http://10.0.0.200:11434"
-    property string ollamaModel: "qwen3:30b"
+    property string ollamaHost: ""
+    property string ollamaModel: ""
+
+    readonly property bool ollamaHostConfigured: root.ollamaHost.length > 0
 
     property bool _loaded: false
 
@@ -51,9 +57,17 @@ Singleton {
             } catch (e) {
                 // No config file yet, or malformed -- keep defaults above.
             }
+            // No saved host yet -- fall back to OLLAMA_BASE_URL if the
+            // environment sets one (matches Ollama's own tooling
+            // convention), rather than staying blank when the user has
+            // already told their shell about a host.
+            if (!root.ollamaHost)
+                root.ollamaHost = Quickshell.env("OLLAMA_BASE_URL") ?? "";
             root._loaded = true;
         }
         onLoadFailed: error => {
+            if (!root.ollamaHost)
+                root.ollamaHost = Quickshell.env("OLLAMA_BASE_URL") ?? "";
             root._loaded = true;
         }
     }

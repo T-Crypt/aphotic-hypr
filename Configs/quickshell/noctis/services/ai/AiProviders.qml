@@ -20,10 +20,46 @@ Singleton {
         { id: "chatgpt", label: "ChatGPT", requiresApiKey: true }
     ]
 
-    readonly property bool ollamaAvailable: true
+    readonly property bool ollamaAvailable: AiConfig.ollamaHostConfigured
     readonly property bool claudeAvailable: AiKeys.hasAnthropicKey
     readonly property bool geminiAvailable: AiKeys.hasGeminiKey
     readonly property bool chatgptAvailable: AiKeys.hasOpenaiKey
+
+    property var ollamaModels: []
+
+    function refreshOllamaModels(): void {
+        if (!AiConfig.ollamaHostConfigured) {
+            root.ollamaModels = [];
+            return;
+        }
+        ollamaModelsProc.command = ["curl", "-s", "-m", "5", `${AiConfig.ollamaHost}/api/tags`];
+        ollamaModelsProc.running = true;
+    }
+
+    Connections {
+        target: AiConfig
+        function onOllamaHostChanged() {
+            root.refreshOllamaModels();
+        }
+    }
+
+    Process {
+        id: ollamaModelsProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const data = JSON.parse(text);
+                    root.ollamaModels = (data.models ?? []).map(m => m.name);
+                } catch (e) {
+                    // Host unreachable or unexpected response -- leave
+                    // ollamaModels as-is rather than clearing a
+                    // previously-successful list.
+                }
+            }
+        }
+    }
+
+    Component.onCompleted: root.refreshOllamaModels()
 
     function isAvailable(providerId: string): bool {
         switch (providerId) {
@@ -57,6 +93,10 @@ Singleton {
             return;
 
         const provider = AiConfig.activeProvider;
+        if (provider === "ollama" && !AiConfig.ollamaHostConfigured) {
+            root.errorReceived(qsTr("No Ollama host configured. Set it in the model pill, or set OLLAMA_BASE_URL, to enable."));
+            return;
+        }
         if (!root.isAvailable(provider)) {
             const label = root.providers.find(p => p.id === provider)?.label ?? provider;
             root.errorReceived(qsTr("No API key configured for %1. Set %2 to enable.").arg(label).arg(root.requiredEnvVar(provider)));
