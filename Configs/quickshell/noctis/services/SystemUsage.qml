@@ -8,10 +8,12 @@ import qs.config
 
 // Pure QML/proc-filesystem system monitor -- no native plugin needed
 // (unlike real caelestia's Cpu/Memory/Storage, which come from its C++
-// plugin). GPU is deliberately left unimplemented (gpuType always
-// "NONE") -- real GPU% needs vendor-specific tooling (nvidia-smi,
-// radeontop, intel_gpu_top), out of scope for now; every dashboard card
-// that reads gpuType already treats "NONE" as "hide this card".
+// plugin). GPU name comes from `lspci` (always available, vendor-neutral).
+// Live usage/temp needs vendor-specific tooling (nvidia-smi, radeontop,
+// intel_gpu_top) that may not be installed -- when none is found,
+// gpuStatsAvailable is false and the dashboard card shows "N/A" for
+// usage/temp rather than hiding the whole card, so the performance grid
+// doesn't reflow depending on what's installed.
 Singleton {
     id: root
 
@@ -19,10 +21,11 @@ Singleton {
     readonly property real cpuPerc: _cpuPerc
     readonly property real cpuTemp: _cpuTemp
 
-    readonly property string gpuType: "NONE"
-    readonly property string gpuName: ""
-    readonly property real gpuPerc: 0
-    readonly property real gpuTemp: 0
+    readonly property bool gpuDetected: _gpuName.length > 0
+    readonly property string gpuName: _gpuName
+    readonly property bool gpuStatsAvailable: _gpuStatsAvailable
+    readonly property real gpuPerc: _gpuPerc
+    readonly property real gpuTemp: _gpuTemp
 
     readonly property real memPerc: _memTotal > 0 ? _memUsed / _memTotal : 0
     readonly property real memUsed: _memUsed
@@ -33,6 +36,11 @@ Singleton {
     property string _cpuName: ""
     property real _cpuPerc: 0
     property real _cpuTemp: 0
+    property string _gpuName: ""
+    property string _gpuVendor: ""
+    property bool _gpuStatsAvailable: false
+    property real _gpuPerc: 0
+    property real _gpuTemp: 0
     property real _memUsed: 0
     property real _memTotal: 0
     property var _disks: []
@@ -67,6 +75,56 @@ Singleton {
         command: ["sh", "-c", "grep -m1 'model name' /proc/cpuinfo | cut -d: -f2"]
         stdout: SplitParser {
             onRead: data => root._cpuName = data.trim()
+        }
+    }
+
+    Process {
+        id: gpuNameProc
+        command: ["sh", "-c", "lspci -mm 2>/dev/null | grep -im1 'vga compatible controller\\|3d controller\\|display controller'"]
+        stdout: SplitParser {
+            onRead: data => {
+                const fields = data.match(/"[^"]*"|\S+/g) ?? [];
+                const vendor = (fields[2] ?? "").replace(/"/g, "");
+                const device = (fields[3] ?? "").replace(/"/g, "");
+                root._gpuName = device || vendor || qsTr("Unknown GPU");
+                root._gpuVendor = /nvidia/i.test(vendor) ? "nvidia" : /amd|ati/i.test(vendor) ? "amd" : /intel/i.test(vendor) ? "intel" : "";
+                gpuStatsProc.running = true;
+            }
+        }
+    }
+
+    Process {
+        id: gpuStatsProc
+        command: {
+            switch (root._gpuVendor) {
+            case "nvidia":
+                return ["nvidia-smi", "--query-gpu=utilization.gpu,temperature.gpu", "--format=csv,noheader,nounits"];
+            case "amd":
+                return ["sh", "-c", "radeontop -d - -l 1 2>/dev/null | grep -o 'gpu [0-9.]*%' | grep -o '[0-9.]*'"];
+            default:
+                return ["true"];
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root._gpuVendor === "nvidia") {
+                    const parts = text.trim().split(",").map(s => parseFloat(s.trim()));
+                    if (parts.length >= 2 && !isNaN(parts[0])) {
+                        root._gpuPerc = parts[0] / 100;
+                        root._gpuTemp = parts[1];
+                        root._gpuStatsAvailable = true;
+                        return;
+                    }
+                } else if (root._gpuVendor === "amd") {
+                    const perc = parseFloat(text.trim());
+                    if (!isNaN(perc)) {
+                        root._gpuPerc = perc / 100;
+                        root._gpuStatsAvailable = true;
+                        return;
+                    }
+                }
+                root._gpuStatsAvailable = false;
+            }
         }
     }
 
@@ -162,8 +220,15 @@ Singleton {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: tempProc.running = true
+        onTriggered: {
+            tempProc.running = true;
+            if (root._gpuVendor.length > 0)
+                gpuStatsProc.running = true;
+        }
     }
 
-    Component.onCompleted: cpuNameProc.running = true
+    Component.onCompleted: {
+        cpuNameProc.running = true;
+        gpuNameProc.running = true;
+    }
 }
