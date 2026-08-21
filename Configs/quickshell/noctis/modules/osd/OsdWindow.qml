@@ -18,7 +18,7 @@ PanelWindow {
     property bool shown: false
 
     function show(): void {
-        if (!Config.osd.enabled)
+        if (!Settings.osdEnabled)
             return;
         shown = true;
         hideTimer.restart();
@@ -41,7 +41,7 @@ PanelWindow {
 
     Timer {
         id: hideTimer
-        interval: Config.osd.hideDelay
+        interval: Settings.osdHideDelay
         onTriggered: root.shown = false
     }
 
@@ -84,7 +84,7 @@ PanelWindow {
         }
 
         OsdSlider {
-            visible: Config.osd.enableMicrophone
+            visible: Settings.osdEnableMicrophone
             height: visible ? implicitHeight : 0
 
             icon: Icons.getMicVolumeIcon(Audio.sourceVolume, Audio.sourceMuted)
@@ -96,7 +96,7 @@ PanelWindow {
         }
 
         OsdSlider {
-            visible: Config.osd.enableBrightness
+            visible: Settings.osdEnableBrightness
             height: visible ? implicitHeight : 0
 
             icon: `brightness_${Math.round((root.monitor?.brightness ?? 0) * 6) + 1}`

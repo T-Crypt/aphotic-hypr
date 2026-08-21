@@ -17,13 +17,13 @@ QtObject {
     property string appIcon
     property string appName
     property string image
-    property real expireTimeout: GlobalConfig.notifs.defaultExpireTimeout
+    property real expireTimeout: Settings.notifExpireTimeout
     property int urgency: NotificationUrgency.Normal
     property list<var> actions
 
     readonly property Timer timer: Timer {
         running: true
-        interval: notif.expireTimeout > 0 ? notif.expireTimeout : GlobalConfig.notifs.defaultExpireTimeout
+        interval: notif.expireTimeout > 0 ? notif.expireTimeout : Settings.notifExpireTimeout
         onTriggered: notif.close()
     }
 

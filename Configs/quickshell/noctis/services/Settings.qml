@@ -23,6 +23,13 @@ Singleton {
     property bool barPositionRight: false
     property bool barCompact: false
 
+    property bool osdEnabled: Config.osd.enabled
+    property int osdHideDelay: Config.osd.hideDelay
+    property bool osdEnableBrightness: Config.osd.enableBrightness
+    property bool osdEnableMicrophone: Config.osd.enableMicrophone
+
+    property real notifExpireTimeout: GlobalConfig.notifs.defaultExpireTimeout
+
     readonly property real barInnerWidth: Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1)
 
     property bool _loaded: false
@@ -36,7 +43,12 @@ Singleton {
             barPersistent: root.barPersistent,
             desktopClockEnabled: root.desktopClockEnabled,
             barPositionRight: root.barPositionRight,
-            barCompact: root.barCompact
+            barCompact: root.barCompact,
+            osdEnabled: root.osdEnabled,
+            osdHideDelay: root.osdHideDelay,
+            osdEnableBrightness: root.osdEnableBrightness,
+            osdEnableMicrophone: root.osdEnableMicrophone,
+            notifExpireTimeout: root.notifExpireTimeout
         }, null, 2));
     }
 
@@ -46,6 +58,11 @@ Singleton {
     onDesktopClockEnabledChanged: root._saveState()
     onBarPositionRightChanged: root._saveState()
     onBarCompactChanged: root._saveState()
+    onOsdEnabledChanged: root._saveState()
+    onOsdHideDelayChanged: root._saveState()
+    onOsdEnableBrightnessChanged: root._saveState()
+    onOsdEnableMicrophoneChanged: root._saveState()
+    onNotifExpireTimeoutChanged: root._saveState()
 
     FileView {
         id: stateFile
@@ -67,6 +84,16 @@ Singleton {
                     root.barPositionRight = data.barPositionRight;
                 if (typeof data.barCompact === "boolean")
                     root.barCompact = data.barCompact;
+                if (typeof data.osdEnabled === "boolean")
+                    root.osdEnabled = data.osdEnabled;
+                if (typeof data.osdHideDelay === "number")
+                    root.osdHideDelay = data.osdHideDelay;
+                if (typeof data.osdEnableBrightness === "boolean")
+                    root.osdEnableBrightness = data.osdEnableBrightness;
+                if (typeof data.osdEnableMicrophone === "boolean")
+                    root.osdEnableMicrophone = data.osdEnableMicrophone;
+                if (typeof data.notifExpireTimeout === "number")
+                    root.notifExpireTimeout = data.notifExpireTimeout;
             } catch (e) {
                 // No state file yet, or malformed -- keep the Config.qml/
                 // GlobalConfig.qml defaults already set above.

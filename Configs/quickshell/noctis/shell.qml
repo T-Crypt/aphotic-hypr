@@ -9,6 +9,7 @@ import qs.modules.osd
 import qs.modules.lock
 import qs.modules.session
 import qs.modules.dashboard
+import qs.modules.settings
 import qs.modules.background
 import qs.modules.areapicker
 
@@ -56,6 +57,15 @@ ShellRoot {
         model: Quickshell.screens
 
         DashboardWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
+    Variants {
+        id: settingsWindows
+        model: Quickshell.screens
+
+        SettingsWindow {
             screenState: root.screenStateFor(modelData)
         }
     }
@@ -128,6 +138,16 @@ ShellRoot {
             const win = dashboardWindows.instances[0];
             if (win)
                 win.screenState.dashboard = !win.screenState.dashboard;
+        }
+    }
+
+    IpcHandler {
+        target: "settings"
+
+        function toggle(): void {
+            const win = settingsWindows.instances[0];
+            if (win)
+                win.screenState.settings = !win.screenState.settings;
         }
     }
 
