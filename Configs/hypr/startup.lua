@@ -5,7 +5,13 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")
-    hl.exec_cmd("qs -c noctis")
+    -- Started as a systemd --user unit (Configs/systemd/user/noctis-shell.service)
+    -- rather than a bare exec: gives the shell real Restart=on-failure
+    -- supervision instead of silently staying dead if it crashes, which
+    -- happened at least once with nothing surfacing the fact. `systemctl
+    -- --user restart` is also how the SUPER+B keybind now recovers it
+    -- (see keybinds.lua), so start/restart go through the same path.
+    hl.exec_cmd("systemctl --user start noctis-shell.service")
     hl.exec_cmd("blueman-applet")
     hl.exec_cmd("nm-applet --indicator")
     hl.exec_cmd("sleep 1 && awww-daemon")

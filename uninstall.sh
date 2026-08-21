@@ -54,6 +54,11 @@ if [[ -L "$HOME/.local/bin/noctis" ]]; then
   echo "Removed ~/.local/bin/noctis"
 fi
 
+if systemctl --user list-unit-files noctis-shell.service &>/dev/null; then
+  systemctl --user disable --now noctis-shell.service &>/dev/null || true
+  echo "Disabled noctis-shell.service"
+fi
+
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
   [[ -f "$rc" ]] || continue
   sed -i '/# Added by noctis install.sh so ~\/.local\/bin (noctis CLI) is on PATH/,+1d' "$rc"
