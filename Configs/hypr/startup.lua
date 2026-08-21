@@ -15,14 +15,19 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-size 20")
 
     hl.exec_cmd("gsettings set org.gnome.desktop.interface icon-theme 'Dracula'")
-    -- gtk-theme is Adwaita-dark, not Dracula: Dracula's own stylesheet
-    -- hardcodes its palette rather than reading the standard @define-color
-    -- tokens, so wallust's gtk.css override (Configs/wallust/templates/
-    -- gtk.css) has nothing to hook into and GTK apps (Thunar, etc.) never
-    -- re-theme with the active wallpaper's colors. Adwaita is built almost
-    -- entirely around those same semantic tokens, so the override actually
-    -- takes effect.
-    hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'")
+    -- gtk-theme is adw-gtk3-dark, not Dracula or GTK's own bundled
+    -- Adwaita-dark: Dracula hardcodes its palette outright, and GTK3's
+    -- own built-in Adwaita compiles its headerbar/window chrome from
+    -- SCSS with baked-in colors that ignore user @define-color overrides
+    -- for anything but a few minor roles (verified live: a gtk.css
+    -- override took effect on list-selection highlights but not window/
+    -- headerbar backgrounds under plain Adwaita-dark). adw-gtk-theme is a
+    -- separate package that reimplements the same look purely through
+    -- those overridable named tokens -- the theme actually built for
+    -- pywal/wallust-style dynamic recoloring, which is why wallust's
+    -- gtk.css override (Configs/wallust/templates/gtk.css) only takes
+    -- real effect with it installed and selected.
+    hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'")
 
     hl.exec_cmd("gsettings set org.gnome.desktop.interface font-name 'Cantarell 10'")
