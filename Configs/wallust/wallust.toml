@@ -1,5 +1,12 @@
 backend = "fastresize"
 palette = "kmeans"
+# Ensures readable contrast against the background for every generated
+# color, not just the fixed "on"-role text wired up in Colours.qml --
+# without this, a dark/desaturated wallpaper region can produce an
+# ANSI color (color8 dim-gray is the common offender) that's nearly
+# invisible against the background, which is exactly what made `ls`
+# output hard to read on some themes.
+check_contrast = true
 
 [templates]
 # Pywal-compatible templates: single-brace {color0} syntax. Only safe for

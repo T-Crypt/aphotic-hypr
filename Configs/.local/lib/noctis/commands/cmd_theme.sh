@@ -100,10 +100,11 @@ _noctis_theme_apply() {
     fi
 
     local image_path="${dir}/${wallpaper_file}"
-    local backend palette colorscheme papirus_color
+    local backend palette colorscheme style papirus_color
     backend="$(_noctis_toml_get "${dir}/theme.toml" engine backend)"
     palette="$(_noctis_toml_get "${dir}/theme.toml" engine palette)"
     colorscheme="$(_noctis_toml_get "${dir}/theme.toml" engine colorscheme)"
+    style="$(_noctis_toml_get "${dir}/theme.toml" engine style)"
     papirus_color="$(_noctis_toml_get "${dir}/theme.toml" icons papirus_color)"
 
     noctis_require awww || return 1
@@ -123,6 +124,7 @@ _noctis_theme_apply() {
             local wallust_cmd=(wallust run "$image_path")
             [[ -n "$backend" ]] && wallust_cmd+=(-b "$backend")
             [[ -n "$palette" ]] && wallust_cmd+=(-p "$palette")
+            [[ -n "$style" ]] && wallust_cmd+=(-S "$style")
             "${wallust_cmd[@]}"
         fi
     else

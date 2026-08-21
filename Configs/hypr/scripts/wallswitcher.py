@@ -62,9 +62,10 @@ def parse_engine_pin(theme):
     backend = ""
     palette = ""
     colorscheme = ""
+    style = ""
     papirus_color = ""
     if not os.path.isfile(toml_path):
-        return backend, palette, colorscheme, papirus_color
+        return backend, palette, colorscheme, style, papirus_color
     section = ""
     with open(toml_path) as f:
         for raw in f:
@@ -86,9 +87,11 @@ def parse_engine_pin(theme):
                     palette = value
                 elif key == "colorscheme":
                     colorscheme = value
+                elif key == "style":
+                    style = value
             elif section == "icons" and key == "papirus_color":
                 papirus_color = value
-    return backend, palette, colorscheme, papirus_color
+    return backend, palette, colorscheme, style, papirus_color
 
 
 def notify(message):
@@ -105,7 +108,7 @@ def apply_wallpaper(theme, wallpaper):
 
     subprocess.run(["awww", "img", "--transition-type", "wipe", "--transition-duration", "3", image_path])
 
-    backend, palette, colorscheme, papirus_color = parse_engine_pin(theme)
+    backend, palette, colorscheme, style, papirus_color = parse_engine_pin(theme)
     if colorscheme:
         # Fixed palette pin -- see cmd_theme.sh's _noctis_theme_apply for
         # why some themes (HackTheBox's real green/navy scheme) pin an
@@ -117,6 +120,8 @@ def apply_wallpaper(theme, wallpaper):
             wallust_cmd += ["-b", backend]
         if palette:
             wallust_cmd += ["-p", palette]
+        if style:
+            wallust_cmd += ["-S", style]
         subprocess.run(wallust_cmd)
     subprocess.run(["cp", image_path, os.path.join(awww_dir, "wallpaper.rofi")])
 
