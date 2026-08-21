@@ -20,7 +20,7 @@ Item {
 
     readonly property int clampedWidth: Math.max(Config.border.minThickness, implicitWidth)
     readonly property int padding: Math.max(Tokens.padding.small, Config.border.thickness)
-    readonly property int contentWidth: Tokens.sizes.bar.innerWidth + padding * 2
+    readonly property int contentWidth: Settings.barInnerWidth + padding * 2
     readonly property int exclusiveZone: !disabled && (Settings.barPersistent || screenState.bar) ? contentWidth : Config.border.thickness
     readonly property bool shouldBeVisible: !fullscreen && !disabled && (Settings.barPersistent || screenState.bar || isHovered)
     property bool isHovered
@@ -72,12 +72,20 @@ Item {
         }
     ]
 
+    // Both children hug the wrapper edge facing away from the docked
+    // screen edge (i.e. towards the popout flyout's padding space in
+    // BarWindow.qml) -- that's parent.right when docked left (screen edge
+    // is parent.left, fixed at the window's own left) and parent.left when
+    // docked right (screen edge is parent.right instead). This keeps the
+    // visible strip flush against the true screen edge in both modes as
+    // root's implicitWidth animates.
     StyledRect {
         id: background
 
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.right: parent.right
+        anchors.right: !Settings.barPositionRight ? parent.right : undefined
+        anchors.left: Settings.barPositionRight ? parent.left : undefined
         width: root.implicitWidth
 
         radius: Tokens.rounding.full
@@ -90,7 +98,8 @@ Item {
 
         anchors.top: parent.top
         anchors.bottom: parent.bottom
-        anchors.right: parent.right
+        anchors.right: !Settings.barPositionRight ? parent.right : undefined
+        anchors.left: Settings.barPositionRight ? parent.left : undefined
 
         active: root.shouldBeVisible
 

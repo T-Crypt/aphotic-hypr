@@ -20,6 +20,10 @@ Singleton {
     property bool showClockDate: Config.bar.clock.showDate
     property bool barPersistent: Config.bar.persistent
     property bool desktopClockEnabled: Config.background.desktopClock.enabled
+    property bool barPositionRight: false
+    property bool barCompact: false
+
+    readonly property real barInnerWidth: Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1)
 
     property bool _loaded: false
 
@@ -30,7 +34,9 @@ Singleton {
             twelveHourClock: root.twelveHourClock,
             showClockDate: root.showClockDate,
             barPersistent: root.barPersistent,
-            desktopClockEnabled: root.desktopClockEnabled
+            desktopClockEnabled: root.desktopClockEnabled,
+            barPositionRight: root.barPositionRight,
+            barCompact: root.barCompact
         }, null, 2));
     }
 
@@ -38,6 +44,8 @@ Singleton {
     onShowClockDateChanged: root._saveState()
     onBarPersistentChanged: root._saveState()
     onDesktopClockEnabledChanged: root._saveState()
+    onBarPositionRightChanged: root._saveState()
+    onBarCompactChanged: root._saveState()
 
     FileView {
         id: stateFile
@@ -55,6 +63,10 @@ Singleton {
                     root.barPersistent = data.barPersistent;
                 if (typeof data.desktopClockEnabled === "boolean")
                     root.desktopClockEnabled = data.desktopClockEnabled;
+                if (typeof data.barPositionRight === "boolean")
+                    root.barPositionRight = data.barPositionRight;
+                if (typeof data.barCompact === "boolean")
+                    root.barCompact = data.barCompact;
             } catch (e) {
                 // No state file yet, or malformed -- keep the Config.qml/
                 // GlobalConfig.qml defaults already set above.

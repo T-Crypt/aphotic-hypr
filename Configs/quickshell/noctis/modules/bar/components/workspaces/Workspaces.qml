@@ -27,7 +27,7 @@ StyledClippingRect {
 
     property real blur: onSpecial ? 1 : 0
 
-    implicitWidth: Tokens.sizes.bar.innerWidth
+    implicitWidth: Settings.barInnerWidth
     implicitHeight: layout.implicitHeight + Tokens.padding.small
 
     color: Colours.palette.m3surfaceContainerHigh

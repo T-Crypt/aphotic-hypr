@@ -8,6 +8,7 @@ Item {
 
     required property var screen
     required property int barWidth
+    required property real windowWidth
     property bool hasCurrent: false
     property string currentName: ""
     property real currentCenter: 0
@@ -46,8 +47,17 @@ Item {
         visible: opacity > 0
         opacity: root.hasCurrent && loader.item ? 1 : 0
         scale: opacity
-        transformOrigin: Item.Left
-        x: root.barWidth + Tokens.spacing.small
+        // Left-docked: strip sits at local x in [0, barWidth] (root shares
+        // BarWindow's origin, which is the screen edge in that mode), so
+        // the flyout starts just past it. Right-docked: the screen edge is
+        // at local x = windowWidth instead, so the strip sits in
+        // [windowWidth - barWidth, windowWidth] and the flyout must render
+        // on the other side of it, ending at windowWidth - barWidth -
+        // spacing and growing further left (hence the transformOrigin
+        // flip, so the scale-in animation still expands away from the
+        // strip instead of away from the flyout's own top-left corner).
+        transformOrigin: Settings.barPositionRight ? Item.Right : Item.Left
+        x: Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - width : root.barWidth + Tokens.spacing.small
         // Clamp both edges -- the previous Math.max-only clamp kept the
         // flyout from starting above the screen top but let it run off
         // the bottom uncorrected for any popout tall enough that its

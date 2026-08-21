@@ -35,7 +35,7 @@ Item {
     property Title current: text1
 
     clip: true
-    implicitWidth: Tokens.sizes.bar.innerWidth
+    implicitWidth: Settings.barInnerWidth
     implicitHeight: icon.implicitHeight + current.implicitWidth + current.anchors.topMargin + Tokens.padding.small * 2
 
     StyledRect {

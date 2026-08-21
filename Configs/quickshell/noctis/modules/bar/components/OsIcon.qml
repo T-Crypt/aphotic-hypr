@@ -7,8 +7,8 @@ import qs.services
 StyledRect {
     id: root
 
-    implicitWidth: Tokens.sizes.bar.innerWidth
-    implicitHeight: Tokens.sizes.bar.innerWidth
+    implicitWidth: Settings.barInnerWidth
+    implicitHeight: Settings.barInnerWidth
 
     color: Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
