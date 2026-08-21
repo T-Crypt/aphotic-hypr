@@ -1,6 +1,6 @@
 [theme]
 display_name = "Latte"
-description = "Light theme -- placeholder wallpaper until a real light-background image is added."
+description = "Light theme, soft cream tones with a latte-art motif."
 
 [wallpaper]
-default = "mountains.jpg"
+default = "latte-art.jpg"

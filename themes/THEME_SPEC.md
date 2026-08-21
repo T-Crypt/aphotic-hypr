@@ -75,5 +75,7 @@ The 8 themes shipped under `Configs/awww/<name>/` in this repo
 (`lofi`, `hackthebox`, `windows11`, `nordic`, `gruvbox`, `tokyonight`,
 `rosepine`, `latte`) are real examples of this contract, not just
 scaffolding — each ships a `theme.toml` following the format above.
-Their wallpapers are placeholders (picked for rough vibe/color match,
-not curated art) until real per-theme wallpapers replace them.
+Each ships an original, hand-authored wallpaper matching its palette
+(a Gruvbox desert sunset, a Tokyo Night neon skyline, and so on) rather
+than a third-party stock image — see the individual `theme.toml`
+`description` fields for what each depicts.
