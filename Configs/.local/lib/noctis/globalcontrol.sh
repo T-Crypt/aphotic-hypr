@@ -4,8 +4,6 @@
 # Sourced by bin/noctis — not meant to be executed directly.
 # Naming/role mirrors HyDE's lib/hyde/globalcontrol.sh.
 
-NOCTIS_VERSION="0.1.0-dev"
-
 # ---- XDG-compliant paths ---------------------------------------------
 NOCTIS_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/noctis"
 NOCTIS_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}/noctis"
@@ -17,6 +15,14 @@ NOCTIS_BACKUP_DIR="${NOCTIS_STATE_HOME}/backups"
 
 # Where the Noctis-Hypr dots repo lives. Overridable via env for dev/CI.
 NOCTIS_DOTS_DIR="${NOCTIS_DOTS_DIR:-$HOME/Noctis-Hypr}"
+
+# Read from the repo's VERSION file so `noctis doctor` reflects the
+# actual checked-out commit's version, not a string that drifts from it.
+if [[ -f "$NOCTIS_DOTS_DIR/VERSION" ]]; then
+    NOCTIS_VERSION="$(<"$NOCTIS_DOTS_DIR/VERSION")"
+else
+    NOCTIS_VERSION="unknown (repo not found at \$NOCTIS_DOTS_DIR: $NOCTIS_DOTS_DIR)"
+fi
 
 QUICKSHELL_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/noctis"
 
