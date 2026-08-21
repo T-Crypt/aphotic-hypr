@@ -100,6 +100,15 @@ ShellRoot {
             if (win)
                 win.screenState.launcher = !win.screenState.launcher;
         }
+
+        function openWallpapers(): void {
+            const win = launcherWindows.instances[0];
+            if (!win)
+                return;
+            if (!win.screenState.launcher)
+                win.screenState.launcherPrefill = "~";
+            win.screenState.launcher = true;
+        }
     }
 
     IpcHandler {

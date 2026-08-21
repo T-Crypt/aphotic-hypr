@@ -17,6 +17,18 @@ Item {
     // convention of one script per Rofi mode (rofi-combi/-clipboard/-emoji/
     // -wallpaper.sh) collapsed into a single searchbox instead of separate
     // launches.
+    // "~" alone browses theme folders; "~<theme>/" drills into that
+    // theme's own wallpapers -- matching directory-per-theme awww layout
+    // (themes/THEME_SPEC.md) instead of a single flat wallpaper list.
+    readonly property string wallpaperThemeSlash: {
+        const t = search.text;
+        if (!t.startsWith("~"))
+            return "";
+        const slash = t.indexOf("/");
+        return slash === -1 ? "" : t.slice(1, slash);
+    }
+    readonly property var openTheme: wallpaperThemeSlash ? Themes.themeInfo(wallpaperThemeSlash) : null
+
     readonly property string mode: {
         const t = search.text;
         if (t.startsWith(">"))
@@ -26,11 +38,13 @@ Item {
         if (t.startsWith("/"))
             return "windows";
         if (t.startsWith("~"))
-            return "wallpaper";
+            return openTheme ? "wallpaper" : "theme";
         return "apps";
     }
     readonly property string query: {
         const t = search.text;
+        if (mode === "wallpaper")
+            return t.slice(1 + wallpaperThemeSlash.length + 1).trim().toLowerCase();
         return mode === "apps" ? t.trim().toLowerCase() : t.slice(1).trim().toLowerCase();
     }
 
@@ -52,7 +66,8 @@ Item {
 
     onVisibleChanged: {
         if (visible) {
-            search.text = "";
+            search.text = root.screenState.launcherPrefill;
+            root.screenState.launcherPrefill = "";
             search.forceActiveFocus();
             refreshMode();
         }
@@ -63,8 +78,6 @@ Item {
     function refreshMode(): void {
         if (mode === "clipboard" && !clipboardProc.running)
             clipboardProc.running = true;
-        else if (mode === "wallpaper" && !wallpaperProc.running)
-            wallpaperProc.running = true;
     }
 
     StyledClippingRect {
@@ -165,10 +178,12 @@ Item {
                                             return qsTr("Search emoji…");
                                         case "windows":
                                             return qsTr("Switch window…");
+                                        case "theme":
+                                            return qsTr("Choose a theme… (type its name + / to browse wallpapers)");
                                         case "wallpaper":
-                                            return qsTr("Choose wallpaper…");
+                                            return qsTr("Choose wallpaper in %1…").arg(root.openTheme?.displayName ?? root.wallpaperThemeSlash);
                                         default:
-                                            return qsTr("Search apps… (> clip, : emoji, / windows, ~ wallpaper)");
+                                            return qsTr("Search apps… (> clip, : emoji, / windows, ~ themes)");
                                         }
                                     }
                                     font: search.font
@@ -208,8 +223,20 @@ Item {
                         const filtered = root.query.length === 0 ? all : all.filter(w => (w.title ?? "").toLowerCase().includes(root.query) || (w.lastIpcObject?.class ?? "").toLowerCase().includes(root.query));
                         return filtered.slice(0, Tokens.sizes.launcher.maxShown);
                     }
-                    case "wallpaper":
-                        return root.query.length === 0 ? wallpaperProc.entries : wallpaperProc.entries.filter(e => e.name.toLowerCase().includes(root.query));
+                    case "theme": {
+                        const all = Themes.themes;
+                        const filtered = root.query.length === 0 ? all : all.filter(t => t.displayName.toLowerCase().includes(root.query) || t.name.toLowerCase().includes(root.query));
+                        return filtered;
+                    }
+                    case "wallpaper": {
+                        const themeName = root.wallpaperThemeSlash;
+                        const files = root.openTheme?.wallpapers ?? [];
+                        const filtered = root.query.length === 0 ? files : files.filter(f => f.toLowerCase().includes(root.query));
+                        return filtered.map(f => ({
+                                    theme: themeName,
+                                    file: f
+                                }));
+                    }
                     default: {
                         const all = DesktopEntries.applications.values.filter(a => !a.noDisplay);
                         const filtered = root.query.length === 0 ? all : all.filter(a => a.name.toLowerCase().includes(root.query));
@@ -244,6 +271,8 @@ Item {
                         return emojiDelegate;
                     case "windows":
                         return windowDelegate;
+                    case "theme":
+                        return themeDelegate;
                     case "wallpaper":
                         return wallpaperDelegate;
                     default:
@@ -287,6 +316,13 @@ Item {
                     }
                 }
                 Component {
+                    id: themeDelegate
+                    ThemeItem {
+                        modelData: delegateLoader.modelData
+                        screenState: root.screenState
+                    }
+                }
+                Component {
                     id: wallpaperDelegate
                     WallpaperItem {
                         modelData: delegateLoader.modelData
@@ -317,19 +353,4 @@ Item {
         }
     }
 
-    Process {
-        id: wallpaperProc
-
-        property var entries: []
-
-        command: ["find", Config.launcher.wallpaperDir, "-maxdepth", "1", "-type", "f", "(", "-iname", "*.png", "-o", "-iname", "*.jpg", "-o", "-iname", "*.jpeg", "-o", "-iname", "*.gif", "-o", "-iname", "*.webp", ")"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                wallpaperProc.entries = text.split("\n").filter(l => l.length > 0).map(l => ({
-                            path: l,
-                            name: l.slice(l.lastIndexOf("/") + 1)
-                        })).sort((a, b) => a.name.localeCompare(b.name));
-            }
-        }
-    }
 }

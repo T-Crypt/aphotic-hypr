@@ -1,50 +1,64 @@
 #!/usr/bin/env bash
-# noctis wallpaper — set/cycle the wallpaper, matching caelestia's `-f` flag.
+# noctis wallpaper — set/cycle the wallpaper within the active theme.
 # @cmd: wallpaper
 # @cmd.desc: Set, randomize, or cycle the wallpaper
-# @cmd.opt: -f, --file <path> | Set a specific wallpaper
-# @cmd.opt: --random          | Pick a random wallpaper from NOCTIS_WALLPAPER_DIR
-# @cmd.opt: --next            | Advance to the next wallpaper in the directory
+# @cmd.opt: -f, --file <path> | Set a specific wallpaper (must live under a theme folder)
+# @cmd.opt: --random          | Pick a random wallpaper from the active theme
+# @cmd.opt: --next            | Advance to another wallpaper in the active theme
+#
+# Wallpapers now live inside theme folders (NOCTIS_AWWW_DIR/<theme>/),
+# see `noctis theme`. --random/--next delegate to wallswitcher.py, the
+# same script SUPER+W runs, so this stays a single source of truth for
+# "pick another wallpaper in the current theme" instead of a second,
+# divergent implementation.
 
-NOCTIS_WALLPAPER_DIR="${NOCTIS_WALLPAPER_DIR:-$HOME/Pictures/Wallpapers}"
-NOCTIS_CURRENT_WALLPAPER_FILE="${NOCTIS_STATE_HOME}/current-wallpaper"
+NOCTIS_AWWW_DIR="${NOCTIS_AWWW_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/awww}"
+NOCTIS_WALLSWITCHER="${NOCTIS_DOTS_DIR}/Configs/hypr/scripts/wallswitcher.py"
+
+_noctis_wallpaper_run_switcher() {
+    if [[ -x "$NOCTIS_WALLSWITCHER" ]] || command -v python3 >/dev/null 2>&1; then
+        python3 "$NOCTIS_WALLSWITCHER"
+    else
+        noctis_err "wallswitcher.py not runnable: ${NOCTIS_WALLSWITCHER}"
+        return 1
+    fi
+}
 
 noctis_cmd_wallpaper() {
     case "${1:-}" in
         -f|--file)
             local path="${2:-}"
             [[ -z "$path" || ! -f "$path" ]] && { noctis_err "file not found: ${path}"; return 1; }
-            noctis_json_set "wallpaper.current" "$path"
-            echo "$path" > "$NOCTIS_CURRENT_WALLPAPER_FILE"
-            noctis_ok "wallpaper set: ${path}"
 
-            # TODO: call the actual setter (swww img / hyprpaper / quickshell IPC)
-            # For now, just reload to trigger any wallpaper-related updates
-            source "${COMMANDS_DIR}/cmd_reload.sh"
-            noctis_cmd_reload --modules-only
+            # Infer theme from the wallpaper's parent directory so it
+            # stays consistent with the awww/<theme>/ layout.
+            local dir theme_name file_name
+            dir="$(cd "$(dirname "$path")" && pwd)"
+            theme_name="$(basename "$dir")"
+            file_name="$(basename "$path")"
+
+            if [[ "$(dirname "$dir")" != "$NOCTIS_AWWW_DIR" ]]; then
+                noctis_err "wallpaper must live under ${NOCTIS_AWWW_DIR}/<theme>/ (got: ${path})"
+                return 1
+            fi
+
+            source "${COMMANDS_DIR}/cmd_theme.sh"
+            if _noctis_theme_apply "$theme_name" "$file_name"; then
+                noctis_ok "wallpaper set: ${theme_name}/${file_name}"
+            else
+                return 1
+            fi
             ;;
-        --random)
-            [[ -d "$NOCTIS_WALLPAPER_DIR" ]] || { noctis_err "no wallpaper dir: ${NOCTIS_WALLPAPER_DIR}"; return 1; }
-            local pick
-            pick="$(find "$NOCTIS_WALLPAPER_DIR" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) | shuf -n1)"
-            [[ -z "$pick" ]] && { noctis_err "no wallpapers found in ${NOCTIS_WALLPAPER_DIR}"; return 1; }
-            noctis_cmd_wallpaper -f "$pick"
-            ;;
-        --next)
-            # This is a simplified implementation - in a real setup, you'd track the current wallpaper
-            # and cycle through all wallpapers in the directory
-            noctis_warn "wallpaper --next: basic implementation - would cycle through wallpapers in directory"
-            # For now, just reload to trigger any wallpaper-related updates
-            source "${COMMANDS_DIR}/cmd_reload.sh"
-            noctis_cmd_reload --modules-only
+        --random|--next)
+            _noctis_wallpaper_run_switcher
             ;;
         ""|-h|--help)
             cat <<HELP
 Usage: noctis wallpaper -f <path> | --random | --next
 
-  -f, --file <path>  Set a specific wallpaper
-  --random            Pick randomly from ${NOCTIS_WALLPAPER_DIR}
-  --next              Advance to the next wallpaper (basic implementation)
+  -f, --file <path>  Set a specific wallpaper (must be under ${NOCTIS_AWWW_DIR}/<theme>/)
+  --random            Pick another wallpaper within the active theme
+  --next              Same as --random (themes don't define wallpaper ordering)
 HELP
             ;;
         *)

@@ -1,0 +1,9 @@
+[theme]
+display_name = "Nordic"
+description = "Cool blue-gray tones."
+
+[engine]
+palette = "ansi"
+
+[wallpaper]
+default = "needing-space.jpg"
