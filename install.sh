@@ -66,6 +66,7 @@ Usage: ./install.sh [options]
   --no-backup                   Skip backing up existing configs
   --keep-backups <N>             Backups to retain (default: 5)
   -h, --help                     Show this help
+  -v, --version                  Print the installed Noctis version
 EOF
 }
 
@@ -78,6 +79,7 @@ while [[ $# -gt 0 ]]; do
     --no-backup) NO_BACKUP=1; shift ;;
     --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
     -h|--help) print_help; exit 0 ;;
+    -v|--version) cat "$ROOT_DIR/VERSION"; exit 0 ;;
     *) echo -e "$CER - Unknown option: $1"; print_help; exit 1 ;;
   esac
 done

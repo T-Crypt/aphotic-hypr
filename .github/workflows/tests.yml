@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, test]
+  pull_request:
+    branches: [main, test]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run bash test suite
+        run: |
+          for f in tests/test_*.sh; do
+            echo "=== $f ==="
+            bash "$f"
+          done
+
+      - name: Run python test suite
+        run: python3 -m pytest tests/ -v
