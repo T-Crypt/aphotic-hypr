@@ -48,7 +48,13 @@ Item {
         scale: opacity
         transformOrigin: Item.Left
         x: root.barWidth + Tokens.spacing.small
-        y: Math.max(0, root.currentCenter - height / 2)
+        // Clamp both edges -- the previous Math.max-only clamp kept the
+        // flyout from starting above the screen top but let it run off
+        // the bottom uncorrected for any popout tall enough that its
+        // vertical center sits in the lower half of the bar (Settings,
+        // Resources), since this window's own height matches the
+        // screen's and content can't render past that boundary.
+        y: Math.min(Math.max(0, root.currentCenter - height / 2), root.screen.height - height)
         width: loader.item ? loader.item.implicitWidth + Tokens.padding.medium * 2 : 0
         height: loader.item ? loader.item.implicitHeight + Tokens.padding.medium * 2 : 0
         radius: Tokens.rounding.medium

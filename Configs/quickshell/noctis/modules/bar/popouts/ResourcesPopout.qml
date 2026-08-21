@@ -7,6 +7,14 @@ import qs.services
 ColumnLayout {
     id: root
 
+    // Fixed width so Layout.fillWidth + elide on the CPU/disk secondary
+    // lines actually constrain their text instead of reporting their
+    // full unelided implicitWidth upward -- with no width imposed here,
+    // a long CPU model name grew the whole popout wider than
+    // BarWindow.qml's fixed popout-flyout budget and got clipped by the
+    // layer-shell surface's own bounds (real bug, not hypothetical).
+    width: 280
+
     spacing: Tokens.spacing.medium
 
     component UsageBar: StyledRect {
