@@ -147,8 +147,22 @@ Item {
 
                 StateLayer {
                     radius: Tokens.rounding.full
-                    disabled: !btn.enabled_
-                    onClicked: btn.clicked()
+                    showHoverBackground: btn.enabled_
+                }
+
+                // A disabled StateLayer's MouseArea stops accepting
+                // clicks entirely, letting them fall through to
+                // DashboardWindow's full-screen click-outside-to-dismiss
+                // MouseArea behind it -- closing the whole dashboard
+                // instead of just no-opping on a disabled media button.
+                // This plain MouseArea always absorbs the click; the
+                // guard lives in the handler instead.
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        if (btn.enabled_)
+                            btn.clicked();
+                    }
                 }
 
                 MaterialIcon {
