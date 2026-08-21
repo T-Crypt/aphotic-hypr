@@ -11,7 +11,7 @@ StyledRect {
 
     required property ScreenState screenState
 
-    readonly property color colour: Colours.palette.m3tertiary
+    readonly property color colour: Colours.palette.m3tertiaryOnSurface
     readonly property int padding: Config.bar.clock.background ? Tokens.padding.medium : Tokens.padding.extraSmall
     readonly property var font: Tokens.font.body.builders.small.scale(1.1)
 

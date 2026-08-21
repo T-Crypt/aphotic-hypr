@@ -12,7 +12,7 @@ import qs.modules.bar.components.status
 StyledRect {
     id: root
 
-    property color colour: Colours.palette.m3secondary
+    property color colour: Colours.palette.m3secondaryOnSurface
     readonly property alias items: iconColumn
 
     readonly property int spacing: Tokens.spacing.medium / 2

@@ -8,7 +8,7 @@ import qs.services
 StyledRect {
     id: root
 
-    readonly property color colour: Colours.palette.m3tertiary
+    readonly property color colour: Colours.palette.m3tertiaryOnSurface
 
     color: Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
