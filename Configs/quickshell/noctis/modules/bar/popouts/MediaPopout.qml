@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import qs.config
@@ -23,16 +25,25 @@ ColumnLayout {
             clip: true
 
             Image {
+                id: albumArt
+
                 anchors.fill: parent
                 source: root.player ? Players.getArtUrl(root.player) : ""
+                sourceSize.width: 64
+                sourceSize.height: 64
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
-                visible: source.toString().length > 0
+                visible: source.toString().length > 0 && status !== Image.Error
             }
 
             MaterialIcon {
                 anchors.centerIn: parent
-                visible: !root.player || Players.getArtUrl(root.player).length === 0
+                // Covers both "no art URL at all" and "URL given but the
+                // fetch failed" (a dead YouTube thumbnail, unreachable
+                // player-supplied trackArtUrl, etc.) -- without the status
+                // check this tile silently renders blank on a failed
+                // remote fetch instead of falling back to the note icon.
+                visible: !albumArt.visible
                 text: "music_note"
                 color: Colours.palette.m3onSurfaceVariant
                 fontStyle: Tokens.font.icon.large
@@ -79,7 +90,7 @@ ColumnLayout {
 
         StyledRect {
             anchors.fill: parent
-            radius: height / 2
+            radius: Tokens.rounding.full
             color: Colours.tPalette.m3surfaceContainer
         }
 
@@ -87,7 +98,7 @@ ColumnLayout {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            radius: parent.height / 2
+            radius: Tokens.rounding.full
             width: root.player?.length > 0 ? parent.width * Math.min(1, root.player.position / root.player.length) : 0
             color: Colours.palette.m3tertiary
 
@@ -207,7 +218,7 @@ ColumnLayout {
 
                 StateLayer {
                     anchors.fill: parent
-                    radius: 4
+                    radius: Tokens.rounding.full
                     color: dot.modelData === root.player ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
                     onClicked: Players.manualActive = dot.modelData
                 }

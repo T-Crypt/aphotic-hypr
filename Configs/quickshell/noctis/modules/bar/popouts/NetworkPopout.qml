@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.config
 import qs.components
 import qs.services
@@ -46,10 +47,18 @@ ColumnLayout {
     }
 
     Repeater {
-        model: {
-            const list = Nmcli.networks.slice();
-            list.sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0) || b.strength - a.strength);
-            return list.slice(0, 6);
+        // Wrapped in ScriptModel (rather than binding model: directly to a
+        // freshly sorted/sliced array) so unchanged entries keep their
+        // delegate identity across re-evaluations -- a plain array binding
+        // reads as a full model reset to Repeater, destroying and
+        // recreating every delegate (losing hover/press state) on every
+        // network-list change instead of diffing just what moved.
+        model: ScriptModel {
+            values: {
+                const list = Nmcli.networks.slice();
+                list.sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0) || b.strength - a.strength);
+                return list.slice(0, 6);
+            }
         }
 
         Item {

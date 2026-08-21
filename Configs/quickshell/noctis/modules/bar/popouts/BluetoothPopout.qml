@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Bluetooth
 import qs.config
 import qs.components
@@ -41,10 +42,15 @@ ColumnLayout {
     }
 
     Repeater {
-        model: {
-            const list = Bluetooth.devices.values.slice();
-            list.sort((a, b) => (b.connected ? 1 : 0) - (a.connected ? 1 : 0));
-            return list.slice(0, 8);
+        // ScriptModel (not a plain array binding) so unchanged entries
+        // keep delegate identity across re-evaluations -- see
+        // NetworkPopout.qml's identical fix for why.
+        model: ScriptModel {
+            values: {
+                const list = Bluetooth.devices.values.slice();
+                list.sort((a, b) => (b.connected ? 1 : 0) - (a.connected ? 1 : 0));
+                return list.slice(0, 8);
+            }
         }
 
         Item {
