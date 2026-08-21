@@ -1,0 +1,6 @@
+[theme]
+display_name = "Latte"
+description = "Light theme -- placeholder wallpaper until a real light-background image is added."
+
+[wallpaper]
+default = "mountains.jpg"

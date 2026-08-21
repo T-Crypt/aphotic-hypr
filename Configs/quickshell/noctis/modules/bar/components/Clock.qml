@@ -47,7 +47,7 @@ StyledRect {
         Loader {
             Layout.alignment: Qt.AlignHCenter
             asynchronous: true
-            active: Config.bar.clock.showDate
+            active: Settings.showClockDate
             visible: active
 
             sourceComponent: ColumnLayout {

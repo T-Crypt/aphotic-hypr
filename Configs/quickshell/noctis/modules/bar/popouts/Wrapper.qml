@@ -12,6 +12,13 @@ Item {
     property string currentName: ""
     property real currentCenter: 0
     property var currentTrayItem: null
+    // Set while the mouse is over the flyout itself, so BarWrapper's
+    // bar-hover-exit handler knows not to close a popout the user has
+    // actually moved into to interact with (e.g. clicking a settings
+    // toggle or dragging the media seek bar) -- the flyout draws outside
+    // the bar's own hover-tracked area, so leaving the bar to reach it
+    // would otherwise look identical to "mouse left, dismiss".
+    readonly property bool hoveringFlyout: flyoutHover.hovered
 
     readonly property string category: currentName.startsWith("traymenu") ? "tray" : currentName
 
@@ -59,6 +66,14 @@ Item {
             }
         }
 
+        HoverHandler {
+            id: flyoutHover
+            onHoveredChanged: {
+                if (!hovered)
+                    root.hasCurrent = false;
+            }
+        }
+
         Loader {
             id: loader
 
@@ -83,6 +98,8 @@ Item {
                     return lockStatusComp;
                 case "media":
                     return mediaComp;
+                case "settings":
+                    return settingsComp;
                 case "tray":
                     return trayComp;
                 default:
@@ -123,6 +140,10 @@ Item {
     Component {
         id: mediaComp
         MediaPopout {}
+    }
+    Component {
+        id: settingsComp
+        SettingsPopout {}
     }
     Component {
         id: trayComp

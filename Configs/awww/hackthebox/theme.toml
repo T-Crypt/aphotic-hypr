@@ -1,0 +1,10 @@
+[theme]
+display_name = "HackTheBox"
+description = "Dark, tech/sci-fi accents."
+
+[engine]
+backend = "fastresize"
+palette = "kmeans"
+
+[wallpaper]
+default = "planets.png"

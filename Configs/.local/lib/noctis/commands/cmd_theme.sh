@@ -5,53 +5,124 @@
 # @cmd.opt: list        | List installed themes
 # @cmd.opt: set <name>  | Apply a theme by name
 # @cmd.opt: next|prev   | Cycle to the next/previous theme
+#
+# Themes live as directories under NOCTIS_AWWW_DIR, each with a
+# theme.toml manifest (see Noctis-Hypr/themes/THEME_SPEC.md) — this is
+# the same layout Themes.qml scans and the same state file
+# (theme.json) that Themes.qml and wallswitcher.py read/write, so the
+# CLI, the launcher, and the SUPER+W keybind all stay in sync.
 
-NOCTIS_THEMES_DIR="${NOCTIS_DATA_HOME}/themes"
-NOCTIS_ACTIVE_THEME_FILE="${NOCTIS_STATE_HOME}/active-theme"
+NOCTIS_AWWW_DIR="${NOCTIS_AWWW_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/awww}"
+NOCTIS_THEME_STATE_FILE="${NOCTIS_STATE_HOME}/theme.json"
 
-_noctis_theme_list() {
-    mkdir -p "$NOCTIS_THEMES_DIR"
-    local found=0
-    for dir in "$NOCTIS_THEMES_DIR"/*/; do
-        [[ -d "$dir" ]] || continue
-        found=1
-        basename "$dir"
-    done
-    [[ "$found" -eq 0 ]] && noctis_log "no themes installed in ${NOCTIS_THEMES_DIR}"
+# Extract a single flat key from a theme.toml, e.g.:
+#   _noctis_toml_get "$dir/theme.toml" wallpaper default
+# Deliberately minimal — matches the flat (no arrays-of-tables, no
+# multi-line strings) shape defined in THEME_SPEC.md, mirroring the
+# hand-written parser in Themes.qml.
+_noctis_toml_get() {
+    local file="$1" section="$2" key="$3"
+    [[ -f "$file" ]] || return 1
+    awk -v section="[$section]" -v key="$key" '
+        $0 == section { insec=1; next }
+        /^\[/ { insec=0 }
+        insec && $0 ~ "^[[:space:]]*"key"[[:space:]]*=" {
+            sub(/^[^=]*=[[:space:]]*/, "");
+            gsub(/^"|"$/, "");
+            print;
+            exit
+        }
+    ' "$file"
 }
 
-_noctis_theme_apply() {
-    local theme_name="$1"
+_noctis_theme_dir() {
+    printf '%s/%s' "$NOCTIS_AWWW_DIR" "$1"
+}
 
-    # Validate theme exists
-    if [[ ! -d "${NOCTIS_THEMES_DIR}/${theme_name}" ]]; then
-        noctis_err "theme '${theme_name}' not found in ${NOCTIS_THEMES_DIR}"
+_noctis_theme_wallpapers() {
+    local dir; dir="$(_noctis_theme_dir "$1")"
+    find "$dir" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) -printf '%f\n' 2>/dev/null | sort
+}
+
+_noctis_theme_list() {
+    mkdir -p "$NOCTIS_AWWW_DIR"
+    local found=0
+    for dir in "$NOCTIS_AWWW_DIR"/*/; do
+        [[ -d "$dir" ]] || continue
+        found=1
+        local name; name="$(basename "$dir")"
+        local display; display="$(_noctis_toml_get "${dir}theme.toml" theme display_name)"
+        printf '%s%s\n' "$name" "${display:+  ($display)}"
+    done
+    if [[ "$found" -eq 0 ]]; then
+        noctis_log "no theme folders found in ${NOCTIS_AWWW_DIR}"
+    fi
+}
+
+# Read {theme, wallpaper} out of theme.json. Prints two lines: theme, wallpaper.
+_noctis_theme_read_state() {
+    if [[ -f "$NOCTIS_THEME_STATE_FILE" ]]; then
+        jq -r '.theme // "", .wallpaper // ""' "$NOCTIS_THEME_STATE_FILE" 2>/dev/null
+    else
+        printf '\n\n'
+    fi
+}
+
+_noctis_theme_write_state() {
+    local theme="$1" wallpaper="$2" tmp
+    tmp="$(mktemp)"
+    jq -n --arg t "$theme" --arg w "$wallpaper" '{theme: $t, wallpaper: $w}' > "$tmp" && mv "$tmp" "$NOCTIS_THEME_STATE_FILE"
+}
+
+# Apply theme_name/wallpaper_file: run awww + wallust with any engine
+# pins from theme.toml, then persist state. wallpaper_file may be
+# empty to fall back to the theme's declared default (or its first
+# wallpaper alphabetically).
+_noctis_theme_apply() {
+    local theme_name="$1" wallpaper_file="${2:-}"
+    local dir; dir="$(_noctis_theme_dir "$theme_name")"
+
+    if [[ ! -d "$dir" ]]; then
+        noctis_err "theme '${theme_name}' not found in ${NOCTIS_AWWW_DIR}"
         return 1
     fi
 
-    # Create a symlink or copy to the active theme location that quickshell modules read from
-    local active_theme_dir="${NOCTIS_DATA_HOME}/active-theme"
-
-    # Remove existing symlink/dir if it exists
-    if [[ -L "$active_theme_dir" ]] || [[ -d "$active_theme_dir" ]]; then
-        rm -rf "$active_theme_dir"
+    if [[ -z "$wallpaper_file" ]]; then
+        wallpaper_file="$(_noctis_toml_get "${dir}/theme.toml" wallpaper default)"
+    fi
+    if [[ -z "$wallpaper_file" ]] || [[ ! -f "${dir}/${wallpaper_file}" ]]; then
+        wallpaper_file="$(_noctis_theme_wallpapers "$theme_name" | head -n1)"
+    fi
+    if [[ -z "$wallpaper_file" ]]; then
+        noctis_err "no wallpapers found in theme '${theme_name}'"
+        return 1
     fi
 
-    # Create symlink to the theme directory
-    ln -s "${NOCTIS_THEMES_DIR}/${theme_name}" "$active_theme_dir"
+    local image_path="${dir}/${wallpaper_file}"
+    local backend palette
+    backend="$(_noctis_toml_get "${dir}/theme.toml" engine backend)"
+    palette="$(_noctis_toml_get "${dir}/theme.toml" engine palette)"
 
-    # Store the active theme name in a state file for cycling
-    echo "$theme_name" > "$NOCTIS_ACTIVE_THEME_FILE"
+    noctis_require awww || return 1
+    awww img "$image_path" --transition-type wipe --transition-angle 30 --transition-step 90
 
-    # Update config with active theme
+    if command -v wallust >/dev/null 2>&1; then
+        local wallust_cmd=(wallust run "$image_path")
+        [[ -n "$backend" ]] && wallust_cmd+=(-b "$backend")
+        [[ -n "$palette" ]] && wallust_cmd+=(-p "$palette")
+        "${wallust_cmd[@]}"
+    else
+        noctis_warn "wallust not found, skipping palette regeneration"
+    fi
+
+    cp "$image_path" "${NOCTIS_AWWW_DIR}/wallpaper.rofi" 2>/dev/null || true
+
+    _noctis_theme_write_state "$theme_name" "$wallpaper_file"
     noctis_json_set "theme.active" "$theme_name"
 
-    noctis_ok "applied theme '${theme_name}'"
-
-    # Reload the shell modules to apply the new theme
-    source "${COMMANDS_DIR}/cmd_reload.sh"
-    noctis_cmd_reload --modules-only
-
+    # Quickshell hot-reloads Themes.qml's state via FileView watchChanges
+    # on theme.json — no explicit reload needed for the shell to pick
+    # this up, only for anything that isn't already watching the file.
     return 0
 }
 
@@ -63,34 +134,27 @@ noctis_cmd_theme() {
             local name="${1:-}"
             [[ -z "$name" ]] && { noctis_err "usage: noctis theme set <name>"; return 1; }
 
-            # Apply the theme
             if _noctis_theme_apply "$name"; then
                 noctis_ok "theme '${name}' applied successfully"
             else
-                noctis_err "failed to apply theme '${name}'"
                 return 1
             fi
             ;;
         next|prev)
-            # Get current theme name from state file
-            local current_theme=""
-            if [[ -f "$NOCTIS_ACTIVE_THEME_FILE" ]]; then
-                current_theme=$(cat "$NOCTIS_ACTIVE_THEME_FILE")
-            fi
+            local current_theme
+            current_theme="$(_noctis_theme_read_state | head -n1)"
 
-            # Get all themes
             local themes=()
-            for dir in "$NOCTIS_THEMES_DIR"/*/; do
+            for dir in "$NOCTIS_AWWW_DIR"/*/; do
                 [[ -d "$dir" ]] || continue
                 themes+=("$(basename "$dir")")
             done
 
             if [[ ${#themes[@]} -eq 0 ]]; then
-                noctis_err "no themes found in ${NOCTIS_THEMES_DIR}"
+                noctis_err "no theme folders found in ${NOCTIS_AWWW_DIR}"
                 return 1
             fi
 
-            # Find current theme index
             local current_index=-1
             for i in "${!themes[@]}"; do
                 if [[ "${themes[$i]}" == "$current_theme" ]]; then
@@ -99,7 +163,6 @@ noctis_cmd_theme() {
                 fi
             done
 
-            # Calculate next/prev index
             local new_index
             if [[ "$sub" == "next" ]]; then
                 if [[ $current_index -eq -1 ]] || [[ $current_index -eq $((${#themes[@]} - 1)) ]]; then
@@ -120,7 +183,6 @@ noctis_cmd_theme() {
             if _noctis_theme_apply "$new_theme"; then
                 noctis_ok "switched to theme '${new_theme}'"
             else
-                noctis_err "failed to switch to theme '${new_theme}'"
                 return 1
             fi
             ;;
@@ -128,8 +190,8 @@ noctis_cmd_theme() {
             cat <<HELP
 Usage: noctis theme <list|set|next|prev> [name]
 
-  list         List installed themes (${NOCTIS_THEMES_DIR})
-  set <name>   Apply a theme
+  list         List theme folders (${NOCTIS_AWWW_DIR})
+  set <name>   Apply a theme (its declared default wallpaper)
   next / prev  Cycle themes
 HELP
             ;;

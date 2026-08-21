@@ -27,8 +27,20 @@ Singleton {
         onFileChanged: root.generation++
     }
 
-    function setWallpaper(path: string): void {
+    // backend/palette let a theme's theme.toml pin a specific wallust
+    // engine mode (see themes/THEME_SPEC.md) for wallpapers that need
+    // something other than Configs/wallust/wallust.toml's own defaults --
+    // both are optional, an empty string means "let wallust use its own
+    // configured default" rather than forcing a value.
+    function setWallpaper(path: string, backend: var, palette: var): void {
         Quickshell.execDetached(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
         Quickshell.execDetached(["cp", path, root.path]);
+
+        const cmd = ["wallust", "run", path];
+        if (backend)
+            cmd.push("-b", backend);
+        if (palette)
+            cmd.push("-p", palette);
+        Quickshell.execDetached(cmd);
     }
 }

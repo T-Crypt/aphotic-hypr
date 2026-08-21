@@ -1,0 +1,6 @@
+[theme]
+display_name = "Windows 11"
+description = "Minimal, muted, high-contrast."
+
+[wallpaper]
+default = "windows-error.jpg"

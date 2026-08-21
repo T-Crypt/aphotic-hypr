@@ -12,13 +12,13 @@ Item {
     required property var modelData
     required property ScreenState screenState
 
-    readonly property bool isActive: modelData.theme === Themes.activeTheme && modelData.file === Themes.activeWallpaper
+    readonly property bool isActive: modelData.name === Themes.activeTheme
 
     width: ListView.view?.width ?? 0
     implicitHeight: Tokens.sizes.launcher.itemHeight
 
     function execute(): void {
-        Themes.setTheme(modelData.theme, modelData.file);
+        Themes.setTheme(modelData.name, "");
     }
 
     StateLayer {
@@ -48,33 +48,44 @@ Item {
 
             Image {
                 anchors.fill: parent
-                source: `file://${Config.launcher.wallpaperDir}/${root.modelData.theme}/${root.modelData.file}`
+                source: root.modelData.defaultWallpaper ? `file://${Config.launcher.wallpaperDir}/${root.modelData.name}/${root.modelData.defaultWallpaper}` : ""
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
             }
         }
 
-        Row {
+        Column {
             anchors.verticalCenter: thumb.verticalCenter
             width: parent.width - thumb.width - parent.spacing
-            spacing: Tokens.spacing.small
+            spacing: Tokens.spacing.small / 2
 
-            StyledText {
-                text: root.modelData.file
-                font: Tokens.font.body.medium
-                elide: Text.ElideRight
-                width: parent.width - (icon.visible ? icon.width + parent.spacing : 0)
+            Row {
+                spacing: Tokens.spacing.small
+
+                StyledText {
+                    text: root.modelData.displayName
+                    font: Tokens.font.body.medium
+                    elide: Text.ElideRight
+                }
+
+                MaterialIcon {
+                    visible: root.isActive
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "check_circle"
+                    fill: 1
+                    fontStyle: Tokens.font.icon.small
+                    color: Colours.palette.m3primary
+                }
             }
 
-            MaterialIcon {
-                id: icon
-                visible: root.isActive
-                anchors.verticalCenter: parent.verticalCenter
-                text: "check_circle"
-                fill: 1
-                fontStyle: Tokens.font.icon.small
-                color: Colours.palette.m3primary
+            StyledText {
+                visible: text.length > 0
+                text: root.modelData.description || qsTr("%1 wallpapers").arg(root.modelData.wallpapers.length)
+                font: Tokens.font.label.medium
+                color: Colours.palette.m3onSurfaceVariant
+                elide: Text.ElideRight
+                width: parent.width
             }
         }
     }

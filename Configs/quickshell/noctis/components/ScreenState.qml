@@ -15,4 +15,10 @@ PersistentProperties {
     // Dashboard state
     property int dashboardTab
     property date dashboardDate: new Date()
+
+    // Launcher: text the search box should start with the next time it
+    // opens (e.g. "~" so SUPER+CTRL+W jumps straight to the theme/
+    // wallpaper picker instead of plain app search). Cleared by the
+    // launcher itself once consumed.
+    property string launcherPrefill: ""
 }
