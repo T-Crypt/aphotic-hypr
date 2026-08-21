@@ -7,6 +7,7 @@ import qs.services
 ColumnLayout {
     id: root
 
+    required property ScreenState screenState
     property string currentTab: "dashboard"
 
     readonly property var tabs: [
@@ -77,7 +78,9 @@ ColumnLayout {
     }
     Component {
         id: workspacesComp
-        WorkspacesTab {}
+        WorkspacesTab {
+            screenState: root.screenState
+        }
     }
     Component {
         id: aiChatComp
