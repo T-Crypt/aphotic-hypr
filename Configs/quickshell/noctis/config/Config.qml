@@ -83,7 +83,8 @@ QtObject {
                 { id: "kbLayout", enabled: false },
                 { id: "network", enabled: true },
                 { id: "bluetooth", enabled: true },
-                { id: "battery", enabled: true }
+                { id: "battery", enabled: true },
+                { id: "resources", enabled: true }
             ]
         }
 
