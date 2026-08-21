@@ -234,6 +234,38 @@ Wallpaper-driven color generation, applied consistently across the stack:
 > [!TIP]
 > Thunar has a right-click **Set as Theme** action for building a theme straight from an image in `$HOME/Pictures` (avoid special characters at the front of the path). An SDDM sync script keeps your login screen's wallpaper matched to whatever's currently active.
 
+## Theme Picker Integration
+
+Noctis now features a complete theming system with:
+- CLI commands for theme management (`noctis theme list`, `set`, `next`, `prev`)
+- Automatic palette regeneration when schemes change
+- State tracking for current theme and wallpaper
+- Integration with Quickshell's color system via wallust engine
+- Support for multiple color schemes (wallust backends and matugen variants)
+
+### Theme Commands
+
+```bash
+# List available themes
+noctis theme list
+
+# Apply a specific theme
+noctis theme set <theme-name>
+
+# Cycle through themes
+noctis theme next    # Switch to next theme
+noctis theme prev    # Switch to previous theme
+
+# Manage color schemes
+noctis scheme set -n <scheme-name>  # Apply a named color scheme
+
+# Wallpaper management
+noctis wallpaper -f <path>     # Set specific wallpaper
+noctis wallpaper --random      # Pick random wallpaper
+```
+
+The system automatically tracks your current theme and wallpaper state, enabling seamless cycling through themes and real-time palette updates when schemes are changed.
+
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
@@ -321,6 +353,21 @@ All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/ke
 | <kbd>XF86AudioMute</kbd> | Toggle mute |
 | <kbd>XF86AudioMicMute</kbd> | Toggle mic mute |
 | <kbd>XF86MonBrightnessUp</kbd> / <kbd>XF86MonBrightnessDown</kbd> | Brightness up/down |
+
+## Terminal Games
+
+Noctis includes some fun terminal-based games accessible through the `noctis play` command:
+
+- **Hangman**: Classic word-guessing game
+- **Snake**: Control a snake to eat food and grow longer
+- **Number Guessing**: Try to guess a randomly generated number
+
+Play them with:
+```bash
+noctis play hangman
+noctis play snake
+noctis play guess
+```
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
