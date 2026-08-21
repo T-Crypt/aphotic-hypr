@@ -1,16 +1,28 @@
 import QtQuick
+import Quickshell
 import qs.config
 import qs.components
+import qs.services
 
-Item {
+StyledRect {
     id: root
 
-    implicitWidth: Math.round(Tokens.font.body.large.pointSize * 1.2)
-    implicitHeight: Math.round(Tokens.font.body.large.pointSize * 1.2)
+    implicitWidth: Tokens.sizes.bar.innerWidth
+    implicitHeight: Tokens.sizes.bar.innerWidth
 
-    Logo {
+    color: Colours.palette.m3surfaceContainerHigh
+    radius: Tokens.rounding.full
+
+    Image {
         anchors.centerIn: parent
-        implicitWidth: Math.round(Tokens.font.body.large.pointSize * 1.6)
-        implicitHeight: Math.round(Tokens.font.body.large.pointSize * 1.6)
+        width: parent.implicitWidth - Tokens.padding.small * 2
+        height: width
+
+        source: Quickshell.shellPath("assets/noctis-logo.svg")
+        sourceSize.width: 96
+        sourceSize.height: 96
+        fillMode: Image.PreserveAspectFit
+        smooth: true
+        asynchronous: true
     }
 }

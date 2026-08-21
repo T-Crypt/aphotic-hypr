@@ -13,11 +13,16 @@ Usage: noctis shell [-d|--daemon]
        noctis shell <ipc-call> [args]
 
   -d, --daemon   Start the quickshell daemon in the background
-  <ipc-call>     Anything else is forwarded to the running daemon's IPC,
-                 e.g. \`noctis shell mpris getActive title\`
+  <ipc-call>     Anything else is forwarded to the running daemon's IPC
 
-TODO: implement once quickshell/noctis/ipc/* defines real IPC targets.
-Mirrors caelestia's \`caelestia shell mpris getActive trackTitle\` pattern.
+Real IPC targets (see Configs/quickshell/noctis/shell.qml):
+  noctis shell launcher toggle
+  noctis shell session toggle
+  noctis shell dashboard toggle
+  noctis shell lock engage
+  noctis shell lock unlock
+  noctis shell lock isLocked
+  noctis shell notifs clear
 HELP
             ;;
         -d|--daemon|"")

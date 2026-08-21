@@ -35,19 +35,8 @@ prompt_theme() {
   echo "${answer:-default}"
 }
 
-prompt_bar_position() {
-  local answer
-  read -rp "Bar position? [top/left] (top): " answer
-  answer="${answer:-top}"
-  if [[ "$answer" != "top" && "$answer" != "left" ]]; then
-    echo "top"
-  else
-    echo "$answer"
-  fi
-}
-
 write_noctis_toml() {
-  local path="$1" profile="$2" layers="$3" theme="$4" bar_position="$5" nvidia="$6" aur_helper="$7" installed_at="$8"
+  local path="$1" profile="$2" layers="$3" theme="$4" nvidia="$5" aur_helper="$6" installed_at="$7"
 
   local layers_toml="[]"
   if [[ -n "$layers" ]]; then
@@ -62,9 +51,6 @@ installed_at = "$installed_at"
 
 [theme]
 name = "$theme"
-
-[bar]
-position = "$bar_position"
 
 [system]
 nvidia = $nvidia

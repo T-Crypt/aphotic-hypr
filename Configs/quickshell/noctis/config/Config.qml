@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import qs.config
 
 // bar.* defaults below match caelestia-dots/shell's native plugin
@@ -24,7 +25,7 @@ QtObject {
         readonly property var excludedScreens: []
 
         readonly property QtObject tray: QtObject {
-            readonly property bool background: false
+            readonly property bool background: true
             readonly property bool recolour: false
             readonly property bool compact: false
             readonly property var iconSubs: GlobalConfig.bar.tray.iconSubs
@@ -32,7 +33,7 @@ QtObject {
         }
 
         readonly property QtObject clock: QtObject {
-            readonly property bool background: false
+            readonly property bool background: true
             readonly property bool showDate: false
             readonly property bool showIcon: true
         }
@@ -41,6 +42,7 @@ QtObject {
             readonly property bool statusIcons: true
             readonly property bool tray: true
             readonly property bool activeWindow: true
+            readonly property bool media: true
         }
 
         readonly property QtObject activeWindow: QtObject {
@@ -91,6 +93,7 @@ QtObject {
                 { id: "spacer", enabled: true },
                 { id: "activeWindow", enabled: true },
                 { id: "spacer", enabled: true },
+                { id: "media", enabled: true },
                 { id: "tray", enabled: true },
                 { id: "clock", enabled: true },
                 { id: "statusIcons", enabled: true },
@@ -102,6 +105,7 @@ QtObject {
     readonly property QtObject services: QtObject {
         readonly property real brightnessIncrement: GlobalConfig.services.brightnessIncrement
         readonly property bool useTwelveHourClock: GlobalConfig.services.useTwelveHourClock
+        readonly property bool useFahrenheitPerformance: false
     }
 
     // Matches caelestia-dots/shell's OsdConfig defaults
@@ -111,5 +115,51 @@ QtObject {
         readonly property int hideDelay: 2000
         readonly property bool enableBrightness: true
         readonly property bool enableMicrophone: false
+    }
+
+    // Merged from the standalone BackgroundConfig.qml/DashboardConfig.qml
+    // (Quickshell.Io JsonObject files) into this repo's one real config
+    // singleton, so there's a single config surface instead of two.
+    readonly property QtObject background: QtObject {
+        readonly property bool enabled: true
+        readonly property bool wallpaperEnabled: true
+
+        readonly property QtObject desktopClock: QtObject {
+            readonly property bool enabled: false
+            readonly property real scale: 1.0
+            readonly property string position: "bottom-right"
+            readonly property bool invertColors: false
+
+            readonly property QtObject background: QtObject {
+                readonly property bool enabled: false
+                readonly property real opacity: 0.7
+                readonly property bool blur: true
+            }
+
+            readonly property QtObject shadow: QtObject {
+                readonly property bool enabled: true
+                readonly property real opacity: 0.7
+                readonly property real blur: 0.4
+            }
+        }
+    }
+
+    readonly property QtObject dashboard: QtObject {
+        readonly property bool enabled: true
+        readonly property int resourceUpdateInterval: 2000
+
+        readonly property QtObject performance: QtObject {
+            readonly property bool showBattery: true
+            readonly property bool showGpu: true
+            readonly property bool showCpu: true
+            readonly property bool showMemory: true
+            readonly property bool showStorage: true
+            readonly property bool showNetwork: true
+        }
+    }
+
+    readonly property QtObject launcher: QtObject {
+        readonly property string emojiListPath: `${Quickshell.env("HOME")}/.config/rofi/emoji.txt`
+        readonly property string wallpaperDir: `${Quickshell.env("HOME")}/.config/awww`
     }
 }

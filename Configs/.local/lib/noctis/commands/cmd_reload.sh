@@ -27,18 +27,21 @@ EOF
         esac
     done
 
-    noctis_log "reloading quickshell modules..."
-    # NOTE: exact IPC call name is a placeholder until the daemon's IPC
-    # surface is implemented (see quickshell/noctis/ipc/*). Mirrors
-    # caelestia's `caelestia shell <ipc-call>` pattern.
+    # Quickshell hot-reloads its own QML on file change already — there's
+    # no separate "reload" IPC target to call. What this actually needs
+    # to guard against: a hot-reload can silently miss an edit (seen
+    # firsthand — see the lock screen incident in the SDD ledger), so a
+    # clean kill+restart is the only way to *guarantee* the daemon is
+    # running the current on-disk QML, not just assume the watcher caught up.
     if pgrep -f "qs -c noctis" >/dev/null 2>&1; then
-        if qs -c noctis ipc call reload >/dev/null 2>&1; then
-            noctis_ok "quickshell modules reloaded"
-        else
-            noctis_warn "IPC reload call failed — daemon running but not responding"
-        fi
+        noctis_log "restarting quickshell daemon..."
+        pkill -f "qs -c noctis" >/dev/null 2>&1
+        sleep 0.5
+        nohup qs -c noctis >/dev/null 2>&1 &
+        disown
+        noctis_ok "quickshell daemon restarted"
     else
-        noctis_warn "quickshell daemon not running — starting it (noctis shell -d)"
+        noctis_warn "quickshell daemon not running — starting it"
         nohup qs -c noctis >/dev/null 2>&1 &
         disown
         noctis_ok "quickshell daemon started"

@@ -40,7 +40,7 @@ StyledRect {
         return false;
     }
 
-    color: Colours.tPalette.m3surfaceContainer
+    color: Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 
     clip: true
@@ -123,6 +123,13 @@ StyledRect {
                             animate: true
                             text: Nmcli.activeEthernet ? "cable" : Nmcli.active ? Icons.getNetworkIcon(Nmcli.active.strength ?? 0) : "wifi_off"
                             color: root.colour
+
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Quickshell.execDetached(["nm-connection-editor"])
+                            }
                         }
                     }
                 }
@@ -131,6 +138,13 @@ StyledRect {
                     delegate: EntryWrapper {
                         BluetoothStatus {
                             colour: root.colour
+
+                            MouseArea {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Quickshell.execDetached(["blueman-manager"])
+                            }
                         }
                     }
                 }

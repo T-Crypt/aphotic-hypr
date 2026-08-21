@@ -59,6 +59,7 @@ ColumnLayout {
                 const trayItem = tray.items.itemAt(index);
                 if (trayItem) {
                     popouts.currentName = `traymenu${index}`;
+                    popouts.currentTrayItem = trayItem;
                     popouts.currentCenter = Qt.binding(() => trayItem.mapToItem(root, 0, trayItem.implicitHeight / 2).y);
                     popouts.hasCurrent = true;
                 } else {
@@ -69,6 +70,10 @@ ColumnLayout {
                 tray.expanded = true;
             }
         } else if (id === "activeWindow" && Config.bar.popouts.activeWindow && Config.bar.activeWindow.showOnHover) {
+            popouts.currentName = id.toLowerCase();
+            popouts.currentCenter = (ch.item as Item).mapToItem(root, 0, (ch.item as Item).implicitHeight / 2).y ?? 0;
+            popouts.hasCurrent = true;
+        } else if (id === "media" && Config.bar.popouts.media) {
             popouts.currentName = id.toLowerCase();
             popouts.currentCenter = (ch.item as Item).mapToItem(root, 0, (ch.item as Item).implicitHeight / 2).y ?? 0;
             popouts.hasCurrent = true;
@@ -101,7 +106,7 @@ ColumnLayout {
         }
     }
 
-    spacing: Tokens.spacing.medium
+    spacing: Tokens.spacing.extraSmall
 
     Repeater {
         id: repeater
@@ -148,6 +153,14 @@ ColumnLayout {
                 }
             }
             DelegateChoice {
+                roleValue: "media"
+                delegate: EntryWrapper {
+                    Media {
+                        objectName: "taskbarMedia"
+                    }
+                }
+            }
+            DelegateChoice {
                 roleValue: "tray"
                 delegate: EntryWrapper {
                     Tray {
@@ -160,6 +173,7 @@ ColumnLayout {
                 delegate: EntryWrapper {
                     Clock {
                         objectName: "taskbarClock"
+                        screenState: root.screenState
                     }
                 }
             }

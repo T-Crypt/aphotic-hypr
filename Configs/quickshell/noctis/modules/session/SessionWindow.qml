@@ -11,9 +11,7 @@ PanelWindow {
     required property var modelData
     screen: modelData
 
-    readonly property ScreenState screenState: ScreenState {
-        modelData: root.screen
-    }
+    required property ScreenState screenState
 
     WlrLayershell.namespace: "noctis-session"
     WlrLayershell.layer: WlrLayer.Overlay

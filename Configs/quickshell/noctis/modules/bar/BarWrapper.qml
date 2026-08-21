@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.components
+import qs.services
 import qs.utils
 import qs.modules.bar.popouts as BarPopouts
 
@@ -71,6 +72,19 @@ Item {
         }
     ]
 
+    StyledRect {
+        id: background
+
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        width: root.implicitWidth
+
+        radius: Tokens.rounding.full
+        color: Colours.tPalette.m3surfaceContainer
+        visible: root.shouldBeVisible
+    }
+
     Loader {
         id: content
 
@@ -87,5 +101,32 @@ Item {
             popouts: root.popouts // qmllint disable incompatible-type
             fullscreen: root.fullscreen
         }
+    }
+
+    // Passive hover tracking -- HoverHandler observes without grabbing the
+    // mouse, so clicks still reach Bar.qml's own StateLayers/MouseAreas
+    // underneath. Drives both the popout-on-hover system (checkPopout) and
+    // the auto-show-on-hover bar state (isHovered) referenced by
+    // shouldBeVisible above -- neither was ever actually wired to real
+    // mouse input before this, so popouts could only be triggered by
+    // debug hacks and would never dismiss.
+    HoverHandler {
+        id: hoverHandler
+
+        target: content
+        onPointChanged: {
+            if (point.position.y >= 0 && point.position.y <= content.height)
+                root.checkPopout(point.position.y);
+        }
+        onHoveredChanged: {
+            root.isHovered = hovered;
+            if (!hovered)
+                root.popouts.hasCurrent = false;
+        }
+    }
+
+    WheelHandler {
+        target: content
+        onWheel: event => root.handleWheel(point.position.y, Qt.point(event.angleDelta.x, event.angleDelta.y))
     }
 }
