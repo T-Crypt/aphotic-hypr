@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose a new feature, module, or setting
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check `README.md`'s Roadmap section first — if this is already listed, a 👍 or a comment on that discussion is more useful than a duplicate issue. Questions about whether something fits the project's direction are welcome here too, before you write code.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What's the actual pain point or gap this addresses?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: If you have one in mind. Doesn't need to be final.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This fits the project's stated scope boundaries (Arch/AUR-only, no multi-distro branching, no fingerprint/face auth, no vendored native C++ plugin — see CONTRIBUTING.md)
+          required: true

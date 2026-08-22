@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, test]
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -21,10 +25,12 @@ jobs:
 
       - name: Run bash test suite
         run: |
+          fail=0
           for f in tests/test_*.sh; do
             echo "=== $f ==="
-            bash "$f"
+            bash "$f" || { echo "FAILED: $f"; fail=1; }
           done
+          exit "$fail"
 
       - name: Run python test suite
         run: python3 -m pytest tests/ -v

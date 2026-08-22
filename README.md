@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/github/issues/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=E0AF68&labelColor=0b0d12">
   <img src="https://img.shields.io/github/forks/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=F7768E&labelColor=0b0d12">
   <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=AD8EE6&labelColor=0b0d12">
+  <img alt="License" src="https://img.shields.io/github/license/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=7DCFFF&labelColor=0b0d12">
 </p>
 
 <p align="center">
@@ -519,6 +520,13 @@ Install the <a href="https://addons.mozilla.org/en-US/firefox/addon/pywalfox/">P
 </p>
 
 <br>
+
+## License
+
+[GPL-3.0](LICENSE) — required by, and compatible with, the vendored/adapted
+[caelestia-dots/shell](https://github.com/caelestia-dots/shell) QML this
+project's Quickshell shell builds on (see [Quickshell Shell](#quickshell-shell)
+above).
 
 ## Credit
 
