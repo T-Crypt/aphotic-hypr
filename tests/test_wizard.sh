@@ -23,11 +23,11 @@ result=$(echo "" | prompt_theme)
 
 WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
-write_noctis_toml "$WORKDIR/noctis.toml" "full" "gaming,dev" "default" "true" "yay" "2026-08-18T10:00:00"
+write_aphotic_toml "$WORKDIR/aphotic.toml" "full" "gaming,dev" "default" "true" "yay" "2026-08-18T10:00:00"
 
-grep -q 'profile = "full"' "$WORKDIR/noctis.toml" || fail "profile not written"
-grep -q 'layers = \["gaming", "dev"\]' "$WORKDIR/noctis.toml" || fail "layers not written correctly"
+grep -q 'profile = "full"' "$WORKDIR/aphotic.toml" || fail "profile not written"
+grep -q 'layers = \["gaming", "dev"\]' "$WORKDIR/aphotic.toml" || fail "layers not written correctly"
 
-python -c "import tomllib; tomllib.load(open('$WORKDIR/noctis.toml','rb'))" || fail "generated noctis.toml is not valid TOML"
+python -c "import tomllib; tomllib.load(open('$WORKDIR/aphotic.toml','rb'))" || fail "generated aphotic.toml is not valid TOML"
 
-echo "PASS: wizard prompts + noctis.toml writer"
+echo "PASS: wizard prompts + aphotic.toml writer"

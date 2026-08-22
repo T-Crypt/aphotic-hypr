@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import qs.services
 
 // wallust-generated: real palette wired in for Task 8, replacing the
 // Task 2 hand-hardcoded stand-in. wallust has no native Material You role
@@ -95,11 +96,21 @@ QtObject {
     }
 
     readonly property QtObject palette: QtObject {
-        readonly property color m3primary: "{{ color4 }}"
+        // Settings' Personalization pane can override just the primary
+        // accent -- purely additive on top of the wallust-derived value,
+        // never touches the wallust pipeline itself. Must live in THIS
+        // template, not just the generated Colours.qml -- the next
+        // `aphotic theme set` regenerates Colours.qml from here and would
+        // silently discard a hand-edit made only to the generated file
+        // (see feedback_quickshell_symlink memory -- learned this the
+        // hard way tonight).
+        readonly property color m3primary: Settings.accentColorOverride.length > 0 ? Settings.accentColorOverride : "{{ color4 }}"
         readonly property color m3onPrimary: root.contrastOn(m3primary)
         readonly property color m3primaryOnSurface: root.legibleAccent(m3primary, m3surfaceContainerHigh)
         readonly property color m3secondary: "{{ color7 }}"
         readonly property color m3secondaryOnSurface: root.legibleAccent(m3secondary, m3surfaceContainerHigh)
+        readonly property color m3secondaryContainer: Qt.tint(m3surfaceContainerHigh, Qt.alpha(m3secondary, 0.24))
+        readonly property color m3onSecondaryContainer: root.legibleAccent(m3secondary, m3secondaryContainer)
         readonly property color m3tertiary: "{{ color2 }}"
         readonly property color m3onTertiary: root.contrastOn(m3tertiary)
         readonly property color m3tertiaryOnSurface: root.legibleAccent(m3tertiary, m3surfaceContainerHigh)

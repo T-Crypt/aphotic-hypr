@@ -5,23 +5,23 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/lib/install/python.sh"
 source "$ROOT_DIR/lib/install/backup.sh"
 
-NOCTIS_TOML="$ROOT_DIR/noctis.toml"
+APHOTIC_TOML="$ROOT_DIR/aphotic.toml"
 PURGE_PACKAGES=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --purge-packages) PURGE_PACKAGES=1; shift ;;
-    --noctis-toml) NOCTIS_TOML="$2"; shift 2 ;;
+    --aphotic-toml) APHOTIC_TOML="$2"; shift 2 ;;
     -h|--help)
-      echo "Usage: ./uninstall.sh [--purge-packages] [--noctis-toml <path>]"
+      echo "Usage: ./uninstall.sh [--purge-packages] [--aphotic-toml <path>]"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;
   esac
 done
 
-if [[ ! -f "$NOCTIS_TOML" ]]; then
-  echo "No noctis.toml found ($NOCTIS_TOML) — nothing recorded to uninstall."
+if [[ ! -f "$APHOTIC_TOML" ]]; then
+  echo "No aphotic.toml found ($APHOTIC_TOML) — nothing recorded to uninstall."
   exit 1
 fi
 
@@ -49,27 +49,27 @@ fi
 
 restore_latest_backup || exit 1
 
-if [[ -L "$HOME/.local/bin/noctis" ]]; then
-  rm -f "$HOME/.local/bin/noctis"
-  echo "Removed ~/.local/bin/noctis"
+if [[ -L "$HOME/.local/bin/aphotic" ]]; then
+  rm -f "$HOME/.local/bin/aphotic"
+  echo "Removed ~/.local/bin/aphotic"
 fi
 
-if systemctl --user list-unit-files noctis-shell.service &>/dev/null; then
-  systemctl --user disable --now noctis-shell.service &>/dev/null || true
-  echo "Disabled noctis-shell.service"
+if systemctl --user list-unit-files aphotic-shell.service &>/dev/null; then
+  systemctl --user disable --now aphotic-shell.service &>/dev/null || true
+  echo "Disabled aphotic-shell.service"
 fi
 
 for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
   [[ -f "$rc" ]] || continue
-  sed -i '/# Added by noctis install.sh so ~\/.local\/bin (noctis CLI) is on PATH/,+1d' "$rc"
+  sed -i '/# Added by aphotic install.sh so ~\/.local\/bin (aphotic CLI) is on PATH/,+1d' "$rc"
 done
 
 if [[ "$PURGE_PACKAGES" == "1" ]]; then
-  AUR_HELPER=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["system"]["aur_helper"])' "$NOCTIS_TOML")
+  AUR_HELPER=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["system"]["aur_helper"])' "$APHOTIC_TOML")
   read -rep $"This will run $AUR_HELPER -R against every package this profile installed (including custom_apps.lst entries). Continue? (y,n) " PURGE_CONFIRM
   if [[ "$PURGE_CONFIRM" == "y" || "$PURGE_CONFIRM" == "Y" ]]; then
-    PROFILE=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["install"]["profile"])' "$NOCTIS_TOML")
-    LAYERS=$("$PYTHON_BIN" -c 'import sys, tomllib; print(",".join(tomllib.load(open(sys.argv[1], "rb"))["install"]["layers"]))' "$NOCTIS_TOML")
+    PROFILE=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["install"]["profile"])' "$APHOTIC_TOML")
+    LAYERS=$("$PYTHON_BIN" -c 'import sys, tomllib; print(",".join(tomllib.load(open(sys.argv[1], "rb"))["install"]["layers"]))' "$APHOTIC_TOML")
     layer_args=""
     if [[ -n "$LAYERS" ]]; then
       IFS=',' read -ra layer_names <<< "$LAYERS"

@@ -38,7 +38,7 @@ prompt_theme() {
   echo "${answer:-default}"
 }
 
-write_noctis_toml() {
+write_aphotic_toml() {
   local path="$1" profile="$2" layers="$3" theme="$4" nvidia="$5" aur_helper="$6" installed_at="$7"
 
   local layers_toml="[]"

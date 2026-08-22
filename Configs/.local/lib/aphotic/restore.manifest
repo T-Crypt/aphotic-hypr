@@ -1,0 +1,12 @@
+# aphotic restore manifest
+# format: <path-relative-to-APHOTIC_DOTS_DIR>|<absolute-target-path>
+# ~ is expanded to $HOME. Lines starting with # are comments.
+#
+# Fill this in as the real dots repo layout solidifies — this is a
+# starting skeleton, not a final list.
+
+hypr/hyprland.conf|~/.config/hypr/hyprland.conf
+hypr/hyprland/monitors.conf|~/.config/hypr/hyprland/monitors.conf
+hypr/hyprland/keybindings.conf|~/.config/hypr/hyprland/keybindings.conf
+quickshell/aphotic|~/.config/quickshell/aphotic
+aphotic/shell.json|~/.config/aphotic/shell.json

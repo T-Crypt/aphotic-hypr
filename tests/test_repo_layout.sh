@@ -20,7 +20,7 @@ target=$(readlink custom_apps.lst)
 
 diff <(cat custom_apps.lst) <(cat profiles/custom_apps.lst) >/dev/null || fail "symlinked content mismatch"
 
-git check-ignore -q noctis.toml || fail "noctis.toml is not gitignored"
+git check-ignore -q aphotic.toml || fail "aphotic.toml is not gitignored"
 git check-ignore -q install.log || fail "install.log is not gitignored"
 
 echo "PASS: repo layout"

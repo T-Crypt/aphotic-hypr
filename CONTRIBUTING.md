@@ -1,6 +1,6 @@
-# Contributing to Noctis-Hypr
+# Contributing to Aphotic-Hypr
 
-Noctis-Hypr is a full custom Quickshell desktop environment for Hyprland,
+Aphotic-Hypr is a full custom Quickshell desktop environment for Hyprland,
 built in the same weight class as `end-4/dots-hyprland` and
 `caelestia-dots/shell` — everything is first-party (bar, launcher,
 notifications, OSD, lock, session menu, dashboard, area picker), not a
@@ -32,7 +32,7 @@ Every Quickshell module follows the same shape:
 - **`qmldir` wiring** — every module directory needs a proper `qmldir`
   entry, not ad hoc imports.
 - **IPC-toggle pattern for overlays** — popouts/overlays are toggled via
-  `qs -c noctis ipc call <target> <action>`, matching the existing lock/
+  `qs -c aphotic ipc call <target> <action>`, matching the existing lock/
   session/settings examples. Don't invent a second mechanism for opening
   UI.
 - **`Tokens`/`Config`/`Settings` layering** — visual tokens (spacing,
@@ -52,30 +52,30 @@ Every Quickshell module follows the same shape:
   `HoverHandler` pattern. New overlay surfaces should reuse this harness
   rather than building bespoke animation/dismiss logic.
 
-## CLI conventions (`noctis`)
+## CLI conventions (`aphotic`)
 
-The `noctis` CLI is a real dispatcher (`Configs/.local/bin/noctis` +
-`lib/noctis/commands/cmd_*.sh`), auto-discovering one file per
+The `aphotic` CLI is a real dispatcher (`Configs/.local/bin/aphotic` +
+`lib/aphotic/commands/cmd_*.sh`), auto-discovering one file per
 subcommand.
 
-- **Simple commands:** add `lib/noctis/commands/cmd_<name>.sh`. It's
+- **Simple commands:** add `lib/aphotic/commands/cmd_<name>.sh`. It's
   auto-discovered — no registration step needed.
 - **Multi-verb commands:** if your command has its own sub-verbs (like
-  `noctis play hangman`), use the grouped convention:
+  `aphotic play hangman`), use the grouped convention:
   `commands/<name>/*.sh`, **no `cmd_` prefix** on the helper files. This
   keeps helper files from being auto-discovered as phantom top-level
   commands.
 - **Use the shared helpers** in `globalcontrol.sh` — XDG paths, logging,
-  `noctis_json_get`/`noctis_json_set`, `noctis_confirm`, `noctis_require`
+  `aphotic_json_get`/`aphotic_json_set`, `aphotic_confirm`, `aphotic_require`
   — rather than reimplementing them per-command.
 - **State contracts are shared, not command-local.** If your command
   touches theme/wallpaper/scheme state, it must agree with `Themes.qml`
   and `wallswitcher.py` — this is a real three-way contract
-  (`~/.local/state/noctis/theme.json`). Changing the shape of that file
+  (`~/.local/state/aphotic/theme.json`). Changing the shape of that file
   is a three-way change: update and re-verify all three call sites
   together, never one at a time.
 - **Settings additions** go through `Settings.qml`'s persisted schema
-  (`~/.local/state/noctis/settings.json`), not a second state file.
+  (`~/.local/state/aphotic/settings.json`), not a second state file.
 
 ## Installer conventions
 
@@ -98,11 +98,11 @@ subcommand.
 
 This project verifies live, not just "it parses":
 
-1. `pkill -x qs` then a fresh `qs -c noctis` restart — never rely on
+1. `pkill -x qs` then a fresh `qs -c aphotic` restart — never rely on
    hot-reload alone to confirm a change works.
 2. Check logs for `Configuration Loaded` and zero new errors.
 3. Confirm the shell is actually still running afterward
-   (`pgrep -f "qs -c noctis"`) — don't assume a clean load means it's
+   (`pgrep -f "qs -c aphotic"`) — don't assume a clean load means it's
    still up a minute later.
 4. For visual changes, include a `grim` screenshot in the PR description.
 5. Revert any temporary debug overrides and check `git diff` before

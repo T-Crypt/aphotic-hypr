@@ -3,7 +3,7 @@
 set -euo pipefail
 
 backup_root() {
-  echo "${NOCTIS_BACKUP_ROOT:-$HOME/.config-backup}"
+  echo "${APHOTIC_BACKUP_ROOT:-$HOME/.config-backup}"
 }
 
 snapshot_config() {

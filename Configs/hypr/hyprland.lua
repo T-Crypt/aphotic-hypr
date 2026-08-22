@@ -1,4 +1,4 @@
--- Noctis — Hyprland config entry point
+-- Aphotic — Hyprland config entry point
 -- See https://wiki.hypr.land/Configuring/Start/
 
 require("monitors")
