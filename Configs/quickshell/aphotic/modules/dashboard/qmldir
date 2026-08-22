@@ -8,4 +8,5 @@ DashMedia 1.0 DashMedia.qml
 DashboardContent 1.0 DashboardContent.qml
 DashboardTab 1.0 DashboardTab.qml
 DashboardWindow 1.0 DashboardWindow.qml
+DashWallpapersTab 1.0 DashWallpapersTab.qml
 WorkspacesTab 1.0 WorkspacesTab.qml

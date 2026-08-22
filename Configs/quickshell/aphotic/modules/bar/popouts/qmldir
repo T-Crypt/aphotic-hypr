@@ -2,6 +2,7 @@ module qs.modules.bar.popouts
 AudioPopout 1.0 AudioPopout.qml
 BatteryPopout 1.0 BatteryPopout.qml
 BluetoothPopout 1.0 BluetoothPopout.qml
+ClaudeSessionPopout 1.0 ClaudeSessionPopout.qml
 KbLayoutPopout 1.0 KbLayoutPopout.qml
 LockStatusPopout 1.0 LockStatusPopout.qml
 MediaPopout 1.0 MediaPopout.qml

@@ -15,15 +15,15 @@ ColumnLayout {
     spacing: Tokens.spacing.medium
 
     Logo {
-        Layout.bottomMargin: Tokens.spacing.small
         implicitWidth: 96
-        implicitHeight: 96 * designHeight / designWidth
+        implicitHeight: 96
     }
 
     StyledText {
+        Layout.topMargin: -Tokens.spacing.extraSmall
         text: "Aphotic-Hypr"
         color: Colours.palette.m3onSurface
-        font: Tokens.font.headline.medium
+        font: Tokens.font.headline.large
     }
 
     StyledText {

@@ -29,6 +29,23 @@ Item {
     }
     readonly property var openTheme: wallpaperThemeSlash ? Themes.themeInfo(wallpaperThemeSlash) : null
 
+    // "@" browses git repos under these roots for the project-switcher
+    // mode -- falls back to ~/Projects and ~/repos (whichever exist) when
+    // the user hasn't configured Settings.projectRoots themselves.
+    readonly property var projectRoots: {
+        if (Settings.projectRoots.length > 0)
+            return Settings.projectRoots;
+        const home = Quickshell.env("HOME");
+        return [`${home}/Projects`, `${home}/repos`];
+    }
+    // Detects package.json/Cargo.toml per repo inline in the same find
+    // pass instead of a per-delegate fs check, so scrolling the results
+    // list doesn't stat the filesystem on every visible row.
+    readonly property string projectScanScript: {
+        const roots = root.projectRoots.map(r => `"${r}"`).join(" ");
+        return `find ${roots} -maxdepth 2 -name .git -type d 2>/dev/null | while IFS= read -r d; do repo=$(dirname "$d"); if [ -f "$repo/package.json" ] || [ -f "$repo/Cargo.toml" ]; then printf 'code\\t%s\\n' "$repo"; else printf 'folder\\t%s\\n' "$repo"; fi; done`;
+    }
+
     readonly property string mode: {
         const t = search.text;
         if (t.startsWith(">"))
@@ -39,6 +56,8 @@ Item {
             return "windows";
         if (t.startsWith("~"))
             return openTheme ? "wallpaper" : "theme";
+        if (t.startsWith("@"))
+            return "project";
         return "apps";
     }
     readonly property string query: {
@@ -78,6 +97,8 @@ Item {
     function refreshMode(): void {
         if (mode === "clipboard" && !clipboardProc.running)
             clipboardProc.running = true;
+        if (mode === "project")
+            projectProc.exec(["sh", "-c", root.projectScanScript]);
     }
 
     StyledClippingRect {
@@ -182,8 +203,10 @@ Item {
                                             return qsTr("Choose a theme… (type its name + / to browse wallpapers)");
                                         case "wallpaper":
                                             return qsTr("Choose wallpaper in %1…").arg(root.openTheme?.displayName ?? root.wallpaperThemeSlash);
+                                        case "project":
+                                            return qsTr("Search projects…");
                                         default:
-                                            return qsTr("Search apps… (> clip, : emoji, / windows, ~ themes)");
+                                            return qsTr("Search apps… (> clip, : emoji, / windows, ~ themes, @ projects)");
                                         }
                                     }
                                     font: search.font
@@ -237,6 +260,8 @@ Item {
                                     file: f
                                 }));
                     }
+                    case "project":
+                        return root.query.length === 0 ? projectProc.entries : projectProc.entries.filter(e => e.name.toLowerCase().includes(root.query));
                     default: {
                         const all = DesktopEntries.applications.values.filter(a => !a.noDisplay);
                         const filtered = root.query.length === 0 ? all : all.filter(a => a.name.toLowerCase().includes(root.query));
@@ -275,6 +300,8 @@ Item {
                         return themeDelegate;
                     case "wallpaper":
                         return wallpaperDelegate;
+                    case "project":
+                        return projectDelegate;
                     default:
                         return appDelegate;
                     }
@@ -329,6 +356,13 @@ Item {
                         screenState: root.screenState
                     }
                 }
+                Component {
+                    id: projectDelegate
+                    ProjectItem {
+                        modelData: delegateLoader.modelData
+                        screenState: root.screenState
+                    }
+                }
             }
         }
         }
@@ -347,6 +381,26 @@ Item {
                     return {
                         raw: l,
                         preview: tab >= 0 ? l.slice(tab + 1) : l
+                    };
+                });
+            }
+        }
+    }
+
+    Process {
+        id: projectProc
+
+        property var entries: []
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                projectProc.entries = text.split("\n").filter(l => l.length > 0).map(l => {
+                    const tab = l.indexOf("\t");
+                    const path = tab >= 0 ? l.slice(tab + 1) : l;
+                    return {
+                        icon: tab >= 0 ? l.slice(0, tab) : "folder",
+                        path: path,
+                        name: path.slice(path.lastIndexOf("/") + 1)
                     };
                 });
             }
