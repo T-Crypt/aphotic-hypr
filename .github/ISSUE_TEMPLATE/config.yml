@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions about project direction / scope
+    url: https://github.com/T-Crypt/aphotic-hypr/discussions
+    about: Open a discussion before writing code for anything that isn't clearly a bug or a scoped feature.
