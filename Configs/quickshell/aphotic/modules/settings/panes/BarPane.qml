@@ -106,5 +106,17 @@ ColumnLayout {
             checked: Settings.barVertical
             onToggled: state => Settings.barVertical = state
         }
+
+        SettingsPresetRow {
+            icon: "style"
+            label: qsTr("Bar style")
+            presets: [
+                { value: "pill", label: qsTr("Pill") },
+                { value: "square", label: qsTr("Square") },
+                { value: "minimal", label: qsTr("Minimal") }
+            ]
+            value: Settings.barSkin
+            onSelected: value => Settings.barSkin = value
+        }
     }
 }

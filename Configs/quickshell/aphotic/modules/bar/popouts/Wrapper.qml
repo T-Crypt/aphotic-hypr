@@ -155,6 +155,8 @@ Item {
                     return batteryComp;
                 case "resources":
                     return resourcesComp;
+                case "claudesessions":
+                    return claudeSessionComp;
                 case "activewindow":
                     return windowComp;
                 case "kblayout":
@@ -193,6 +195,10 @@ Item {
     Component {
         id: resourcesComp
         ResourcesPopout {}
+    }
+    Component {
+        id: claudeSessionComp
+        ClaudeSessionPopout {}
     }
     Component {
         id: windowComp

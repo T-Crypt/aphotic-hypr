@@ -212,6 +212,75 @@ ColumnLayout {
         font: Tokens.font.body.small
     }
 
+    StyledText {
+        Layout.topMargin: Tokens.spacing.small
+        text: qsTr("Status icon accents")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.label.medium
+    }
+
+    StyledText {
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: qsTr("These normally just inherit the bar's default icon colour. Override any of them independently, or leave on theme default.")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+
+        SettingsRow {
+            icon: "bluetooth"
+            label: qsTr("Bluetooth")
+
+            ColorPickerField {
+                value: Settings.statusIconBluetoothColor
+                onValueChanged: Settings.statusIconBluetoothColor = value
+            }
+        }
+
+        SettingsRow {
+            icon: "wifi"
+            label: qsTr("Wi-Fi")
+
+            ColorPickerField {
+                value: Settings.statusIconWifiColor
+                onValueChanged: Settings.statusIconWifiColor = value
+            }
+        }
+
+        SettingsRow {
+            icon: "bolt"
+            label: qsTr("Power profile")
+
+            ColorPickerField {
+                value: Settings.statusIconPowerProfileColor
+                onValueChanged: Settings.statusIconPowerProfileColor = value
+            }
+        }
+
+        SettingsRow {
+            icon: "monitoring"
+            label: qsTr("Performance")
+
+            ColorPickerField {
+                value: Settings.statusIconPerformanceColor
+                onValueChanged: Settings.statusIconPerformanceColor = value
+            }
+        }
+
+        SettingsRow {
+            icon: "smart_toy"
+            label: qsTr("Claude sessions")
+
+            ColorPickerField {
+                value: Settings.statusIconClaudeColor
+                onValueChanged: Settings.statusIconClaudeColor = value
+            }
+        }
+    }
+
     component NamePill: StyledRect {
         id: pill
 

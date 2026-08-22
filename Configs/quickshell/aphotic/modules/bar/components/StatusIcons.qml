@@ -138,7 +138,7 @@ StyledRect {
                         MaterialIcon {
                             animate: true
                             text: Nmcli.activeEthernet ? "cable" : Nmcli.active ? Icons.getNetworkIcon(Nmcli.active.strength ?? 0) : "wifi_off"
-                            color: root.colour
+                            color: Settings.statusIconWifiColor.length > 0 ? Settings.statusIconWifiColor : root.colour
 
                             MouseArea {
                                 anchors.fill: parent
@@ -153,7 +153,7 @@ StyledRect {
                     roleValue: "bluetooth"
                     delegate: EntryWrapper {
                         BluetoothStatus {
-                            colour: root.colour
+                            colour: Settings.statusIconBluetoothColor.length > 0 ? Settings.statusIconBluetoothColor : root.colour
 
                             MouseArea {
                                 anchors.fill: parent
@@ -168,7 +168,7 @@ StyledRect {
                     roleValue: "battery"
                     delegate: EntryWrapper {
                         BatteryStatus {
-                            colour: root.colour
+                            colour: Settings.statusIconPowerProfileColor.length > 0 ? Settings.statusIconPowerProfileColor : root.colour
                         }
                     }
                 }
@@ -176,7 +176,15 @@ StyledRect {
                     roleValue: "resources"
                     delegate: EntryWrapper {
                         ResourcesStatus {
-                            colour: root.colour
+                            colour: Settings.statusIconPerformanceColor.length > 0 ? Settings.statusIconPerformanceColor : root.colour
+                        }
+                    }
+                }
+                DelegateChoice {
+                    roleValue: "claudeSessions"
+                    delegate: EntryWrapper {
+                        ClaudeSessionStatus {
+                            colour: Settings.statusIconClaudeColor.length > 0 ? Settings.statusIconClaudeColor : root.colour
                         }
                     }
                 }

@@ -29,6 +29,14 @@ Singleton {
     property bool barCompact: false
     property bool barVertical: false
     property bool barPositionBottom: false
+    // "pill" (default filled rounded bar), "square" (sharp corners, same
+    // fill), or "minimal" (border-only outline, transparent fill) --
+    // purely the outer bar strip's own background treatment
+    // (BarWrapper.qml's `background` StyledRect). Deliberately doesn't
+    // touch per-module chip styling (status icons, workspaces, ...),
+    // docking, masking, or exclusive-zone sizing -- those stay identical
+    // across every skin.
+    property string barSkin: "pill"
 
     property bool osdEnabled: Config.osd.enabled
     property int osdHideDelay: Config.osd.hideDelay
@@ -41,6 +49,15 @@ Singleton {
     // m3primary); non-empty overrides it. Purely additive -- doesn't touch
     // the wallust/theme pipeline at all.
     property string accentColorOverride: ""
+    // Same "" = theme default, non-empty = override convention as
+    // accentColorOverride above, one per status-bar icon that would
+    // otherwise always just inherit the bar's blanket secondaryOnSurface
+    // tint with no way to set it apart.
+    property string statusIconBluetoothColor: ""
+    property string statusIconWifiColor: ""
+    property string statusIconPowerProfileColor: ""
+    property string statusIconPerformanceColor: ""
+    property string statusIconClaudeColor: ""
     property string cursorTheme: "Bibata-Modern-Ice"
     property int cursorSize: 20
     // Papirus family, not an arbitrary icon theme, matches cmd_theme.sh's
@@ -58,6 +75,18 @@ Singleton {
     property int idleScreenOffTimeout: 630
     property bool idleSuspendEnabled: false
     property int idleSuspendTimeout: 1800
+
+    // Root directories the launcher's "@" project-switcher mode scans for
+    // git repos (each immediate/one-level-deep child dir containing a
+    // .git). Empty means "not configured yet" -- Launcher.qml falls back
+    // to ~/Projects and ~/repos itself rather than writing a default here.
+    property var projectRoots: []
+
+    // Named, one-key launch groups: [{ name: string, entries: [{ command:
+    // string, workspace: int }] }]. Not a live session snapshot -- Hyprland/
+    // X11 apps don't support that -- just a fixed replay list dispatched via
+    // `hyprctl dispatch exec [workspace N] <command>` per entry.
+    property var workspaceProfiles: []
 
     readonly property real barInnerWidth: Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1)
 
@@ -77,12 +106,18 @@ Singleton {
             barCompact: root.barCompact,
             barVertical: root.barVertical,
             barPositionBottom: root.barPositionBottom,
+            barSkin: root.barSkin,
             osdEnabled: root.osdEnabled,
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
             osdEnableMicrophone: root.osdEnableMicrophone,
             notifExpireTimeout: root.notifExpireTimeout,
             accentColorOverride: root.accentColorOverride,
+            statusIconBluetoothColor: root.statusIconBluetoothColor,
+            statusIconWifiColor: root.statusIconWifiColor,
+            statusIconPowerProfileColor: root.statusIconPowerProfileColor,
+            statusIconPerformanceColor: root.statusIconPerformanceColor,
+            statusIconClaudeColor: root.statusIconClaudeColor,
             cursorTheme: root.cursorTheme,
             cursorSize: root.cursorSize,
             iconTheme: root.iconTheme,
@@ -90,7 +125,9 @@ Singleton {
             idleLockTimeout: root.idleLockTimeout,
             idleScreenOffTimeout: root.idleScreenOffTimeout,
             idleSuspendEnabled: root.idleSuspendEnabled,
-            idleSuspendTimeout: root.idleSuspendTimeout
+            idleSuspendTimeout: root.idleSuspendTimeout,
+            projectRoots: root.projectRoots,
+            workspaceProfiles: root.workspaceProfiles
         }, null, 2));
     }
 
@@ -141,13 +178,30 @@ Singleton {
     // replacing the old unconditional hardcoded calls in startup.lua --
     // this is now the single source of truth instead of two places
     // fighting over it on every reboot.
-    function _applyPersonalization(): void {
-        personalizationApplyProc.command = ["sh", "-c", `hyprctl setcursor '${root.cursorTheme}' ${root.cursorSize}; gsettings set org.gnome.desktop.interface cursor-theme '${root.cursorTheme}'; gsettings set org.gnome.desktop.interface cursor-size ${root.cursorSize}; gsettings set org.gnome.desktop.interface icon-theme '${root.iconTheme}'`];
-        personalizationApplyProc.running = true;
+    //
+    // Split into two independent Process/functions (was one shared
+    // Process running all 4 commands for any of cursorTheme/cursorSize/
+    // iconTheme changing) -- a cursor pick used to also gsettings-set
+    // the icon theme every time, and a rapid second click (theme pick,
+    // or a size +/- bump) landing while the first script was still
+    // mid-flight silently no-opped, since `running = true` on an
+    // already-running Process doesn't restart it with the new command.
+    // `exec()` always (re)launches immediately, so a newer pick preempts
+    // an in-flight one instead of being dropped.
+    function _applyCursor(): void {
+        cursorApplyProc.exec(["sh", "-c", `hyprctl setcursor '${root.cursorTheme}' ${root.cursorSize}; gsettings set org.gnome.desktop.interface cursor-theme '${root.cursorTheme}'; gsettings set org.gnome.desktop.interface cursor-size ${root.cursorSize}`]);
+    }
+
+    function _applyIconTheme(): void {
+        iconApplyProc.exec(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", root.iconTheme]);
     }
 
     Process {
-        id: personalizationApplyProc
+        id: cursorApplyProc
+    }
+
+    Process {
+        id: iconApplyProc
     }
 
     onTwelveHourClockChanged: root._saveState()
@@ -158,23 +212,29 @@ Singleton {
     onBarCompactChanged: root._saveState()
     onBarVerticalChanged: root._saveState()
     onBarPositionBottomChanged: root._saveState()
+    onBarSkinChanged: root._saveState()
     onOsdEnabledChanged: root._saveState()
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
     onOsdEnableMicrophoneChanged: root._saveState()
     onNotifExpireTimeoutChanged: root._saveState()
     onAccentColorOverrideChanged: root._saveState()
+    onStatusIconBluetoothColorChanged: root._saveState()
+    onStatusIconWifiColorChanged: root._saveState()
+    onStatusIconPowerProfileColorChanged: root._saveState()
+    onStatusIconPerformanceColorChanged: root._saveState()
+    onStatusIconClaudeColorChanged: root._saveState()
     onCursorThemeChanged: {
         root._saveState();
-        root._applyPersonalization();
+        root._applyCursor();
     }
     onCursorSizeChanged: {
         root._saveState();
-        root._applyPersonalization();
+        root._applyCursor();
     }
     onIconThemeChanged: {
         root._saveState();
-        root._applyPersonalization();
+        root._applyIconTheme();
     }
     onIdleLockEnabledChanged: {
         root._saveState();
@@ -196,6 +256,8 @@ Singleton {
         root._saveState();
         root._applyIdleConfig();
     }
+    onProjectRootsChanged: root._saveState()
+    onWorkspaceProfilesChanged: root._saveState()
 
     FileView {
         id: stateFile
@@ -231,6 +293,8 @@ Singleton {
                     root.barVertical = data.barVertical;
                 if (typeof data.barPositionBottom === "boolean")
                     root.barPositionBottom = data.barPositionBottom;
+                if (typeof data.barSkin === "string")
+                    root.barSkin = data.barSkin;
                 if (typeof data.osdEnabled === "boolean")
                     root.osdEnabled = data.osdEnabled;
                 if (typeof data.osdHideDelay === "number")
@@ -243,6 +307,16 @@ Singleton {
                     root.notifExpireTimeout = data.notifExpireTimeout;
                 if (typeof data.accentColorOverride === "string")
                     root.accentColorOverride = data.accentColorOverride;
+                if (typeof data.statusIconBluetoothColor === "string")
+                    root.statusIconBluetoothColor = data.statusIconBluetoothColor;
+                if (typeof data.statusIconWifiColor === "string")
+                    root.statusIconWifiColor = data.statusIconWifiColor;
+                if (typeof data.statusIconPowerProfileColor === "string")
+                    root.statusIconPowerProfileColor = data.statusIconPowerProfileColor;
+                if (typeof data.statusIconPerformanceColor === "string")
+                    root.statusIconPerformanceColor = data.statusIconPerformanceColor;
+                if (typeof data.statusIconClaudeColor === "string")
+                    root.statusIconClaudeColor = data.statusIconClaudeColor;
                 if (typeof data.cursorTheme === "string")
                     root.cursorTheme = data.cursorTheme;
                 if (typeof data.cursorSize === "number")
@@ -259,6 +333,10 @@ Singleton {
                     root.idleSuspendEnabled = data.idleSuspendEnabled;
                 if (typeof data.idleSuspendTimeout === "number")
                     root.idleSuspendTimeout = data.idleSuspendTimeout;
+                if (Array.isArray(data.projectRoots))
+                    root.projectRoots = data.projectRoots;
+                if (Array.isArray(data.workspaceProfiles))
+                    root.workspaceProfiles = data.workspaceProfiles;
             } catch (e) {
                 // No state file yet, or malformed -- keep the Config.qml/
                 // GlobalConfig.qml defaults already set above.
@@ -269,12 +347,14 @@ Singleton {
             // what makes cursor/icon theme survive a reboot instead of
             // startup.lua's old hardcoded calls silently overwriting
             // whatever was chosen here on the next boot.
-            root._applyPersonalization();
+            root._applyCursor();
+            root._applyIconTheme();
             root._applyIdleConfig();
         }
         onLoadFailed: error => {
             root._loaded = true;
-            root._applyPersonalization();
+            root._applyCursor();
+            root._applyIconTheme();
             root._applyIdleConfig();
         }
     }

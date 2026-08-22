@@ -227,6 +227,178 @@ ColumnLayout {
     }
 
     ColumnLayout {
+        id: ollamaModelsSection
+
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+        visible: AiConfig.activeProvider === "ollama" && AiConfig.ollamaHostConfigured
+
+        function formatVram(bytes: real): string {
+            return qsTr("%1 GB").arg((bytes / 1073741824).toFixed(1));
+        }
+
+        function runningInfo(name: string): var {
+            return AiProviders.ollamaRunningModels.find(m => m.name === name) ?? null;
+        }
+
+        Component.onCompleted: AiProviders.refreshRunningModels()
+
+        onVisibleChanged: {
+            if (ollamaModelsSection.visible)
+                AiProviders.refreshRunningModels();
+        }
+
+        Timer {
+            interval: 5000
+            running: ollamaModelsSection.visible
+            repeat: true
+            onTriggered: AiProviders.refreshRunningModels()
+        }
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Ollama Models")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+            visible: AiProviders.ollamaModels.length > 0
+
+            Repeater {
+                model: AiProviders.ollamaModels
+
+                SettingsRow {
+                    id: modelRow
+
+                    required property string modelData
+                    readonly property var running: ollamaModelsSection.runningInfo(modelRow.modelData)
+                    readonly property bool active: modelRow.modelData === AiConfig.ollamaModel
+
+                    icon: "memory"
+                    label: modelRow.modelData
+                    description: modelRow.running ? qsTr("Running -- %1 VRAM").arg(ollamaModelsSection.formatVram(modelRow.running.size_vram)) : qsTr("Idle")
+
+                    RowLayout {
+                        spacing: Tokens.spacing.small
+
+                        MaterialIcon {
+                            text: "check_circle"
+                            fill: modelRow.active ? 1 : 0
+                            color: modelRow.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+
+                            StateLayer {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                radius: Tokens.rounding.full
+                                onClicked: AiConfig.ollamaModel = modelRow.modelData
+                            }
+                        }
+
+                        MaterialIcon {
+                            text: "delete"
+                            color: Colours.palette.m3error
+                            fontStyle: Tokens.font.icon.small
+
+                            StateLayer {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                radius: Tokens.rounding.full
+                                onClicked: AiProviders.deleteModel(modelRow.modelData)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsRow {
+                icon: "download"
+                label: qsTr("Pull new model")
+                description: qsTr("Downloads a model onto the Ollama host")
+
+                RowLayout {
+                    spacing: Tokens.spacing.small
+
+                    StyledRect {
+                        Layout.preferredWidth: 160
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        TextInput {
+                            id: pullInput
+
+                            anchors.fill: parent
+                            anchors.leftMargin: Tokens.padding.medium
+                            anchors.rightMargin: Tokens.padding.medium
+                            verticalAlignment: TextInput.AlignVCenter
+                            clip: true
+                            enabled: !AiProviders.pulling
+                            font: Tokens.font.label.small
+                            color: Colours.palette.m3onSurface
+
+                            Keys.onReturnPressed: {
+                                if (pullInput.text.trim().length > 0) {
+                                    AiProviders.pullModel(pullInput.text);
+                                    pullInput.text = "";
+                                }
+                            }
+
+                            StyledText {
+                                visible: pullInput.text.length === 0
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: qsTr("llama3.2")
+                                color: Colours.palette.m3onSurfaceVariant
+                                font: Tokens.font.label.small
+                            }
+                        }
+                    }
+
+                    StyledRect {
+                        Layout.preferredWidth: pullLabel.implicitWidth + Tokens.padding.large * 2
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        opacity: AiProviders.pulling ? 0.5 : 1
+                        color: Colours.palette.m3primary
+
+                        StyledText {
+                            id: pullLabel
+                            anchors.centerIn: parent
+                            text: AiProviders.pulling ? qsTr("Pulling…") : qsTr("Pull")
+                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            font: Tokens.font.label.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            showHoverBackground: !AiProviders.pulling
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: !AiProviders.pulling
+                            onClicked: {
+                                if (pullInput.text.trim().length > 0) {
+                                    AiProviders.pullModel(pullInput.text);
+                                    pullInput.text = "";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    ColumnLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.extraSmall
 

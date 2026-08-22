@@ -56,6 +56,7 @@ GridLayout {
             return root.activeWsId === root.ws ? activeLabel : root.isOccupied ? occupiedLabel : label;
         }
         color: Config.bar.workspaces.occupiedBg || root.isOccupied || root.activeWsId === root.ws ? Colours.palette.m3onSurface : Colours.layer(Colours.palette.m3outlineVariant, 2)
+        horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
         font.family: Tokens.font.workspaces
     }

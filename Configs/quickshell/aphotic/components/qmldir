@@ -1,8 +1,11 @@
 module qs.components
 AnchorAnim 1.0 AnchorAnim.qml
+AphoticMark 1.0 AphoticMark.qml
 AnimLoader 1.0 AnimLoader.qml
 Anim 1.0 Anim.qml
 CAnim 1.0 CAnim.qml
+ColorPickerField 1.0 ColorPickerField.qml
+ColorWheel 1.0 ColorWheel.qml
 Logo 1.0 Logo.qml
 MaterialIcon 1.0 MaterialIcon.qml
 ScreenState 1.0 ScreenState.qml

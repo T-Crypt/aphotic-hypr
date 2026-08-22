@@ -1,0 +1,7 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Themable accent layer: light shaft + spark, unioned into one solid
+       shape so a single QML Colouriser tint colors both. Geometry matches
+       assets/aphotic-favicon.svg's shaft/spark. -->
+  <path d="M 214,132 L 298,132 L 256,320 Z" fill="#000000"/>
+  <circle cx="308" cy="360" r="17" fill="#000000"/>
+</svg>
