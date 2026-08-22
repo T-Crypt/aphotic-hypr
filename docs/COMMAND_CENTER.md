@@ -19,7 +19,7 @@ are resolved one way or the other.
   click-to-open-Dashboard muscle memory; can revisit if that's missed in
   practice.
 - Open Conflict #6 (API key storage location) — **resolved: separate
-  `~/.config/noctis/ai-keys.json`, `chmod 600`**, per §4's recommendation.
+  `~/.config/aphotic/ai-keys.json`, `chmod 600`**, per §4's recommendation.
   Not folded into `shell.json`.
 
 Only #5 (phase/versioning, informational — already answered in practice:
@@ -59,7 +59,7 @@ how much of it is built. Concretely:
   doesn't quite exist in the form stated: there's nothing narrower to
   preserve or replace here, just one click handler to point at a bigger
   surface.
-- The global hotkey path is `qs -c noctis ipc call dashboard toggle`
+- The global hotkey path is `qs -c aphotic ipc call dashboard toggle`
   (documented in `README.md`), which flips the same `screenState.dashboard`
   boolean `Clock.qml`'s click handler does. One flag, two triggers, already
   true today.
@@ -91,7 +91,7 @@ not a technical one, and should be confirmed before Step 2 starts.
   everything, and it's dismissed by click-outside or Escape. This is
   standard practice for a "floating-looking" surface built on layer-shell
   rather than a real Hyprland toplevel, and it's the same trick caelestia's
-  own dashboard uses (per the brief's own description) — Noctis already
+  own dashboard uses (per the brief's own description) — Aphotic already
   has it, doesn't need to import it.
 - **No Hyprland `windowrulev2` float/center rule is needed.** Real floating
   toplevel rules (see `Configs/hypr/windows.lua`'s existing
@@ -166,7 +166,7 @@ animation curve.
 - `Clock.qml`'s existing `onClicked: root.screenState.dashboard =
   !root.screenState.dashboard` stays exactly as-is — it already does what's
   being asked (open the surface from the calendar bar module).
-- The global hotkey (`qs -c noctis ipc call dashboard toggle`) also stays
+- The global hotkey (`qs -c aphotic ipc call dashboard toggle`) also stays
   as-is — same flag, already a second trigger path, nothing to add.
 - **Resolved**: always opens to the "Dashboard" tab, no last-viewed-tab
   memory and no new hover-preview surface on the clock. Matches current
@@ -178,12 +178,12 @@ animation curve.
 
 ### What already exists
 
-`Configs/.local/lib/noctis/commands/cmd_ai.sh` is real, not a stub:
-`noctis ai status` checks both the `claude` CLI and `ollama` reachability
-(with loaded-model listing for Ollama), and `noctis ai profile <name>`
-writes to `shell.json` via `noctis_json_set "ai.activeProfile" "$name"`
-(the same jq-wrapped config convention — `NOCTIS_CONFIG_FILE`,
-`noctis_json_get`/`noctis_json_set` in `globalcontrol.sh` — the brief asks
+`Configs/.local/lib/aphotic/commands/cmd_ai.sh` is real, not a stub:
+`aphotic ai status` checks both the `claude` CLI and `ollama` reachability
+(with loaded-model listing for Ollama), and `aphotic ai profile <name>`
+writes to `shell.json` via `aphotic_json_set "ai.activeProfile" "$name"`
+(the same jq-wrapped config convention — `APHOTIC_CONFIG_FILE`,
+`aphotic_json_get`/`aphotic_json_set` in `globalcontrol.sh` — the brief asks
 to follow). Profile *definitions* are an explicit `TODO` in that file
 today. This is the right foundation to build the QML-side provider
 abstraction against, not a parallel system.
@@ -258,20 +258,20 @@ per concern, not a monolith):
 ### API key storage — a real decision, not a detail
 
 The brief says "using jq-wrapped config like the rest of the project" —
-meaning `shell.json` via `noctis_json_set`. That file is general shell
+meaning `shell.json` via `aphotic_json_set`. That file is general shell
 state (theme, bar settings, AI profile *name*), read and rewritten
 casually by CLI commands, the QML shell, and theme-switch scripts, with no
 special file permissions. Putting live API keys in the same file as
 "is the bar persistent" is a real credential-hygiene smell — anything with
-read access to `~/.config/noctis/shell.json` (any user process, any future
-`noctis` subcommand that does a broad `jq` dump for debugging) gets the
+read access to `~/.config/aphotic/shell.json` (any user process, any future
+`aphotic` subcommand that does a broad `jq` dump for debugging) gets the
 keys too.
 
 **Recommendation**: real secrets — the Anthropic key used by the Claude
 preset, plus Gemini/ChatGPT keys — live in their own file,
-`~/.config/noctis/ai-keys.json`, created `chmod 600`, read only by
+`~/.config/aphotic/ai-keys.json`, created `chmod 600`, read only by
 `cmd_ai.sh`/the QML AI service — not folded into `shell.json`. Still
-jq-wrapped (same `noctis_json_get`/`set`-style helpers, just pointed at a
+jq-wrapped (same `aphotic_json_get`/`set`-style helpers, just pointed at a
 different, tightly-permissioned file) so it doesn't introduce a second
 config *format*, just a second config *file* for the one category of data
 that actually needs isolation. The Ollama host address is not a secret and
@@ -354,7 +354,7 @@ was so future motion work doesn't reinvent it per-surface.
    Feature updates once scope is settled, rather than trying to retrofit
    phase numbering that the current doc has already moved past.
 6. ~~**API key storage location**~~ — **RESOLVED**: separate
-   `600`-permissioned `~/.config/noctis/ai-keys.json`, not folded into
+   `600`-permissioned `~/.config/aphotic/ai-keys.json`, not folded into
    `shell.json`. See §4.
 7. **`CLAUDE_ROADMAP.md` accuracy**: independent of Command Center, the
    roadmap's "Dashboard v2" feature-update entry is stale (describes

@@ -15,7 +15,7 @@ check_contrast = true
 cava = { template = "colors-cava", target = "~/.config/cava/config", pywal = true }
 kitty = { template = "colors-kitty.conf", target = "~/.config/kitty/colors-kitty.conf", pywal = true }
 swaylock = { template = "colors-swaylock", target = "~/.config/swaylock/config", pywal = true }
-kvantum = { template = "Noctis.kvconfig", target = "~/.config/Kvantum/Noctis/Noctis.kvconfig", pywal = true }
+kvantum = { template = "Aphotic.kvconfig", target = "~/.config/Kvantum/Aphotic/Aphotic.kvconfig", pywal = true }
 
 # Native Jinja2 templates: double-brace {{ color0 }} syntax, required for
 # files that have their own literal `{ }` (Lua tables, CSS rule blocks) —
@@ -23,4 +23,4 @@ kvantum = { template = "Noctis.kvconfig", target = "~/.config/Kvantum/Noctis/Noc
 hyprland = { template = "colors-hyprland.lua", target = "~/.config/hypr/colors.lua" }
 gtk = { template = "gtk.css", target = "~/.config/gtk-3.0/gtk.css" }
 gtk4 = { template = "gtk.css", target = "~/.config/gtk-4.0/gtk.css" }
-quickshell = { template = "colors-quickshell-colours.qml", target = "~/.config/quickshell/noctis/services/Colours.qml" }
+quickshell = { template = "colors-quickshell-colours.qml", target = "~/.config/quickshell/aphotic/services/Colours.qml" }

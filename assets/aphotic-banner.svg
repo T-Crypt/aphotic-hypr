@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="320" viewBox="0 0 900 320" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="900" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#05070a"/>
+      <stop offset="1" stop-color="#0a1218"/>
+    </linearGradient>
+    <linearGradient id="shaftGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a5f3fc"/>
+      <stop offset="55%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#0e7490" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="voidGrad" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#131a22"/>
+      <stop offset="100%" stop-color="#080b0f"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a5f3fc"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="sparkGlow" x="-150%" y="-150%" width="400%" height="400%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="900" height="320" fill="url(#bgGrad)"/>
+  <circle cx="450" cy="110" r="220" fill="url(#glow)"/>
+
+  <!-- depth specks, replacing starfield -->
+  <g fill="#5eead4" opacity="0.55">
+    <circle cx="60" cy="40" r="1.4"/>
+    <circle cx="120" cy="90" r="1"/>
+    <circle cx="760" cy="45" r="1.2"/>
+    <circle cx="820" cy="100" r="1"/>
+    <circle cx="840" cy="180" r="1"/>
+  </g>
+
+  <!-- icon mark: hex boundary + tapering light shaft + bioluminescent spark -->
+  <g transform="translate(58,52) scale(0.235)">
+    <polygon points="256,68 418.8,162 418.8,350 256,444 93.2,350 93.2,162"
+             fill="url(#voidGrad)" stroke="#2a3644" stroke-width="6"/>
+    <path d="M 226,140
+             C 226,168 236,190 244,214
+             C 250,232 253,250 254,270
+             C 254.6,282 255,292 255,300
+             L 257,300
+             C 257,292 257.4,282 258,270
+             C 259,250 262,232 268,214
+             C 276,190 286,168 286,140 Z"
+          fill="url(#shaftGrad)"/>
+    <circle cx="300" cy="352" r="7.5" fill="#5eead4" filter="url(#sparkGlow)"/>
+  </g>
+
+  <text x="248" y="138" font-family="'JetBrains Mono','Fira Code','Courier New',Consolas,monospace" font-weight="700" letter-spacing="2" font-size="60" fill="url(#titleGrad)">APHOTIC</text>
+  <text x="251" y="170" font-family="'Courier New',Consolas,monospace" font-size="14" letter-spacing="2" fill="#5b7280">HYPRLAND | QUICKSHELL, BEYOND THE LIGHT</text>
+
+  <!-- terminal window: the IPC grammar as a lived-in prompt -->
+  <g transform="translate(60,210)">
+    <rect x="0" y="0" width="780" height="86" rx="10" fill="#0c0f14" stroke="#1c2530" stroke-width="1"/>
+    <circle cx="20" cy="18" r="4.5" fill="#263041"/>
+    <circle cx="36" cy="18" r="4.5" fill="#263041"/>
+    <circle cx="52" cy="18" r="4.5" fill="#263041"/>
+    <line x1="0" y1="30" x2="780" y2="30" stroke="#161c24" stroke-width="1"/>
+
+    <text x="20" y="52" font-family="'Courier New',Consolas,monospace" font-size="14" fill="#22d3ee">❯</text>
+    <text x="38" y="52" font-family="'Courier New',Consolas,monospace" font-size="14" fill="#a5f3fc">aphotic shell</text>
+    <text x="150" y="52" font-family="'Courier New',Consolas,monospace" font-size="14" fill="#5b7280">reload</text>
+
+    <text x="20" y="74" font-family="'Courier New',Consolas,monospace" font-size="12" fill="#3d4a58">quickshell daemon · ipc socket attached · bar / notifs / launcher</text>
+  </g>
+</svg>

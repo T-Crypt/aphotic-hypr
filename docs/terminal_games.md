@@ -1,25 +1,25 @@
-# Terminal Games in Noctis
+# Terminal Games in Aphotic
 
-Noctis includes some fun terminal-based games accessible through the `noctis play` command.
+Aphotic includes some fun terminal-based games accessible through the `aphotic play` command.
 
 ## Available Games
 
 ### 1. Hangman
 Play the classic word guessing game:
 ```bash
-noctis play hangman
+aphotic play hangman
 ```
 
 ### 2. Snake
 Control a snake to eat food and grow longer without hitting walls or yourself:
 ```bash
-noctis play snake
+aphotic play snake
 ```
 
 ### 3. Number Guessing
 Guess a randomly generated number between 1 and 100:
 ```bash
-noctis play guess
+aphotic play guess
 ```
 
 ## How to Play
@@ -30,4 +30,4 @@ noctis play guess
 
 ## Requirements
 
-All games are written in bash with no external dependencies beyond what's already included in Noctis. They use terminal control sequences for display and input handling.
+All games are written in bash with no external dependencies beyond what's already included in Aphotic. They use terminal control sequences for display and input handling.

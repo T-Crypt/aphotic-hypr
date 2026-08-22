@@ -40,7 +40,7 @@ default = "wallpaper-one.jpg"   # shown first when the theme is selected
 ```
 
 Every field under `[engine]` is a **pin**, not a requirement — if a theme
-omits `theme.toml` entirely, or omits `[engine]`, Noctis falls back to
+omits `theme.toml` entirely, or omits `[engine]`, Aphotic falls back to
 `Configs/wallust/wallust.toml`'s own top-level `backend`/`palette`
 defaults. A theme only needs to declare a pin when its wallpapers need
 something different from the default (e.g. a theme built around
@@ -49,8 +49,8 @@ picks muddy clusters on it).
 
 `[wallpaper].default` matters because a theme folder can hold more than
 one image — it's the one shown/applied when you switch *into* the theme
-for the first time. After that, Noctis remembers which wallpaper within
-the theme you last had active (`~/.local/state/noctis/theme.json`), so
+for the first time. After that, Aphotic remembers which wallpaper within
+the theme you last had active (`~/.local/state/aphotic/theme.json`), so
 returning to a theme resumes where you left it rather than resetting to
 `default`.
 
@@ -128,7 +128,7 @@ actually flip for Latte.
 display_name = "Lofi"
 ```
 
-No `[engine]`, no `[wallpaper]`, no `[overrides]` — Noctis uses the
+No `[engine]`, no `[wallpaper]`, no `[overrides]` — Aphotic uses the
 global wallust defaults and treats the alphabetically-first wallpaper in
 the folder as the default. This is intentionally the whole contract for
 a "just drop some wallpapers in a folder" theme; the rest of the spec

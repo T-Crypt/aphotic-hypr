@@ -15,10 +15,10 @@ def run_optional(cmd):
 # Directory-per-theme layout (see themes/THEME_SPEC.md): each subfolder of
 # awww_dir is a theme, containing wallpapers + an optional theme.toml pin.
 # State is shared with the Quickshell side (services/Themes.qml) via the
-# same ~/.local/state/noctis/theme.json, so switching from either side
+# same ~/.local/state/aphotic/theme.json, so switching from either side
 # keeps the other in sync instead of drifting.
 awww_dir = os.path.expanduser("~/.config/awww")
-state_path = os.path.expanduser("~/.local/state/noctis/theme.json")
+state_path = os.path.expanduser("~/.local/state/aphotic/theme.json")
 
 IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
@@ -110,7 +110,7 @@ def apply_wallpaper(theme, wallpaper):
 
     backend, palette, colorscheme, style, papirus_color = parse_engine_pin(theme)
     if colorscheme:
-        # Fixed palette pin -- see cmd_theme.sh's _noctis_theme_apply for
+        # Fixed palette pin -- see cmd_theme.sh's _aphotic_theme_apply for
         # why some themes (HackTheBox's real green/navy scheme) pin an
         # exact colorscheme file instead of deriving from the image.
         subprocess.run(["wallust", "cs", colorscheme, "--format", "pywal"])
@@ -126,7 +126,7 @@ def apply_wallpaper(theme, wallpaper):
     subprocess.run(["cp", image_path, os.path.join(awww_dir, "wallpaper.rofi")])
 
     if papirus_color:
-        # Folder-icon accent pin -- see cmd_theme.sh's _noctis_theme_apply
+        # Folder-icon accent pin -- see cmd_theme.sh's _aphotic_theme_apply
         # for why this needs passwordless sudo and only no-ops silently
         # (same best-effort class as the sddm sync call below) rather
         # than blocking on a password prompt.
@@ -136,12 +136,12 @@ def apply_wallpaper(theme, wallpaper):
     # so it's saved right after the actual wallpaper+color change lands --
     # ahead of the best-effort integration calls below, none of which
     # should be able to leave state stale just because e.g. pywalfox isn't
-    # installed or `noctis` isn't on PATH in a given environment.
+    # installed or `aphotic` isn't on PATH in a given environment.
     write_state(theme, wallpaper)
 
     run_optional(["pywalfox", "update"])
-    run_optional(["noctis", "reload"])
-    run_optional(["noctis", "sddm", "sync"])
+    run_optional(["aphotic", "reload"])
+    run_optional(["aphotic", "sddm", "sync"])
     notify(f"Wallpaper changed to {theme}/{wallpaper}")
 
 

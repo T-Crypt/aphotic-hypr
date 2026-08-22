@@ -1,0 +1,23 @@
+[Unit]
+Description=Aphotic Quickshell desktop shell
+After=graphical-session.target
+PartOf=graphical-session.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+# The systemd user manager's own PATH doesn't include ~/.local/bin (that
+# only gets added by shell rc files, which this unit never sources) --
+# any QML Process/execDetached call shelling out to the `aphotic` CLI
+# (SystemPane.qml's doctor check, Wallpapers.qml's sddm sync, etc.) would
+# otherwise fail to even start the process, silently, with neither
+# stdout nor stderr ever firing. Prepending it here fixes every such
+# call site at once instead of hardcoding an absolute path in each one.
+Environment=PATH=%h/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin
+ExecStart=/usr/bin/qs -c aphotic
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

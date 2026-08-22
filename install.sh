@@ -18,7 +18,7 @@ CWR="[\e[1;35mWARNING\e[0m]"
 CAT="[\e[1;37mATTENTION\e[0m]"
 CAC="[\e[1;33mACTION\e[0m]"
 INSTLOG="install.log"
-NOCTIS_TOML="$ROOT_DIR/noctis.toml"
+APHOTIC_TOML="$ROOT_DIR/aphotic.toml"
 
 DRY_RUN=0
 NO_BACKUP=0
@@ -69,7 +69,7 @@ Usage: ./install.sh [options]
   --no-backup                   Skip backing up existing configs
   --keep-backups <N>             Backups to retain (default: 5)
   -h, --help                     Show this help
-  -v, --version                  Print the installed Noctis version
+  -v, --version                  Print the installed Aphotic version
 EOF
 }
 
@@ -151,10 +151,10 @@ detect_nvidia() {
 }
 
 resolve_config() {
-  if [[ -f "$NOCTIS_TOML" && -z "$PROFILE" && -z "$LAYERS" ]]; then
+  if [[ -f "$APHOTIC_TOML" && -z "$PROFILE" && -z "$LAYERS" ]]; then
     local existing_profile existing_layers
-    existing_profile=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["install"]["profile"])' "$NOCTIS_TOML")
-    existing_layers=$("$PYTHON_BIN" -c 'import sys, tomllib; print(",".join(tomllib.load(open(sys.argv[1], "rb"))["install"]["layers"]))' "$NOCTIS_TOML")
+    existing_profile=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["install"]["profile"])' "$APHOTIC_TOML")
+    existing_layers=$("$PYTHON_BIN" -c 'import sys, tomllib; print(",".join(tomllib.load(open(sys.argv[1], "rb"))["install"]["layers"]))' "$APHOTIC_TOML")
     echo -e "$CNT - Existing config found (profile=$existing_profile, layers=$existing_layers)."
     read -rep $'[\e[1;33mACTION\e[0m] - Reinstall same config? (Y,n) ' REUSE
     if [[ "$REUSE" != "n" && "$REUSE" != "N" ]]; then
@@ -333,14 +333,14 @@ main() {
     fi
 
     mkdir -p "$HOME/.local/bin"
-    ln -sf "$ROOT_DIR/Configs/.local/bin/noctis" "$HOME/.local/bin/noctis"
+    ln -sf "$ROOT_DIR/Configs/.local/bin/aphotic" "$HOME/.local/bin/aphotic"
 
-    echo -e "$CNT - Enabling the Noctis shell restart-supervision unit..."
+    echo -e "$CNT - Enabling the Aphotic shell restart-supervision unit..."
     mkdir -p "$HOME/.config/systemd/user"
     systemctl --user daemon-reload &>> "$INSTLOG"
-    systemctl --user enable noctis-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable noctis-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
+    systemctl --user enable aphotic-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
 
-    # Make sure `noctis` (and anything else under ~/.local/bin) resolves on
+    # Make sure `aphotic` (and anything else under ~/.local/bin) resolves on
     # PATH without relying on the optional zsh-activation step below, since
     # bash users need this too and Configs/.zshrc only lands on disk if they
     # opt in.
@@ -348,14 +348,14 @@ main() {
       [[ "$rc" == "$HOME/.zshrc" && ! -f "$rc" ]] && continue
       touch "$rc"
       if ! grep -qF '.local/bin' "$rc"; then
-        printf '\n# Added by noctis install.sh so ~/.local/bin (noctis CLI) is on PATH\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$rc"
+        printf '\n# Added by aphotic install.sh so ~/.local/bin (aphotic CLI) is on PATH\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$rc"
       fi
     done
 
     KVARCDARK_SVG="/usr/share/Kvantum/KvArcDark/KvArcDark.svg"
-    mkdir -p "$HOME/.config/Kvantum/Noctis"
+    mkdir -p "$HOME/.config/Kvantum/Aphotic"
     if [[ -f "$KVARCDARK_SVG" ]]; then
-      cp "$KVARCDARK_SVG" "$HOME/.config/Kvantum/Noctis/Noctis.svg"
+      cp "$KVARCDARK_SVG" "$HOME/.config/Kvantum/Aphotic/Aphotic.svg"
     else
       echo -e "$CWR - KvArcDark theme assets not found at $KVARCDARK_SVG (should ship with the kvantum package); Kvantum will fall back to its default style."
     fi
@@ -398,7 +398,7 @@ main() {
     chsh -s "$(which zsh)"
   fi
 
-  write_noctis_toml "$NOCTIS_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)"
+  write_aphotic_toml "$APHOTIC_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)"
 
   echo -e "\n\e[1;32m── Install summary ──\e[0m"
   echo -e "  Profile:       $PROFILE"
@@ -407,7 +407,7 @@ main() {
   echo -e "  AUR helper:    $AUR_HELPER"
   echo -e "  Nvidia:        $ISNVIDIA"
   echo -e "  Configs copied: $([[ "$CFG_COPIED" == "1" ]] && echo yes || echo no)"
-  echo -e "  Config saved:  $NOCTIS_TOML"
+  echo -e "  Config saved:  $APHOTIC_TOML"
   echo -e "$COK - Install complete."
 
   if [[ "$ISNVIDIA" == "true" ]]; then

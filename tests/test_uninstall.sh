@@ -10,12 +10,12 @@ WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
 
 export HOME="$WORKDIR/home"
-export NOCTIS_BACKUP_ROOT="$WORKDIR/backups"
-mkdir -p "$HOME/.config/waybar" "$NOCTIS_BACKUP_ROOT/20260101-000000/waybar"
-echo "backed-up" > "$NOCTIS_BACKUP_ROOT/20260101-000000/waybar/config.jsonc"
+export APHOTIC_BACKUP_ROOT="$WORKDIR/backups"
+mkdir -p "$HOME/.config/waybar" "$APHOTIC_BACKUP_ROOT/20260101-000000/waybar"
+echo "backed-up" > "$APHOTIC_BACKUP_ROOT/20260101-000000/waybar/config.jsonc"
 echo "current" > "$HOME/.config/waybar/config.jsonc"
 
-cat > "$WORKDIR/noctis.toml" <<'EOF'
+cat > "$WORKDIR/aphotic.toml" <<'EOF'
 [install]
 profile = "full"
 layers = []
@@ -33,7 +33,7 @@ aur_helper = "yay"
 EOF
 
 cd "$ROOT"
-echo "y" | bash uninstall.sh --noctis-toml "$WORKDIR/noctis.toml"
+echo "y" | bash uninstall.sh --aphotic-toml "$WORKDIR/aphotic.toml"
 
 content=$(cat "$HOME/.config/waybar/config.jsonc")
 [[ "$content" == "backed-up" ]] || fail "expected backup restored, got '$content'"
@@ -45,11 +45,11 @@ WORKDIR2=$(mktemp -d)
 trap 'rm -rf "$WORKDIR" "$WORKDIR2"' EXIT
 
 export HOME="$WORKDIR2/home"
-export NOCTIS_BACKUP_ROOT="$WORKDIR2/backups"
+export APHOTIC_BACKUP_ROOT="$WORKDIR2/backups"
 mkdir -p "$HOME/.config"
-# Intentionally do NOT create NOCTIS_BACKUP_ROOT — no backups exist at all.
+# Intentionally do NOT create APHOTIC_BACKUP_ROOT — no backups exist at all.
 
-cat > "$WORKDIR2/noctis.toml" <<'EOF'
+cat > "$WORKDIR2/aphotic.toml" <<'EOF'
 [install]
 profile = "full"
 layers = []
@@ -68,7 +68,7 @@ EOF
 
 cd "$ROOT"
 set +e
-output=$(echo "y" | bash uninstall.sh --noctis-toml "$WORKDIR2/noctis.toml" 2>&1)
+output=$(echo "y" | bash uninstall.sh --aphotic-toml "$WORKDIR2/aphotic.toml" 2>&1)
 status=$?
 set -e
 
