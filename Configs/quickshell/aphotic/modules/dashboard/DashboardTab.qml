@@ -37,4 +37,13 @@ RowLayout {
             id: media
         }
     }
+
+    Card {
+        Layout.preferredWidth: pomodoro.implicitWidth
+        Layout.preferredHeight: pomodoro.implicitHeight
+
+        DashPomodoro {
+            id: pomodoro
+        }
+    }
 }

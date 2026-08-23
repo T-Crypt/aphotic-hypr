@@ -188,6 +188,22 @@ StyledRect {
                         }
                     }
                 }
+                DelegateChoice {
+                    roleValue: "hostInfo"
+                    delegate: EntryWrapper {
+                        HostInfoStatus {
+                            colour: Settings.statusIconHostInfoColor.length > 0 ? Settings.statusIconHostInfoColor : root.colour
+                        }
+                    }
+                }
+                DelegateChoice {
+                    roleValue: "pomodoro"
+                    delegate: EntryWrapper {
+                        PomodoroStatus {
+                            colour: Settings.statusIconPomodoroColor.length > 0 ? Settings.statusIconPomodoroColor : root.colour
+                        }
+                    }
+                }
             }
         }
     }

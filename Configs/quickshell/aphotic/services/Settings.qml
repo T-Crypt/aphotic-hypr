@@ -58,6 +58,8 @@ Singleton {
     property string statusIconPowerProfileColor: ""
     property string statusIconPerformanceColor: ""
     property string statusIconClaudeColor: ""
+    property string statusIconHostInfoColor: ""
+    property string statusIconPomodoroColor: ""
     property string cursorTheme: "Bibata-Modern-Ice"
     property int cursorSize: 20
     // Papirus family, not an arbitrary icon theme, matches cmd_theme.sh's
@@ -118,6 +120,8 @@ Singleton {
             statusIconPowerProfileColor: root.statusIconPowerProfileColor,
             statusIconPerformanceColor: root.statusIconPerformanceColor,
             statusIconClaudeColor: root.statusIconClaudeColor,
+            statusIconHostInfoColor: root.statusIconHostInfoColor,
+            statusIconPomodoroColor: root.statusIconPomodoroColor,
             cursorTheme: root.cursorTheme,
             cursorSize: root.cursorSize,
             iconTheme: root.iconTheme,
@@ -224,6 +228,8 @@ Singleton {
     onStatusIconPowerProfileColorChanged: root._saveState()
     onStatusIconPerformanceColorChanged: root._saveState()
     onStatusIconClaudeColorChanged: root._saveState()
+    onStatusIconHostInfoColorChanged: root._saveState()
+    onStatusIconPomodoroColorChanged: root._saveState()
     onCursorThemeChanged: {
         root._saveState();
         root._applyCursor();
@@ -317,6 +323,10 @@ Singleton {
                     root.statusIconPerformanceColor = data.statusIconPerformanceColor;
                 if (typeof data.statusIconClaudeColor === "string")
                     root.statusIconClaudeColor = data.statusIconClaudeColor;
+                if (typeof data.statusIconHostInfoColor === "string")
+                    root.statusIconHostInfoColor = data.statusIconHostInfoColor;
+                if (typeof data.statusIconPomodoroColor === "string")
+                    root.statusIconPomodoroColor = data.statusIconPomodoroColor;
                 if (typeof data.cursorTheme === "string")
                     root.cursorTheme = data.cursorTheme;
                 if (typeof data.cursorSize === "number")

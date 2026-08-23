@@ -4,9 +4,12 @@ singleton Brightness 1.0 Brightness.qml
 singleton ClaudeSessions 1.0 ClaudeSessions.qml
 singleton Colours 1.0 Colours.qml
 singleton EmojiList 1.0 EmojiList.qml
+singleton HostInfo 1.0 HostInfo.qml
 singleton Hypr 1.0 Hypr.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
+singleton PinnedSnippets 1.0 PinnedSnippets.qml
+singleton Pomodoro 1.0 Pomodoro.qml
 singleton Settings 1.0 Settings.qml
 singleton SystemUsage 1.0 SystemUsage.qml
 singleton Themes 1.0 Themes.qml
