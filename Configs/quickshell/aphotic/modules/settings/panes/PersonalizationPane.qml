@@ -279,6 +279,26 @@ ColumnLayout {
                 onValueChanged: Settings.statusIconClaudeColor = value
             }
         }
+
+        SettingsRow {
+            icon: "lan"
+            label: qsTr("Host info")
+
+            ColorPickerField {
+                value: Settings.statusIconHostInfoColor
+                onValueChanged: Settings.statusIconHostInfoColor = value
+            }
+        }
+
+        SettingsRow {
+            icon: "timer"
+            label: qsTr("Pomodoro")
+
+            ColorPickerField {
+                value: Settings.statusIconPomodoroColor
+                onValueChanged: Settings.statusIconPomodoroColor = value
+            }
+        }
     }
 
     component NamePill: StyledRect {
