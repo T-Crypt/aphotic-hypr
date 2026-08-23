@@ -15,19 +15,31 @@
 </p>
 
 <p align="center">
+  <a href="#preview"><code>Preview</code></a> ·
   <a href="#install"><code>Install</code></a> ·
   <a href="#profiles--layers"><code>Profiles</code></a> ·
   <a href="#architecture"><code>Architecture</code></a> ·
   <a href="#quickshell-shell"><code>Quickshell</code></a> ·
   <a href="#settings--control-center"><code>Settings</code></a> ·
   <a href="#theming"><code>Theming</code></a> ·
-  <a href="#in-motion"><code>Screenshots</code></a> ·
   <a href="#keybindings"><code>Keybindings</code></a> ·
   <a href="#roadmap"><code>Roadmap</code></a> ·
   <a href="#faq"><code>FAQ</code></a>
 </p>
 
 <sub><a id="-top"></a></sub>
+
+<br>
+
+## Preview
+
+One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings → Appearance open over **HackTheBox**, **Nordic**, and **Windows 11**, three of the eight themes that ship out of the box:
+
+<p align="center">
+  <img src="./assets/aphotic-preview.png" width="900">
+</p>
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
 
@@ -92,11 +104,6 @@ Two more bar icons round out the QoL set: a **host info** icon (click to copy yo
 | `~` | Change wallpaper | Files in `~/.config/awww` |
 | `@` | Jump to a project — opens a terminal running `claude` plus an editor | Git repos found under `~/Projects`/`~/repos` (or `Settings.projectRoots`) |
 
-<p align="center">
-  <img src="./assets/quickshell-launcher-apps.png" width="49%">
-  <img src="./assets/quickshell-launcher-emoji.png" width="49%">
-</p>
-
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
@@ -121,12 +128,7 @@ Two more bar icons round out the QoL set: a **host info** icon (click to copy yo
 | System | Live `aphotic doctor` output, an Overview (theme, install profile, daemon status), Hardware (CPU/GPU/RAM/disk), and an on-demand package check |
 | About | Real Aphotic logo, version (read from `VERSION`), repo link, wallpaper art credits |
 
-Every toggle here persists to `~/.local/state/aphotic/settings.json` and survives a shell restart. Adding a new setting is a data addition to an existing pane, not new UI — every row shares one component (`SettingsRow`, grouped into connected-card sections by `SettingsGroup`) for the icon-badge/title/description/control layout. Pane content and the category rail both scroll independently once they outgrow the panel, so a long pane never gets clipped.
-
-<p align="center">
-  <img src="./assets/quickshell-settings.png" width="49%">
-  <img src="./assets/quickshell-wallpaper-picker.png" width="49%">
-</p>
+Every toggle here persists to `~/.local/state/aphotic/settings.json` and survives a shell restart. Adding a new setting is a data addition to an existing pane, not new UI — every row shares one component (`SettingsRow`, grouped into connected-card sections by `SettingsGroup`) for the icon-badge/title/description/control layout. Pane content and the category rail both scroll independently once they outgrow the panel, so a long pane never gets clipped. See [Preview](#preview) above for the panel itself, live across three different themes.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -332,35 +334,6 @@ aphotic wallpaper --random      # Pick random wallpaper
 ```
 
 The system automatically tracks your current theme and wallpaper state, enabling seamless cycling through themes and real-time palette updates when schemes are changed.
-
-<div align="right"><a href="#-top">🡅 back to top</a></div>
-
-<br>
-
-## In Motion
-
-<a id="screenshots"></a>
-
-**Desktop** — bar, workspace pill, and status icons re-themed live from the wallpaper
-
-<p align="center">
-  <img src="./assets/quickshell-desktop.png" width="98%">
-</p>
-
-**Bar popout & screenshot picker** — real detail panels on hover, drag-select captures with client snapping
-
-<p align="center">
-  <img src="./assets/quickshell-bar-popout.png" width="49%">
-  <img src="./assets/quickshell-areapicker.png" width="49%">
-</p>
-
-**Launcher** — see [Launcher modes](#quickshell-shell) above for the full picture
-
-**Command Center** — tabbed dashboard overlay (Dashboard/Performance/Workspaces/AI Chat)
-
-<p align="center">
-  <img src="./assets/quickshell-command-center.png" width="98%">
-</p>
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
