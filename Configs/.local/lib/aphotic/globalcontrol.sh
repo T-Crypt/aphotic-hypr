@@ -26,6 +26,16 @@ fi
 
 QUICKSHELL_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/aphotic"
 
+# Plugin system (see docs/PLUGIN_SYSTEM.md). Installed plugins are plain
+# directories under here, each with its own plugin.toml -- same
+# "directory + manifest" shape as ~/.config/awww/<theme>/theme.toml.
+APHOTIC_PLUGINS_DIR="${APHOTIC_DATA_HOME}/plugins"
+APHOTIC_PLUGINS_STATE_FILE="${APHOTIC_STATE_HOME}/plugins.json"
+# Where `aphotic plugin install` looks for a local checkout of the
+# aphotic-plugins repo. Override for a dev checkout elsewhere.
+APHOTIC_PLUGINS_REPO="${APHOTIC_PLUGINS_REPO:-$HOME/aphotic-plugins}"
+APHOTIC_PLUGINS_INDEX_URL="${APHOTIC_PLUGINS_INDEX_URL:-https://raw.githubusercontent.com/T-Crypt/aphotic-plugins/main/index.json}"
+
 # one-time migration: noctis -> aphotic config path
 _APHOTIC_OLD_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/noctis"
 if [[ -d "$_APHOTIC_OLD_CONFIG_HOME" ]] && [[ ! -e "$APHOTIC_CONFIG_HOME" ]]; then
@@ -34,11 +44,12 @@ if [[ -d "$_APHOTIC_OLD_CONFIG_HOME" ]] && [[ ! -e "$APHOTIC_CONFIG_HOME" ]]; th
 fi
 
 mkdir -p "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$APHOTIC_DATA_HOME" \
-         "$APHOTIC_RUNTIME_DIR" "$APHOTIC_BACKUP_DIR"
+         "$APHOTIC_RUNTIME_DIR" "$APHOTIC_BACKUP_DIR" "$APHOTIC_PLUGINS_DIR"
 
 export APHOTIC_VERSION APHOTIC_CONFIG_HOME APHOTIC_STATE_HOME APHOTIC_DATA_HOME \
        APHOTIC_RUNTIME_DIR APHOTIC_CONFIG_FILE APHOTIC_BACKUP_DIR APHOTIC_DOTS_DIR \
-       QUICKSHELL_CONFIG_DIR
+       QUICKSHELL_CONFIG_DIR APHOTIC_PLUGINS_DIR APHOTIC_PLUGINS_STATE_FILE \
+       APHOTIC_PLUGINS_REPO APHOTIC_PLUGINS_INDEX_URL
 
 # ---- logging -----------------------------------------------------------
 _APHOTIC_DIM=$'\e[2m'; _APHOTIC_R=$'\e[0m'
@@ -78,4 +89,77 @@ aphotic_json_set() {
     tmp="$(mktemp)"
     jq --arg k "$key" --arg v "$value" 'setpath($k | split("."); $v)' \
         "$APHOTIC_CONFIG_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_CONFIG_FILE"
+}
+
+# ---- minimal TOML reader -------------------------------------------------
+# Shared by cmd_theme.sh (theme.toml) and cmd_plugin.sh (plugin.toml).
+# Deliberately minimal — flat key = "value" pairs only, no arrays-of-
+# tables, no multi-line strings — mirrors the hand-written parser in
+# Themes.qml. See _aphotic_toml_get_array below for the one array shape
+# plugin.toml actually needs (capabilities, requires.binaries).
+#   _aphotic_toml_get "$dir/theme.toml" wallpaper default
+aphotic_toml_get() {
+    local file="$1" section="$2" key="$3"
+    [[ -f "$file" ]] || return 1
+    awk -v section="[$section]" -v key="$key" '
+        $0 == section { insec=1; next }
+        /^\[/ { insec=0 }
+        insec && $0 ~ "^[[:space:]]*"key"[[:space:]]*=" {
+            sub(/^[^=]*=[[:space:]]*/, "");
+            gsub(/^"|"$/, "");
+            print;
+            exit
+        }
+    ' "$file"
+}
+
+# Same shape, for `key = ["a", "b", "c"]` — prints one value per line.
+# Only handles a single-line bracketed list of quoted strings, matching
+# the only array shape plugin.toml uses.
+aphotic_toml_get_array() {
+    local file="$1" section="$2" key="$3"
+    [[ -f "$file" ]] || return 1
+    awk -v section="[$section]" -v key="$key" '
+        $0 == section { insec=1; next }
+        /^\[/ { insec=0 }
+        insec && $0 ~ "^[[:space:]]*"key"[[:space:]]*=" {
+            sub(/^[^=]*=[[:space:]]*\[/, "");
+            sub(/\][[:space:]]*$/, "");
+            print;
+            exit
+        }
+    ' "$file" | tr ',' '\n' | sed -e 's/^[[:space:]]*"\?//' -e 's/"\?[[:space:]]*$//' -e '/^$/d'
+}
+
+# ---- plugin helpers -------------------------------------------------------
+# List installed plugin directory names (each has a plugin.toml).
+aphotic_plugin_names() {
+    local d
+    [[ -d "$APHOTIC_PLUGINS_DIR" ]] || return 0
+    for d in "$APHOTIC_PLUGINS_DIR"/*/; do
+        [[ -f "${d}plugin.toml" ]] && basename "$d"
+    done
+}
+
+# Enabled by default; explicitly listed in the state file's "disabled"
+# array to turn one off. Matches Config.qml's enabled-flag-per-entry
+# convention more loosely than mirroring it exactly, since most installed
+# plugins are expected to want to just work once installed.
+aphotic_plugin_is_enabled() {
+    local name="$1"
+    [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || return 0
+    ! jq -e --arg n "$name" '.disabled // [] | index($n) != null' "$APHOTIC_PLUGINS_STATE_FILE" >/dev/null 2>&1
+}
+
+aphotic_plugin_set_enabled() {
+    local name="$1" enabled="$2" tmp
+    aphotic_require jq || return 1
+    [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
+    tmp="$(mktemp)"
+    if [[ "$enabled" == "true" ]]; then
+        jq --arg n "$name" '.disabled = ((.disabled // []) - [$n])' "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp"
+    else
+        jq --arg n "$name" '.disabled = ((.disabled // []) + [$n] | unique)' "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp"
+    fi
+    mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
 }

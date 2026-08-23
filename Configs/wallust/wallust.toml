@@ -16,6 +16,12 @@ cava = { template = "colors-cava", target = "~/.config/cava/config", pywal = tru
 kitty = { template = "colors-kitty.conf", target = "~/.config/kitty/colors-kitty.conf", pywal = true }
 swaylock = { template = "colors-swaylock", target = "~/.config/swaylock/config", pywal = true }
 kvantum = { template = "Aphotic.kvconfig", target = "~/.config/Kvantum/Aphotic/Aphotic.kvconfig", pywal = true }
+# Plugin-facing palette snapshot -- regenerated on every wallust run
+# (fixed-colorscheme theme or image-derived, doesn't matter), giving the
+# plugin system (see docs/PLUGIN_SYSTEM.md) one reliable, always-fresh
+# source for "the current resolved palette" without duplicating any of
+# the theme-resolution logic itself.
+plugin_palette = { template = "colors-plugin-palette.json", target = "~/.local/state/aphotic/palette.json" }
 
 # Native Jinja2 templates: double-brace {{ color0 }} syntax, required for
 # files that have their own literal `{ }` (Lua tables, CSS rule blocks) —

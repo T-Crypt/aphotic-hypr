@@ -157,6 +157,10 @@ Item {
                     return resourcesComp;
                 case "claudesessions":
                     return claudeSessionComp;
+                case "hostinfo":
+                    return hostInfoComp;
+                case "pomodoro":
+                    return pomodoroComp;
                 case "activewindow":
                     return windowComp;
                 case "kblayout":
@@ -199,6 +203,14 @@ Item {
     Component {
         id: claudeSessionComp
         ClaudeSessionPopout {}
+    }
+    Component {
+        id: hostInfoComp
+        HostInfoPopout {}
+    }
+    Component {
+        id: pomodoroComp
+        PomodoroPopout {}
     }
     Component {
         id: windowComp

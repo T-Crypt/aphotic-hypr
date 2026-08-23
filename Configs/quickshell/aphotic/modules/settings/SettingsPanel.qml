@@ -21,6 +21,7 @@ RowLayout {
         { id: "ai", icon: "smart_toy", label: qsTr("AI"), description: qsTr("Provider, API keys") },
         { id: "power", icon: "shield", label: qsTr("Power & Security"), description: qsTr("Profile, idle, lock") },
         { id: "workspaceProfiles", icon: "workspaces", label: qsTr("Workspace Profiles"), description: qsTr("Named one-key launch groups") },
+        { id: "plugins", icon: "extension", label: qsTr("Plugins"), description: qsTr("Browse, install, manage") },
         { id: "system", icon: "monitor_heart", label: qsTr("System"), description: qsTr("Doctor, dependencies") },
         { id: "about", icon: "info", label: qsTr("About"), description: qsTr("Version, credits") }
     ]
@@ -100,6 +101,8 @@ RowLayout {
                         return powerComp;
                     case "workspaceProfiles":
                         return workspaceProfilesComp;
+                    case "plugins":
+                        return pluginsComp;
                     case "system":
                         return systemComp;
                     case "about":
@@ -185,6 +188,10 @@ RowLayout {
     Component {
         id: workspaceProfilesComp
         WorkspaceProfilesPane {}
+    }
+    Component {
+        id: pluginsComp
+        PluginsPane {}
     }
     Component {
         id: systemComp

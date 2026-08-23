@@ -237,8 +237,16 @@ Item {
             model: ScriptModel {
                 values: {
                     switch (root.mode) {
-                    case "clipboard":
-                        return root.query.length === 0 ? clipboardProc.entries : clipboardProc.entries.filter(e => e.preview.toLowerCase().includes(root.query));
+                    case "clipboard": {
+                        // Pinned entries always lead the list (and survive
+                        // cliphist's rolling history getting trimmed) --
+                        // deduped against the live history by raw line so a
+                        // still-recent pinned copy doesn't show up twice.
+                        const pinned = PinnedSnippets.entries;
+                        const rest = clipboardProc.entries.filter(e => !pinned.some(p => p.raw === e.raw));
+                        const all = [...pinned, ...rest];
+                        return root.query.length === 0 ? all : all.filter(e => e.preview.toLowerCase().includes(root.query));
+                    }
                     case "emoji":
                         return (root.query.length === 0 ? EmojiList.entries : EmojiList.entries.filter(e => e.name.toLowerCase().includes(root.query))).slice(0, Tokens.sizes.launcher.maxShown);
                     case "windows": {
