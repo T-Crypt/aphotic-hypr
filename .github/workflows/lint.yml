@@ -1,0 +1,49 @@
+name: Lint
+
+on:
+  push:
+    branches: [main, test]
+  pull_request:
+    branches: [main, test]
+
+concurrency:
+  group: lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Non-blocking for now: this is the first lint pass over a codebase
+      # that's never run shellcheck before, so warning-level findings are
+      # expected. Surfacing them as annotations (without failing the job)
+      # lets them get cleaned up incrementally instead of red-blocking
+      # every PR on day one. Flip `continue-on-error` off once the
+      # existing findings are addressed.
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        continue-on-error: true
+        with:
+          severity: warning
+          scandir: '.'
+          ignore_paths: >-
+            .git
+            install.log
+
+  bash-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n every shell script
+        run: |
+          fail=0
+          while IFS= read -r -d '' f; do
+            bash -n "$f" || { echo "SYNTAX ERROR: $f"; fail=1; }
+          done < <(find . -name '*.sh' -not -path './.git/*' -print0)
+          # bin/aphotic has no .sh extension, so it's outside the find
+          # pattern above -- check it explicitly.
+          bash -n Configs/.local/bin/aphotic || { echo "SYNTAX ERROR: Configs/.local/bin/aphotic"; fail=1; }
+          exit "$fail"

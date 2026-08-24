@@ -125,6 +125,12 @@ def apply_wallpaper(theme, wallpaper):
         subprocess.run(wallust_cmd)
     subprocess.run(["cp", image_path, os.path.join(awww_dir, "wallpaper.rofi")])
 
+    # Plugin theme-hooks (see docs/PLUGIN_SYSTEM.md) -- run() blocks until
+    # wallust above has actually finished re-templating palette.json, so
+    # unlike Wallpapers.qml's execDetached calls this doesn't need any
+    # extra chaining to avoid a race.
+    run_optional(["aphotic", "plugin", "run-theme-hooks"])
+
     if papirus_color:
         # Folder-icon accent pin -- see cmd_theme.sh's _aphotic_theme_apply
         # for why this needs passwordless sudo and only no-ops silently

@@ -84,7 +84,10 @@ QtObject {
                 { id: "network", enabled: true },
                 { id: "bluetooth", enabled: true },
                 { id: "battery", enabled: true },
-                { id: "resources", enabled: true }
+                { id: "resources", enabled: true },
+                { id: "claudeSessions", enabled: true },
+                { id: "hostInfo", enabled: true },
+                { id: "pomodoro", enabled: true }
             ]
         }
 

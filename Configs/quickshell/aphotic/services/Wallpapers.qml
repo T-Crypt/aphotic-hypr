@@ -43,18 +43,26 @@ Singleton {
         Quickshell.execDetached(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
         Quickshell.execDetached(["cp", path, root.path]);
 
+        // Chained in one shell command (not two separate execDetached
+        // calls) so the plugin theme-hook run only fires once wallust has
+        // actually finished and re-templated palette.json -- execDetached
+        // has no completion signal, so two independent calls here would
+        // race the hook against wallust still running, reading last
+        // theme's stale palette instead of the one just generated.
+        let wallustCmd;
         if (colorscheme) {
-            Quickshell.execDetached(["wallust", "cs", colorscheme, "--format", "pywal"]);
+            wallustCmd = ["wallust", "cs", colorscheme, "--format", "pywal"];
         } else {
-            const cmd = ["wallust", "run", path];
+            wallustCmd = ["wallust", "run", path];
             if (backend)
-                cmd.push("-b", backend);
+                wallustCmd.push("-b", backend);
             if (palette)
-                cmd.push("-p", palette);
+                wallustCmd.push("-p", palette);
             if (style)
-                cmd.push("-S", style);
-            Quickshell.execDetached(cmd);
+                wallustCmd.push("-S", style);
         }
+        const quoted = wallustCmd.map(a => `'${a.replace(/'/g, "'\\''")}'`).join(" ");
+        Quickshell.execDetached(["sh", "-c", `${quoted} && aphotic plugin run-theme-hooks`]);
 
         // Folder-icon accent pin -- see cmd_theme.sh's _aphotic_theme_apply
         // for why this needs sudo and only no-ops silently (same class of

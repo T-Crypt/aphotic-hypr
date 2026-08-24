@@ -12,11 +12,14 @@ more hands touch it.
 
 - **Branch model:** active development happens on `test`. `main` is the
   stable/production line. Base your work off `test`, not `main`.
-- **Read `CLAUDE_ROADMAP.md` first.** It's the authoritative source of
-  truth for what's done, what's in progress, what's intentionally
-  deferred, and what's explicitly out of scope. If your PR touches
-  something the roadmap already has an opinion on, follow it — open an
-  issue first if you think the roadmap itself needs to change.
+- **Read `README.md`'s [Roadmap](README.md#roadmap) section first.** It's
+  the shipped source of truth for what's done, what's in progress, and
+  what's explicitly out of scope. If your PR touches something the
+  roadmap already has an opinion on, follow it — open an issue or
+  discussion first if you think the roadmap itself needs to change.
+  (`CLAUDE_ROADMAP.md`/`ROADMAP_FEATURES.md`, if you see them referenced
+  in old commit messages, are gitignored maintainer-local working docs —
+  not part of the shipped repo, don't expect to find them in your clone.)
 - **Check for drift before extending CLI/script behavior.** State
   contracts (theme/wallpaper, settings) have changed shape before. If
   you're not sure the local checkout reflects the latest agreed model,
@@ -123,8 +126,8 @@ This project verifies live, not just "it parses":
 ## Opening a PR
 
 - Target `test`, not `main`.
-- Reference the relevant `CLAUDE_ROADMAP.md` item (Quality debt # or
-  Feature update #) if your change maps to one.
+- Reference the relevant `README.md` Roadmap item if your change maps to
+  one.
 - If your change closes, resolves, or explicitly defers a roadmap item,
   say so in the PR description — the roadmap gets updated as part of the
   merge, not after.
