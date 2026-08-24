@@ -398,6 +398,13 @@ main() {
     chsh -s "$(which zsh)"
   fi
 
+  read -rep $'[\e[1;33mACTION\e[0m] - Download the larger community wallpaper pool now? ~145MB across all 8 themes; each theme already ships a handful of wallpapers regardless, this just adds more choice. Skip if you\'re on a slow connection (y,N) ' EXTRA_WALLPAPERS
+  if [[ "$EXTRA_WALLPAPERS" == "Y" || "$EXTRA_WALLPAPERS" == "y" ]]; then
+    "$HOME/.local/bin/aphotic" wallpaper --fetch-extra -y || echo -e "$CWR - Could not fetch extra wallpapers now; run 'aphotic wallpaper --fetch-extra' any time later."
+  else
+    echo -e "$CNT - Skipping the extra wallpaper pool. Run 'aphotic wallpaper --fetch-extra' any time later to get it."
+  fi
+
   write_aphotic_toml "$APHOTIC_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)"
 
   echo -e "\n\e[1;32m── Install summary ──\e[0m"
