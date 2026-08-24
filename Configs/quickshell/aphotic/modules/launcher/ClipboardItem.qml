@@ -34,10 +34,30 @@ Item {
         anchors.fill: parent
         anchors.margins: Tokens.padding.small
         anchors.leftMargin: Tokens.padding.medium
-        anchors.rightMargin: Tokens.padding.medium
+        anchors.rightMargin: pin.implicitWidth + Tokens.padding.small
         verticalAlignment: Text.AlignVCenter
         text: root.modelData.preview
         font: Tokens.font.body.medium
         elide: Text.ElideRight
+    }
+
+    MaterialIcon {
+        id: pin
+
+        anchors.right: parent.right
+        anchors.rightMargin: Tokens.padding.medium
+        anchors.verticalCenter: parent.verticalCenter
+        text: "push_pin"
+        fill: PinnedSnippets.isPinned(root.modelData.raw) ? 1 : 0
+        color: PinnedSnippets.isPinned(root.modelData.raw) ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+        fontStyle: Tokens.font.icon.small
+        opacity: PinnedSnippets.isPinned(root.modelData.raw) ? 1 : 0.5
+
+        MouseArea {
+            anchors.fill: parent
+            anchors.margins: -Tokens.padding.small
+            cursorShape: Qt.PointingHandCursor
+            onClicked: PinnedSnippets.toggle(root.modelData.raw, root.modelData.preview)
+        }
     }
 }

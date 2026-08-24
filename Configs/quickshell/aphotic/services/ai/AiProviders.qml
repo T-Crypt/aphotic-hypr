@@ -26,6 +26,8 @@ Singleton {
     readonly property bool chatgptAvailable: AiKeys.hasOpenaiKey
 
     property var ollamaModels: []
+    property var ollamaRunningModels: []
+    property bool pulling: false
 
     function refreshOllamaModels(): void {
         if (!AiConfig.ollamaHostConfigured) {
@@ -36,10 +38,34 @@ Singleton {
         ollamaModelsProc.running = true;
     }
 
+    function refreshRunningModels(): void {
+        if (!AiConfig.ollamaHostConfigured) {
+            root.ollamaRunningModels = [];
+            return;
+        }
+        ollamaPsProc.command = ["curl", "-s", "-m", "5", `${AiConfig.ollamaHost}/api/ps`];
+        ollamaPsProc.running = true;
+    }
+
+    function deleteModel(name: string): void {
+        ollamaDeleteProc.exec(["curl", "-s", "-m", "10", "-X", "DELETE", `${AiConfig.ollamaHost}/api/delete`, "-d", JSON.stringify({ name })]);
+    }
+
+    function pullModel(name: string): void {
+        if (root.pulling)
+            return;
+        const trimmed = name.trim();
+        if (trimmed.length === 0)
+            return;
+        root.pulling = true;
+        ollamaPullProc.exec(["curl", "-s", "-X", "POST", `${AiConfig.ollamaHost}/api/pull`, "-d", JSON.stringify({ name: trimmed })]);
+    }
+
     Connections {
         target: AiConfig
         function onOllamaHostChanged() {
             root.refreshOllamaModels();
+            root.refreshRunningModels();
         }
     }
 
@@ -56,6 +82,40 @@ Singleton {
                     // previously-successful list.
                 }
             }
+        }
+    }
+
+    // GET /api/ps -- currently-loaded (in-VRAM) models, separate from the
+    // full installed-models list above.
+    Process {
+        id: ollamaPsProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const data = JSON.parse(text);
+                    root.ollamaRunningModels = (data.models ?? []).map(m => ({ name: m.name, size_vram: m.size_vram }));
+                } catch (e) {
+                    // Host unreachable or unexpected response -- leave
+                    // ollamaRunningModels as-is.
+                }
+            }
+        }
+    }
+
+    // DELETE /api/delete takes no response body worth parsing -- just
+    // re-list the installed models once it's done.
+    Process {
+        id: ollamaDeleteProc
+        onExited: root.refreshOllamaModels()
+    }
+
+    // POST /api/pull streams newline-delimited progress objects; we don't
+    // render live progress, just a busy flag until the pull finishes.
+    Process {
+        id: ollamaPullProc
+        onExited: {
+            root.pulling = false;
+            root.refreshOllamaModels();
         }
     }
 

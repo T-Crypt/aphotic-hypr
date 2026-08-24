@@ -16,25 +16,11 @@
 APHOTIC_AWWW_DIR="${APHOTIC_AWWW_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/awww}"
 APHOTIC_THEME_STATE_FILE="${APHOTIC_STATE_HOME}/theme.json"
 
-# Extract a single flat key from a theme.toml, e.g.:
-#   _aphotic_toml_get "$dir/theme.toml" wallpaper default
-# Deliberately minimal — matches the flat (no arrays-of-tables, no
-# multi-line strings) shape defined in THEME_SPEC.md, mirroring the
-# hand-written parser in Themes.qml.
-_aphotic_toml_get() {
-    local file="$1" section="$2" key="$3"
-    [[ -f "$file" ]] || return 1
-    awk -v section="[$section]" -v key="$key" '
-        $0 == section { insec=1; next }
-        /^\[/ { insec=0 }
-        insec && $0 ~ "^[[:space:]]*"key"[[:space:]]*=" {
-            sub(/^[^=]*=[[:space:]]*/, "");
-            gsub(/^"|"$/, "");
-            print;
-            exit
-        }
-    ' "$file"
-}
+# _aphotic_toml_get (the flat theme.toml reader) now lives in
+# globalcontrol.sh, shared with cmd_plugin.sh's plugin.toml reading —
+# kept the same name/signature here via this thin alias so the calls
+# below didn't all need touching.
+_aphotic_toml_get() { aphotic_toml_get "$@"; }
 
 _aphotic_theme_dir() {
     printf '%s/%s' "$APHOTIC_AWWW_DIR" "$1"
@@ -132,6 +118,11 @@ _aphotic_theme_apply() {
     fi
 
     cp "$image_path" "${APHOTIC_AWWW_DIR}/wallpaper.rofi" 2>/dev/null || true
+
+    # Plugin theme-hooks (see docs/PLUGIN_SYSTEM.md) -- fire-and-forget,
+    # the shared implementation (cmd_plugin.sh) already backgrounds each
+    # hook with its own timeout, so this call itself returns immediately.
+    source "${COMMANDS_DIR}/cmd_plugin.sh" && _aphotic_plugin_run_theme_hooks
 
     # Folder-icon accent pin (theme.toml's [icons].papirus_color) -- real
     # per-icon recoloring isn't possible with a normal icon theme (each

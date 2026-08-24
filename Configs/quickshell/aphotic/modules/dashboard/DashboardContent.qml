@@ -15,6 +15,7 @@ ColumnLayout {
         { id: "dashboard", icon: "dashboard", label: qsTr("Dashboard") },
         { id: "performance", icon: "monitoring", label: qsTr("Performance") },
         { id: "workspaces", icon: "grid_view", label: qsTr("Workspaces") },
+        { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") },
         { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") }
     ]
 
@@ -75,6 +76,8 @@ ColumnLayout {
                     return performanceComp;
                 case "workspaces":
                     return workspacesComp;
+                case "wallpapers":
+                    return wallpapersComp;
                 case "aiChat":
                     return aiChatComp;
                 default:
@@ -111,6 +114,10 @@ ColumnLayout {
         WorkspacesTab {
             screenState: root.screenState
         }
+    }
+    Component {
+        id: wallpapersComp
+        DashWallpapersTab {}
     }
     Component {
         id: aiChatComp

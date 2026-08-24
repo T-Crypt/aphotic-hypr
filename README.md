@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/github/issues/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=E0AF68&labelColor=0b0d12">
   <img src="https://img.shields.io/github/forks/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=F7768E&labelColor=0b0d12">
   <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=AD8EE6&labelColor=0b0d12">
+  <img alt="License" src="https://img.shields.io/github/license/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=7DCFFF&labelColor=0b0d12">
 </p>
 
 <p align="center">
@@ -14,19 +15,31 @@
 </p>
 
 <p align="center">
+  <a href="#preview"><code>Preview</code></a> ·
   <a href="#install"><code>Install</code></a> ·
   <a href="#profiles--layers"><code>Profiles</code></a> ·
   <a href="#architecture"><code>Architecture</code></a> ·
   <a href="#quickshell-shell"><code>Quickshell</code></a> ·
   <a href="#settings--control-center"><code>Settings</code></a> ·
   <a href="#theming"><code>Theming</code></a> ·
-  <a href="#in-motion"><code>Screenshots</code></a> ·
   <a href="#keybindings"><code>Keybindings</code></a> ·
   <a href="#roadmap"><code>Roadmap</code></a> ·
   <a href="#faq"><code>FAQ</code></a>
 </p>
 
 <sub><a id="-top"></a></sub>
+
+<br>
+
+## Preview
+
+One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings → Appearance open over **HackTheBox**, **Nordic**, and **Windows 11**, three of the eight themes that ship out of the box:
+
+<p align="center">
+  <img src="./assets/aphotic-preview.png" width="900">
+</p>
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
 
@@ -55,22 +68,28 @@ Waybar, Mako, Swaylock, and Rofi have all been fully retired in favor of one han
 
 | Module | Replaces | Notes |
 |---|---|---|
-| Bar | Waybar | Dockable left or right, standard or compact density (Settings → Bar) — workspaces, active window, tray, clock, status icons, power button, all with real hover popouts (see below) |
-| Bar popouts | — (new) | Hover any status icon, the tray, or the active window pill for a real detail panel — volume slider + output picker, Wi-Fi list, Bluetooth devices, battery + power profile, full window title, keyboard layout, lock state, live CPU/GPU/memory/disk/network meter |
+| Bar | Waybar | Dockable left or right, standard or compact density, three selectable bar styles — pill/square/minimal (Settings → Bar) — workspaces, active window, tray, clock, status icons, power button, all with real hover popouts (see below) |
+| Bar popouts | — (new) | Hover any status icon, the tray, or the active window pill for a real detail panel — volume slider + output picker, Wi-Fi list, Bluetooth devices, battery + power profile, active Claude Code session count, hostname + click-to-copy LAN IP, a Pomodoro focus/break timer, full window title, keyboard layout, lock state, live CPU/GPU/memory/disk/network meter |
 | Launcher | Rofi (drun, clipboard, emoji, wallpaper) | One search box, mode switched by a prefix — see the table below |
 | Screenshot picker | `grim`/`slurp` combo scripts | Drag-select a region with live client-window snapping and a freeze-mode preview — `SUPER+Shift+S` (see [Keybindings](#keybindings) for the freeze/clipboard variants); the plain `grim`/`slurp`/`swappy` combo stays on `SUPER+S` |
 | Notifications | Mako | Popup toasts, top-right — `SUPER+Shift+N` clears them all |
 | OSD | — (new) | Volume/mic/brightness popups on change, enable flags and hide-delay configurable in Settings |
 | Lock screen | Swaylock | Real `ext-session-lock-v1` + real PAM auth via the system's own `/etc/pam.d/swaylock` service — `SUPER+L` |
 | Session/power menu | Rofi's powermenu | Lock, suspend, log out, hibernate, reboot, shut down — `SUPER+Backspace` |
-| Command Center | — (new) | Tabbed dashboard overlay — Dashboard (clock/calendar/media), Performance (live CPU/GPU/memory/storage/network cards), Workspaces (numbered grid, click to jump), AI Chat (Claude/Ollama/Gemini/ChatGPT, see below) — `SUPER+D` |
-| Settings | — (new) | Full-screen Control Center — searchable category rail (Appearance, Bar, Clock/Date, OSD/Notifications, AI, System, About), cross-theme wallpaper picker, live doctor output — `SUPER+I` |
+| Command Center | — (new) | Tabbed dashboard overlay — Dashboard (clock/calendar/media), Performance (live CPU/GPU/memory/storage/network cards), Workspaces (numbered grid, click to jump), Wallpapers (cycle/pick within the active theme live, without opening Settings), AI Chat (Claude/Ollama/Gemini/ChatGPT, see below) — `SUPER+D` |
+| Settings | — (new) | Full-screen Control Center — searchable category rail (Appearance, Theme Creator, Personalization, Bar, Displays, Clock/Date, OSD/Notifications, AI, Power & Security, Workspace Profiles, System, About), cross-theme wallpaper picker, live doctor output — `SUPER+I` |
 
 Every module is a thin, deliberately-scoped-down rewrite of its caelestia counterpart, not a faithful port — things needing caelestia's own native plugin (fingerprint/face auth, a calculator, Material-You scheme switching) were left out in favor of what Aphotic actually needs; the resource-meter and dashboard gaps that plugin would otherwise cover are hand-implemented instead (see Performance/System above), not skipped.
 
 ### AI Chat
 
 The Command Center's AI Chat tab talks to four providers behind one interface: **Claude** (via the `claude` CLI, needs `ANTHROPIC_API_KEY`), **Ollama** (direct HTTP to a configurable local/LAN host, no key needed), **Gemini** and **ChatGPT** (direct HTTP, need their own API keys). A provider with no key/host configured shows a clear inline message telling you what to set instead of failing silently. Keys live in `~/.config/aphotic/ai-keys.json` (`chmod 600`, separate from the general shell config); the active provider and Ollama host/model persist in `~/.config/aphotic/ai-config.json`. Neither ships with a real address baked in — set your Ollama host from the model picker in the AI Chat tab, or export `OLLAMA_BASE_URL` in your shell.
+
+Settings → AI also has a full **Ollama model manager**: every installed model with live/idle status and VRAM usage, one click to set the active model, a delete button, and a pull-by-name field to download a new one — all straight against Ollama's own REST API, no separate CLI needed.
+
+The bar's status icons include a small **Claude Code session indicator** — a live count of running `claude` CLI sessions, filled/outlined to show idle vs. active, click to focus the nearest terminal running one. Its color (like Bluetooth/Wi-Fi/Performance/Power profile) can be overridden independently in Settings → Personalization → Status icon accents.
+
+Two more bar icons round out the QoL set: a **host info** icon (click to copy your LAN IP straight to the clipboard, hover for hostname + IP with per-row copy — handy for SSH-heavy workflows) and a **Pomodoro timer** (25/5 focus/break cycle, click to start/pause, hover for reset/skip controls, notified on phase change, with a matching card on the Command Center's Dashboard tab). Both get their own Personalization accent-color override too.
 
 ### Launcher modes
 
@@ -79,15 +98,11 @@ The Command Center's AI Chat tab talks to four providers behind one interface: *
 | Type | Mode | Backed by |
 |:--:|---|---|
 | *(nothing)* | Search & launch installed apps | Desktop entries |
-| `>` | Clipboard history | `cliphist` |
+| `>` | Clipboard history (pin frequent snippets/commands with the pin icon so they survive `cliphist`'s rolling history) | `cliphist` |
 | `:` | Emoji picker | `Configs/quickshell/aphotic/data/emoji.txt` |
 | `/` | Switch to an open window | Hyprland's own window list |
 | `~` | Change wallpaper | Files in `~/.config/awww` |
-
-<p align="center">
-  <img src="./assets/quickshell-launcher-apps.png" width="49%">
-  <img src="./assets/quickshell-launcher-emoji.png" width="49%">
-</p>
+| `@` | Jump to a project — opens a terminal running `claude` plus an editor | Git repos found under `~/Projects`/`~/repos` (or `Settings.projectRoots`) |
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -100,19 +115,37 @@ The Command Center's AI Chat tab talks to four providers behind one interface: *
 | Category | What's in it |
 |---|---|
 | Appearance | Theme grid (fills the available space, not a fixed-size row), wallpaper-in-active-theme quick picker, and a **Browse all wallpapers** grid spanning every theme (click any thumbnail to switch theme + wallpaper + colorscheme together) |
-| Bar | Dock left/right, compact density (vertical orientation is planned, shown disabled for now) |
+| Theme Creator | Build your own **static** theme — a full palette editor (background/foreground/cursor + 16 ANSI colors, common-color presets or a real HSV color wheel) writes a fixed colorscheme + generated wallpaper straight into `~/.config/awww`, no wallpaper-derived palette needed. Shows up in Appearance's theme grid like any other once created, plus a folder icon to open it in Thunar |
+| Personalization | Accent color override, cursor theme + size, icon theme, and independent color overrides for the Bluetooth/Wi-Fi/Power-profile/Performance/Claude-session/host-info/Pomodoro bar icons (each defaults to the theme's own tone, override any of them or leave as-is) |
+| Bar | Dock left/right or top/bottom, compact density, vertical orientation, three selectable bar styles (pill/square/minimal) |
+| Displays | Live per-monitor info — name, resolution, refresh rate, scale, primary badge (read-only; live resolution/scale editing isn't wired up yet, see the Displays entry in the roadmap for why) |
 | Clock / Date | 12-hour clock, show date in bar clock, desktop clock |
 | OSD / Notifications | Show/hide OSD, brightness/mic sliders, OSD hide delay, notification timeout |
-| AI | Active provider (Ollama/Claude/Gemini/ChatGPT), live Ollama host + model picker, masked API-key entry for each provider — same backend as the Command Center's AI Chat tab |
-| System | Live `aphotic doctor` output — dependency and path checks, daemon status |
+| AI | Active provider (Ollama/Claude/Gemini/ChatGPT), live Ollama host + model picker, an Ollama model manager (VRAM per loaded model, delete, pull-by-name), masked API-key entry for each provider — same backend as the Command Center's AI Chat tab |
+| Power & Security | Power profile switcher (Saver/Balanced/Performance), idle lock/screen-off/suspend timeouts (generates `hypridle.conf`), lockout info |
+| Workspace Profiles | Named, one-key launch groups — save a list of commands + target workspaces, launch them all at once via `hyprctl dispatch exec`. Not a live session snapshot (Hyprland/X11 apps don't expose one), just a saved replay list |
+| Plugins | Link to the [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) repo, an **Installed** list (enable/disable/remove, missing-dependency warnings), and a **Browse available** list pulled live from the repo's index — install with one click. See [Plugin system](#plugin-system) below |
+| System | Live `aphotic doctor` output, an Overview (theme, install profile, daemon status), Hardware (CPU/GPU/RAM/disk), and an on-demand package check |
 | About | Real Aphotic logo, version (read from `VERSION`), repo link, wallpaper art credits |
 
-Every toggle here persists to `~/.local/state/aphotic/settings.json` and survives a shell restart. Adding a new setting is a data addition to an existing pane, not new UI — every row shares one component (`SettingsRow`, grouped into connected-card sections by `SettingsGroup`) for the icon-badge/title/description/control layout. Pane content and the category rail both scroll independently once they outgrow the panel, so a long pane never gets clipped.
+Every toggle here persists to `~/.local/state/aphotic/settings.json` and survives a shell restart. Adding a new setting is a data addition to an existing pane, not new UI — every row shares one component (`SettingsRow`, grouped into connected-card sections by `SettingsGroup`) for the icon-badge/title/description/control layout. Pane content and the category rail both scroll independently once they outgrow the panel, so a long pane never gets clipped. See [Preview](#preview) above for the panel itself, live across three different themes.
 
-<p align="center">
-  <img src="./assets/quickshell-settings.png" width="49%">
-  <img src="./assets/quickshell-wallpaper-picker.png" width="49%">
-</p>
+<div align="right"><a href="#-top">🡅 back to top</a></div>
+
+<br>
+
+## Plugin System
+
+Aphotic ships a small, real plugin mechanism (Phase 1 of the design in [`docs/PLUGIN_SYSTEM.md`](docs/PLUGIN_SYSTEM.md)): a plugin is a directory with a `plugin.toml` manifest and an `on_theme_change` hook script. Every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's hook with the freshly-resolved palette as JSON on stdin — fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall a theme switch.
+
+Plugins are distributed from a separate, purpose-built repo, [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) — kept apart from the main dotfiles so plugins can version and release independently. `aphotic plugin list --remote` (and Settings → Plugins' **Browse available** list) reads that repo's lightweight `index.json` without needing a full clone; `aphotic plugin install <name>` (or the Settings UI's Install button) clones just that plugin locally. The first real plugin, **OpenRGB Sync**, sets your RGB lighting to the theme's accent color on every theme change.
+
+```
+aphotic plugin list [--remote] [--json]   # installed, or browse the remote index
+aphotic plugin install <name> [--link]    # clone (or symlink, for local dev) a plugin
+aphotic plugin enable|disable <name>
+aphotic plugin remove <name>
+```
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -306,35 +339,6 @@ The system automatically tracks your current theme and wallpaper state, enabling
 
 <br>
 
-## In Motion
-
-<a id="screenshots"></a>
-
-**Desktop** — bar, workspace pill, and status icons re-themed live from the wallpaper
-
-<p align="center">
-  <img src="./assets/quickshell-desktop.png" width="98%">
-</p>
-
-**Bar popout & screenshot picker** — real detail panels on hover, drag-select captures with client snapping
-
-<p align="center">
-  <img src="./assets/quickshell-bar-popout.png" width="49%">
-  <img src="./assets/quickshell-areapicker.png" width="49%">
-</p>
-
-**Launcher** — see [Launcher modes](#quickshell-shell) above for the full picture
-
-**Command Center** — tabbed dashboard overlay (Dashboard/Performance/Workspaces/AI Chat)
-
-<p align="center">
-  <img src="./assets/quickshell-command-center.png" width="98%">
-</p>
-
-<div align="right"><a href="#-top">🡅 back to top</a></div>
-
-<br>
-
 ## Keybindings
 
 All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua) — grouped exactly as below. Every `qs -c aphotic ipc call ...` target the shell exposes has a keybind; anything below not bound to a key is intentionally IPC-only (scriptable, but not meant to be memorized).
@@ -453,11 +457,17 @@ Aphotic reached **v1.0** on `main` — the Quickshell shell, per-theme wallpaper
 - **Shell restart supervision** — ✅ shipped: a `systemd --user` unit (`aphotic-shell.service`) auto-restarts the Quickshell daemon on crash instead of requiring a manual `SUPER+B`.
 - **`matugen` as a second color engine** — next up. `theme.toml` already reserves the config slot; wiring it in gives themes a real tonal-spot/vibrant/expressive variant picker alongside wallust.
 - ~~**AI settings pane**~~ — ✅ shipped: Settings → AI covers active provider, Ollama host/model, and masked API-key entry for Claude/Gemini/ChatGPT.
-- **Settings panel expansion** — the Control Center's architecture (one row component, one pane-per-category) is built to grow further: a System-updates action (distinct from the current read-only doctor output), a Theme-colors swatch view, and a Plugins category once a real plugin architecture exists to back it. Network/Audio/Bluetooth pages (matching the bar's existing popouts) are also planned.
+- ~~**Bar orientation**~~ — ✅ shipped: a true vertical (left/right-docked) bar mode, plus three selectable bar styles (pill/square/minimal, Settings → Bar).
+- ~~**Theme-colors swatch view**~~ — ✅ shipped, and further than originally scoped: a full **Theme Creator** (Settings → Theme Creator) — build a static theme from a hand-picked palette (common-color presets or an HSV color wheel), writes a real theme + colorscheme + generated wallpaper into `~/.config/awww`.
+- ~~**Ollama model management**~~ — ✅ shipped: Settings → AI's Ollama Models section (live VRAM per loaded model, delete, pull-by-name, set active model).
+- **AI-native differentiators** — first pass shipped: a bar "agentic module" showing live Claude Code session presence/count with click-to-focus, and a launcher project switcher (`@` sigil — jump to a git repo with a terminal + `claude` + editor in one action). Deeper integration (live per-session thinking/editing status via a Claude Code hook, AI chat context injection, session handoff) is still open.
+- **Workspace profiles** — ✅ shipped: named, one-key launch groups (Settings → Workspace Profiles) — not a live session snapshot, a saved replay list dispatched via `hyprctl`.
+- ~~**Plugin system**~~ — ✅ Phase 1 shipped: theme-change hooks, the `aphotic plugin` CLI, a Settings → Plugins pane (browse/install/enable/disable), and a real first plugin (OpenRGB Sync) distributed via the separate [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) repo. See [Plugin System](#plugin-system) above and [`docs/PLUGIN_SYSTEM.md`](docs/PLUGIN_SYSTEM.md) for Phase 2/3 (CLI-triggered actions, real UI surfaces beyond theme hooks).
+- **Settings panel expansion** — the Control Center's architecture (one row component, one pane-per-category) is built to grow further: a System-updates action (distinct from the current read-only doctor output). Network/Audio/Bluetooth pages (matching the bar's existing popouts) are also planned.
+- ~~**Small QoL wins**~~ — ✅ shipped: a host-info bar icon (click-to-copy LAN IP, hover for hostname), a Pomodoro focus/break timer (bar icon + popout + Dashboard card), and a clipboard "pin" so frequently reused snippets/commands survive `cliphist`'s rolling history.
 - **Keyboard scratchpad workflow** — `SUPER+Ctrl+Tab` already cycles between open special workspaces, but nothing yet creates/toggles one from the keyboard; a dedicated create/toggle bind is a small follow-up.
-- **Bar orientation** — a true vertical-bar mode, distinct from the already-shipped left/right dock toggle.
 - **Gaming profile** — a real performance-mode toggle, MangoHud bar integration, Proton/Steam polish.
-- **Dev environment** — deeper terminal and editor tooling, AI CLI workflow integration on top of the `ai` layer (the Command Center's AI Chat tab now covers the interactive side of this).
+- **Dev environment** — deeper terminal and editor tooling, AI CLI workflow integration on top of the `ai` layer (the Command Center's AI Chat tab and the launcher's project switcher now cover the interactive side of this).
 - **Maintenance tooling** — release tagging and migration tooling; versioning and CI are already in place.
 
 Longer-term, the plan is a full wiki — install walkthroughs, theme authoring docs, and a troubleshooting reference — rather than trying to cram everything into this README forever.
@@ -505,6 +515,13 @@ Install the <a href="https://addons.mozilla.org/en-US/firefox/addon/pywalfox/">P
 </p>
 
 <br>
+
+## License
+
+[GPL-3.0](LICENSE) — required by, and compatible with, the vendored/adapted
+[caelestia-dots/shell](https://github.com/caelestia-dots/shell) QML this
+project's Quickshell shell builds on (see [Quickshell Shell](#quickshell-shell)
+above).
 
 ## Credit
 

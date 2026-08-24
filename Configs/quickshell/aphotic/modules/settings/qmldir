@@ -8,9 +8,12 @@ ClockPane 1.0 panes/ClockPane.qml
 DisplaysPane 1.0 panes/DisplaysPane.qml
 OsdPane 1.0 panes/OsdPane.qml
 PersonalizationPane 1.0 panes/PersonalizationPane.qml
+PluginsPane 1.0 panes/PluginsPane.qml
 PowerSecurityPane 1.0 panes/PowerSecurityPane.qml
 SettingsPanel 1.0 SettingsPanel.qml
 SettingsWindow 1.0 SettingsWindow.qml
 SystemPane 1.0 panes/SystemPane.qml
+ThemeCreatorPane 1.0 panes/ThemeCreatorPane.qml
 WallpaperPicker 1.0 panes/WallpaperPicker.qml
 WallpaperTile 1.0 panes/WallpaperTile.qml
+WorkspaceProfilesPane 1.0 panes/WorkspaceProfilesPane.qml

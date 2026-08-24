@@ -128,9 +128,15 @@ Item {
         x: !Settings.barVertical && Settings.barPositionRight ? root.width - width : 0
         y: Settings.barVertical && Settings.barPositionBottom ? root.height - height : 0
 
-        radius: Tokens.rounding.full
-        color: Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSkin === "square" ? Tokens.rounding.small : Tokens.rounding.full
+        color: Settings.barSkin === "minimal" ? "transparent" : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSkin === "minimal" ? Config.border.thickness : 0
+        border.color: Colours.palette.m3outlineVariant
         visible: root.shouldBeVisible
+
+        Behavior on radius {
+            Anim { type: Anim.DefaultEffects }
+        }
     }
 
     Loader {

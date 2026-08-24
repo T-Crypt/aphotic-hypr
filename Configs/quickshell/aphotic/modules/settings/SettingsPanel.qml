@@ -12,6 +12,7 @@ RowLayout {
 
     readonly property var categories: [
         { id: "appearance", icon: "palette", label: qsTr("Appearance"), description: qsTr("Theme, wallpaper, colors") },
+        { id: "themeCreator", icon: "format_paint", label: qsTr("Theme Creator"), description: qsTr("Build a static custom theme") },
         { id: "personalization", icon: "face", label: qsTr("Personalization"), description: qsTr("Accent, cursor, icons") },
         { id: "bar", icon: "dock_to_bottom", label: qsTr("Bar"), description: qsTr("Position, density") },
         { id: "displays", icon: "monitor", label: qsTr("Displays"), description: qsTr("Resolution, refresh rate") },
@@ -19,6 +20,8 @@ RowLayout {
         { id: "osd", icon: "notifications", label: qsTr("OSD / Notifications"), description: qsTr("Sliders, timeouts") },
         { id: "ai", icon: "smart_toy", label: qsTr("AI"), description: qsTr("Provider, API keys") },
         { id: "power", icon: "shield", label: qsTr("Power & Security"), description: qsTr("Profile, idle, lock") },
+        { id: "workspaceProfiles", icon: "workspaces", label: qsTr("Workspace Profiles"), description: qsTr("Named one-key launch groups") },
+        { id: "plugins", icon: "extension", label: qsTr("Plugins"), description: qsTr("Browse, install, manage") },
         { id: "system", icon: "monitor_heart", label: qsTr("System"), description: qsTr("Doctor, dependencies") },
         { id: "about", icon: "info", label: qsTr("About"), description: qsTr("Version, credits") }
     ]
@@ -80,6 +83,8 @@ RowLayout {
 
                 sourceComponent: {
                     switch (root.currentCategory) {
+                    case "themeCreator":
+                        return themeCreatorComp;
                     case "personalization":
                         return personalizationComp;
                     case "bar":
@@ -94,6 +99,10 @@ RowLayout {
                         return aiComp;
                     case "power":
                         return powerComp;
+                    case "workspaceProfiles":
+                        return workspaceProfilesComp;
+                    case "plugins":
+                        return pluginsComp;
                     case "system":
                         return systemComp;
                     case "about":
@@ -144,6 +153,11 @@ RowLayout {
         AppearancePane {}
     }
     Component {
+        id: themeCreatorComp
+        ThemeCreatorPane {}
+    }
+
+    Component {
         id: personalizationComp
         PersonalizationPane {}
     }
@@ -170,6 +184,14 @@ RowLayout {
     Component {
         id: powerComp
         PowerSecurityPane {}
+    }
+    Component {
+        id: workspaceProfilesComp
+        WorkspaceProfilesPane {}
+    }
+    Component {
+        id: pluginsComp
+        PluginsPane {}
     }
     Component {
         id: systemComp

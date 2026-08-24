@@ -1,0 +1,58 @@
+name: Bug report
+description: Something in the shell, CLI, or installer is broken
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. This project only supports Arch/AUR — please confirm that's your base before filing.
+
+  - type: input
+    id: version
+    attributes:
+      label: Aphotic-Hypr version
+      description: Output of `aphotic doctor`, or the contents of `VERSION`
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Settings → ...
+        2. Click ...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Quickshell logs live under `/run/user/$(id -u)/quickshell/by-id/*/log.qslog`. Paste any errors here.
+      render: shell
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: For visual bugs, a `grim` screenshot helps a lot.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues and this hasn't already been reported
+          required: true
+        - label: I'm on Arch (or an Arch derivative) — this project doesn't support other distros
+          required: true
