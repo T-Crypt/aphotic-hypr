@@ -114,7 +114,16 @@ Item {
                 font: Tokens.font.label.medium
             }
 
-            RowLayout {
+            Flow {
+                // A theme can now hold a couple dozen wallpapers (see
+                // `aphotic wallpaper --fetch-extra`) rather than the single
+                // curated one every theme shipped with when this was
+                // written -- a RowLayout never wraps, so it just ran every
+                // pill off the right edge of the panel once a theme
+                // actually had more than a handful. Flow wraps onto more
+                // rows instead, and the pane's own Flickable (see
+                // SettingsPanel.qml) already scrolls for the height that
+                // adds.
                 visible: Themes.wallpapersInActiveTheme.length > 1
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.small
@@ -130,14 +139,22 @@ Item {
                         required property string modelData
                         readonly property bool active: wallpaperPill.modelData === Themes.activeWallpaper
 
-                        Layout.preferredHeight: 32
-                        Layout.preferredWidth: wallpaperLabel.implicitWidth + Tokens.padding.large * 2
+                        // Layout.preferredWidth/Height only mean something
+                        // inside a real Layout -- Flow sizes children from
+                        // their own width/height instead, silently ignoring
+                        // Layout.* attached properties. Capped at 160 (with
+                        // the label eliding inside that) rather than
+                        // growing to fit, since a sanitized fetch-extra
+                        // filename can run long.
+                        height: 32
+                        width: Math.min(wallpaperLabel.implicitWidth + Tokens.padding.large * 2, 160)
                         radius: Tokens.rounding.full
                         color: wallpaperPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
 
                         StyledText {
                             id: wallpaperLabel
                             anchors.centerIn: parent
+                            width: wallpaperPill.width - Tokens.padding.large * 2
                             elide: Text.ElideMiddle
                             text: wallpaperPill.modelData
                             color: wallpaperPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant

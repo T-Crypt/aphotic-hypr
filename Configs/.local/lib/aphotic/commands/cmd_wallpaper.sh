@@ -99,6 +99,13 @@ _aphotic_wallpaper_fetch_extra() {
             if curl -fsSL -m 30 -o "$tmp" "$url" 2>/dev/null; then
                 got_sha="$(sha256sum "$tmp" | cut -d' ' -f1)"
                 if [[ "$got_sha" == "$sha" ]]; then
+                    # mktemp defaults to 600 -- mv preserves that, which
+                    # would otherwise leave every fetched wallpaper
+                    # unreadable by anything running as another user
+                    # (e.g. a display manager reading it for a login
+                    # background) where every other file here is a normal
+                    # 644.
+                    chmod 644 "$tmp"
                     mv "$tmp" "$dest"
                     ok=$((ok + 1))
                 else

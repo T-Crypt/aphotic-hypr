@@ -35,7 +35,7 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: row.implicitHeight + Tokens.padding.medium
             implicitWidth: row.implicitWidth + Tokens.padding.medium * 2
-            radius: Tokens.rounding.normal
+            radius: Tokens.rounding.small
             color: "transparent"
 
             StateLayer {

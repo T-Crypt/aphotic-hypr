@@ -245,124 +245,74 @@
   ],
   "rosepine": [
     {
-      "filename": "rosepine-p4rfait-village.jpg",
-      "size": 340959,
-      "sha256": "3fa9ddd74500b8ecf1d7bc4e7f7ebd7738d7a20efdc722797887d64260d792eb",
-      "width": 1920,
-      "height": 1080,
-      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/irl/village.jpg",
+      "filename": "rosepine-p4rfait-flowers.jpg",
+      "size": 963452,
+      "sha256": "379af673789535db759be73c14ca4b6c9a312c9e21a03656f8435d414860c73b",
+      "width": 3707,
+      "height": 2734,
+      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/irl/flowers.jpg",
       "source_owner": "p4rfait",
       "source_repo": "rose-pine-wallpapers"
     },
     {
-      "filename": "rosepine-official-windows.jpg",
-      "size": 464105,
-      "sha256": "682d9eb782d47c7828d699108e211c80c03fb29027b7501d94e8b6cfc34a41c7",
-      "width": 6000,
-      "height": 4000,
-      "source_url": "https://raw.githubusercontent.com/rose-pine/wallpapers/main/os/windows.jpg",
-      "source_owner": "rose-pine",
-      "source_repo": "wallpapers"
+      "filename": "rosepine-sakura-sakura-2.jpg",
+      "size": 1467534,
+      "sha256": "0d0b62d005bb60200c4aa68fbedf3ee27f783a558bc40eb8ef07ded2614d0372",
+      "width": 4912,
+      "height": 3264,
+      "source_url": "https://raw.githubusercontent.com/theurbanspirit/sakura_walls/master/sakura_2.jpeg",
+      "source_owner": "theurbanspirit",
+      "source_repo": "sakura_walls"
     },
     {
-      "filename": "rosepine-p4rfait-camera-2.jpg",
-      "size": 534300,
-      "sha256": "06321b488f7a63b77b04ac4ea865aa7b6125fc94956dedc1271416a30816ab08",
-      "width": 3066,
-      "height": 1724,
-      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/irl/camera-2.jpg",
+      "filename": "rosepine-p4rfait-sunset.jpg",
+      "size": 1472574,
+      "sha256": "78ba26d2d348784b216e27b1885fa250ecd2cf76be3fa2fb6609bf569eb35903",
+      "width": 4000,
+      "height": 2992,
+      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/irl/sunset.jpg",
       "source_owner": "p4rfait",
       "source_repo": "rose-pine-wallpapers"
     },
     {
-      "filename": "rosepine-p4rfait-komeiji-koishi.png",
-      "size": 863411,
-      "sha256": "098fbf143de53602da960e3cd98dfafb6d17f1ee3b443702ce9087e7a12fa813",
+      "filename": "rosepine-kawaii-kawaii.png",
+      "size": 2497180,
+      "sha256": "1a562af431497fbc9cbf945002703e8c8c7ee22c2a21b6806caa7bd535cb14ce",
       "width": 2560,
       "height": 1440,
-      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/anime/komeiji-koishi.png",
-      "source_owner": "p4rfait",
-      "source_repo": "rose-pine-wallpapers"
+      "source_url": "https://raw.githubusercontent.com/LeonidPilyugin/kawaii-wallpapers/main/files/Kawaii/contents/images/2560x1440.png",
+      "source_owner": "LeonidPilyugin",
+      "source_repo": "kawaii-wallpapers"
     },
     {
-      "filename": "rosepine-official-topo.jpg",
-      "size": 1496161,
-      "sha256": "d95750d4b444baca579edc250d63bf22be20be596ea283386f3f5ddd46508c7e",
-      "width": 3840,
-      "height": 2160,
-      "source_url": "https://raw.githubusercontent.com/rose-pine/wallpapers/main/illustration/topo.jpg",
-      "source_owner": "rose-pine",
-      "source_repo": "wallpapers"
-    },
-    {
-      "filename": "rosepine-p4rfait-forest.jpg",
-      "size": 1501115,
-      "sha256": "78c8d60465e982d815698794106f079fa1640b236161af5e5bc0228470113501",
-      "width": 3840,
-      "height": 2160,
-      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/irl/forest.jpg",
-      "source_owner": "p4rfait",
-      "source_repo": "rose-pine-wallpapers"
-    },
-    {
-      "filename": "rosepine-official-topo-1887.jpg",
-      "size": 2055469,
-      "sha256": "8ed99db2299d9990e0c4e940ffa60ff3fdeffd08c2f2d03dd2070143375c031a",
-      "width": 3840,
-      "height": 2160,
-      "source_url": "https://raw.githubusercontent.com/rose-pine/wallpapers/main/illustration/topo%20-%201887.jpg",
-      "source_owner": "rose-pine",
-      "source_repo": "wallpapers"
-    },
-    {
-      "filename": "rosepine-p4rfait-anna-scarfiello-pxf5sydvuxq.jpg",
-      "size": 2368109,
-      "sha256": "97f349d1e7b8a75077f30a815837a9dddab0ecf772bc5b3b7bcb2eeff5855642",
-      "width": 4580,
-      "height": 3053,
-      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/irl/anna-scarfiello-Pxf5syDVuxQ.jpg",
-      "source_owner": "p4rfait",
-      "source_repo": "rose-pine-wallpapers"
-    },
-    {
-      "filename": "rosepine-official-motorcycle.jpg",
-      "size": 3167041,
-      "sha256": "7fb3ee41deb8414c1a3a6b6d2bc07fba9a6ed52e0e0f2936df510a673d0371e1",
-      "width": 6050,
-      "height": 2880,
-      "source_url": "https://raw.githubusercontent.com/rose-pine/wallpapers/main/miscellaneous/motorcycle.jpg",
-      "source_owner": "rose-pine",
-      "source_repo": "wallpapers"
-    },
-    {
-      "filename": "rosepine-p4rfait-ruins-2.png",
-      "size": 3533256,
-      "sha256": "95109e7ae3a15c5e948c1e644171e857f3f33103d045952d309ccf3da2e1a741",
-      "width": 1920,
-      "height": 1080,
-      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/mix/ruins-2.png",
-      "source_owner": "p4rfait",
-      "source_repo": "rose-pine-wallpapers"
-    },
-    {
-      "filename": "rosepine-official-rocks.jpg",
-      "size": 4085607,
-      "sha256": "f1003a0a7e6bd27bcb6231780337e05a476c595ec28b7bdee2d6bde1502ed48e",
+      "filename": "rosepine-official-flower.jpg",
+      "size": 2933952,
+      "sha256": "03cddd530dd04fb1a9586495f8963b17e914dfc08d939b90af3170c8be7215d1",
       "width": 4032,
       "height": 3024,
-      "source_url": "https://raw.githubusercontent.com/rose-pine/wallpapers/main/photography/kainoa-kanter/rocks.jpg",
+      "source_url": "https://raw.githubusercontent.com/rose-pine/wallpapers/main/photography/kainoa-kanter/flower.jpg",
       "source_owner": "rose-pine",
       "source_repo": "wallpapers"
     },
     {
-      "filename": "rosepine-official-stahlgrave-tower.webp",
-      "size": 5312240,
-      "sha256": "0365feb4bc61aa180653cf464c875caf890c124742a03630f7dfa890cea8b703",
-      "width": 3840,
-      "height": 2160,
-      "source_url": "https://raw.githubusercontent.com/rose-pine/wallpapers/main/minecraft/stahlgrave-tower.webp",
-      "source_owner": "rose-pine",
-      "source_repo": "wallpapers"
+      "filename": "rosepine-p4rfait-gruv-wallhaven-l3y2p2.png",
+      "size": 5109752,
+      "sha256": "494900d4b71826e26f555fd1a087aef5ca4f82128283d113def63392a814d099",
+      "width": 7147,
+      "height": 4196,
+      "source_url": "https://raw.githubusercontent.com/p4rfait/rose-pine-wallpapers/main/wallpapers/anime/gruv-wallhaven-l3y2p2.png",
+      "source_owner": "p4rfait",
+      "source_repo": "rose-pine-wallpapers"
+    },
+    {
+      "filename": "rosepine-sakura-sakura-4.jpg",
+      "size": 6657347,
+      "sha256": "2d1d35d9e6f4bc145dd1d9133194af70f8c16b7b2ae38bec2002e043f2db537b",
+      "width": 6000,
+      "height": 4000,
+      "source_url": "https://raw.githubusercontent.com/theurbanspirit/sakura_walls/master/sakura_4.jpeg",
+      "source_owner": "theurbanspirit",
+      "source_repo": "sakura_walls"
     }
   ],
   "tokyonight": [
@@ -557,6 +507,292 @@
       "source_url": "https://raw.githubusercontent.com/iambluie/masterpiecewallpapers/main/src/wallpapers/Catppuccin-Latte/chainsaw_angel_lake.jpg",
       "source_owner": "iambluie",
       "source_repo": "masterpiecewallpapers"
+    }
+  ],
+  "lofi": [
+    {
+      "filename": "lofi-cozywalls-ghibli-totoro-sunrise.jpg",
+      "size": 437932,
+      "sha256": "4cc99778816d123ea2d180adb0463d77f41093be69ad27f5b9c31f1f3eae9125",
+      "width": 3968,
+      "height": 2160,
+      "source_url": "https://raw.githubusercontent.com/leanghok120/cozywalls/master/ghibli-totoro-sunrise.jpeg",
+      "source_owner": "leanghok120",
+      "source_repo": "cozywalls"
+    },
+    {
+      "filename": "lofi-cozypixels-foggy-city.jpg",
+      "size": 477069,
+      "sha256": "6fd0d8122ff10e9253c8c8d80f4ce760a6eef04792313fae0949570927a2d0ec",
+      "width": 5640,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/SleepyCatHey/CozyPixels/main/Catppuccin/Seasonal%20%26%20Weather/foggy-city.jpg",
+      "source_owner": "SleepyCatHey",
+      "source_repo": "CozyPixels"
+    },
+    {
+      "filename": "lofi-cozywalls-house-green.jpg",
+      "size": 687983,
+      "sha256": "4f602ac733ae7d00ed0f62e010572a5f4e9dce25cbf650dc097d7abad9cefe84",
+      "width": 3848,
+      "height": 2160,
+      "source_url": "https://raw.githubusercontent.com/leanghok120/cozywalls/master/house-green.jpg",
+      "source_owner": "leanghok120",
+      "source_repo": "cozywalls"
+    },
+    {
+      "filename": "lofi-cozypixels-samurai.jpg",
+      "size": 703095,
+      "sha256": "7dec0f45283ef101d4968c819b6035bc790a2435dfff5a09e1701b05c07bbacd",
+      "width": 3840,
+      "height": 2160,
+      "source_url": "https://raw.githubusercontent.com/SleepyCatHey/CozyPixels/main/Catppuccin/Characters%20%26%20People/samurai.jpg",
+      "source_owner": "SleepyCatHey",
+      "source_repo": "CozyPixels"
+    },
+    {
+      "filename": "lofi-cozypixels-river-city.jpg",
+      "size": 1019286,
+      "sha256": "60af8f0f085d0d21de759a50b81cb54685cb459fd390d0e95e0127da59d88f21",
+      "width": 4800,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/SleepyCatHey/CozyPixels/main/Catppuccin/Urban%20%26%20Architecture/river-city.jpg",
+      "source_owner": "SleepyCatHey",
+      "source_repo": "CozyPixels"
+    },
+    {
+      "filename": "lofi-cozywalls-cozy-beach-mountain.jpg",
+      "size": 1030188,
+      "sha256": "4cc1fce5fadb2883245af9eec283f38db83174ab1d20ceb72944e6b837f0c301",
+      "width": 3850,
+      "height": 2160,
+      "source_url": "https://raw.githubusercontent.com/leanghok120/cozywalls/master/cozy-beach-mountain.jpeg",
+      "source_owner": "leanghok120",
+      "source_repo": "cozywalls"
+    },
+    {
+      "filename": "lofi-cozywalls-cat-leaves.png",
+      "size": 1384415,
+      "sha256": "91e8142bad98b48ec6dcffe922a7167451a5a8de12d7fe3138e98e6e83f124a1",
+      "width": 3840,
+      "height": 2160,
+      "source_url": "https://raw.githubusercontent.com/leanghok120/cozywalls/master/cat_leaves.png",
+      "source_owner": "leanghok120",
+      "source_repo": "cozywalls"
+    },
+    {
+      "filename": "lofi-cozypixels-pixel-alley.png",
+      "size": 1592933,
+      "sha256": "bd5df91e11d925975aca73deec21fefd0a9c185dd0394c79d596db96417a156d",
+      "width": 1456,
+      "height": 816,
+      "source_url": "https://raw.githubusercontent.com/SleepyCatHey/CozyPixels/main/Catppuccin/Pixel%20Art/pixel-alley.png",
+      "source_owner": "SleepyCatHey",
+      "source_repo": "CozyPixels"
+    },
+    {
+      "filename": "lofi-cozywalls-sakura-japan-countryside.png",
+      "size": 2595828,
+      "sha256": "f809ee885ed5130993cc1b415910121e46a55d22fd6eafd304006b63e4d98ff8",
+      "width": 2800,
+      "height": 1575,
+      "source_url": "https://raw.githubusercontent.com/leanghok120/cozywalls/master/sakura-japan-countryside.png",
+      "source_owner": "leanghok120",
+      "source_repo": "cozywalls"
+    },
+    {
+      "filename": "lofi-cozypixels-pixel-car.png",
+      "size": 3447642,
+      "sha256": "7c0a7b4f1c864308a52f9e6552b4a682464fe7ab85facf70f5a1a52ac00393c6",
+      "width": 1920,
+      "height": 1080,
+      "source_url": "https://raw.githubusercontent.com/SleepyCatHey/CozyPixels/main/Catppuccin/Anime%20%26%20Gaming/pixel-car.png",
+      "source_owner": "SleepyCatHey",
+      "source_repo": "CozyPixels"
+    },
+    {
+      "filename": "lofi-cozywalls-chinatown.jpg",
+      "size": 4693019,
+      "sha256": "21a4196f6e1e2e9638f73de4d479cb0266e9b9c13ddf2856c87ed6f1dfd623c8",
+      "width": 2880,
+      "height": 1620,
+      "source_url": "https://raw.githubusercontent.com/leanghok120/cozywalls/master/chinatown.jpg",
+      "source_owner": "leanghok120",
+      "source_repo": "cozywalls"
+    }
+  ],
+  "hackthebox": [
+    {
+      "filename": "htb-hackerwall-kaligreen.png",
+      "size": 2464748,
+      "sha256": "cf07e24f5f1724b795564f78ace8285a0fbd727581102fa8ddfe7d474d8b1bba",
+      "width": 1920,
+      "height": 1080,
+      "source_url": "https://raw.githubusercontent.com/doulos0/hackerwall/master/kaligreen.png",
+      "source_owner": "doulos0",
+      "source_repo": "hackerwall"
+    },
+    {
+      "filename": "htb-haltman-dedsec-style-006.png",
+      "size": 2592749,
+      "sha256": "9c9d53ef8f6b89464abd7187c3192314e1f8166c8d468f0ca5e59b2ee05018f6",
+      "width": 1672,
+      "height": 941,
+      "source_url": "https://raw.githubusercontent.com/haltman-io/wallpaper/main/dump/dedsec-style/dedsec-style-006.png",
+      "source_owner": "haltman-io",
+      "source_repo": "wallpaper"
+    },
+    {
+      "filename": "htb-hackerwall-hacker-red.png",
+      "size": 2781121,
+      "sha256": "9eb50b54840606d50d528ab964dc33ed3ada50ed496f9c3ed40393de4c1e6cfe",
+      "width": 1920,
+      "height": 1080,
+      "source_url": "https://raw.githubusercontent.com/doulos0/hackerwall/master/hacker_red.png",
+      "source_owner": "doulos0",
+      "source_repo": "hackerwall"
+    },
+    {
+      "filename": "htb-haltman-thc-wallpaper-004.png",
+      "size": 2950768,
+      "sha256": "800094bf4dd95dec678021c3b580502792161d3776ba5177970acb3f09965192",
+      "width": 1672,
+      "height": 941,
+      "source_url": "https://raw.githubusercontent.com/haltman-io/wallpaper/main/dump/thc/thc-wallpaper-004.png",
+      "source_owner": "haltman-io",
+      "source_repo": "wallpaper"
+    },
+    {
+      "filename": "htb-hackerwall-hacker-green.png",
+      "size": 3041045,
+      "sha256": "adde75cee75362c7c43f6fac9f307a25ac161ebe94331a9535d5ecee6e376700",
+      "width": 1920,
+      "height": 1080,
+      "source_url": "https://raw.githubusercontent.com/doulos0/hackerwall/master/hacker_green.png",
+      "source_owner": "doulos0",
+      "source_repo": "hackerwall"
+    },
+    {
+      "filename": "htb-haltman-dedsec-style-001.png",
+      "size": 3111151,
+      "sha256": "6f87443aff0804b5c1a0782044897029baf9accb16f75de1171363d27f5602c2",
+      "width": 1672,
+      "height": 941,
+      "source_url": "https://raw.githubusercontent.com/haltman-io/wallpaper/main/dump/dedsec-style/dedsec-style-001.png",
+      "source_owner": "haltman-io",
+      "source_repo": "wallpaper"
+    },
+    {
+      "filename": "htb-cryotech-2880x1800-cryotech-1.png",
+      "size": 6422448,
+      "sha256": "c8e1e7861247ee2b82844c575e8d722069d96eebcbfe45988b2c523fa605e7d7",
+      "width": 2880,
+      "height": 1800,
+      "source_url": "https://raw.githubusercontent.com/dolphin-electric/Cryotech-Wallpapers/main/Wallpapers/2880x1800-cryotech-1.png",
+      "source_owner": "dolphin-electric",
+      "source_repo": "Cryotech-Wallpapers"
+    },
+    {
+      "filename": "htb-cryotech-2880x1800-cryotech-2.png",
+      "size": 6427185,
+      "sha256": "26c1a3236ba78446875e7f23efb7cff39e4d74bc3135f418d0d5a3b2ec72fc1c",
+      "width": 2880,
+      "height": 1800,
+      "source_url": "https://raw.githubusercontent.com/dolphin-electric/Cryotech-Wallpapers/main/Wallpapers/2880x1800-cryotech-2.png",
+      "source_owner": "dolphin-electric",
+      "source_repo": "Cryotech-Wallpapers"
+    },
+    {
+      "filename": "htb-cryotech-2880x1800-cryotech-3.png",
+      "size": 6642921,
+      "sha256": "cadc2ed1eb7abcf680ccd4d6ff68d673e28bd86eb7734696098b01472426e03c",
+      "width": 2880,
+      "height": 1800,
+      "source_url": "https://raw.githubusercontent.com/dolphin-electric/Cryotech-Wallpapers/main/Wallpapers/2880x1800-cryotech-3.png",
+      "source_owner": "dolphin-electric",
+      "source_repo": "Cryotech-Wallpapers"
+    },
+    {
+      "filename": "htb-cryotech-2880x1800-cryotech-4.png",
+      "size": 6689585,
+      "sha256": "24854ca44316cd7e84530324b76cf2daafb03a9a81dc153942ca77609e4c9b40",
+      "width": 2880,
+      "height": 1800,
+      "source_url": "https://raw.githubusercontent.com/dolphin-electric/Cryotech-Wallpapers/main/Wallpapers/2880x1800-cryotech-4.png",
+      "source_owner": "dolphin-electric",
+      "source_repo": "Cryotech-Wallpapers"
+    }
+  ],
+  "windows11": [
+    {
+      "filename": "win11-uiassets-img20.jpg",
+      "size": 826734,
+      "sha256": "6610e4c12b5ccaa2906e7584339786378d921cbaf7c4b3bc5bd585e3f955b685",
+      "width": 3840,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/bartekl1/windows-ui-assets/main/Wallpapers/Windows%2011/Desktop/Glow/img20.jpg",
+      "source_owner": "bartekl1",
+      "source_repo": "windows-ui-assets"
+    },
+    {
+      "filename": "win11-uiassets-img23.jpg",
+      "size": 907112,
+      "sha256": "38795e3adab04932e79a87bdd33ec5724a16106cbcb6e8b0aafba7916f4396bb",
+      "width": 3840,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/bartekl1/windows-ui-assets/main/Wallpapers/Windows%2011/Desktop/Glow/img23.jpg",
+      "source_owner": "bartekl1",
+      "source_repo": "windows-ui-assets"
+    },
+    {
+      "filename": "win11-abdughafur-win11.9.jpg",
+      "size": 985873,
+      "sha256": "885793edb838c1a313fb171b5e954635ef52b5249ff463a8903f870937d4552d",
+      "width": 3841,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/Abdughafur/Win11-wallpapers/main/walls/win11.9.jpg",
+      "source_owner": "Abdughafur",
+      "source_repo": "Win11-wallpapers"
+    },
+    {
+      "filename": "win11-uiassets-img25.jpg",
+      "size": 1019877,
+      "sha256": "9f56f69ee6d80fcd612e8ff43f23ed9744114868575a873f840191ddbdd48289",
+      "width": 3840,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/bartekl1/windows-ui-assets/main/Wallpapers/Windows%2011/Desktop/Captured%20Motion/img25.jpg",
+      "source_owner": "bartekl1",
+      "source_repo": "windows-ui-assets"
+    },
+    {
+      "filename": "win11-abdughafur-win11.10.jpg",
+      "size": 1060216,
+      "sha256": "923836595dfbc7b2cf48663ea0016ec051ff2d0763b1417027e9e9d125b6550f",
+      "width": 3840,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/Abdughafur/Win11-wallpapers/main/walls/win11.10.jpg",
+      "source_owner": "Abdughafur",
+      "source_repo": "Win11-wallpapers"
+    },
+    {
+      "filename": "win11-uiassets-img30.jpg",
+      "size": 1068913,
+      "sha256": "6f4748bf44f714286bdb1ac749623015137e5c82146e6d62e38fcc343c8b0eb5",
+      "width": 3840,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/bartekl1/windows-ui-assets/main/Wallpapers/Windows%2011/Desktop/Sunrise/img30.jpg",
+      "source_owner": "bartekl1",
+      "source_repo": "windows-ui-assets"
+    },
+    {
+      "filename": "win11-uiassets-img32.jpg",
+      "size": 1077710,
+      "sha256": "2b8a86eea1db88b953e20a10b9209344c42771a3a9e6436c0da96a7838a124d9",
+      "width": 3841,
+      "height": 2400,
+      "source_url": "https://raw.githubusercontent.com/bartekl1/windows-ui-assets/main/Wallpapers/Windows%2011/Desktop/Flow/img32.jpg",
+      "source_owner": "bartekl1",
+      "source_repo": "windows-ui-assets"
     }
   ]
 }

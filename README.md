@@ -329,11 +329,33 @@ aphotic theme prev    # Switch to previous theme
 aphotic scheme set -n <scheme-name>  # Apply a named color scheme
 
 # Wallpaper management
-aphotic wallpaper -f <path>     # Set specific wallpaper
-aphotic wallpaper --random      # Pick random wallpaper
+aphotic wallpaper -f <path>          # Set specific wallpaper
+aphotic wallpaper --random           # Pick random wallpaper
+aphotic wallpaper --fetch-extra      # Download the larger community wallpaper pool (see below)
 ```
 
 The system automatically tracks your current theme and wallpaper state, enabling seamless cycling through themes and real-time palette updates when schemes are changed.
+
+### Wallpaper pool size (bandwidth-friendly by default)
+
+Every theme ships with 4-5 wallpapers committed directly in the repo (well
+under 20MB total across all 8) — enough that a fresh `git clone` stays
+small even on a slow connection. A much larger curated pool (~145MB
+across all themes, sourced from the community wallpaper repos linked in
+each theme's credits) is available on request rather than bundled by
+default:
+
+```bash
+aphotic wallpaper --fetch-extra            # every theme's extra pool
+aphotic wallpaper --fetch-extra nordic     # just one theme
+```
+
+Both prompt with the total download size first (skip the prompt with
+`-y`/`--yes`), verify each file's SHA-256 before keeping it, and are
+idempotent — re-running only fetches what's still missing. `install.sh`
+also asks about this once, near the end of setup, defaulting to **no**
+so a `curl`-limited connection isn't stuck downloading images it didn't
+ask for.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -526,6 +548,17 @@ above).
 ## Credit
 
 Inspired by and built with gratitude toward [Tittu](https://github.com/prasanthrangan)'s minimalist Hyprland dotfiles — Aphotic started as a fork of that philosophy and has been growing its own identity ever since.
+
+Theme wallpapers (the curated set committed in each `Configs/awww/<theme>/` and the larger pool behind `aphotic wallpaper --fetch-extra`, see [Theme Picker Integration](#theme-picker-integration)) are pulled from the community wallpaper repos below — full credit to their authors and the original artists:
+
+- Gruvbox: [AngelJumbo/gruvbox-wallpapers](https://github.com/AngelJumbo/gruvbox-wallpapers), [vctrblck/gruvbox-wallpapers](https://github.com/vctrblck/gruvbox-wallpapers)
+- Nord: [Ahmosys/nordpapers](https://github.com/Ahmosys/nordpapers), [ChrisTitusTech/nord-background](https://github.com/ChrisTitusTech/nord-background), [dxnst/nord-backgrounds](https://github.com/dxnst/nord-backgrounds)
+- Rosé Pine: [rose-pine/wallpapers](https://github.com/rose-pine/wallpapers), [p4rfait/rose-pine-wallpapers](https://github.com/p4rfait/rose-pine-wallpapers), [theurbanspirit/sakura_walls](https://github.com/theurbanspirit/sakura_walls), [LeonidPilyugin/kawaii-wallpapers](https://github.com/LeonidPilyugin/kawaii-wallpapers)
+- Tokyo Night: [tokyo-night/wallpapers](https://github.com/tokyo-night/wallpapers), [atraxsrc/tokyonight-wallpapers](https://github.com/atraxsrc/tokyonight-wallpapers)
+- Catppuccin Latte: [zhichaoh/catppuccin-wallpapers](https://github.com/zhichaoh/catppuccin-wallpapers), [iambluie/masterpiecewallpapers](https://github.com/iambluie/masterpiecewallpapers), [rishav12s/Cat-Latte](https://github.com/rishav12s/Cat-Latte), [harilvfs/wallpapers](https://github.com/harilvfs/wallpapers)
+- Lofi: [leanghok120/cozywalls](https://github.com/leanghok120/cozywalls), [SleepyCatHey/CozyPixels](https://github.com/SleepyCatHey/CozyPixels)
+- HackTheBox: [haltman-io/wallpaper](https://github.com/haltman-io/wallpaper), [doulos0/hackerwall](https://github.com/doulos0/hackerwall), [dolphin-electric/Cryotech-Wallpapers](https://github.com/dolphin-electric/Cryotech-Wallpapers)
+- Windows 11: [bartekl1/windows-ui-assets](https://github.com/bartekl1/windows-ui-assets), [Abdughafur/Win11-wallpapers](https://github.com/Abdughafur/Win11-wallpapers)
 
 <p align="center">
   <sub>after dark, always.</sub>
