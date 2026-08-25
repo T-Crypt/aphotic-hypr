@@ -323,6 +323,15 @@ Item {
                 }
             }
             DelegateChoice {
+                roleValue: "agent"
+                delegate: EntryWrapper {
+                    AgentIndicator {
+                        objectName: "taskbarAgent"
+                        screenState: root.screenState
+                    }
+                }
+            }
+            DelegateChoice {
                 roleValue: "power"
                 delegate: EntryWrapper {
                     Power {

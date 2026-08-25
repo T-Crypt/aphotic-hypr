@@ -85,7 +85,6 @@ QtObject {
                 { id: "bluetooth", enabled: true },
                 { id: "battery", enabled: true },
                 { id: "resources", enabled: true },
-                { id: "claudeSessions", enabled: true },
                 { id: "hostInfo", enabled: true },
                 { id: "pomodoro", enabled: true }
             ]
@@ -103,6 +102,7 @@ QtObject {
                 { id: "clock", enabled: true },
                 { id: "statusIcons", enabled: true },
                 { id: "settings", enabled: true },
+                { id: "agent", enabled: true },
                 { id: "power", enabled: true }
             ]
         }
