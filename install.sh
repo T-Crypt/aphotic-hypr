@@ -339,6 +339,8 @@ main() {
     mkdir -p "$HOME/.config/systemd/user"
     systemctl --user daemon-reload &>> "$INSTLOG"
     systemctl --user enable aphotic-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
+    echo -e "$CNT - Enabling the agent usage-tracking timer..."
+    systemctl --user enable --now aphotic-agent-usage.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-agent-usage.timer; the bar's agent popout will show stale/no usage data until it's enabled manually."
 
     # Make sure `aphotic` (and anything else under ~/.local/bin) resolves on
     # PATH without relying on the optional zsh-activation step below, since
