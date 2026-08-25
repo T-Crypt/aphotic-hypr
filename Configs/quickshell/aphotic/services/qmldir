@@ -1,4 +1,5 @@
 module qs.services
+singleton AgentProviders 1.0 AgentProviders.qml
 singleton Audio 1.0 Audio.qml
 singleton Brightness 1.0 Brightness.qml
 singleton ClaudeSessions 1.0 ClaudeSessions.qml
