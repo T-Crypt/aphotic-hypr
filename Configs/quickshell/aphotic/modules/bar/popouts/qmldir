@@ -1,4 +1,5 @@
 module qs.modules.bar.popouts
+AgentPopout 1.0 AgentPopout.qml
 AudioPopout 1.0 AudioPopout.qml
 BatteryPopout 1.0 BatteryPopout.qml
 BluetoothPopout 1.0 BluetoothPopout.qml
