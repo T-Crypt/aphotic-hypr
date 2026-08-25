@@ -6,7 +6,7 @@ import Quickshell.Io
 
 // Hostname + primary LAN IP, polled here and shared by the bar's
 // HostInfoStatus icon and its popout -- same "one service, icon + popout
-// both read it" shape as ClaudeSessions. Aimed at SSH-heavy workflows:
+// both read it" shape as AgentProviders. Aimed at SSH-heavy workflows:
 // quick-copy either value without opening a terminal.
 Singleton {
     id: root

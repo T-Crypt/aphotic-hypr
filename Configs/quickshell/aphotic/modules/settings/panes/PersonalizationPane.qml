@@ -271,16 +271,6 @@ ColumnLayout {
         }
 
         SettingsRow {
-            icon: "smart_toy"
-            label: qsTr("Claude sessions")
-
-            ColorPickerField {
-                value: Settings.statusIconClaudeColor
-                onValueChanged: Settings.statusIconClaudeColor = value
-            }
-        }
-
-        SettingsRow {
             icon: "lan"
             label: qsTr("Host info")
 

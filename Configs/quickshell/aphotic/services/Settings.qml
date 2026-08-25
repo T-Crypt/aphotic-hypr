@@ -59,7 +59,6 @@ Singleton {
     property string statusIconWifiColor: ""
     property string statusIconPowerProfileColor: ""
     property string statusIconPerformanceColor: ""
-    property string statusIconClaudeColor: ""
     property string statusIconHostInfoColor: ""
     property string statusIconPomodoroColor: ""
     property string cursorTheme: "Bibata-Modern-Ice"
@@ -122,7 +121,6 @@ Singleton {
             statusIconWifiColor: root.statusIconWifiColor,
             statusIconPowerProfileColor: root.statusIconPowerProfileColor,
             statusIconPerformanceColor: root.statusIconPerformanceColor,
-            statusIconClaudeColor: root.statusIconClaudeColor,
             statusIconHostInfoColor: root.statusIconHostInfoColor,
             statusIconPomodoroColor: root.statusIconPomodoroColor,
             cursorTheme: root.cursorTheme,
@@ -326,8 +324,6 @@ Singleton {
                     root.statusIconPowerProfileColor = data.statusIconPowerProfileColor;
                 if (typeof data.statusIconPerformanceColor === "string")
                     root.statusIconPerformanceColor = data.statusIconPerformanceColor;
-                if (typeof data.statusIconClaudeColor === "string")
-                    root.statusIconClaudeColor = data.statusIconClaudeColor;
                 if (typeof data.statusIconHostInfoColor === "string")
                     root.statusIconHostInfoColor = data.statusIconHostInfoColor;
                 if (typeof data.statusIconPomodoroColor === "string")

@@ -181,14 +181,6 @@ StyledRect {
                     }
                 }
                 DelegateChoice {
-                    roleValue: "claudeSessions"
-                    delegate: EntryWrapper {
-                        ClaudeSessionStatus {
-                            colour: Settings.statusIconClaudeColor.length > 0 ? Settings.statusIconClaudeColor : root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
                     roleValue: "hostInfo"
                     delegate: EntryWrapper {
                         HostInfoStatus {
