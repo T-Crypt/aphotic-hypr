@@ -158,6 +158,15 @@ Item {
             popouts.currentName = id.toLowerCase();
             popouts.currentCenter = root.centerAlong(ch.item as Item) ?? 0;
             popouts.hasCurrent = true;
+        } else {
+            // Entries with no popout of their own (clock, logo, workspaces,
+            // power) -- or one of the ones above with its Config.bar.popouts
+            // flag off -- fell through every branch above with nothing to
+            // clear hasCurrent, so whatever popout was showing for
+            // whichever entry the cursor last hovered stayed stuck on
+            // screen (e.g. hovering the clock kept the settings popout
+            // open if settings was the last entry actually handled here).
+            popouts.hasCurrent = false;
         }
     }
 

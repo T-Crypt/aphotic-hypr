@@ -296,7 +296,7 @@ Wallpaper-driven color generation, applied consistently across the stack:
 - Quickshell (bar, launcher, notifications, OSD, lock, session menu, dashboard)
 - Cava
 - Firefox — requires the [Pywalfox extension](https://addons.mozilla.org/en-US/firefox/addon/pywalfox/)
-- VS Code
+- VS Code — requires the [Wal Theme extension](https://marketplace.visualstudio.com/items?itemName=dlasagno.wal-theme) (bundled and installed automatically by `install.sh`, along with setting it as the active color theme) and updates live off `wallust`'s own `~/.cache/wal/colors`/`colors.json` output. If it doesn't pick up a change immediately after a fresh install, reload the VS Code window once — its file watcher needs `~/.cache/wal/` to already exist when it starts
 - GTK — in progress
 
 > [!TIP]
