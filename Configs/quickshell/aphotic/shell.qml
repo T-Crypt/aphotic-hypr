@@ -45,6 +45,7 @@ ShellRoot {
     }
 
     Variants {
+        id: barWindows
         model: Quickshell.screens
 
         BarWindow {
@@ -138,6 +139,16 @@ ShellRoot {
             const win = dashboardWindows.instances[0];
             if (win)
                 win.screenState.dashboard = !win.screenState.dashboard;
+        }
+    }
+
+    IpcHandler {
+        target: "agent"
+
+        function toggle(): void {
+            const win = barWindows.instances[0];
+            if (win)
+                win.screenState.agentPanel = !win.screenState.agentPanel;
         }
     }
 
