@@ -11,7 +11,9 @@ Item {
     required property int barWidth
     required property real windowWidth
     required property real windowHeight
+    required property ScreenState screenState
     readonly property alias flyoutItem: flyout
+    readonly property alias agentFlyoutItem: agentFlyout
     property bool hasCurrent: false
     property string currentName: ""
     property real currentCenter: 0
@@ -176,6 +178,48 @@ Item {
                 default:
                     return null;
                 }
+            }
+        }
+    }
+
+    StyledRect {
+        id: agentFlyout
+
+        visible: opacity > 0
+        opacity: root.screenState.agentPanel ? 1 : 0
+        x: flyout.x
+        y: flyout.y
+        width: agentLoader.item ? agentLoader.item.implicitWidth + Tokens.padding.medium * 2 : 0
+        height: agentLoader.item ? agentLoader.item.implicitHeight + Tokens.padding.medium * 2 : 0
+        radius: Tokens.rounding.medium
+        color: Colours.palette.m3surfaceContainerHigh
+
+        Behavior on width {
+            Anim { type: Anim.Emphasized }
+        }
+        Behavior on height {
+            Anim { type: Anim.Emphasized }
+        }
+        Behavior on opacity {
+            Anim { type: Anim.Emphasized }
+        }
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Colours.palette.m3shadow
+            shadowOpacity: 0.5
+            shadowBlur: 0.5
+            shadowVerticalOffset: 2
+        }
+
+        Loader {
+            id: agentLoader
+
+            anchors.centerIn: parent
+            active: root.screenState.agentPanel
+            sourceComponent: AgentPopout {
+                screenState: root.screenState
             }
         }
     }

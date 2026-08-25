@@ -53,6 +53,9 @@ PanelWindow {
         Region {
             item: popouts.flyoutItem
         }
+        Region {
+            item: popouts.agentFlyoutItem
+        }
     }
 
     anchors.top: Settings.barVertical ? !Settings.barPositionBottom : true
@@ -85,6 +88,7 @@ PanelWindow {
         barWidth: root.barWidth
         windowWidth: root.width
         windowHeight: root.height
+        screenState: root.screenState
     }
 
     BarWrapper {
