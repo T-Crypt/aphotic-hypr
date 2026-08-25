@@ -7,6 +7,7 @@ source "$ROOT_DIR/lib/install/aur.sh"
 source "$ROOT_DIR/lib/install/backup.sh"
 source "$ROOT_DIR/lib/install/wizard.sh"
 source "$ROOT_DIR/lib/install/blackarch.sh"
+source "$ROOT_DIR/lib/install/claude_hooks.sh"
 # sourced libs each set -euo pipefail, which otherwise leaks into this
 # script's shell options since `set` is not scoped to the sourced file
 set +euo pipefail
@@ -341,6 +342,12 @@ main() {
     systemctl --user enable aphotic-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
     echo -e "$CNT - Enabling the agent usage-tracking timer..."
     systemctl --user enable --now aphotic-agent-usage.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-agent-usage.timer; the bar's agent popout will show stale/no usage data until it's enabled manually."
+    echo -e "$CNT - Configuring the Claude Code hook for live agent session tracking..."
+    if command -v jq >/dev/null 2>&1; then
+      configure_claude_code_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/agent_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not update ~/.claude/settings.json; the bar's agent popout will only show session presence/count, not live per-session status. Wire it manually — see docs/AGENT_TRACKING.md."
+    else
+      echo -e "$CWR - jq not found; skipping Claude Code hook setup. Wire it manually — see docs/AGENT_TRACKING.md."
+    fi
 
     # Make sure `aphotic` (and anything else under ~/.local/bin) resolves on
     # PATH without relying on the optional zsh-activation step below, since
