@@ -157,8 +157,6 @@ Item {
                     return batteryComp;
                 case "resources":
                     return resourcesComp;
-                case "claudesessions":
-                    return claudeSessionComp;
                 case "hostinfo":
                     return hostInfoComp;
                 case "pomodoro":
@@ -243,10 +241,6 @@ Item {
     Component {
         id: resourcesComp
         ResourcesPopout {}
-    }
-    Component {
-        id: claudeSessionComp
-        ClaudeSessionPopout {}
     }
     Component {
         id: hostInfoComp
