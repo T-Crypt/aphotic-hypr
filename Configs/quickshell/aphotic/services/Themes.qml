@@ -75,6 +75,22 @@ Singleton {
         return result;
     }
 
+    // The actual apply (wallust + awww, see Wallpapers.setWallpaper) ends
+    // with Colours.qml getting rewritten -- and Quickshell hot-reloads its
+    // *entire* scene graph on any watched QML file changing, Colours.qml
+    // included (see cmd_reload.sh's own comment on this). That reload is
+    // the expensive, visible part, well past what a debounce inside
+    // Wallpapers.qml alone can smooth over. Picking themes in quick
+    // succession -- clicking through the grid, or holding next/prev --
+    // used to kick off one full reload per click, and a second click
+    // landing mid-reload is exactly the "glitchy" symptom reported.
+    // Debouncing the heavy half here means N rapid picks collapse into
+    // one reload for whichever theme the user actually settles on --
+    // activeTheme/activeWallpaper (and so the grid's own highlight) still
+    // update immediately below, every time, so clicking itself never
+    // feels delayed.
+    property var _pendingApply: null
+
     function setTheme(themeName: string, wallpaperFile: string): void {
         const info = themeInfo(themeName);
         if (!info || info.wallpapers.length === 0)
@@ -83,10 +99,27 @@ Singleton {
         const file = wallpaperFile && info.wallpapers.includes(wallpaperFile) ? wallpaperFile : (info.defaultWallpaper ?? info.wallpapers[0]);
         root.activeTheme = themeName;
         root.activeWallpaper = file;
-
-        const fullPath = `${root.awwwDir}/${themeName}/${file}`;
-        Wallpapers.setWallpaper(fullPath, info.backend ?? "", info.palette ?? "", info.colorscheme ?? "", info.style ?? "", info.papirusColor ?? "");
         root._saveState();
+
+        root._pendingApply = {
+            themeName: themeName,
+            file: file,
+            info: info
+        };
+        applyDebounce.restart();
+    }
+
+    Timer {
+        id: applyDebounce
+        interval: 200
+        onTriggered: {
+            const p = root._pendingApply;
+            if (!p)
+                return;
+            root._pendingApply = null;
+            const fullPath = `${root.awwwDir}/${p.themeName}/${p.file}`;
+            Wallpapers.setWallpaper(fullPath, p.info.backend ?? "", p.info.palette ?? "", p.info.colorscheme ?? "", p.info.style ?? "", p.info.papirusColor ?? "");
+        }
     }
 
     function setWallpaperInActiveTheme(file: string): void {

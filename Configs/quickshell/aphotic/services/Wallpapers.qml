@@ -27,6 +27,10 @@ Singleton {
         onFileChanged: root.generation++
     }
 
+    // Bumped on every setWallpaper() call, and stamped onto wallustProc
+    // right before each exec() -- see the onExited guard below for why.
+    property int _generation: 0
+
     // backend/palette let a theme's theme.toml pin a specific wallust
     // engine mode (see themes/THEME_SPEC.md) for wallpapers that need
     // something other than Configs/wallust/wallust.toml's own defaults --
@@ -39,16 +43,29 @@ Singleton {
     // wallpaper happens to contain -- when set, backend/palette (image-
     // generation-only knobs) are ignored, mirroring cmd_theme.sh's
     // _aphotic_theme_apply so the CLI and this QML path stay in sync.
+    //
+    // Picking themes in quick succession (the Appearance pane's grid has
+    // no per-click cooldown, by design -- clicking should always feel
+    // instant) used to launch a fresh, independent `awww img` transition
+    // and a fresh, independent `wallust run` on every single click via
+    // Quickshell.execDetached, with no way to cancel the previous one.
+    // Two wallust runs racing meant two processes writing the same
+    // Colours.qml/Kvantum/GTK/cava/swaylock output files concurrently --
+    // whichever finished last "won" per file, so a fast double-pick could
+    // land on a torn mix of both themes' colors (the actual "glitchy"
+    // symptom) -- and two `awww img` calls raced two wipe transitions on
+    // screen at once. Routing both through a real Process + exec() fixes
+    // this for free: exec() on an already-running Process kills it and
+    // launches the new command immediately (same convention already
+    // relied on by Settings.qml's cursorApplyProc), so only the
+    // most-recently-clicked theme's processes ever survive to write
+    // anything or animate anything.
     function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var): void {
-        Quickshell.execDetached(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
-        Quickshell.execDetached(["cp", path, root.path]);
+        root._generation++;
 
-        // Chained in one shell command (not two separate execDetached
-        // calls) so the plugin theme-hook run only fires once wallust has
-        // actually finished and re-templated palette.json -- execDetached
-        // has no completion signal, so two independent calls here would
-        // race the hook against wallust still running, reading last
-        // theme's stale palette instead of the one just generated.
+        awwwProc.exec(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
+        cpProc.exec(["cp", path, root.path]);
+
         let wallustCmd;
         if (colorscheme) {
             wallustCmd = ["wallust", "cs", colorscheme, "--format", "pywal"];
@@ -61,8 +78,8 @@ Singleton {
             if (style)
                 wallustCmd.push("-S", style);
         }
-        const quoted = wallustCmd.map(a => `'${a.replace(/'/g, "'\\''")}'`).join(" ");
-        Quickshell.execDetached(["sh", "-c", `${quoted} && aphotic plugin run-theme-hooks`]);
+        wallustProc.taggedGeneration = root._generation;
+        wallustProc.exec(wallustCmd);
 
         // Folder-icon accent pin -- see cmd_theme.sh's _aphotic_theme_apply
         // for why this needs sudo and only no-ops silently (same class of
@@ -72,5 +89,36 @@ Singleton {
 
         // Best-effort — see cmd_sddm.sh; no-ops without passwordless sudo.
         Quickshell.execDetached(["aphotic", "sddm", "sync"]);
+    }
+
+    Process {
+        id: awwwProc
+    }
+
+    Process {
+        id: cpProc
+    }
+
+    // Only the theme-hook run (and, transitively, anything reading
+    // palette.json) needs to wait for wallust to actually finish -- that
+    // used to be `&&`-chained into one shell command specifically because
+    // execDetached has no completion signal at all. A real Process does,
+    // so this now runs off onExited instead, with the generation tag
+    // guarding against a stale (superseded-and-killed) run's onExited
+    // firing after a newer pick's process object has already moved on --
+    // if _generation has advanced past what this run was tagged with,
+    // a later exec() already preempted it and that later run's own
+    // onExited will fire the hooks once *it* actually finishes.
+    Process {
+        id: wallustProc
+
+        property int taggedGeneration: 0
+
+        onExited: exitCode => {
+            if (wallustProc.taggedGeneration !== root._generation)
+                return;
+            if (exitCode === 0)
+                Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
+        }
     }
 }
