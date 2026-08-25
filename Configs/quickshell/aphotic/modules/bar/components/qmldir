@@ -1,5 +1,6 @@
 module qs.modules.bar.components
 ActiveWindow 1.0 ActiveWindow.qml
+AgentIndicator 1.0 AgentIndicator.qml
 Clock 1.0 Clock.qml
 Media 1.0 Media.qml
 OsIcon 1.0 OsIcon.qml

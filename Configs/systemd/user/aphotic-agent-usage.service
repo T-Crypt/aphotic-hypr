@@ -1,0 +1,6 @@
+[Unit]
+Description=Aphotic agent usage record updater
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env aphotic agent usage-update

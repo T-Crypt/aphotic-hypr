@@ -38,6 +38,8 @@ Singleton {
     // across every skin.
     property string barSkin: "pill"
 
+    property string agentSelectedProvider: "claude"
+
     property bool osdEnabled: Config.osd.enabled
     property int osdHideDelay: Config.osd.hideDelay
     property bool osdEnableBrightness: Config.osd.enableBrightness
@@ -109,6 +111,7 @@ Singleton {
             barVertical: root.barVertical,
             barPositionBottom: root.barPositionBottom,
             barSkin: root.barSkin,
+            agentSelectedProvider: root.agentSelectedProvider,
             osdEnabled: root.osdEnabled,
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
@@ -301,6 +304,8 @@ Singleton {
                     root.barPositionBottom = data.barPositionBottom;
                 if (typeof data.barSkin === "string")
                     root.barSkin = data.barSkin;
+                if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "ollama"].includes(data.agentSelectedProvider))
+                    root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.osdEnabled === "boolean")
                     root.osdEnabled = data.osdEnabled;
                 if (typeof data.osdHideDelay === "number")

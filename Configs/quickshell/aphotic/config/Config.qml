@@ -103,6 +103,7 @@ QtObject {
                 { id: "clock", enabled: true },
                 { id: "statusIcons", enabled: true },
                 { id: "settings", enabled: true },
+                { id: "agent", enabled: true },
                 { id: "power", enabled: true }
             ]
         }
