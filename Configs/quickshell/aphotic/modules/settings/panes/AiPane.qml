@@ -438,6 +438,113 @@ ColumnLayout {
         }
     }
 
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+        visible: AiConfig.assistantEnabled
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Aphotic Assistant")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsRow {
+                icon: "smart_toy"
+                label: qsTr("Installed model")
+                description: AiConfig.assistantModel.length > 0 ? AiConfig.assistantModel : qsTr("Unknown")
+
+                RowLayout {
+                    spacing: Tokens.spacing.small
+
+                    StyledRect {
+                        Layout.preferredWidth: reinstallLabel.implicitWidth + Tokens.padding.large * 2
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        opacity: AiProviders.pulling ? 0.5 : 1
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        StyledText {
+                            id: reinstallLabel
+                            anchors.centerIn: parent
+                            text: AiProviders.pulling ? qsTr("Pulling…") : qsTr("Reinstall")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            showHoverBackground: !AiProviders.pulling
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: !AiProviders.pulling
+                            onClicked: AiProviders.pullModel(AiConfig.assistantModel)
+                        }
+                    }
+
+                    StyledRect {
+                        id: uninstallButton
+
+                        property bool confirming: false
+
+                        Layout.preferredWidth: uninstallLabel.implicitWidth + Tokens.padding.large * 2
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        color: uninstallButton.confirming ? Colours.palette.m3error : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        Behavior on color {
+                            CAnim {}
+                        }
+
+                        StyledText {
+                            id: uninstallLabel
+                            anchors.centerIn: parent
+                            text: uninstallButton.confirming ? qsTr("Confirm remove?") : qsTr("Uninstall")
+                            color: uninstallButton.confirming ? Colours.contrastOn(Colours.palette.m3error) : Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (uninstallButton.confirming) {
+                                    AiProviders.deleteModel(AiConfig.assistantModel);
+                                    if (AiConfig.activeProvider === "assistant")
+                                        AiConfig.activeProvider = "ollama";
+                                    AiConfig.assistantEnabled = false;
+                                    AiConfig.assistantModel = "";
+                                    AiConfig.assistantInstalledAt = "";
+                                    uninstallButton.confirming = false;
+                                } else {
+                                    uninstallButton.confirming = true;
+                                    uninstallResetTimer.restart();
+                                }
+                            }
+                        }
+
+                        Timer {
+                            id: uninstallResetTimer
+                            interval: 4000
+                            onTriggered: uninstallButton.confirming = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     component ApiKeyRow: SettingsRow {
         id: keyRow
 

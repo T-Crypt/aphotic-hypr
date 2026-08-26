@@ -13,17 +13,34 @@ import qs.services.ai
 Singleton {
     id: root
 
-    readonly property var providers: [
+    readonly property var _baseProviders: [
         { id: "ollama", label: "Ollama", requiresApiKey: false },
         { id: "claude", label: "Claude", requiresApiKey: true },
         { id: "gemini", label: "Gemini", requiresApiKey: true },
         { id: "chatgpt", label: "ChatGPT", requiresApiKey: true }
     ]
+    // Pinned to the top of the list, and only present at all, once
+    // installed -- there's no "not installed yet" pill to click; install.sh
+    // is the only install path (NVIDIA-gated, opt-in), see AiConfig.qml.
+    readonly property var providers: AiConfig.assistantEnabled ? [{ id: "assistant", label: "Aphotic Assistant", requiresApiKey: false }].concat(root._baseProviders) : root._baseProviders
 
     readonly property bool ollamaAvailable: AiConfig.ollamaHostConfigured
+    readonly property bool assistantAvailable: AiConfig.assistantEnabled && AiConfig.ollamaHostConfigured
     readonly property bool claudeAvailable: AiKeys.hasAnthropicKey
     readonly property bool geminiAvailable: AiKeys.hasGeminiKey
     readonly property bool chatgptAvailable: AiKeys.hasOpenaiKey
+
+    readonly property string assistantPromptPath: `${Quickshell.env("HOME")}/.config/aphotic/assistant-system-prompt.md`
+    property string assistantSystemPrompt: ""
+
+    FileView {
+        id: assistantPromptFile
+
+        path: root.assistantPromptPath
+        watchChanges: true
+        onLoaded: root.assistantSystemPrompt = text()
+        onLoadFailed: error => root.assistantSystemPrompt = ""
+    }
 
     property var ollamaModels: []
     property var ollamaRunningModels: []
@@ -124,6 +141,7 @@ Singleton {
     function isAvailable(providerId: string): bool {
         switch (providerId) {
         case "ollama": return root.ollamaAvailable;
+        case "assistant": return root.assistantAvailable;
         case "claude": return root.claudeAvailable;
         case "gemini": return root.geminiAvailable;
         case "chatgpt": return root.chatgptAvailable;
@@ -153,7 +171,7 @@ Singleton {
             return;
 
         const provider = AiConfig.activeProvider;
-        if (provider === "ollama" && !AiConfig.ollamaHostConfigured) {
+        if ((provider === "ollama" || provider === "assistant") && !AiConfig.ollamaHostConfigured) {
             root.errorReceived(qsTr("No Ollama host configured. Set it in the model pill, or set OLLAMA_BASE_URL, to enable."));
             return;
         }
@@ -185,13 +203,24 @@ Singleton {
                 "-d", JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: text }] })];
             chatgptProc.running = true;
             break;
-        default:
+        default: {
+            // Reached by both "ollama" and "assistant" -- the Assistant is
+            // a persona/preset layered on this same Ollama call (pinned
+            // model + a fixed system prompt), not a separate provider
+            // type. root.assistantSystemPrompt is blank until install.sh's
+            // setup_assistant renders it, so a manually-set
+            // assistantEnabled with no rendered file just behaves like
+            // plain Ollama with no system message.
+            const isAssistant = provider === "assistant";
+            const model = isAssistant ? AiConfig.assistantModel : AiConfig.ollamaModel;
+            const messages = isAssistant && root.assistantSystemPrompt.length > 0 ? [{ role: "system", content: root.assistantSystemPrompt }, { role: "user", content: text }] : [{ role: "user", content: text }];
             ollamaProc.command = ["curl", "-s", "-m", "30",
                 `${AiConfig.ollamaHost}/v1/chat/completions`,
                 "-H", "content-type: application/json",
-                "-d", JSON.stringify({ model: AiConfig.ollamaModel, messages: [{ role: "user", content: text }] })];
+                "-d", JSON.stringify({ model, messages })];
             ollamaProc.running = true;
             break;
+        }
         }
     }
 
