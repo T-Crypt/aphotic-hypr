@@ -438,6 +438,346 @@ ColumnLayout {
         }
     }
 
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Hardware Advisor")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        StyledText {
+            visible: LlmFit.checked && !LlmFit.available
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: qsTr("⚠ llmfit not found. Add it via the 'ai' profile layer, or run: curl -fsSL https://llmfit.axjns.dev/install.sh | sh")
+            color: Colours.palette.m3error
+            font: Tokens.font.label.small
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+            visible: LlmFit.available
+
+            SettingsRow {
+                icon: "insights"
+                label: qsTr("Recommended model for this system")
+                description: LlmFit.scanning ? qsTr("Scanning CPU/GPU…") : qsTr("Runs llmfit against your detected hardware")
+
+                StyledRect {
+                    Layout.preferredWidth: scanLabel.implicitWidth + Tokens.padding.large * 2
+                    Layout.preferredHeight: 32
+                    radius: Tokens.rounding.full
+                    opacity: LlmFit.scanning ? 0.5 : 1
+                    color: Colours.palette.m3primary
+
+                    StyledText {
+                        id: scanLabel
+                        anchors.centerIn: parent
+                        text: LlmFit.scanning ? qsTr("Scanning…") : qsTr("Scan")
+                        color: Colours.contrastOn(Colours.palette.m3primary)
+                        font: Tokens.font.label.small
+                    }
+
+                    StateLayer {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        showHoverBackground: !LlmFit.scanning
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: !LlmFit.scanning
+                        onClicked: LlmFit.scan()
+                    }
+                }
+            }
+        }
+
+        StyledText {
+            visible: LlmFit.available && LlmFit.errorText.length > 0
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: `⚠ ${LlmFit.errorText}`
+            color: Colours.palette.m3error
+            font: Tokens.font.label.small
+        }
+
+        StyledText {
+            visible: LlmFit.available && LlmFit.systemInfo !== null
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: LlmFit.systemInfo ? qsTr("%1 · %2 cores · %3 GB RAM · %4").arg(LlmFit.systemInfo.cpu_name).arg(LlmFit.systemInfo.cpu_cores).arg(LlmFit.systemInfo.total_ram_gb).arg(LlmFit.systemInfo.has_gpu ? `${LlmFit.systemInfo.gpu_name} (${LlmFit.systemInfo.gpu_vram_gb} GB)` : qsTr("no GPU detected")) : ""
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.small
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+            visible: LlmFit.available && LlmFit.recommendations.length > 0
+
+            Repeater {
+                model: LlmFit.recommendations
+
+                SettingsRow {
+                    id: recRow
+
+                    required property var modelData
+                    readonly property string tag: LlmFit.guessOllamaTag(recRow.modelData)
+
+                    icon: "smart_toy"
+                    label: `${recRow.modelData.name} (${recRow.modelData.best_quant})`
+                    description: qsTr("%1 fit · ~%2 tok/s · %3 params · score %4/100").arg(recRow.modelData.fit_level).arg(Math.round(recRow.modelData.estimated_tps)).arg(recRow.modelData.parameter_count).arg(Math.round(recRow.modelData.score))
+
+                    StyledRect {
+                        Layout.preferredWidth: pullLabel.implicitWidth + Tokens.padding.large * 2
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        visible: recRow.tag.length > 0
+                        opacity: AiProviders.pulling ? 0.5 : 1
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        StyledText {
+                            id: pullLabel
+                            anchors.centerIn: parent
+                            text: qsTr("Pull \"%1\"").arg(recRow.tag)
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            showHoverBackground: !AiProviders.pulling
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: !AiProviders.pulling
+                            onClicked: AiProviders.pullModel(recRow.tag)
+                        }
+                    }
+                }
+            }
+        }
+
+        StyledText {
+            visible: LlmFit.available && LlmFit.recommendations.length > 0
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: qsTr("Pull tags are a best-effort guess from the model name, not a lookup -- verify against Ollama Models above if a pull doesn't find a match.")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.small
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Model Storage")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsRow {
+                icon: "folder"
+                label: qsTr("Ollama models")
+                description: ModelStorage.ollamaDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ollamaDir).arg(ModelStorage.ollamaDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ollamaDir)
+
+                RowLayout {
+                    spacing: Tokens.spacing.small
+
+                    StyledRect {
+                        visible: !ModelStorage.ollamaDirExists
+                        Layout.preferredWidth: createOllamaLabel.implicitWidth + Tokens.padding.large * 2
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        color: Colours.palette.m3primary
+
+                        StyledText {
+                            id: createOllamaLabel
+                            anchors.centerIn: parent
+                            text: qsTr("Create")
+                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            font: Tokens.font.label.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: ModelStorage.createOllamaDir()
+                        }
+                    }
+
+                    StyledRect {
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
+                        radius: Tokens.rounding.full
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            text: "refresh"
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: ModelStorage.refreshOllama()
+                        }
+                    }
+                }
+            }
+
+            SettingsRow {
+                icon: "folder_open"
+                label: qsTr("GGUF directory")
+                description: ModelStorage.ggufDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ggufDir).arg(ModelStorage.ggufDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ggufDir)
+
+                RowLayout {
+                    spacing: Tokens.spacing.small
+
+                    StyledRect {
+                        Layout.preferredWidth: 200
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        TextInput {
+                            id: ggufDirInput
+
+                            anchors.fill: parent
+                            anchors.leftMargin: Tokens.padding.medium
+                            anchors.rightMargin: Tokens.padding.medium
+                            verticalAlignment: TextInput.AlignVCenter
+                            clip: true
+                            font: Tokens.font.label.small
+                            color: Colours.palette.m3onSurface
+                            text: Settings.ggufModelsDir
+
+                            Keys.onReturnPressed: {
+                                const value = ggufDirInput.text.trim();
+                                if (value.length > 0)
+                                    Settings.ggufModelsDir = value;
+                            }
+                        }
+                    }
+
+                    StyledRect {
+                        visible: !ModelStorage.ggufDirExists
+                        Layout.preferredWidth: createGgufLabel.implicitWidth + Tokens.padding.large * 2
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        color: Colours.palette.m3primary
+
+                        StyledText {
+                            id: createGgufLabel
+                            anchors.centerIn: parent
+                            text: qsTr("Create")
+                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            font: Tokens.font.label.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: ModelStorage.createGgufDir()
+                        }
+                    }
+
+                    StyledRect {
+                        visible: ModelStorage.ggufDirExists
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
+                        radius: Tokens.rounding.full
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            text: "refresh"
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: ModelStorage.refreshGguf()
+                        }
+                    }
+                }
+            }
+        }
+
+        StyledText {
+            visible: ModelStorage.ggufDirExists && ModelStorage.ggufFiles.length === 0
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: qsTr("No .gguf files in this directory yet.")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.small
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+            visible: ModelStorage.ggufDirExists && ModelStorage.ggufFiles.length > 0
+
+            Repeater {
+                model: ModelStorage.ggufFiles
+
+                SettingsRow {
+                    id: ggufRow
+
+                    required property var modelData
+
+                    icon: "description"
+                    label: ggufRow.modelData.name
+                    description: ggufRow.modelData.sizeText
+
+                    MaterialIcon {
+                        text: "delete"
+                        color: Colours.palette.m3error
+                        fontStyle: Tokens.font.icon.small
+
+                        StateLayer {
+                            anchors.fill: parent
+                            anchors.margins: -Tokens.padding.small
+                            radius: Tokens.rounding.full
+                            onClicked: ModelStorage.deleteGgufFile(ggufRow.modelData.name)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     component ApiKeyRow: SettingsRow {
         id: keyRow
 

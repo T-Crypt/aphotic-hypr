@@ -6,6 +6,8 @@ singleton Colours 1.0 Colours.qml
 singleton EmojiList 1.0 EmojiList.qml
 singleton HostInfo 1.0 HostInfo.qml
 singleton Hypr 1.0 Hypr.qml
+singleton LlmFit 1.0 LlmFit.qml
+singleton ModelStorage 1.0 ModelStorage.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
 singleton PinnedSnippets 1.0 PinnedSnippets.qml
