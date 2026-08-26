@@ -7,6 +7,7 @@ singleton DoNotDisturb 1.0 DoNotDisturb.qml
 singleton EmojiList 1.0 EmojiList.qml
 singleton HostInfo 1.0 HostInfo.qml
 singleton Hypr 1.0 Hypr.qml
+singleton LauncherUsage 1.0 LauncherUsage.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
 singleton PinnedSnippets 1.0 PinnedSnippets.qml

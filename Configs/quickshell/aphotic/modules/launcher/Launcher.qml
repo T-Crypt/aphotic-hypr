@@ -273,7 +273,13 @@ Item {
                     default: {
                         const all = DesktopEntries.applications.values.filter(a => !a.noDisplay);
                         const filtered = root.query.length === 0 ? all : all.filter(a => a.name.toLowerCase().includes(root.query));
-                        return filtered.sort((a, b) => a.name.localeCompare(b.name)).slice(0, Tokens.sizes.launcher.maxShown);
+                        // Frequency first, alphabetical as the tiebreak (was
+                        // purely alphabetical) -- there's no fuzzy-match
+                        // relevance scoring here to begin with (just the
+                        // substring filter above), so this can't outrank an
+                        // actual query match, only make ties among already-
+                        // matched results smarter.
+                        return filtered.sort((a, b) => (LauncherUsage.countFor(b.id) - LauncherUsage.countFor(a.id)) || a.name.localeCompare(b.name)).slice(0, Tokens.sizes.launcher.maxShown);
                     }
                     }
                 }
@@ -325,6 +331,7 @@ Item {
                         modelData: delegateLoader.modelData
                         screenState: root.screenState
                         function execute(): void {
+                            LauncherUsage.recordLaunch(modelData.id);
                             modelData.execute();
                         }
                     }
