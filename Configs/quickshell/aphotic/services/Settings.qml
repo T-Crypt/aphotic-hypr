@@ -40,6 +40,12 @@ Singleton {
 
     property string agentSelectedProvider: "claude"
 
+    // Suppresses notification popups only -- notifications still land in
+    // Notifs.list (history), see services/Notifs.qml. Auto-engaged/released
+    // by services/DoNotDisturb.qml's Pomodoro connection; persisted here so
+    // a mid-DND SUPER+B shell restart doesn't silently drop it.
+    property bool dndEnabled: false
+
     property bool osdEnabled: Config.osd.enabled
     property int osdHideDelay: Config.osd.hideDelay
     property bool osdEnableBrightness: Config.osd.enableBrightness
@@ -61,6 +67,7 @@ Singleton {
     property string statusIconPerformanceColor: ""
     property string statusIconHostInfoColor: ""
     property string statusIconPomodoroColor: ""
+    property string statusIconDndColor: ""
     property string cursorTheme: "Bibata-Modern-Ice"
     property int cursorSize: 20
     // Papirus family, not an arbitrary icon theme, matches cmd_theme.sh's
@@ -111,6 +118,7 @@ Singleton {
             barPositionBottom: root.barPositionBottom,
             barSkin: root.barSkin,
             agentSelectedProvider: root.agentSelectedProvider,
+            dndEnabled: root.dndEnabled,
             osdEnabled: root.osdEnabled,
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
@@ -123,6 +131,7 @@ Singleton {
             statusIconPerformanceColor: root.statusIconPerformanceColor,
             statusIconHostInfoColor: root.statusIconHostInfoColor,
             statusIconPomodoroColor: root.statusIconPomodoroColor,
+            statusIconDndColor: root.statusIconDndColor,
             cursorTheme: root.cursorTheme,
             cursorSize: root.cursorSize,
             iconTheme: root.iconTheme,
@@ -218,6 +227,7 @@ Singleton {
     onBarVerticalChanged: root._saveState()
     onBarPositionBottomChanged: root._saveState()
     onBarSkinChanged: root._saveState()
+    onDndEnabledChanged: root._saveState()
     onOsdEnabledChanged: root._saveState()
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
@@ -230,6 +240,7 @@ Singleton {
     onStatusIconPerformanceColorChanged: root._saveState()
     onStatusIconHostInfoColorChanged: root._saveState()
     onStatusIconPomodoroColorChanged: root._saveState()
+    onStatusIconDndColorChanged: root._saveState()
     onCursorThemeChanged: {
         root._saveState();
         root._applyCursor();
@@ -303,6 +314,8 @@ Singleton {
                     root.barSkin = data.barSkin;
                 if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "ollama"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
+                if (typeof data.dndEnabled === "boolean")
+                    root.dndEnabled = data.dndEnabled;
                 if (typeof data.osdEnabled === "boolean")
                     root.osdEnabled = data.osdEnabled;
                 if (typeof data.osdHideDelay === "number")
@@ -327,6 +340,8 @@ Singleton {
                     root.statusIconHostInfoColor = data.statusIconHostInfoColor;
                 if (typeof data.statusIconPomodoroColor === "string")
                     root.statusIconPomodoroColor = data.statusIconPomodoroColor;
+                if (typeof data.statusIconDndColor === "string")
+                    root.statusIconDndColor = data.statusIconDndColor;
                 if (typeof data.cursorTheme === "string")
                     root.cursorTheme = data.cursorTheme;
                 if (typeof data.cursorSize === "number")
