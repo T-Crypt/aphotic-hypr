@@ -24,6 +24,12 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dashboard tog
 hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c aphotic ipc call settings toggle"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifs clear"))
 
+-- Intelligence quick-chat popout -- a fast, always-ready inference overlay
+-- distinct from the Command Center's AI Chat tab (SUPER+D), with its own
+-- persisted session history. SHIFT+A rather than plain A since mainMod+A
+-- is already the launcher.
+hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("qs -c aphotic ipc call intelligence toggle"))
+
 -- Quickshell area picker (drag-select with client snapping + freeze preview) —
 -- distinct from the raw grim/slurp/swappy bind on mainMod + S above, which
 -- stays as the simple no-frills fallback.
