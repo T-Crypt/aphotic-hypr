@@ -10,6 +10,21 @@ RowLayout {
     required property ScreenState screenState
     property string currentCategory: "appearance"
 
+    // Wallpaper auto-cycle (services/WallpaperCycle.qml) pauses while this
+    // is true -- centralized here rather than on the panes themselves,
+    // since paneLoader (below) has no `active:` guard and stays mounted
+    // on whatever category was last shown even after the Settings window
+    // itself closes, so a pane's own Component.onCompleted/onDestruction
+    // would only fire on category switches, not on the window actually
+    // closing while still on Appearance/Theme Creator.
+    readonly property bool _showingWallpaperPane: root.currentCategory === "appearance" || root.currentCategory === "themeCreator"
+
+    Binding {
+        target: UiPickerState
+        property: "active"
+        value: root.screenState.settings && root._showingWallpaperPane
+    }
+
     readonly property var categories: [
         { id: "appearance", icon: "palette", label: qsTr("Appearance"), description: qsTr("Theme, wallpaper, colors") },
         { id: "themeCreator", icon: "format_paint", label: qsTr("Theme Creator"), description: qsTr("Build a static custom theme") },

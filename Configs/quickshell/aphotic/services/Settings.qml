@@ -46,6 +46,11 @@ Singleton {
     // a mid-DND SUPER+B shell restart doesn't silently drop it.
     property bool dndEnabled: false
 
+    // Advances the wallpaper within the active theme on a Timer (see
+    // services/WallpaperCycle.qml) -- interval in minutes.
+    property bool wallpaperAutoCycleEnabled: false
+    property int wallpaperAutoCycleInterval: 15
+
     property bool osdEnabled: Config.osd.enabled
     property int osdHideDelay: Config.osd.hideDelay
     property bool osdEnableBrightness: Config.osd.enableBrightness
@@ -119,6 +124,8 @@ Singleton {
             barSkin: root.barSkin,
             agentSelectedProvider: root.agentSelectedProvider,
             dndEnabled: root.dndEnabled,
+            wallpaperAutoCycleEnabled: root.wallpaperAutoCycleEnabled,
+            wallpaperAutoCycleInterval: root.wallpaperAutoCycleInterval,
             osdEnabled: root.osdEnabled,
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
@@ -228,6 +235,8 @@ Singleton {
     onBarPositionBottomChanged: root._saveState()
     onBarSkinChanged: root._saveState()
     onDndEnabledChanged: root._saveState()
+    onWallpaperAutoCycleEnabledChanged: root._saveState()
+    onWallpaperAutoCycleIntervalChanged: root._saveState()
     onOsdEnabledChanged: root._saveState()
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
@@ -316,6 +325,10 @@ Singleton {
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.dndEnabled === "boolean")
                     root.dndEnabled = data.dndEnabled;
+                if (typeof data.wallpaperAutoCycleEnabled === "boolean")
+                    root.wallpaperAutoCycleEnabled = data.wallpaperAutoCycleEnabled;
+                if (typeof data.wallpaperAutoCycleInterval === "number")
+                    root.wallpaperAutoCycleInterval = data.wallpaperAutoCycleInterval;
                 if (typeof data.osdEnabled === "boolean")
                     root.osdEnabled = data.osdEnabled;
                 if (typeof data.osdHideDelay === "number")
