@@ -438,6 +438,188 @@ ColumnLayout {
         }
     }
 
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Intelligence")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsToggleRow {
+                label: qsTr("Quick-chat popout")
+                description: qsTr("SUPER+Shift+A — a fast overlay separate from the AI Chat tab above")
+                checked: Settings.intelligenceEnabled
+                onToggled: state => Settings.intelligenceEnabled = state
+            }
+
+            SettingsRow {
+                icon: "smart_toy"
+                label: qsTr("Default provider")
+                description: qsTr("Used for new Intelligence sessions — blank follows Active above")
+
+                RowLayout {
+                    spacing: Tokens.spacing.small
+
+                    Repeater {
+                        model: [{ id: "", label: qsTr("Same as Active") }, ...AiProviders.providers]
+
+                        StyledRect {
+                            id: defaultProviderPill
+
+                            required property var modelData
+                            readonly property bool active: defaultProviderPill.modelData.id === Settings.intelligenceDefaultProvider
+
+                            Layout.preferredHeight: 28
+                            Layout.preferredWidth: defaultProviderLabel.implicitWidth + Tokens.padding.medium * 2
+                            radius: Tokens.rounding.full
+                            color: defaultProviderPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                            StyledText {
+                                id: defaultProviderLabel
+                                anchors.centerIn: parent
+                                text: defaultProviderPill.modelData.label
+                                color: defaultProviderPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                font: Tokens.font.label.small
+                            }
+
+                            StateLayer {
+                                anchors.fill: parent
+                                radius: parent.radius
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: Settings.intelligenceDefaultProvider = defaultProviderPill.modelData.id
+                            }
+                        }
+                    }
+                }
+            }
+
+            SettingsRow {
+                icon: "memory"
+                label: qsTr("Default model")
+                description: qsTr("Ollama-only — blank follows the Active model above")
+
+                StyledRect {
+                    Layout.preferredWidth: 160
+                    Layout.preferredHeight: 32
+                    radius: Tokens.rounding.full
+                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                    TextInput {
+                        id: defaultModelInput
+
+                        anchors.fill: parent
+                        anchors.leftMargin: Tokens.padding.medium
+                        anchors.rightMargin: Tokens.padding.medium
+                        verticalAlignment: TextInput.AlignVCenter
+                        clip: true
+                        font: Tokens.font.label.small
+                        color: Colours.palette.m3onSurface
+                        text: Settings.intelligenceDefaultModel
+
+                        Keys.onReturnPressed: Settings.intelligenceDefaultModel = defaultModelInput.text.trim()
+
+                        StyledText {
+                            visible: defaultModelInput.text.length === 0
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("Same as Active")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+                    }
+                }
+            }
+
+            SettingsRow {
+                icon: "auto_delete"
+                label: qsTr("Session limits")
+                description: qsTr("Older or excess sessions are pruned automatically — 0 disables a limit")
+
+                RowLayout {
+                    spacing: Tokens.spacing.small
+
+                    StyledRect {
+                        Layout.preferredWidth: 60
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        TextInput {
+                            id: maxSessionsInput
+
+                            anchors.fill: parent
+                            horizontalAlignment: TextInput.AlignHCenter
+                            verticalAlignment: TextInput.AlignVCenter
+                            validator: IntValidator {
+                                bottom: 0
+                                top: 999
+                            }
+                            font: Tokens.font.label.small
+                            color: Colours.palette.m3onSurface
+                            text: Settings.intelligenceMaxSessions.toString()
+
+                            Keys.onReturnPressed: {
+                                const value = parseInt(maxSessionsInput.text, 10);
+                                if (!isNaN(value))
+                                    Settings.intelligenceMaxSessions = value;
+                            }
+                        }
+                    }
+
+                    StyledText {
+                        text: qsTr("max sessions")
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.small
+                    }
+
+                    StyledRect {
+                        Layout.preferredWidth: 60
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        TextInput {
+                            id: autoPruneInput
+
+                            anchors.fill: parent
+                            horizontalAlignment: TextInput.AlignHCenter
+                            verticalAlignment: TextInput.AlignVCenter
+                            validator: IntValidator {
+                                bottom: 0
+                                top: 999
+                            }
+                            font: Tokens.font.label.small
+                            color: Colours.palette.m3onSurface
+                            text: Settings.intelligenceAutoPruneDays.toString()
+
+                            Keys.onReturnPressed: {
+                                const value = parseInt(autoPruneInput.text, 10);
+                                if (!isNaN(value))
+                                    Settings.intelligenceAutoPruneDays = value;
+                            }
+                        }
+                    }
+
+                    StyledText {
+                        text: qsTr("days old")
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.small
+                    }
+                }
+            }
+        }
+    }
+
     component ApiKeyRow: SettingsRow {
         id: keyRow
 

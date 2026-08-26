@@ -31,16 +31,18 @@ ColumnLayout {
             return;
         root._appendMessage("user", text);
         input.text = "";
-        AiProviders.sendMessage(text);
+        AiProviders.sendMessage("dashboard", AiConfig.activeProvider, AiConfig.ollamaModel, text);
     }
 
     Connections {
         target: AiProviders
-        function onResponseReceived(text) {
-            root._appendMessage("assistant", text);
+        function onResponseReceived(requestId, text) {
+            if (requestId === "dashboard")
+                root._appendMessage("assistant", text);
         }
-        function onErrorReceived(message) {
-            root._appendMessage("assistant", `⚠ ${message}`);
+        function onErrorReceived(requestId, message) {
+            if (requestId === "dashboard")
+                root._appendMessage("assistant", `⚠ ${message}`);
         }
     }
 

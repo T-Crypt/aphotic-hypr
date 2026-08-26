@@ -1,0 +1,7 @@
+module qs.modules.intelligence
+IntelligenceChatView 1.0 IntelligenceChatView.qml
+IntelligenceContent 1.0 IntelligenceContent.qml
+IntelligenceHeader 1.0 IntelligenceHeader.qml
+IntelligenceInput 1.0 IntelligenceInput.qml
+IntelligenceSessionList 1.0 IntelligenceSessionList.qml
+IntelligenceWindow 1.0 IntelligenceWindow.qml

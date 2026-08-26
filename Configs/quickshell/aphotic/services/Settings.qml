@@ -40,6 +40,18 @@ Singleton {
 
     property string agentSelectedProvider: "claude"
 
+    property bool intelligenceEnabled: true
+    // "" = inherit AiConfig.activeProvider/ollamaModel for new sessions --
+    // non-empty overrides it, same "" = default convention as
+    // accentColorOverride above. Only affects sessions created after the
+    // change; existing sessions keep whatever provider/model they were
+    // created with.
+    property string intelligenceDefaultProvider: ""
+    property string intelligenceDefaultModel: ""
+    property int intelligenceMaxSessions: 50
+    // 0 = never auto-prune by age.
+    property int intelligenceAutoPruneDays: 30
+
     property bool osdEnabled: Config.osd.enabled
     property int osdHideDelay: Config.osd.hideDelay
     property bool osdEnableBrightness: Config.osd.enableBrightness
@@ -132,7 +144,12 @@ Singleton {
             idleSuspendEnabled: root.idleSuspendEnabled,
             idleSuspendTimeout: root.idleSuspendTimeout,
             projectRoots: root.projectRoots,
-            workspaceProfiles: root.workspaceProfiles
+            workspaceProfiles: root.workspaceProfiles,
+            intelligenceEnabled: root.intelligenceEnabled,
+            intelligenceDefaultProvider: root.intelligenceDefaultProvider,
+            intelligenceDefaultModel: root.intelligenceDefaultModel,
+            intelligenceMaxSessions: root.intelligenceMaxSessions,
+            intelligenceAutoPruneDays: root.intelligenceAutoPruneDays
         }, null, 2));
     }
 
@@ -264,6 +281,11 @@ Singleton {
     }
     onProjectRootsChanged: root._saveState()
     onWorkspaceProfilesChanged: root._saveState()
+    onIntelligenceEnabledChanged: root._saveState()
+    onIntelligenceDefaultProviderChanged: root._saveState()
+    onIntelligenceDefaultModelChanged: root._saveState()
+    onIntelligenceMaxSessionsChanged: root._saveState()
+    onIntelligenceAutoPruneDaysChanged: root._saveState()
 
     FileView {
         id: stateFile
@@ -347,6 +369,16 @@ Singleton {
                     root.projectRoots = data.projectRoots;
                 if (Array.isArray(data.workspaceProfiles))
                     root.workspaceProfiles = data.workspaceProfiles;
+                if (typeof data.intelligenceEnabled === "boolean")
+                    root.intelligenceEnabled = data.intelligenceEnabled;
+                if (typeof data.intelligenceDefaultProvider === "string")
+                    root.intelligenceDefaultProvider = data.intelligenceDefaultProvider;
+                if (typeof data.intelligenceDefaultModel === "string")
+                    root.intelligenceDefaultModel = data.intelligenceDefaultModel;
+                if (typeof data.intelligenceMaxSessions === "number")
+                    root.intelligenceMaxSessions = data.intelligenceMaxSessions;
+                if (typeof data.intelligenceAutoPruneDays === "number")
+                    root.intelligenceAutoPruneDays = data.intelligenceAutoPruneDays;
             } catch (e) {
                 // No state file yet, or malformed -- keep the Config.qml/
                 // GlobalConfig.qml defaults already set above.

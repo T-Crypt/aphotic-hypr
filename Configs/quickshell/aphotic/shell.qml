@@ -12,6 +12,7 @@ import qs.modules.dashboard
 import qs.modules.settings
 import qs.modules.background
 import qs.modules.areapicker
+import qs.modules.intelligence
 
 ShellRoot {
     id: root
@@ -67,6 +68,15 @@ ShellRoot {
         model: Quickshell.screens
 
         SettingsWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
+    Variants {
+        id: intelligenceWindows
+        model: Quickshell.screens
+
+        IntelligenceWindow {
             screenState: root.screenStateFor(modelData)
         }
     }
@@ -159,6 +169,16 @@ ShellRoot {
             const win = settingsWindows.instances[0];
             if (win)
                 win.screenState.settings = !win.screenState.settings;
+        }
+    }
+
+    IpcHandler {
+        target: "intelligence"
+
+        function toggle(): void {
+            const win = intelligenceWindows.instances[0];
+            if (win)
+                win.screenState.intelligence = !win.screenState.intelligence;
         }
     }
 
