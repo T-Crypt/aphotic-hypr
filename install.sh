@@ -8,6 +8,7 @@ source "$ROOT_DIR/lib/install/backup.sh"
 source "$ROOT_DIR/lib/install/wizard.sh"
 source "$ROOT_DIR/lib/install/blackarch.sh"
 source "$ROOT_DIR/lib/install/claude_hooks.sh"
+source "$ROOT_DIR/lib/install/assistant.sh"
 # sourced libs each set -euo pipefail, which otherwise leaks into this
 # script's shell options since `set` is not scoped to the sourced file
 set +euo pipefail
@@ -27,6 +28,7 @@ KEEP_BACKUPS=5
 PROFILE=""
 LAYERS=""
 THEME=""
+ASSISTANT=""
 
 TOTAL_STAGES=7
 STAGE_COLORS=(35 36 33 34 32 36 35)
@@ -66,6 +68,9 @@ Usage: ./install.sh [options]
                                 (exploit enables the BlackArch repo -- see
                                 docs/exploit-layer.md)
   --theme <name>                Theme preset name
+  --with-assistant               Install the Aphotic Assistant (local chatbot,
+                                needs an NVIDIA GPU; implies the ai layer)
+  --no-assistant                 Skip the Aphotic Assistant, don't ask
   --dry-run                     Print planned actions, change nothing
   --no-backup                   Skip backing up existing configs
   --keep-backups <N>             Backups to retain (default: 5)
@@ -79,6 +84,8 @@ while [[ $# -gt 0 ]]; do
     --profile) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; PROFILE="$2"; shift 2 ;;
     --with) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; LAYERS="$2"; shift 2 ;;
     --theme) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; THEME="$2"; shift 2 ;;
+    --with-assistant) ASSISTANT="true"; shift ;;
+    --no-assistant) ASSISTANT="false"; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
     --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
@@ -195,6 +202,9 @@ main() {
     fi
   fi
 
+  ISNVIDIA=$(detect_nvidia)
+  resolve_assistant
+
   local layer_paths=()
   if [[ -n "$LAYERS" ]]; then
     IFS=',' read -ra layer_names <<< "$LAYERS"
@@ -211,13 +221,21 @@ main() {
   main_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --custom-apps "$ROOT_DIR/profiles/custom_apps.lst" --field main) || { echo -e "$CER - Failed to resolve package list (check --profile/--with values)"; exit 1; }
   prep_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --field prep) || { echo -e "$CER - Failed to resolve package list (check --profile/--with values)"; exit 1; }
 
-  ISNVIDIA=$(detect_nvidia)
-
   if [[ "$DRY_RUN" == "1" ]]; then
     echo -e "$CNT - [dry-run] plan:"
     echo "  profile: $PROFILE"
     echo "  layers: $LAYERS"
     echo "  nvidia: $ISNVIDIA"
+    echo "  assistant: $ASSISTANT"
+    if [[ "$ASSISTANT" == "true" ]]; then
+      local dry_model
+      dry_model=$(resolve_assistant_model_via_llmfit || true)
+      if [[ -n "$dry_model" ]]; then
+        echo "  would pull model: $dry_model [llmfit recommendation]"
+      else
+        echo "  would pull model: $ASSISTANT_FALLBACK_MODEL [fallback -- llmfit not installed yet]"
+      fi
+    fi
     echo "  prep packages:"
     echo "$prep_pkgs" | sed 's/^/    - /'
     echo "  main packages:"
@@ -303,6 +321,10 @@ main() {
   while IFS= read -r pkg; do
     [[ -n "$pkg" ]] && install_software "$pkg"
   done <<< "$main_pkgs"
+
+  if [[ "$ASSISTANT" == "true" ]]; then
+    setup_assistant || echo -e "$CWR - Aphotic Assistant setup did not finish; see $INSTLOG. The rest of the install continues."
+  fi
 
   echo -e "$CNT - Enabling bluetooth service..."
   sudo systemctl enable --now bluetooth.service &>> "$INSTLOG"
@@ -422,6 +444,7 @@ main() {
   echo -e "  Theme:         $THEME"
   echo -e "  AUR helper:    $AUR_HELPER"
   echo -e "  Nvidia:        $ISNVIDIA"
+  echo -e "  Assistant:     $ASSISTANT"
   echo -e "  Configs copied: $([[ "$CFG_COPIED" == "1" ]] && echo yes || echo no)"
   echo -e "  Config saved:  $APHOTIC_TOML"
   echo -e "$COK - Install complete."
