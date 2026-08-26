@@ -23,6 +23,7 @@ hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dashboard toggle"))
 hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c aphotic ipc call settings toggle"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifs clear"))
+hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dnd toggle"))
 
 -- Quickshell area picker (drag-select with client snapping + freeze preview) —
 -- distinct from the raw grim/slurp/swappy bind on mainMod + S above, which

@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
+import qs.services
 
 Singleton {
     id: root
@@ -25,7 +26,7 @@ Singleton {
         onNotification: notif => {
             notif.tracked = true;
             const comp = notifComp.createObject(root, {
-                popup: true,
+                popup: !DoNotDisturb.enabled,
                 notification: notif
             });
             root.list = [comp, ...root.list];

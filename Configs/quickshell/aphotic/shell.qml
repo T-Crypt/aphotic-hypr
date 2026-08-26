@@ -12,6 +12,7 @@ import qs.modules.dashboard
 import qs.modules.settings
 import qs.modules.background
 import qs.modules.areapicker
+import qs.services
 
 ShellRoot {
     id: root
@@ -159,6 +160,14 @@ ShellRoot {
             const win = settingsWindows.instances[0];
             if (win)
                 win.screenState.settings = !win.screenState.settings;
+        }
+    }
+
+    IpcHandler {
+        target: "dnd"
+
+        function toggle(): void {
+            DoNotDisturb.toggle();
         }
     }
 
