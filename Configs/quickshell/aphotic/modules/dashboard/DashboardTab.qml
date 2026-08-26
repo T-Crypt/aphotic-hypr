@@ -46,4 +46,13 @@ RowLayout {
             id: pomodoro
         }
     }
+
+    Card {
+        Layout.preferredWidth: quickToggles.implicitWidth
+        Layout.preferredHeight: quickToggles.implicitHeight
+
+        DashQuickToggles {
+            id: quickToggles
+        }
+    }
 }
