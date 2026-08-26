@@ -228,7 +228,6 @@ Singleton {
     onStatusIconWifiColorChanged: root._saveState()
     onStatusIconPowerProfileColorChanged: root._saveState()
     onStatusIconPerformanceColorChanged: root._saveState()
-    onStatusIconClaudeColorChanged: root._saveState()
     onStatusIconHostInfoColorChanged: root._saveState()
     onStatusIconPomodoroColorChanged: root._saveState()
     onCursorThemeChanged: {
