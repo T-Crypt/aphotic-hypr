@@ -19,6 +19,7 @@ Item {
     StateLayer {
         radius: Tokens.rounding.large
         onClicked: {
+            LauncherUsage.recordLaunch(root.modelData.id);
             root.modelData.execute();
             root.screenState.launcher = false;
         }

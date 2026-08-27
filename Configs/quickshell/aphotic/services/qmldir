@@ -3,18 +3,24 @@ singleton AgentProviders 1.0 AgentProviders.qml
 singleton Audio 1.0 Audio.qml
 singleton Brightness 1.0 Brightness.qml
 singleton Colours 1.0 Colours.qml
+singleton DoNotDisturb 1.0 DoNotDisturb.qml
 singleton EmojiList 1.0 EmojiList.qml
 singleton HostInfo 1.0 HostInfo.qml
 singleton Hypr 1.0 Hypr.qml
+singleton LauncherUsage 1.0 LauncherUsage.qml
 singleton LlmFit 1.0 LlmFit.qml
 singleton ModelStorage 1.0 ModelStorage.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
 singleton PinnedSnippets 1.0 PinnedSnippets.qml
 singleton Pomodoro 1.0 Pomodoro.qml
+singleton SessionLockState 1.0 SessionLockState.qml
 singleton Settings 1.0 Settings.qml
 singleton SystemUsage 1.0 SystemUsage.qml
 singleton Themes 1.0 Themes.qml
+singleton UiPickerState 1.0 UiPickerState.qml
+singleton WallpaperCycle 1.0 WallpaperCycle.qml
+singleton Weather 1.0 Weather.qml
 NotifData 1.0 NotifData.qml
 singleton Notifs 1.0 Notifs.qml
 singleton Players 1.0 Players.qml

@@ -207,6 +207,70 @@ Item {
                     onClicked: root.showWallpaperPicker = true
                 }
             }
+
+            StyledText {
+                Layout.topMargin: Tokens.spacing.small
+                text: qsTr("Wallpaper Slideshow")
+                color: Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.label.medium
+            }
+
+            SettingsGroup {
+                Layout.fillWidth: true
+
+                SettingsToggleRow {
+                    icon: "slideshow"
+                    label: qsTr("Auto-cycle wallpaper")
+                    description: qsTr("Randomly advances within the active theme's wallpapers")
+                    checked: Settings.wallpaperAutoCycleEnabled
+                    onToggled: state => Settings.wallpaperAutoCycleEnabled = state
+                }
+
+                SettingsRow {
+                    icon: "timer"
+                    label: qsTr("Interval")
+                    description: qsTr("Every %1 minutes").arg(Settings.wallpaperAutoCycleInterval)
+
+                    RowLayout {
+                        spacing: Tokens.spacing.small
+
+                        Repeater {
+                            model: [5, 15, 30, 60]
+
+                            StyledRect {
+                                id: intervalPill
+
+                                required property int modelData
+                                readonly property bool active: intervalPill.modelData === Settings.wallpaperAutoCycleInterval
+
+                                Layout.preferredHeight: 28
+                                Layout.preferredWidth: intervalLabel.implicitWidth + Tokens.padding.medium * 2
+                                radius: Tokens.rounding.full
+                                color: intervalPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                                StyledText {
+                                    id: intervalLabel
+                                    anchors.centerIn: parent
+                                    text: qsTr("%1m").arg(intervalPill.modelData)
+                                    color: intervalPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                    font: Tokens.font.label.small
+                                }
+
+                                StateLayer {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    showHoverBackground: !intervalPill.active
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: Settings.wallpaperAutoCycleInterval = intervalPill.modelData
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

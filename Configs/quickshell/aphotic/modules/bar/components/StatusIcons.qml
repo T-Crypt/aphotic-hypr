@@ -196,6 +196,14 @@ StyledRect {
                         }
                     }
                 }
+                DelegateChoice {
+                    roleValue: "dnd"
+                    delegate: EntryWrapper {
+                        DndStatus {
+                            colour: Settings.statusIconDndColor.length > 0 ? Settings.statusIconDndColor : root.colour
+                        }
+                    }
+                }
             }
         }
     }

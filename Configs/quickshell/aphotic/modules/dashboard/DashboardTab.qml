@@ -46,4 +46,22 @@ RowLayout {
             id: pomodoro
         }
     }
+
+    Card {
+        Layout.preferredWidth: quickToggles.implicitWidth
+        Layout.preferredHeight: quickToggles.implicitHeight
+
+        DashQuickToggles {
+            id: quickToggles
+        }
+    }
+
+    Card {
+        Layout.preferredWidth: weather.implicitWidth
+        Layout.preferredHeight: weather.implicitHeight
+
+        DashWeather {
+            id: weather
+        }
+    }
 }
