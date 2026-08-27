@@ -61,7 +61,8 @@ step "Scene 2 -- Theme: Nordic (Super+. cycles the same way)" 4
 "$APHOTIC_BIN" theme set windows11 >/dev/null 2>&1
 step "Scene 2 -- Theme: Windows 11" 4
 
-operator "Scene 3 -- Hover: volume -> Wi-Fi -> Bluetooth -> battery -> agent -> host info -> Pomodoro -> resources" 24
+operator "Scene 3 -- Hover: volume -> Wi-Fi -> Bluetooth -> battery -> host info -> Pomodoro -> resources" 20
+operator "Scene 3 -- Left-click the Claude Code agent indicator, then again to close (toggle, not hover)" 4
 
 qsipc launcher toggle
 step "Scene 4 -- Launcher (Super+A): app search" 3

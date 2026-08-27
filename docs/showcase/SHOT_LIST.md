@@ -45,14 +45,19 @@ repaint live — no rebuild, no relogin.
 ## Scene 3 — Bar hover popouts (24s)
 
 `OPERATOR`: hover, in order, the volume/output icon, Wi-Fi, Bluetooth,
-battery/power profile, the Claude Code agent indicator, host-info (click
-to copy the LAN IP), Pomodoro, and the resource meter. No IPC target
-opens a specific popout — Bar.qml's `checkPopout` responds to real
-pointer position, so this is real mouse hovering, not scriptable.
+battery/power profile, host-info (click to copy the LAN IP), Pomodoro,
+and the resource meter — these are all in the grouped status-icon pills
+and open on hover. No IPC target opens a specific popout — Bar.qml's
+`checkPopout` responds to real pointer position, so this is real mouse
+hovering, not scriptable. The Claude Code agent indicator is a separate
+element (not part of the status-icon pills) and opens on **click**, not
+hover — see `AgentIndicator.qml`'s `onClicked`; include it as a
+left-click in this scene, not another hover.
 
 | Trigger | Expected result | Duration |
 |---|---|---|
-| `OPERATOR` — hover each status icon in sequence | Each hover opens that icon's real detail popout (`popouts/*.qml`) | 24s |
+| `OPERATOR` — hover each status icon in sequence | Each hover opens that icon's real detail popout (`popouts/*.qml`) | 20s |
+| `OPERATOR` — left-click the Claude Code agent indicator, then click again to close | Agent panel opens/closes (toggle, not hover) | 4s |
 
 ## Scene 4 — Launcher modes (20s)
 
@@ -94,7 +99,11 @@ Real Quickshell picker, not the plain `grim`/`slurp`/`swappy` combo on
 > notification daemon (`org.freedesktop.Notifications`) for the toast to
 > land — if another daemon (mako, dunst, …) already owns that DBus name,
 > `notify-send` will render through that instead and the scene won't
-> match. `aphotic doctor` flags a competing daemon if one's running.
+> match. `qs -c aphotic` logs `Could not register notification server at
+> org.freedesktop.Notifications, presumably because one is already
+> registered` on startup when this is the case — check for that line, or
+> stop the competing daemon, before recording this scene. `aphotic
+> doctor` doesn't check for this itself.
 
 ## Scene 7 — Command Center (17s)
 
