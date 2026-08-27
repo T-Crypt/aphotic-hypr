@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.config
+import qs.components
 import qs.services
 
 PanelWindow {
@@ -47,16 +48,16 @@ PanelWindow {
         }
 
         add: Transition {
-            NumberAnimation { property: "opacity"; from: 0; to: 1 }
+            Anim { type: Anim.DefaultEffects; property: "opacity"; from: 0; to: 1 }
         }
         remove: Transition {
-            NumberAnimation { property: "opacity"; from: 1; to: 0 }
+            Anim { type: Anim.DefaultEffects; property: "opacity"; from: 1; to: 0 }
         }
         move: Transition {
-            NumberAnimation { property: "y" }
+            Anim { type: Anim.Emphasized; property: "y" }
         }
         displaced: Transition {
-            NumberAnimation { property: "y" }
+            Anim { type: Anim.Emphasized; property: "y" }
         }
     }
 }

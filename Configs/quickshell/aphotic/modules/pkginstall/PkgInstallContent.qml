@@ -22,37 +22,6 @@ Item {
     width: root.implicitWidth
     height: root.implicitHeight
 
-    state: root.open ? "open" : ""
-
-    states: State {
-        name: "open"
-        PropertyChanges {
-            card.opacity: 1
-            card.scale: 1
-        }
-    }
-
-    transitions: [
-        Transition {
-            from: ""
-            to: "open"
-            NumberAnimation {
-                properties: "opacity,scale"
-                duration: Tokens.anim.durations.small
-                easing: Tokens.anim.emphasizedDecel
-            }
-        },
-        Transition {
-            from: "open"
-            to: ""
-            NumberAnimation {
-                properties: "opacity,scale"
-                duration: Tokens.anim.durations.expressiveFastEffects
-                easing: Tokens.anim.emphasizedAccel
-            }
-        }
-    ]
-
     onOpenChanged: {
         if (root.open) {
             searchInput.text = "";
@@ -66,12 +35,28 @@ Item {
 
         width: root.width
         height: root.height
-        opacity: 0
-        scale: 0.96
+        // Bound directly to root.open with the Behaviors below driving
+        // the motion, matching the Behavior-on-property idiom every other
+        // popout in this shell uses (see popouts/Wrapper.qml's flyout/
+        // agentFlyout) rather than a bespoke state/PropertyChanges/
+        // Transition block with its own one-off duration/easing pair.
+        opacity: root.open ? 1 : 0
+        scale: root.open ? 1 : 0.96
         transformOrigin: Item.Center
 
         radius: Tokens.rounding.large
         color: Colours.palette.m3surfaceContainer
+
+        Behavior on opacity {
+            Anim {
+                type: Anim.Emphasized
+            }
+        }
+        Behavior on scale {
+            Anim {
+                type: Anim.Emphasized
+            }
+        }
 
         layer.enabled: true
         layer.effect: MultiEffect {

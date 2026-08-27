@@ -133,6 +133,7 @@ PanelWindow {
             transitions: Transition {
                 AnchorAnimation {
                     duration: Tokens.anim.durations.expressiveDefaultSpatial
+                    easing: Tokens.anim.expressiveDefaultSpatial
                 }
             }
 
