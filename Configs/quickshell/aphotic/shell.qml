@@ -15,6 +15,7 @@ import qs.modules.areapicker
 import qs.modules.colorpicker
 import qs.modules.intelligence
 import qs.modules.notificationcenter
+import qs.modules.pkginstall
 import qs.services
 
 ShellRoot {
@@ -89,6 +90,15 @@ ShellRoot {
         model: Quickshell.screens
 
         NotificationCenterWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
+    Variants {
+        id: pkgInstallWindows
+        model: Quickshell.screens
+
+        PkgInstallWindow {
             screenState: root.screenStateFor(modelData)
         }
     }
@@ -209,6 +219,18 @@ ShellRoot {
             const win = notificationCenterWindows.instances[0];
             if (win)
                 win.screenState.notificationCenter = !win.screenState.notificationCenter;
+        }
+    }
+
+    IpcHandler {
+        target: "pkginstall"
+
+        function toggle(): void {
+            if (!PkgSearch.available)
+                return;
+            const win = pkgInstallWindows.instances[0];
+            if (win)
+                win.screenState.pkgInstall = !win.screenState.pkgInstall;
         }
     }
 

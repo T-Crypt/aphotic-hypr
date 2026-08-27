@@ -15,6 +15,7 @@ PersistentProperties {
     property bool agentPanel
     property bool intelligence
     property bool notificationCenter
+    property bool pkgInstall
 
     // Dashboard state
     property int dashboardTab
