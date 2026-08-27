@@ -12,6 +12,7 @@ import qs.modules.dashboard
 import qs.modules.settings
 import qs.modules.background
 import qs.modules.areapicker
+import qs.modules.colorpicker
 import qs.services
 
 ShellRoot {
@@ -172,4 +173,6 @@ ShellRoot {
     }
 
     AreaPicker {}
+
+    ColorPicker {}
 }

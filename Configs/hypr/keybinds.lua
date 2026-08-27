@@ -33,6 +33,10 @@ hl.bind(mainMod .. " + CTRL + S",          hl.dsp.exec_cmd("qs -c aphotic ipc ca
 hl.bind(mainMod .. " + ALT + S",           hl.dsp.exec_cmd("qs -c aphotic ipc call picker openClip"))
 hl.bind(mainMod .. " + CTRL + ALT + S",    hl.dsp.exec_cmd("qs -c aphotic ipc call picker openFreezeClip"))
 
+-- Screen capture: eyedropper (click-to-sample a single pixel, copies its
+-- hex to the clipboard)
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("qs -c aphotic ipc call colorpicker toggle"))
+
 -- Audio output cycling and special-workspace cycling (Quickshell IPC, no
 -- other UI path exists for either of these yet)
 hl.bind(mainMod .. " + CTRL + O", hl.dsp.exec_cmd("qs -c aphotic ipc call audio cycleOutput"))
