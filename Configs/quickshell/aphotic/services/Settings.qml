@@ -51,6 +51,13 @@ Singleton {
     property bool wallpaperAutoCycleEnabled: false
     property int wallpaperAutoCycleInterval: 15
 
+    // "" = auto-detect via IP geolocation (services/Weather.qml), non-empty
+    // = geocoded via Open-Meteo's geocoding API (city/place name or
+    // "lat,lon" both work since it's passed straight through as the query).
+    property string weatherLocation: ""
+    // "celsius" or "fahrenheit".
+    property string weatherUnits: "celsius"
+
     property bool osdEnabled: Config.osd.enabled
     property int osdHideDelay: Config.osd.hideDelay
     property bool osdEnableBrightness: Config.osd.enableBrightness
@@ -126,6 +133,8 @@ Singleton {
             dndEnabled: root.dndEnabled,
             wallpaperAutoCycleEnabled: root.wallpaperAutoCycleEnabled,
             wallpaperAutoCycleInterval: root.wallpaperAutoCycleInterval,
+            weatherLocation: root.weatherLocation,
+            weatherUnits: root.weatherUnits,
             osdEnabled: root.osdEnabled,
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
@@ -237,6 +246,8 @@ Singleton {
     onDndEnabledChanged: root._saveState()
     onWallpaperAutoCycleEnabledChanged: root._saveState()
     onWallpaperAutoCycleIntervalChanged: root._saveState()
+    onWeatherLocationChanged: root._saveState()
+    onWeatherUnitsChanged: root._saveState()
     onOsdEnabledChanged: root._saveState()
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
@@ -329,6 +340,10 @@ Singleton {
                     root.wallpaperAutoCycleEnabled = data.wallpaperAutoCycleEnabled;
                 if (typeof data.wallpaperAutoCycleInterval === "number")
                     root.wallpaperAutoCycleInterval = data.wallpaperAutoCycleInterval;
+                if (typeof data.weatherLocation === "string")
+                    root.weatherLocation = data.weatherLocation;
+                if (typeof data.weatherUnits === "string" && ["celsius", "fahrenheit"].includes(data.weatherUnits))
+                    root.weatherUnits = data.weatherUnits;
                 if (typeof data.osdEnabled === "boolean")
                     root.osdEnabled = data.osdEnabled;
                 if (typeof data.osdHideDelay === "number")

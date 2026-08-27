@@ -18,6 +18,7 @@ singleton SystemUsage 1.0 SystemUsage.qml
 singleton Themes 1.0 Themes.qml
 singleton UiPickerState 1.0 UiPickerState.qml
 singleton WallpaperCycle 1.0 WallpaperCycle.qml
+singleton Weather 1.0 Weather.qml
 NotifData 1.0 NotifData.qml
 singleton Notifs 1.0 Notifs.qml
 singleton Players 1.0 Players.qml
