@@ -144,26 +144,34 @@ Singleton {
     }
 
     property bool busy: false
+    property string activeRequestId: ""
 
-    signal responseReceived(string text)
-    signal errorReceived(string message)
+    signal responseReceived(string requestId, string text)
+    signal errorReceived(string requestId, string message)
 
-    function sendMessage(text: string): void {
+    // requestId lets multiple independent consumers (the dashboard AI Chat
+    // tab, each Intelligence session) share this one singleton without
+    // cross-talk -- every response/error echoes back the id its request
+    // was sent under, so each consumer filters to its own. The provider
+    // backend itself stays single-flight (one Process per provider type),
+    // so a second sendMessage while busy is rejected the same way the
+    // dashboard tab already disables its input on AiProviders.busy.
+    function sendMessage(requestId: string, provider: string, model: string, text: string): void {
         if (root.busy)
             return;
 
-        const provider = AiConfig.activeProvider;
         if (provider === "ollama" && !AiConfig.ollamaHostConfigured) {
-            root.errorReceived(qsTr("No Ollama host configured. Set it in the model pill, or set OLLAMA_BASE_URL, to enable."));
+            root.errorReceived(requestId, qsTr("No Ollama host configured. Set it in the model pill, or set OLLAMA_BASE_URL, to enable."));
             return;
         }
         if (!root.isAvailable(provider)) {
             const label = root.providers.find(p => p.id === provider)?.label ?? provider;
-            root.errorReceived(qsTr("No API key configured for %1. Set %2 to enable.").arg(label).arg(root.requiredEnvVar(provider)));
+            root.errorReceived(requestId, qsTr("No API key configured for %1. Set %2 to enable.").arg(label).arg(root.requiredEnvVar(provider)));
             return;
         }
 
         root.busy = true;
+        root.activeRequestId = requestId;
 
         switch (provider) {
         case "claude":
@@ -189,7 +197,7 @@ Singleton {
             ollamaProc.command = ["curl", "-s", "-m", "30",
                 `${AiConfig.ollamaHost}/v1/chat/completions`,
                 "-H", "content-type: application/json",
-                "-d", JSON.stringify({ model: AiConfig.ollamaModel, messages: [{ role: "user", content: text }] })];
+                "-d", JSON.stringify({ model: model || AiConfig.ollamaModel, messages: [{ role: "user", content: text }] })];
             ollamaProc.running = true;
             break;
         }
@@ -203,14 +211,14 @@ Singleton {
         id: claudeProc
         stdout: StdioCollector {
             onStreamFinished: {
-                root.responseReceived(text.trim());
+                root.responseReceived(root.activeRequestId, text.trim());
                 root._finish();
             }
         }
         stderr: StdioCollector {
             onStreamFinished: {
                 if (text.trim().length > 0 && claudeProc.exitCode !== 0)
-                    root.errorReceived(text.trim());
+                    root.errorReceived(root.activeRequestId, text.trim());
             }
         }
     }
@@ -221,9 +229,9 @@ Singleton {
             onStreamFinished: {
                 try {
                     const data = JSON.parse(text);
-                    root.responseReceived(data.choices[0].message.content.trim());
+                    root.responseReceived(root.activeRequestId, data.choices[0].message.content.trim());
                 } catch (e) {
-                    root.errorReceived(`Ollama: unexpected response (${text.slice(0, 200)})`);
+                    root.errorReceived(root.activeRequestId, `Ollama: unexpected response (${text.slice(0, 200)})`);
                 }
                 root._finish();
             }
@@ -236,9 +244,9 @@ Singleton {
             onStreamFinished: {
                 try {
                     const data = JSON.parse(text);
-                    root.responseReceived(data.candidates[0].content.parts[0].text.trim());
+                    root.responseReceived(root.activeRequestId, data.candidates[0].content.parts[0].text.trim());
                 } catch (e) {
-                    root.errorReceived(`Gemini: unexpected response (${text.slice(0, 200)})`);
+                    root.errorReceived(root.activeRequestId, `Gemini: unexpected response (${text.slice(0, 200)})`);
                 }
                 root._finish();
             }
@@ -251,9 +259,9 @@ Singleton {
             onStreamFinished: {
                 try {
                     const data = JSON.parse(text);
-                    root.responseReceived(data.choices[0].message.content.trim());
+                    root.responseReceived(root.activeRequestId, data.choices[0].message.content.trim());
                 } catch (e) {
-                    root.errorReceived(`ChatGPT: unexpected response (${text.slice(0, 200)})`);
+                    root.errorReceived(root.activeRequestId, `ChatGPT: unexpected response (${text.slice(0, 200)})`);
                 }
                 root._finish();
             }
