@@ -674,6 +674,8 @@ ColumnLayout {
                             color: Colours.palette.m3onSurface
                             text: Settings.ggufModelsDir
 
+                            Component.onCompleted: ggufDirInput.cursorPosition = 0
+
                             Keys.onReturnPressed: {
                                 const value = ggufDirInput.text.trim();
                                 if (value.length > 0)
