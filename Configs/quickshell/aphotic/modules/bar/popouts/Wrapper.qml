@@ -19,6 +19,14 @@ Item {
     property real currentCenter: 0
     property var currentTrayItem: null
     property var currentTaskGroup: null
+    // The agent icon's own along-axis center, kept live by whichever bar
+    // style actually has an "agent" entry (Bar.qml/MinimalBar.qml) via a
+    // continuous binding -- deliberately separate from currentCenter,
+    // which tracks whatever's currently hovered. The agent popout is
+    // opened by a click, not hover, and has to stay anchored to the
+    // agent icon's own fixed position regardless of what the mouse does
+    // afterward.
+    property real agentCenter: 0
     // Set while the mouse is over the flyout itself, so BarWrapper's
     // bar-hover-exit handler knows not to close a popout the user has
     // actually moved into to interact with (e.g. clicking a settings
@@ -192,13 +200,27 @@ Item {
 
         visible: opacity > 0
         opacity: root.screenState.agentPanel ? 1 : 0
-        x: flyout.x
-        y: flyout.y
+        // Own along-axis anchor (agentCenter), not currentCenter/flyout.x --
+        // previously this bound directly to flyout.x/flyout.y with no
+        // Behavior at all, so once the agent panel was opened, hovering
+        // any other bar icon dragged this popout instantly (no
+        // animation) to that icon's position, reading as "the agent
+        // popout is replacing whatever I'm hovering" instead of staying
+        // put next to the agent icon. Same along-axis formula flyout
+        // uses, just keyed on agentCenter.
+        x: Settings.barVertical ? Math.min(Math.max(0, root.agentCenter - width / 2), root.screen.width - width) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - width : root.barWidth + Tokens.spacing.small)
+        y: Settings.barVertical ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - height : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.agentCenter - height / 2), root.screen.height - height)
         width: agentLoader.item ? agentLoader.item.implicitWidth + Tokens.padding.medium * 2 : 0
         height: agentLoader.item ? agentLoader.item.implicitHeight + Tokens.padding.medium * 2 : 0
         radius: Tokens.rounding.medium
         color: Colours.palette.m3surfaceContainerHigh
 
+        Behavior on x {
+            Anim { type: Anim.Emphasized }
+        }
+        Behavior on y {
+            Anim { type: Anim.Emphasized }
+        }
         Behavior on width {
             Anim { type: Anim.Emphasized }
         }
