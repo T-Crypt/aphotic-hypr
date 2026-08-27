@@ -58,6 +58,7 @@ Singleton {
     // to the Dock style regardless of whether they're currently running.
     property var dockPinnedApps: []
     property bool taskbarGrouping: true
+    property bool minimalShowDnd: true
 
     // name: "full" | "dock" | "taskbar" | "minimal" -- the single entry
     // point for changing bar style, shared by the Settings tab, the CLI
@@ -208,6 +209,7 @@ Singleton {
             dockAutoHide: root.dockAutoHide,
             dockPinnedApps: root.dockPinnedApps,
             taskbarGrouping: root.taskbarGrouping,
+            minimalShowDnd: root.minimalShowDnd,
             agentSelectedProvider: root.agentSelectedProvider,
             ggufModelsDir: root.ggufModelsDir,
             assistantWelcomeShown: root.assistantWelcomeShown,
@@ -338,6 +340,7 @@ Singleton {
     onDockAutoHideChanged: root._saveState()
     onDockPinnedAppsChanged: root._saveState()
     onTaskbarGroupingChanged: root._saveState()
+    onMinimalShowDndChanged: root._saveState()
     onGgufModelsDirChanged: root._saveState()
     onAssistantWelcomeShownChanged: root._saveState()
     onDndEnabledChanged: root._saveState()
@@ -444,6 +447,8 @@ Singleton {
                     root.dockPinnedApps = data.dockPinnedApps;
                 if (typeof data.taskbarGrouping === "boolean")
                     root.taskbarGrouping = data.taskbarGrouping;
+                if (typeof data.minimalShowDnd === "boolean")
+                    root.minimalShowDnd = data.minimalShowDnd;
                 if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "ollama"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.ggufModelsDir === "string" && data.ggufModelsDir.length > 0)
