@@ -9,3 +9,5 @@ DockAppIcon 1.0 DockAppIcon.qml
 DockWorkspaces 1.0 DockWorkspaces.qml
 DockBar 1.0 DockBar.qml
 DockWindow 1.0 DockWindow.qml
+MinimalTray 1.0 MinimalTray.qml
+MinimalIndicators 1.0 MinimalIndicators.qml
