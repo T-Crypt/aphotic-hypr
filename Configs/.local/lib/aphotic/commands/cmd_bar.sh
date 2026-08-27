@@ -22,6 +22,7 @@ _aphotic_bar_style() {
     fi
 
     local ok=0
+    local v
     for v in "${valid[@]}"; do
         [[ "$name" == "$v" ]] && ok=1
     done
@@ -31,12 +32,22 @@ _aphotic_bar_style() {
     fi
 
     aphotic_require qs || return 1
-    qs -c aphotic ipc call bar setStyle "$name" && aphotic_ok "bar style set to '${name}'"
+    if qs -c aphotic ipc call bar setStyle "$name"; then
+        aphotic_ok "bar style set to '${name}'"
+    else
+        aphotic_err "failed to reach the running shell via qs ipc -- is 'qs -c aphotic' running?"
+        return 1
+    fi
 }
 
 _aphotic_bar_cycle() {
     aphotic_require qs || return 1
-    qs -c aphotic ipc call bar cycleStyle && aphotic_ok "cycled bar style"
+    if qs -c aphotic ipc call bar cycleStyle; then
+        aphotic_ok "cycled bar style"
+    else
+        aphotic_err "failed to reach the running shell via qs ipc -- is 'qs -c aphotic' running?"
+        return 1
+    fi
 }
 
 aphotic_cmd_bar() {
