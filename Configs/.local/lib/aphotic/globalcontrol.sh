@@ -35,6 +35,13 @@ APHOTIC_PLUGINS_STATE_FILE="${APHOTIC_STATE_HOME}/plugins.json"
 # aphotic-plugins repo. Override for a dev checkout elsewhere.
 APHOTIC_PLUGINS_REPO="${APHOTIC_PLUGINS_REPO:-$HOME/aphotic-plugins}"
 APHOTIC_PLUGINS_INDEX_URL="${APHOTIC_PLUGINS_INDEX_URL:-https://raw.githubusercontent.com/T-Crypt/aphotic-plugins/main/index.json}"
+# Security-category plugins (Bloodhound, Caido, ...) live in a SEPARATE
+# index, not merged into the main one -- mirrors the exploit layer's
+# BlackArch precedent (lib/install/blackarch.sh's ensure_blackarch_repo):
+# an explicit trust step before this kind of content is even visible,
+# not just before it installs. See aphotic_plugins_security_index_trusted
+# below and cmd_plugin.sh's trust-security-index subcommand.
+APHOTIC_PLUGINS_SECURITY_INDEX_URL="${APHOTIC_PLUGINS_SECURITY_INDEX_URL:-https://raw.githubusercontent.com/T-Crypt/aphotic-plugins-security/main/index.json}"
 
 # one-time migration: noctis -> aphotic config path
 _APHOTIC_OLD_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/noctis"
@@ -49,7 +56,7 @@ mkdir -p "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$APHOTIC_DATA_HOME" \
 export APHOTIC_VERSION APHOTIC_CONFIG_HOME APHOTIC_STATE_HOME APHOTIC_DATA_HOME \
        APHOTIC_RUNTIME_DIR APHOTIC_CONFIG_FILE APHOTIC_BACKUP_DIR APHOTIC_DOTS_DIR \
        QUICKSHELL_CONFIG_DIR APHOTIC_PLUGINS_DIR APHOTIC_PLUGINS_STATE_FILE \
-       APHOTIC_PLUGINS_REPO APHOTIC_PLUGINS_INDEX_URL
+       APHOTIC_PLUGINS_REPO APHOTIC_PLUGINS_INDEX_URL APHOTIC_PLUGINS_SECURITY_INDEX_URL
 
 # ---- logging -----------------------------------------------------------
 _APHOTIC_DIM=$'\e[2m'; _APHOTIC_R=$'\e[0m'
@@ -161,5 +168,24 @@ aphotic_plugin_set_enabled() {
     else
         jq --arg n "$name" '.disabled = ((.disabled // []) + [$n] | unique)' "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp"
     fi
+    mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+}
+
+# Whether the user has explicitly opted into seeing/installing
+# security-category plugins from APHOTIC_PLUGINS_SECURITY_INDEX_URL.
+# False (untrusted) unless this flag has been set -- see
+# cmd_plugin.sh's trust-security-index subcommand for the confirmation
+# gate that sets it.
+aphotic_plugins_security_index_trusted() {
+    [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || return 1
+    jq -e '.security_index_trusted // false' "$APHOTIC_PLUGINS_STATE_FILE" >/dev/null 2>&1
+}
+
+aphotic_plugins_set_security_index_trusted() {
+    local trusted="$1" tmp
+    aphotic_require jq || return 1
+    [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
+    tmp="$(mktemp)"
+    jq --argjson t "$trusted" '.security_index_trusted = $t' "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp"
     mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
 }
