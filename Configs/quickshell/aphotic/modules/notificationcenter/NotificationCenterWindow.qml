@@ -38,9 +38,12 @@ PanelWindow {
             closeTimer.start();
     }
 
+    // Matches NotificationCenterContent's card animation duration
+    // (Anim.Emphasized -> durations.normal) so the window stays mounted
+    // through the full slide-out instead of cutting it short.
     Timer {
         id: closeTimer
-        interval: Tokens.anim.durations.expressiveFastEffects
+        interval: Tokens.anim.durations.normal
         onTriggered: root.showContent = false
     }
 
