@@ -25,8 +25,38 @@ prompt_layers() {
   read -rp "Enable ai layer? [y/N]: " answer
   [[ "$answer" =~ ^[Yy]$ ]] && layers+=("ai")
 
-  read -rp "Enable exploit layer? Adds the BlackArch repo -- less stable than Arch's official repos, see docs/exploit-layer.md [y/N]: " answer
-  [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit")
+  read -rp "Enable exploit/offensive-security tooling? Adds the BlackArch repo for most sublayers -- less stable than Arch's official repos, see docs/exploit-layer.md [y/N]: " answer
+  if [[ "$answer" =~ ^[Yy]$ ]]; then
+    read -rp "  Use the default bundle (recon + web + network)? [Y/n]: " answer
+    if [[ ! "$answer" =~ ^[Nn]$ ]]; then
+      layers+=("exploit")
+    else
+      read -rp "  Enable exploit-recon (nmap, amass, subfinder, theHarvester, recon-ng)? [y/N]: " answer
+      [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-recon")
+
+      read -rp "  Enable exploit-web (Burp Suite CE, sqlmap, ffuf, gobuster, nikto, ZAP)? [y/N]: " answer
+      [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-web")
+
+      read -rp "  Enable exploit-network (Wireshark, aircrack-ng, bettercap, tcpdump)? [y/N]: " answer
+      [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-network")
+    fi
+
+    read -rp "  Enable exploit-passwords (John the Ripper, hashcat, Hydra)? [y/N]: " answer
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+      layers+=("exploit-passwords")
+      read -rp "    Also fetch the rockyou wordlist? ~130MB decompressed, from the OWASP SecLists project -- always separate, never bundled automatically [y/N]: " answer
+      [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-wordlists")
+    fi
+
+    read -rp "  Enable exploit-reversing (Ghidra, radare2, Cutter, gdb+pwndbg, binwalk)? [y/N]: " answer
+    [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-reversing")
+
+    read -rp "  Enable exploit-forensics (Autopsy, Sleuth Kit, Volatility 3)? [y/N]: " answer
+    [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-forensics")
+
+    read -rp "  Enable exploit-reporting (engagement report scaffolding, aphotic report CLI)? [y/N]: " answer
+    [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-reporting")
+  fi
 
   local IFS=","
   echo "${layers[*]}"
