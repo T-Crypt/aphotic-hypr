@@ -8,9 +8,11 @@ KbLayoutPopout 1.0 KbLayoutPopout.qml
 LockStatusPopout 1.0 LockStatusPopout.qml
 MediaPopout 1.0 MediaPopout.qml
 NetworkPopout 1.0 NetworkPopout.qml
+NetworkSpeedPopout 1.0 NetworkSpeedPopout.qml
 PomodoroPopout 1.0 PomodoroPopout.qml
 ResourcesPopout 1.0 ResourcesPopout.qml
 SettingsPopout 1.0 SettingsPopout.qml
 TrayPopout 1.0 TrayPopout.qml
+VpnPopout 1.0 VpnPopout.qml
 Wrapper 1.0 Wrapper.qml
 WindowPopout 1.0 WindowPopout.qml

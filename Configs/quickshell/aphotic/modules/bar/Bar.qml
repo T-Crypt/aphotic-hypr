@@ -320,6 +320,7 @@ Item {
                 delegate: EntryWrapper {
                     StatusIcons {
                         objectName: "taskbarStatusIcons"
+                        screenState: root.screenState
                     }
                 }
             }
