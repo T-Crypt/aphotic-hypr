@@ -209,6 +209,13 @@ ColumnLayout {
                 checked: Settings.dockAutoHide
                 onToggled: state => Settings.dockAutoHide = state
             }
+
+            SettingsToggleRow {
+                icon: "zoom_in"
+                label: qsTr("Icon magnification on hover")
+                checked: Settings.dockMagnification
+                onToggled: state => Settings.dockMagnification = state
+            }
         }
 
         StyledText {
