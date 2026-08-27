@@ -47,31 +47,7 @@ One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings 
 
 ## Showcase video
 
-A silent, ~3-minute walkthrough of everything below — live theme
-switching, the bar's hover popouts, the launcher's five modes, the
-screenshot picker, Command Center, Settings, the plugin system, lock
-screen, and the terminal games — captioned, no narration needed.
-
-There's no committed video file (screen recordings don't belong in git
-history) — the whole pipeline that produces it is checked in instead,
-so it's a `scripts/showcase/record.sh` away from being current again
-whenever a feature changes, instead of going stale like a one-off
-capture would:
-
-```
-scripts/showcase/record.sh      # records the live demo sequence (needs wf-recorder)
-scripts/showcase/assemble.sh    # burns in captions + title cards -> recordings/aphotic-showcase.mp4
-```
-
-Running that pipeline locally drops the finished video at
-`recordings/aphotic-showcase.mp4` — that's the one to watch;
-`recordings/aphotic-showcase-raw.mp4` is `record.sh`'s unedited
-intermediate output before captions and title cards are burned in.
-
-See [`docs/showcase/SHOT_LIST.md`](docs/showcase/SHOT_LIST.md) for the
-full scene-by-scene breakdown (trigger, expected result, duration) and
-[`docs/showcase/CAPTIONS.md`](docs/showcase/CAPTIONS.md) for the exact
-burned-in caption text and timing.
+[▶ Watch the showcase video](recordings/aphotic-showcase.mp4)
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
