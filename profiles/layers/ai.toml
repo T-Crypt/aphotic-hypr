@@ -1,6 +1,6 @@
 [meta]
 name = "ai"
-description = "Local AI CLI backend (Phase D wires the actual workflow integration)"
+description = "Local AI CLI backend (Ollama) plus llmfit hardware-aware model recommendations"
 
 [packages]
-main = ["ollama"]
+main = ["ollama", "llmfit"]
