@@ -7,6 +7,7 @@ source "$ROOT_DIR/lib/install/aur.sh"
 source "$ROOT_DIR/lib/install/backup.sh"
 source "$ROOT_DIR/lib/install/wizard.sh"
 source "$ROOT_DIR/lib/install/blackarch.sh"
+source "$ROOT_DIR/lib/install/exploit_disclaimer.sh"
 source "$ROOT_DIR/lib/install/claude_hooks.sh"
 source "$ROOT_DIR/lib/install/assistant.sh"
 # sourced libs each set -euo pipefail, which otherwise leaks into this
@@ -29,6 +30,7 @@ PROFILE=""
 LAYERS=""
 THEME=""
 ASSISTANT=""
+ACCEPT_EXPLOIT_DISCLAIMER=0
 
 TOTAL_STAGES=7
 STAGE_COLORS=(35 36 33 34 32 36 35)
@@ -65,8 +67,20 @@ Usage: ./install.sh [options]
 
   --profile <minimal|full>     Select base profile (skips wizard prompt)
   --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai,exploit
-                                (exploit enables the BlackArch repo -- see
-                                docs/exploit-layer.md)
+                                ("exploit" is a convenience bundle of
+                                exploit-recon+web+network; exploit-passwords/
+                                -reversing/-forensics/-reporting/-wordlists
+                                are separate opt-ins -- see
+                                docs/exploit-layer.md). Any exploit-* layer
+                                enables the BlackArch repo unless its own
+                                sublayer doesn't need it (e.g. -reporting,
+                                -wordlists).
+  --accept-exploit-disclaimer   Required alongside --with when it includes
+                                any exploit-* layer AND stdin isn't a TTY
+                                (scripted/CI installs) -- confirms you've
+                                read and agree to the authorized-use
+                                disclaimer that would otherwise be shown
+                                interactively.
   --theme <name>                Theme preset name
   --with-assistant               Install the Aphotic Assistant (local chatbot,
                                 needs an NVIDIA GPU; implies the ai layer)
@@ -86,6 +100,7 @@ while [[ $# -gt 0 ]]; do
     --theme) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; THEME="$2"; shift 2 ;;
     --with-assistant) ASSISTANT="true"; shift ;;
     --no-assistant) ASSISTANT="false"; shift ;;
+    --accept-exploit-disclaimer) ACCEPT_EXPLOIT_DISCLAIMER=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
     --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
@@ -191,14 +206,30 @@ main() {
   fi
 
   print_stage 2 "Configuration"
-  resolve_config
 
-  if [[ ",$LAYERS," == *",exploit,"* && "$DRY_RUN" != "1" ]]; then
+  PREV_LAYERS=""
+  if [[ -f "$APHOTIC_TOML" ]]; then
+    PREV_LAYERS=$("$PYTHON_BIN" -c '
+import sys, tomllib
+try:
+    d = tomllib.load(open(sys.argv[1], "rb"))
+    print(",".join(d.get("install", {}).get("layers", [])))
+except Exception:
+    print("")
+' "$APHOTIC_TOML" 2>/dev/null || echo "")
+  fi
+
+  resolve_config
+  LAYERS=$(expand_layer_bundles "$LAYERS")
+
+  exploit_disclaimer_gate "$PREV_LAYERS"
+
+  if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" && "$DRY_RUN" != "1" ]]; then
     print_blackarch_warning
-    read -rep $'[\e[1;33mACTION\e[0m] - Continue enabling the exploit layer / BlackArch repo? (y,N) ' EXPLOIT_OK
+    read -rep $'[\e[1;33mACTION\e[0m] - Continue enabling BlackArch for the exploit-* layers that need it? (y,N) ' EXPLOIT_OK
     if [[ "$EXPLOIT_OK" != "y" && "$EXPLOIT_OK" != "Y" ]]; then
-      echo -e "$CWR - Skipping the exploit layer."
-      LAYERS=$(echo ",$LAYERS," | sed 's/,exploit,/,/' | sed 's/^,//; s/,$//')
+      echo -e "$CWR - Skipping the BlackArch-backed exploit-* layers."
+      LAYERS=$(strip_layers_matching "$LAYERS" _predicate_requires_blackarch)
     fi
   fi
 
@@ -245,7 +276,7 @@ main() {
     else
       echo "  would install hyprland"
     fi
-    if [[ ",$LAYERS," == *",exploit,"* ]]; then
+    if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
       ensure_blackarch_repo
     fi
     exit 0
@@ -277,9 +308,9 @@ main() {
   AUR_HELPER=$(ensure_aur_helper)
   echo -e "$COK - Using AUR helper: $AUR_HELPER"
 
-  if [[ ",$LAYERS," == *",exploit,"* ]]; then
-    echo -e "$CNT - Enabling the BlackArch repo for the exploit layer..."
-    ensure_blackarch_repo || { echo -e "$CER - Failed to enable the BlackArch repo; exploit-layer packages will fail to install. See docs/exploit-layer.md."; }
+  if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
+    echo -e "$CNT - Enabling the BlackArch repo for the exploit-* layers that need it..."
+    ensure_blackarch_repo || { echo -e "$CER - Failed to enable the BlackArch repo; BlackArch-backed exploit-* packages will fail to install. See docs/exploit-layer.md."; }
   fi
 
   print_stage 4 "Backup"
@@ -447,6 +478,9 @@ main() {
   echo -e "  Assistant:     $ASSISTANT"
   echo -e "  Configs copied: $([[ "$CFG_COPIED" == "1" ]] && echo yes || echo no)"
   echo -e "  Config saved:  $APHOTIC_TOML"
+  if [[ ",$LAYERS," == *",exploit-"* ]]; then
+    echo -e "  Exploit disclaimer: $([[ -f "$EXPLOIT_ACK_FILE" ]] && echo "acknowledged, see $EXPLOIT_ACK_FILE" || echo "not recorded")"
+  fi
   echo -e "$COK - Install complete."
 
   if [[ "$ISNVIDIA" == "true" ]]; then
