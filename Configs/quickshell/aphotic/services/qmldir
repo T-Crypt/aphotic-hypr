@@ -14,6 +14,7 @@ singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
 singleton NotificationHistory 1.0 NotificationHistory.qml
 singleton PinnedSnippets 1.0 PinnedSnippets.qml
+singleton PkgSearch 1.0 PkgSearch.qml
 singleton Pomodoro 1.0 Pomodoro.qml
 singleton SessionLockState 1.0 SessionLockState.qml
 singleton Settings 1.0 Settings.qml

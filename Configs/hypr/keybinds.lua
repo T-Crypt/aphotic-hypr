@@ -24,6 +24,9 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dashboard tog
 hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c aphotic ipc call settings toggle"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifs clear"))
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifications toggle"))
+-- AUR/official package search + install (Arch-only; silently a no-op if
+-- neither yay nor paru is on PATH, see services/PkgSearch.qml)
+hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("qs -c aphotic ipc call pkginstall toggle"))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dnd toggle"))
 
 -- Intelligence quick-chat popout -- a fast, always-ready inference overlay
