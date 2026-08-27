@@ -12,6 +12,8 @@ import qs.modules.bar.components.status
 StyledRect {
     id: root
 
+    required property ScreenState screenState
+
     property color colour: Colours.palette.m3secondaryOnSurface
     readonly property alias items: iconColumn
 
@@ -201,6 +203,15 @@ StyledRect {
                     delegate: EntryWrapper {
                         DndStatus {
                             colour: Settings.statusIconDndColor.length > 0 ? Settings.statusIconDndColor : root.colour
+                        }
+                    }
+                }
+                DelegateChoice {
+                    roleValue: "notifCenter"
+                    delegate: EntryWrapper {
+                        NotifCenterStatus {
+                            colour: root.colour
+                            screenState: root.screenState
                         }
                     }
                 }
