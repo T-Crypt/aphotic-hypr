@@ -2,3 +2,4 @@ module qs.services.ai
 singleton AiConfig 1.0 AiConfig.qml
 singleton AiKeys 1.0 AiKeys.qml
 singleton AiProviders 1.0 AiProviders.qml
+singleton IntelligenceSessions 1.0 IntelligenceSessions.qml

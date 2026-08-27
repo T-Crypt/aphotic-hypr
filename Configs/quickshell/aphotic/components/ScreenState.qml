@@ -13,6 +13,7 @@ PersistentProperties {
     property bool utilities
     property bool sidebar
     property bool agentPanel
+    property bool intelligence
 
     // Dashboard state
     property int dashboardTab
