@@ -57,6 +57,10 @@ Singleton {
     // Array of desktop-entry ids (DesktopEntry.id, e.g. "firefox") pinned
     // to the Dock style regardless of whether they're currently running.
     property var dockPinnedApps: []
+    // macOS-style icon-proximity magnification on Dock's app row. Only
+    // engages in horizontal placement (Settings.barVertical) -- side
+    // placement has no real vertical-dock layout to magnify along.
+    property bool dockMagnification: true
     property bool taskbarGrouping: true
     property bool minimalShowDnd: true
 
@@ -208,6 +212,7 @@ Singleton {
             barStyleDefaultsApplied: root.barStyleDefaultsApplied,
             dockAutoHide: root.dockAutoHide,
             dockPinnedApps: root.dockPinnedApps,
+            dockMagnification: root.dockMagnification,
             taskbarGrouping: root.taskbarGrouping,
             minimalShowDnd: root.minimalShowDnd,
             agentSelectedProvider: root.agentSelectedProvider,
@@ -339,6 +344,7 @@ Singleton {
     onBarStyleDefaultsAppliedChanged: root._saveState()
     onDockAutoHideChanged: root._saveState()
     onDockPinnedAppsChanged: root._saveState()
+    onDockMagnificationChanged: root._saveState()
     onTaskbarGroupingChanged: root._saveState()
     onMinimalShowDndChanged: root._saveState()
     onGgufModelsDirChanged: root._saveState()
@@ -445,6 +451,8 @@ Singleton {
                     root.dockAutoHide = data.dockAutoHide;
                 if (Array.isArray(data.dockPinnedApps))
                     root.dockPinnedApps = data.dockPinnedApps;
+                if (typeof data.dockMagnification === "boolean")
+                    root.dockMagnification = data.dockMagnification;
                 if (typeof data.taskbarGrouping === "boolean")
                     root.taskbarGrouping = data.taskbarGrouping;
                 if (typeof data.minimalShowDnd === "boolean")

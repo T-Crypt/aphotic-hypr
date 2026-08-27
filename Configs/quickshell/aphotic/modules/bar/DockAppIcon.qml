@@ -10,9 +10,27 @@ Item {
     id: root
 
     required property var item
+    // Externally computed by DockBar's icon row (distance-based falloff
+    // from the hovered pointer position) -- kept as a plain input here
+    // rather than each icon owning its own hover detection, since the
+    // falloff needs every icon's position relative to ONE shared cursor
+    // position at once.
+    property real magnifyScale: 1
+    // Which edge a magnified icon should grow away from -- Item.Bottom
+    // for a bottom-anchored dock (icons grow upward, matching macOS),
+    // Item.Top for top-anchored, Item.Center for a side placement.
+    property int growOrigin: Item.Center
 
     implicitWidth: Tokens.sizes.bar.innerWidth
     implicitHeight: Tokens.sizes.bar.innerWidth
+
+    scale: magnifyScale
+    transformOrigin: growOrigin
+    z: Math.round(magnifyScale * 100)
+
+    Behavior on scale {
+        Anim { type: Anim.StandardSmall }
+    }
 
     StateLayer {
         anchors.fill: parent

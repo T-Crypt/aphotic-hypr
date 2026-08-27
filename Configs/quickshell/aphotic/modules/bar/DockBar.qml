@@ -56,6 +56,19 @@ Item {
         return items;
     }
 
+    // Icon-proximity magnification falloff (macOS-style), quadratic so it
+    // reads as a smooth "wave" rather than a hard-edged linear ramp.
+    // Horizontal placement only -- see Settings.dockMagnification.
+    function magnifyFalloff(centerPos: real): real {
+        const radius = 90;
+        const maxExtra = 0.6;
+        const dist = Math.abs(centerPos - iconHover.point.position.x);
+        if (dist >= radius)
+            return 1;
+        const t = 1 - dist / radius;
+        return 1 + maxExtra * t * t;
+    }
+
     // Auto-hide is content-transform-only (translate + opacity below),
     // never a window re-anchor/re-mask -- matches this repo's shared
     // popout/bar animation discipline. "No window focused" is a rough
@@ -122,12 +135,37 @@ Item {
             rowSpacing: Tokens.spacing.small
             columnSpacing: Tokens.spacing.small
 
-            Repeater {
-                model: root.dockItems
+            Item {
+                id: iconRow
 
-                DockAppIcon {
-                    required property var modelData
-                    item: modelData
+                Layout.preferredWidth: iconGrid.implicitWidth
+                Layout.preferredHeight: iconGrid.implicitHeight
+
+                readonly property bool magnifying: Settings.dockMagnification && Settings.barVertical && iconHover.hovered
+
+                HoverHandler {
+                    id: iconHover
+                }
+
+                Grid {
+                    id: iconGrid
+
+                    flow: Settings.barVertical ? Grid.LeftToRight : Grid.TopToBottom
+                    columns: Settings.barVertical ? root.dockItems.length : 1
+                    rows: Settings.barVertical ? 1 : root.dockItems.length
+                    spacing: Tokens.spacing.small
+
+                    Repeater {
+                        model: root.dockItems
+
+                        DockAppIcon {
+                            id: dockIcon
+                            required property var modelData
+                            item: modelData
+                            growOrigin: !Settings.barVertical ? Item.Center : (Settings.barPositionBottom ? Item.Bottom : Item.Top)
+                            magnifyScale: iconRow.magnifying ? root.magnifyFalloff(dockIcon.x + dockIcon.width / 2) : 1
+                        }
+                    }
                 }
             }
 
