@@ -64,6 +64,37 @@ for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
   sed -i '/# Added by aphotic install.sh so ~\/.local\/bin (aphotic CLI) is on PATH/,+1d' "$rc"
 done
 
+ASSISTANT_CONFIG="$HOME/.config/aphotic/ai-config.json"
+if [[ -f "$ASSISTANT_CONFIG" ]]; then
+  ASSISTANT_MODEL=$("$PYTHON_BIN" -c 'import json, sys
+try:
+    data = json.load(open(sys.argv[1]))
+except (FileNotFoundError, json.JSONDecodeError):
+    data = {}
+print(data.get("assistantModel", "") if data.get("assistantEnabled") else "")' "$ASSISTANT_CONFIG")
+  if [[ -n "$ASSISTANT_MODEL" ]]; then
+    read -rep $"Remove the Aphotic Assistant's pulled model ($ASSISTANT_MODEL)? Your other Ollama models are untouched. (y,n) " ASSISTANT_CONFIRM
+    if [[ "$ASSISTANT_CONFIRM" == "y" || "$ASSISTANT_CONFIRM" == "Y" ]]; then
+      if command -v ollama >/dev/null 2>&1; then
+        ollama rm "$ASSISTANT_MODEL" || echo "Could not remove $ASSISTANT_MODEL via 'ollama rm' -- it may already be gone, or Ollama may not be running."
+      else
+        echo "ollama CLI not found; remove $ASSISTANT_MODEL yourself (e.g. via Settings -> AI, or the Ollama API) if it's still pulled."
+      fi
+      "$PYTHON_BIN" -c 'import json, sys
+path = sys.argv[1]
+try:
+    data = json.load(open(path))
+except (FileNotFoundError, json.JSONDecodeError):
+    data = {}
+data["assistantEnabled"] = False
+data["assistantModel"] = ""
+data["assistantInstalledAt"] = ""
+json.dump(data, open(path, "w"), indent=2)' "$ASSISTANT_CONFIG"
+      echo "Aphotic Assistant removed."
+    fi
+  fi
+fi
+
 if [[ "$PURGE_PACKAGES" == "1" ]]; then
   AUR_HELPER=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["system"]["aur_helper"])' "$APHOTIC_TOML")
   read -rep $"This will run $AUR_HELPER -R against every package this profile installed (including custom_apps.lst entries). Continue? (y,n) " PURGE_CONFIRM

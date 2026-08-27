@@ -46,6 +46,31 @@ ColumnLayout {
         }
     }
 
+    // First Command Center open after the Assistant is installed: pre-select
+    // it and greet with a system-authored message instead of a live model
+    // call, so there's no cold-start latency on the very first thing the
+    // user sees. assistantWelcomeShown makes this a once-ever trigger, not
+    // once-per-tab-open. Checked both on mount AND on assistantEnabled
+    // changing -- AiConfig's own FileView loads asynchronously, so
+    // assistantEnabled can still be at its false default the instant this
+    // tab mounts, before ai-config.json has actually finished loading.
+    function _maybeShowAssistantWelcome() {
+        if (AiConfig.assistantEnabled && !Settings.assistantWelcomeShown) {
+            AiConfig.activeProvider = "assistant";
+            root._appendMessage("assistant", qsTr("Hi, I'm the Aphotic Assistant — I run locally and know this specific install (your profile, layers, and theme). Ask me about theming, the launcher's prefix modes, keybinds, or setting up the gaming/dev layers."));
+            Settings.assistantWelcomeShown = true;
+        }
+    }
+
+    Component.onCompleted: root._maybeShowAssistantWelcome()
+
+    Connections {
+        target: AiConfig
+        function onAssistantEnabledChanged() {
+            root._maybeShowAssistantWelcome();
+        }
+    }
+
     RowLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.small
