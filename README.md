@@ -63,6 +63,11 @@ scripts/showcase/record.sh      # records the live demo sequence (needs wf-recor
 scripts/showcase/assemble.sh    # burns in captions + title cards -> recordings/aphotic-showcase.mp4
 ```
 
+Running that pipeline locally drops the finished video at
+`recordings/aphotic-showcase.mp4` — that's the one to watch;
+`recordings/aphotic-showcase-raw.mp4` is `record.sh`'s unedited
+intermediate output before captions and title cards are burned in.
+
 See [`docs/showcase/SHOT_LIST.md`](docs/showcase/SHOT_LIST.md) for the
 full scene-by-scene breakdown (trigger, expected result, duration) and
 [`docs/showcase/CAPTIONS.md`](docs/showcase/CAPTIONS.md) for the exact
