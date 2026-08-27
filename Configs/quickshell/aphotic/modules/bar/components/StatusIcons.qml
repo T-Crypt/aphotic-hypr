@@ -9,65 +9,76 @@ import qs.services
 import qs.utils
 import qs.modules.bar.components.status
 
-StyledRect {
+Item {
     id: root
 
     required property ScreenState screenState
 
     property color colour: Colours.palette.m3secondaryOnSurface
-    readonly property alias items: iconColumn
 
     readonly property int spacing: Tokens.spacing.medium / 2
+    // Real gap BETWEEN pills -- previously a single 1px divider line
+    // inside one continuous background, which read as "no separation,
+    // one shape" rather than distinct groups.
+    readonly property int groupSpacing: Tokens.spacing.small
 
-    // Index of the first/last entry that isn't collapsed, for edge margin gating
-    readonly property int firstPresent: {
-        const values = model.values;
-        for (let i = 0; i < values.length; i++)
-            if (!collapsed(values[i]))
-                return i;
-        return -1;
-    }
-    readonly property int lastPresent: {
-        const values = model.values;
-        for (let i = values.length - 1; i >= 0; i--)
-            if (!collapsed(values[i]))
-                return i;
-        return -1;
-    }
-
-    // Entries that can shrink to nothing, spacing included
-    function collapsed(entry: var): bool {
-        if (entry.id === "lockStatus")
-            return !Hypr.capsLock && !Hypr.numLock;
-        return false;
+    // Bar.qml's checkPopout reads this for group-aware hit-testing: find
+    // which pill's own bounds contain the hover position first, THEN
+    // the nearest icon within just that pill -- tightly scoped to each
+    // pill's real extent rather than one flat search across every icon
+    // regardless of which group it's visually in.
+    readonly property var groupContainers: {
+        const result = [];
+        for (let i = 0; i < groupRepeater.count; i++) {
+            const pill = groupRepeater.itemAt(i);
+            if (pill)
+                result.push({ pill, icons: pill.icons });
+        }
+        return result;
     }
 
-    color: Colours.palette.m3surfaceContainerHigh
-    radius: Tokens.rounding.full
+    // groupDivider entries now just mark a split point between pills
+    // instead of rendering as a visible line -- the pills' own gap does
+    // that job.
+    readonly property var groups: {
+        const values = root.Config.bar.statusIcons.values.filter(e => e.enabled);
+        const out = [];
+        let current = [];
+        for (const v of values) {
+            if (v.id === "groupDivider") {
+                if (current.length > 0) {
+                    out.push(current);
+                    current = [];
+                }
+            } else {
+                current.push(v);
+            }
+        }
+        if (current.length > 0)
+            out.push(current);
+        return out;
+    }
 
-    clip: true
-    implicitWidth: Settings.barVertical ? iconColumn.implicitWidth + Tokens.padding.medium * 2 : Settings.barInnerWidth
-    implicitHeight: Settings.barVertical ? Settings.barInnerWidth : iconColumn.implicitHeight + Tokens.padding.medium * 2
+    implicitWidth: Settings.barVertical ? groupLayout.implicitWidth : Settings.barInnerWidth
+    implicitHeight: Settings.barVertical ? Settings.barInnerWidth : groupLayout.implicitHeight
 
     GridLayout {
-        id: iconColumn
+        id: groupLayout
 
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: Settings.barVertical ? 0 : Tokens.padding.medium
-        anchors.rightMargin: Settings.barVertical ? Tokens.padding.medium : 0
 
         flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
-        rowSpacing: 0
-        columnSpacing: 0
+        rowSpacing: root.groupSpacing
+        columnSpacing: root.groupSpacing
 
         states: State {
             name: "vertical"
             when: Settings.barVertical
 
             AnchorChanges {
-                target: iconColumn
+                target: groupLayout
                 anchors.left: undefined
                 anchors.top: root.top
                 anchors.bottom: root.bottom
@@ -76,169 +87,182 @@ StyledRect {
         }
 
         Repeater {
-            model: ScriptModel {
-                id: model
+            id: groupRepeater
 
-                values: root.Config.bar.statusIcons.values.filter(e => e.enabled)
-            }
+            model: root.groups
 
-            DelegateChooser {
-                role: "id"
+            StyledRect {
+                id: pill
 
-                DelegateChoice {
-                    roleValue: "lockStatus"
-                    delegate: EntryWrapper {
-                        LockStatus {
-                            colour: root.colour
-                            parentSpacing: root.spacing
+                required property var modelData
+                readonly property alias icons: pillIcons
+
+                color: Colours.palette.m3surfaceContainerHigh
+                radius: Tokens.rounding.full
+                clip: true
+
+                Layout.preferredWidth: Settings.barVertical ? pillIcons.implicitWidth + Tokens.padding.medium * 2 : Settings.barInnerWidth
+                Layout.preferredHeight: Settings.barVertical ? Settings.barInnerWidth : pillIcons.implicitHeight + Tokens.padding.medium * 2
+
+                GridLayout {
+                    id: pillIcons
+
+                    anchors.centerIn: parent
+                    flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
+                    rowSpacing: root.spacing
+                    columnSpacing: root.spacing
+
+                    Repeater {
+                        model: ScriptModel {
+                            values: pill.modelData
                         }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "audio"
-                    delegate: EntryWrapper {
-                        margin: Tokens.spacing.extraSmall / 2
 
-                        MaterialIcon {
-                            animate: true
-                            text: Icons.getVolumeIcon(Audio.volume, Audio.muted)
-                            color: root.colour
-                            fontStyle: Tokens.font.icon.medium
-                            fill: 1
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "microphone"
-                    delegate: EntryWrapper {
-                        margin: Tokens.spacing.extraSmall / 2
-                        name: "audio" // Mic opens audio popout
+                        DelegateChooser {
+                            role: "id"
 
-                        MaterialIcon {
-                            animate: true
-                            text: Icons.getMicVolumeIcon(Audio.sourceVolume, Audio.sourceMuted)
-                            color: root.colour
-                            fontStyle: Tokens.font.icon.medium
-                            fill: 1
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "kbLayout"
-                    delegate: EntryWrapper {
-                        StyledText {
-                            animate: true
-                            text: Hypr.kbLayout
-                            color: root.colour
-                            font: Tokens.font.mono.medium
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "network"
-                    delegate: EntryWrapper {
-                        MaterialIcon {
-                            animate: true
-                            text: Nmcli.activeEthernet ? "cable" : Nmcli.active ? Icons.getNetworkIcon(Nmcli.active.strength ?? 0) : "wifi_off"
-                            color: Settings.statusIconWifiColor.length > 0 ? Settings.statusIconWifiColor : root.colour
-
-                            MouseArea {
-                                anchors.fill: parent
-                                anchors.margins: -Tokens.padding.small
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Quickshell.execDetached(["nm-connection-editor"])
+                            DelegateChoice {
+                                roleValue: "lockStatus"
+                                delegate: EntryWrapper {
+                                    LockStatus {
+                                        colour: root.colour
+                                        parentSpacing: root.spacing
+                                    }
+                                }
                             }
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "bluetooth"
-                    delegate: EntryWrapper {
-                        BluetoothStatus {
-                            colour: Settings.statusIconBluetoothColor.length > 0 ? Settings.statusIconBluetoothColor : root.colour
-
-                            MouseArea {
-                                anchors.fill: parent
-                                anchors.margins: -Tokens.padding.small
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: Quickshell.execDetached(["blueman-manager"])
+                            DelegateChoice {
+                                roleValue: "audio"
+                                delegate: EntryWrapper {
+                                    MaterialIcon {
+                                        animate: true
+                                        text: Icons.getVolumeIcon(Audio.volume, Audio.muted)
+                                        color: root.colour
+                                        fontStyle: Tokens.font.icon.medium
+                                        fill: 1
+                                    }
+                                }
                             }
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "vpn"
-                    delegate: EntryWrapper {
-                        VpnStatus {
-                            colour: root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "battery"
-                    delegate: EntryWrapper {
-                        BatteryStatus {
-                            colour: Settings.statusIconPowerProfileColor.length > 0 ? Settings.statusIconPowerProfileColor : root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "resources"
-                    delegate: EntryWrapper {
-                        ResourcesStatus {
-                            colour: Settings.statusIconPerformanceColor.length > 0 ? Settings.statusIconPerformanceColor : root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "hostInfo"
-                    delegate: EntryWrapper {
-                        HostInfoStatus {
-                            colour: Settings.statusIconHostInfoColor.length > 0 ? Settings.statusIconHostInfoColor : root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "networkSpeed"
-                    delegate: EntryWrapper {
-                        NetworkSpeedStatus {
-                            colour: root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "pomodoro"
-                    delegate: EntryWrapper {
-                        PomodoroStatus {
-                            colour: Settings.statusIconPomodoroColor.length > 0 ? Settings.statusIconPomodoroColor : root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "dnd"
-                    delegate: EntryWrapper {
-                        DndStatus {
-                            colour: Settings.statusIconDndColor.length > 0 ? Settings.statusIconDndColor : root.colour
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "groupDivider"
-                    delegate: EntryWrapper {
-                        Rectangle {
-                            implicitWidth: Settings.barVertical ? 20 : 1
-                            implicitHeight: Settings.barVertical ? 1 : 20
-                            color: Colours.palette.m3outlineVariant
-                            opacity: 0.6
-                        }
-                    }
-                }
-                DelegateChoice {
-                    roleValue: "notifCenter"
-                    delegate: EntryWrapper {
-                        NotifCenterStatus {
-                            colour: root.colour
-                            screenState: root.screenState
+                            DelegateChoice {
+                                roleValue: "microphone"
+                                delegate: EntryWrapper {
+                                    name: "audio" // Mic opens audio popout
+
+                                    MaterialIcon {
+                                        animate: true
+                                        text: Icons.getMicVolumeIcon(Audio.sourceVolume, Audio.sourceMuted)
+                                        color: root.colour
+                                        fontStyle: Tokens.font.icon.medium
+                                        fill: 1
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "kbLayout"
+                                delegate: EntryWrapper {
+                                    StyledText {
+                                        animate: true
+                                        text: Hypr.kbLayout
+                                        color: root.colour
+                                        font: Tokens.font.mono.medium
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "network"
+                                delegate: EntryWrapper {
+                                    MaterialIcon {
+                                        animate: true
+                                        text: Nmcli.activeEthernet ? "cable" : Nmcli.active ? Icons.getNetworkIcon(Nmcli.active.strength ?? 0) : "wifi_off"
+                                        color: Settings.statusIconWifiColor.length > 0 ? Settings.statusIconWifiColor : root.colour
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            anchors.margins: -Tokens.padding.small
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Quickshell.execDetached(["nm-connection-editor"])
+                                        }
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "bluetooth"
+                                delegate: EntryWrapper {
+                                    BluetoothStatus {
+                                        colour: Settings.statusIconBluetoothColor.length > 0 ? Settings.statusIconBluetoothColor : root.colour
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            anchors.margins: -Tokens.padding.small
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: Quickshell.execDetached(["blueman-manager"])
+                                        }
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "vpn"
+                                delegate: EntryWrapper {
+                                    VpnStatus {
+                                        colour: root.colour
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "battery"
+                                delegate: EntryWrapper {
+                                    BatteryStatus {
+                                        colour: Settings.statusIconPowerProfileColor.length > 0 ? Settings.statusIconPowerProfileColor : root.colour
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "resources"
+                                delegate: EntryWrapper {
+                                    ResourcesStatus {
+                                        colour: Settings.statusIconPerformanceColor.length > 0 ? Settings.statusIconPerformanceColor : root.colour
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "hostInfo"
+                                delegate: EntryWrapper {
+                                    HostInfoStatus {
+                                        colour: Settings.statusIconHostInfoColor.length > 0 ? Settings.statusIconHostInfoColor : root.colour
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "networkSpeed"
+                                delegate: EntryWrapper {
+                                    NetworkSpeedStatus {
+                                        colour: root.colour
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "pomodoro"
+                                delegate: EntryWrapper {
+                                    PomodoroStatus {
+                                        colour: Settings.statusIconPomodoroColor.length > 0 ? Settings.statusIconPomodoroColor : root.colour
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "dnd"
+                                delegate: EntryWrapper {
+                                    DndStatus {
+                                        colour: Settings.statusIconDndColor.length > 0 ? Settings.statusIconDndColor : root.colour
+                                    }
+                                }
+                            }
+                            DelegateChoice {
+                                roleValue: "notifCenter"
+                                delegate: EntryWrapper {
+                                    NotifCenterStatus {
+                                        colour: root.colour
+                                        screenState: root.screenState
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -246,40 +270,26 @@ StyledRect {
         }
     }
 
+    // Simple uniform spacing (pillIcons' own rowSpacing/columnSpacing)
+    // replaces the old per-item topGap/bottomGap edge-margin-gating --
+    // that machinery existed only to avoid a phantom gap around
+    // lockStatus when it collapses to zero width, which only ever
+    // happens within one pill (the System group). Accepting that one
+    // minor, rare cosmetic edge case (a slightly wider gap around a
+    // collapsed lockStatus icon) in exchange for real per-pill grouping
+    // without threading first/last-present indices through 13 delegate
+    // call sites that would each need it.
     component EntryWrapper: Item {
         required property var modelData
         required property int index
-        property int margin: root.spacing / 2
-        readonly property bool present: !root.collapsed(modelData)
-        property real topGap: present && index !== root.firstPresent ? margin : 0
-        property real bottomGap: present && index !== root.lastPresent ? margin : 0
         default property Item item
         property string name: modelData.id.toLowerCase()
 
-        // topGap/bottomGap are really "leading gap"/"trailing gap" along
-        // whichever axis the icons flow on -- routed to left/right margins
-        // instead of top/bottom when the bar runs horizontally.
-        Layout.topMargin: Settings.barVertical ? 0 : Math.round(topGap)
-        Layout.bottomMargin: Settings.barVertical ? 0 : Math.round(bottomGap)
-        Layout.leftMargin: Settings.barVertical ? Math.round(topGap) : 0
-        Layout.rightMargin: Settings.barVertical ? Math.round(bottomGap) : 0
         Layout.alignment: Settings.barVertical ? Qt.AlignVCenter : Qt.AlignHCenter
 
         implicitWidth: item?.implicitWidth ?? 0
         implicitHeight: item?.implicitHeight ?? 0
 
         children: item
-
-        Behavior on topGap {
-            Anim {
-                type: Anim.SlowEffects
-            }
-        }
-
-        Behavior on bottomGap {
-            Anim {
-                type: Anim.SlowEffects
-            }
-        }
     }
 }
