@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.components
@@ -44,6 +45,10 @@ ColumnLayout {
     function launchProfile(profile: var): void {
         for (const entry of profile.entries)
             launchProc.exec(["hyprctl", "dispatch", "exec", `[workspace ${entry.workspace}] ${entry.command}`]);
+        // Fire-and-forget notification to any plugin declaring the
+        // workspace-hook capability -- see cmd_plugin.sh's
+        // run-workspace-hooks. Plugins never replace the launch above.
+        Quickshell.execDetached(["aphotic", "plugin", "run-workspace-hooks", profile.name]);
     }
 
     function deleteProfile(index: int): void {
