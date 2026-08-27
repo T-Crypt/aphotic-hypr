@@ -21,6 +21,7 @@ RowLayout {
     // this codebase has today; more (night light, screen-recording
     // indicator, ...) can be added here later without redesigning this.
     MinimalIndicatorIcon {
+        visible: Settings.minimalShowDnd
         active: Settings.dndEnabled
         icon: "do_not_disturb_on"
         colour: root.colour
