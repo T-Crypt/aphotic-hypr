@@ -3,22 +3,28 @@
 # @cmd: plugin
 # @cmd.desc: List, install, enable/disable, or remove plugins
 # @cmd.group: CONFIG
-# @cmd.opt: list [--remote] [--json]  | List installed (or available-remote) plugins
-# @cmd.opt: install <name> [--link]   | Install a plugin from APHOTIC_PLUGINS_REPO
-# @cmd.opt: enable|disable <name>     | Toggle a plugin without uninstalling it
-# @cmd.opt: remove <name>             | Uninstall a plugin
+# @cmd.opt: list [--remote] [--json] [--category <name>]  | List installed (or available-remote) plugins
+# @cmd.opt: install <name> [--link]                        | Install a plugin from APHOTIC_PLUGINS_REPO
+# @cmd.opt: enable|disable <name>                          | Toggle a plugin without uninstalling it
+# @cmd.opt: remove <name>                                  | Uninstall a plugin
+# @cmd.opt: trust-security-index                            | Opt into the separate security-category plugin index
+# @cmd.opt: untrust-security-index                          | Revoke that opt-in (hides security-category plugins again)
 #
 # See docs/PLUGIN_SYSTEM.md. A plugin is a directory under
 # APHOTIC_PLUGINS_DIR with its own plugin.toml (same "directory +
-# manifest" shape as a theme). This file also owns `run-theme-hooks`, the
-# one shared implementation of the theme-hook loop called from all three
-# theme-apply call sites (cmd_theme.sh here, Themes.qml/Wallpapers.qml,
-# and wallswitcher.py) — see _aphotic_plugin_run_theme_hooks below.
+# manifest" shape as a theme). This file also owns `run-theme-hooks`/
+# `run-project-hooks`/`run-workspace-hooks`, the shared implementations
+# of each hook-firing loop, called from cmd_theme.sh/Themes.qml/
+# Wallpapers.qml/wallswitcher.py (theme), ProjectItem.qml (project), and
+# WorkspaceProfilesPane.qml (workspace) respectively -- see
+# _aphotic_plugin_run_theme_hooks and _aphotic_plugin_run_hook_by_capability
+# below. project/workspace hooks only fire for plugins that declare the
+# matching capability tag in their manifest, not every enabled plugin.
 
 _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 
 _aphotic_plugin_describe() {
-    local name="$1" dir manifest display desc version caps enabled missing bin
+    local name="$1" dir manifest display desc version category caps enabled missing bin
     dir="$(_aphotic_plugin_dir "$name")"
     manifest="${dir}/plugin.toml"
     [[ -f "$manifest" ]] || return 1
@@ -26,6 +32,7 @@ _aphotic_plugin_describe() {
     display="$(aphotic_toml_get "$manifest" plugin display_name)"
     desc="$(aphotic_toml_get "$manifest" plugin description)"
     version="$(aphotic_toml_get "$manifest" plugin version)"
+    category="$(aphotic_toml_get "$manifest" plugin category)"
     caps="$(aphotic_toml_get_array "$manifest" plugin capabilities | jq -R . | jq -s .)"
     enabled="false"
     aphotic_plugin_is_enabled "$name" && enabled="true"
@@ -41,10 +48,11 @@ _aphotic_plugin_describe() {
         --arg display_name "${display:-$name}" \
         --arg description "${desc:-}" \
         --arg version "${version:-0.0.0}" \
+        --arg category "${category:-}" \
         --argjson capabilities "${caps:-[]}" \
         --argjson enabled "$enabled" \
         --argjson missing_binaries "$missing" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries}'
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries}'
 }
 
 _aphotic_plugin_list_installed_json() {
@@ -58,7 +66,21 @@ _aphotic_plugin_list_installed_json() {
 
 _aphotic_plugin_list_remote_json() {
     aphotic_require curl || return 1
-    curl -fsSL -m 10 "$APHOTIC_PLUGINS_INDEX_URL" 2>/dev/null || echo '{"plugins": []}'
+    local main_data security_data
+    main_data="$(curl -fsSL -m 10 "$APHOTIC_PLUGINS_INDEX_URL" 2>/dev/null || echo '{"plugins": []}')"
+
+    # Security-category plugins only ever appear here once the user has
+    # explicitly trusted the separate security index (see
+    # aphotic_plugins_security_index_trusted) -- untrusted, this
+    # function behaves exactly as if that index didn't exist, not just
+    # "installable but hidden" -- it's not fetched at all.
+    if aphotic_plugins_security_index_trusted; then
+        security_data="$(curl -fsSL -m 10 "$APHOTIC_PLUGINS_SECURITY_INDEX_URL" 2>/dev/null || echo '{"plugins": []}')"
+        jq -n --argjson a "$main_data" --argjson b "$security_data" \
+            '{plugins: (($a.plugins // []) + ($b.plugins // []))}'
+    else
+        echo "$main_data"
+    fi
 }
 
 # Fire every enabled theme-hook plugin's on_theme_change script, piping
@@ -92,6 +114,107 @@ _aphotic_plugin_run_theme_hooks() {
         ) &
         disown 2>/dev/null || true
     done < <(aphotic_plugin_names)
+}
+
+# Shared shape for the two new v2 hooks below: only plugins that declare
+# the matching capability tag AND set the matching [hooks] key get
+# fired -- not every enabled plugin -- so a theming-only plugin doesn't
+# get invoked on every project switch or workspace launch it has no
+# reason to care about. $1: capability tag, $2: hooks key, $3: single
+# positional argument passed to the hook script.
+_aphotic_plugin_run_hook_by_capability() {
+    local capability="$1" hooks_key="$2" arg="$3"
+    local name dir manifest hook caps
+    while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        aphotic_plugin_is_enabled "$name" || continue
+
+        dir="$(_aphotic_plugin_dir "$name")"
+        manifest="${dir}/plugin.toml"
+        caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
+        grep -qx "$capability" <<<"$caps" || continue
+
+        hook="$(aphotic_toml_get "$manifest" hooks "$hooks_key")"
+        [[ -n "$hook" && -x "${dir}/${hook}" ]] || continue
+
+        (
+            timeout 5 "${dir}/${hook}" "$arg" >/dev/null 2>&1 \
+                || aphotic_warn "plugin '${name}': ${hooks_key} hook failed or timed out"
+        ) &
+        disown 2>/dev/null || true
+    done < <(aphotic_plugin_names)
+}
+
+# Fired from the launcher's "@" project-switcher (ProjectItem.qml) after
+# it dispatches its own terminal+editor launch -- plugins never replace
+# that, they just get told a project was opened.
+_aphotic_plugin_run_project_hooks() {
+    local path="$1"
+    [[ -n "$path" ]] || return 0
+    _aphotic_plugin_run_hook_by_capability "project-hook" "on_project_open" "$path"
+}
+
+# Fired from Workspace Profiles' launchProfile() after it dispatches the
+# profile's own hyprctl execs.
+_aphotic_plugin_run_workspace_hooks() {
+    local profile_name="$1"
+    [[ -n "$profile_name" ]] || return 0
+    _aphotic_plugin_run_hook_by_capability "workspace-hook" "on_workspace_launch" "$profile_name"
+}
+
+# Confirmation gate for the separate security-category plugin index --
+# same shape as lib/install/blackarch.sh's ensure_blackarch_repo: a real
+# warning, explicit y/N, persisted only once accepted. --yes skips the
+# interactive prompt for a non-interactive caller (Settings -> Plugins,
+# which renders its own warning/confirm UI before calling this) --
+# mirrors exploit_disclaimer.sh's TTY-vs-flag split, just simpler since
+# there's no scripted-install angle here to fail loudly against.
+_aphotic_plugin_trust_security_index() {
+    local skip_prompt="$1"
+
+    if [[ "$skip_prompt" != "true" ]]; then
+        cat <<'EOF'
+================================================================
+         SECURITY-CATEGORY PLUGIN INDEX
+================================================================
+
+This index carries offensive-security tooling (e.g. Bloodhound,
+Caido) as installable plugins -- separate from the main,
+maintainer-curated aphotic-plugins index, and not vetted the
+same way.
+
+Only enable this if you understand what you're installing and
+intend to use it for legitimate, authorized security work.
+================================================================
+
+EOF
+        local confirm
+        read -rep $'[\e[1;33mACTION\e[0m] - Trust the security plugin index? (y,N) ' confirm
+        if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+            aphotic_log "not trusted -- security-category plugins will stay hidden"
+            return 0
+        fi
+    fi
+
+    aphotic_plugins_set_security_index_trusted true
+    aphotic_ok "security plugin index trusted -- security-category plugins now visible in 'aphotic plugin list --remote'"
+}
+
+_aphotic_plugin_untrust_security_index() {
+    aphotic_plugins_set_security_index_trusted false
+    aphotic_ok "security plugin index untrusted -- security-category plugins hidden again (already-installed ones are unaffected)"
+}
+
+# JSON status query -- PluginsPane.qml uses this (not a heuristic over
+# whether any security-category entries happen to be present in the
+# fetched list) to decide whether to show the trust-prompt UI for the
+# security category.
+_aphotic_plugin_security_index_status() {
+    local trusted="false"
+    if aphotic_plugins_security_index_trusted; then
+        trusted="true"
+    fi
+    jq -n --argjson trusted "$trusted" '{trusted: $trusted}'
 }
 
 _aphotic_plugin_install() {
@@ -136,11 +259,13 @@ aphotic_cmd_plugin() {
 
     case "$sub" in
         list)
-            local remote="false" as_json="false"
-            for arg in "$@"; do
-                case "$arg" in
-                    --remote) remote="true" ;;
-                    --json) as_json="true" ;;
+            local remote="false" as_json="false" category=""
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    --remote) remote="true"; shift ;;
+                    --json) as_json="true"; shift ;;
+                    --category) category="${2:-}"; shift 2 ;;
+                    *) shift ;;
                 esac
             done
 
@@ -149,6 +274,9 @@ aphotic_cmd_plugin() {
             local data
             if [[ "$remote" == "true" ]]; then
                 data="$(_aphotic_plugin_list_remote_json)"
+                if [[ -n "$category" ]]; then
+                    data="$(echo "$data" | jq --arg c "$category" '{plugins: ((.plugins // []) | map(select(.category == $c)))}')"
+                fi
                 [[ "$as_json" == "true" ]] && { echo "$data" | jq '.plugins // []'; return 0; }
                 echo "$data" | jq -r '(.plugins // [])[] | "\(.name)\t\(.display_name)\t\(.version)\t\(.description)"' | column -t -s $'\t'
             else
@@ -189,12 +317,39 @@ aphotic_cmd_plugin() {
             # reads the already-fresh palette.json itself, see above.
             _aphotic_plugin_run_theme_hooks
             ;;
+        run-project-hooks)
+            # Plumbing subcommand — called from ProjectItem.qml's
+            # execute() (the launcher's "@" project switcher).
+            _aphotic_plugin_run_project_hooks "${1:-}"
+            ;;
+        run-workspace-hooks)
+            # Plumbing subcommand — called from WorkspaceProfilesPane.qml's
+            # launchProfile().
+            _aphotic_plugin_run_workspace_hooks "${1:-}"
+            ;;
+        trust-security-index)
+            local skip="false"
+            [[ "${1:-}" == "--yes" ]] && skip="true"
+            _aphotic_plugin_trust_security_index "$skip"
+            ;;
+        untrust-security-index)
+            _aphotic_plugin_untrust_security_index
+            ;;
+        security-index-status)
+            aphotic_require jq || return 1
+            _aphotic_plugin_security_index_status
+            ;;
         -h|--help|"")
             cat <<EOF
-Usage: aphotic plugin <list|install|enable|disable|remove> [args]
+Usage: aphotic plugin <list|install|enable|disable|remove|...> [args]
 
-  list [--remote] [--json]   List installed plugins (or --remote: what's
-                              available from APHOTIC_PLUGINS_INDEX_URL)
+  list [--remote] [--json] [--category <name>]
+                              List installed plugins (or --remote: what's
+                              available from APHOTIC_PLUGINS_INDEX_URL,
+                              plus the security index if trusted).
+                              --category filters by plugin.toml's
+                              [plugin].category (dev/security/mobile/
+                              ai/theming/productivity).
   install <name> [--link]    Install from a local checkout of
                               aphotic-plugins (APHOTIC_PLUGINS_REPO,
                               default ~/aphotic-plugins). --link symlinks
@@ -202,6 +357,9 @@ Usage: aphotic plugin <list|install|enable|disable|remove> [args]
   enable <name>               Re-enable an installed plugin
   disable <name>               Disable without uninstalling
   remove <name>                Uninstall
+  trust-security-index         Opt into the separate security-category
+                              plugin index (warns first; see docs)
+  untrust-security-index       Revoke that opt-in
 EOF
             ;;
         *)

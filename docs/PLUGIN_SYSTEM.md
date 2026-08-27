@@ -1,10 +1,12 @@
 # Plugin System — Design Doc
 
-Status: **draft, not implemented.** Nothing here gets built until this is
-reviewed. Scope is deliberately phased — Phase 1 is small, real, and
-enough to ship the first actual plugin (OpenRGB sync); Phases 2/3 are the
-path toward the "native community plugins" vision `CONTRIBUTING.md`
-already gestures at, not something built in one pass.
+Status: **Phase 1 shipped** (`cmd_plugin.sh`, the OpenRGB reference
+plugin) — see the resolutions noted inline below for where the shipped
+version diverged from this doc's original sketch. A manifest v2
+expansion (category, project/workspace hooks, the security-category
+index) has also shipped on top of Phase 1, per `CLAUDE.md`'s Plugin
+Ecosystem plan. §6's own Phase 2 (CLI subcommands)/Phase 3 (UI surfaces)
+are still unbuilt.
 
 ## 0. What already exists that this builds on
 
@@ -215,16 +217,65 @@ visual language needed.
 
 ## Open questions checklist (resolve before Phase 1 implementation)
 
-- [ ] Confirm `~/.local/share/aphotic/plugins/` as the install path (vs.
-      e.g. under the dots repo checkout itself).
-- [ ] Confirm the positional-args hook contract (§4) vs. a JSON-on-stdin
-      alternative — positional is simpler; JSON is more extensible if a
-      Phase-1.5 hook ever needs more than the palette.
-- [ ] Decide the accent-slot question in §5 now or explicitly defer it
-      per-plugin.
-- [ ] Decide whether `aphotic plugin install` fetches from a hardcoded
-      `~/aphotic-plugins` path, an env var, or a `Settings.qml`-persisted
-      path — this doc assumes the last, matching `Settings.projectRoots`'s
-      precedent, but it's not decided.
-- [ ] Decide the hook timeout value (§4) — a real number needs picking,
-      not just "has one."
+**Phase 1 has shipped** (`Configs/.local/lib/aphotic/commands/cmd_plugin.sh`).
+Resolutions, for whoever next reads this list expecting it to still be
+open:
+
+- [x] Install path: `~/.local/share/aphotic/plugins/` (`APHOTIC_PLUGINS_DIR`), as sketched.
+- [x] Hook contract: **JSON-on-stdin, not positional args** — `on_theme_change`
+      receives the resolved palette by reading `~/.local/state/aphotic/palette.json`
+      on stdin, not 19 positional hex strings. The positional sketch in §4/§5
+      below is what was *proposed*; it's not what shipped. `[hooks]` keys are
+      still plain relative script paths, unchanged from the sketch.
+- [ ] Accent-slot question (§5): still genuinely open, not resolved by
+      the shipped OpenRGB plugin (it hardcodes the same `color4`-or-fallback
+      heuristic this doc flagged as not guaranteed).
+- [x] Plugin source: `APHOTIC_PLUGINS_REPO` env var (default `~/aphotic-plugins`),
+      not a `Settings.qml`-persisted path.
+- [x] Hook timeout: 5 seconds (`timeout 5 ...`).
+
+## Plugin manifest v2 (category, project/workspace hooks, security index)
+
+Shipped on top of Phase 1, per `CLAUDE.md`'s Plugin Ecosystem Phase 2a
+plan — **not** the same thing as this doc's own "Phase 2 (CLI
+subcommands)"/"Phase 3 (UI surfaces)" in §6 below, which are still
+unbuilt. This is a separate, additive expansion of what a Phase-1-shaped
+plugin (a directory + `plugin.toml` + hook scripts) can declare, layered
+in before those two original phases:
+
+- **`[plugin].category`** (optional string) — one of `dev` / `security` /
+  `mobile` / `ai` / `theming` / `productivity`. Drives Settings → Plugins'
+  category rail and `aphotic plugin list --remote --category <name>`.
+  Absent on a v1 manifest, reads back as `""` (no error, no filter match
+  except explicit `""` queries, which nothing issues).
+- **`capabilities` gains two more tags** (still the same flat array
+  Phase 1 shipped, e.g. `["theme-hook", "project-hook"]` — not a
+  separate `[capabilities]` table, despite `CLAUDE.md`'s own sketch
+  suggesting one; reconciled with the real shipped shape instead):
+  - `project-hook` + `[hooks].on_project_open = "hooks/....sh"` — fired
+    (single positional arg: the project's absolute path) from the
+    launcher's `@` project-switcher (`ProjectItem.qml`) after it
+    launches its own terminal+editor.
+  - `workspace-hook` + `[hooks].on_workspace_launch = "hooks/....sh"` —
+    fired (single positional arg: the profile's name) from Workspace
+    Profiles' `launchProfile()` after it dispatches its own `hyprctl`
+    execs.
+  - Both only fire for a plugin that **declares** the matching
+    capability tag, not every enabled plugin — an intentional choice so
+    a theming-only plugin doesn't get invoked on every project switch.
+    Same fire-and-forget/5s-timeout/never-blocks contract as
+    `on_theme_change`.
+- **Security-category plugins live in a separate index**
+  (`APHOTIC_PLUGINS_SECURITY_INDEX_URL`), never fetched by
+  `aphotic plugin list --remote` until `aphotic plugin trust-security-index`
+  has been run once (real warning text, explicit y/N, `--yes` for the
+  Settings-UI caller which renders its own confirm UI first) — mirrors
+  the `exploit` layer's BlackArch confirmation precedent. `aphotic plugin
+  untrust-security-index` reverses it; already-installed security plugins
+  are unaffected either way. `aphotic plugin security-index-status`
+  returns `{"trusted": bool}` for UI callers that need to distinguish
+  "untrusted" from "trusted but currently empty."
+
+No manifest migration needed — every v2 field is optional, and a v1
+plugin with only `[plugin]` + `on_theme_change` parses and behaves
+identically under this.
