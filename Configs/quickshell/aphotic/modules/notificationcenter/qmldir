@@ -1,0 +1,4 @@
+module qs.modules.notificationcenter
+NotificationCenterContent 1.0 NotificationCenterContent.qml
+NotificationCenterWindow 1.0 NotificationCenterWindow.qml
+NotificationHistoryItem 1.0 NotificationHistoryItem.qml
