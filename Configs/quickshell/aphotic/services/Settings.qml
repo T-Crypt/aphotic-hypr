@@ -53,6 +53,8 @@ Singleton {
     // 0 = never auto-prune by age.
     property int intelligenceAutoPruneDays: 30
 
+    property bool assistantWelcomeShown: false
+
     property bool osdEnabled: Config.osd.enabled
     property int osdHideDelay: Config.osd.hideDelay
     property bool osdEnableBrightness: Config.osd.enableBrightness
@@ -125,6 +127,7 @@ Singleton {
             barSkin: root.barSkin,
             agentSelectedProvider: root.agentSelectedProvider,
             ggufModelsDir: root.ggufModelsDir,
+            assistantWelcomeShown: root.assistantWelcomeShown,
             osdEnabled: root.osdEnabled,
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
@@ -238,6 +241,7 @@ Singleton {
     onBarPositionBottomChanged: root._saveState()
     onBarSkinChanged: root._saveState()
     onGgufModelsDirChanged: root._saveState()
+    onAssistantWelcomeShownChanged: root._saveState()
     onOsdEnabledChanged: root._saveState()
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
@@ -330,6 +334,8 @@ Singleton {
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.ggufModelsDir === "string" && data.ggufModelsDir.length > 0)
                     root.ggufModelsDir = data.ggufModelsDir;
+                if (typeof data.assistantWelcomeShown === "boolean")
+                    root.assistantWelcomeShown = data.assistantWelcomeShown;
                 if (typeof data.osdEnabled === "boolean")
                     root.osdEnabled = data.osdEnabled;
                 if (typeof data.osdHideDelay === "number")
