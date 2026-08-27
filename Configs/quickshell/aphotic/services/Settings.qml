@@ -55,6 +55,24 @@ Singleton {
 
     property bool assistantWelcomeShown: false
 
+    // Suppresses notification popups only -- notifications still land in
+    // Notifs.list (history), see services/Notifs.qml. Auto-engaged/released
+    // by services/DoNotDisturb.qml's Pomodoro connection; persisted here so
+    // a mid-DND SUPER+B shell restart doesn't silently drop it.
+    property bool dndEnabled: false
+
+    // Advances the wallpaper within the active theme on a Timer (see
+    // services/WallpaperCycle.qml) -- interval in minutes.
+    property bool wallpaperAutoCycleEnabled: false
+    property int wallpaperAutoCycleInterval: 15
+
+    // "" = auto-detect via IP geolocation (services/Weather.qml), non-empty
+    // = geocoded via Open-Meteo's geocoding API (city/place name or
+    // "lat,lon" both work since it's passed straight through as the query).
+    property string weatherLocation: ""
+    // "celsius" or "fahrenheit".
+    property string weatherUnits: "celsius"
+
     property bool osdEnabled: Config.osd.enabled
     property int osdHideDelay: Config.osd.hideDelay
     property bool osdEnableBrightness: Config.osd.enableBrightness
@@ -76,6 +94,7 @@ Singleton {
     property string statusIconPerformanceColor: ""
     property string statusIconHostInfoColor: ""
     property string statusIconPomodoroColor: ""
+    property string statusIconDndColor: ""
     property string cursorTheme: "Bibata-Modern-Ice"
     property int cursorSize: 20
     // Papirus family, not an arbitrary icon theme, matches cmd_theme.sh's
@@ -128,6 +147,11 @@ Singleton {
             agentSelectedProvider: root.agentSelectedProvider,
             ggufModelsDir: root.ggufModelsDir,
             assistantWelcomeShown: root.assistantWelcomeShown,
+            dndEnabled: root.dndEnabled,
+            wallpaperAutoCycleEnabled: root.wallpaperAutoCycleEnabled,
+            wallpaperAutoCycleInterval: root.wallpaperAutoCycleInterval,
+            weatherLocation: root.weatherLocation,
+            weatherUnits: root.weatherUnits,
             osdEnabled: root.osdEnabled,
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
@@ -140,6 +164,7 @@ Singleton {
             statusIconPerformanceColor: root.statusIconPerformanceColor,
             statusIconHostInfoColor: root.statusIconHostInfoColor,
             statusIconPomodoroColor: root.statusIconPomodoroColor,
+            statusIconDndColor: root.statusIconDndColor,
             cursorTheme: root.cursorTheme,
             cursorSize: root.cursorSize,
             iconTheme: root.iconTheme,
@@ -242,6 +267,11 @@ Singleton {
     onBarSkinChanged: root._saveState()
     onGgufModelsDirChanged: root._saveState()
     onAssistantWelcomeShownChanged: root._saveState()
+    onDndEnabledChanged: root._saveState()
+    onWallpaperAutoCycleEnabledChanged: root._saveState()
+    onWallpaperAutoCycleIntervalChanged: root._saveState()
+    onWeatherLocationChanged: root._saveState()
+    onWeatherUnitsChanged: root._saveState()
     onOsdEnabledChanged: root._saveState()
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
@@ -254,6 +284,7 @@ Singleton {
     onStatusIconPerformanceColorChanged: root._saveState()
     onStatusIconHostInfoColorChanged: root._saveState()
     onStatusIconPomodoroColorChanged: root._saveState()
+    onStatusIconDndColorChanged: root._saveState()
     onCursorThemeChanged: {
         root._saveState();
         root._applyCursor();
@@ -336,6 +367,16 @@ Singleton {
                     root.ggufModelsDir = data.ggufModelsDir;
                 if (typeof data.assistantWelcomeShown === "boolean")
                     root.assistantWelcomeShown = data.assistantWelcomeShown;
+                if (typeof data.dndEnabled === "boolean")
+                    root.dndEnabled = data.dndEnabled;
+                if (typeof data.wallpaperAutoCycleEnabled === "boolean")
+                    root.wallpaperAutoCycleEnabled = data.wallpaperAutoCycleEnabled;
+                if (typeof data.wallpaperAutoCycleInterval === "number")
+                    root.wallpaperAutoCycleInterval = data.wallpaperAutoCycleInterval;
+                if (typeof data.weatherLocation === "string")
+                    root.weatherLocation = data.weatherLocation;
+                if (typeof data.weatherUnits === "string" && ["celsius", "fahrenheit"].includes(data.weatherUnits))
+                    root.weatherUnits = data.weatherUnits;
                 if (typeof data.osdEnabled === "boolean")
                     root.osdEnabled = data.osdEnabled;
                 if (typeof data.osdHideDelay === "number")
@@ -360,6 +401,8 @@ Singleton {
                     root.statusIconHostInfoColor = data.statusIconHostInfoColor;
                 if (typeof data.statusIconPomodoroColor === "string")
                     root.statusIconPomodoroColor = data.statusIconPomodoroColor;
+                if (typeof data.statusIconDndColor === "string")
+                    root.statusIconDndColor = data.statusIconDndColor;
                 if (typeof data.cursorTheme === "string")
                     root.cursorTheme = data.cursorTheme;
                 if (typeof data.cursorSize === "number")

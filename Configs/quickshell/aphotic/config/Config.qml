@@ -86,7 +86,8 @@ QtObject {
                 { id: "battery", enabled: true },
                 { id: "resources", enabled: true },
                 { id: "hostInfo", enabled: true },
-                { id: "pomodoro", enabled: true }
+                { id: "pomodoro", enabled: true },
+                { id: "dnd", enabled: true }
             ]
         }
 

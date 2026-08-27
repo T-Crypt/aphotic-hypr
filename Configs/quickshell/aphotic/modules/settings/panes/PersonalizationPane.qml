@@ -289,6 +289,16 @@ ColumnLayout {
                 onValueChanged: Settings.statusIconPomodoroColor = value
             }
         }
+
+        SettingsRow {
+            icon: "notifications_off"
+            label: qsTr("Do Not Disturb")
+
+            ColorPickerField {
+                value: Settings.statusIconDndColor
+                onValueChanged: Settings.statusIconDndColor = value
+            }
+        }
     }
 
     component NamePill: StyledRect {

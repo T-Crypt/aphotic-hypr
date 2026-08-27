@@ -12,7 +12,9 @@ import qs.modules.dashboard
 import qs.modules.settings
 import qs.modules.background
 import qs.modules.areapicker
+import qs.modules.colorpicker
 import qs.modules.intelligence
+import qs.services
 
 ShellRoot {
     id: root
@@ -182,5 +184,15 @@ ShellRoot {
         }
     }
 
+    IpcHandler {
+        target: "dnd"
+
+        function toggle(): void {
+            DoNotDisturb.toggle();
+        }
+    }
+
     AreaPicker {}
+
+    ColorPicker {}
 }

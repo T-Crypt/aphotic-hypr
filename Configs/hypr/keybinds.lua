@@ -23,6 +23,7 @@ hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dashboard toggle"))
 hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c aphotic ipc call settings toggle"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifs clear"))
+hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dnd toggle"))
 
 -- Intelligence quick-chat popout -- a fast, always-ready inference overlay
 -- distinct from the Command Center's AI Chat tab (SUPER+D), with its own
@@ -37,6 +38,10 @@ hl.bind(mainMod .. " + SHIFT + S",         hl.dsp.exec_cmd("qs -c aphotic ipc ca
 hl.bind(mainMod .. " + CTRL + S",          hl.dsp.exec_cmd("qs -c aphotic ipc call picker openFreeze"))
 hl.bind(mainMod .. " + ALT + S",           hl.dsp.exec_cmd("qs -c aphotic ipc call picker openClip"))
 hl.bind(mainMod .. " + CTRL + ALT + S",    hl.dsp.exec_cmd("qs -c aphotic ipc call picker openFreezeClip"))
+
+-- Screen capture: eyedropper (click-to-sample a single pixel, copies its
+-- hex to the clipboard)
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("qs -c aphotic ipc call colorpicker toggle"))
 
 -- Audio output cycling and special-workspace cycling (Quickshell IPC, no
 -- other UI path exists for either of these yet)
