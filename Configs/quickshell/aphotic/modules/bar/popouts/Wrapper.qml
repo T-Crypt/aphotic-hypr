@@ -153,10 +153,14 @@ Item {
                     return networkComp;
                 case "bluetooth":
                     return bluetoothComp;
+                case "vpn":
+                    return vpnComp;
                 case "battery":
                     return batteryComp;
                 case "resources":
                     return resourcesComp;
+                case "networkspeed":
+                    return networkSpeedComp;
                 case "hostinfo":
                     return hostInfoComp;
                 case "pomodoro":
@@ -235,12 +239,20 @@ Item {
         BluetoothPopout {}
     }
     Component {
+        id: vpnComp
+        VpnPopout {}
+    }
+    Component {
         id: batteryComp
         BatteryPopout {}
     }
     Component {
         id: resourcesComp
         ResourcesPopout {}
+    }
+    Component {
+        id: networkSpeedComp
+        NetworkSpeedPopout {}
     }
     Component {
         id: hostInfoComp

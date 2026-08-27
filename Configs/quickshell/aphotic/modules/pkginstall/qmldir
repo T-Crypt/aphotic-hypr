@@ -1,0 +1,4 @@
+module qs.modules.pkginstall
+PkgInstallContent 1.0 PkgInstallContent.qml
+PkgInstallWindow 1.0 PkgInstallWindow.qml
+PkgResultItem 1.0 PkgResultItem.qml
