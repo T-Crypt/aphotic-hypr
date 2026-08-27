@@ -12,6 +12,7 @@ singleton LlmFit 1.0 LlmFit.qml
 singleton ModelStorage 1.0 ModelStorage.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
+singleton NotificationHistory 1.0 NotificationHistory.qml
 singleton PinnedSnippets 1.0 PinnedSnippets.qml
 singleton Pomodoro 1.0 Pomodoro.qml
 singleton SessionLockState 1.0 SessionLockState.qml

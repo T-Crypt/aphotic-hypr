@@ -14,6 +14,7 @@ import qs.modules.background
 import qs.modules.areapicker
 import qs.modules.colorpicker
 import qs.modules.intelligence
+import qs.modules.notificationcenter
 import qs.services
 
 ShellRoot {
@@ -79,6 +80,15 @@ ShellRoot {
         model: Quickshell.screens
 
         IntelligenceWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
+    Variants {
+        id: notificationCenterWindows
+        model: Quickshell.screens
+
+        NotificationCenterWindow {
             screenState: root.screenStateFor(modelData)
         }
     }
@@ -189,6 +199,16 @@ ShellRoot {
 
         function toggle(): void {
             DoNotDisturb.toggle();
+        }
+    }
+
+    IpcHandler {
+        target: "notifications"
+
+        function toggle(): void {
+            const win = notificationCenterWindows.instances[0];
+            if (win)
+                win.screenState.notificationCenter = !win.screenState.notificationCenter;
         }
     }
 

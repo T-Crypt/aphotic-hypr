@@ -4,5 +4,6 @@ BluetoothStatus 1.0 BluetoothStatus.qml
 DndStatus 1.0 DndStatus.qml
 HostInfoStatus 1.0 HostInfoStatus.qml
 LockStatus 1.0 LockStatus.qml
+NotifCenterStatus 1.0 NotifCenterStatus.qml
 PomodoroStatus 1.0 PomodoroStatus.qml
 ResourcesStatus 1.0 ResourcesStatus.qml

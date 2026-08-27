@@ -23,6 +23,7 @@ hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code"))
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dashboard toggle"))
 hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c aphotic ipc call settings toggle"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifs clear"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifications toggle"))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dnd toggle"))
 
 -- Intelligence quick-chat popout -- a fast, always-ready inference overlay
