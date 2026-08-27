@@ -29,6 +29,10 @@ hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifications
 hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("qs -c aphotic ipc call pkginstall toggle"))
 hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dnd toggle"))
 
+-- Cycle bar style (full -> dock -> taskbar -> minimal -> ...), same
+-- entry point as the Settings -> Bar tab and `aphotic bar cycle`
+hl.bind(mainMod .. " + CTRL + SHIFT + B", hl.dsp.exec_cmd("qs -c aphotic ipc call bar cycleStyle"))
+
 -- Intelligence quick-chat popout -- a fast, always-ready inference overlay
 -- distinct from the Command Center's AI Chat tab (SUPER+D), with its own
 -- persisted session history. SHIFT+A rather than plain A since mainMod+A
