@@ -66,6 +66,11 @@ Item {
             Layout.fillWidth: true
         }
 
+        AgentIndicator {
+            screenState: root.screenState
+            colour: root.onAccent
+        }
+
         MinimalTray {
             id: tray
         }
