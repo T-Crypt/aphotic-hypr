@@ -16,6 +16,11 @@ Item {
     required property string label
 
     readonly property bool selected: Settings.barStyle === root.styleName
+    // Matches Tokens.sizes.bar.minimalInnerWidth vs innerWidth -- Minimal
+    // is thinner than Full/Taskbar in the real bar, and the preview
+    // needs to actually reflect that instead of rendering it at the same
+    // virtual thickness as the other two.
+    readonly property real previewThickness: root.styleName === "minimal" ? 28 : 48
 
     implicitWidth: 190
     implicitHeight: 120
@@ -85,7 +90,7 @@ Item {
                     x: root.styleName === "dock" ? (previewFrame.width - width * previewScale) / 2 : 0
                     y: (previewFrame.height - height * previewScale) / 2
                     width: root.styleName === "dock" ? loader.item?.implicitWidth ?? 0 : previewFrame.width / previewScale
-                    height: root.styleName === "dock" ? (loader.item?.implicitHeight ?? 0) : 48
+                    height: root.styleName === "dock" ? (loader.item?.implicitHeight ?? 0) : root.previewThickness
 
                     Loader {
                         id: loader
@@ -128,7 +133,7 @@ Item {
             screenState: previewScreenState
             popouts: previewPopouts
             fullscreen: false
-            thickness: 48
+            thickness: root.previewThickness
         }
     }
 
@@ -139,7 +144,7 @@ Item {
             screenState: previewScreenState
             popouts: previewPopouts
             fullscreen: false
-            thickness: 48
+            thickness: root.previewThickness
         }
     }
 
@@ -150,7 +155,7 @@ Item {
             screenState: previewScreenState
             popouts: previewPopouts
             fullscreen: false
-            thickness: 28
+            thickness: root.previewThickness
         }
     }
 
