@@ -5,6 +5,22 @@ keep that one scannable. Newest entries at the top of each block match
 the order they were added to the README over time (not strictly
 chronological release dates).
 
+## v1.1.0
+
+- **Swappable bar styles** — the bar's cosmetic pill/square/minimal skin
+  choice is now a real structural style switcher: **Full** (the
+  existing bar, unchanged), **Dock** (a floating macOS-style app dock —
+  pinned + live running apps, auto-hide, icon-proximity hover-scale
+  magnification), **Taskbar** (Windows-style grouped task list + start
+  button), and **Minimal** (an Omarchy-style thin single-accent icon
+  strip). Switch live from Settings → Bar (four real live-previewed
+  cards, not screenshots), `aphotic bar style <name>` / `aphotic bar
+  cycle`, or `SUPER+Ctrl+Shift+B`. See
+  [`docs/bar-styles.md`](bar-styles.md). Note: `barSkin`'s old
+  `"minimal"` value (a transparent-background outline treatment) is
+  repurposed to mean the new structural Minimal style — a one-time
+  behavior change for anyone with that value already saved.
+
 - **Aphotic Assistant** — an opt-in local chatbot (NVIDIA-gated, installed via `install.sh --with-assistant` or the wizard prompt) with a fixed persona/system-prompt, model picked via `llmfit`'s hardware-aware recommendation at install time, a first-open welcome message, and reinstall/uninstall controls in Settings → AI. Not supported on AMD/ROCm or CPU-only yet — a real future gap, not attempted in that pass.
 - **Low-lift shell QoL batch** — a weather Dashboard card (Open-Meteo, IP-based auto-location fallback), a single-click eyedropper (`SUPER+Shift+C`), a Do Not Disturb toggle (bar icon + `SUPER+Shift+D`, auto-engaged by Pomodoro focus), a wallpaper slideshow (Settings → Appearance), launcher app sorting by actual usage, and a Wi-Fi/Bluetooth/DND quick-toggles card on the Dashboard.
 - **Intelligence quick-chat popout** — a right-docked overlay (`SUPER+Shift+A`) sharing the AI Chat tab's provider/key backend but with its own persisted, per-session conversation history — see [Intelligence](../README.md#quickshell-shell) in the README. Not streamed token-by-token yet (an explicit scope cut, not a stub) — that would need a per-provider rewrite (NDJSON for Ollama, SSE for Gemini/ChatGPT, `--output-format stream-json` for the Claude CLI) that didn't fit that pass.
