@@ -39,6 +39,7 @@ Singleton {
     property string barSkin: "pill"
 
     property string agentSelectedProvider: "claude"
+    property string ggufModelsDir: `${Quickshell.env("HOME")}/Models/gguf`
 
     property bool intelligenceEnabled: true
     // "" = inherit AiConfig.activeProvider/ollamaModel for new sessions --
@@ -123,6 +124,7 @@ Singleton {
             barPositionBottom: root.barPositionBottom,
             barSkin: root.barSkin,
             agentSelectedProvider: root.agentSelectedProvider,
+            ggufModelsDir: root.ggufModelsDir,
             osdEnabled: root.osdEnabled,
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
@@ -235,6 +237,7 @@ Singleton {
     onBarVerticalChanged: root._saveState()
     onBarPositionBottomChanged: root._saveState()
     onBarSkinChanged: root._saveState()
+    onGgufModelsDirChanged: root._saveState()
     onOsdEnabledChanged: root._saveState()
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
@@ -325,6 +328,8 @@ Singleton {
                     root.barSkin = data.barSkin;
                 if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "ollama"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
+                if (typeof data.ggufModelsDir === "string" && data.ggufModelsDir.length > 0)
+                    root.ggufModelsDir = data.ggufModelsDir;
                 if (typeof data.osdEnabled === "boolean")
                     root.osdEnabled = data.osdEnabled;
                 if (typeof data.osdHideDelay === "number")
