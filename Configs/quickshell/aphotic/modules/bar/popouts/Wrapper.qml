@@ -18,6 +18,7 @@ Item {
     property string currentName: ""
     property real currentCenter: 0
     property var currentTrayItem: null
+    property var currentTaskGroup: null
     // Set while the mouse is over the flyout itself, so BarWrapper's
     // bar-hover-exit handler knows not to close a popout the user has
     // actually moved into to interact with (e.g. clicking a settings
@@ -177,6 +178,8 @@ Item {
                     return settingsComp;
                 case "tray":
                     return trayComp;
+                case "taskgroup":
+                    return taskGroupComp;
                 default:
                     return null;
                 }
@@ -286,6 +289,12 @@ Item {
         id: trayComp
         TrayPopout {
             trayItem: root.currentTrayItem
+        }
+    }
+    Component {
+        id: taskGroupComp
+        TaskGroupPopout {
+            group: root.currentTaskGroup
         }
     }
 }
