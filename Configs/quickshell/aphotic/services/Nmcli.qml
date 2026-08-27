@@ -16,6 +16,8 @@ Singleton {
     property string activeInterface: ""
     property string activeConnection: ""
     property bool wifiEnabled: true
+    property bool vpnActive: false
+    property string vpnConnectionName: ""
     readonly property bool scanning: rescanProc.running
     readonly property list<AccessPoint> networks: []
     readonly property AccessPoint active: networks.find(n => n.active) ?? null
@@ -932,6 +934,28 @@ Singleton {
         });
     }
 
+    // Active connections whose TYPE names a VPN backend -- covers both
+    // NetworkManager-managed VPN plugins ("vpn") and native WireGuard
+    // connections ("wireguard"), the two forms `nmcli connection show
+    // --active` actually reports.
+    function getVpnStatus(callback: var): void {
+        executeCommand(["-t", "-f", "NAME,TYPE", "connection", "show", "--active"], result => {
+            if (!result.success) {
+                if (callback)
+                    callback(false, "");
+                return;
+            }
+            const vpnLine = result.output.split("\n").find(line => {
+                const type = line.split(":")[1] ?? "";
+                return type === "vpn" || type === "wireguard";
+            });
+            root.vpnActive = !!vpnLine;
+            root.vpnConnectionName = vpnLine ? vpnLine.split(":")[0] : "";
+            if (callback)
+                callback(root.vpnActive, root.vpnConnectionName);
+        });
+    }
+
     function findNetwork(ssid: string): var {
         return networks.find(n => n.ssid === ssid) ?? null;
     }
@@ -1371,6 +1395,7 @@ Singleton {
     }
 
     function refreshOnConnectionChange(): void {
+        getVpnStatus(() => {});
         getNetworks(networks => {
             const newActive = root.active;
 
@@ -1412,6 +1437,7 @@ Singleton {
 
     Component.onCompleted: {
         getWifiStatus(() => {});
+        getVpnStatus(() => {});
         getNetworks(() => {});
         loadSavedConnections(() => {});
         getEthernetInterfaces(() => {});
