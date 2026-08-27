@@ -12,6 +12,7 @@ NetworkSpeedPopout 1.0 NetworkSpeedPopout.qml
 PomodoroPopout 1.0 PomodoroPopout.qml
 ResourcesPopout 1.0 ResourcesPopout.qml
 SettingsPopout 1.0 SettingsPopout.qml
+TaskGroupPopout 1.0 TaskGroupPopout.qml
 TrayPopout 1.0 TrayPopout.qml
 VpnPopout 1.0 VpnPopout.qml
 Wrapper 1.0 Wrapper.qml

@@ -45,6 +45,7 @@ QtObject {
     readonly property QtObject sizes: QtObject {
         readonly property QtObject bar: QtObject {
             readonly property int innerWidth: 48
+            readonly property int minimalInnerWidth: 28
         }
 
         readonly property QtObject launcher: QtObject {
