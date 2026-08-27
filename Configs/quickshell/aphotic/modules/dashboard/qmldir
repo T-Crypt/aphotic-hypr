@@ -7,6 +7,7 @@ DashDateTime 1.0 DashDateTime.qml
 DashMedia 1.0 DashMedia.qml
 DashPomodoro 1.0 DashPomodoro.qml
 DashQuickToggles 1.0 DashQuickToggles.qml
+DashWeather 1.0 DashWeather.qml
 DashboardContent 1.0 DashboardContent.qml
 DashboardTab 1.0 DashboardTab.qml
 DashboardWindow 1.0 DashboardWindow.qml

@@ -55,4 +55,13 @@ RowLayout {
             id: quickToggles
         }
     }
+
+    Card {
+        Layout.preferredWidth: weather.implicitWidth
+        Layout.preferredHeight: weather.implicitHeight
+
+        DashWeather {
+            id: weather
+        }
+    }
 }
