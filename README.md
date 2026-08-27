@@ -16,6 +16,7 @@
 
 <p align="center">
   <a href="#preview"><code>Preview</code></a> ·
+  <a href="#themes"><code>Themes</code></a> ·
   <a href="#install"><code>Install</code></a> ·
   <a href="#profiles--layers"><code>Profiles</code></a> ·
   <a href="#architecture"><code>Architecture</code></a> ·
@@ -43,12 +44,27 @@ One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings 
 
 <br>
 
+## Themes
+
+Eight themes ship out of the box, each a directory-per-theme wallpaper set with its own accent, icon tint, and (for Latte) light-mode variant. Colors below are each theme's real generated accent, pulled straight off its default wallpaper — click a swatch to see that wallpaper:
+
+| | | | |
+|:--:|:--:|:--:|:--:|
+| [![Gruvbox](https://placehold.co/150x40/AA8356/000000?text=Gruvbox)](Configs/awww/gruvbox/sunset.jpg) | [![Nordic](https://placehold.co/150x40/5C638D/FFFFFF?text=Nordic)](Configs/awww/nordic/aurora.jpg) | [![Rosé Pine](https://placehold.co/150x40/837F94/000000?text=Rose+Pine)](Configs/awww/rosepine/pine-moon.jpg) | [![Tokyo Night](https://placehold.co/150x40/756087/FFFFFF?text=Tokyo+Night)](Configs/awww/tokyonight/neon-skyline.jpg) |
+| [![Catppuccin Latte](https://placehold.co/150x40/CAAD94/000000?text=Latte)](Configs/awww/latte/latte-art.jpg) | [![Lofi](https://placehold.co/150x40/A778A5/000000?text=Lofi)](Configs/awww/lofi/cozy-window.jpg) | [![HackTheBox](https://placehold.co/150x40/4A5A52/FFFFFF?text=HackTheBox)](Configs/awww/hackthebox/circuit.jpg) | [![Windows 11](https://placehold.co/150x40/4F909C/000000?text=Windows+11)](Configs/awww/windows11/bloom.jpg) |
+
+Switch between them live with `aphotic theme next`/`prev` (or <kbd>Super</kbd> + <kbd>,</kbd>/<kbd>.</kbd>), pick one directly in Settings → Appearance, or build your own in the [Theme Creator](#settings--control-center). See [Theming](#theming) for how the palette actually gets generated and applied.
+
+<div align="right"><a href="#-top">🡅 back to top</a></div>
+
+<br>
+
 ## Stack
 
 | Layer | Choice |
 |---|---|
 | Window Manager | [Hyprland](https://github.com/hyprwm/Hyprland) |
-| Shell (bar, launcher, notifications, OSD, lock, power menu, dashboard, screenshot picker) | [Quickshell](https://quickshell.org) — hand-vendored, visually cloned from [caelestia-dots/shell](https://github.com/caelestia-dots/shell) |
+| Shell (bar, launcher, notifications, OSD, lock, power menu, dashboard, screenshot picker) | [Quickshell](https://quickshell.org) — hand-vendored, fully custom QML |
 | Terminal | [Kitty](https://github.com/kovidgoyal/kitty) |
 | File Manager | [Thunar](https://github.com/xfce-mirror/thunar) |
 | Wallpaper Engine | [awww](https://codeberg.org/LGFae/awww) |
@@ -64,7 +80,7 @@ One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings 
 
 ## Quickshell Shell
 
-Waybar, Mako, Swaylock, and Rofi have all been fully retired in favor of one hand-vendored [Quickshell](https://quickshell.org) shell — visually inspired from [caelestia-dots/shell](https://github.com/caelestia-dots/shell) (GPL-3.0), not an installed dependency: the QML is checked into `Configs/quickshell/aphotic/`, with no native C++ plugin required. Color comes from `wallust` the same as everything else — Quickshell doesn't bring its own theming engine.
+Waybar, Mako, Swaylock, and Rofi have all been fully retired in favor of one hand-vendored [Quickshell](https://quickshell.org) shell, not an installed dependency: the QML is checked into `Configs/quickshell/aphotic/`, with no native C++ plugin required. Color comes from `wallust` the same as everything else — Quickshell doesn't bring its own theming engine.
 
 | Module | Replaces | Notes |
 |---|---|---|
@@ -81,7 +97,7 @@ Waybar, Mako, Swaylock, and Rofi have all been fully retired in favor of one han
 | Intelligence | — | Right-docked quick-chat popout, separate from the Command Center's AI Chat tab — persisted session history, per-session provider/model, click-outside or `Esc` to dismiss — `SUPER+Shift+A` (see below) |
 | Eyedropper | — | Single-click screen color picker — samples one pixel via `grim`, copies its hex to the clipboard, confirms with a notification carrying a generated color swatch icon — `SUPER+Shift+C` |
 
-Every module is a thin, deliberately-scoped-down rewrite of its caelestia counterpart, not a faithful port — things needing caelestia's own native plugin (fingerprint/face auth, a calculator, Material-You scheme switching) were left out in favor of what Aphotic actually needs; the resource-meter and dashboard gaps that plugin would otherwise cover are hand-implemented instead (see Performance/System above), not skipped.
+Every module is a deliberately-scoped-down, hand-built implementation, not a kitchen-sink port — things needing a native C++ plugin (fingerprint/face auth, a calculator, Material-You scheme switching) were left out in favor of what Aphotic actually needs; the resource-meter and dashboard gaps a plugin would otherwise cover are hand-implemented instead (see Performance/System above), not skipped.
 
 ### AI Chat
 
@@ -574,7 +590,7 @@ above).
 
 ## Credit
 
-Inspired by and built with gratitude toward [Tittu](https://github.com/prasanthrangan)'s minimalist Hyprland dotfiles — Aphotic started as a fork of that philosophy and has been growing its own identity ever since.
+Inspired by and built with gratitude toward [Tittu](https://github.com/prasanthrangan)'s minimalist Hyprland dotfiles — Aphotic started as a fork of that philosophy and has been growing its own identity ever since. The Quickshell shell's earliest visual direction also owes a debt to [caelestia-dots/shell](https://github.com/caelestia-dots/shell) — see [License](#license) for the attribution GPL-3.0 requires on the parts still built on it.
 
 Theme wallpapers (the curated set committed in each `Configs/awww/<theme>/` and the larger pool behind `aphotic wallpaper --fetch-extra`, see [Theme Picker Integration](#theme-picker-integration)) are pulled from the community wallpaper repos below — full credit to their authors and the original artists:
 
