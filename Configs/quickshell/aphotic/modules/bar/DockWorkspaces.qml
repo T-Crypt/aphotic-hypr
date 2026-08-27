@@ -12,6 +12,13 @@ RowLayout {
 
     required property ShellScreen screen
 
+    // Overridable so this reads correctly on a solid-accent background
+    // (MinimalBar's single-accent-color strip) as well as the neutral
+    // surface Dock uses by default.
+    property color activeColour: Colours.palette.m3primary
+    property color occupiedColour: Colours.palette.m3onSurfaceVariant
+    property color emptyColour: Colours.palette.m3outlineVariant
+
     spacing: Tokens.spacing.extraSmall
 
     readonly property int activeWsId: GlobalConfig.bar.workspaces.perMonitorWorkspaces ? (Hypr.monitorFor(screen).activeWorkspace?.id ?? 1) : Hypr.activeWsId
@@ -36,7 +43,7 @@ RowLayout {
             Layout.preferredWidth: active ? 14 : 6
             Layout.preferredHeight: 6
             radius: 3
-            color: active ? Colours.palette.m3primary : (isOccupied ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3outlineVariant)
+            color: active ? root.activeColour : (isOccupied ? root.occupiedColour : root.emptyColour)
 
             Behavior on Layout.preferredWidth {
                 Anim {}
