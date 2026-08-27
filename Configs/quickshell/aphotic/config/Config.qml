@@ -76,17 +76,27 @@ QtObject {
         }
 
         readonly property QtObject statusIcons: QtObject {
+            // Grouped by function with a thin divider between clusters --
+            // Connectivity (Wi-Fi/Bluetooth/VPN/host info), System (lock
+            // state, CPU+mem+disk, network throughput, Pomodoro timer,
+            // battery/power profile), Notifications (DND, history center).
+            // audio/microphone/kbLayout stay disabled by default (opt-in,
+            // not part of any named group).
             readonly property var values: [
-                { id: "lockStatus", enabled: true },
                 { id: "audio", enabled: false },
                 { id: "microphone", enabled: false },
                 { id: "kbLayout", enabled: false },
                 { id: "network", enabled: true },
                 { id: "bluetooth", enabled: true },
-                { id: "battery", enabled: true },
-                { id: "resources", enabled: true },
+                { id: "vpn", enabled: true },
                 { id: "hostInfo", enabled: true },
+                { id: "groupDivider", enabled: true },
+                { id: "lockStatus", enabled: true },
+                { id: "resources", enabled: true },
+                { id: "networkSpeed", enabled: true },
                 { id: "pomodoro", enabled: true },
+                { id: "battery", enabled: true },
+                { id: "groupDivider", enabled: true },
                 { id: "dnd", enabled: true },
                 { id: "notifCenter", enabled: true }
             ]

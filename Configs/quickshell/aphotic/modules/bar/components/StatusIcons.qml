@@ -167,6 +167,14 @@ StyledRect {
                     }
                 }
                 DelegateChoice {
+                    roleValue: "vpn"
+                    delegate: EntryWrapper {
+                        VpnStatus {
+                            colour: root.colour
+                        }
+                    }
+                }
+                DelegateChoice {
                     roleValue: "battery"
                     delegate: EntryWrapper {
                         BatteryStatus {
@@ -191,6 +199,14 @@ StyledRect {
                     }
                 }
                 DelegateChoice {
+                    roleValue: "networkSpeed"
+                    delegate: EntryWrapper {
+                        NetworkSpeedStatus {
+                            colour: root.colour
+                        }
+                    }
+                }
+                DelegateChoice {
                     roleValue: "pomodoro"
                     delegate: EntryWrapper {
                         PomodoroStatus {
@@ -203,6 +219,17 @@ StyledRect {
                     delegate: EntryWrapper {
                         DndStatus {
                             colour: Settings.statusIconDndColor.length > 0 ? Settings.statusIconDndColor : root.colour
+                        }
+                    }
+                }
+                DelegateChoice {
+                    roleValue: "groupDivider"
+                    delegate: EntryWrapper {
+                        Rectangle {
+                            implicitWidth: Settings.barVertical ? 20 : 1
+                            implicitHeight: Settings.barVertical ? 1 : 20
+                            color: Colours.palette.m3outlineVariant
+                            opacity: 0.6
                         }
                     }
                 }
