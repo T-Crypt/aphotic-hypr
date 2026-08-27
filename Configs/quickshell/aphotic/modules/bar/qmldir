@@ -1,4 +1,7 @@
 module qs.modules.bar
 Bar 1.0 Bar.qml
+BarShell 1.0 BarShell.qml
+TaskbarBar 1.0 TaskbarBar.qml
+MinimalBar 1.0 MinimalBar.qml
 BarWrapper 1.0 BarWrapper.qml
 BarWindow 1.0 BarWindow.qml
