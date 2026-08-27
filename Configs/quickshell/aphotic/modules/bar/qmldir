@@ -5,3 +5,7 @@ TaskbarBar 1.0 TaskbarBar.qml
 MinimalBar 1.0 MinimalBar.qml
 BarWrapper 1.0 BarWrapper.qml
 BarWindow 1.0 BarWindow.qml
+DockAppIcon 1.0 DockAppIcon.qml
+DockWorkspaces 1.0 DockWorkspaces.qml
+DockBar 1.0 DockBar.qml
+DockWindow 1.0 DockWindow.qml
