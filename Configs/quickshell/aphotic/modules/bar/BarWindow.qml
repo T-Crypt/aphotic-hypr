@@ -22,7 +22,16 @@ PanelWindow {
     WlrLayershell.namespace: "aphotic-bar"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.exclusionMode: ExclusionMode.Normal
-    WlrLayershell.exclusiveZone: barWidth
+    // barWrapper.exclusiveZone (not barWidth) -- it already accounts for
+    // disabled/hiddenMode (0, e.g. the "hidden" visibility mode or the
+    // Dock style, which renders nothing here at all) and autohide's thin
+    // collapsed sliver vs. the full reserved width when actually shown.
+    // Binding this to the bare barWidth constant instead (as it used to)
+    // meant this window kept reserving full-width desktop space in both
+    // of those cases even though nothing was drawn there -- a real,
+    // pre-existing gap "hidden" mode already had, not something new to
+    // the Dock style, just newly noticed because Dock hits it too.
+    WlrLayershell.exclusiveZone: barWrapper.exclusiveZone
     color: "transparent"
 
     // This window is deliberately wider than the visible bar strip (see

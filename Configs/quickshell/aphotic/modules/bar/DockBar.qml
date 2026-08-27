@@ -26,17 +26,24 @@ Item {
             const entry = DesktopEntries.applications.values.find(a => a.id === id);
             if (!entry)
                 continue;
-            const match = grouped.find(g => (DesktopEntries.heuristicLookup(g.appClass)?.id ?? "") === id);
+            // filter, not find -- an app can spawn windows under more
+            // than one distinct wmClass (multi-process/Electron apps are
+            // a common real case for DesktopEntries.heuristicLookup's
+            // fuzzy matching), so more than one group can resolve to the
+            // same pinned id. Merging all of them (and marking all as
+            // seen below) avoids the same logical app showing up as two
+            // separate dock icons, one per group.
+            const matches = grouped.filter(g => (DesktopEntries.heuristicLookup(g.appClass)?.id ?? "") === id);
             items.push({
                 key: id,
                 name: entry.name,
                 icon: Quickshell.iconPath(entry.icon, "application-x-executable"),
-                running: !!match,
-                windows: match?.windows ?? [],
+                running: matches.length > 0,
+                windows: matches.flatMap(g => g.windows),
                 entry
             });
-            if (match)
-                seenClasses.add(match.appClass);
+            for (const m of matches)
+                seenClasses.add(m.appClass);
         }
 
         for (const g of grouped) {
