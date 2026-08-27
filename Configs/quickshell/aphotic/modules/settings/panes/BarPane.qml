@@ -48,13 +48,14 @@ ColumnLayout {
         }
     }
 
-    // Dock's own floating pill is designed horizontal (top/bottom); a
-    // side placement isn't blocked -- per the spec, a bad combination
-    // gets flagged, not silently allowed with no warning -- but it will
-    // look worse than the reference top/bottom placement.
+    // None of the three new styles have a real vertical/side-dock layout
+    // (Dock's pill, Taskbar's task list, and Minimal's strip are all
+    // built horizontal-first) -- a side placement isn't blocked, but per
+    // the spec, a combination that's likely to look broken gets flagged
+    // rather than silently allowed with no warning.
     StyledRect {
         Layout.fillWidth: true
-        visible: Settings.barStyle === "dock" && !Settings.barVertical
+        visible: Settings.barStyle !== "full" && !Settings.barVertical
         implicitHeight: warningRow.implicitHeight + Tokens.padding.medium * 2
         radius: Tokens.rounding.medium
         color: Colours.palette.m3error
@@ -75,7 +76,7 @@ ColumnLayout {
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                text: qsTr("Dock is designed for top/bottom placement -- side placement may look broken.")
+                text: qsTr("This style is designed for top/bottom placement -- side placement may look broken.")
                 color: Colours.palette.m3onError
                 font: Tokens.font.body.small
             }
