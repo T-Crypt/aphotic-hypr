@@ -118,13 +118,32 @@ Item {
         const top = Settings.barVertical ? ch.x : ch.y;
 
         if (id === "statusIcons" && Config.bar.popouts.statusIcons) {
-            const items = (ch.item as StatusIcons).items;
-            const localAlong = Settings.barVertical ? activeLayout.mapToItem(items, pos, 0).x : activeLayout.mapToItem(items, 0, pos).y;
-            const icon = root.nearestAlongChild(items, localAlong);
-            if (icon) {
-                popouts.currentName = icon.name;
-                popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
-                popouts.hasCurrent = true;
+            // Tightly scoped to whichever pill (Connectivity/System/
+            // Notifications) the pointer is actually within -- hovering
+            // the gap between two pills clears the popout instead of
+            // resolving to whichever pill happens to be nearest.
+            const groups = (ch.item as StatusIcons).groupContainers;
+            let matched = null;
+            for (const g of groups) {
+                const local = Settings.barVertical ? activeLayout.mapToItem(g.pill, pos, 0).x : activeLayout.mapToItem(g.pill, 0, pos).y;
+                const size = Settings.barVertical ? g.pill.width : g.pill.height;
+                if (local >= 0 && local <= size) {
+                    matched = g;
+                    break;
+                }
+            }
+            if (matched) {
+                const localAlong = Settings.barVertical ? activeLayout.mapToItem(matched.icons, pos, 0).x : activeLayout.mapToItem(matched.icons, 0, pos).y;
+                const icon = root.nearestAlongChild(matched.icons, localAlong);
+                if (icon) {
+                    popouts.currentName = icon.name;
+                    popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
+                    popouts.hasCurrent = true;
+                } else {
+                    popouts.hasCurrent = false;
+                }
+            } else {
+                popouts.hasCurrent = false;
             }
         } else if (id === "tray" && Config.bar.popouts.tray) {
             const tray = ch.item as Tray;
@@ -168,6 +187,28 @@ Item {
             // open if settings was the last entry actually handled here).
             popouts.hasCurrent = false;
         }
+    }
+
+    // Keeps popouts.agentCenter live-anchored to the agent entry's own
+    // position regardless of hover -- the agent popout opens on click,
+    // not hover, so it needs a stable anchor independent of whatever
+    // checkPopout is currently doing. Qt.binding() re-evaluates whenever
+    // any property read inside it changes (activeRepeater on an
+    // orientation swap, or any sibling entry's own size/position via
+    // centerAlong's mapToItem call), so this stays correct without
+    // needing to be re-triggered from anywhere else.
+    Component.onCompleted: {
+        popouts.agentCenter = Qt.binding(() => {
+            const rep = root.activeRepeater;
+            if (!rep)
+                return 0;
+            for (let i = 0; i < rep.count; i++) {
+                const w = rep.itemAt(i) as EntryWrapper;
+                if (w?.entryId === "agent")
+                    return root.centerAlong(w.item);
+            }
+            return 0;
+        });
     }
 
     function handleWheel(pos: real, angleDelta: point): void {
@@ -260,6 +301,19 @@ Item {
                 delegate: EntryWrapper {
                     Layout.fillWidth: Settings.barVertical
                     Layout.fillHeight: !Settings.barVertical
+                }
+            }
+            DelegateChoice {
+                // Fixed-width breathing room, not a greedy fill spacer --
+                // separates the status/info cluster (agent, statusIcons)
+                // from the settings/power utility actions without
+                // competing for leftover space with the existing
+                // fillWidth spacers around activeWindow, which would
+                // shrink that gap unpredictably to feed this one.
+                roleValue: "gap"
+                delegate: EntryWrapper {
+                    implicitWidth: Settings.barVertical ? Tokens.spacing.large : 1
+                    implicitHeight: Settings.barVertical ? 1 : Tokens.spacing.large
                 }
             }
             DelegateChoice {

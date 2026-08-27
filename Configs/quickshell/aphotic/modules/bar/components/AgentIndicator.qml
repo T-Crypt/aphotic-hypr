@@ -8,17 +8,30 @@ Item {
 
     required property ScreenState screenState
     property color colour: Colours.palette.m3secondaryOnSurface
+    // Full/Taskbar want the same background-chip treatment every other
+    // entry (Clock/Tray/OsIcon/...) already has, so the agent icon has
+    // its own visual boundary instead of blending into whatever's next
+    // to it. Minimal is icon-only with no chips anywhere, so it opts out.
+    property bool showBackground: true
 
     readonly property var provider: AgentProviders.providers[AgentProviders.selectedIndex] ?? AgentProviders.providers[0]
     readonly property var stat: AgentProviders.stats[AgentProviders.selectedIndex] ?? AgentProviders.stats[0]
     readonly property int badgeCount: root.provider.id === "ollama" ? root.stat.loadedModels.length : root.stat.sessionCount
 
-    implicitWidth: icon.implicitWidth
-    implicitHeight: icon.implicitHeight
+    implicitWidth: root.showBackground ? Settings.barInnerWidth : icon.implicitWidth
+    implicitHeight: root.showBackground ? Settings.barInnerWidth : icon.implicitHeight
+
+    StyledRect {
+        visible: root.showBackground
+        anchors.fill: parent
+        radius: Tokens.rounding.full
+        color: Colours.palette.m3surfaceContainerHigh
+    }
 
     MaterialIcon {
         id: icon
 
+        anchors.centerIn: parent
         animate: true
         text: root.provider.icon
         color: root.colour

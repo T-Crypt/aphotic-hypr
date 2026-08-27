@@ -18,9 +18,6 @@ Item {
     required property bool fullscreen
     required property real thickness
 
-    readonly property color accent: Colours.palette.m3primary
-    readonly property color onAccent: Colours.contrastOn(accent)
-
     implicitWidth: Settings.barVertical ? thickness : layout.implicitWidth + Tokens.padding.small * 2
     implicitHeight: Settings.barVertical ? layout.implicitHeight + Tokens.padding.small * 2 : thickness
 
@@ -37,10 +34,21 @@ Item {
             Audio.decrementVolume();
     }
 
+    // Same dark neutral surface every other bar style's background uses
+    // (matches Taskbar's own m3surfaceContainer exactly) instead of a
+    // full-bleed solid accent block -- a bold single-color fill read as
+    // a genuine outlier against the rest of this repo's UI language,
+    // where accent is reserved for active/interactive state (the active
+    // workspace dot, a toggled indicator), never a whole background. The
+    // thin accent border keeps a nod to "accent strip" without the
+    // jarring full-color fill -- also a deliberate callback to the old
+    // (pre-repurposing) "minimal" skin's own outline-only treatment.
     StyledRect {
         anchors.fill: parent
-        color: root.accent
+        color: Colours.tPalette.m3surfaceContainer
         radius: 0
+        border.width: Config.border.thickness
+        border.color: Colours.palette.m3primary
     }
 
     RowLayout {
@@ -53,14 +61,9 @@ Item {
 
         DockWorkspaces {
             screen: root.screen
-            activeColour: root.onAccent
-            occupiedColour: Qt.alpha(root.onAccent, 0.7)
-            emptyColour: Qt.alpha(root.onAccent, 0.35)
         }
 
-        MinimalIndicators {
-            colour: root.onAccent
-        }
+        MinimalIndicators {}
 
         Item {
             Layout.fillWidth: true
@@ -68,7 +71,7 @@ Item {
 
         AgentIndicator {
             screenState: root.screenState
-            colour: root.onAccent
+            showBackground: false
         }
 
         MinimalTray {
@@ -77,7 +80,7 @@ Item {
 
         StyledText {
             text: Settings.twelveHourClock ? `${Time.hourStr}:${Time.minuteStr} ${Time.amPmStr.toLowerCase()}` : `${Time.hourStr}:${Time.minuteStr}`
-            color: root.onAccent
+            color: Colours.palette.m3secondaryOnSurface
             font: Tokens.font.body.small
         }
     }
