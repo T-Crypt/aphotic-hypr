@@ -205,6 +205,18 @@ _aphotic_plugin_untrust_security_index() {
     aphotic_ok "security plugin index untrusted -- security-category plugins hidden again (already-installed ones are unaffected)"
 }
 
+# JSON status query -- PluginsPane.qml uses this (not a heuristic over
+# whether any security-category entries happen to be present in the
+# fetched list) to decide whether to show the trust-prompt UI for the
+# security category.
+_aphotic_plugin_security_index_status() {
+    local trusted="false"
+    if aphotic_plugins_security_index_trusted; then
+        trusted="true"
+    fi
+    jq -n --argjson trusted "$trusted" '{trusted: $trusted}'
+}
+
 _aphotic_plugin_install() {
     local name="$1" link="$2" src dest
     [[ -n "$name" ]] || { aphotic_err "usage: aphotic plugin install <name> [--link]"; return 1; }
@@ -322,6 +334,10 @@ aphotic_cmd_plugin() {
             ;;
         untrust-security-index)
             _aphotic_plugin_untrust_security_index
+            ;;
+        security-index-status)
+            aphotic_require jq || return 1
+            _aphotic_plugin_security_index_status
             ;;
         -h|--help|"")
             cat <<EOF
