@@ -69,13 +69,31 @@ Item {
         }
 
         if (child === statusIcons && Config.bar.popouts.statusIcons) {
-            const items = statusIcons.items;
-            const localX = layout.mapToItem(items, localPos, 0).x;
-            const icon = root.nearestAlongChild(items, localX);
-            if (icon) {
-                root.popouts.currentName = icon.name;
-                root.popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
-                root.popouts.hasCurrent = true;
+            // Same group-aware, tightly-scoped hit-testing as Bar.qml --
+            // find which pill localPos actually falls within first, only
+            // then search icons inside it. Horizontal-only here (x axis),
+            // matching this component's own single RowLayout.
+            const groups = statusIcons.groupContainers;
+            let matched = null;
+            for (const g of groups) {
+                const local = layout.mapToItem(g.pill, localPos, 0).x;
+                if (local >= 0 && local <= g.pill.width) {
+                    matched = g;
+                    break;
+                }
+            }
+            if (matched) {
+                const localX = layout.mapToItem(matched.icons, localPos, 0).x;
+                const icon = root.nearestAlongChild(matched.icons, localX);
+                if (icon) {
+                    root.popouts.currentName = icon.name;
+                    root.popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
+                    root.popouts.hasCurrent = true;
+                } else {
+                    root.popouts.hasCurrent = false;
+                }
+            } else {
+                root.popouts.hasCurrent = false;
             }
         } else if (child === tray && Config.bar.popouts.tray) {
             const hoveringExpandIcon = tray.expandIcon.contains(layout.mapToItem(tray.expandIcon, localPos, 0));

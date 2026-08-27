@@ -112,9 +112,10 @@ QtObject {
                 { id: "media", enabled: true },
                 { id: "tray", enabled: true },
                 { id: "clock", enabled: true },
-                { id: "statusIcons", enabled: true },
-                { id: "settings", enabled: true },
                 { id: "agent", enabled: true },
+                { id: "statusIcons", enabled: true },
+                { id: "gap", enabled: true },
+                { id: "settings", enabled: true },
                 { id: "power", enabled: true }
             ]
         }
