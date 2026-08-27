@@ -18,6 +18,11 @@ Item {
     function execute(): void {
         Quickshell.execDetached(["kitty", "--directory", root.modelData.path, "zsh", "-ic", "claude"]);
         Quickshell.execDetached(["code", root.modelData.path]);
+        // Fire-and-forget notification to any plugin declaring the
+        // project-hook capability -- see cmd_plugin.sh's
+        // run-project-hooks / _aphotic_plugin_run_hook_by_capability.
+        // Plugins never replace the launch above, they just get told.
+        Quickshell.execDetached(["aphotic", "plugin", "run-project-hooks", root.modelData.path]);
     }
 
     StateLayer {
