@@ -59,6 +59,15 @@ ShellRoot {
     }
 
     Variants {
+        id: dockWindows
+        model: Quickshell.screens
+
+        DockWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
+    Variants {
         id: dashboardWindows
         model: Quickshell.screens
 

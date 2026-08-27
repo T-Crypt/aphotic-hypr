@@ -17,7 +17,10 @@ Item {
     required property bool fullscreen
 
     readonly property bool disabled: Strings.testRegexList(Config.bar.excludedScreens, screen.name)
-    readonly property bool hiddenMode: Settings.barVisibility === "hidden"
+    // Dock lives entirely in its own floating DockWindow (see
+    // DockWindow.qml) -- this edge-docked strip has nothing to render
+    // and must reserve no space while that style is active.
+    readonly property bool hiddenMode: Settings.barVisibility === "hidden" || Settings.barStyle === "dock"
     // BarWindow.qml's input mask needs a wider hover target than root's
     // own (collapsed, in autohide mode) bounds -- content is already
     // always sized to the full contentWidth/height regardless of
@@ -41,15 +44,15 @@ Item {
     property bool isHovered
 
     function closeTray(): void {
-        (content.item as Bar)?.closeTray();
+        (content.item as BarShell)?.closeTray();
     }
 
     function checkPopout(y: real): void {
-        (content.item as Bar)?.checkPopout(y);
+        (content.item as BarShell)?.checkPopout(y);
     }
 
     function handleWheel(y: real, angleDelta: point): void {
-        (content.item as Bar)?.handleWheel(y, angleDelta);
+        (content.item as BarShell)?.handleWheel(y, angleDelta);
     }
 
     clip: true
@@ -128,11 +131,15 @@ Item {
         x: !Settings.barVertical && Settings.barPositionRight ? root.width - width : 0
         y: Settings.barVertical && Settings.barPositionBottom ? root.height - height : 0
 
+        // Only the "full" style's own pill/square backdrop -- taskbar and
+        // minimal draw their own full-bleed background internally
+        // (TaskbarBar.qml/MinimalBar.qml), matching their own described
+        // look instead of inheriting Full's rounded-strip treatment.
         radius: Settings.barSkin === "square" ? Tokens.rounding.small : Tokens.rounding.full
-        color: Settings.barSkin === "minimal" ? "transparent" : Colours.tPalette.m3surfaceContainer
-        border.width: Settings.barSkin === "minimal" ? Config.border.thickness : 0
+        color: Colours.tPalette.m3surfaceContainer
+        border.width: 0
         border.color: Colours.palette.m3outlineVariant
-        visible: root.shouldBeVisible
+        visible: root.shouldBeVisible && Settings.barStyle === "full"
 
         Behavior on radius {
             Anim { type: Anim.DefaultEffects }
@@ -149,7 +156,7 @@ Item {
 
         active: root.shouldBeVisible
 
-        sourceComponent: Bar {
+        sourceComponent: BarShell {
             thickness: root.contentWidth
             screen: root.screen
             screenState: root.screenState

@@ -29,14 +29,78 @@ Singleton {
     property bool barCompact: false
     property bool barVertical: false
     property bool barPositionBottom: false
-    // "pill" (default filled rounded bar), "square" (sharp corners, same
-    // fill), or "minimal" (border-only outline, transparent fill) --
-    // purely the outer bar strip's own background treatment
-    // (BarWrapper.qml's `background` StyledRect). Deliberately doesn't
-    // touch per-module chip styling (status icons, workspaces, ...),
-    // docking, masking, or exclusive-zone sizing -- those stay identical
-    // across every skin.
+    // Expanded from a purely cosmetic "outer strip background" choice
+    // into the master bar-style switch. "pill"/"square" still just mean
+    // the existing Full-style bar with its rounded/sharp background
+    // treatment (BarWrapper.qml's `background` StyledRect) -- unchanged.
+    // "dock"/"taskbar" are new structural styles. "minimal" is
+    // REPURPOSED: it used to mean "Full-style bar, border-only outline,
+    // transparent fill" -- it now means the new Omarchy-inspired thin
+    // icon-only strip (a real layout change, not a background tweak).
+    // Anyone with a pre-existing `barSkin: "minimal"` in settings.json
+    // gets the new structural style on next load, not the old outline
+    // look -- a deliberate one-time behavior change, not a bug.
     property string barSkin: "pill"
+    // Whichever of "pill"/"square" was last active, so cycling/switching
+    // back to the "full" style (from dock/taskbar/minimal) restores the
+    // user's own preference instead of hardcoding one.
+    property string lastFullSkin: "pill"
+    // Style names that have ever had their first-selection position
+    // default applied (dock -> bottom, minimal -> top) -- applied once
+    // ever per style, not every time it's re-selected, so a user's own
+    // later position override sticks.
+    property var barStyleDefaultsApplied: []
+
+    readonly property string barStyle: ["dock", "taskbar", "minimal"].includes(barSkin) ? barSkin : "full"
+
+    property bool dockAutoHide: false
+    // Array of desktop-entry ids (DesktopEntry.id, e.g. "firefox") pinned
+    // to the Dock style regardless of whether they're currently running.
+    property var dockPinnedApps: []
+    // macOS-style icon-proximity magnification on Dock's app row. Only
+    // engages in horizontal placement (Settings.barVertical) -- side
+    // placement has no real vertical-dock layout to magnify along.
+    property bool dockMagnification: true
+    property bool taskbarGrouping: true
+    property bool minimalShowDnd: true
+
+    // name: "full" | "dock" | "taskbar" | "minimal" -- the single entry
+    // point for changing bar style, shared by the Settings tab, the CLI
+    // (`aphotic bar style`), and the IPC handler below, so all three
+    // paths apply the exact same first-selection-position-default and
+    // lastFullSkin bookkeeping instead of three divergent copies.
+    function setBarStyle(name: string): void {
+        const valid = ["full", "dock", "taskbar", "minimal"];
+        if (!valid.includes(name))
+            return;
+
+        if (name === "full") {
+            root.barSkin = root.lastFullSkin;
+            return;
+        }
+
+        if (!root.barStyleDefaultsApplied.includes(name)) {
+            root.barStyleDefaultsApplied = [...root.barStyleDefaultsApplied, name];
+            if (name === "dock") {
+                root.barVertical = true;
+                root.barPositionBottom = true;
+            } else if (name === "minimal") {
+                root.barVertical = true;
+                root.barPositionBottom = false;
+            } else if (name === "taskbar") {
+                root.barVertical = true;
+                root.barPositionBottom = true;
+            }
+        }
+
+        root.barSkin = name;
+    }
+
+    function cycleBarStyle(): void {
+        const order = ["full", "dock", "taskbar", "minimal"];
+        const idx = order.indexOf(root.barStyle);
+        root.setBarStyle(order[(idx + 1) % order.length]);
+    }
 
     property string agentSelectedProvider: "claude"
     property string ggufModelsDir: `${Quickshell.env("HOME")}/Models/gguf`
@@ -125,7 +189,7 @@ Singleton {
     // `hyprctl dispatch exec [workspace N] <command>` per entry.
     property var workspaceProfiles: []
 
-    readonly property real barInnerWidth: Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1)
+    readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1)
 
     property bool _loaded: false
     property bool _writePending: false
@@ -144,6 +208,13 @@ Singleton {
             barVertical: root.barVertical,
             barPositionBottom: root.barPositionBottom,
             barSkin: root.barSkin,
+            lastFullSkin: root.lastFullSkin,
+            barStyleDefaultsApplied: root.barStyleDefaultsApplied,
+            dockAutoHide: root.dockAutoHide,
+            dockPinnedApps: root.dockPinnedApps,
+            dockMagnification: root.dockMagnification,
+            taskbarGrouping: root.taskbarGrouping,
+            minimalShowDnd: root.minimalShowDnd,
             agentSelectedProvider: root.agentSelectedProvider,
             ggufModelsDir: root.ggufModelsDir,
             assistantWelcomeShown: root.assistantWelcomeShown,
@@ -264,7 +335,18 @@ Singleton {
     onBarCompactChanged: root._saveState()
     onBarVerticalChanged: root._saveState()
     onBarPositionBottomChanged: root._saveState()
-    onBarSkinChanged: root._saveState()
+    onBarSkinChanged: {
+        if (root.barSkin === "pill" || root.barSkin === "square")
+            root.lastFullSkin = root.barSkin;
+        root._saveState();
+    }
+    onLastFullSkinChanged: root._saveState()
+    onBarStyleDefaultsAppliedChanged: root._saveState()
+    onDockAutoHideChanged: root._saveState()
+    onDockPinnedAppsChanged: root._saveState()
+    onDockMagnificationChanged: root._saveState()
+    onTaskbarGroupingChanged: root._saveState()
+    onMinimalShowDndChanged: root._saveState()
     onGgufModelsDirChanged: root._saveState()
     onAssistantWelcomeShownChanged: root._saveState()
     onDndEnabledChanged: root._saveState()
@@ -361,6 +443,20 @@ Singleton {
                     root.barPositionBottom = data.barPositionBottom;
                 if (typeof data.barSkin === "string")
                     root.barSkin = data.barSkin;
+                if (typeof data.lastFullSkin === "string")
+                    root.lastFullSkin = data.lastFullSkin;
+                if (Array.isArray(data.barStyleDefaultsApplied))
+                    root.barStyleDefaultsApplied = data.barStyleDefaultsApplied;
+                if (typeof data.dockAutoHide === "boolean")
+                    root.dockAutoHide = data.dockAutoHide;
+                if (Array.isArray(data.dockPinnedApps))
+                    root.dockPinnedApps = data.dockPinnedApps;
+                if (typeof data.dockMagnification === "boolean")
+                    root.dockMagnification = data.dockMagnification;
+                if (typeof data.taskbarGrouping === "boolean")
+                    root.taskbarGrouping = data.taskbarGrouping;
+                if (typeof data.minimalShowDnd === "boolean")
+                    root.minimalShowDnd = data.minimalShowDnd;
                 if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "ollama"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.ggufModelsDir === "string" && data.ggufModelsDir.length > 0)
@@ -466,6 +562,23 @@ Singleton {
         id: mkStateDir
         command: ["mkdir", "-p", `${Quickshell.env("HOME")}/.local/state/aphotic`]
         onExited: stateFile.reload()
+    }
+
+    // `aphotic bar style <name>` and any future keybind/IPC quick-swap
+    // both go through this rather than writing settings.json directly --
+    // one source of truth (setBarStyle's own first-selection-default and
+    // lastFullSkin bookkeeping), matching the IPC-toggle pattern every
+    // other overlay/setting in this repo already uses.
+    IpcHandler {
+        function setStyle(name: string): void {
+            root.setBarStyle(name);
+        }
+
+        function cycleStyle(): void {
+            root.cycleBarStyle();
+        }
+
+        target: "bar"
     }
 
     Component.onCompleted: mkStateDir.running = true

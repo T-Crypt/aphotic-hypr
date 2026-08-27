@@ -1,0 +1,62 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell.Widgets
+import qs.config
+import qs.components
+import qs.services
+
+Item {
+    id: root
+
+    required property var item
+    // Externally computed by DockBar's icon row (distance-based falloff
+    // from the hovered pointer position) -- kept as a plain input here
+    // rather than each icon owning its own hover detection, since the
+    // falloff needs every icon's position relative to ONE shared cursor
+    // position at once.
+    property real magnifyScale: 1
+    // Which edge a magnified icon should grow away from -- Item.Bottom
+    // for a bottom-anchored dock (icons grow upward, matching macOS),
+    // Item.Top for top-anchored, Item.Center for a side placement.
+    property int growOrigin: Item.Center
+
+    implicitWidth: Tokens.sizes.bar.innerWidth
+    implicitHeight: Tokens.sizes.bar.innerWidth
+
+    scale: magnifyScale
+    transformOrigin: growOrigin
+    z: Math.round(magnifyScale * 100)
+
+    Behavior on scale {
+        Anim { type: Anim.StandardSmall }
+    }
+
+    StateLayer {
+        anchors.fill: parent
+        radius: Tokens.rounding.full
+        onClicked: {
+            if (root.item.windows.length > 0)
+                WindowList.focus(root.item.windows[0].address);
+            else
+                root.item.entry?.execute();
+        }
+    }
+
+    IconImage {
+        anchors.centerIn: parent
+        source: root.item.icon
+        implicitSize: parent.width * 0.6
+    }
+
+    Rectangle {
+        visible: root.item.running
+        width: 5
+        height: 5
+        radius: 2.5
+        color: Colours.palette.m3primary
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 2
+    }
+}
