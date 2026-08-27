@@ -84,7 +84,7 @@ Waybar, Mako, Swaylock, and Rofi have all been fully retired in favor of one han
 
 | Module | Replaces | Notes |
 |---|---|---|
-| Bar | Waybar | Dockable left or right, standard or compact density, three selectable bar styles — pill/square/minimal (Settings → Bar) — workspaces, active window, tray, clock, status icons, power button, all with real hover popouts (see below) |
+| Bar | Waybar | Four swappable bar styles -- Full (dockable left/right/top/bottom, pill or square background), Dock (floating macOS-style app dock), Taskbar (Windows-style grouped task list), Minimal (Omarchy-style thin icon strip) -- switchable live from Settings → Bar, `aphotic bar style <name>`, or SUPER+CTRL+SHIFT+B to cycle. Full's workspaces/active window/tray/clock/status icons all keep their real hover popouts (see below) |
 | Bar popouts | — | Hover any status icon, the tray, or the active window pill for a real detail panel — volume, Wi-Fi, Bluetooth, battery/power profile, agent sessions, host info, Pomodoro, window title, keyboard layout, lock state, live resource meter |
 | Launcher | Rofi (drun, clipboard, emoji, wallpaper) | One search box, mode switched by a prefix — see the table below |
 | Screenshot picker | `grim`/`slurp` combo scripts | Drag-select a region with live client-window snapping and a freeze-mode preview — `SUPER+Shift+S` (see [Keybindings](#keybindings) for the freeze/clipboard variants); the plain `grim`/`slurp`/`swappy` combo stays on `SUPER+S` |
@@ -147,7 +147,7 @@ Three small bar icons round out the QoL set, each with its own Personalization a
 | Appearance | Theme grid, wallpaper-in-active-theme quick picker, a **Browse all wallpapers** grid spanning every theme, and a wallpaper slideshow (auto-advance on a configurable interval) |
 | Theme Creator | Build your own **static** theme — a full palette editor (background/foreground/cursor + 16 ANSI colors, common-color presets or a real HSV color wheel) writes a fixed colorscheme + generated wallpaper straight into `~/.config/awww`, no wallpaper-derived palette needed. Shows up in Appearance's theme grid like any other once created, plus a folder icon to open it in Thunar |
 | Personalization | Accent color override, cursor theme + size, icon theme, and independent color overrides for the Bluetooth/Wi-Fi/Power-profile/Performance/host-info/Pomodoro bar icons (each defaults to the theme's own tone, override any of them or leave as-is) |
-| Bar | Dock left/right or top/bottom, compact density, vertical orientation, three selectable bar styles (pill/square/minimal) |
+| Bar | Four live-previewed styles (Full/Dock/Taskbar/Minimal, click a preview to switch), dock left/right or top/bottom, compact density, vertical orientation, Full's own pill/square background choice, plus per-style options (Dock auto-hide + pinned apps, Taskbar grouping, Minimal's DND indicator) |
 | Displays | Live per-monitor info — name, resolution, refresh rate, scale, primary badge (read-only; live resolution/scale editing isn't wired up yet, see the Displays entry in the roadmap for why) |
 | Clock / Date | 12-hour clock, show date in bar clock, desktop clock, weather location override + Celsius/Fahrenheit |
 | OSD / Notifications | Show/hide OSD, brightness/mic sliders, OSD hide delay, notification timeout |
@@ -435,6 +435,7 @@ All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/ke
 | <kbd>Super</kbd> + <kbd>Backspace</kbd> | Session / power menu — lock, suspend, log out, hibernate, reboot, shut down |
 | <kbd>Super</kbd> + <kbd>M</kbd> | `wlogout` (fallback power menu) |
 | <kbd>Super</kbd> + <kbd>B</kbd> | Restart Quickshell |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> | Cycle bar style (Full → Dock → Taskbar → Minimal) |
 
 </details>
 
