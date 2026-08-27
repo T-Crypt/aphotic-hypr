@@ -7,6 +7,7 @@ Item {
     id: root
 
     required property ScreenState screenState
+    property color colour: Colours.palette.m3secondaryOnSurface
 
     readonly property var provider: AgentProviders.providers[AgentProviders.selectedIndex] ?? AgentProviders.providers[0]
     readonly property var stat: AgentProviders.stats[AgentProviders.selectedIndex] ?? AgentProviders.stats[0]
@@ -20,7 +21,7 @@ Item {
 
         animate: true
         text: root.provider.icon
-        color: Colours.palette.m3secondaryOnSurface
+        color: root.colour
         fill: root.badgeCount > 0 ? 1 : 0
     }
 
