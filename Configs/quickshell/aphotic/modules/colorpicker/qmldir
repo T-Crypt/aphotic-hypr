@@ -1,0 +1,3 @@
+module qs.modules.colorpicker
+ColorPicker 1.0 ColorPicker.qml
+EyedropperPicker 1.0 EyedropperPicker.qml
