@@ -379,16 +379,56 @@ except Exception:
 
     cp -R "$ROOT_DIR/Configs/"* "$HOME/.config/"
 
-    # hypr/scripts is symlinked back into the repo rather than left as the
-    # one-shot copy above, same as .local/bin/aphotic below -- a plain
-    # `cp -R` here means any later edit to these scripts (bug fixes
-    # included) silently stops matching what Hyprland's keybinds actually
-    # run, with zero indication anything drifted, until a full reinstall.
-    # ln -sfn (not -sf) so re-running this on an existing install replaces
-    # a stale symlink/copy in place instead of nesting one inside the other.
-    rm -rf "$HOME/.config/hypr/scripts"
-    ln -sfn "$ROOT_DIR/Configs/hypr/scripts" "$HOME/.config/hypr/scripts"
+    # A handful of paths under Configs/ need to track repo edits directly
+    # rather than sit as the one-shot copy above -- a plain `cp -R` means
+    # any later edit (bug fixes included) silently stops matching what's
+    # actually live, with zero indication anything drifted, until a full
+    # reinstall. Not hypothetical: this exact drift is what silently broke
+    # SUPER+SHIFT+A (intelligence), SUPER+CTRL+SHIFT+B (bar cycle),
+    # SUPER+SHIFT+D (dnd), and SUPER+N/SUPER+Y (keybinds.lua stale since
+    # before those binds existed); kept regenerating Colours.qml from an
+    # old wallust template (docs/IN_FLIGHT.md item 3); and left the
+    # Kvantum theme selector pointed at the pre-rename "Noctis" name.
+    # Symlinking these closes the whole bug class instead of patching it
+    # path by path as each instance is separately noticed. ln -sfn (not
+    # -sf) so re-running this on an existing install replaces a stale
+    # symlink/copy in place instead of nesting one inside the other.
+    #
+    # Configs/hypr/* except three files that must stay real, independent
+    # copies rather than track the repo:
+    #   - custom.lua: the user's own local override (see the backup/
+    #     restore immediately below), meant to diverge per-machine.
+    #   - monitors.lua: hardware config (output name, exact resolution,
+    #     position, scale) is inherently per-machine too -- the repo's own
+    #     copy is only a generic "output='', mode=preferred" placeholder.
+    #     Symlinking this one was a real regression, caught live: it threw
+    #     away this machine's pinned "Virtual-1, 1920x1080" for the
+    #     placeholder's "preferred", which negotiated down to 1280x800.
+    #   - hyprland.lua: install.sh appends `require("nvidia")` to it below
+    #     when Nvidia is detected -- a symlink would write that append
+    #     straight into the tracked repo file instead of a local copy, and
+    #     (since cp -R can no longer "reset" a symlinked target the way it
+    #     resets a plain file) re-running install.sh would keep appending
+    #     duplicate require lines with nothing ever clearing them.
+    for entry in "$ROOT_DIR/Configs/hypr/"*; do
+      name="$(basename "$entry")"
+      case "$name" in
+        custom.lua|monitors.lua|hyprland.lua) continue ;;
+      esac
+      rm -rf "$HOME/.config/hypr/$name"
+      ln -sfn "$entry" "$HOME/.config/hypr/$name"
+    done
     chmod +x "$HOME/.config/hypr/scripts/"*
+
+    rm -rf "$HOME/.config/wallust"
+    ln -sfn "$ROOT_DIR/Configs/wallust" "$HOME/.config/wallust"
+
+    # Just the selector file -- Kvantum/Aphotic/Aphotic.kvconfig alongside
+    # it is wallust template *output* (wallust.toml's `kvantum` entry), not
+    # repo source, and must stay a real file wallust can keep overwriting.
+    mkdir -p "$HOME/.config/Kvantum"
+    rm -f "$HOME/.config/Kvantum/kvantum.kvconfig"
+    ln -sfn "$ROOT_DIR/Configs/Kvantum/kvantum.kvconfig" "$HOME/.config/Kvantum/kvantum.kvconfig"
 
     if [[ -n "$CUSTOM_LUA_BACKUP" ]]; then
       cp "$CUSTOM_LUA_BACKUP" "$CUSTOM_LUA"
@@ -401,6 +441,16 @@ except Exception:
 
     echo -e "$CNT - Enabling the Aphotic shell restart-supervision unit..."
     mkdir -p "$HOME/.config/systemd/user"
+    # Same symlink treatment as above -- these three unit files are only
+    # ever added to or edited in the repo, never hand-written per machine,
+    # so there's no user-owned-copy case to preserve the way custom.lua
+    # has one. Concretely bit already: aphotic-agent-usage.service/.timer
+    # postdated this machine's last cp -R and were never installed at all
+    # (`systemctl --user is-enabled` reported "not-found"), so the Live
+    # Agent Activity Module silently never ran.
+    for unit in "$ROOT_DIR/Configs/systemd/user/"*; do
+      ln -sfn "$unit" "$HOME/.config/systemd/user/$(basename "$unit")"
+    done
     systemctl --user daemon-reload &>> "$INSTLOG"
     systemctl --user enable aphotic-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
     echo -e "$CNT - Enabling the agent usage-tracking timer..."

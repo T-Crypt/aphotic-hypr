@@ -58,7 +58,99 @@ Item {
             return openTheme ? "wallpaper" : "theme";
         if (t.startsWith("@"))
             return "project";
+        if (t.startsWith("?"))
+            return "settings";
+        if (t.startsWith("!"))
+            return "keybinds";
+        if (t.startsWith("="))
+            return "calculator";
         return "apps";
+    }
+
+    // Real recursive-descent parser/evaluator -- deliberately never
+    // eval()/Function() on this text, since it's live, untrusted input
+    // typed straight into the launcher. Returns a number, or null if the
+    // expression doesn't parse/evaluate cleanly (empty result list, not
+    // a NaN/broken row). Grammar: expr := term (('+'|'-') term)*,
+    // term := power (('*'|'/'|'%') power)*, power := primary ('^' power)?
+    // (right-assoc), primary := NUMBER | '(' expr ')', with unary +/-
+    // folded into number parsing.
+    function _evalMath(expr: string): var {
+        const s = expr.replace(/\s+/g, "");
+        if (s.length === 0)
+            return null;
+        let pos = 0;
+
+        function peek() {
+            return s[pos];
+        }
+        function parseNumber() {
+            const start = pos;
+            if (s[pos] === "+" || s[pos] === "-")
+                pos++;
+            let sawDigit = false;
+            while (pos < s.length && /[0-9]/.test(s[pos])) {
+                pos++;
+                sawDigit = true;
+            }
+            if (s[pos] === ".") {
+                pos++;
+                while (pos < s.length && /[0-9]/.test(s[pos])) {
+                    pos++;
+                    sawDigit = true;
+                }
+            }
+            if (!sawDigit)
+                throw new Error("expected number");
+            return parseFloat(s.slice(start, pos));
+        }
+        function parsePrimary() {
+            if (peek() === "(") {
+                pos++;
+                const v = parseExpr();
+                if (peek() !== ")")
+                    throw new Error("expected )");
+                pos++;
+                return v;
+            }
+            return parseNumber();
+        }
+        function parsePower() {
+            const base = parsePrimary();
+            if (peek() === "^") {
+                pos++;
+                return Math.pow(base, parsePower());
+            }
+            return base;
+        }
+        function parseTerm() {
+            let v = parsePower();
+            while (peek() === "*" || peek() === "/" || peek() === "%") {
+                const op = peek();
+                pos++;
+                const rhs = parsePower();
+                v = op === "*" ? v * rhs : op === "/" ? v / rhs : v % rhs;
+            }
+            return v;
+        }
+        function parseExpr() {
+            let v = parseTerm();
+            while (peek() === "+" || peek() === "-") {
+                const op = peek();
+                pos++;
+                v = op === "+" ? v + parseTerm() : v - parseTerm();
+            }
+            return v;
+        }
+
+        try {
+            const result = parseExpr();
+            if (pos !== s.length || !isFinite(result))
+                return null;
+            return result;
+        } catch (e) {
+            return null;
+        }
     }
     readonly property string query: {
         const t = search.text;
@@ -192,15 +284,27 @@ Item {
                                     font: Tokens.font.body.large
                                     color: Colours.palette.m3onSurface
 
+                                    // Grid style (Settings.launcherStyle === "grid",
+                                    // apps mode only) swaps the visible results view
+                                    // out from under this same search box, but used to
+                                    // leave these three handlers hardcoded to `list` --
+                                    // Down/Up moved list's currentIndex while the grid
+                                    // (the thing actually on screen) stayed frozen on
+                                    // its first cell, and Enter read list.currentItem
+                                    // regardless of which view the user was looking at.
+                                    // moveCurrentIndexUp/Down (not increment/decrement)
+                                    // since GridView steps by a full row, not by one
+                                    // cell, for correct 2D wrap-around.
                                     Keys.onEscapePressed: root.screenState.launcher = false
                                     Keys.onReturnPressed: {
-                                        if (list.currentItem) {
-                                            list.currentItem.execute();
+                                        const activeView = root.useGrid ? grid : list;
+                                        if (activeView.currentItem) {
+                                            activeView.currentItem.execute();
                                             root.screenState.launcher = false;
                                         }
                                     }
-                                    Keys.onDownPressed: list.incrementCurrentIndex()
-                                    Keys.onUpPressed: list.decrementCurrentIndex()
+                                    Keys.onDownPressed: root.useGrid ? grid.moveCurrentIndexDown() : list.incrementCurrentIndex()
+                                    Keys.onUpPressed: root.useGrid ? grid.moveCurrentIndexUp() : list.decrementCurrentIndex()
                                 }
 
                                 StyledText {
@@ -222,8 +326,14 @@ Item {
                                             return qsTr("Choose wallpaper in %1…").arg(root.openTheme?.displayName ?? root.wallpaperThemeSlash);
                                         case "project":
                                             return qsTr("Search projects…");
+                                        case "settings":
+                                            return qsTr("Search settings…");
+                                        case "keybinds":
+                                            return qsTr("Search keybinds…");
+                                        case "calculator":
+                                            return qsTr("Type an expression…");
                                         default:
-                                            return qsTr("Search apps… (> clip, : emoji, / windows, ~ themes, @ projects)");
+                                            return qsTr("Search apps… (> clip, : emoji, / windows, ~ themes, @ projects, ? settings, ! keybinds, = calculator)");
                                         }
                                     }
                                     font: search.font
@@ -288,6 +398,18 @@ Item {
                     }
                     case "project":
                         return root.query.length === 0 ? projectProc.entries : projectProc.entries.filter(e => e.name.toLowerCase().includes(root.query));
+                    case "settings": {
+                        const all = SettingsCategories.list;
+                        return root.query.length === 0 ? all : all.filter(c => c.label.toLowerCase().includes(root.query) || c.description.toLowerCase().includes(root.query));
+                    }
+                    case "keybinds": {
+                        const all = HyprKeybinds.entries;
+                        return root.query.length === 0 ? all : all.filter(k => k.description.toLowerCase().includes(root.query) || k.combo.toLowerCase().includes(root.query));
+                    }
+                    case "calculator": {
+                        const value = root._evalMath(root.query);
+                        return value === null ? [] : [{ expression: root.query, value: value }];
+                    }
                     default:
                         // Frequency-first sort, alphabetical tiebreak -- see
                         // root.appResults above.
@@ -327,6 +449,12 @@ Item {
                         return wallpaperDelegate;
                     case "project":
                         return projectDelegate;
+                    case "settings":
+                        return settingsDelegate;
+                    case "keybinds":
+                        return keybindDelegate;
+                    case "calculator":
+                        return calculatorDelegate;
                     default:
                         return appDelegate;
                     }
@@ -385,6 +513,27 @@ Item {
                 Component {
                     id: projectDelegate
                     ProjectItem {
+                        modelData: delegateLoader.modelData
+                        screenState: root.screenState
+                    }
+                }
+                Component {
+                    id: settingsDelegate
+                    SettingsItem {
+                        modelData: delegateLoader.modelData
+                        screenState: root.screenState
+                    }
+                }
+                Component {
+                    id: keybindDelegate
+                    KeybindItem {
+                        modelData: delegateLoader.modelData
+                        screenState: root.screenState
+                    }
+                }
+                Component {
+                    id: calculatorDelegate
+                    CalculatorItem {
                         modelData: delegateLoader.modelData
                         screenState: root.screenState
                     }

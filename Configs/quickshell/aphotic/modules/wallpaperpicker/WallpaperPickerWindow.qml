@@ -13,7 +13,7 @@ PanelWindow {
 
     required property ScreenState screenState
 
-    WlrLayershell.namespace: "aphotic-settings"
+    WlrLayershell.namespace: "aphotic-wallpaperpicker"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
@@ -24,32 +24,16 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.settings
+    visible: screenState.wallpaperPicker
     implicitWidth: screen.width
     implicitHeight: screen.height
 
-    // Jump-to-category handoff from the launcher's "?" settings-search
-    // mode (Launcher.qml/SettingsItem.qml) -- same one-shot
-    // set-then-clear shape as Launcher.qml's own launcherPrefill
-    // consumption.
-    onVisibleChanged: {
-        if (visible && screenState.settingsCategory !== "") {
-            settingsPanel.currentCategory = screenState.settingsCategory;
-            screenState.settingsCategory = "";
-        }
-    }
-
     MouseArea {
         anchors.fill: parent
-        focus: true
-        onClicked: root.screenState.settings = false
-
-        Keys.onEscapePressed: root.screenState.settings = false
+        onClicked: root.screenState.wallpaperPicker = false
     }
 
-    SettingsPanel {
-        id: settingsPanel
-
+    WallpaperFilmstrip {
         anchors.centerIn: parent
         screenState: root.screenState
     }

@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.components
 import qs.config
 import qs.services
 
@@ -12,6 +13,8 @@ PanelWindow {
 
     required property var modelData
     screen: modelData
+
+    required property ScreenState screenState
 
     readonly property string currentWallpaper: Wallpapers.current
 
@@ -31,6 +34,46 @@ PanelWindow {
         id: backgroundContent
 
         anchors.fill: parent
+
+        // Desktop right-click menu -- TapHandler (not MouseArea) so it
+        // observes without grabbing the button, leaving normal
+        // left-click-through-to-desktop behaviour untouched.
+        property bool menuOpen: false
+        property real menuX: 0
+        property real menuY: 0
+
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: eventPoint => {
+                backgroundContent.menuX = eventPoint.position.x;
+                backgroundContent.menuY = eventPoint.position.y;
+                backgroundContent.menuOpen = true;
+            }
+        }
+
+        TapHandler {
+            acceptedButtons: Qt.LeftButton
+            enabled: backgroundContent.menuOpen
+            onTapped: backgroundContent.menuOpen = false
+        }
+
+        Loader {
+            id: contextMenuLoader
+
+            // Above the wallpaper/clock siblings below regardless of
+            // declaration order (QML stacks same-parent children by
+            // declaration order otherwise, and this is declared first).
+            z: 100
+            active: backgroundContent.menuOpen
+            asynchronous: false
+
+            sourceComponent: DesktopContextMenu {
+                screenState: root.screenState
+                menuX: backgroundContent.menuX
+                menuY: backgroundContent.menuY
+                onDismissed: backgroundContent.menuOpen = false
+            }
+        }
 
         Loader {
             id: wallpaperDisplay
