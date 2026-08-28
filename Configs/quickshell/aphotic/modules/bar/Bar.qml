@@ -101,6 +101,53 @@ Item {
         return total;
     }
 
+    // ---- Screen-centering for the active-window pill --------------------
+    //
+    // The two "spacer" entries flanking "activeWindow" default to an even
+    // 50/50 split of whatever room is left, via plain Layout.fillWidth --
+    // which only centers the pill within the gap between the workspaces
+    // cluster and the tray/clock/status cluster. Those two clusters are
+    // rarely the same width (the right side always carries more entries
+    // than logo+workspaces on the left), so an even split leaves the pill
+    // sitting off true screen-centre by half that difference -- a fixed
+    // pixel offset that reads as more of a miss the wider the monitor
+    // gets. These properties size the flanking spacers asymmetrically
+    // instead, so the pill's own centre lands on alongExtent / 2 -- the
+    // screen's actual midpoint -- on any monitor, ultrawide included.
+    readonly property int activeWindowIndex: {
+        const rep = activeRepeater;
+        if (!rep)
+            return -1;
+        for (let i = 0; i < rep.count; i++) {
+            if ((rep.itemAt(i) as EntryWrapper)?.entryId === "activeWindow")
+                return i;
+        }
+        return -1;
+    }
+    readonly property real activeWindowSlackTotal: Math.max(0, contentExtent - sumOver(w => w.grantedAlong))
+    readonly property real activeWindowSlackLeft: {
+        if (activeWindowIndex < 0)
+            return 0;
+        const aw = activeRepeater.itemAt(activeWindowIndex) as EntryWrapper;
+        const leftGroupExtent = sumRange(0, activeWindowIndex - 1);
+        const ideal = alongExtent / 2 - vPadding - spacing * activeWindowIndex - leftGroupExtent - (aw?.grantedAlong ?? 0) / 2;
+        return Math.max(0, Math.min(activeWindowSlackTotal, ideal));
+    }
+    readonly property real activeWindowSlackRight: activeWindowSlackTotal - activeWindowSlackLeft
+
+    function sumRange(fromIdx: int, toIdxExclusive: int): real {
+        const rep = activeRepeater;
+        if (!rep)
+            return 0;
+        let total = 0;
+        for (let i = Math.max(0, fromIdx); i < toIdxExclusive; i++) {
+            const w = rep.itemAt(i) as EntryWrapper;
+            if (w)
+                total += w.grantedAlong;
+        }
+        return total;
+    }
+
     implicitWidth: Settings.barHorizontal ? alongExtent : thickness
     implicitHeight: Settings.barHorizontal ? thickness : alongExtent
     width: implicitWidth
@@ -338,8 +385,17 @@ Item {
             DelegateChoice {
                 roleValue: "spacer"
                 delegate: EntryWrapper {
-                    Layout.fillWidth: Settings.barHorizontal
-                    Layout.fillHeight: !Settings.barHorizontal
+                    // The two spacers flanking "activeWindow" get an
+                    // asymmetric split so that entry lands on true
+                    // screen-centre (see root.activeWindowSlackLeft/Right);
+                    // any other spacer keeps the old even 50/50 fill.
+                    readonly property bool centersActiveWindow: root.activeWindowIndex >= 0 && (index === root.activeWindowIndex - 1 || index === root.activeWindowIndex + 1)
+                    readonly property real centeringSlack: index === root.activeWindowIndex - 1 ? root.activeWindowSlackLeft : root.activeWindowSlackRight
+
+                    Layout.fillWidth: Settings.barHorizontal && !centersActiveWindow
+                    Layout.fillHeight: !Settings.barHorizontal && !centersActiveWindow
+                    Layout.preferredWidth: Settings.barHorizontal && centersActiveWindow ? centeringSlack : -1
+                    Layout.preferredHeight: !Settings.barHorizontal && centersActiveWindow ? centeringSlack : -1
                 }
             }
             DelegateChoice {
