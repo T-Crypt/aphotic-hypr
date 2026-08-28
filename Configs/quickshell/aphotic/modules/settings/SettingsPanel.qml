@@ -155,14 +155,56 @@ RowLayout {
         StyledRect {
             id: scrollThumb
 
+            // Was 4px with no MouseArea at all -- just a scroll-position
+            // indicator, not actually grabbable. Widened to a real click
+            // target and made draggable (real ask: "hard to grab... and
+            // use it without my scroll wheel"). Drag math sets
+            // paneFlick.contentY directly from the mouse delta rather
+            // than binding drag.target to this item -- QML's drag
+            // mechanics overwrite a bound `y` with a plain value on
+            // press, which would have permanently broken the one-way
+            // binding below after the first drag.
             visible: paneFlick.contentHeight > paneFlick.height
             x: paneFlick.x + paneFlick.width - width
             y: paneFlick.y + paneFlick.visibleArea.yPosition * paneFlick.height
-            width: 4
+            width: 8
             height: Math.max(24, paneFlick.visibleArea.heightRatio * paneFlick.height)
             radius: Tokens.rounding.full
             color: Colours.palette.m3onSurfaceVariant
-            opacity: 0.35
+            opacity: dragArea.pressed ? 0.7 : dragArea.containsMouse ? 0.55 : 0.35
+
+            Behavior on opacity {
+                Anim { type: Anim.StandardSmall }
+            }
+
+            MouseArea {
+                id: dragArea
+
+                anchors.fill: parent
+                anchors.margins: -4
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                preventStealing: true
+
+                property real pressY: 0
+                property real pressContentY: 0
+
+                onPressed: mouse => {
+                    pressY = mapToItem(paneFlick, mouse.x, mouse.y).y;
+                    pressContentY = paneFlick.contentY;
+                }
+                onPositionChanged: mouse => {
+                    if (!pressed)
+                        return;
+                    const trackHeight = paneFlick.height - scrollThumb.height;
+                    if (trackHeight <= 0)
+                        return;
+                    const scrollable = paneFlick.contentHeight - paneFlick.height;
+                    const deltaY = mapToItem(paneFlick, mouse.x, mouse.y).y - pressY;
+                    const deltaContent = deltaY / trackHeight * scrollable;
+                    paneFlick.contentY = Math.max(0, Math.min(scrollable, pressContentY + deltaContent));
+                }
+            }
         }
     }
 
