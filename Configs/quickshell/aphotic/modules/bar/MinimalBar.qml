@@ -18,8 +18,8 @@ Item {
     required property bool fullscreen
     required property real thickness
 
-    implicitWidth: Settings.barVertical ? thickness : layout.implicitWidth + Tokens.padding.small * 2
-    implicitHeight: Settings.barVertical ? layout.implicitHeight + Tokens.padding.small * 2 : thickness
+    implicitWidth: Settings.barHorizontal ? thickness : layout.implicitWidth + Tokens.padding.small * 2
+    implicitHeight: Settings.barHorizontal ? layout.implicitHeight + Tokens.padding.small * 2 : thickness
 
     function closeTray(): void {
         tray.expanded = false;

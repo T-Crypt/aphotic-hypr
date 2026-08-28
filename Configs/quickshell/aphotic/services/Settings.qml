@@ -27,7 +27,12 @@ Singleton {
     property bool desktopClockEnabled: Config.background.desktopClock.enabled
     property bool barPositionRight: false
     property bool barCompact: false
-    property bool barVertical: false
+    // true = full-width bar docked to top/bottom, entries flow left-to-right.
+    // false (default) = full-height bar docked to left/right, entries flow
+    // top-to-bottom. Was named `barVertical` with this exact meaning
+    // inverted (true meant horizontal) until the rename -- see settings.json
+    // load below for the migration of existing users' persisted state.
+    property bool barHorizontal: false
     property bool barPositionBottom: false
     // Expanded from a purely cosmetic "outer strip background" choice
     // into the master bar-style switch. "pill"/"square" still just mean
@@ -58,7 +63,7 @@ Singleton {
     // to the Dock style regardless of whether they're currently running.
     property var dockPinnedApps: []
     // macOS-style icon-proximity magnification on Dock's app row. Only
-    // engages in horizontal placement (Settings.barVertical) -- side
+    // engages in horizontal placement (Settings.barHorizontal) -- side
     // placement has no real vertical-dock layout to magnify along.
     property bool dockMagnification: true
     property bool taskbarGrouping: true
@@ -82,13 +87,13 @@ Singleton {
         if (!root.barStyleDefaultsApplied.includes(name)) {
             root.barStyleDefaultsApplied = [...root.barStyleDefaultsApplied, name];
             if (name === "dock") {
-                root.barVertical = true;
+                root.barHorizontal = true;
                 root.barPositionBottom = true;
             } else if (name === "minimal") {
-                root.barVertical = true;
+                root.barHorizontal = true;
                 root.barPositionBottom = false;
             } else if (name === "taskbar") {
-                root.barVertical = true;
+                root.barHorizontal = true;
                 root.barPositionBottom = true;
             }
         }
@@ -196,6 +201,13 @@ Singleton {
     // to ~/Projects and ~/repos itself rather than writing a default here.
     property var projectRoots: []
 
+    // "list" (default, the original vertical row layout) or "grid" (a
+    // Rofi-drun-style icon grid) -- only affects the app-search mode
+    // (Launcher.qml's default, no prefix), every other prefix mode
+    // (clipboard/emoji/windows/theme/wallpaper/project) always renders
+    // as a list regardless of this setting.
+    property string launcherStyle: "list"
+
     // Named, one-key launch groups: [{ name: string, entries: [{ command:
     // string, workspace: int }] }]. Not a live session snapshot -- Hyprland/
     // X11 apps don't support that -- just a fixed replay list dispatched via
@@ -229,7 +241,7 @@ Singleton {
             desktopClockEnabled: root.desktopClockEnabled,
             barPositionRight: root.barPositionRight,
             barCompact: root.barCompact,
-            barVertical: root.barVertical,
+            barHorizontal: root.barHorizontal,
             barPositionBottom: root.barPositionBottom,
             barSkin: root.barSkin,
             lastFullSkin: root.lastFullSkin,
@@ -273,6 +285,7 @@ Singleton {
             idleSuspendEnabled: root.idleSuspendEnabled,
             idleSuspendTimeout: root.idleSuspendTimeout,
             projectRoots: root.projectRoots,
+            launcherStyle: root.launcherStyle,
             workspaceProfiles: root.workspaceProfiles,
             vpnConfigPath: root.vpnConfigPath,
             vpnAutoConnect: root.vpnAutoConnect,
@@ -397,7 +410,7 @@ Singleton {
     onDesktopClockEnabledChanged: root._saveState()
     onBarPositionRightChanged: root._saveState()
     onBarCompactChanged: root._saveState()
-    onBarVerticalChanged: root._saveState()
+    onBarHorizontalChanged: root._saveState()
     onBarPositionBottomChanged: root._saveState()
     onBarSkinChanged: {
         if (root.barSkin === "pill" || root.barSkin === "square")
@@ -472,6 +485,7 @@ Singleton {
         root._applyIdleConfig();
     }
     onProjectRootsChanged: root._saveState()
+    onLauncherStyleChanged: root._saveState()
     onWorkspaceProfilesChanged: root._saveState()
     onVpnConfigPathChanged: root._saveState()
     onVpnAutoConnectChanged: root._saveState()
@@ -511,8 +525,14 @@ Singleton {
                     root.barPositionRight = data.barPositionRight;
                 if (typeof data.barCompact === "boolean")
                     root.barCompact = data.barCompact;
-                if (typeof data.barVertical === "boolean")
-                    root.barVertical = data.barVertical;
+                if (typeof data.barHorizontal === "boolean")
+                    root.barHorizontal = data.barHorizontal;
+                else if (typeof data.barVertical === "boolean")
+                    // Migrate the pre-rename key -- `barVertical` was a
+                    // misnomer (true actually meant horizontal placement,
+                    // see the property declaration above), so the stored
+                    // boolean carries over unchanged under the new name.
+                    root.barHorizontal = data.barVertical;
                 if (typeof data.barPositionBottom === "boolean")
                     root.barPositionBottom = data.barPositionBottom;
                 if (typeof data.barSkin === "string")
@@ -599,6 +619,8 @@ Singleton {
                     root.idleSuspendTimeout = data.idleSuspendTimeout;
                 if (Array.isArray(data.projectRoots))
                     root.projectRoots = data.projectRoots;
+                if (typeof data.launcherStyle === "string")
+                    root.launcherStyle = data.launcherStyle;
                 if (Array.isArray(data.workspaceProfiles))
                     root.workspaceProfiles = data.workspaceProfiles;
                 if (typeof data.vpnConfigPath === "string")

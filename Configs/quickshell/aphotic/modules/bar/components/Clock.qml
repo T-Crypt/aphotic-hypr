@@ -15,8 +15,8 @@ StyledRect {
     readonly property int padding: Config.bar.clock.background ? Tokens.padding.medium : Tokens.padding.extraSmall
     readonly property var font: Tokens.font.body.builders.small.scale(1.1)
 
-    implicitWidth: Settings.barVertical ? (hLayout.item?.implicitWidth ?? 0) + root.padding * 2 : Settings.barInnerWidth
-    implicitHeight: Settings.barVertical ? Settings.barInnerWidth : (vLayout.item?.implicitHeight ?? 0) + root.padding * 2
+    implicitWidth: Settings.barHorizontal ? (hLayout.item?.implicitWidth ?? 0) + root.padding * 2 : Settings.barInnerWidth
+    implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : (vLayout.item?.implicitHeight ?? 0) + root.padding * 2
 
     color: Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
@@ -30,7 +30,7 @@ StyledRect {
         id: hLayout
 
         anchors.centerIn: parent
-        active: Settings.barVertical
+        active: Settings.barHorizontal
 
         sourceComponent: RowLayout {
             spacing: Tokens.spacing.extraSmall
@@ -94,7 +94,7 @@ StyledRect {
         id: vLayout
 
         anchors.centerIn: parent
-        active: !Settings.barVertical
+        active: !Settings.barHorizontal
 
         sourceComponent: ColumnLayout {
             id: layout

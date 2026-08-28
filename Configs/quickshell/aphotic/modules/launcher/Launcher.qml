@@ -67,6 +67,23 @@ Item {
         return mode === "apps" ? t.trim().toLowerCase() : t.slice(1).trim().toLowerCase();
     }
 
+    // Rofi-drun-style icon grid, app-search mode only (Settings.launcherStyle
+    // === "grid") -- every other prefix mode always renders as the list
+    // below regardless of this setting.
+    readonly property bool useGrid: mode === "apps" && Settings.launcherStyle === "grid"
+    readonly property int gridMaxShown: Tokens.sizes.launcher.gridColumns * Tokens.sizes.launcher.gridRows
+    readonly property var appResults: {
+        const all = DesktopEntries.applications.values.filter(a => !a.noDisplay);
+        const filtered = root.query.length === 0 ? all : all.filter(a => a.name.toLowerCase().includes(root.query));
+        // Frequency first, alphabetical as the tiebreak -- there's no
+        // fuzzy-match relevance scoring here to begin with (just the
+        // substring filter above), so this can't outrank an actual query
+        // match, only make ties among already-matched results smarter.
+        // Shared by both the list and grid styles so they never drift
+        // against each other.
+        return filtered.sort((a, b) => (LauncherUsage.countFor(b.id) - LauncherUsage.countFor(a.id)) || a.name.localeCompare(b.name));
+    }
+
     // Rofi-parity sizing: the wallpaper preview strip behind the search
     // bar (matching style.rasi's `inputbar { background-image: url(...) }`)
     // is its own fixed-height band above the results panel, not blended
@@ -74,7 +91,7 @@ Item {
     readonly property int previewHeight: 140
 
     implicitWidth: Tokens.sizes.launcher.width
-    implicitHeight: previewHeight + list.height + Tokens.padding.large
+    implicitHeight: previewHeight + (useGrid ? grid.height : list.height) + Tokens.padding.large
 
     visible: opacity > 0
     opacity: screenState.launcher ? 1 : 0
@@ -224,6 +241,7 @@ Item {
 
             readonly property int shown: Math.min(Tokens.sizes.launcher.maxShown, count)
 
+            visible: !root.useGrid
             width: parent.width
             height: Tokens.sizes.launcher.itemHeight * shown + Tokens.spacing.small * Math.max(0, shown - 1) + Tokens.padding.large * 2
             topMargin: Tokens.padding.large
@@ -270,17 +288,10 @@ Item {
                     }
                     case "project":
                         return root.query.length === 0 ? projectProc.entries : projectProc.entries.filter(e => e.name.toLowerCase().includes(root.query));
-                    default: {
-                        const all = DesktopEntries.applications.values.filter(a => !a.noDisplay);
-                        const filtered = root.query.length === 0 ? all : all.filter(a => a.name.toLowerCase().includes(root.query));
-                        // Frequency first, alphabetical as the tiebreak (was
-                        // purely alphabetical) -- there's no fuzzy-match
-                        // relevance scoring here to begin with (just the
-                        // substring filter above), so this can't outrank an
-                        // actual query match, only make ties among already-
-                        // matched results smarter.
-                        return filtered.sort((a, b) => (LauncherUsage.countFor(b.id) - LauncherUsage.countFor(a.id)) || a.name.localeCompare(b.name)).slice(0, Tokens.sizes.launcher.maxShown);
-                    }
+                    default:
+                        // Frequency-first sort, alphabetical tiebreak -- see
+                        // root.appResults above.
+                        return root.appResults.slice(0, Tokens.sizes.launcher.maxShown);
                     }
                 }
                 onValuesChanged: list.currentIndex = 0
@@ -378,6 +389,41 @@ Item {
                         screenState: root.screenState
                     }
                 }
+            }
+        }
+
+        GridView {
+            id: grid
+
+            readonly property int shownCount: Math.min(root.gridMaxShown, count)
+            readonly property int shownRows: Math.ceil(shownCount / Tokens.sizes.launcher.gridColumns)
+
+            visible: root.useGrid
+            width: parent.width
+            height: visible ? shownRows * Tokens.sizes.launcher.gridCellHeight + Tokens.padding.large * 2 : 0
+            topMargin: Tokens.padding.large
+            bottomMargin: Tokens.padding.large
+            leftMargin: Tokens.padding.large
+            rightMargin: Tokens.padding.large
+            clip: true
+            currentIndex: 0
+            cellWidth: width / Tokens.sizes.launcher.gridColumns
+            cellHeight: Tokens.sizes.launcher.gridCellHeight
+
+            model: ScriptModel {
+                values: root.useGrid ? root.appResults.slice(0, root.gridMaxShown) : []
+                onValuesChanged: grid.currentIndex = 0
+            }
+
+            highlight: StyledRect {
+                radius: Tokens.rounding.large
+                color: Colours.palette.m3onSurface
+                opacity: 0.08
+            }
+            highlightFollowsCurrentItem: true
+
+            delegate: AppGridItem {
+                screenState: root.screenState
             }
         }
         }

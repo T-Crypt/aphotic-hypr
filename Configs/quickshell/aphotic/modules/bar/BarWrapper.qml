@@ -30,7 +30,6 @@ Item {
     // than a literal couple-of-pixels sliver.
     readonly property alias hoverTarget: content
 
-    readonly property int clampedWidth: Math.max(Config.border.minThickness, implicitWidth)
     readonly property int padding: Math.max(Tokens.padding.small, Config.border.thickness)
     readonly property int contentWidth: Settings.barInnerWidth + padding * 2
     // "hidden" reserves no desktop space at all, matching a fully disabled
@@ -59,7 +58,7 @@ Item {
     // Anchor pairs decide which axis is actually screen-edge-driven (see
     // BarWindow.qml's own dual implicitWidth/implicitHeight comment) -- the
     // other axis is this collapsible thickness, whichever one that is.
-    visible: (Settings.barVertical ? height : width) > 0
+    visible: (Settings.barHorizontal ? height : width) > 0
     implicitWidth: fullscreen || hiddenMode ? 0 : Config.border.thickness
     implicitHeight: fullscreen || hiddenMode ? 0 : Config.border.thickness
 
@@ -126,10 +125,10 @@ Item {
     StyledRect {
         id: background
 
-        width: Settings.barVertical ? root.width : root.implicitWidth
-        height: Settings.barVertical ? root.implicitWidth : root.height
-        x: !Settings.barVertical && Settings.barPositionRight ? root.width - width : 0
-        y: Settings.barVertical && Settings.barPositionBottom ? root.height - height : 0
+        width: Settings.barHorizontal ? root.width : root.implicitWidth
+        height: Settings.barHorizontal ? root.implicitWidth : root.height
+        x: !Settings.barHorizontal && Settings.barPositionRight ? root.width - width : 0
+        y: Settings.barHorizontal && Settings.barPositionBottom ? root.height - height : 0
 
         // Only the "full" style's own pill/square backdrop -- taskbar and
         // minimal draw their own full-bleed background internally
@@ -149,10 +148,10 @@ Item {
     Loader {
         id: content
 
-        width: Settings.barVertical ? root.width : root.contentWidth
-        height: Settings.barVertical ? root.contentWidth : root.height
-        x: !Settings.barVertical && Settings.barPositionRight ? root.width - width : 0
-        y: Settings.barVertical && Settings.barPositionBottom ? root.height - height : 0
+        width: Settings.barHorizontal ? root.width : root.contentWidth
+        height: Settings.barHorizontal ? root.contentWidth : root.height
+        x: !Settings.barHorizontal && Settings.barPositionRight ? root.width - width : 0
+        y: Settings.barHorizontal && Settings.barPositionBottom ? root.height - height : 0
 
         active: root.shouldBeVisible
 
@@ -177,7 +176,7 @@ Item {
 
         target: content
         onPointChanged: {
-            if (Settings.barVertical) {
+            if (Settings.barHorizontal) {
                 if (point.position.x >= 0 && point.position.x <= content.width)
                     root.checkPopout(point.position.x);
             } else if (point.position.y >= 0 && point.position.y <= content.height) {
@@ -193,6 +192,6 @@ Item {
 
     WheelHandler {
         target: content
-        onWheel: event => root.handleWheel(Settings.barVertical ? point.position.x : point.position.y, Qt.point(event.angleDelta.x, event.angleDelta.y))
+        onWheel: event => root.handleWheel(Settings.barHorizontal ? point.position.x : point.position.y, Qt.point(event.angleDelta.x, event.angleDelta.y))
     }
 }

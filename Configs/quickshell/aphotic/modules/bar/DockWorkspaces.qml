@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "components"
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -7,7 +8,7 @@ import qs.config
 import qs.components
 import qs.services
 
-RowLayout {
+Item {
     id: root
 
     required property ShellScreen screen
@@ -19,7 +20,13 @@ RowLayout {
     property color occupiedColour: Colours.palette.m3onSurfaceVariant
     property color emptyColour: Colours.palette.m3outlineVariant
 
-    spacing: Tokens.spacing.extraSmall
+    property Item hoveredEntry: null
+
+    readonly property int dotSize: 6
+    readonly property int activeDotSize: 14
+
+    implicitWidth: dots.implicitWidth
+    implicitHeight: dots.implicitHeight
 
     readonly property int activeWsId: GlobalConfig.bar.workspaces.perMonitorWorkspaces ? (Hypr.monitorFor(screen).activeWorkspace?.id ?? 1) : Hypr.activeWsId
     readonly property var occupied: {
@@ -29,29 +36,68 @@ RowLayout {
         return occ;
     }
 
-    Repeater {
-        model: Config.bar.workspaces.shown
+    HoverHandler {
+        id: hover
 
-        Rectangle {
-            id: dot
+        onPointChanged: {
+            if (!hover.hovered)
+                return;
+            const local = root.mapToItem(dots, hover.point.position.x, hover.point.position.y);
+            root.hoveredEntry = BarHit.nearestAt(dots, local.x, local.y);
+        }
+        onHoveredChanged: {
+            if (!hover.hovered)
+                root.hoveredEntry = null;
+        }
+    }
 
-            required property int index
-            readonly property int wsId: index + 1
-            readonly property bool active: wsId === root.activeWsId
-            readonly property bool isOccupied: !!root.occupied[wsId]
+    // Every other bar style feeds this the strip's own thickness, but a
+    // row of dots has none to give -- sized that way the highlight would
+    // vanish behind the dot it sits under. Sized off the active dot
+    // instead, so it stays legible and stays the same size whichever dot
+    // it is over.
+    HoverPill {
+        container: dots
+        hoveredEntry: root.hoveredEntry
+        thickness: root.activeDotSize + Tokens.padding.extraSmall
+    }
 
-            Layout.preferredWidth: active ? 14 : 6
-            Layout.preferredHeight: 6
-            radius: 3
-            color: active ? root.activeColour : (isOccupied ? root.occupiedColour : root.emptyColour)
+    GridLayout {
+        id: dots
 
-            Behavior on Layout.preferredWidth {
-                Anim {}
-            }
+        anchors.centerIn: parent
+        flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
+        rowSpacing: Tokens.spacing.extraSmall
+        columnSpacing: Tokens.spacing.extraSmall
 
-            MouseArea {
-                anchors.fill: parent
-                onClicked: Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ workspace = ${dot.wsId} })` : `workspace ${dot.wsId}`)
+        Repeater {
+            model: Config.bar.workspaces.shown
+
+            Rectangle {
+                id: dot
+
+                required property int index
+                readonly property int wsId: index + 1
+                readonly property bool active: wsId === root.activeWsId
+                readonly property bool isOccupied: !!root.occupied[wsId]
+
+                Layout.preferredWidth: Settings.barHorizontal ? (active ? root.activeDotSize : root.dotSize) : root.dotSize
+                Layout.preferredHeight: Settings.barHorizontal ? root.dotSize : (active ? root.activeDotSize : root.dotSize)
+                radius: root.dotSize / 2
+                color: active ? root.activeColour : (isOccupied ? root.occupiedColour : root.emptyColour)
+
+                Behavior on Layout.preferredWidth {
+                    Anim {}
+                }
+
+                Behavior on Layout.preferredHeight {
+                    Anim {}
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ workspace = ${dot.wsId} })` : `workspace ${dot.wsId}`)
+                }
             }
         }
     }

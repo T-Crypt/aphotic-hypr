@@ -14,22 +14,28 @@ StyledRect {
     required property Item mask
     required property bool fullscreen
 
+    // workspaces.count, not Config.bar.workspaces.shown: the row shows
+    // fewer cells than configured when Bar.qml's sizing budget can't fit
+    // them all (see Workspaces.qml's effectiveShown), and this index has to
+    // wrap on what is actually rendered or it points at a cell that isn't
+    // there.
+    readonly property int shown: Math.max(1, workspaces.count)
     readonly property int currentWsIdx: {
         let i = activeWsId - 1;
         while (i < 0)
-            i += Config.bar.workspaces.shown;
-        return i % Config.bar.workspaces.shown;
+            i += shown;
+        return i % shown;
     }
 
-    property real leading: workspaces.count > 0 ? (Settings.barVertical ? workspaces.itemAt(currentWsIdx)?.x ?? 0 : workspaces.itemAt(currentWsIdx)?.y ?? 0) : 0
-    property real trailing: workspaces.count > 0 ? (Settings.barVertical ? workspaces.itemAt(currentWsIdx)?.x ?? 0 : workspaces.itemAt(currentWsIdx)?.y ?? 0) : 0
+    property real leading: workspaces.count > 0 ? (Settings.barHorizontal ? workspaces.itemAt(currentWsIdx)?.x ?? 0 : workspaces.itemAt(currentWsIdx)?.y ?? 0) : 0
+    property real trailing: workspaces.count > 0 ? (Settings.barHorizontal ? workspaces.itemAt(currentWsIdx)?.x ?? 0 : workspaces.itemAt(currentWsIdx)?.y ?? 0) : 0
     property real currentSize: workspaces.count > 0 ? (workspaces.itemAt(currentWsIdx) as Workspace)?.size ?? 0 : 0
     property real offset: Math.min(leading, trailing)
     property real size: {
         const s = Math.abs(leading - trailing) + currentSize;
         if (Config.bar.workspaces.activeTrail && lastWs > currentWsIdx) {
             const ws = workspaces.itemAt(lastWs) as Workspace;
-            const wsAlong = ws ? (Settings.barVertical ? ws.x : ws.y) : 0;
+            const wsAlong = ws ? (Settings.barHorizontal ? ws.x : ws.y) : 0;
             return ws ? Math.min(wsAlong + ws.size - offset, s) : 0;
         }
         return s;
@@ -44,10 +50,10 @@ StyledRect {
     }
 
     clip: true
-    x: Settings.barVertical ? offset + mask.x : 0
-    y: Settings.barVertical ? 0 : offset + mask.y
-    implicitWidth: Settings.barVertical ? size : (Settings.barInnerWidth - Tokens.padding.small)
-    implicitHeight: Settings.barVertical ? (Settings.barInnerWidth - Tokens.padding.small) : size
+    x: Settings.barHorizontal ? offset + mask.x : 0
+    y: Settings.barHorizontal ? 0 : offset + mask.y
+    implicitWidth: Settings.barHorizontal ? size : (Settings.barInnerWidth - Tokens.padding.small)
+    implicitHeight: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small) : size
     radius: Tokens.rounding.full
     color: Colours.palette.m3primary
 
@@ -58,8 +64,8 @@ StyledRect {
         sourceColor: Colours.palette.m3onSurface
         colorizationColor: Colours.palette.m3onPrimary
 
-        x: Settings.barVertical ? -parent.offset : 0
-        y: Settings.barVertical ? 0 : -parent.offset
+        x: Settings.barHorizontal ? -parent.offset : 0
+        y: Settings.barHorizontal ? 0 : -parent.offset
         implicitWidth: root.mask.implicitWidth
         implicitHeight: root.mask.implicitHeight
 
@@ -67,7 +73,7 @@ StyledRect {
 
         states: State {
             name: "vertical"
-            when: Settings.barVertical
+            when: Settings.barHorizontal
 
             AnchorChanges {
                 target: colouriser

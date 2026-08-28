@@ -17,9 +17,11 @@ more hands touch it.
   what's explicitly out of scope. If your PR touches something the
   roadmap already has an opinion on, follow it — open an issue or
   discussion first if you think the roadmap itself needs to change.
-  (`CLAUDE_ROADMAP.md`/`ROADMAP_FEATURES.md`, if you see them referenced
-  in old commit messages, are gitignored maintainer-local working docs —
-  not part of the shipped repo, don't expect to find them in your clone.)
+  The fuller backlog behind that summary lives in
+  [`docs/ROADMAP.md`](docs/ROADMAP.md) — check there too. (If you see
+  `CLAUDE_ROADMAP.md`/`ROADMAP_FEATURES.md`/`CLAUDE.md` referenced in
+  old commit messages: those were gitignored maintainer-local working
+  docs, since folded into `docs/ROADMAP.md` and removed.)
 - **Check for drift before extending CLI/script behavior.** State
   contracts (theme/wallpaper, settings) have changed shape before. If
   you're not sure the local checkout reflects the latest agreed model,
