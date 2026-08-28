@@ -26,26 +26,6 @@ Item {
         tray.expanded = false;
     }
 
-    // Adapted from Bar.qml's own checkPopout -- same tray/statusIcons
-    // hit-testing, with the barHorizontal branching dropped since Taskbar
-    // only ever flows its content left-to-right along a single RowLayout.
-    function nearestAlongChild(container: Item, pos: real): var {
-        if (!container)
-            return null;
-        let best = null;
-        let bestDist = Infinity;
-        for (const child of container.children) {
-            if (child.width <= 0)
-                continue;
-            const dist = Math.abs(child.x + child.width / 2 - pos);
-            if (dist < bestDist) {
-                bestDist = dist;
-                best = child;
-            }
-        }
-        return best;
-    }
-
     function centerAlong(item: Item): real {
         return item.mapToItem(root, item.implicitWidth / 2, 0).x;
     }
@@ -58,7 +38,7 @@ Item {
         // layout's children (including tray/statusIcons's own local
         // geometry) or every hit-test below is off by that margin.
         const localPos = pos - layout.x;
-        const child = root.nearestAlongChild(layout, localPos);
+        const child = BarHit.nearestAlong(layout, localPos);
 
         if (child !== tray)
             root.closeTray();
@@ -84,7 +64,7 @@ Item {
             }
             if (matched) {
                 const localX = layout.mapToItem(matched.icons, localPos, 0).x;
-                const icon = root.nearestAlongChild(matched.icons, localX);
+                const icon = BarHit.nearestAlong(matched.icons, localX);
                 if (icon) {
                     root.popouts.currentName = icon.name;
                     root.popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));

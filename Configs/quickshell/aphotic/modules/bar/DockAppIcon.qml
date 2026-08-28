@@ -20,6 +20,11 @@ Item {
     // for a bottom-anchored dock (icons grow upward, matching macOS),
     // Item.Top for top-anchored, Item.Center for a side placement.
     property int growOrigin: Item.Center
+    // Off when the dock row is showing its shared gliding HoverPill
+    // instead: that pill is the same circle at the same opacity as this
+    // icon's own hover layer, so leaving both on would double the tint
+    // and hide the glide entirely.
+    property bool showHover: true
 
     implicitWidth: Tokens.sizes.bar.innerWidth
     implicitHeight: Tokens.sizes.bar.innerWidth
@@ -35,6 +40,7 @@ Item {
     StateLayer {
         anchors.fill: parent
         radius: Tokens.rounding.full
+        stateOpacity: root.showHover && containsMouse ? 0.08 : 0
         onClicked: {
             if (root.item.windows.length > 0)
                 WindowList.focus(root.item.windows[0].address);

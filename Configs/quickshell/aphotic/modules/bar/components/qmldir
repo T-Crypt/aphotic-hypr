@@ -1,11 +1,13 @@
 module qs.modules.bar.components
 ActiveWindow 1.0 ActiveWindow.qml
 AgentIndicator 1.0 AgentIndicator.qml
+singleton BarHit 1.0 BarHit.qml
 Clock 1.0 Clock.qml
+HoverPill 1.0 HoverPill.qml
 Media 1.0 Media.qml
 OsIcon 1.0 OsIcon.qml
 Power 1.0 Power.qml
 SettingsButton 1.0 SettingsButton.qml
 StatusIcons 1.0 StatusIcons.qml
-TrayItem 1.0 TrayItem.qml
 Tray 1.0 Tray.qml
+TrayItem 1.0 TrayItem.qml

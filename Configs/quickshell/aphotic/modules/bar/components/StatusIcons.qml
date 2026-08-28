@@ -62,24 +62,6 @@ Item {
     implicitWidth: Settings.barHorizontal ? groupLayout.implicitWidth : Settings.barInnerWidth
     implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : groupLayout.implicitHeight
 
-    function nearestPillChild(container: Item, pos: real): var {
-        if (!container)
-            return null;
-        let best = null;
-        let bestDist = Infinity;
-        for (const child of container.children) {
-            const size = Settings.barHorizontal ? child.width : child.height;
-            if (size <= 0)
-                continue;
-            const start = Settings.barHorizontal ? child.x : child.y;
-            const dist = Math.abs(start + size / 2 - pos);
-            if (dist < bestDist) {
-                bestDist = dist;
-                best = child;
-            }
-        }
-        return best;
-    }
 
     GridLayout {
         id: groupLayout
@@ -124,9 +106,10 @@ Item {
                 Layout.preferredWidth: Settings.barHorizontal ? pillIcons.implicitWidth + Tokens.padding.medium * 2 : Settings.barInnerWidth
                 Layout.preferredHeight: Settings.barHorizontal ? Settings.barInnerWidth : pillIcons.implicitHeight + Tokens.padding.medium * 2
 
-                HoverIndicator {
-                    pillContainer: pillIcons
+                HoverPill {
+                    container: pillIcons
                     hoveredEntry: pill.hoveredEntry
+                    thickness: Settings.barHorizontal ? pill.height : pill.width
                 }
 
                 HoverHandler {
@@ -135,7 +118,7 @@ Item {
                         if (!pillHover.hovered)
                             return;
                         const local = pill.mapToItem(pillIcons, pillHover.point.position.x, pillHover.point.position.y);
-                        pill.hoveredEntry = root.nearestPillChild(pillIcons, Settings.barHorizontal ? local.x : local.y);
+                        pill.hoveredEntry = BarHit.nearestAt(pillIcons, local.x, local.y);
                     }
                     onHoveredChanged: {
                         if (!pillHover.hovered)
@@ -330,59 +313,5 @@ Item {
         implicitHeight: item?.implicitHeight ?? 0
 
         children: item
-    }
-
-    component HoverIndicator: StyledRect {
-        id: indicator
-
-        required property Item pillContainer
-        required property Item hoveredEntry
-
-        property real leading
-        property real trailing
-        property real currentSize
-        readonly property real offset: Math.min(leading, trailing)
-        readonly property real size: Math.abs(leading - trailing) + currentSize
-
-        visible: opacity > 0
-        opacity: hoveredEntry ? 0.08 : 0
-        x: Settings.barHorizontal ? pillContainer.x + offset : pillContainer.x
-        y: Settings.barHorizontal ? pillContainer.y : pillContainer.y + offset
-        implicitWidth: Settings.barHorizontal ? size : pillContainer.height
-        implicitHeight: Settings.barHorizontal ? pillContainer.height : size
-        radius: Tokens.rounding.full
-        color: Colours.palette.m3onSurface
-
-        Binding {
-            target: indicator
-            property: "leading"
-            value: indicator.hoveredEntry ? (Settings.barHorizontal ? indicator.hoveredEntry.x : indicator.hoveredEntry.y) : 0
-            when: indicator.hoveredEntry !== null
-        }
-        Binding {
-            target: indicator
-            property: "trailing"
-            value: indicator.hoveredEntry ? (Settings.barHorizontal ? indicator.hoveredEntry.x : indicator.hoveredEntry.y) : 0
-            when: indicator.hoveredEntry !== null
-        }
-        Binding {
-            target: indicator
-            property: "currentSize"
-            value: indicator.hoveredEntry ? (Settings.barHorizontal ? indicator.hoveredEntry.width : indicator.hoveredEntry.height) : 0
-            when: indicator.hoveredEntry !== null
-        }
-
-        Behavior on leading {
-            Anim { type: Anim.FastEffects }
-        }
-        Behavior on trailing {
-            Anim { type: Anim.DefaultEffects }
-        }
-        Behavior on currentSize {
-            Anim { type: Anim.FastEffects }
-        }
-        Behavior on opacity {
-            Anim { type: Anim.FastEffects }
-        }
     }
 }
