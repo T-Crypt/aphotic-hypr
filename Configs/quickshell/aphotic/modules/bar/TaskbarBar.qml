@@ -27,7 +27,7 @@ Item {
     }
 
     // Adapted from Bar.qml's own checkPopout -- same tray/statusIcons
-    // hit-testing, with the barVertical branching dropped since Taskbar
+    // hit-testing, with the barHorizontal branching dropped since Taskbar
     // only ever flows its content left-to-right along a single RowLayout.
     function nearestAlongChild(container: Item, pos: real): var {
         if (!container)
@@ -237,10 +237,15 @@ Item {
                     return;
                 }
                 const popouts = item.taskbarRoot.popouts;
-                const centerPoint = item.mapToItem(item.taskbarRoot, item.width / 2, 0);
                 popouts.currentName = "taskgroup";
                 popouts.currentTaskGroup = item.group;
-                popouts.currentCenter = centerPoint.x;
+                // Qt.binding(), not a one-shot value -- matches every other
+                // popout trigger in this file/Bar.qml. A plain assignment
+                // here left currentCenter stale if the taskbar row reflows
+                // (a window opens/closes elsewhere) while this popout is
+                // still open, since the click already happened and nothing
+                // would re-run this expression afterward.
+                popouts.currentCenter = Qt.binding(() => item.taskbarRoot.centerAlong(item));
                 popouts.hasCurrent = true;
             }
         }
