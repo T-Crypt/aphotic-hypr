@@ -52,6 +52,26 @@ Item {
     // changes; the near edge (and the bar itself) stays put.
     readonly property real alongAxisAnchorRadius: Settings.barInnerWidth / 2
 
+    // The flyout's own width/height (below) are themselves Behavior-animated
+    // whenever the popout content changes size, which used to make x/y
+    // chase a moving target: those two clamp/anchor expressions read
+    // `width`/`height` directly, so every frame of the resize animation
+    // fed a slightly different value back into the position formula,
+    // producing a second, compounding wobble on top of the x/y Behavior's
+    // own animation instead of one clean move. Real bug reported as the
+    // popout feeling "snap-to"/sporadic rather than a uniform glide,
+    // worst right after switching between two popouts of different sizes
+    // (exactly when width/height are mid-animation). Fixed the same way
+    // caelestia-dots/shell's own popout wrapper does it (see
+    // modules/bar/popouts/Wrapper.qml's nonAnimWidth/nonAnimHeight there)
+    // -- read the loader's raw, un-animated implicitWidth/implicitHeight
+    // for position math instead of the animating width/height, so x/y
+    // always animate toward a stable final target from the first frame.
+    readonly property real nonAnimWidth: loader.item ? loader.item.implicitWidth + Tokens.padding.medium * 2 : 0
+    readonly property real nonAnimHeight: loader.item ? loader.item.implicitHeight + Tokens.padding.medium * 2 : 0
+    readonly property real agentNonAnimWidth: agentLoader.item ? agentLoader.item.implicitWidth + Tokens.padding.medium * 2 : 0
+    readonly property real agentNonAnimHeight: agentLoader.item ? agentLoader.item.implicitHeight + Tokens.padding.medium * 2 : 0
+
     // Keeps the loader (and thus popout content) alive through the
     // fade-out animation below -- deactivating it the instant hasCurrent
     // goes false would collapse width/height to 0 immediately and cut the
@@ -75,7 +95,7 @@ Item {
 
         visible: opacity > 0
         opacity: root.hasCurrent && loader.item ? 1 : 0
-        // Left/right-docked (vertical bar, see Settings.barVertical):
+        // Left/right-docked (vertical bar, see Settings.barHorizontal):
         // strip sits at local x in [0, barWidth] (root shares BarWindow's
         // origin, which is the screen edge in that mode) when docked left,
         // so the flyout starts just past it. Right-docked: the screen edge
@@ -89,16 +109,16 @@ Item {
         // every frame, keeping the flyout's edge nearest the bar pinned in
         // every docking mode as it grows/shrinks, rather than growing away
         // from a fixed corner.
-        x: Settings.barVertical ? Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.width - width) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - width : root.barWidth + Tokens.spacing.small)
+        x: Settings.barHorizontal ? Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.width - root.nonAnimWidth) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - root.nonAnimWidth : root.barWidth + Tokens.spacing.small)
         // Clamp the along-axis edge -- Math.max alone kept the flyout from
         // starting before the screen's near edge but let it run off the
         // far edge uncorrected for any popout whose along-axis center sits
         // in the latter half of the bar (Settings, Resources), since this
         // window's own size matches the screen's on that axis and content
         // can't render past that boundary.
-        y: Settings.barVertical ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - height : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.height - height)
-        width: loader.item ? loader.item.implicitWidth + Tokens.padding.medium * 2 : 0
-        height: loader.item ? loader.item.implicitHeight + Tokens.padding.medium * 2 : 0
+        y: Settings.barHorizontal ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - root.nonAnimHeight : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.height - root.nonAnimHeight)
+        width: root.nonAnimWidth
+        height: root.nonAnimHeight
         radius: Tokens.rounding.medium
         color: Colours.palette.m3surfaceContainerHigh
 
@@ -150,22 +170,35 @@ Item {
         Loader {
             id: loader
 
+            property bool contentRevealed: false
+
             anchors.centerIn: parent
             active: root.showContent
-            // Staggered behind the container: opacity multiplies with
-            // flyout's own opacity above, so content only becomes fully
-            // visible once both have finished, but on entry it visibly
-            // starts a beat after the container begins its morph (no
-            // delay on close, so content doesn't linger while the
-            // container is already shrinking) -- that stagger is what
-            // reads as the container "arriving first" rather than
-            // everything popping in at once.
-            opacity: root.hasCurrent ? 1 : 0
+            // A Timer, not a SequentialAnimation's PauseAnimation inside
+            // Behavior -- that form restarted from scratch on every
+            // rehover, so content never actually appeared unless the
+            // pointer held still through one full uninterrupted pause.
+            opacity: contentRevealed ? 1 : 0
 
             Behavior on opacity {
-                SequentialAnimation {
-                    PauseAnimation { duration: root.hasCurrent ? 70 : 0 }
-                    Anim { type: Anim.DefaultEffects }
+                Anim { type: Anim.DefaultEffects }
+            }
+
+            Timer {
+                id: revealTimer
+                interval: 70
+                onTriggered: loader.contentRevealed = true
+            }
+
+            Connections {
+                target: root
+                function onHasCurrentChanged(): void {
+                    if (root.hasCurrent) {
+                        revealTimer.restart();
+                    } else {
+                        revealTimer.stop();
+                        loader.contentRevealed = false;
+                    }
                 }
             }
 
@@ -223,10 +256,10 @@ Item {
         // popout is replacing whatever I'm hovering" instead of staying
         // put next to the agent icon. Same along-axis formula flyout
         // uses, just keyed on agentCenter.
-        x: Settings.barVertical ? Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.width - width) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - width : root.barWidth + Tokens.spacing.small)
-        y: Settings.barVertical ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - height : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.height - height)
-        width: agentLoader.item ? agentLoader.item.implicitWidth + Tokens.padding.medium * 2 : 0
-        height: agentLoader.item ? agentLoader.item.implicitHeight + Tokens.padding.medium * 2 : 0
+        x: Settings.barHorizontal ? Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.width - root.agentNonAnimWidth) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - root.agentNonAnimWidth : root.barWidth + Tokens.spacing.small)
+        y: Settings.barHorizontal ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - root.agentNonAnimHeight : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.height - root.agentNonAnimHeight)
+        width: root.agentNonAnimWidth
+        height: root.agentNonAnimHeight
         radius: Tokens.rounding.medium
         color: Colours.palette.m3surfaceContainerHigh
 
