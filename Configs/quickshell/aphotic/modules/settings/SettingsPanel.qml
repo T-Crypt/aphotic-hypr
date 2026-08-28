@@ -35,6 +35,7 @@ RowLayout {
         { id: "osd", icon: "notifications", label: qsTr("OSD / Notifications"), description: qsTr("Sliders, timeouts") },
         { id: "ai", icon: "smart_toy", label: qsTr("AI"), description: qsTr("Provider, API keys") },
         { id: "power", icon: "shield", label: qsTr("Power & Security"), description: qsTr("Profile, idle, lock") },
+        { id: "network", icon: "lan", label: qsTr("Network"), description: qsTr("VPN") },
         { id: "workspaceProfiles", icon: "workspaces", label: qsTr("Workspace Profiles"), description: qsTr("Named one-key launch groups") },
         { id: "plugins", icon: "extension", label: qsTr("Plugins"), description: qsTr("Browse, install, manage") },
         { id: "system", icon: "monitor_heart", label: qsTr("System"), description: qsTr("Doctor, dependencies") },
@@ -114,6 +115,8 @@ RowLayout {
                         return aiComp;
                     case "power":
                         return powerComp;
+                    case "network":
+                        return networkComp;
                     case "workspaceProfiles":
                         return workspaceProfilesComp;
                     case "plugins":
@@ -199,6 +202,10 @@ RowLayout {
     Component {
         id: powerComp
         PowerSecurityPane {}
+    }
+    Component {
+        id: networkComp
+        NetworkPane {}
     }
     Component {
         id: workspaceProfilesComp

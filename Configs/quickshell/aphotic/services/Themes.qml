@@ -118,7 +118,7 @@ Singleton {
                 return;
             root._pendingApply = null;
             const fullPath = `${root.awwwDir}/${p.themeName}/${p.file}`;
-            Wallpapers.setWallpaper(fullPath, p.info.backend ?? "", p.info.palette ?? "", p.info.colorscheme ?? "", p.info.style ?? "", p.info.papirusColor ?? "");
+            Wallpapers.setWallpaper(fullPath, p.info.backend ?? "", p.info.palette ?? "", p.info.colorscheme ?? "", p.info.style ?? "", p.info.papirusColor ?? "", p.info.iconTheme ?? "", p.info.cursorTheme ?? "", p.info.gtkTheme ?? "");
         }
     }
 
@@ -278,6 +278,9 @@ Singleton {
                         colorscheme: toml.engine?.colorscheme ?? "",
                         style: toml.engine?.style ?? "",
                         papirusColor: toml.icons?.papirus_color ?? "",
+                        iconTheme: toml.icons?.icon_theme ?? "",
+                        cursorTheme: toml.icons?.cursor_theme ?? "",
+                        gtkTheme: toml.gtk?.theme ?? "",
                         defaultWallpaper: toml.wallpaper?.default ?? (t.wallpapers[0] ?? ""),
                         wallpapers: t.wallpapers.sort()
                     };

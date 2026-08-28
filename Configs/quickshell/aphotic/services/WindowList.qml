@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import qs.services
+import qs.utils
 
 Singleton {
     id: root
@@ -12,7 +13,7 @@ Singleton {
                 address: t.address,
                 title: t.title || t.lastIpcObject?.class || "",
                 appClass: t.lastIpcObject?.class ?? "",
-                icon: Quickshell.iconPath(t.lastIpcObject?.class, "application-x-executable"),
+                icon: Icons.getAppIcon(t.lastIpcObject?.class, "application-x-executable"),
                 workspaceId: t.workspace?.id ?? 0,
                 workspaceName: t.workspace?.name ?? "",
                 focused: t.address === Hypr.activeToplevel?.address,
