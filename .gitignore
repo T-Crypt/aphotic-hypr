@@ -1,10 +1,7 @@
-# Claude Code working docs (specs, roadmap) - not part of the shipped rice
-CLAUDE_ROADMAP.md
+# Claude Code working docs - not part of the shipped rice
 docs/superpowers/
 .superpowers/
 .claude/
-CLAUDE.md
-ROADMAP_FEATURES.md
 
 aphotic.toml
 install.log
