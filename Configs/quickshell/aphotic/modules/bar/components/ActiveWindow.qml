@@ -30,16 +30,16 @@ Item {
     // every sibling entry's own along-axis extent is subtracted out.
     readonly property int maxExtent: {
         const otherModules = bar.children.filter(c => c.entryId && c.item !== this && c.entryId !== "spacer");
-        const otherSize = otherModules.reduce((acc, curr) => acc + (Settings.barVertical ? (curr.item.nonAnimWidth ?? curr.width) : (curr.item.nonAnimHeight ?? curr.height)), 0);
-        const barSize = Settings.barVertical ? bar.width : bar.height;
+        const otherSize = otherModules.reduce((acc, curr) => acc + (Settings.barHorizontal ? (curr.item.nonAnimWidth ?? curr.width) : (curr.item.nonAnimHeight ?? curr.height)), 0);
+        const barSize = Settings.barHorizontal ? bar.width : bar.height;
         // Length - 2 cause repeater counts as a child
         return barSize - otherSize - bar.spacing * (bar.children.length - 1) - bar.vPadding * 2;
     }
     property Title current: text1
 
     clip: true
-    implicitWidth: Settings.barVertical ? icon.implicitWidth + Tokens.spacing.small + current.implicitWidth + Tokens.padding.small * 2 : Settings.barInnerWidth
-    implicitHeight: Settings.barVertical ? Settings.barInnerWidth : icon.implicitHeight + current.implicitWidth + current.anchors.topMargin + Tokens.padding.small * 2
+    implicitWidth: Settings.barHorizontal ? icon.implicitWidth + Tokens.spacing.small + current.implicitWidth + Tokens.padding.small * 2 : Settings.barInnerWidth
+    implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : icon.implicitHeight + current.implicitWidth + current.anchors.topMargin + Tokens.padding.small * 2
 
     StyledRect {
         anchors.fill: parent
@@ -78,8 +78,8 @@ Item {
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: Settings.barVertical ? 0 : Tokens.padding.small
-        anchors.leftMargin: Settings.barVertical ? Tokens.padding.small : 0
+        anchors.topMargin: Settings.barHorizontal ? 0 : Tokens.padding.small
+        anchors.leftMargin: Settings.barHorizontal ? Tokens.padding.small : 0
 
         animate: true
         text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")
@@ -87,7 +87,7 @@ Item {
 
         states: State {
             name: "horizontal"
-            when: Settings.barVertical
+            when: Settings.barHorizontal
 
             AnchorChanges {
                 target: icon
@@ -113,7 +113,7 @@ Item {
         text: root.windowTitle
         font: root.Tokens.font.body.builders.small.weight(Font.Medium).letterSpacing(1.4).build()
         elide: Qt.ElideRight
-        elideWidth: Settings.barVertical ? root.maxExtent - icon.width : root.maxExtent - icon.height
+        elideWidth: Settings.barHorizontal ? root.maxExtent - icon.width : root.maxExtent - icon.height
 
         onTextChanged: {
             const next = root.current === text1 ? text2 : text1;
@@ -136,8 +136,8 @@ Item {
 
         anchors.horizontalCenter: icon.horizontalCenter
         anchors.top: icon.bottom
-        anchors.topMargin: Settings.barVertical ? 0 : Tokens.spacing.small
-        anchors.leftMargin: Settings.barVertical ? Tokens.spacing.small : 0
+        anchors.topMargin: Settings.barHorizontal ? 0 : Tokens.spacing.small
+        anchors.leftMargin: Settings.barHorizontal ? Tokens.spacing.small : 0
 
         font: metrics.font
         color: root.colour
@@ -153,21 +153,21 @@ Item {
         // angle/offset are gated.
         transform: [
             Translate {
-                x: Settings.barVertical ? 0 : (root.Config.bar.activeWindow.inverted ? -text.implicitWidth + text.implicitHeight : 0)
+                x: Settings.barHorizontal ? 0 : (root.Config.bar.activeWindow.inverted ? -text.implicitWidth + text.implicitHeight : 0)
             },
             Rotation {
-                angle: Settings.barVertical ? 0 : (root.Config.bar.activeWindow.inverted ? 270 : 90)
+                angle: Settings.barHorizontal ? 0 : (root.Config.bar.activeWindow.inverted ? 270 : 90)
                 origin.x: text.implicitHeight / 2
                 origin.y: text.implicitHeight / 2
             }
         ]
 
-        width: Settings.barVertical ? implicitWidth : implicitHeight
-        height: Settings.barVertical ? implicitHeight : implicitWidth
+        width: Settings.barHorizontal ? implicitWidth : implicitHeight
+        height: Settings.barHorizontal ? implicitHeight : implicitWidth
 
         states: State {
             name: "horizontal"
-            when: Settings.barVertical
+            when: Settings.barHorizontal
 
             AnchorChanges {
                 target: text

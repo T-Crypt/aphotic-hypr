@@ -41,10 +41,10 @@ StyledRect {
     }
 
     clip: true
-    visible: Settings.barVertical ? width > 0 : height > 0
+    visible: Settings.barHorizontal ? width > 0 : height > 0
 
-    implicitWidth: Settings.barVertical ? nonAnimWidth : Settings.barInnerWidth
-    implicitHeight: Settings.barVertical ? Settings.barInnerWidth : nonAnimHeight
+    implicitWidth: Settings.barHorizontal ? nonAnimWidth : Settings.barInnerWidth
+    implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : nonAnimHeight
 
     color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, items.count > 0 ? 1 : 0)
     radius: Tokens.rounding.full
@@ -54,23 +54,23 @@ StyledRect {
 
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: Settings.barVertical ? 0 : root.padding
-        anchors.leftMargin: Settings.barVertical ? root.padding : 0
+        anchors.topMargin: Settings.barHorizontal ? 0 : root.padding
+        anchors.leftMargin: Settings.barHorizontal ? root.padding : 0
         spacing: Tokens.spacing.small
 
-        flow: Settings.barVertical ? Grid.LeftToRight : Grid.TopToBottom
+        flow: Settings.barHorizontal ? Grid.LeftToRight : Grid.TopToBottom
         // Grid (unlike GridLayout) has no "no limit" default for the
         // cross axis, so this is pinned to the actual item count instead
         // of a large constant -- large fixed values overflowed rows *
         // columns into a negative capacity.
-        columns: Settings.barVertical ? Math.max(1, items.count) : 1
-        rows: Settings.barVertical ? 1 : Math.max(1, items.count)
+        columns: Settings.barHorizontal ? Math.max(1, items.count) : 1
+        rows: Settings.barHorizontal ? 1 : Math.max(1, items.count)
 
         opacity: root.expanded || !Config.bar.tray.compact ? 1 : 0
 
         states: State {
             name: "vertical"
-            when: Settings.barVertical
+            when: Settings.barHorizontal
 
             AnchorChanges {
                 target: layout
@@ -130,7 +130,7 @@ StyledRect {
 
         states: State {
             name: "vertical"
-            when: Settings.barVertical
+            when: Settings.barHorizontal
 
             AnchorChanges {
                 target: expandIcon
@@ -142,23 +142,23 @@ StyledRect {
         }
 
         sourceComponent: Item {
-            implicitWidth: Settings.barVertical ? expandIconInner.implicitWidth - Tokens.padding.small : expandIconInner.implicitWidth
-            implicitHeight: Settings.barVertical ? expandIconInner.implicitHeight : expandIconInner.implicitHeight - Tokens.padding.small
+            implicitWidth: Settings.barHorizontal ? expandIconInner.implicitWidth - Tokens.padding.small : expandIconInner.implicitWidth
+            implicitHeight: Settings.barHorizontal ? expandIconInner.implicitHeight : expandIconInner.implicitHeight - Tokens.padding.small
 
             MaterialIcon {
                 id: expandIconInner
 
-                anchors.horizontalCenter: Settings.barVertical ? undefined : parent.horizontalCenter
-                anchors.bottom: Settings.barVertical ? undefined : parent.bottom
-                anchors.verticalCenter: Settings.barVertical ? parent.verticalCenter : undefined
-                anchors.right: Settings.barVertical ? parent.right : undefined
-                anchors.bottomMargin: Settings.barVertical ? 0 : (Config.bar.tray.background ? Tokens.padding.extraSmall : -Tokens.padding.small)
-                anchors.rightMargin: Settings.barVertical ? (Config.bar.tray.background ? Tokens.padding.extraSmall : -Tokens.padding.small) : 0
+                anchors.horizontalCenter: Settings.barHorizontal ? undefined : parent.horizontalCenter
+                anchors.bottom: Settings.barHorizontal ? undefined : parent.bottom
+                anchors.verticalCenter: Settings.barHorizontal ? parent.verticalCenter : undefined
+                anchors.right: Settings.barHorizontal ? parent.right : undefined
+                anchors.bottomMargin: Settings.barHorizontal ? 0 : (Config.bar.tray.background ? Tokens.padding.extraSmall : -Tokens.padding.small)
+                anchors.rightMargin: Settings.barHorizontal ? (Config.bar.tray.background ? Tokens.padding.extraSmall : -Tokens.padding.small) : 0
                 // Collapsed: point toward the leading edge items expand
                 // from (up when stacked top-down, left when laid out
                 // left-to-right). Expanded: point away, toward where the
                 // items now are.
-                rotation: Settings.barVertical ? (root.expanded ? 90 : -90) : (root.expanded ? 180 : 0)
+                rotation: Settings.barHorizontal ? (root.expanded ? 90 : -90) : (root.expanded ? 180 : 0)
                 text: "expand_less"
                 color: Colours.palette.m3onSurfaceVariant
                 fontStyle: Tokens.font.icon.medium

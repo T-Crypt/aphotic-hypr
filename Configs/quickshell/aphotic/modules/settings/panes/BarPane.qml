@@ -55,7 +55,7 @@ ColumnLayout {
     // rather than silently allowed with no warning.
     StyledRect {
         Layout.fillWidth: true
-        visible: Settings.barStyle !== "full" && !Settings.barVertical
+        visible: Settings.barStyle !== "full" && !Settings.barHorizontal
         implicitHeight: warningRow.implicitHeight + Tokens.padding.medium * 2
         radius: Tokens.rounding.medium
         color: Colours.palette.m3error
@@ -144,7 +144,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
-            visible: !Settings.barVertical
+            visible: !Settings.barHorizontal
             icon: "dock_to_right"
             label: qsTr("Dock bar to right edge")
             checked: Settings.barPositionRight
@@ -152,7 +152,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
-            visible: Settings.barVertical
+            visible: Settings.barHorizontal
             icon: "vertical_align_bottom"
             label: qsTr("Dock bar to bottom edge")
             checked: Settings.barPositionBottom
@@ -171,9 +171,9 @@ ColumnLayout {
         // left/right-docked, top-to-bottom mode above.
         SettingsToggleRow {
             icon: "swap_horiz"
-            label: qsTr("Vertical orientation")
-            checked: Settings.barVertical
-            onToggled: state => Settings.barVertical = state
+            label: qsTr("Horizontal orientation")
+            checked: Settings.barHorizontal
+            onToggled: state => Settings.barHorizontal = state
         }
 
         SettingsPresetRow {

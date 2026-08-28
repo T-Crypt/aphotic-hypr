@@ -27,11 +27,11 @@ Item {
     // closeTray() and the along-axis helpers below hit-test/iterate through
     // this rather than root's own direct children, since the entries now
     // live one level deeper (root -> Loader -> Row/ColumnLayout -> entry).
-    readonly property Item activeLayout: Settings.barVertical ? hLoader.item : vLoader.item
+    readonly property Item activeLayout: Settings.barHorizontal ? hLoader.item : vLoader.item
     readonly property Repeater activeRepeater: activeLayout?.repeater ?? null
 
-    implicitWidth: Settings.barVertical ? (activeLayout?.implicitWidth ?? 0) : thickness
-    implicitHeight: Settings.barVertical ? thickness : (activeLayout?.implicitHeight ?? 0)
+    implicitWidth: Settings.barHorizontal ? (activeLayout?.implicitWidth ?? 0) : thickness
+    implicitHeight: Settings.barHorizontal ? thickness : (activeLayout?.implicitHeight ?? 0)
     width: implicitWidth
     height: implicitHeight
 
@@ -59,7 +59,7 @@ Item {
     // root's coordinate space (from BarWrapper's HoverHandler/WheelHandler,
     // which target this component) translate directly with no offset.
     function alongPoint(pos: real): point {
-        return Settings.barVertical ? Qt.point(pos, height / 2) : Qt.point(width / 2, pos);
+        return Settings.barHorizontal ? Qt.point(pos, height / 2) : Qt.point(width / 2, pos);
     }
 
     // Nearest-center hit-test rather than an exact childAt() rect test --
@@ -81,10 +81,10 @@ Item {
         let best = null;
         let bestDist = Infinity;
         for (const child of container.children) {
-            const size = Settings.barVertical ? child.width : child.height;
+            const size = Settings.barHorizontal ? child.width : child.height;
             if (size <= 0)
                 continue;
-            const start = Settings.barVertical ? child.x : child.y;
+            const start = Settings.barHorizontal ? child.x : child.y;
             const dist = Math.abs(start + size / 2 - pos);
             if (dist < bestDist) {
                 bestDist = dist;
@@ -99,8 +99,8 @@ Item {
     }
 
     function centerAlong(item: Item): real {
-        const c = Settings.barVertical ? item.mapToItem(activeLayout, item.implicitWidth / 2, 0) : item.mapToItem(activeLayout, 0, item.implicitHeight / 2);
-        return Settings.barVertical ? c.x : c.y;
+        const c = Settings.barHorizontal ? item.mapToItem(activeLayout, item.implicitWidth / 2, 0) : item.mapToItem(activeLayout, 0, item.implicitHeight / 2);
+        return Settings.barHorizontal ? c.x : c.y;
     }
 
     function checkPopout(pos: real): void {
@@ -115,7 +115,7 @@ Item {
         }
 
         const id = ch.entryId;
-        const top = Settings.barVertical ? ch.x : ch.y;
+        const top = Settings.barHorizontal ? ch.x : ch.y;
 
         if (id === "statusIcons" && Config.bar.popouts.statusIcons) {
             // Tightly scoped to whichever pill (Connectivity/System/
@@ -125,15 +125,15 @@ Item {
             const groups = (ch.item as StatusIcons).groupContainers;
             let matched = null;
             for (const g of groups) {
-                const local = Settings.barVertical ? activeLayout.mapToItem(g.pill, pos, 0).x : activeLayout.mapToItem(g.pill, 0, pos).y;
-                const size = Settings.barVertical ? g.pill.width : g.pill.height;
+                const local = Settings.barHorizontal ? activeLayout.mapToItem(g.pill, pos, 0).x : activeLayout.mapToItem(g.pill, 0, pos).y;
+                const size = Settings.barHorizontal ? g.pill.width : g.pill.height;
                 if (local >= 0 && local <= size) {
                     matched = g;
                     break;
                 }
             }
             if (matched) {
-                const localAlong = Settings.barVertical ? activeLayout.mapToItem(matched.icons, pos, 0).x : activeLayout.mapToItem(matched.icons, 0, pos).y;
+                const localAlong = Settings.barHorizontal ? activeLayout.mapToItem(matched.icons, pos, 0).x : activeLayout.mapToItem(matched.icons, 0, pos).y;
                 const icon = root.nearestAlongChild(matched.icons, localAlong);
                 if (icon) {
                     popouts.currentName = icon.name;
@@ -150,7 +150,7 @@ Item {
             const hoverPoint = alongPoint(pos);
             const hoveringExpandIcon = tray.expandIcon.contains(activeLayout.mapToItem(tray.expandIcon, hoverPoint.x, hoverPoint.y));
             if (!Config.bar.tray.compact || (tray.expanded && !hoveringExpandIcon)) {
-                const trayExtent = Settings.barVertical ? tray.layout.implicitWidth : tray.layout.implicitHeight;
+                const trayExtent = Settings.barHorizontal ? tray.layout.implicitWidth : tray.layout.implicitHeight;
                 const index = Math.floor(((pos - top - tray.padding * 2 + tray.spacing) / trayExtent) * tray.items.count);
                 const trayItem = tray.items.itemAt(index);
                 if (trayItem) {
@@ -221,7 +221,7 @@ Item {
                 Hypr.dispatch(Hypr.usingLua ? `hl.dsp.workspace.toggle_special("${specialWs.slice(8)}")` : `togglespecialworkspace ${specialWs.slice(8)}`);
             else if (angleDelta.y < 0 || (GlobalConfig.bar.workspaces.perMonitorWorkspaces ? mon.activeWorkspace?.id : Hypr.activeWsId) > 1)
                 Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ workspace = "r${angleDelta.y > 0 ? "-" : "+"}1" })` : `workspace r${angleDelta.y > 0 ? "-" : "+"}1`);
-        } else if (pos < (Settings.barVertical ? screen.width : screen.height) / 2 && Config.bar.scrollActions.volume) {
+        } else if (pos < (Settings.barHorizontal ? screen.width : screen.height) / 2 && Config.bar.scrollActions.volume) {
             // Volume scroll on the half of the bar nearer the screen origin
             if (angleDelta.y > 0)
                 Audio.incrementVolume();
@@ -250,7 +250,7 @@ Item {
         id: vLoader
 
         anchors.fill: parent
-        active: !Settings.barVertical
+        active: !Settings.barHorizontal
 
         sourceComponent: ColumnLayout {
             id: vColumn
@@ -270,7 +270,7 @@ Item {
         id: hLoader
 
         anchors.fill: parent
-        active: Settings.barVertical
+        active: Settings.barHorizontal
 
         sourceComponent: RowLayout {
             id: hRow
@@ -299,8 +299,8 @@ Item {
             DelegateChoice {
                 roleValue: "spacer"
                 delegate: EntryWrapper {
-                    Layout.fillWidth: Settings.barVertical
-                    Layout.fillHeight: !Settings.barVertical
+                    Layout.fillWidth: Settings.barHorizontal
+                    Layout.fillHeight: !Settings.barHorizontal
                 }
             }
             DelegateChoice {
@@ -312,8 +312,8 @@ Item {
                 // shrink that gap unpredictably to feed this one.
                 roleValue: "gap"
                 delegate: EntryWrapper {
-                    implicitWidth: Settings.barVertical ? Tokens.spacing.large : 1
-                    implicitHeight: Settings.barVertical ? 1 : Tokens.spacing.large
+                    implicitWidth: Settings.barHorizontal ? Tokens.spacing.large : 1
+                    implicitHeight: Settings.barHorizontal ? 1 : Tokens.spacing.large
                 }
             }
             DelegateChoice {
@@ -413,11 +413,11 @@ Item {
         default property Item item
         readonly property string entryId: modelData.id
 
-        Layout.topMargin: !Settings.barVertical && index === 0 ? root.vPadding : 0
-        Layout.bottomMargin: !Settings.barVertical && index === root.activeRepeater.count - 1 ? root.vPadding : 0
-        Layout.leftMargin: Settings.barVertical && index === 0 ? root.vPadding : 0
-        Layout.rightMargin: Settings.barVertical && index === root.activeRepeater.count - 1 ? root.vPadding : 0
-        Layout.alignment: Settings.barVertical ? Qt.AlignVCenter : Qt.AlignHCenter
+        Layout.topMargin: !Settings.barHorizontal && index === 0 ? root.vPadding : 0
+        Layout.bottomMargin: !Settings.barHorizontal && index === root.activeRepeater.count - 1 ? root.vPadding : 0
+        Layout.leftMargin: Settings.barHorizontal && index === 0 ? root.vPadding : 0
+        Layout.rightMargin: Settings.barHorizontal && index === root.activeRepeater.count - 1 ? root.vPadding : 0
+        Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
 
         implicitWidth: item?.implicitWidth ?? 0
         implicitHeight: item?.implicitHeight ?? 0

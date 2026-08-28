@@ -67,10 +67,10 @@ PanelWindow {
         }
     }
 
-    anchors.top: Settings.barVertical ? !Settings.barPositionBottom : true
-    anchors.bottom: Settings.barVertical ? Settings.barPositionBottom : true
-    anchors.left: Settings.barVertical ? true : !Settings.barPositionRight
-    anchors.right: Settings.barVertical ? true : Settings.barPositionRight
+    anchors.top: Settings.barHorizontal ? !Settings.barPositionBottom : true
+    anchors.bottom: Settings.barHorizontal ? Settings.barPositionBottom : true
+    anchors.left: Settings.barHorizontal ? true : !Settings.barPositionRight
+    anchors.right: Settings.barHorizontal ? true : Settings.barPositionRight
 
     // Wider/taller than barWidth to give the popout flyout (drawn on the
     // side of the bar strip facing away from the docked screen edge, see
@@ -120,9 +120,9 @@ PanelWindow {
         // entirely; self-referencing implicitWidth/implicitHeight as the
         // "not this axis" fallback is safe here since BarWrapper is a
         // plain Item, not a Layout fighting an external size.
-        x: !Settings.barVertical && Settings.barPositionRight ? root.width - width : 0
-        y: Settings.barVertical && Settings.barPositionBottom ? root.height - height : 0
-        width: Settings.barVertical ? root.width : implicitWidth
-        height: Settings.barVertical ? implicitHeight : root.height
+        x: !Settings.barHorizontal && Settings.barPositionRight ? root.width - width : 0
+        y: Settings.barHorizontal && Settings.barPositionBottom ? root.height - height : 0
+        width: Settings.barHorizontal ? root.width : implicitWidth
+        height: Settings.barHorizontal ? implicitHeight : root.height
     }
 }

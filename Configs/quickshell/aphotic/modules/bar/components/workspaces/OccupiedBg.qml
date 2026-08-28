@@ -70,8 +70,8 @@ Item {
             // always feed both from start's own position.
             x: (start?.x ?? 0) - 1
             y: (start?.y ?? 0) - 1
-            implicitWidth: Settings.barVertical ? (start && end ? end.x + end.size - start.x + 2 : 0) : (Settings.barInnerWidth - Tokens.padding.small + 2)
-            implicitHeight: Settings.barVertical ? (Settings.barInnerWidth - Tokens.padding.small + 2) : (start && end ? end.y + end.size - start.y + 2 : 0)
+            implicitWidth: Settings.barHorizontal ? (start && end ? end.x + end.size - start.x + 2 : 0) : (Settings.barInnerWidth - Tokens.padding.small + 2)
+            implicitHeight: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small + 2) : (start && end ? end.y + end.size - start.y + 2 : 0)
 
             color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
             radius: Tokens.rounding.full
@@ -81,7 +81,7 @@ Item {
 
             states: State {
                 name: "vertical"
-                when: Settings.barVertical
+                when: Settings.barHorizontal
 
                 AnchorChanges {
                     target: rect

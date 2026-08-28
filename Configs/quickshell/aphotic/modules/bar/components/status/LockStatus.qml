@@ -13,7 +13,7 @@ GridLayout {
     property real capsHeight: Hypr.capsLock ? capslockIcon.implicitHeight : 0
     property real numHeight: Hypr.numLock ? numlockIcon.implicitHeight : 0
 
-    flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
+    flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
     rowSpacing: Math.round(gap)
     columnSpacing: Math.round(gap)
 
@@ -36,8 +36,8 @@ GridLayout {
     }
 
     Item {
-        implicitWidth: Settings.barVertical ? Math.round(root.capsHeight) : capslockIcon.implicitWidth
-        implicitHeight: Settings.barVertical ? capslockIcon.implicitHeight : Math.round(root.capsHeight)
+        implicitWidth: Settings.barHorizontal ? Math.round(root.capsHeight) : capslockIcon.implicitWidth
+        implicitHeight: Settings.barHorizontal ? capslockIcon.implicitHeight : Math.round(root.capsHeight)
 
         MaterialIcon {
             id: capslockIcon
@@ -65,8 +65,8 @@ GridLayout {
     }
 
     Item {
-        implicitWidth: Settings.barVertical ? Math.round(root.numHeight) : numlockIcon.implicitWidth
-        implicitHeight: Settings.barVertical ? numlockIcon.implicitHeight : Math.round(root.numHeight)
+        implicitWidth: Settings.barHorizontal ? Math.round(root.numHeight) : numlockIcon.implicitWidth
+        implicitHeight: Settings.barHorizontal ? numlockIcon.implicitHeight : Math.round(root.numHeight)
 
         MaterialIcon {
             id: numlockIcon
