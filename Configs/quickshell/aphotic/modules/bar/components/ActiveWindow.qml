@@ -26,15 +26,32 @@ Item {
         return title;
     }
 
-    // How much room is left for this entry along the bar's length, once
-    // every sibling entry's own along-axis extent is subtracted out.
-    readonly property int maxExtent: {
-        const otherModules = bar.children.filter(c => c.entryId && c.item !== this && c.entryId !== "spacer");
-        const otherSize = otherModules.reduce((acc, curr) => acc + (Settings.barHorizontal ? (curr.item.nonAnimWidth ?? curr.width) : (curr.item.nonAnimHeight ?? curr.height)), 0);
-        const barSize = Settings.barHorizontal ? bar.width : bar.height;
-        // Length - 2 cause repeater counts as a child
-        return barSize - otherSize - bar.spacing * (bar.children.length - 1) - bar.vPadding * 2;
-    }
+    // Room this entry has been granted along the bar's length, handed down
+    // by Bar.qml's sizing budget (see Bar.qml's contentExtent). -1 means
+    // "unconstrained", for any host that doesn't run a budget.
+    //
+    // This used to be computed here, by summing every sibling entry's own
+    // rendered width/height -- which are outputs of the very layout pass
+    // this value feeds, so a long title grew the bar's reported size to
+    // make room for itself and pushed every entry after it off the screen.
+    // Sizing now flows strictly one way: the bar measures the screen,
+    // divides it up, and tells each entry what it got.
+    property real maxExtent: -1
+
+    readonly property font titleFont: Tokens.font.body.builders.small.weight(Font.Medium).letterSpacing(1.4).build()
+
+    readonly property real iconExtent: Settings.barHorizontal ? icon.implicitWidth : icon.implicitHeight
+    // Everything except the title: the app icon and its padding always
+    // survive, however crowded the bar gets.
+    readonly property real baseExtent: iconExtent + Tokens.spacing.small + Tokens.padding.small * 2
+    // The title at its natural, unelided width, measured by a TextMetrics
+    // of its own (see naturalMetrics) rather than off `metrics`: reading
+    // any property of `metrics` here would run back into `metrics`'
+    // own elideWidth, which is computed FROM this value -- a real binding
+    // loop that Qt breaks by freezing `demand` one evaluation short, so
+    // the title ended up elided even on a bar with room to spare.
+    readonly property real desiredExtent: baseExtent + naturalMetrics.advanceWidth
+
     property Title current: text1
 
     clip: true
@@ -107,13 +124,26 @@ Item {
         id: text2
     }
 
+    // Measures the title at its natural width only. Kept separate from
+    // `metrics` below so that nothing which feeds `metrics.elideWidth` ever
+    // reads a property of `metrics` itself.
+    TextMetrics {
+        id: naturalMetrics
+
+        text: root.windowTitle
+        font: root.titleFont
+    }
+
     TextMetrics {
         id: metrics
 
         text: root.windowTitle
-        font: root.Tokens.font.body.builders.small.weight(Font.Medium).letterSpacing(1.4).build()
+        font: root.titleFont
         elide: Qt.ElideRight
-        elideWidth: Settings.barHorizontal ? root.maxExtent - icon.width : root.maxExtent - icon.height
+        // No budget in force -- render the title at its natural width
+        // rather than eliding against a meaningless target (an elideWidth
+        // of 0 elides every string down to a bare ellipsis).
+        elideWidth: root.maxExtent < 0 ? naturalMetrics.advanceWidth : Math.max(20, root.maxExtent - root.baseExtent)
 
         onTextChanged: {
             const next = root.current === text1 ? text2 : text1;
@@ -123,13 +153,10 @@ Item {
         onElideWidthChanged: root.current.text = elidedText
     }
 
-    Behavior on implicitHeight {
-        Anim {}
-    }
-
-    Behavior on implicitWidth {
-        Anim {}
-    }
+    // The along-axis resize animation lives on Bar.qml's EntryWrapper now,
+    // which animates the allocation this entry was granted. Animating the
+    // implicit size here as well would mean two animations racing to
+    // describe the same resize.
 
     component Title: StyledText {
         id: text

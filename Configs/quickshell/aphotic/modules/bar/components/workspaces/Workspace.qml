@@ -15,6 +15,11 @@ GridLayout {
     required property int activeWsId
     required property var occupied
     required property int groupOffset
+    // How many window icons this workspace has been allowed to show, shared
+    // out by Workspaces.qml from the along-axis room Bar.qml granted the
+    // whole row. Config.bar.workspaces.maxWindowIcons is the ceiling this
+    // is capped against; this is what actually fits.
+    required property int maxIcons
 
     readonly property bool isWorkspace: true // Flag for finding workspace children
     // Unanimated prop for others to use as reference -- the along-axis
@@ -23,7 +28,7 @@ GridLayout {
 
     readonly property int ws: groupOffset + index + 1
     readonly property bool isOccupied: occupied[ws] ?? false
-    readonly property bool hasWindows: isOccupied && Config.bar.workspaces.showWindows
+    readonly property bool hasWindows: isOccupied && Config.bar.workspaces.showWindows && maxIcons > 0
 
     flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
     Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
@@ -84,8 +89,10 @@ GridLayout {
             // cross axis, so this is pinned to the actual item count
             // instead of a large constant -- large fixed values
             // overflowed rows * columns into a negative capacity.
-            columns: Settings.barHorizontal ? Math.max(1, windowIconsGrid.children.length) : 1
-            rows: Settings.barHorizontal ? 1 : Math.max(1, windowIconsGrid.children.length)
+            // Counted off the Repeater rather than `children.length`, which
+            // includes the Repeater itself and so ran one over.
+            columns: Settings.barHorizontal ? Math.max(1, icons.count) : 1
+            rows: Settings.barHorizontal ? 1 : Math.max(1, icons.count)
 
             add: Transition {
                 Anim {
@@ -108,12 +115,13 @@ GridLayout {
             }
 
             Repeater {
+                id: icons
+
                 model: ScriptModel {
                     values: {
                         const ws = root.ws;
                         const windows = Hypr.toplevels.values.filter(c => c.workspace?.id === ws);
-                        const maxIcons = root.Config.bar.workspaces.maxWindowIcons;
-                        return maxIcons > 0 ? windows.slice(0, maxIcons) : windows;
+                        return windows.slice(0, root.maxIcons);
                     }
                 }
 

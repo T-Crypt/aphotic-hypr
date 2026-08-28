@@ -30,7 +30,6 @@ Item {
     // than a literal couple-of-pixels sliver.
     readonly property alias hoverTarget: content
 
-    readonly property int clampedWidth: Math.max(Config.border.minThickness, implicitWidth)
     readonly property int padding: Math.max(Tokens.padding.small, Config.border.thickness)
     readonly property int contentWidth: Settings.barInnerWidth + padding * 2
     // "hidden" reserves no desktop space at all, matching a fully disabled
