@@ -163,10 +163,35 @@ Item {
                 Layout.preferredWidth: iconGrid.implicitWidth
                 Layout.preferredHeight: iconGrid.implicitHeight
 
-                readonly property bool magnifying: Settings.dockMagnification && Settings.barHorizontal && iconHover.hovered
+                readonly property bool magnifies: Settings.dockMagnification && Settings.barHorizontal
+                readonly property bool magnifying: magnifies && iconHover.hovered
+                property Item hoveredEntry: null
 
                 HoverHandler {
                     id: iconHover
+
+                    onPointChanged: {
+                        if (!iconHover.hovered)
+                            return;
+                        const local = iconRow.mapToItem(iconGrid, iconHover.point.position.x, iconHover.point.position.y);
+                        iconRow.hoveredEntry = BarHit.nearestAt(iconGrid, local.x, local.y);
+                    }
+                    onHoveredChanged: {
+                        if (!iconHover.hovered)
+                            iconRow.hoveredEntry = null;
+                    }
+                }
+
+                // Magnification already answers "which icon is the pointer
+                // on" by growing it, and a highlight gliding under icons
+                // that are themselves swelling reads as two effects
+                // fighting -- so the dock shows one or the other, never
+                // both. DockAppIcon's own StateLayer hover takes over
+                // whenever this pill is off.
+                HoverPill {
+                    container: iconGrid
+                    hoveredEntry: iconRow.magnifies ? null : iconRow.hoveredEntry
+                    thickness: Settings.barHorizontal ? iconRow.height : iconRow.width
                 }
 
                 Grid {
@@ -186,6 +211,7 @@ Item {
                             item: modelData
                             growOrigin: !Settings.barHorizontal ? Item.Center : (Settings.barPositionBottom ? Item.Bottom : Item.Top)
                             magnifyScale: iconRow.magnifying ? root.magnifyFalloff(dockIcon.x + dockIcon.width / 2) : 1
+                            showHover: iconRow.magnifies
                         }
                     }
                 }
