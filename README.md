@@ -48,7 +48,7 @@ One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings 
 ## Showcase video
 
 <p align="center">
-  <video src="https://raw.githubusercontent.com/T-Crypt/aphotic-hypr/test/recordings/aphotic-showcase.mp4" controls width="900" poster="./assets/aphotic-preview.png">
+  <video src="https://raw.githubusercontent.com/T-Crypt/aphotic-hypr/main/recordings/aphotic-showcase.mp4" controls width="900" poster="./assets/aphotic-preview.png">
     Your browser doesn't support inline video — <a href="recordings/aphotic-showcase.mp4">watch it here</a> instead.
   </video>
 </p>
