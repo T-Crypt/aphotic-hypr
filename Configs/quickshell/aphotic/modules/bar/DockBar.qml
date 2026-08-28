@@ -106,22 +106,37 @@ Item {
         id: pill
 
         anchors.centerIn: parent
-        implicitWidth: Settings.barVertical ? layout.implicitWidth + Tokens.padding.medium * 2 : Tokens.sizes.bar.innerWidth + Tokens.padding.small * 2
-        implicitHeight: Settings.barVertical ? Tokens.sizes.bar.innerWidth + Tokens.padding.small * 2 : layout.implicitHeight + Tokens.padding.medium * 2
+        implicitWidth: Settings.barHorizontal ? layout.implicitWidth + Tokens.padding.medium * 2 : Tokens.sizes.bar.innerWidth + Tokens.padding.small * 2
+        implicitHeight: Settings.barHorizontal ? Tokens.sizes.bar.innerWidth + Tokens.padding.small * 2 : layout.implicitHeight + Tokens.padding.medium * 2
 
         radius: Tokens.rounding.full
         color: Colours.tPalette.m3surfaceContainer
 
         opacity: root.shouldShow ? 1 : 0
+        // Behaviors go on the Translate's own x/y, not on `transform`
+        // itself -- `transform` never actually changes identity here (it's
+        // always the same Translate instance, just its x/y sub-properties
+        // being reassigned), so a `Behavior on transform` never fires: QML
+        // only animates a property when the property's OWN value changes,
+        // and from the outside this list-valued property's value (the
+        // Translate object reference) never does. Real bug this caused:
+        // the auto-hide reveal/hide slide had no animation at all -- the
+        // pill just snapped instantly to shown/hidden every time, the
+        // literal "SNAP-to" behavior reported, and inconsistent with every
+        // other bar style's Emphasized-eased motion.
         transform: Translate {
             y: root.shouldShow ? 0 : (Settings.barPositionBottom ? pill.height : -pill.height)
-            x: Settings.barVertical ? 0 : (Settings.barPositionRight ? pill.width : -pill.width)
+            x: Settings.barHorizontal ? 0 : (Settings.barPositionRight ? pill.width : -pill.width)
+
+            Behavior on y {
+                Anim { type: Anim.Emphasized }
+            }
+            Behavior on x {
+                Anim { type: Anim.Emphasized }
+            }
         }
 
         Behavior on opacity {
-            Anim { type: Anim.Emphasized }
-        }
-        Behavior on transform {
             Anim { type: Anim.Emphasized }
         }
 
@@ -138,7 +153,7 @@ Item {
             id: layout
 
             anchors.centerIn: parent
-            flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
+            flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
             rowSpacing: Tokens.spacing.small
             columnSpacing: Tokens.spacing.small
 
@@ -148,7 +163,7 @@ Item {
                 Layout.preferredWidth: iconGrid.implicitWidth
                 Layout.preferredHeight: iconGrid.implicitHeight
 
-                readonly property bool magnifying: Settings.dockMagnification && Settings.barVertical && iconHover.hovered
+                readonly property bool magnifying: Settings.dockMagnification && Settings.barHorizontal && iconHover.hovered
 
                 HoverHandler {
                     id: iconHover
@@ -157,9 +172,9 @@ Item {
                 Grid {
                     id: iconGrid
 
-                    flow: Settings.barVertical ? Grid.LeftToRight : Grid.TopToBottom
-                    columns: Settings.barVertical ? root.dockItems.length : 1
-                    rows: Settings.barVertical ? 1 : root.dockItems.length
+                    flow: Settings.barHorizontal ? Grid.LeftToRight : Grid.TopToBottom
+                    columns: Settings.barHorizontal ? root.dockItems.length : 1
+                    rows: Settings.barHorizontal ? 1 : root.dockItems.length
                     spacing: Tokens.spacing.small
 
                     Repeater {
@@ -169,7 +184,7 @@ Item {
                             id: dockIcon
                             required property var modelData
                             item: modelData
-                            growOrigin: !Settings.barVertical ? Item.Center : (Settings.barPositionBottom ? Item.Bottom : Item.Top)
+                            growOrigin: !Settings.barHorizontal ? Item.Center : (Settings.barPositionBottom ? Item.Bottom : Item.Top)
                             magnifyScale: iconRow.magnifying ? root.magnifyFalloff(dockIcon.x + dockIcon.width / 2) : 1
                         }
                     }
@@ -177,8 +192,8 @@ Item {
             }
 
             Rectangle {
-                Layout.preferredWidth: Settings.barVertical ? 20 : 1
-                Layout.preferredHeight: Settings.barVertical ? 1 : 20
+                Layout.preferredWidth: Settings.barHorizontal ? 20 : 1
+                Layout.preferredHeight: Settings.barHorizontal ? 1 : 20
                 Layout.alignment: Qt.AlignCenter
                 visible: root.dockItems.length > 0
                 color: Colours.palette.m3outlineVariant
