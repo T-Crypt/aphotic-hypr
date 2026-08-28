@@ -16,6 +16,7 @@ import qs.modules.colorpicker
 import qs.modules.intelligence
 import qs.modules.notificationcenter
 import qs.modules.pkginstall
+import qs.modules.wallpaperpicker
 import qs.services
 
 ShellRoot {
@@ -74,7 +75,9 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        BackgroundWindow {}
+        BackgroundWindow {
+            screenState: root.screenStateFor(modelData)
+        }
     }
 
     Variants {
@@ -140,6 +143,93 @@ ShellRoot {
         }
     }
 
+    Variants {
+        id: wallpaperPickerWindows
+        model: Quickshell.screens
+
+        WallpaperPickerWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
+    // Backs both the per-target IpcHandlers below (kept as thin aliases
+    // for back-compat -- `qs ipc call launcher toggle` etc. still work
+    // unchanged) and the uniform `aphotic toggle(name)` dispatcher, so
+    // every future toggle-shaped surface only needs one new map entry
+    // instead of a whole new IpcHandler block. Deliberately does NOT
+    // cover the eight verb-bearing targets (mpris, brightness, picker,
+    // lock, hypr, audio, notifs, bar) -- those take real arguments or
+    // dispatch more than one action, so collapsing them here would just
+    // be forcing a shape that doesn't fit.
+    readonly property var _toggleTargets: ({
+        launcher: () => {
+            const win = root.focusedInstance(launcherWindows);
+            if (win)
+                win.screenState.launcher = !win.screenState.launcher;
+        },
+        session: () => {
+            const win = root.focusedInstance(sessionWindows);
+            if (win)
+                win.screenState.session = !win.screenState.session;
+        },
+        dashboard: () => {
+            const win = root.focusedInstance(dashboardWindows);
+            if (win)
+                win.screenState.dashboard = !win.screenState.dashboard;
+        },
+        agent: () => {
+            const win = root.focusedInstance(barWindows);
+            if (win)
+                win.screenState.agentPanel = !win.screenState.agentPanel;
+        },
+        settings: () => {
+            const win = root.focusedInstance(settingsWindows);
+            if (win)
+                win.screenState.settings = !win.screenState.settings;
+        },
+        intelligence: () => {
+            const win = root.focusedInstance(intelligenceWindows);
+            if (win)
+                win.screenState.intelligence = !win.screenState.intelligence;
+        },
+        dnd: () => DoNotDisturb.toggle(),
+        notifications: () => {
+            const win = root.focusedInstance(notificationCenterWindows);
+            if (win)
+                win.screenState.notificationCenter = !win.screenState.notificationCenter;
+        },
+        pkginstall: () => {
+            if (!PkgSearch.available)
+                return;
+            const win = root.focusedInstance(pkgInstallWindows);
+            if (win)
+                win.screenState.pkgInstall = !win.screenState.pkgInstall;
+        },
+        colorpicker: () => colorPicker.toggle(),
+        wallpaperpicker: () => {
+            const win = root.focusedInstance(wallpaperPickerWindows);
+            if (win)
+                win.screenState.wallpaperPicker = !win.screenState.wallpaperPicker;
+        }
+    })
+
+    // Single entry point every future toggle-shaped surface can bind to
+    // with zero new plumbing: `qs -c aphotic ipc call aphotic toggle
+    // <name>`. Unknown names warn instead of throwing -- a typo'd name
+    // (or a keybind referencing a surface from a branch that hasn't
+    // landed yet) should be visible in the log, not a hard IPC error.
+    IpcHandler {
+        target: "aphotic"
+
+        function toggle(name: string): void {
+            const fn = root._toggleTargets[name];
+            if (fn)
+                fn();
+            else
+                console.warn(`aphotic toggle: unknown name '${name}'`);
+        }
+    }
+
     Lock {}
 
     Variants {
@@ -176,9 +266,7 @@ ShellRoot {
         target: "launcher"
 
         function toggle(): void {
-            const win = root.focusedInstance(launcherWindows);
-            if (win)
-                win.screenState.launcher = !win.screenState.launcher;
+            root._toggleTargets.launcher();
         }
 
         function openWallpapers(): void {
@@ -195,9 +283,7 @@ ShellRoot {
         target: "session"
 
         function toggle(): void {
-            const win = root.focusedInstance(sessionWindows);
-            if (win)
-                win.screenState.session = !win.screenState.session;
+            root._toggleTargets.session();
         }
     }
 
@@ -205,9 +291,7 @@ ShellRoot {
         target: "dashboard"
 
         function toggle(): void {
-            const win = root.focusedInstance(dashboardWindows);
-            if (win)
-                win.screenState.dashboard = !win.screenState.dashboard;
+            root._toggleTargets.dashboard();
         }
     }
 
@@ -215,9 +299,7 @@ ShellRoot {
         target: "agent"
 
         function toggle(): void {
-            const win = root.focusedInstance(barWindows);
-            if (win)
-                win.screenState.agentPanel = !win.screenState.agentPanel;
+            root._toggleTargets.agent();
         }
     }
 
@@ -225,9 +307,7 @@ ShellRoot {
         target: "settings"
 
         function toggle(): void {
-            const win = root.focusedInstance(settingsWindows);
-            if (win)
-                win.screenState.settings = !win.screenState.settings;
+            root._toggleTargets.settings();
         }
     }
 
@@ -235,9 +315,7 @@ ShellRoot {
         target: "intelligence"
 
         function toggle(): void {
-            const win = root.focusedInstance(intelligenceWindows);
-            if (win)
-                win.screenState.intelligence = !win.screenState.intelligence;
+            root._toggleTargets.intelligence();
         }
     }
 
@@ -245,7 +323,7 @@ ShellRoot {
         target: "dnd"
 
         function toggle(): void {
-            DoNotDisturb.toggle();
+            root._toggleTargets.dnd();
         }
     }
 
@@ -253,9 +331,7 @@ ShellRoot {
         target: "notifications"
 
         function toggle(): void {
-            const win = root.focusedInstance(notificationCenterWindows);
-            if (win)
-                win.screenState.notificationCenter = !win.screenState.notificationCenter;
+            root._toggleTargets.notifications();
         }
     }
 
@@ -263,15 +339,21 @@ ShellRoot {
         target: "pkginstall"
 
         function toggle(): void {
-            if (!PkgSearch.available)
-                return;
-            const win = root.focusedInstance(pkgInstallWindows);
-            if (win)
-                win.screenState.pkgInstall = !win.screenState.pkgInstall;
+            root._toggleTargets.pkginstall();
+        }
+    }
+
+    IpcHandler {
+        target: "wallpaperpicker"
+
+        function toggle(): void {
+            root._toggleTargets.wallpaperpicker();
         }
     }
 
     AreaPicker {}
 
-    ColorPicker {}
+    ColorPicker {
+        id: colorPicker
+    }
 }

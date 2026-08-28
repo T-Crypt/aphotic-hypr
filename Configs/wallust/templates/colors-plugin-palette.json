@@ -2,6 +2,8 @@
   "background": "{{ background }}",
   "foreground": "{{ foreground }}",
   "cursor": "{{ foreground }}",
+  "surfaceContainer": "{{ background | darken(0.05) }}",
+  "surfaceContainerHigh": "{{ background | lighten(0.12) }}",
   "colors": {
     "color0": "{{ color0 }}",
     "color1": "{{ color1 }}",

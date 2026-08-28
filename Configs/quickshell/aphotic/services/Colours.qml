@@ -1,13 +1,26 @@
 pragma Singleton
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import qs.services
 
-// wallust-generated: real palette wired in for Task 8, replacing the
-// Task 2 hand-hardcoded stand-in. wallust has no native Material You role
-// generation (that's matugen's job, still optional/unused here per the
-// roadmap), so ANSI-style color0-15 are mapped onto M3 role names by
-// convention (color4=blue->primary, color1=red->error, color2=green->
-// tertiary).
+// Static file, NOT wallust-templated -- it used to be regenerated
+// wholesale on every theme apply (Task 8), which made a *tracked git
+// source file* something ordinary desktop use rewrote constantly: it was
+// dirty in the working tree after every theme switch, and `aphotic update`
+// (`git pull`) hit a real checkout conflict against that machine-local
+// drift. The raw palette now lives in ~/.local/state/aphotic/palette.json
+// (wallust's plugin_palette template, see Configs/wallust/wallust.toml and
+// colors-plugin-palette.json) -- the same file the plugin system already
+// reads -- and this file just reads it too, at runtime, via the FileView
+// below. See docs/IN_FLIGHT.md item 3 for the full writeup.
+//
+// wallust has no native Material You role generation (that's matugen's
+// job, still optional/unused here per the roadmap), so ANSI-style
+// color0-15 are mapped onto M3 role names by convention (color4=blue->
+// primary, color1=red->error, color2=green->tertiary) -- same mapping the
+// old per-theme template used, just resolved here instead of at
+// template-render time.
 //
 // "on" (text/foreground) roles are NOT derived by blindly darkening the
 // accent color — some wallust palettes produce dark, desaturated accents,
@@ -21,7 +34,7 @@ import qs.services
 // still hard to read. mutedOn() applies the same real-ratio check to the
 // secondary/muted text blend so it never drops below WCAG AA (4.5:1)
 // regardless of wallpaper.
-QtObject {
+Singleton {
     id: root
 
     readonly property bool light: false
@@ -95,32 +108,61 @@ QtObject {
         return Qt.tint(accent, Qt.alpha(contrastOn(surface), 0.6));
     }
 
+    // Raw resolved palette, read once at load and again on every future
+    // theme apply (watchChanges catches wallust's rewrite of the target
+    // file). Empty object until the first successful load -- the ?? "..."
+    // fallbacks below are the same literal defaults the old Task 2
+    // hand-hardcoded stand-in used, so a fresh install with no theme
+    // applied yet still renders something coherent instead of black.
+    property var _raw: ({})
+
+    FileView {
+        id: paletteFile
+
+        path: `${Quickshell.env("HOME")}/.local/state/aphotic/palette.json`
+        watchChanges: true
+        onLoaded: {
+            try {
+                root._raw = JSON.parse(text());
+            } catch (e) {
+                root._raw = {};
+            }
+        }
+        onLoadFailed: root._raw = {}
+    }
+
+    function _rawColor(key: string, fallback: string): color {
+        return root._raw?.colors?.[key] ?? fallback;
+    }
+
     readonly property QtObject palette: QtObject {
         // Settings' Personalization pane can override just the primary
         // accent -- purely additive on top of the wallust-derived value,
-        // never touches the wallust pipeline itself. Must live in THIS
-        // template, not just the generated Colours.qml -- the next
-        // `aphotic theme set` regenerates Colours.qml from here and would
-        // silently discard a hand-edit made only to the generated file
-        // (see feedback_quickshell_symlink memory -- learned this the
-        // hard way tonight).
-        readonly property color m3primary: Settings.accentColorOverride.length > 0 ? Settings.accentColorOverride : "#5A6089"
+        // never touches the wallust pipeline itself, and (unlike when
+        // this whole file was regenerated per-theme) nothing can silently
+        // discard this check anymore since Colours.qml itself is no
+        // longer template output.
+        readonly property color m3primary: Settings.accentColorOverride.length > 0 ? Settings.accentColorOverride : root._rawColor("color4", "#5A6089")
         readonly property color m3onPrimary: root.contrastOn(m3primary)
         readonly property color m3primaryOnSurface: root.legibleAccent(m3primary, m3surfaceContainerHigh)
-        readonly property color m3secondary: "#F9EEDA"
+        readonly property color m3secondary: root._rawColor("color7", "#F9EEDA")
         readonly property color m3secondaryOnSurface: root.legibleAccent(m3secondary, m3surfaceContainerHigh)
         readonly property color m3secondaryContainer: Qt.tint(m3surfaceContainerHigh, Qt.alpha(m3secondary, 0.24))
         readonly property color m3onSecondaryContainer: root.legibleAccent(m3secondary, m3secondaryContainer)
-        readonly property color m3tertiary: "#4B836F"
+        readonly property color m3tertiary: root._rawColor("color2", "#4B836F")
         readonly property color m3onTertiary: root.contrastOn(m3tertiary)
         readonly property color m3tertiaryOnSurface: root.legibleAccent(m3tertiary, m3surfaceContainerHigh)
-        readonly property color m3error: "#BC7541"
+        readonly property color m3error: root._rawColor("color1", "#BC7541")
         readonly property color m3onError: root.contrastOn(m3error)
         readonly property color m3onSurface: root.contrastOn(m3surfaceContainer)
         readonly property color m3onSurfaceVariant: root.mutedOn(m3surfaceContainer, m3onSurface, 0.35)
-        readonly property color m3outlineVariant: "#535355"
-        readonly property color m3surfaceContainer: "#000000"
-        readonly property color m3surfaceContainerHigh: "#1F1F1F"
+        readonly property color m3outlineVariant: root._rawColor("color8", "#535355")
+        // surfaceContainer/surfaceContainerHigh aren't ANSI slots -- they're
+        // background darken(0.05)/lighten(0.12), computed wallust-side (see
+        // colors-plugin-palette.json) so there's one color-math
+        // implementation instead of a second one ported into QML/JS.
+        readonly property color m3surfaceContainer: root._raw?.surfaceContainer ?? "#000000"
+        readonly property color m3surfaceContainerHigh: root._raw?.surfaceContainerHigh ?? "#1F1F1F"
         readonly property color m3shadow: "#000000"
     }
 

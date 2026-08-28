@@ -123,6 +123,27 @@ Item {
                 }
 
                 Item {
+                    implicitWidth: dndIcon.implicitHeight + Tokens.padding.extraSmall * 2
+                    implicitHeight: dndIcon.implicitHeight + Tokens.padding.extraSmall * 2
+
+                    StateLayer {
+                        anchors.fill: parent
+                        radius: Tokens.rounding.full
+                        onClicked: DoNotDisturb.toggle()
+                    }
+
+                    MaterialIcon {
+                        id: dndIcon
+
+                        anchors.centerIn: parent
+                        text: DoNotDisturb.enabled ? "notifications_off" : "notifications"
+                        color: DoNotDisturb.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        fill: DoNotDisturb.enabled ? 1 : 0
+                        fontStyle: Tokens.font.icon.small
+                    }
+                }
+
+                Item {
                     implicitWidth: closeIcon.implicitHeight + Tokens.padding.extraSmall * 2
                     implicitHeight: closeIcon.implicitHeight + Tokens.padding.extraSmall * 2
 
