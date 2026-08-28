@@ -5,7 +5,7 @@
 # @cmd.group: CONFIG
 # @cmd.opt: -f, --file <path> | Set a specific wallpaper (must live under a theme folder)
 # @cmd.opt: --random          | Pick a random wallpaper from the active theme
-# @cmd.opt: --next            | Advance to another wallpaper in the active theme
+# @cmd.opt: --next            | Advance to the next wallpaper in the active theme, in order
 # @cmd.opt: --fetch-extra [theme] | Download the larger community wallpaper pool (opt-in, see below)
 # @cmd.opt: -y, --yes             | Skip the --fetch-extra confirmation prompt
 #
@@ -125,8 +125,17 @@ _aphotic_wallpaper_fetch_extra() {
 }
 
 _aphotic_wallpaper_run_switcher() {
+    # $1 = "next" for a real ordered advance through the active theme's
+    # own wallpaper list (wraps at the end), anything else (or omitted)
+    # for a random pick -- see wallswitcher.py's main(). Used to be the
+    # same call either way (--next was just an alias for random).
+    local mode="${1:-random}"
     if [[ -x "$APHOTIC_WALLSWITCHER" ]] || command -v python3 >/dev/null 2>&1; then
-        python3 "$APHOTIC_WALLSWITCHER"
+        if [[ "$mode" == "next" ]]; then
+            python3 "$APHOTIC_WALLSWITCHER" --next
+        else
+            python3 "$APHOTIC_WALLSWITCHER"
+        fi
     else
         aphotic_err "wallswitcher.py not runnable: ${APHOTIC_WALLSWITCHER}"
         return 1
@@ -158,8 +167,11 @@ aphotic_cmd_wallpaper() {
                 return 1
             fi
             ;;
-        --random|--next)
-            _aphotic_wallpaper_run_switcher
+        --random)
+            _aphotic_wallpaper_run_switcher random
+            ;;
+        --next)
+            _aphotic_wallpaper_run_switcher next
             ;;
         --fetch-extra)
             local extra_theme="" skip_confirm="no"
@@ -180,7 +192,9 @@ Usage: aphotic wallpaper -f <path> | --random | --next | --fetch-extra [theme] [
 
   -f, --file <path>   Set a specific wallpaper (must be under ${APHOTIC_AWWW_DIR}/<theme>/)
   --random            Pick another wallpaper within the active theme
-  --next              Same as --random (themes don't define wallpaper ordering)
+  --next              Advance to the next wallpaper in the theme's own
+                       list (alphabetical, wraps at the end) -- a real
+                       deterministic cycle, not a second random pick
   --fetch-extra [theme]  Download the larger community wallpaper pool (all
                           themes, or just one). Prompts with the total size
                           first; pass -y/--yes to skip the prompt.

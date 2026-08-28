@@ -5,6 +5,7 @@ import os
 import random
 import re
 import subprocess
+import sys
 
 
 def run_optional(cmd):
@@ -68,8 +69,9 @@ def parse_engine_pin(theme):
     icon_theme = ""
     cursor_theme = ""
     gtk_theme = ""
+    engine_name = ""
     if not os.path.isfile(toml_path):
-        return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme
+        return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name
     section = ""
     with open(toml_path) as f:
         for raw in f:
@@ -93,6 +95,8 @@ def parse_engine_pin(theme):
                     colorscheme = value
                 elif key == "style":
                     style = value
+                elif key == "name":
+                    engine_name = value
             elif section == "icons":
                 if key == "papirus_color":
                     papirus_color = value
@@ -102,7 +106,7 @@ def parse_engine_pin(theme):
                     cursor_theme = value
             elif section == "gtk" and key == "theme":
                 gtk_theme = value
-    return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme
+    return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name
 
 
 settings_path = os.path.expanduser("~/.local/state/aphotic/settings.json")
@@ -173,7 +177,18 @@ def apply_wallpaper(theme, wallpaper):
 
     subprocess.run(["awww", "img", "--transition-type", "wipe", "--transition-duration", "3", image_path])
 
-    backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme = parse_engine_pin(theme)
+    backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name = parse_engine_pin(theme)
+
+    # [engine].name is documented (themes/THEME_SPEC.md) as accepting
+    # "wallust" | "matugen", but nothing here (or in cmd_theme.sh/
+    # Wallpapers.qml) has ever actually read it -- every apply path always
+    # runs wallust regardless, so a theme pinning matugen silently got
+    # wallust instead with zero indication anything was ignored. Not
+    # implementing matugen here -- just making the mismatch loud instead
+    # of silent.
+    if engine_name and engine_name != "wallust":
+        notify(f"theme '{theme}' pins engine '{engine_name}', but only wallust is wired up — using wallust")
+
     if colorscheme:
         # Fixed palette pin -- see cmd_theme.sh's _aphotic_theme_apply for
         # why some themes (HackTheBox's real green/navy scheme) pin an
@@ -233,11 +248,21 @@ def main():
         notify(f"No wallpapers found in theme '{current_theme}'")
         return
 
-    # Random pick within the current theme, excluding the current
-    # wallpaper when there's more than one to choose from -- matches the
-    # original script's "always changes to something new" behavior.
-    choices = [w for w in wallpapers if w != current_wallpaper] or wallpapers
-    next_wallpaper = random.choice(choices)
+    # --next used to just be an alias for random (themes shipped too few
+    # wallpapers each for order to matter) -- now that every theme ships
+    # several curated wallpapers, a real deterministic cycle is more
+    # useful and matches what the flag's name actually promises. Default
+    # (no flag, still what SUPER+W's keybind runs) stays random --
+    # nothing asked to change that keybind's own feel.
+    if "--next" in sys.argv[1:] and current_wallpaper in wallpapers:
+        idx = wallpapers.index(current_wallpaper)
+        next_wallpaper = wallpapers[(idx + 1) % len(wallpapers)]
+    else:
+        # Random pick within the current theme, excluding the current
+        # wallpaper when there's more than one to choose from -- matches
+        # the original script's "always changes to something new" behavior.
+        choices = [w for w in wallpapers if w != current_wallpaper] or wallpapers
+        next_wallpaper = random.choice(choices)
 
     apply_wallpaper(current_theme, next_wallpaper)
 
