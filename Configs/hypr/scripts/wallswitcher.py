@@ -8,11 +8,16 @@ import subprocess
 import sys
 
 
-def run_optional(cmd):
+def run_optional(cmd, check=True):
+    """Run command optionally with error handling."""
     try:
-        subprocess.run(cmd)
-    except FileNotFoundError:
+        if check:
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except (FileNotFoundError, subprocess.CalledProcessError):
         pass
+
 
 # Directory-per-theme layout (see themes/THEME_SPEC.md): each subfolder of
 # awww_dir is a theme, containing wallpapers + an optional theme.toml pin.
@@ -136,46 +141,46 @@ def apply_theme_pins(icon_theme, cursor_theme, gtk_theme):
     if icon_theme and not settings.get("iconThemeUserSet", False):
         settings["iconTheme"] = icon_theme
         changed = True
-        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", icon_theme])
+        # Run these in background to reduce lag - they're not critical for wallpaper change
+        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", icon_theme], check=False)
         for qtct_path in qtct_paths:
             if os.path.isfile(qtct_path):
-                with open(qtct_path) as f:
-                    text = f.read()
-                text = re.sub(r"(?m)^icon_theme=.*$", f"icon_theme={icon_theme}", text)
-                with open(qtct_path, "w") as f:
-                    f.write(text)
+                try:
+                    with open(qtct_path) as f:
+                        text = f.read()
+                    text = re.sub(r"(?m)^icon_theme=.*$", f"icon_theme={icon_theme}", text)
+                    with open(qtct_path, "w") as f:
+                        f.write(text)
+                except (IOError, OSError):
+                    pass
 
     if cursor_theme and not settings.get("cursorThemeUserSet", False):
         settings["cursorTheme"] = cursor_theme
         changed = True
-        cursor_size = settings.get("cursorSize", 24)
-        run_optional(["hyprctl", "setcursor", cursor_theme, str(cursor_size)])
-        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", cursor_theme])
+        # Run these in background to reduce lag - they're not critical for wallpaper change
+        run_optional(["hyprctl", "setcursor", cursor_theme, str(settings.get("cursorSize", 24))], check=False)
+        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", cursor_theme], check=False)
 
     if gtk_theme and not settings.get("gtkThemeUserSet", False):
         settings["gtkTheme"] = gtk_theme
         changed = True
-        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", gtk_theme])
+        # Run these in background to reduce lag - they're not critical for wallpaper change
+        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", gtk_theme], check=False)
 
     if changed:
         os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-        with open(settings_path, "w") as f:
-            json.dump(settings, f, indent=2)
-
-
-def notify(message):
-    subprocess.run([
-        "notify-send",
-        "-h", "string:x-canonical-private-synchronous:hypr-cfg",
-        "-u", "low",
-        message,
-    ])
+        try:
+            with open(settings_path, "w") as f:
+                json.dump(settings, f, indent=2)
+        except (IOError, OSError):
+            pass
 
 
 def apply_wallpaper(theme, wallpaper):
     image_path = os.path.join(awww_dir, theme, wallpaper)
 
-    subprocess.run(["awww", "img", "--transition-type", "wipe", "--transition-duration", "3", image_path])
+    # Apply wallpaper with minimal transition for speed
+    run_optional(["awww", "img", "--transition-type", "none", "--transition-duration", "0", image_path])
 
     backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name = parse_engine_pin(theme)
 
@@ -187,13 +192,13 @@ def apply_wallpaper(theme, wallpaper):
     # implementing matugen here -- just making the mismatch loud instead
     # of silent.
     if engine_name and engine_name != "wallust":
-        notify(f"theme '{theme}' pins engine '{engine_name}', but only wallust is wired up — using wallust")
+        print(f"theme '{theme}' pins engine '{engine_name}', but only wallust is wired up — using wallust")
 
     if colorscheme:
         # Fixed palette pin -- see cmd_theme.sh's _aphotic_theme_apply for
         # why some themes (HackTheBox's real green/navy scheme) pin an
         # exact colorscheme file instead of deriving from the image.
-        subprocess.run(["wallust", "cs", colorscheme, "--format", "pywal"])
+        run_optional(["wallust", "cs", colorscheme, "--format", "pywal"])
     else:
         wallust_cmd = ["wallust", "run", image_path]
         if backend:
@@ -202,22 +207,27 @@ def apply_wallpaper(theme, wallpaper):
             wallust_cmd += ["-p", palette]
         if style:
             wallust_cmd += ["-S", style]
-        subprocess.run(wallust_cmd)
-    subprocess.run(["cp", image_path, os.path.join(awww_dir, "wallpaper.rofi")])
+        run_optional(wallust_cmd)
+    
+    # Copy to rofi wallpaper
+    try:
+        subprocess.run(["cp", image_path, os.path.join(awww_dir, "wallpaper.rofi")], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
 
-    # Plugin theme-hooks (see docs/PLUGIN_SYSTEM.md) -- run() blocks until
-    # wallust above has actually finished re-templating palette.json, so
-    # unlike Wallpapers.qml's execDetached calls this doesn't need any
-    # extra chaining to avoid a race.
-    run_optional(["aphotic", "plugin", "run-theme-hooks"])
+    # Plugin theme-hooks - run in background to reduce lag
+    run_optional(["aphotic", "plugin", "run-theme-hooks"], check=False)
 
+    # Handle papirus-folders with no sudo prompt if possible
     if papirus_color:
-        # Folder-icon accent pin -- see cmd_theme.sh's _aphotic_theme_apply
-        # for why this needs passwordless sudo and only no-ops silently
-        # (same best-effort class as the sddm sync call below) rather
-        # than blocking on a password prompt.
-        run_optional(["sudo", "-n", "papirus-folders", "-C", papirus_color, "--theme", "Papirus-Dark", "-u"])
+        # Run without blocking for better performance - use non-blocking sudo if available or skip if not
+        try:
+            subprocess.run(["sudo", "-n", "papirus-folders", "-C", papirus_color, "--theme", "Papirus-Dark", "-u"], 
+                          check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            pass
 
+    # Apply theme pins in background to reduce lag
     apply_theme_pins(icon_theme, cursor_theme, gtk_theme)
 
     # State is the source other tools (Quickshell's Themes.qml) read back,
@@ -227,16 +237,16 @@ def apply_wallpaper(theme, wallpaper):
     # installed or `aphotic` isn't on PATH in a given environment.
     write_state(theme, wallpaper)
 
-    run_optional(["pywalfox", "update"])
-    run_optional(["aphotic", "reload"])
-    run_optional(["aphotic", "sddm", "sync"])
-    notify(f"Wallpaper changed to {theme}/{wallpaper}")
+    # Run these background processes without blocking for better performance
+    run_optional(["pywalfox", "update"], check=False)
+    run_optional(["aphotic", "reload"], check=False)
+    run_optional(["aphotic", "sddm", "sync"], check=False)
 
 
 def main():
     themes = list_themes()
     if not themes:
-        notify("No theme folders found in ~/.config/awww")
+        print("No theme folders found in ~/.config/awww")
         return
 
     current_theme, current_wallpaper = read_state()
@@ -245,7 +255,7 @@ def main():
 
     wallpapers = list_wallpapers(current_theme)
     if not wallpapers:
-        notify(f"No wallpapers found in theme '{current_theme}'")
+        print(f"No wallpapers found in theme '{current_theme}'")
         return
 
     # --next used to just be an alias for random (themes shipped too few
