@@ -30,6 +30,34 @@ ShellRoot {
         return null;
     }
 
+    // Every IPC toggle() below used to just grab `instances[0]` -- the
+    // first screen in Quickshell.screens' own enumeration order, which
+    // has no relationship to which monitor the user is actually looking
+    // at. On a single-monitor box that's harmless (there's only one
+    // instance), which is exactly why this went unnoticed -- on multi-
+    // monitor it meant every keybind/IPC-triggered popout (Settings,
+    // Dashboard, launcher, ...) always opened on whichever screen
+    // happened to enumerate first, never the focused one. Each window
+    // instance sets `screen: modelData` from its own Quickshell.screens
+    // entry (see DashboardWindow.qml etc.), and Quickshell.screens
+    // entries expose `.name` matching the Wayland output name Hyprland's
+    // own HyprlandMonitor also reports -- so matching on that name finds
+    // the instance actually on the focused monitor. Falls back to
+    // instances[0] if nothing matches (no monitor focused yet at
+    // startup, or a screen genuinely isn't in this repeater for some
+    // reason) rather than returning null and silently dropping the toggle.
+    function focusedInstance(variants: var): var {
+        const name = Hypr.focusedMonitor?.name;
+        if (name) {
+            for (let i = 0; i < variants.instances.length; i++) {
+                const w = variants.instances[i];
+                if (w.screen?.name === name)
+                    return w;
+            }
+        }
+        return variants.instances[0] ?? null;
+    }
+
     // One shared ScreenState per screen — every window below is given the
     // SAME instance for its screen, so a toggle from one module (e.g. the
     // bar's power button setting screenState.session) is actually observed
@@ -148,13 +176,13 @@ ShellRoot {
         target: "launcher"
 
         function toggle(): void {
-            const win = launcherWindows.instances[0];
+            const win = root.focusedInstance(launcherWindows);
             if (win)
                 win.screenState.launcher = !win.screenState.launcher;
         }
 
         function openWallpapers(): void {
-            const win = launcherWindows.instances[0];
+            const win = root.focusedInstance(launcherWindows);
             if (!win)
                 return;
             if (!win.screenState.launcher)
@@ -167,7 +195,7 @@ ShellRoot {
         target: "session"
 
         function toggle(): void {
-            const win = sessionWindows.instances[0];
+            const win = root.focusedInstance(sessionWindows);
             if (win)
                 win.screenState.session = !win.screenState.session;
         }
@@ -177,7 +205,7 @@ ShellRoot {
         target: "dashboard"
 
         function toggle(): void {
-            const win = dashboardWindows.instances[0];
+            const win = root.focusedInstance(dashboardWindows);
             if (win)
                 win.screenState.dashboard = !win.screenState.dashboard;
         }
@@ -187,7 +215,7 @@ ShellRoot {
         target: "agent"
 
         function toggle(): void {
-            const win = barWindows.instances[0];
+            const win = root.focusedInstance(barWindows);
             if (win)
                 win.screenState.agentPanel = !win.screenState.agentPanel;
         }
@@ -197,7 +225,7 @@ ShellRoot {
         target: "settings"
 
         function toggle(): void {
-            const win = settingsWindows.instances[0];
+            const win = root.focusedInstance(settingsWindows);
             if (win)
                 win.screenState.settings = !win.screenState.settings;
         }
@@ -207,7 +235,7 @@ ShellRoot {
         target: "intelligence"
 
         function toggle(): void {
-            const win = intelligenceWindows.instances[0];
+            const win = root.focusedInstance(intelligenceWindows);
             if (win)
                 win.screenState.intelligence = !win.screenState.intelligence;
         }
@@ -225,7 +253,7 @@ ShellRoot {
         target: "notifications"
 
         function toggle(): void {
-            const win = notificationCenterWindows.instances[0];
+            const win = root.focusedInstance(notificationCenterWindows);
             if (win)
                 win.screenState.notificationCenter = !win.screenState.notificationCenter;
         }
@@ -237,7 +265,7 @@ ShellRoot {
         function toggle(): void {
             if (!PkgSearch.available)
                 return;
-            const win = pkgInstallWindows.instances[0];
+            const win = root.focusedInstance(pkgInstallWindows);
             if (win)
                 win.screenState.pkgInstall = !win.screenState.pkgInstall;
         }
