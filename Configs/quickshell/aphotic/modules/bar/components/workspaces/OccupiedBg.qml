@@ -20,7 +20,7 @@ Item {
             return;
         let count = 0;
         const start = groupOffset;
-        const end = start + Config.bar.workspaces.shown;
+        const end = start + Math.max(1, workspaces.count);
         for (const [ws, occ] of Object.entries(occupied)) {
             if (ws > start && ws <= end && occ) {
                 const isFirstInGroup = Number(ws) === start + 1;
@@ -55,11 +55,14 @@ Item {
             readonly property Workspace start: root.workspaces.count > 0 ? root.workspaces.itemAt(getWsIdx(modelData.start)) ?? null : null // qmllint disable incompatible-type
             readonly property Workspace end: root.workspaces.count > 0 ? root.workspaces.itemAt(getWsIdx(modelData.end)) ?? null : null // qmllint disable incompatible-type
 
+            // See ActiveIndicator.qml's own note: wrap on the number of
+            // cells actually rendered, not the configured maximum.
             function getWsIdx(ws: int): int {
+                const shown = Math.max(1, root.workspaces.count);
                 let i = ws - 1;
                 while (i < 0)
-                    i += Config.bar.workspaces.shown;
-                return i % Config.bar.workspaces.shown;
+                    i += shown;
+                return i % shown;
             }
 
             anchors.horizontalCenter: root.horizontalCenter

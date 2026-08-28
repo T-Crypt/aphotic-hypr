@@ -19,8 +19,6 @@ Item {
     required property bool fullscreen
     required property real thickness
     readonly property int vPadding: Tokens.padding.large
-    // Read by ActiveWindow.qml to work out how much room its own entry has
-    // left along the bar.
     readonly property real spacing: Tokens.spacing.extraSmall
 
     // The active layout's Repeater, whichever orientation is live -- both
@@ -30,8 +28,81 @@ Item {
     readonly property Item activeLayout: Settings.barHorizontal ? hLoader.item : vLoader.item
     readonly property Repeater activeRepeater: activeLayout?.repeater ?? null
 
-    implicitWidth: Settings.barHorizontal ? (activeLayout?.implicitWidth ?? 0) : thickness
-    implicitHeight: Settings.barHorizontal ? thickness : (activeLayout?.implicitHeight ?? 0)
+    // ---- Along-axis sizing budget --------------------------------------
+    //
+    // "Along axis" is the bar's length: the screen's height when docked
+    // left/right, its width when docked top/bottom.
+    //
+    // The budget is derived from the PHYSICAL SCREEN and flows strictly one
+    // way:
+    //
+    //     screen -> contentExtent -> per-entry grant -> the entry's size
+    //
+    // Nothing to the right of an arrow may feed back into anything to its
+    // left. That single rule is the whole fix for the class of bug where a
+    // growing entry -- a long window title, an active workspace picking up
+    // window icons as apps open on it -- inflated the bar's OWN reported
+    // size to make room for itself, and every entry after it got pushed
+    // past the bar's vPadding and clean off the bottom/right of the screen.
+    // (Reproduced before this change: five windows on the active workspace
+    // pushed the power button off a 1080px-tall vertical bar.)
+    //
+    // Deriving implicitWidth/implicitHeight from activeLayout's own
+    // content size -- as this used to -- is exactly that forbidden
+    // back-edge, because the layout is simultaneously sized FROM root by
+    // the Loaders below.
+    readonly property real alongExtent: Settings.barHorizontal ? screen.width : screen.height
+    readonly property int entryCount: activeRepeater?.count ?? 0
+    readonly property real contentExtent: Math.max(0, alongExtent - vPadding * 2 - spacing * Math.max(0, entryCount - 1))
+
+    // Every entry declares three numbers rather than one implicit size:
+    //
+    //   minAlong     -- the hard floor. Below this the entry stops being
+    //                   worth drawing at all (one workspace cell; an app
+    //                   icon with no title).
+    //   baseAlong    -- its full STRUCTURE, with every optional detail
+    //                   dropped (all configured workspace cells, but no
+    //                   window icons).
+    //   desiredAlong -- what it would take if the bar were infinitely long.
+    //
+    // Inelastic entries (logo, clock, tray, status icons, ...) leave all
+    // three at their own implicit size and are therefore never asked to
+    // give anything up.
+    //
+    // Room is then handed out as a priority ladder, so the bar sheds detail
+    // before it sheds structure:
+    //
+    //   1. every entry gets its minAlong;
+    //   2. what's left goes toward the structural gap (base - min), shared
+    //      in proportion to each entry's own gap;
+    //   3. only once every base is covered does anything go toward optional
+    //      detail (desired - base), shared the same way.
+    //
+    // Sharing proportionally rather than first-come means two elastic
+    // entries degrade together instead of whichever one is listed first
+    // eating the room the rest needed.
+    readonly property real minTotal: sumOver(w => w.minAlong)
+    readonly property real baseTotal: sumOver(w => w.baseAlong)
+    readonly property real structuralTotal: sumOver(w => w.structuralDemand)
+    readonly property real optionalTotal: sumOver(w => w.optionalDemand)
+    readonly property real structuralSlack: Math.max(0, contentExtent - minTotal)
+    readonly property real optionalSlack: Math.max(0, contentExtent - baseTotal)
+
+    function sumOver(pick: var): real {
+        const rep = activeRepeater;
+        if (!rep)
+            return 0;
+        let total = 0;
+        for (let i = 0; i < rep.count; i++) {
+            const w = rep.itemAt(i) as EntryWrapper;
+            if (w)
+                total += pick(w);
+        }
+        return total;
+    }
+
+    implicitWidth: Settings.barHorizontal ? alongExtent : thickness
+    implicitHeight: Settings.barHorizontal ? thickness : alongExtent
     width: implicitWidth
     height: implicitHeight
 
@@ -62,40 +133,8 @@ Item {
         return Settings.barHorizontal ? Qt.point(pos, height / 2) : Qt.point(width / 2, pos);
     }
 
-    // Nearest-center hit-test rather than an exact childAt() rect test --
-    // childAt() returns null the instant the cursor sits in the (small
-    // but real) gap/margin between two adjacent entries, which is exactly
-    // where a cursor moving along a tightly-packed row of icons (the
-    // status icons: wifi, bluetooth, battery, resources) spends a lot of
-    // its time. A null hit left checkPopout() falling through without
-    // updating anything, so the PREVIOUS popout just stuck around and
-    // then snapped to the new one once the cursor cleared the gap --
-    // reading as an inconsistent, sometimes-from-above/sometimes-from-
-    // below jump rather than a clean, direct move. Picking whichever
-    // child's center is closest guarantees a hit everywhere, with the
-    // switch-over happening exactly at each pair's midpoint instead of a
-    // dead zone.
-    function nearestAlongChild(container: Item, pos: real): var {
-        if (!container)
-            return null;
-        let best = null;
-        let bestDist = Infinity;
-        for (const child of container.children) {
-            const size = Settings.barHorizontal ? child.width : child.height;
-            if (size <= 0)
-                continue;
-            const start = Settings.barHorizontal ? child.x : child.y;
-            const dist = Math.abs(start + size / 2 - pos);
-            if (dist < bestDist) {
-                bestDist = dist;
-                best = child;
-            }
-        }
-        return best;
-    }
-
     function childAlong(pos: real): EntryWrapper {
-        return root.nearestAlongChild(activeLayout, pos) as EntryWrapper;
+        return BarHit.nearestAlong(activeLayout, pos) as EntryWrapper;
     }
 
     function centerAlong(item: Item): real {
@@ -134,7 +173,7 @@ Item {
             }
             if (matched) {
                 const localAlong = Settings.barHorizontal ? activeLayout.mapToItem(matched.icons, pos, 0).x : activeLayout.mapToItem(matched.icons, 0, pos).y;
-                const icon = root.nearestAlongChild(matched.icons, localAlong);
+                const icon = BarHit.nearestAlong(matched.icons, localAlong);
                 if (icon) {
                     popouts.currentName = icon.name;
                     popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
@@ -327,20 +366,45 @@ Item {
             DelegateChoice {
                 roleValue: "workspaces"
                 delegate: EntryWrapper {
+                    id: workspacesEntry
+
+                    // Elastic: the workspace row's optional detail is its
+                    // per-workspace window icons, which it drops from the
+                    // outside in as the bar runs out of room.
+                    minAlong: workspacesItem.minExtent
+                    baseAlong: workspacesItem.baseExtent
+                    desiredAlong: workspacesItem.desiredExtent
+
                     Workspaces {
+                        id: workspacesItem
+
                         objectName: "taskbarWorkspaces"
                         screen: root.screen
                         fullscreen: root.fullscreen
+                        structureExtent: workspacesEntry.structuralAlong
+                        maxExtent: workspacesEntry.grantedAlong
                     }
                 }
             }
             DelegateChoice {
                 roleValue: "activeWindow"
                 delegate: EntryWrapper {
+                    id: activeWindowEntry
+
+                    // Elastic: the optional detail is the window title,
+                    // which elides down to nothing while the app icon
+                    // stays.
+                    minAlong: activeWindowItem.baseExtent
+                    baseAlong: activeWindowItem.baseExtent
+                    desiredAlong: activeWindowItem.desiredExtent
+
                     ActiveWindow {
+                        id: activeWindowItem
+
                         objectName: "taskbarActiveWindow"
                         bar: root
                         monitor: Brightness.getMonitorForScreen(root.screen)
+                        maxExtent: activeWindowEntry.grantedAlong
                     }
                 }
             }
@@ -408,20 +472,102 @@ Item {
     }
 
     component EntryWrapper: Item {
+        id: entry
+
         required property var modelData
         required property int index
         default property Item item
         readonly property string entryId: modelData.id
 
+        // See root.minTotal. An elastic entry overrides these with sizes it
+        // can work out WITHOUT measuring itself -- reading its own rendered
+        // geometry here would re-close the very feedback loop the budget
+        // exists to break. An inelastic entry leaves all three equal to its
+        // own implicit size and is never asked to shrink.
+        property real minAlong: Settings.barHorizontal ? implicitWidth : implicitHeight
+        property real baseAlong: minAlong
+        property real desiredAlong: baseAlong
+
+        readonly property real structuralDemand: Math.max(0, baseAlong - minAlong)
+        readonly property real optionalDemand: Math.max(0, desiredAlong - baseAlong)
+
+        // Rung 1 + 2 of the ladder. Deliberately exposed on its own, and
+        // deliberately free of any dependency on desiredAlong: an entry
+        // whose STRUCTURE adapts to its allocation (Workspaces dropping
+        // cells) must read this one, never grantedAlong -- its own optional
+        // demand is measured per visible cell, so feeding the full grant
+        // back into that decision is a genuine binding loop, which Qt
+        // resolves by freezing the value one evaluation short.
+        readonly property real structuralAlong: minAlong + (root.structuralTotal > 0 ? Math.min(structuralDemand, root.structuralSlack * structuralDemand / root.structuralTotal) : 0)
+        // Rung 3 on top: optional detail, once every structure is paid for.
+        readonly property real grantedAlong: structuralAlong + (root.optionalTotal > 0 ? Math.min(optionalDemand, root.optionalSlack * optionalDemand / root.optionalTotal) : 0)
+
+        // Suppresses the grow-from-zero animation every entry would
+        // otherwise play on the bar's first layout pass.
+        property bool settled: false
+
         Layout.topMargin: !Settings.barHorizontal && index === 0 ? root.vPadding : 0
-        Layout.bottomMargin: !Settings.barHorizontal && index === root.activeRepeater.count - 1 ? root.vPadding : 0
+        Layout.bottomMargin: !Settings.barHorizontal && index === root.entryCount - 1 ? root.vPadding : 0
         Layout.leftMargin: Settings.barHorizontal && index === 0 ? root.vPadding : 0
-        Layout.rightMargin: Settings.barHorizontal && index === root.activeRepeater.count - 1 ? root.vPadding : 0
+        Layout.rightMargin: Settings.barHorizontal && index === root.entryCount - 1 ? root.vPadding : 0
         Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
+
+        // The grant -- never the item's raw implicit size -- is what the
+        // layout is asked to allocate along the bar's length, and it is
+        // additionally capped at the bar's whole budget so no single entry
+        // can ever request more room than the bar physically has. -1 on the
+        // cross axis is Layout's own "just use my implicit size".
+        Layout.preferredWidth: Settings.barHorizontal ? grantedAlong : -1
+        Layout.preferredHeight: Settings.barHorizontal ? -1 : grantedAlong
+        Layout.maximumWidth: Settings.barHorizontal ? root.contentExtent : Number.POSITIVE_INFINITY
+        Layout.maximumHeight: Settings.barHorizontal ? Number.POSITIVE_INFINITY : root.contentExtent
+        // Explicit zero floor along the bar's length. QtQuick.Layouts will
+        // happily overflow a layout whose children can't be shrunk below
+        // their minimum hint -- the entries would then run straight off the
+        // strip again, which is the whole failure this budget exists to
+        // prevent. On a bar too short for even every entry's minAlong
+        // (many workspaces on a short vertical screen) squeezing is the
+        // honest outcome; silently spilling off the edge is not.
+        Layout.minimumWidth: Settings.barHorizontal ? 0 : -1
+        Layout.minimumHeight: Settings.barHorizontal ? -1 : 0
 
         implicitWidth: item?.implicitWidth ?? 0
         implicitHeight: item?.implicitHeight ?? 0
 
         children: item
+
+        Component.onCompleted: settled = true
+
+        // Last line of defence, not the mechanism: hand the child exactly
+        // the room it was allocated. When an elastic entry has already
+        // reduced itself to its grant this is a no-op -- it only bites when
+        // the bar is physically too short for even every entry's base size,
+        // where something has to give and silently overlapping neighbours
+        // would be worse than one squeezed entry.
+        Binding {
+            target: entry.item
+            property: "width"
+            value: entry.width
+            when: Settings.barHorizontal && entry.item !== null
+            restoreMode: Binding.RestoreBindingOrValue
+        }
+
+        Binding {
+            target: entry.item
+            property: "height"
+            value: entry.height
+            when: !Settings.barHorizontal && entry.item !== null
+            restoreMode: Binding.RestoreBindingOrValue
+        }
+
+        Behavior on Layout.preferredWidth {
+            enabled: entry.settled && Settings.barHorizontal
+            Anim {}
+        }
+
+        Behavior on Layout.preferredHeight {
+            enabled: entry.settled && !Settings.barHorizontal
+            Anim {}
+        }
     }
 }

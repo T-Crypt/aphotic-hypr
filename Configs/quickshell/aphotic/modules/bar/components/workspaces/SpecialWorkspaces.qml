@@ -319,7 +319,6 @@ Item {
 
             Layout.alignment: Qt.AlignHCenter
             Layout.fillHeight: true
-            Layout.preferredHeight: implicitHeight
 
             visible: active
             active: ws.hasWindows

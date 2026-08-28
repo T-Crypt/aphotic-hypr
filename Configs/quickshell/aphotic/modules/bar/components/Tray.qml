@@ -29,8 +29,9 @@ StyledRect {
     }
 
     // Mirrors nonAnimHeight onto the along-axis extent used in horizontal
-    // mode -- also read by ActiveWindow.qml's space-accounting when it
-    // sits alongside this entry.
+    // mode. Both are kept separate from implicitWidth/implicitHeight below
+    // so the Behaviors at the bottom of this file animate the rendered size
+    // without the animated value feeding back into the calculation.
     readonly property real nonAnimWidth: {
         if (!Config.bar.tray.compact)
             return layout.implicitWidth + padding * 2;

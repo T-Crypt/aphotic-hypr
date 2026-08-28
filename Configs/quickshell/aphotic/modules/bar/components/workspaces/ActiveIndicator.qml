@@ -14,11 +14,17 @@ StyledRect {
     required property Item mask
     required property bool fullscreen
 
+    // workspaces.count, not Config.bar.workspaces.shown: the row shows
+    // fewer cells than configured when Bar.qml's sizing budget can't fit
+    // them all (see Workspaces.qml's effectiveShown), and this index has to
+    // wrap on what is actually rendered or it points at a cell that isn't
+    // there.
+    readonly property int shown: Math.max(1, workspaces.count)
     readonly property int currentWsIdx: {
         let i = activeWsId - 1;
         while (i < 0)
-            i += Config.bar.workspaces.shown;
-        return i % Config.bar.workspaces.shown;
+            i += shown;
+        return i % shown;
     }
 
     property real leading: workspaces.count > 0 ? (Settings.barHorizontal ? workspaces.itemAt(currentWsIdx)?.x ?? 0 : workspaces.itemAt(currentWsIdx)?.y ?? 0) : 0
