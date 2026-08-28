@@ -34,7 +34,26 @@ EOF
     # firsthand — see the lock screen incident in the SDD ledger), so a
     # clean kill+restart is the only way to *guarantee* the daemon is
     # running the current on-disk QML, not just assume the watcher caught up.
-    if pgrep -f "qs -c aphotic" >/dev/null 2>&1; then
+    #
+    # Real bug this used to have: under the normal install, the daemon
+    # runs as aphotic-shell.service (Restart=on-failure). A bare `pkill -f
+    # "qs -c aphotic"` sends SIGTERM, which systemd counts as a failure
+    # and auto-respawns from -- so the old unconditional "pkill, sleep,
+    # manually launch a new one" below raced systemd's own respawn and
+    # left TWO untracked `qs` processes running (one systemd's, one this
+    # script's own orphan, neither aware of the other). Found live via a
+    # doubled notification-server-registration warning and a genuinely
+    # confusing round of screenshot testing. Route through `systemctl
+    # --user restart` when the unit exists -- the exact same path the
+    # SUPER+B keybind already uses (see keybinds.lua) -- so there's a
+    # single source of truth for "restart the shell" instead of two. Only
+    # falls back to the manual pkill+relaunch for a dev/debug session
+    # where `qs -c aphotic` was started bypassing the service entirely.
+    if systemctl --user list-unit-files aphotic-shell.service >/dev/null 2>&1; then
+        aphotic_log "restarting quickshell daemon (aphotic-shell.service)..."
+        systemctl --user restart aphotic-shell.service
+        aphotic_ok "quickshell daemon restarted"
+    elif pgrep -f "qs -c aphotic" >/dev/null 2>&1; then
         aphotic_log "restarting quickshell daemon..."
         pkill -f "qs -c aphotic" >/dev/null 2>&1
         sleep 0.5
