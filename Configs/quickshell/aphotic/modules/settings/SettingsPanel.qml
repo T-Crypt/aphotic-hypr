@@ -30,6 +30,7 @@ RowLayout {
         { id: "themeCreator", icon: "format_paint", label: qsTr("Theme Creator"), description: qsTr("Build a static custom theme") },
         { id: "personalization", icon: "face", label: qsTr("Personalization"), description: qsTr("Accent, cursor, icons") },
         { id: "bar", icon: "dock_to_bottom", label: qsTr("Bar"), description: qsTr("Position, density") },
+        { id: "launcher", icon: "grid_view", label: qsTr("Launcher"), description: qsTr("Results style") },
         { id: "displays", icon: "monitor", label: qsTr("Displays"), description: qsTr("Resolution, refresh rate") },
         { id: "clock", icon: "schedule", label: qsTr("Clock / Date"), description: qsTr("Format, desktop clock") },
         { id: "osd", icon: "notifications", label: qsTr("OSD / Notifications"), description: qsTr("Sliders, timeouts") },
@@ -105,6 +106,8 @@ RowLayout {
                         return personalizationComp;
                     case "bar":
                         return barComp;
+                    case "launcher":
+                        return launcherComp;
                     case "displays":
                         return displaysComp;
                     case "clock":
@@ -224,6 +227,10 @@ RowLayout {
     Component {
         id: barComp
         BarPane {}
+    }
+    Component {
+        id: launcherComp
+        LauncherPane {}
     }
     Component {
         id: displaysComp

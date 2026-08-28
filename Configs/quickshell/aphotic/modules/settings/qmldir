@@ -7,6 +7,7 @@ BarStylePreviewCard 1.0 panes/BarStylePreviewCard.qml
 CategoryRail 1.0 CategoryRail.qml
 ClockPane 1.0 panes/ClockPane.qml
 DisplaysPane 1.0 panes/DisplaysPane.qml
+LauncherPane 1.0 panes/LauncherPane.qml
 NetworkPane 1.0 panes/NetworkPane.qml
 OsdPane 1.0 panes/OsdPane.qml
 PersonalizationPane 1.0 panes/PersonalizationPane.qml

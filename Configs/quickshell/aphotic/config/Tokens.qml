@@ -52,6 +52,12 @@ QtObject {
             readonly property int width: 640
             readonly property int itemHeight: 56
             readonly property int maxShown: 8
+            // Grid style (app-search mode only, Settings.launcherStyle ===
+            // "grid") -- a Rofi-drun-style icon grid instead of the default
+            // vertical list.
+            readonly property int gridColumns: 4
+            readonly property int gridRows: 3
+            readonly property int gridCellHeight: 104
         }
 
         readonly property QtObject notifs: QtObject {
