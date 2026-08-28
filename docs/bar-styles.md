@@ -109,7 +109,7 @@ screen edge" model the way Full/Taskbar/Minimal do.
   `magnifyFalloff()` -- a quadratic falloff (not linear) from the
   hovered pointer's x position, radius 90px, up to 1.6x scale, so it
   reads as a smooth macOS-style "wave" instead of a hard-edged jump.
-  Horizontal placement (`Settings.barVertical`) only -- there's no
+  Horizontal placement (`Settings.barHorizontal`) only -- there's no
   meaningful "distance along the dock" to magnify against in a side
   placement.
 - **Pinned apps** (`Settings.dockPinnedApps`) are desktop-entry ids
@@ -144,7 +144,7 @@ not build a second app menu.
 `Bar.qml` normally drives their hover popouts externally via its own
 `checkPopout(pos)`. Taskbar had to hand-adapt that same hit-testing
 logic into its own `checkPopout`/`nearestAlongChild`/`centerAlong`
-(dropping the `barVertical` branching, since Taskbar only ever flows
+(dropping the `barHorizontal` branching, since Taskbar only ever flows
 left-to-right in a single `RowLayout`) -- it's a copy, not a shared
 function, so a future change to Full's popout hit-testing needs to be
 mirrored here by hand if it should also apply to Taskbar.
@@ -202,7 +202,7 @@ None of Dock/Taskbar/Minimal have a real vertical/side-placement layout
 -- all three are horizontal-first designs (see
 [Known limitation](#known-limitation-no-real-side-placement) below).
 `BarPane.qml` shows a warning banner when
-`Settings.barStyle !== "full" && !Settings.barVertical`: a non-Full style
+`Settings.barStyle !== "full" && !Settings.barHorizontal`: a non-Full style
 combined with a side placement. This is a deliberate flag, not a block
 -- the combination is allowed and won't crash, it's just likely to look
 broken, so the pane tells you that instead of either silently allowing
@@ -252,7 +252,7 @@ transparent/outline treatment anymore; it was retired, not renamed.
 
 Dock, Taskbar, and Minimal are all horizontal-first designs -- none of
 them has a real vertical/side-dock layout the way Full does. Settings
-still lets you combine any of the three with `Settings.barVertical` /
+still lets you combine any of the three with `Settings.barHorizontal` /
 a side edge; nothing blocks it, and Dock in particular is functional
 in a side placement (magnification just disables itself there, per
 above). Taskbar and Minimal are more likely to look genuinely broken in

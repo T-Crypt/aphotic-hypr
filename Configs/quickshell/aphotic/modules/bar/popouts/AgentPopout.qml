@@ -9,7 +9,6 @@ ColumnLayout {
 
     required property ScreenState screenState
 
-    implicitWidth: 300
     spacing: Tokens.spacing.medium
 
     RowLayout {

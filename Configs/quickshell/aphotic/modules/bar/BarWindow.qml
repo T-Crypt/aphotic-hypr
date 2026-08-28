@@ -67,29 +67,31 @@ PanelWindow {
         }
     }
 
-    anchors.top: Settings.barVertical ? !Settings.barPositionBottom : true
-    anchors.bottom: Settings.barVertical ? Settings.barPositionBottom : true
-    anchors.left: Settings.barVertical ? true : !Settings.barPositionRight
-    anchors.right: Settings.barVertical ? true : Settings.barPositionRight
+    anchors.top: Settings.barHorizontal ? !Settings.barPositionBottom : true
+    anchors.bottom: Settings.barHorizontal ? Settings.barPositionBottom : true
+    anchors.left: Settings.barHorizontal ? true : !Settings.barPositionRight
+    anchors.right: Settings.barHorizontal ? true : Settings.barPositionRight
 
     // Wider/taller than barWidth to give the popout flyout (drawn on the
     // side of the bar strip facing away from the docked screen edge, see
     // popouts/Wrapper.qml) real surface to paint into -- Wayland
     // layer-shell surfaces clip anything outside their own bounds, a hard
-    // boundary no amount of internal QML sizing can exceed. 400 (was 320,
-    // a real bug: ResourcesPopout's ~300px content + padding + spacing
-    // needed ~332px against a 328px budget, silently clipping its right
-    // edge regardless of the popout's own implicitWidth) leaves real
-    // headroom for both that and the drop shadow's blur bleed around the
-    // flyout's edge. exclusionZone above stays pinned to barWidth so this
-    // extra space doesn't reserve desktop area. Both implicit dimensions
-    // are set unconditionally to the same expression -- whichever axis
-    // has both opposing anchors active (the long axis, spanning the full
-    // screen edge) is anchor-driven and silently ignores this value, so
-    // only the other (short/thickness) axis actually honours it, in
-    // either docking orientation.
-    implicitWidth: barWidth + Tokens.spacing.small * 2 + 400
-    implicitHeight: barWidth + Tokens.spacing.small * 2 + 400
+    // boundary no amount of internal QML sizing can exceed. 480 (was 400,
+    // then 320 before that -- each bump the same real bug: a popout's
+    // real content needed more than the current budget, silently clipping
+    // its right edge regardless of the popout's own implicitWidth. 400
+    // fit ResourcesPopout; AgentPopout's three-tab provider row plus its
+    // title-row close icon didn't fit 400) leaves real headroom for both
+    // that and the drop shadow's blur bleed around the flyout's edge.
+    // exclusionZone above stays pinned to barWidth so this extra space
+    // doesn't reserve desktop area. Both implicit dimensions are set
+    // unconditionally to the same expression -- whichever axis has both
+    // opposing anchors active (the long axis, spanning the full screen
+    // edge) is anchor-driven and silently ignores this value, so only the
+    // other (short/thickness) axis actually honours it, in either docking
+    // orientation.
+    implicitWidth: barWidth + Tokens.spacing.small * 2 + 480
+    implicitHeight: barWidth + Tokens.spacing.small * 2 + 480
 
     BarPopouts.Wrapper {
         id: popouts
@@ -120,9 +122,9 @@ PanelWindow {
         // entirely; self-referencing implicitWidth/implicitHeight as the
         // "not this axis" fallback is safe here since BarWrapper is a
         // plain Item, not a Layout fighting an external size.
-        x: !Settings.barVertical && Settings.barPositionRight ? root.width - width : 0
-        y: Settings.barVertical && Settings.barPositionBottom ? root.height - height : 0
-        width: Settings.barVertical ? root.width : implicitWidth
-        height: Settings.barVertical ? implicitHeight : root.height
+        x: !Settings.barHorizontal && Settings.barPositionRight ? root.width - width : 0
+        y: Settings.barHorizontal && Settings.barPositionBottom ? root.height - height : 0
+        width: Settings.barHorizontal ? root.width : implicitWidth
+        height: Settings.barHorizontal ? implicitHeight : root.height
     }
 }

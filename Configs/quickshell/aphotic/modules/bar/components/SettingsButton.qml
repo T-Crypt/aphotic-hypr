@@ -9,8 +9,8 @@ StyledRect {
     color: Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 
-    implicitWidth: Settings.barVertical ? icon.implicitHeight + Tokens.padding.small * 2 : Settings.barInnerWidth
-    implicitHeight: Settings.barVertical ? Settings.barInnerWidth : icon.implicitHeight + Tokens.padding.small * 2
+    implicitWidth: Settings.barHorizontal ? icon.implicitHeight + Tokens.padding.small * 2 : Settings.barInnerWidth
+    implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : icon.implicitHeight + Tokens.padding.small * 2
 
     MaterialIcon {
         id: icon

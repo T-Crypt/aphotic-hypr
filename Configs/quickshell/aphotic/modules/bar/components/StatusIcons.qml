@@ -59,8 +59,9 @@ Item {
         return out;
     }
 
-    implicitWidth: Settings.barVertical ? groupLayout.implicitWidth : Settings.barInnerWidth
-    implicitHeight: Settings.barVertical ? Settings.barInnerWidth : groupLayout.implicitHeight
+    implicitWidth: Settings.barHorizontal ? groupLayout.implicitWidth : Settings.barInnerWidth
+    implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : groupLayout.implicitHeight
+
 
     GridLayout {
         id: groupLayout
@@ -69,13 +70,13 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
 
-        flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
+        flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
         rowSpacing: root.groupSpacing
         columnSpacing: root.groupSpacing
 
         states: State {
             name: "vertical"
-            when: Settings.barVertical
+            when: Settings.barHorizontal
 
             AnchorChanges {
                 target: groupLayout
@@ -96,19 +97,40 @@ Item {
 
                 required property var modelData
                 readonly property alias icons: pillIcons
+                property Item hoveredEntry: null
 
                 color: Colours.palette.m3surfaceContainerHigh
                 radius: Tokens.rounding.full
                 clip: true
 
-                Layout.preferredWidth: Settings.barVertical ? pillIcons.implicitWidth + Tokens.padding.medium * 2 : Settings.barInnerWidth
-                Layout.preferredHeight: Settings.barVertical ? Settings.barInnerWidth : pillIcons.implicitHeight + Tokens.padding.medium * 2
+                Layout.preferredWidth: Settings.barHorizontal ? pillIcons.implicitWidth + Tokens.padding.medium * 2 : Settings.barInnerWidth
+                Layout.preferredHeight: Settings.barHorizontal ? Settings.barInnerWidth : pillIcons.implicitHeight + Tokens.padding.medium * 2
+
+                HoverPill {
+                    container: pillIcons
+                    hoveredEntry: pill.hoveredEntry
+                    thickness: Settings.barHorizontal ? pill.height : pill.width
+                }
+
+                HoverHandler {
+                    id: pillHover
+                    onPointChanged: {
+                        if (!pillHover.hovered)
+                            return;
+                        const local = pill.mapToItem(pillIcons, pillHover.point.position.x, pillHover.point.position.y);
+                        pill.hoveredEntry = BarHit.nearestAt(pillIcons, local.x, local.y);
+                    }
+                    onHoveredChanged: {
+                        if (!pillHover.hovered)
+                            pill.hoveredEntry = null;
+                    }
+                }
 
                 GridLayout {
                     id: pillIcons
 
                     anchors.centerIn: parent
-                    flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
+                    flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
                     rowSpacing: root.spacing
                     columnSpacing: root.spacing
 
@@ -285,7 +307,7 @@ Item {
         default property Item item
         property string name: modelData.id.toLowerCase()
 
-        Layout.alignment: Settings.barVertical ? Qt.AlignVCenter : Qt.AlignHCenter
+        Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
 
         implicitWidth: item?.implicitWidth ?? 0
         implicitHeight: item?.implicitHeight ?? 0

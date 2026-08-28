@@ -48,7 +48,7 @@ PanelWindow {
         screen: root.screen
         screenState: root.screenState
 
-        x: Settings.barVertical ? (root.width - width) / 2 : (Settings.barPositionRight ? root.width - width - root.edgeMargin : root.edgeMargin)
-        y: Settings.barVertical ? (Settings.barPositionBottom ? root.height - height - root.edgeMargin : root.edgeMargin) : (root.height - height) / 2
+        x: Settings.barHorizontal ? (root.width - width) / 2 : (Settings.barPositionRight ? root.width - width - root.edgeMargin : root.edgeMargin)
+        y: Settings.barHorizontal ? (Settings.barPositionBottom ? root.height - height - root.edgeMargin : root.edgeMargin) : (root.height - height) / 2
     }
 }
