@@ -16,7 +16,7 @@
 
 <p align="center">
   <a href="#preview"><code>Preview</code></a> ·
-  <a href="#showcase-video"><code>Showcase</code></a> ·
+  <a href="#screenshots"><code>Screenshots</code></a> ·
   <a href="#themes"><code>Themes</code></a> ·
   <a href="#install"><code>Install</code></a> ·
   <a href="#profiles--layers"><code>Profiles</code></a> ·
@@ -45,13 +45,50 @@ One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings 
 
 <br>
 
-## Showcase video
+## Screenshots
 
-<p align="center">
-  <video src="https://raw.githubusercontent.com/T-Crypt/aphotic-hypr/main/recordings/aphotic-showcase.mp4" controls width="900" poster="./assets/aphotic-preview.png">
-    Your browser doesn't support inline video — <a href="recordings/aphotic-showcase.mp4">watch it here</a> instead.
-  </video>
-</p>
+<table>
+<tr>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/dashboard.png" width="440"><br><sub>Command Center — clock, calendar, media, Pomodoro, quick toggles, live weather</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/settings-menu.png" width="440"><br><sub>Settings → Bar — live style previews, visibility, per-style options</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/wallpaper-picker.png" width="440"><br><sub>Settings → Appearance — theme and wallpaper selection</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/ai-assistant.png" width="440"><br><sub>Intelligence — quick-chat popout, Ollama/Claude/Gemini/ChatGPT</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/bar-full.png" width="440"><br><sub>Full bar style, live-recolored from a non-default Nordic wallpaper</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/bar-dock.png" width="440"><br><sub>Dock bar style — floating macOS-inspired app dock</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/bar-minimal.png" width="440"><br><sub>Minimal bar style — single-accent icon strip + desktop clock</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/vscode-tiled.png" width="440"><br><sub>VS Code, Thunar, and Kitty tiled — consistent GTK/Qt/editor theming</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/terminal-neofetch.png" width="440"><br><sub>Kitty + neofetch</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="assets/screenshots/cli-output.png" width="440"><br><sub><code>aphotic --help</code> — the shell's own CLI</sub></p>
+</td>
+</tr>
+</table>
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
