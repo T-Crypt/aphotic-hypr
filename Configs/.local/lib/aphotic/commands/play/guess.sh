@@ -37,6 +37,11 @@ aphotic_cmd_play_guess() {
             echo ""
             echo "Congratulations! You guessed the number in $attempts attempts!"
             echo "The number was: $target"
+            if _aphotic_play_record_low guess bestAttempts "$attempts"; then
+                echo "New best!"
+            else
+                echo "Best: $(_aphotic_play_stat_get guess bestAttempts) attempts"
+            fi
             break
         fi
     done

@@ -7,7 +7,10 @@ aphotic_cmd_play_hangman() {
     # Word list for hangman
     local words=("python" "computer" "programming" "terminal" "linux" "bash"
                  "hyprland" "wallpaper" "theme" "quickshell" "aphotic" "developer"
-                 "keyboard" "mouse" "monitor" "software" "hardware" "network")
+                 "keyboard" "mouse" "monitor" "software" "hardware" "network"
+                 "wayland" "compositor" "widget" "notification" "launcher"
+                 "clipboard" "snippet" "workspace" "shortcut" "shader"
+                 "gradient" "kernel" "package" "repository" "dotfiles")
 
     # Hangman drawing parts
     local hangman_parts=(
@@ -118,6 +121,8 @@ aphotic_cmd_play_hangman() {
             echo ""
             echo "Congratulations! You won!"
             echo "The word was: $word"
+            _aphotic_play_record_result hangman true
+            echo "Record: $(_aphotic_play_stat_get hangman wins 0) wins / $(_aphotic_play_stat_get hangman played 0) played"
             return 0
         fi
     done
@@ -134,5 +139,7 @@ aphotic_cmd_play_hangman() {
 
     echo ""
     echo "Game over! You lost!"
+    _aphotic_play_record_result hangman false
     echo "The word was: $word"
+    echo "Record: $(_aphotic_play_stat_get hangman wins 0) wins / $(_aphotic_play_stat_get hangman played 0) played"
 }
