@@ -79,7 +79,7 @@ Item {
             SettingsToggleRow {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 300
-                visible: !Settings.barVertical
+                visible: !Settings.barHorizontal
                 icon: "dock_to_right"
                 label: qsTr("Dock bar to right edge")
                 checked: Settings.barPositionRight
@@ -89,7 +89,7 @@ Item {
             SettingsToggleRow {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 300
-                visible: Settings.barVertical
+                visible: Settings.barHorizontal
                 icon: "vertical_align_bottom"
                 label: qsTr("Dock bar to bottom edge")
                 checked: Settings.barPositionBottom
@@ -109,9 +109,9 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 300
                 icon: "swap_horiz"
-                label: qsTr("Vertical orientation")
-                checked: Settings.barVertical
-                onToggled: state => Settings.barVertical = state
+                label: qsTr("Horizontal orientation")
+                checked: Settings.barHorizontal
+                onToggled: state => Settings.barHorizontal = state
             }
         }
     }

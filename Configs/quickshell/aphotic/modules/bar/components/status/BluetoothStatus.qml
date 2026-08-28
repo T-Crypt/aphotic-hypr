@@ -32,7 +32,7 @@ Item {
     GridLayout {
         id: layout
 
-        flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
+        flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
         rowSpacing: Tokens.spacing.medium / 2
         columnSpacing: Tokens.spacing.medium / 2
 

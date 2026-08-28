@@ -8,8 +8,8 @@ Item {
 
     required property ScreenState screenState
 
-    implicitWidth: Settings.barVertical ? icon.implicitHeight : icon.implicitHeight + Tokens.padding.small
-    implicitHeight: Settings.barVertical ? icon.implicitHeight + Tokens.padding.small : icon.implicitHeight
+    implicitWidth: Settings.barHorizontal ? icon.implicitHeight : icon.implicitHeight + Tokens.padding.small
+    implicitHeight: Settings.barHorizontal ? icon.implicitHeight + Tokens.padding.small : icon.implicitHeight
 
     StateLayer {
         // Cursed workaround to make the height larger than the parent

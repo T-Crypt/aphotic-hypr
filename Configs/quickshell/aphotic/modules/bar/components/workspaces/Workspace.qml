@@ -19,16 +19,16 @@ GridLayout {
     readonly property bool isWorkspace: true // Flag for finding workspace children
     // Unanimated prop for others to use as reference -- the along-axis
     // extent OccupiedBg.qml/ActiveIndicator.qml read via .size
-    readonly property int size: (Settings.barVertical ? implicitWidth : implicitHeight) + (hasWindows ? Tokens.padding.extraSmall : 0)
+    readonly property int size: (Settings.barHorizontal ? implicitWidth : implicitHeight) + (hasWindows ? Tokens.padding.extraSmall : 0)
 
     readonly property int ws: groupOffset + index + 1
     readonly property bool isOccupied: occupied[ws] ?? false
     readonly property bool hasWindows: isOccupied && Config.bar.workspaces.showWindows
 
-    flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
-    Layout.alignment: Settings.barVertical ? Qt.AlignVCenter : Qt.AlignHCenter
-    Layout.preferredHeight: Settings.barVertical ? -1 : size
-    Layout.preferredWidth: Settings.barVertical ? size : -1
+    flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
+    Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
+    Layout.preferredHeight: Settings.barHorizontal ? -1 : size
+    Layout.preferredWidth: Settings.barHorizontal ? size : -1
 
     rowSpacing: 0
     columnSpacing: 0
@@ -36,9 +36,9 @@ GridLayout {
     StyledText {
         id: indicator
 
-        Layout.alignment: Settings.barVertical ? (Qt.AlignVCenter | Qt.AlignLeft) : (Qt.AlignHCenter | Qt.AlignTop)
-        Layout.preferredHeight: Settings.barVertical ? -1 : (Settings.barInnerWidth - Tokens.padding.small)
-        Layout.preferredWidth: Settings.barVertical ? (Settings.barInnerWidth - Tokens.padding.small) : -1
+        Layout.alignment: Settings.barHorizontal ? (Qt.AlignVCenter | Qt.AlignLeft) : (Qt.AlignHCenter | Qt.AlignTop)
+        Layout.preferredHeight: Settings.barHorizontal ? -1 : (Settings.barInnerWidth - Tokens.padding.small)
+        Layout.preferredWidth: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small) : -1
 
         animate: true
         text: {
@@ -66,11 +66,11 @@ GridLayout {
 
         asynchronous: true
 
-        Layout.alignment: Settings.barVertical ? Qt.AlignVCenter : Qt.AlignHCenter
-        Layout.fillHeight: !Settings.barVertical
-        Layout.fillWidth: Settings.barVertical
-        Layout.topMargin: Settings.barVertical ? 0 : -Settings.barInnerWidth / 10
-        Layout.leftMargin: Settings.barVertical ? -Settings.barInnerWidth / 10 : 0
+        Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
+        Layout.fillHeight: !Settings.barHorizontal
+        Layout.fillWidth: Settings.barHorizontal
+        Layout.topMargin: Settings.barHorizontal ? 0 : -Settings.barInnerWidth / 10
+        Layout.leftMargin: Settings.barHorizontal ? -Settings.barInnerWidth / 10 : 0
 
         visible: active
         active: root.hasWindows
@@ -79,13 +79,13 @@ GridLayout {
             id: windowIconsGrid
 
             spacing: 0
-            flow: Settings.barVertical ? Grid.LeftToRight : Grid.TopToBottom
+            flow: Settings.barHorizontal ? Grid.LeftToRight : Grid.TopToBottom
             // Grid (unlike GridLayout) has no "no limit" default for the
             // cross axis, so this is pinned to the actual item count
             // instead of a large constant -- large fixed values
             // overflowed rows * columns into a negative capacity.
-            columns: Settings.barVertical ? Math.max(1, windowIconsGrid.children.length) : 1
-            rows: Settings.barVertical ? 1 : Math.max(1, windowIconsGrid.children.length)
+            columns: Settings.barHorizontal ? Math.max(1, windowIconsGrid.children.length) : 1
+            rows: Settings.barHorizontal ? 1 : Math.max(1, windowIconsGrid.children.length)
 
             add: Transition {
                 Anim {

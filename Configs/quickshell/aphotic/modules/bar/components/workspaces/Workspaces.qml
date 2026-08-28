@@ -27,8 +27,8 @@ StyledClippingRect {
 
     property real blur: onSpecial ? 1 : 0
 
-    implicitWidth: Settings.barVertical ? layout.implicitWidth + Tokens.padding.small : Settings.barInnerWidth
-    implicitHeight: Settings.barVertical ? Settings.barInnerWidth : layout.implicitHeight + Tokens.padding.small
+    implicitWidth: Settings.barHorizontal ? layout.implicitWidth + Tokens.padding.small : Settings.barInnerWidth
+    implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : layout.implicitHeight + Tokens.padding.small
 
     color: Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
@@ -64,7 +64,7 @@ StyledClippingRect {
             id: layout
 
             anchors.centerIn: parent
-            flow: Settings.barVertical ? GridLayout.LeftToRight : GridLayout.TopToBottom
+            flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
             rowSpacing: Math.floor(Tokens.spacing.extraSmall)
             columnSpacing: Math.floor(Tokens.spacing.extraSmall)
 
@@ -90,7 +90,7 @@ StyledClippingRect {
 
             states: State {
                 name: "vertical"
-                when: Settings.barVertical
+                when: Settings.barHorizontal
 
                 AnchorChanges {
                     target: activeIndicatorLoader
