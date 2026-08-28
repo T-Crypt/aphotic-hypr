@@ -37,6 +37,21 @@ Item {
 
     readonly property string category: currentName.startsWith("traymenu") ? "tray" : currentName
 
+    // Along-axis anchor radius used below to keep the flyout's near edge
+    // pinned to roughly the hovered icon's own edge, regardless of which
+    // popout is open -- a fixed reference (the bar's own icon-strip
+    // thickness), not the popout's own width/height. Real bug this fixes:
+    // both x (horizontal bar) and y (vertical bar) used to center the
+    // flyout on the icon using the POPOUT's own along-axis dimension
+    // (currentCenter - width/2 or - height/2), so switching between two
+    // popouts of different width/height re-centered around a different
+    // point each time -- the icon never moved, but the flyout's near edge
+    // visibly jumped every time you hovered a different icon, reading as
+    // "everything shifted." Reported via r/unixporn feedback. Using this
+    // fixed radius instead means only the FAR edge moves as content size
+    // changes; the near edge (and the bar itself) stays put.
+    readonly property real alongAxisAnchorRadius: Settings.barInnerWidth / 2
+
     // Keeps the loader (and thus popout content) alive through the
     // fade-out animation below -- deactivating it the instant hasCurrent
     // goes false would collapse width/height to 0 immediately and cut the
@@ -74,14 +89,14 @@ Item {
         // every frame, keeping the flyout's edge nearest the bar pinned in
         // every docking mode as it grows/shrinks, rather than growing away
         // from a fixed corner.
-        x: Settings.barVertical ? Math.min(Math.max(0, root.currentCenter - width / 2), root.screen.width - width) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - width : root.barWidth + Tokens.spacing.small)
+        x: Settings.barVertical ? Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.width - width) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - width : root.barWidth + Tokens.spacing.small)
         // Clamp the along-axis edge -- Math.max alone kept the flyout from
         // starting before the screen's near edge but let it run off the
         // far edge uncorrected for any popout whose along-axis center sits
         // in the latter half of the bar (Settings, Resources), since this
         // window's own size matches the screen's on that axis and content
         // can't render past that boundary.
-        y: Settings.barVertical ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - height : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.currentCenter - height / 2), root.screen.height - height)
+        y: Settings.barVertical ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - height : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.height - height)
         width: loader.item ? loader.item.implicitWidth + Tokens.padding.medium * 2 : 0
         height: loader.item ? loader.item.implicitHeight + Tokens.padding.medium * 2 : 0
         radius: Tokens.rounding.medium
@@ -208,8 +223,8 @@ Item {
         // popout is replacing whatever I'm hovering" instead of staying
         // put next to the agent icon. Same along-axis formula flyout
         // uses, just keyed on agentCenter.
-        x: Settings.barVertical ? Math.min(Math.max(0, root.agentCenter - width / 2), root.screen.width - width) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - width : root.barWidth + Tokens.spacing.small)
-        y: Settings.barVertical ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - height : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.agentCenter - height / 2), root.screen.height - height)
+        x: Settings.barVertical ? Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.width - width) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - width : root.barWidth + Tokens.spacing.small)
+        y: Settings.barVertical ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - height : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.height - height)
         width: agentLoader.item ? agentLoader.item.implicitWidth + Tokens.padding.medium * 2 : 0
         height: agentLoader.item ? agentLoader.item.implicitHeight + Tokens.padding.medium * 2 : 0
         radius: Tokens.rounding.medium
