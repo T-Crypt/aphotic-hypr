@@ -1,5 +1,5 @@
 # Claude Code working docs - not part of the shipped rice
-docs/superpowers/
+docs/
 .superpowers/
 .claude/
 
@@ -11,5 +11,4 @@ Thumbs.db
 *.swp
 *.bak
 
-recordings/*
-!recordings/aphotic-showcase.mp4
+recordings/
