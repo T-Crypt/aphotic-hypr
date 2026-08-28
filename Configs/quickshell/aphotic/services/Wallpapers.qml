@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // Real convention already used by every wallpaper-setting script in this
 // repo (rofi-wallpaper.sh, thunar_wall.py, wallswitcher.py): they all copy
@@ -60,7 +61,7 @@ Singleton {
     // relied on by Settings.qml's cursorApplyProc), so only the
     // most-recently-clicked theme's processes ever survive to write
     // anything or animate anything.
-    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var): void {
+    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var, iconTheme: var, cursorTheme: var, gtkTheme: var): void {
         root._generation++;
 
         awwwProc.exec(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
@@ -86,6 +87,19 @@ Singleton {
         // best-effort call as sddm sync below) rather than blocking.
         if (papirusColor)
             Quickshell.execDetached(["sudo", "-n", "papirus-folders", "-C", papirusColor, "--theme", "Papirus-Dark", "-u"]);
+
+        // Theme's own icon/cursor/gtk-theme pin (theme.toml's [icons]/
+        // [gtk] tables) -- only applies while the user hasn't manually
+        // picked one in Personalization (see Settings.qml's *UserSet
+        // properties). Routed through Settings' own setters rather than
+        // gsettings/sed calls here directly, so onXChanged's existing
+        // _applyX() chain fires for free -- no duplicate apply logic.
+        if (iconTheme && !Settings.iconThemeUserSet)
+            Settings.iconTheme = iconTheme;
+        if (cursorTheme && !Settings.cursorThemeUserSet)
+            Settings.cursorTheme = cursorTheme;
+        if (gtkTheme && !Settings.gtkThemeUserSet)
+            Settings.gtkTheme = gtkTheme;
 
         // Best-effort — see cmd_sddm.sh; no-ops without passwordless sudo.
         Quickshell.execDetached(["aphotic", "sddm", "sync"]);

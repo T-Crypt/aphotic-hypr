@@ -27,7 +27,12 @@ colorscheme = "some-name"  # fixed palette, see below — mutually exclusive wit
 style = "light"         # wallust -S: dark | light — omit for dark (the default for every theme but Latte)
 
 [icons]
-papirus_color = "green"  # one of `papirus-folders --list`, see below
+papirus_color = "green"     # one of `papirus-folders --list`, see below
+icon_theme = "Papirus-Dark" # optional, see "Icon/cursor/GTK theme pins" below
+cursor_theme = "Bibata-Modern-Ice"  # optional, same section
+
+[gtk]
+theme = "adw-gtk3-dark"  # optional, same section
 
 [wallpaper]
 default = "wallpaper-one.jpg"   # shown first when the theme is selected
@@ -78,6 +83,41 @@ no-ops rather than blocking on a password prompt (see
 `[overrides]` is reserved for Phase 3's per-app override story — not
 consumed by anything yet. A theme author can still write entries now;
 they're simply ignored until that lands.
+
+### Icon/cursor/GTK theme pins (`[icons].icon_theme`/`cursor_theme`, `[gtk].theme`)
+
+Unlike `papirus_color`'s folder-tint (always applied when set), these
+three keys are pins for the actual icon set, cursor theme, and GTK
+window-chrome theme — the same three things Settings → Personalization
+lets you pick manually (`Settings.iconTheme`/`cursorTheme`/`gtkTheme`).
+A theme can declare any subset of the three; an unset key just leaves
+whatever's currently active alone.
+
+Each has a matching `Settings.iconThemeUserSet`/`cursorThemeUserSet`/
+`gtkThemeUserSet` boolean, `false` by default and flipped to `true` the
+moment you manually pick that setting in Personalization. A theme's pin
+only applies while its matching flag is still `false` — so a fresh
+install quietly follows whichever theme is active, but the moment you
+pick something yourself, theme switching stops touching it, permanently
+(picking a different theme later won't silently revert your choice).
+There's no UI to reset a flag back to `false` today — it's a one-way
+"I've made a manual choice" marker.
+
+All three theme-apply call sites (`cmd_theme.sh`, `Wallpapers.qml`,
+`wallswitcher.py`) apply these the same way `Settings.qml`'s own pickers
+do: `gsettings` for icon/gtk-theme, `hyprctl setcursor` + `gsettings` for
+cursor theme, and a `qt5ct.conf`/`qt6ct.conf` `icon_theme=` patch so Qt
+apps track the same icon theme as GTK (Qt apps only pick this up on
+their next launch, not live).
+
+**Known limitation**: `papirus_color`'s `papirus-folders -C <color>
+--theme Papirus-Dark` call (above) hardcodes `--theme Papirus-Dark`
+literally, not read from `icon_theme`/`Settings.iconTheme` — so if a
+theme pins `icon_theme` to anything other than Papirus-Dark/Papirus-Light,
+that same theme's `papirus_color` folder-tint silently becomes a no-op
+(it recolors a Papirus-Dark install that isn't the active icon theme).
+Not fixed by this mechanism — a theme that wants both should keep
+`icon_theme` on a Papirus variant, or skip `papirus_color`.
 
 ### Fixed colorschemes (`[engine].colorscheme`)
 

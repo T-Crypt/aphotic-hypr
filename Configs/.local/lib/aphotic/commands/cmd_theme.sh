@@ -86,12 +86,15 @@ _aphotic_theme_apply() {
     fi
 
     local image_path="${dir}/${wallpaper_file}"
-    local backend palette colorscheme style papirus_color
+    local backend palette colorscheme style papirus_color icon_theme cursor_theme gtk_theme
     backend="$(_aphotic_toml_get "${dir}/theme.toml" engine backend)"
     palette="$(_aphotic_toml_get "${dir}/theme.toml" engine palette)"
     colorscheme="$(_aphotic_toml_get "${dir}/theme.toml" engine colorscheme)"
     style="$(_aphotic_toml_get "${dir}/theme.toml" engine style)"
     papirus_color="$(_aphotic_toml_get "${dir}/theme.toml" icons papirus_color)"
+    icon_theme="$(_aphotic_toml_get "${dir}/theme.toml" icons icon_theme)"
+    cursor_theme="$(_aphotic_toml_get "${dir}/theme.toml" icons cursor_theme)"
+    gtk_theme="$(_aphotic_toml_get "${dir}/theme.toml" gtk theme)"
 
     aphotic_require awww || return 1
     awww img "$image_path" --transition-type wipe --transition-angle 30 --transition-step 90
@@ -137,6 +140,44 @@ _aphotic_theme_apply() {
             sudo papirus-folders -C "$papirus_color" --theme Papirus-Dark -u 2>/dev/null || true
         else
             aphotic_warn "papirus-folders needs passwordless sudo to run automatically (see commands/README.md); run 'sudo papirus-folders -C ${papirus_color} --theme Papirus-Dark' manually, or 'sudo -v' first"
+        fi
+    fi
+
+    # Icon/cursor/gtk-theme pin (theme.toml's [icons].icon_theme/
+    # cursor_theme, [gtk].theme) -- see themes/THEME_SPEC.md. Only applies
+    # while the matching Settings.qml *UserSet flag is still false (the
+    # user hasn't manually picked one in Personalization). Patches
+    # settings.json directly (not aphotic_json_set/APHOTIC_CONFIG_FILE --
+    # that's a different file, ~/.config/aphotic/shell.json, unrelated to
+    # Quickshell's own state) so a running shell (settings.json has
+    # watchChanges: true) picks the change up live and it survives the
+    # next restart either way; also applied directly here via gsettings/
+    # hyprctl so it takes effect even if the shell isn't running at all.
+    local settings_file="${APHOTIC_STATE_HOME}/settings.json"
+    if command -v jq >/dev/null 2>&1 && [[ -f "$settings_file" ]]; then
+        local icon_user_set cursor_user_set gtk_user_set
+        icon_user_set="$(jq -r '.iconThemeUserSet // false' "$settings_file")"
+        cursor_user_set="$(jq -r '.cursorThemeUserSet // false' "$settings_file")"
+        gtk_user_set="$(jq -r '.gtkThemeUserSet // false' "$settings_file")"
+
+        if [[ -n "$icon_theme" && "$icon_user_set" != "true" ]]; then
+            local tmp; tmp="$(mktemp)"
+            jq --arg v "$icon_theme" '.iconTheme = $v' "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+            gsettings set org.gnome.desktop.interface icon-theme "$icon_theme" 2>/dev/null || true
+            for f in "${HOME}/.config/qt5ct/qt5ct.conf" "${HOME}/.config/qt6ct/qt6ct.conf"; do
+                [[ -f "$f" ]] && sed -i "s/^icon_theme=.*/icon_theme=${icon_theme}/" "$f"
+            done
+        fi
+        if [[ -n "$cursor_theme" && "$cursor_user_set" != "true" ]]; then
+            local tmp; tmp="$(mktemp)"
+            jq --arg v "$cursor_theme" '.cursorTheme = $v' "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+            hyprctl setcursor "$cursor_theme" "$(jq -r '.cursorSize // 24' "$settings_file")" 2>/dev/null || true
+            gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" 2>/dev/null || true
+        fi
+        if [[ -n "$gtk_theme" && "$gtk_user_set" != "true" ]]; then
+            local tmp; tmp="$(mktemp)"
+            jq --arg v "$gtk_theme" '.gtkTheme = $v' "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+            gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" 2>/dev/null || true
         fi
     fi
 

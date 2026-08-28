@@ -86,6 +86,25 @@ Without it, folder icons keep whatever color they were last set to
 manually (or Papirus's default) and the theme switch just warns instead
 of blocking on a password prompt.
 
+## `aphotic vpn` and passwordless sudo
+
+`cmd_vpn.sh` shells out to the raw `openvpn` binary directly (not
+`openvpn3`, not a NetworkManager plugin — see the file's own header
+comment), which needs root to open a tun device. `connect`/`disconnect`
+both need it. Add a third sudoers drop-in:
+
+```
+your_user ALL=(root) NOPASSWD: /usr/bin/openvpn --config * --daemon aphotic-vpn --log *, /usr/bin/pkill -f aphotic-vpn
+```
+
+Unlike the `cp`/`sed` pair above, `pkill -f` can't be scoped any tighter
+than "matches this literal string anywhere in a process's command line" —
+`aphotic-vpn` is the distinctive `--daemon` tag `cmd_vpn.sh` always passes
+(not a real process rename), chosen specifically so this NOPASSWD rule
+can't accidentally kill anything else. Without passwordless sudo, both
+subcommands warn and no-op rather than blocking on a password prompt —
+run `sudo -v` first, or connect/disconnect manually.
+
 ## Environment Variables
 
 The following variables are available:

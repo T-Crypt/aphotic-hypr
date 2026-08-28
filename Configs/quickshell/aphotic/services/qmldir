@@ -21,6 +21,7 @@ singleton Settings 1.0 Settings.qml
 singleton SystemUsage 1.0 SystemUsage.qml
 singleton Themes 1.0 Themes.qml
 singleton UiPickerState 1.0 UiPickerState.qml
+singleton Vpn 1.0 Vpn.qml
 singleton WallpaperCycle 1.0 WallpaperCycle.qml
 singleton Weather 1.0 Weather.qml
 singleton WindowList 1.0 WindowList.qml

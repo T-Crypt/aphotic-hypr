@@ -7,6 +7,7 @@ import Quickshell.Hyprland
 import qs.config
 import qs.components
 import qs.services
+import qs.utils
 
 Item {
     id: root
@@ -41,7 +42,7 @@ Item {
             id: icon
 
             asynchronous: true
-            source: Quickshell.iconPath(root.modelData.lastIpcObject?.class, "application-x-executable")
+            source: Icons.getAppIcon(root.modelData.lastIpcObject?.class, "application-x-executable")
             implicitSize: parent.height * 0.7
             anchors.verticalCenter: parent.verticalCenter
         }

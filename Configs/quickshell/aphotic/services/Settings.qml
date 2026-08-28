@@ -166,6 +166,19 @@ Singleton {
     // comment) -- picking a non-Papirus theme here just loses that
     // recoloring, it isn't blocked outright.
     property string iconTheme: "Papirus-Dark"
+    // adw-gtk3-dark, not Dracula/stock Adwaita-dark -- see _applyGtkTheme()
+    // below for why.
+    property string gtkTheme: "adw-gtk3-dark"
+    // Gate for an Aphotic theme's own icon_theme/cursor_theme/gtk_theme pin
+    // (theme.toml's [icons]/[gtk] tables, applied in Wallpapers.qml's
+    // setWallpaper -- see themes/THEME_SPEC.md). false = a theme switch is
+    // free to follow its pin for this property; flipped to true the moment
+    // the matching PersonalizationPane picker is used manually, after
+    // which theme switches never touch it again. A fresh install with no
+    // manual picks yet quietly follows whichever theme is active.
+    property bool iconThemeUserSet: false
+    property bool cursorThemeUserSet: false
+    property bool gtkThemeUserSet: false
 
     // Idle behavior, backed by hypridle (~/.config/hypr/hypridle.conf,
     // fully generated here -- see _applyIdleConfig -- no repo-tracked
@@ -188,6 +201,17 @@ Singleton {
     // X11 apps don't support that -- just a fixed replay list dispatched via
     // `hyprctl dispatch exec [workspace N] <command>` per entry.
     property var workspaceProfiles: []
+
+    // Raw-openvpn profile state (see commands/cmd_vpn.sh) -- user runtime
+    // state, not an install-time profile/layer choice, so it lives here
+    // rather than a new [network.vpn] block in a toml (ROADMAP_FEATURES.md
+    // PART C's resolved config-location decision). vpnConfigPath empty =
+    // not configured. vpnAutoConnect is read by `aphotic vpn autostart`,
+    // called from startup.lua -- Settings.qml itself never shells out to
+    // openvpn (that needs root; connect/disconnect stay CLI-only, this is
+    // just the config the CLI reads).
+    property string vpnConfigPath: ""
+    property bool vpnAutoConnect: false
 
     readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1)
 
@@ -239,6 +263,10 @@ Singleton {
             cursorTheme: root.cursorTheme,
             cursorSize: root.cursorSize,
             iconTheme: root.iconTheme,
+            gtkTheme: root.gtkTheme,
+            iconThemeUserSet: root.iconThemeUserSet,
+            cursorThemeUserSet: root.cursorThemeUserSet,
+            gtkThemeUserSet: root.gtkThemeUserSet,
             idleLockEnabled: root.idleLockEnabled,
             idleLockTimeout: root.idleLockTimeout,
             idleScreenOffTimeout: root.idleScreenOffTimeout,
@@ -246,6 +274,8 @@ Singleton {
             idleSuspendTimeout: root.idleSuspendTimeout,
             projectRoots: root.projectRoots,
             workspaceProfiles: root.workspaceProfiles,
+            vpnConfigPath: root.vpnConfigPath,
+            vpnAutoConnect: root.vpnAutoConnect,
             intelligenceEnabled: root.intelligenceEnabled,
             intelligenceDefaultProvider: root.intelligenceDefaultProvider,
             intelligenceDefaultModel: root.intelligenceDefaultModel,
@@ -319,12 +349,46 @@ Singleton {
         iconApplyProc.exec(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", root.iconTheme]);
     }
 
+    // gsettings only reaches GTK apps -- Qt apps read their icon theme from
+    // qt5ct/qt6ct's own conf file instead, so it needs its own sync path.
+    // Both files have exactly one `icon_theme=` line each; a plain sed -i
+    // is the same pattern cmd_sddm.sh already uses for this class of flat
+    // single-key config file. Qt apps only re-read this on next launch, not
+    // live, unlike GTK's gsettings-watched keys.
+    function _applyQtIconTheme(): void {
+        const home = Quickshell.env("HOME");
+        const script = `for f in "${home}/.config/qt5ct/qt5ct.conf" "${home}/.config/qt6ct/qt6ct.conf"; do [ -f "$f" ] && sed -i "s/^icon_theme=.*/icon_theme=${root.iconTheme}/" "$f"; done`;
+        qtIconThemeApplyProc.exec(["sh", "-c", script]);
+    }
+
+    // adw-gtk3-dark specifically, not Dracula or GTK's own bundled
+    // Adwaita-dark -- see startup.lua's old comment (now redundant, this
+    // is the real single source of truth): Dracula hardcodes its own
+    // palette outright, and stock Adwaita-dark's SCSS-compiled headerbar/
+    // window chrome ignores @define-color overrides, so only adw-gtk3-dark
+    // actually reflects wallust's live recoloring (Configs/wallust/
+    // templates/gtk.css). Was previously set once at Hyprland startup only
+    // -- nothing reasserted it afterward, so an external tool (nwg-look,
+    // lxappearance) changing it just stuck until next relogin, the same
+    // class of bug cursor/icon theme already got fixed for above.
+    function _applyGtkTheme(): void {
+        gtkThemeApplyProc.exec(["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", root.gtkTheme]);
+    }
+
     Process {
         id: cursorApplyProc
     }
 
     Process {
         id: iconApplyProc
+    }
+
+    Process {
+        id: qtIconThemeApplyProc
+    }
+
+    Process {
+        id: gtkThemeApplyProc
     }
 
     onTwelveHourClockChanged: root._saveState()
@@ -378,7 +442,15 @@ Singleton {
     onIconThemeChanged: {
         root._saveState();
         root._applyIconTheme();
+        root._applyQtIconTheme();
     }
+    onGtkThemeChanged: {
+        root._saveState();
+        root._applyGtkTheme();
+    }
+    onIconThemeUserSetChanged: root._saveState()
+    onCursorThemeUserSetChanged: root._saveState()
+    onGtkThemeUserSetChanged: root._saveState()
     onIdleLockEnabledChanged: {
         root._saveState();
         root._applyIdleConfig();
@@ -401,6 +473,8 @@ Singleton {
     }
     onProjectRootsChanged: root._saveState()
     onWorkspaceProfilesChanged: root._saveState()
+    onVpnConfigPathChanged: root._saveState()
+    onVpnAutoConnectChanged: root._saveState()
     onIntelligenceEnabledChanged: root._saveState()
     onIntelligenceDefaultProviderChanged: root._saveState()
     onIntelligenceDefaultModelChanged: root._saveState()
@@ -505,6 +579,14 @@ Singleton {
                     root.cursorSize = data.cursorSize;
                 if (typeof data.iconTheme === "string")
                     root.iconTheme = data.iconTheme;
+                if (typeof data.gtkTheme === "string")
+                    root.gtkTheme = data.gtkTheme;
+                if (typeof data.iconThemeUserSet === "boolean")
+                    root.iconThemeUserSet = data.iconThemeUserSet;
+                if (typeof data.cursorThemeUserSet === "boolean")
+                    root.cursorThemeUserSet = data.cursorThemeUserSet;
+                if (typeof data.gtkThemeUserSet === "boolean")
+                    root.gtkThemeUserSet = data.gtkThemeUserSet;
                 if (typeof data.idleLockEnabled === "boolean")
                     root.idleLockEnabled = data.idleLockEnabled;
                 if (typeof data.idleLockTimeout === "number")
@@ -519,6 +601,10 @@ Singleton {
                     root.projectRoots = data.projectRoots;
                 if (Array.isArray(data.workspaceProfiles))
                     root.workspaceProfiles = data.workspaceProfiles;
+                if (typeof data.vpnConfigPath === "string")
+                    root.vpnConfigPath = data.vpnConfigPath;
+                if (typeof data.vpnAutoConnect === "boolean")
+                    root.vpnAutoConnect = data.vpnAutoConnect;
                 if (typeof data.intelligenceEnabled === "boolean")
                     root.intelligenceEnabled = data.intelligenceEnabled;
                 if (typeof data.intelligenceDefaultProvider === "string")
@@ -541,12 +627,16 @@ Singleton {
             // whatever was chosen here on the next boot.
             root._applyCursor();
             root._applyIconTheme();
+            root._applyQtIconTheme();
+            root._applyGtkTheme();
             root._applyIdleConfig();
         }
         onLoadFailed: error => {
             root._loaded = true;
             root._applyCursor();
             root._applyIconTheme();
+            root._applyQtIconTheme();
+            root._applyGtkTheme();
             root._applyIdleConfig();
         }
     }

@@ -3,6 +3,7 @@
 import json
 import os
 import random
+import re
 import subprocess
 
 
@@ -64,8 +65,11 @@ def parse_engine_pin(theme):
     colorscheme = ""
     style = ""
     papirus_color = ""
+    icon_theme = ""
+    cursor_theme = ""
+    gtk_theme = ""
     if not os.path.isfile(toml_path):
-        return backend, palette, colorscheme, style, papirus_color
+        return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme
     section = ""
     with open(toml_path) as f:
         for raw in f:
@@ -89,9 +93,70 @@ def parse_engine_pin(theme):
                     colorscheme = value
                 elif key == "style":
                     style = value
-            elif section == "icons" and key == "papirus_color":
-                papirus_color = value
-    return backend, palette, colorscheme, style, papirus_color
+            elif section == "icons":
+                if key == "papirus_color":
+                    papirus_color = value
+                elif key == "icon_theme":
+                    icon_theme = value
+                elif key == "cursor_theme":
+                    cursor_theme = value
+            elif section == "gtk" and key == "theme":
+                gtk_theme = value
+    return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme
+
+
+settings_path = os.path.expanduser("~/.local/state/aphotic/settings.json")
+qtct_paths = (
+    os.path.expanduser("~/.config/qt5ct/qt5ct.conf"),
+    os.path.expanduser("~/.config/qt6ct/qt6ct.conf"),
+)
+
+
+# Mirrors cmd_theme.sh's _aphotic_theme_apply icon/cursor/gtk-theme pin
+# block -- see that function's comment for why this patches settings.json
+# directly (Quickshell's own state, watchChanges: true picks it up live if
+# the shell is running) as well as calling gsettings/hyprctl/sed directly
+# (so it still takes effect even if the shell isn't running at all). Only
+# applies while the matching Settings.qml *UserSet flag is still false.
+def apply_theme_pins(icon_theme, cursor_theme, gtk_theme):
+    if not (icon_theme or cursor_theme or gtk_theme):
+        return
+    try:
+        with open(settings_path) as f:
+            settings = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        settings = {}
+
+    changed = False
+
+    if icon_theme and not settings.get("iconThemeUserSet", False):
+        settings["iconTheme"] = icon_theme
+        changed = True
+        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", icon_theme])
+        for qtct_path in qtct_paths:
+            if os.path.isfile(qtct_path):
+                with open(qtct_path) as f:
+                    text = f.read()
+                text = re.sub(r"(?m)^icon_theme=.*$", f"icon_theme={icon_theme}", text)
+                with open(qtct_path, "w") as f:
+                    f.write(text)
+
+    if cursor_theme and not settings.get("cursorThemeUserSet", False):
+        settings["cursorTheme"] = cursor_theme
+        changed = True
+        cursor_size = settings.get("cursorSize", 24)
+        run_optional(["hyprctl", "setcursor", cursor_theme, str(cursor_size)])
+        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "cursor-theme", cursor_theme])
+
+    if gtk_theme and not settings.get("gtkThemeUserSet", False):
+        settings["gtkTheme"] = gtk_theme
+        changed = True
+        run_optional(["gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", gtk_theme])
+
+    if changed:
+        os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+        with open(settings_path, "w") as f:
+            json.dump(settings, f, indent=2)
 
 
 def notify(message):
@@ -108,7 +173,7 @@ def apply_wallpaper(theme, wallpaper):
 
     subprocess.run(["awww", "img", "--transition-type", "wipe", "--transition-duration", "3", image_path])
 
-    backend, palette, colorscheme, style, papirus_color = parse_engine_pin(theme)
+    backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme = parse_engine_pin(theme)
     if colorscheme:
         # Fixed palette pin -- see cmd_theme.sh's _aphotic_theme_apply for
         # why some themes (HackTheBox's real green/navy scheme) pin an
@@ -137,6 +202,8 @@ def apply_wallpaper(theme, wallpaper):
         # (same best-effort class as the sddm sync call below) rather
         # than blocking on a password prompt.
         run_optional(["sudo", "-n", "papirus-folders", "-C", papirus_color, "--theme", "Papirus-Dark", "-u"])
+
+    apply_theme_pins(icon_theme, cursor_theme, gtk_theme)
 
     # State is the source other tools (Quickshell's Themes.qml) read back,
     # so it's saved right after the actual wallpaper+color change lands --

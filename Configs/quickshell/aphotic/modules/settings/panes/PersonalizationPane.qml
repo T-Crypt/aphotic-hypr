@@ -15,12 +15,14 @@ ColumnLayout {
 
     property var cursorThemes: []
     property var iconThemes: []
+    property var gtkThemes: []
 
     spacing: Tokens.spacing.largeIncreased
 
     Component.onCompleted: {
         cursorThemeProc.running = true;
         iconThemeProc.running = true;
+        gtkThemeProc.running = true;
     }
 
     // Cursor themes are marked by a `cursors/` subdirectory, not
@@ -38,6 +40,16 @@ ColumnLayout {
         command: ["sh", "-c", `for f in /usr/share/icons/*/index.theme ${Quickshell.env("HOME")}/.local/share/icons/*/index.theme; do [ -f "$f" ] && basename "$(dirname "$f")"; done 2>/dev/null | sort -u`]
         stdout: StdioCollector {
             onStreamFinished: root.iconThemes = text.split("\n").filter(s => s.length > 0)
+        }
+    }
+
+    // GTK themes are marked by a gtk-3.0/ subdirectory, same enumeration
+    // shape as cursor themes' cursors/ subdirectory above.
+    Process {
+        id: gtkThemeProc
+        command: ["sh", "-c", `for d in /usr/share/themes/*/gtk-3.0 ${Quickshell.env("HOME")}/.local/share/themes/*/gtk-3.0; do [ -d "$d" ] && basename "$(dirname "$d")"; done 2>/dev/null | sort -u`]
+        stdout: StdioCollector {
+            onStreamFinished: root.gtkThemes = text.split("\n").filter(s => s.length > 0)
         }
     }
 
@@ -126,7 +138,10 @@ ColumnLayout {
                 required property string modelData
                 label: modelData
                 active: Settings.cursorTheme === modelData
-                onClicked: Settings.cursorTheme = modelData
+                onClicked: {
+                    Settings.cursorTheme = modelData;
+                    Settings.cursorThemeUserSet = true;
+                }
             }
         }
     }
@@ -200,7 +215,10 @@ ColumnLayout {
                 required property string modelData
                 label: modelData
                 active: Settings.iconTheme === modelData
-                onClicked: Settings.iconTheme = modelData
+                onClicked: {
+                    Settings.iconTheme = modelData;
+                    Settings.iconThemeUserSet = true;
+                }
             }
         }
     }
@@ -208,6 +226,50 @@ ColumnLayout {
     StyledText {
         visible: root.iconThemes.length === 0
         text: qsTr("No icon themes found under ~/.local/share/icons or /usr/share/icons")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    StyledText {
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: qsTr("Qt apps (qt5ct/qt6ct) follow this too, but only pick it up on next launch, not live.")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    StyledText {
+        Layout.topMargin: Tokens.spacing.small
+        text: qsTr("Window theme")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.label.medium
+    }
+
+    Flow {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.small
+        visible: root.gtkThemes.length > 0
+
+        Repeater {
+            model: ScriptModel {
+                values: root.gtkThemes
+            }
+
+            NamePill {
+                required property string modelData
+                label: modelData
+                active: Settings.gtkTheme === modelData
+                onClicked: {
+                    Settings.gtkTheme = modelData;
+                    Settings.gtkThemeUserSet = true;
+                }
+            }
+        }
+    }
+
+    StyledText {
+        visible: root.gtkThemes.length === 0
+        text: qsTr("No GTK themes found under ~/.local/share/themes or /usr/share/themes")
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.body.small
     }
