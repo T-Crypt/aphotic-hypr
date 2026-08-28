@@ -1,4 +1,5 @@
 module qs.modules.launcher
+AppGridItem 1.0 AppGridItem.qml
 AppItem 1.0 AppItem.qml
 ClipboardItem 1.0 ClipboardItem.qml
 EmojiItem 1.0 EmojiItem.qml
