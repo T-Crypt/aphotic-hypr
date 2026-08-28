@@ -20,7 +20,10 @@ display_name = "Tokyo Night"
 description = "Neon purples and blues, city-at-night palette."
 
 [engine]
-name = "wallust"        # "wallust" | "matugen" (matugen not wired yet — Phase 3)
+name = "wallust"        # "wallust" | "matugen" (matugen not wired yet — Phase 3;
+                        # pinning it doesn't error, but all three apply sites now
+                        # notify-send a warning and use wallust anyway, rather
+                        # than silently ignoring the pin)
 backend = "fastresize"  # wallust -b: full | resized | wal | thumb | fastresize
 palette = "kmeans"      # wallust -p: salience | ansi | kmeans
 colorscheme = "some-name"  # fixed palette, see below — mutually exclusive with backend/palette

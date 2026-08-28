@@ -61,8 +61,20 @@ Singleton {
     // relied on by Settings.qml's cursorApplyProc), so only the
     // most-recently-clicked theme's processes ever survive to write
     // anything or animate anything.
-    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var, iconTheme: var, cursorTheme: var, gtkTheme: var): void {
+    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var, iconTheme: var, cursorTheme: var, gtkTheme: var, engineName: var): void {
         root._generation++;
+
+        // [engine].name is documented (themes/THEME_SPEC.md) as accepting
+        // "wallust" | "matugen", but nothing here (or in cmd_theme.sh/
+        // wallswitcher.py) has ever actually read it -- every apply path
+        // always runs wallust regardless, so a theme pinning matugen
+        // silently got wallust instead with zero indication anything was
+        // ignored. Not implementing matugen here -- just making the
+        // mismatch loud instead of silent, via a real notification
+        // (Toaster.qml's toast() is a dead no-op stub left over from an
+        // unfinished Caelestia port, not what real toasts render through).
+        if (engineName && engineName !== "wallust")
+            Quickshell.execDetached(["notify-send", "-u", "low", "Aphotic", `theme pins engine '${engineName}', but only wallust is wired up — using wallust`]);
 
         awwwProc.exec(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
         cpProc.exec(["cp", path, root.path]);
