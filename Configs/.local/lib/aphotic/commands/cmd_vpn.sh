@@ -2,8 +2,8 @@
 # aphotic vpn — connect/disconnect a raw OpenVPN profile (see
 # ROADMAP_FEATURES.md's PART C for the resolved design: shells out to the
 # raw `openvpn` binary directly, not openvpn3 or a NetworkManager plugin,
-# since only `openvpn` is installed (profiles/layers/exploit.toml, an
-# offensive-security/CTF context — HTB/THM-style VPN access, not a
+# since only `openvpn` is installed (profiles/layers/exploit-network.toml,
+# an offensive-security/CTF context — HTB/THM-style VPN access, not a
 # general-purpose always-on VPN layer).
 #
 # Deliberately separate from services/Nmcli.qml's existing `vpnActive`

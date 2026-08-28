@@ -104,23 +104,23 @@ QtObject {
         // silently discard a hand-edit made only to the generated file
         // (see feedback_quickshell_symlink memory -- learned this the
         // hard way tonight).
-        readonly property color m3primary: Settings.accentColorOverride.length > 0 ? Settings.accentColorOverride : "#9781C6"
+        readonly property color m3primary: Settings.accentColorOverride.length > 0 ? Settings.accentColorOverride : "#5A6089"
         readonly property color m3onPrimary: root.contrastOn(m3primary)
         readonly property color m3primaryOnSurface: root.legibleAccent(m3primary, m3surfaceContainerHigh)
-        readonly property color m3secondary: "#9FC56B"
+        readonly property color m3secondary: "#F9EEDA"
         readonly property color m3secondaryOnSurface: root.legibleAccent(m3secondary, m3surfaceContainerHigh)
         readonly property color m3secondaryContainer: Qt.tint(m3surfaceContainerHigh, Qt.alpha(m3secondary, 0.24))
         readonly property color m3onSecondaryContainer: root.legibleAccent(m3secondary, m3secondaryContainer)
-        readonly property color m3tertiary: "#74889D"
+        readonly property color m3tertiary: "#4B836F"
         readonly property color m3onTertiary: root.contrastOn(m3tertiary)
         readonly property color m3tertiaryOnSurface: root.legibleAccent(m3tertiary, m3surfaceContainerHigh)
-        readonly property color m3error: "#767892"
+        readonly property color m3error: "#BC7541"
         readonly property color m3onError: root.contrastOn(m3error)
         readonly property color m3onSurface: root.contrastOn(m3surfaceContainer)
         readonly property color m3onSurfaceVariant: root.mutedOn(m3surfaceContainer, m3onSurface, 0.35)
-        readonly property color m3outlineVariant: "#2F303C"
-        readonly property color m3surfaceContainer: "#15161E"
-        readonly property color m3surfaceContainerHigh: "#32333B"
+        readonly property color m3outlineVariant: "#535355"
+        readonly property color m3surfaceContainer: "#000000"
+        readonly property color m3surfaceContainerHigh: "#1F1F1F"
         readonly property color m3shadow: "#000000"
     }
 
