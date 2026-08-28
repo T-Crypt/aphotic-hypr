@@ -378,6 +378,16 @@ except Exception:
     fi
 
     cp -R "$ROOT_DIR/Configs/"* "$HOME/.config/"
+
+    # hypr/scripts is symlinked back into the repo rather than left as the
+    # one-shot copy above, same as .local/bin/aphotic below -- a plain
+    # `cp -R` here means any later edit to these scripts (bug fixes
+    # included) silently stops matching what Hyprland's keybinds actually
+    # run, with zero indication anything drifted, until a full reinstall.
+    # ln -sfn (not -sf) so re-running this on an existing install replaces
+    # a stale symlink/copy in place instead of nesting one inside the other.
+    rm -rf "$HOME/.config/hypr/scripts"
+    ln -sfn "$ROOT_DIR/Configs/hypr/scripts" "$HOME/.config/hypr/scripts"
     chmod +x "$HOME/.config/hypr/scripts/"*
 
     if [[ -n "$CUSTOM_LUA_BACKUP" ]]; then
