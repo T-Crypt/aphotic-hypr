@@ -10,6 +10,11 @@
 aphotic_cmd_play() {
     local game="${1:-}"
 
+    # Shared stat persistence (best score, win/loss tally, ...) -- see
+    # play/scores.sh's own header for the two generic primitives every
+    # game builds on.
+    source "${COMMANDS_DIR}/play/scores.sh"
+
     case "$game" in
         hangman)
             source "${COMMANDS_DIR}/play/hangman.sh"

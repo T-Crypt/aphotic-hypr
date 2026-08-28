@@ -10,10 +10,38 @@ aphotic_cmd_play_snake() {
     local show_cursor='\033[?25h'
     local cursor_home='\033[H'
 
+    # Always restore the cursor on the way out, however the game ends --
+    # Ctrl+C previously left it hidden for the rest of the terminal
+    # session since nothing ever ran $show_cursor on an interrupt.
+    trap 'echo -ne "$show_cursor"' EXIT
+
+    # Board fills the actual terminal ("play within the walls of the
+    # current terminal"), not a fixed 20x15 -- `stty size` is the
+    # reliable way to ask the tty directly (works even when $COLUMNS/
+    # $LINES aren't exported into a script's environment), falling back
+    # to tput and then a safe default if neither is available (e.g. stdin
+    # isn't actually a tty). Clamped so a huge terminal doesn't turn into
+    # an unplayably large board, and a tiny one still gets something
+    # playable.
+    local term_rows term_cols
+    read -r term_rows term_cols < <(stty size 2>/dev/null) || true
+    if [[ -z "$term_cols" ]] && command -v tput >/dev/null 2>&1; then
+        term_cols="$(tput cols 2>/dev/null)" || true
+        term_rows="$(tput lines 2>/dev/null)" || true
+    fi
+    term_cols="${term_cols:-80}"
+    term_rows="${term_rows:-24}"
+
+    local width=$((term_cols - 2))
+    local height=$((term_rows - 4))  # top/bottom border + score line + a margin so the board never scrolls
+    ((width < 10)) && width=10
+    ((width > 60)) && width=60
+    ((height < 8)) && height=8
+    ((height > 25)) && height=25
+
     # Game constants
-    local width=20
-    local height=15
-    local speed=200  # milliseconds between updates
+    local base_speed=200  # milliseconds between updates at score 0
+    local min_speed=70    # never gets faster than this
 
     # Game state
     local snake_x=()
@@ -24,6 +52,8 @@ aphotic_cmd_play_snake() {
     local direction="right"
     local game_over=false
     local score=0
+    local best_score
+    best_score="$(_aphotic_play_best_score snake)"
 
     # Initialize game
     init_game() {
@@ -112,7 +142,7 @@ aphotic_cmd_play_snake() {
         done
         echo ""
 
-        echo "Score: $score | Use WASD to move, Q to quit"
+        echo "Score: $score | Best: $best_score | Use WASD to move, Q to quit"
     }
 
     # Move snake
@@ -173,8 +203,14 @@ aphotic_cmd_play_snake() {
     handle_input() {
         local input=""
 
-        # Read input without waiting for Enter
-        read -n1 -t 0.05 input
+        # Read input without waiting for Enter. `|| true` matters: a
+        # `-t` timeout with nothing typed (the common case, every single
+        # tick with no keypress) makes `read` return non-zero, which
+        # `aphotic`'s dispatcher's `set -e` would otherwise treat as a
+        # real failure and kill the whole CLI process on the very first
+        # tick -- this is why the game previously exited instantly
+        # instead of ever drawing a frame.
+        read -n1 -t 0.05 input || true
 
         case "$input" in
             "w"|"W")
@@ -204,11 +240,13 @@ aphotic_cmd_play_snake() {
 
         if [[ "$game_over" == false ]]; then
             draw_board
-            sleep 0.001  # Small delay for screen refresh
         fi
 
-        # Wait for next update
-        sleep 0.$speed
+        # Wait for next update -- gets a little faster as the score
+        # climbs (classic snake difficulty ramp), never below min_speed.
+        local speed=$((base_speed - score))
+        ((speed < min_speed)) && speed=$min_speed
+        sleep "0.$(printf '%03d' "$speed")"
     done
 
     # Game over
@@ -218,7 +256,12 @@ aphotic_cmd_play_snake() {
     echo ""
     echo "Game Over!"
     echo "Final Score: $score"
+    if _aphotic_play_record_score snake "$score"; then
+        echo "New best score!"
+    else
+        echo "Best Score: $(_aphotic_play_best_score snake)"
+    fi
     echo ""
     echo "Press any key to continue..."
-    read -n1 -s
+    read -n1 -s -t 10 || true
 }
