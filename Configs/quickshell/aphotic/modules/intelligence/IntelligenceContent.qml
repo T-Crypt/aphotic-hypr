@@ -69,6 +69,17 @@ Item {
             shadowVerticalOffset: 2
         }
 
+        DepthLayer {
+            anchors.fill: parent
+            opacityScale: 0.35
+        }
+
+        DepthGradient {
+            anchors.fill: parent
+            radius: card.radius
+            baseColour: card.color
+        }
+
         // Absorbs clicks so a click anywhere on the card (not just on its
         // interactive children) doesn't fall through to the full-screen
         // dismiss MouseArea in IntelligenceWindow underneath.

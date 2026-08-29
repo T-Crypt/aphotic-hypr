@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.components
+import qs.components.effects
 import qs.services
 import qs.utils
 
@@ -58,7 +59,14 @@ Item {
     implicitWidth: Settings.barHorizontal ? icon.implicitWidth + Tokens.spacing.small + current.implicitWidth + Tokens.padding.small * 2 : Settings.barInnerWidth
     implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : icon.implicitHeight + current.implicitWidth + current.anchors.topMargin + Tokens.padding.small * 2
 
+    BioluminescentGlow {
+        target: background
+        intensity: Hypr.activeToplevel ? DepthFx.glowIntensity : 0
+    }
+
     StyledRect {
+        id: background
+
         anchors.fill: parent
         radius: Tokens.rounding.full
         color: Colours.palette.m3surfaceContainerHigh

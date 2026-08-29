@@ -63,6 +63,15 @@ Item {
             shadowVerticalOffset: 2
         }
 
+        // No DepthLayer here -- this card's own content (a dense
+        // notification list) is already visually busy, per Aphotic
+        // Depth's per-surface intensity guidance.
+        DepthGradient {
+            anchors.fill: parent
+            radius: card.radius
+            baseColour: card.color
+        }
+
         MouseArea {
             anchors.fill: parent
         }

@@ -57,6 +57,10 @@ StyledRect {
     radius: Tokens.rounding.full
     color: Colours.palette.m3primary
 
+    BioluminescentGlow {
+        target: root
+    }
+
     Colouriser {
         id: colouriser
 

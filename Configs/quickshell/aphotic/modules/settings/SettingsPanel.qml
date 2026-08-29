@@ -35,10 +35,23 @@ RowLayout {
     spacing: 0
 
     StyledRect {
+        id: rail
+
         Layout.fillHeight: true
         Layout.preferredWidth: 300
         radius: Tokens.rounding.extraLarge
         color: Colours.tPalette.m3surfaceContainer
+
+        DepthLayer {
+            anchors.fill: parent
+            opacityScale: 0.5
+        }
+
+        DepthGradient {
+            anchors.fill: parent
+            radius: rail.radius
+            baseColour: rail.color
+        }
 
         CategoryRail {
             anchors.fill: parent
@@ -60,6 +73,12 @@ RowLayout {
         clip: true
 
         property int _prevCategoryIndex: 0
+
+        DepthGradient {
+            anchors.fill: parent
+            radius: paneSurface.radius
+            baseColour: paneSurface.color
+        }
 
         Flickable {
             id: paneFlick

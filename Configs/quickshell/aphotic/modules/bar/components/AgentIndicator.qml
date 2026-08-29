@@ -1,6 +1,7 @@
 import QtQuick
 import qs.config
 import qs.components
+import qs.components.effects
 import qs.services
 
 Item {
@@ -21,7 +22,14 @@ Item {
     implicitWidth: root.showBackground ? Settings.barInnerWidth : icon.implicitWidth
     implicitHeight: root.showBackground ? Settings.barInnerWidth : icon.implicitHeight
 
+    BioluminescentGlow {
+        target: background
+        intensity: root.badgeCount > 0 ? DepthFx.glowIntensity : 0
+    }
+
     StyledRect {
+        id: background
+
         visible: root.showBackground
         anchors.fill: parent
         radius: Tokens.rounding.full

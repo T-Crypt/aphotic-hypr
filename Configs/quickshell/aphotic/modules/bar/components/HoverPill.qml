@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.components
+import qs.components.effects
 import qs.services
 
 // The bar's shared hover affordance: one soft circle that GLIDES along a
@@ -83,5 +84,13 @@ StyledRect {
         Anim {
             type: Anim.FastEffects
         }
+    }
+
+    // The glow rides along for free -- it's anchored to root, and root's
+    // own x/y glide is already animated above, so this reads as a soft
+    // trail during motion rather than a separate effect to keep in sync.
+    BioluminescentGlow {
+        target: root
+        glowBlur: 12
     }
 }

@@ -143,6 +143,12 @@ Item {
         Behavior on radius {
             Anim { type: Anim.DefaultEffects }
         }
+
+        DepthGradient {
+            anchors.fill: parent
+            radius: parent.radius
+            baseColour: Colours.tPalette.m3surfaceContainer
+        }
     }
 
     Loader {

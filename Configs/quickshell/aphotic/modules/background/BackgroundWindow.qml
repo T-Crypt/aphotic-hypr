@@ -35,6 +35,71 @@ PanelWindow {
 
         anchors.fill: parent
 
+        // "Descent" intro: the shell surfaces into view rather than just
+        // appearing, echoing light fading in from depth on first map. Any
+        // input skips straight to the settled state -- this is a mood-
+        // setting flourish, not something that should ever make someone
+        // wait to start using their desktop.
+        //
+        // Uses an explicit, stoppable Animation rather than a Behavior:
+        // a Behavior can't be reliably snapped to its end value mid-flight
+        // (disabling it just freezes wherever the animation currently is),
+        // which would make "skippable" a lie the moment input arrives
+        // partway through the ~650ms transition.
+        property bool introSkipped: false
+
+        opacity: 0
+        scale: 1.04
+        transformOrigin: Item.Center
+
+        function skipIntro(): void {
+            if (backgroundContent.introSkipped)
+                return;
+            backgroundContent.introSkipped = true;
+            descentAnim.stop();
+            backgroundContent.opacity = 1;
+            backgroundContent.scale = 1;
+        }
+
+        ParallelAnimation {
+            id: descentAnim
+
+            NumberAnimation {
+                target: backgroundContent
+                property: "opacity"
+                to: 1
+                duration: Tokens.anim.durations.expressiveSlowSpatial
+                easing: Tokens.anim.expressiveSlowSpatial
+            }
+            NumberAnimation {
+                target: backgroundContent
+                property: "scale"
+                to: 1
+                duration: Tokens.anim.durations.expressiveSlowSpatial
+                easing: Tokens.anim.expressiveSlowSpatial
+            }
+        }
+
+        Timer {
+            interval: 16
+            running: true
+            onTriggered: {
+                if (!backgroundContent.introSkipped)
+                    descentAnim.start();
+            }
+        }
+
+        HoverHandler {
+            enabled: !backgroundContent.introSkipped
+            onPointChanged: backgroundContent.skipIntro()
+        }
+
+        TapHandler {
+            enabled: !backgroundContent.introSkipped
+            acceptedButtons: Qt.AllButtons
+            onTapped: backgroundContent.skipIntro()
+        }
+
         // Desktop right-click menu -- TapHandler (not MouseArea) so it
         // observes without grabbing the button, leaving normal
         // left-click-through-to-desktop behaviour untouched.
