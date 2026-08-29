@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Shapes
 import qs.config
 import qs.components
+import qs.components.effects
 import qs.services
 import qs.services.ai
 
@@ -17,6 +18,47 @@ Item {
     readonly property alias layout: graphLayout
     readonly property bool empty: root.sessions.length === 0
     readonly property bool anyFlowing: graphLayout.edges.some(e => e.status === "running")
+
+    // Per-surface accent override, same contract as the per-icon overrides:
+    // empty string means follow the theme rather than storing a copy of it.
+    readonly property color accent: Settings.agentGraphAccent ? Settings.agentGraphAccent : Colours.palette.m3primary
+
+    property int hoveredIndex: -1
+    property int selectedIndex: -1
+    property real nowMs: 0
+
+    function focusSession(index: int): void {
+        const node = graphLayout.nodes[index];
+        if (!node || node.kind !== "session" || !node.cwd)
+            return;
+        const leaf = node.cwd.slice(node.cwd.lastIndexOf("/") + 1);
+        if (!leaf)
+            return;
+        const match = WindowList.windows.find(w => w.title.includes(leaf));
+        if (match)
+            WindowList.focus(match.address);
+    }
+
+    function _durationText(node): string {
+        const ms = node.status === "running"
+            ? Math.max(0, root.nowMs - (node.startedAt ?? 0))
+            : (node.durationMs ?? 0);
+        if (!ms || !node.startedAt)
+            return "";
+        if (ms < 1000)
+            return qsTr("%1 ms").arg(Math.round(ms));
+        if (ms < 60000)
+            return qsTr("%1 s").arg((ms / 1000).toFixed(1));
+        return qsTr("%1 m %2 s").arg(Math.floor(ms / 60000)).arg(Math.round((ms % 60000) / 1000));
+    }
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.visible && root.anyFlowing
+        triggeredOnStart: true
+        onTriggered: root.nowMs = Date.now()
+    }
 
     // One clock for every packet on every edge instead of an animation per
     // packet: phase comes from the packet's index, so N particles cost one
@@ -128,7 +170,7 @@ Item {
 
         ShapePath {
             strokeWidth: 2.5
-            strokeColor: Qt.alpha(Colours.palette.m3primary, 0.9)
+            strokeColor: Qt.alpha(root.accent, 0.9)
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
             joinStyle: ShapePath.RoundJoin
@@ -155,6 +197,17 @@ Item {
             readonly property var to: graphLayout.positions[flow.modelData.b] ?? { x: 0, y: 0 }
             readonly property bool flowing: flow.modelData.status === "running"
 
+            // Packet speed carries how long the call has been in flight: a
+            // fresh call streams quickly, one that has been grinding for a
+            // while slows to a crawl. Integer multipliers only -- a
+            // fractional one would jump at every wrap of the shared clock.
+            readonly property int speed: {
+                const elapsed = root.nowMs - (flow.modelData.startedAt ?? 0);
+                if (!flow.modelData.startedAt || elapsed > 20000)
+                    return 1;
+                return elapsed > 5000 ? 2 : 3;
+            }
+
             visible: flow.flowing
 
             Repeater {
@@ -165,14 +218,14 @@ Item {
 
                     required property int index
 
-                    readonly property real progress: (root.flowClock + packet.index / Math.max(1, root.edgeParticles)) % 1
+                    readonly property real progress: (root.flowClock * flow.speed + packet.index / Math.max(1, root.edgeParticles)) % 1
                     readonly property real eased: packet.progress * packet.progress * (3 - 2 * packet.progress)
 
                     width: 6
                     height: 6
                     radius: width / 2
-                    color: Colours.palette.m3primary
-                    opacity: 1 - Math.abs(packet.progress - 0.5) * 0.5
+                    color: root.accent
+                    opacity: 0.35 + packet.progress * 0.65
                     x: flow.from.x + (flow.to.x - flow.from.x) * packet.eased - width / 2
                     y: flow.from.y + (flow.to.y - flow.from.y) * packet.eased - height / 2
                 }
@@ -193,6 +246,17 @@ Item {
             readonly property bool isSession: node.modelData.kind === "session"
             readonly property bool running: node.modelData.status === "running"
             readonly property bool errored: node.modelData.status === "errored"
+            readonly property bool waiting: node.modelData.status === "waiting"
+            readonly property bool ended: node.modelData.status === "ended"
+            readonly property bool hovered: root.hoveredIndex === node.index
+            readonly property bool selected: root.selectedIndex === node.index
+            readonly property color stateColour: node.errored ? Colours.palette.m3error : root.accent
+
+            opacity: node.ended ? 0.5 : 1
+
+            Behavior on opacity {
+                Anim { type: Anim.DefaultEffects }
+            }
 
             x: node.point.x - width / 2
             y: node.point.y - height / 2
@@ -208,36 +272,17 @@ Item {
                 Anim { type: Anim.EmphasizedSmall }
             }
 
-            Rectangle {
-                id: halo
-
-                property real pulse: 0.1
-
-                anchors.centerIn: pill
-                width: pill.width + Tokens.padding.medium
-                height: pill.height + Tokens.padding.medium
-                radius: height / 2
-                color: "transparent"
-                border.width: 1
-                border.color: node.errored ? Colours.palette.m3error : Colours.palette.m3primary
-                opacity: node.running ? halo.pulse : node.errored ? 0.6 : 0
-
-                SequentialAnimation on pulse {
-                    running: node.running && root.visible
-                    loops: Animation.Infinite
-                    Anim {
-                        to: 0.5
-                        type: Anim.SlowEffects
-                    }
-                    Anim {
-                        to: 0.08
-                        type: Anim.SlowEffects
-                    }
-                }
-
-                Behavior on opacity {
-                    Anim { type: Anim.DefaultEffects }
-                }
+            // The shared Aphotic glow rather than a graph-specific highlight:
+            // breathing while a call is in flight, held steady (not
+            // breathing) while a session waits on the user, and persistent
+            // in the error colour once something has failed. Declared before
+            // the pill on purpose -- it renders a blurred shape behind it.
+            BioluminescentGlow {
+                target: pill
+                glowColour: node.stateColour
+                breathing: node.running || node.isSession && node.modelData.status === "running"
+                visible: node.running || node.errored || node.waiting || node.hovered || node.selected
+                glowBlur: node.selected ? 26 : 18
             }
 
             StyledRect {
@@ -247,11 +292,11 @@ Item {
                 implicitWidth: content.implicitWidth + (node.isSession ? Tokens.padding.large : Tokens.padding.medium)
                 implicitHeight: node.isSession ? 32 : 26
                 radius: Tokens.rounding.full
-                scale: node.running ? 1.06 : 1
+                scale: node.selected ? 1.12 : node.hovered ? 1.09 : node.running ? 1.06 : 1
                 color: node.isSession
-                    ? Qt.alpha(Colours.palette.m3primary, node.modelData.status === "ended" ? 0.3 : 0.85)
+                    ? Qt.alpha(root.accent, node.ended ? 0.3 : 0.85)
                     : node.running
-                        ? Qt.alpha(Colours.palette.m3primary, 0.8)
+                        ? Qt.alpha(root.accent, 0.8)
                         : node.errored
                             ? Qt.alpha(Colours.palette.m3error, 0.85)
                             : Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.92)
@@ -266,6 +311,18 @@ Item {
 
                 Behavior on scale {
                     Anim { type: Anim.EmphasizedSmall }
+                }
+
+                HoverHandler {
+                    onHoveredChanged: root.hoveredIndex = hovered ? node.index : (root.hoveredIndex === node.index ? -1 : root.hoveredIndex)
+                }
+
+                TapHandler {
+                    onTapped: {
+                        root.selectedIndex = root.selectedIndex === node.index ? -1 : node.index;
+                        if (node.isSession)
+                            root.focusSession(node.index);
+                    }
                 }
 
                 Row {
@@ -299,6 +356,79 @@ Item {
                         color: Qt.alpha(pill.ink, 0.7)
                     }
                 }
+            }
+        }
+    }
+
+    // One tooltip for the whole view rather than one per node, and it
+    // reuses the tab/popout chrome (surfaceContainer + outlineVariant +
+    // extraLarge rounding) instead of introducing a second card style.
+    StyledRect {
+        id: tip
+
+        readonly property int target: root.selectedIndex >= 0 ? root.selectedIndex : root.hoveredIndex
+        readonly property var node: tip.target >= 0 ? graphLayout.nodes[tip.target] ?? null : null
+        readonly property var point: tip.target >= 0 ? graphLayout.positions[tip.target] ?? null : null
+
+        visible: opacity > 0
+        opacity: tip.node ? 1 : 0
+        implicitWidth: tipContent.implicitWidth + Tokens.padding.large * 2
+        implicitHeight: tipContent.implicitHeight + Tokens.padding.medium * 2
+        radius: Tokens.rounding.large
+        color: Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.97)
+        border.width: 1
+        border.color: Colours.palette.m3outlineVariant
+        z: 10
+
+        x: Math.max(0, Math.min(root.width - width, (tip.point?.x ?? 0) - width / 2))
+        y: {
+            const at = tip.point?.y ?? 0;
+            return at + 46 + height > root.height ? Math.max(0, at - height - 30) : at + 30;
+        }
+
+        Behavior on opacity {
+            Anim { type: Anim.DefaultEffects }
+        }
+
+        Column {
+            id: tipContent
+
+            anchors.centerIn: parent
+            spacing: Tokens.spacing.extraSmall
+
+            StyledText {
+                text: tip.node ? (tip.node.kind === "session" ? tip.node.label : tip.node.tool) : ""
+                font: Tokens.font.body.medium
+                color: Colours.palette.m3onSurface
+            }
+
+            StyledText {
+                visible: text.length > 0
+                text: {
+                    if (!tip.node)
+                        return "";
+                    const bits = [tip.node.status];
+                    const duration = root._durationText(tip.node);
+                    if (duration)
+                        bits.push(duration);
+                    if (tip.node.agentType)
+                        bits.push(tip.node.agentType);
+                    if (tip.node.kind === "session" && tip.node.callCount)
+                        bits.push(qsTr("%1 calls").arg(tip.node.callCount));
+                    return bits.join(" · ");
+                }
+                font: Tokens.font.label.small
+                color: Colours.palette.m3onSurfaceVariant
+            }
+
+            StyledText {
+                visible: text.length > 0
+                text: tip.node && tip.node.kind === "session" ? tip.node.cwd : ""
+                font: Tokens.font.label.small
+                color: Colours.palette.m3outlineVariant
+                elide: Text.ElideLeft
+                maximumLineCount: 1
+                width: Math.min(implicitWidth, 260)
             }
         }
     }
