@@ -133,7 +133,15 @@ Singleton {
         session.nodes = session.nodes.slice();
         session.agentParents = Object.assign({}, session.agentParents);
         session.updatedAt = record.t ?? session.updatedAt;
+        if (session.status === "ended" && record.event !== "session_end")
+            session.endedAt = 0;
 
+        // Observed on real data, not assumed: Claude Code emits session_end
+        // followed by session_start for the SAME session_id when the process
+        // restarts or a session resumes. So session_end is the end of a
+        // session *instance*, not proof the session is over -- any later
+        // event revives it, keeping the tool-call history it already had
+        // rather than starting from blank.
         if (record.event === "session_end") {
             session.status = "ended";
             session.endedAt = record.t ?? 0;
@@ -284,8 +292,8 @@ Singleton {
         running: true
         repeat: true
         onTriggered: {
-            const cutoff = Date.now() - 60000;
-            const kept = root._sessions.filter(s => s.status !== "ended" || s.endedAt > cutoff);
+            const cutoff = Date.now() - 300000;
+            const kept = root._sessions.filter(s => s.status !== "ended" || s.endedAt > cutoff || s.updatedAt > s.endedAt);
             if (kept.length !== root._sessions.length)
                 root._sessions = kept;
         }
