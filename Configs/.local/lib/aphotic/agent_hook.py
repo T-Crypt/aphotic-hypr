@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-FileCopyrightText: Aphotic-Hypr contributors
 """aphotic agent hook worker -- see agent_hook.sh for why this is one
 process and why nothing in here is allowed to raise."""
 import json, os, sys, time
