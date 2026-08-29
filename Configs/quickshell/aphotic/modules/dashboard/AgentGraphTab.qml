@@ -92,10 +92,7 @@ StyledRect {
                 StateLayer {
                     anchors.fill: parent
                     radius: parent.radius
-                }
-
-                TapHandler {
-                    onTapped: {
+                    onClicked: {
                         root.replayMode = !root.replayMode;
                         if (root.replayMode)
                             AgentGraphService.refreshRuns();
