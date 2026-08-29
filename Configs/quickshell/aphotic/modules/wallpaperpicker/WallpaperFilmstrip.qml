@@ -152,7 +152,30 @@ Item {
                 model: Themes.wallpapersInActiveTheme
 
                 onContentXChanged: {
-                    const idx = strip.indexAt(strip.contentX + strip.width / 2, strip.height / 2);
+                    // Geometric center-detection (indexAt at the viewport's
+                    // middle) can never resolve to one of the last/first
+                    // couple of items once contentX is pinned at either
+                    // scroll extreme -- there isn't enough content past
+                    // them left to carry the viewport's exact center point
+                    // over their position, unlike every item in the
+                    // middle of the strip. With 5 visible slots that
+                    // stranded currentIndex up to 2 items short of the
+                    // real last index, and neither arrow key nor a flick
+                    // could ever move further: _flickToIndex always
+                    // recomputes its target against this same currentIndex,
+                    // so once stuck it stayed stuck no matter how many more
+                    // times Right was pressed. Snapping explicitly at each
+                    // saturated bound sidesteps center-detection there
+                    // instead of trying to make it reach geometrically
+                    // unreachable positions.
+                    const maxX = Math.max(0, strip.contentWidth - strip.width);
+                    let idx;
+                    if (strip.contentX >= maxX - 0.5)
+                        idx = strip.count - 1;
+                    else if (strip.contentX <= 0.5)
+                        idx = 0;
+                    else
+                        idx = strip.indexAt(strip.contentX + strip.width / 2, strip.height / 2);
                     if (idx !== -1 && idx !== strip.currentIndex)
                         strip.currentIndex = idx;
                 }

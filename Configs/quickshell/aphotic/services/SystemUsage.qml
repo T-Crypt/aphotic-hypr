@@ -80,14 +80,35 @@ Singleton {
 
     Process {
         id: gpuNameProc
-        command: ["sh", "-c", "lspci -mm 2>/dev/null | grep -im1 'vga compatible controller\\|3d controller\\|display controller'"]
-        stdout: SplitParser {
-            onRead: data => {
-                const fields = data.match(/"[^"]*"|\S+/g) ?? [];
-                const vendor = (fields[2] ?? "").replace(/"/g, "");
-                const device = (fields[3] ?? "").replace(/"/g, "");
-                root._gpuName = device || vendor || qsTr("Unknown GPU");
-                root._gpuVendor = /nvidia/i.test(vendor) ? "nvidia" : /amd|ati/i.test(vendor) ? "amd" : /intel/i.test(vendor) ? "intel" : "";
+        // Every matching controller, not just the first -- a desktop with
+        // both a CPU iGPU (Intel/AMD) and a discrete GPU reports both, and
+        // lspci's default output is sorted by PCI bus number, which always
+        // puts the CPU's own iGPU (bus 00) before a card in a PCIe slot
+        // (bus 01+). `-m1` on the old grep meant this always picked the
+        // iGPU on exactly that (very common) hardware combination -- an
+        // i9-14900K + RTX 4090 reported "UHD Graphics 770", never the
+        // 4090 -- regardless of which one is actually doing any work.
+        command: ["sh", "-c", "lspci -mm 2>/dev/null | grep -i 'vga compatible controller\\|3d controller\\|display controller'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const candidates = text.split("\n").filter(l => l.length > 0).map(line => {
+                    const fields = line.match(/"[^"]*"|\S+/g) ?? [];
+                    return {
+                        vendor: (fields[2] ?? "").replace(/"/g, ""),
+                        device: (fields[3] ?? "").replace(/"/g, "")
+                    };
+                });
+                // Prefer a discrete GPU over an integrated one when a
+                // system reports both -- Intel/AMD's own iGPU is never
+                // the one a "Performance" card exists to show on a
+                // machine that also has a real GPU, and it's the only
+                // one of the three vendor(s) that never gets a live
+                // usage/temp reading below anyway (see gpuStatsProc).
+                const rank = v => /nvidia/i.test(v) || /amd|ati/i.test(v) ? 1 : 0;
+                candidates.sort((a, b) => rank(b.vendor) - rank(a.vendor));
+                const best = candidates[0];
+                root._gpuName = best ? (best.device || best.vendor || qsTr("Unknown GPU")) : qsTr("Unknown GPU");
+                root._gpuVendor = best ? (/nvidia/i.test(best.vendor) ? "nvidia" : /amd|ati/i.test(best.vendor) ? "amd" : /intel/i.test(best.vendor) ? "intel" : "") : "";
                 gpuStatsProc.running = true;
             }
         }
