@@ -9,8 +9,21 @@ established so the project stays uniform as more hands touch it.
 
 ## Before you start
 
-- **Branch model:** active development happens on `test`. `main` is the
-  stable/production line. Base your work off `test`, not `main`.
+- **Branch model:** all work happens on a short-lived feature branch off
+  `main` (e.g. `fix/<short-description>`), merged back via PR. `main` is
+  protected — direct pushes are rejected for everyone, including repo
+  admins; a PR with CI green (`test`, `shellcheck`, `bash-syntax`,
+  `CodeQL`) is required to merge. There is no separate `test`/staging
+  branch — an earlier two-branch (`test` -> `main`) model was retired
+  2026-08-29 once `main` itself became the PR-gated, CI-enforced line;
+  base your work off `main`.
+- **Installer-affecting changes need dev-VM validation too.** If your
+  change touches `install.sh` or adds/changes a systemd unit file, it
+  needs a real run on the project's dev VM (a clean-ish Arch box, not
+  just CI) before merge, confirming the affected install path still
+  works end to end — note this in the PR description. Changes scoped to
+  Quickshell/QML or other configs that don't affect what a fresh install
+  does are fine with just CI + normal live verification below.
 - **Read `README.md`'s [Roadmap](README.md#roadmap) section first.** It's
   the shipped source of truth for what's done, what's in progress, and
   what's explicitly out of scope. If your PR touches something the
@@ -24,7 +37,7 @@ established so the project stays uniform as more hands touch it.
 - **Check for drift before extending CLI/script behavior.** State
   contracts (theme/wallpaper, settings) have changed shape before. If
   you're not sure the local checkout reflects the latest agreed model,
-  diff against `origin/test` before building on top of it.
+  diff against `origin/main` before building on top of it.
 
 ## Module conventions (QML)
 
@@ -126,7 +139,8 @@ This project verifies live, not just "it parses":
 
 ## Opening a PR
 
-- Target `test`, not `main`.
+- Target `main` — it's PR-gated and CI-enforced (see "Branch model"
+  above), so there's no separate staging branch to target first.
 - Reference the relevant `README.md` Roadmap item if your change maps to
   one.
 - If your change closes, resolves, or explicitly defers a roadmap item,

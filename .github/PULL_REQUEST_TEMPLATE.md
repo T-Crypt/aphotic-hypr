@@ -4,9 +4,9 @@
 
 ## Scope
 
-- [ ] This PR targets `test`, not `main`
 - [ ] This is scoped to one module/command/fix, not a multi-surface change
 - [ ] Related `README.md` Roadmap item (if any): <!-- e.g. "Bar orientation" -->
+- [ ] If this touches `install.sh` or a systemd unit file: validated on the dev VM (not just CI) -- note the result below
 
 ## Verification
 
