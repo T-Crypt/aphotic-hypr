@@ -16,7 +16,8 @@ ColumnLayout {
         { id: "performance", icon: "monitoring", label: qsTr("Performance") },
         { id: "workspaces", icon: "grid_view", label: qsTr("Workspaces") },
         { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") },
-        { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") }
+        { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") },
+        { id: "agentGraph", icon: "account_tree", label: qsTr("Agent Graph") }
     ]
 
     spacing: Tokens.spacing.medium
@@ -91,6 +92,8 @@ ColumnLayout {
                     return wallpapersComp;
                 case "aiChat":
                     return aiChatComp;
+                case "agentGraph":
+                    return agentGraphComp;
                 default:
                     return dashboardComp;
                 }
@@ -133,5 +136,9 @@ ColumnLayout {
     Component {
         id: aiChatComp
         AiChatTab {}
+    }
+    Component {
+        id: agentGraphComp
+        AgentGraphTab {}
     }
 }

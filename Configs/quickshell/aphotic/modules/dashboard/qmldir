@@ -1,4 +1,5 @@
 module qs.modules.dashboard
+AgentGraphTab 1.0 AgentGraphTab.qml
 AiChatTab 1.0 AiChatTab.qml
 CommandCenterTabBar 1.0 CommandCenterTabBar.qml
 Dashboard 1.0 Dashboard.qml
