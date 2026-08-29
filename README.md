@@ -47,44 +47,73 @@ One shell, reskinned live from a wallpaper. No rebuild, no relogin. Settings →
 
 ## Screenshots
 
-<!-- Placeholders below. Capture your own for each label, drop the file at
-     the matching assets/screenshots/<name>.png path, and swap the <img src>
-     to point at it. -->
-
-<p><sub>Placeholders below — swap each image for your own capture at the matching <code>assets/screenshots/</code> path.</sub></p>
+<!-- A couple of these (Lock Screen, Screenshot Picker) are still
+     placeholders. Capture your own, drop the file at the matching
+     assets/screenshots/<name>.png path, and swap the <img src> to point
+     at it. -->
 
 <table>
 <tr>
 <td width="50%">
-<p align="center"><img src="https://placehold.co/440x260/0b0d12/7DCFFF?text=Dashboard&font=roboto" width="440"><br><sub>Dashboard</sub></p>
+<p align="center"><img src="./assets/screenshots/dashboard.png" width="440"><br><sub>Dashboard</sub></p>
 </td>
 <td width="50%">
-<p align="center"><img src="https://placehold.co/440x260/0b0d12/E0AF68?text=Launcher&font=roboto" width="440"><br><sub>Launcher</sub></p>
+<p align="center"><img src="./assets/screenshots/performance.png" width="440"><br><sub>Performance</sub></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-<p align="center"><img src="https://placehold.co/440x260/0b0d12/F7768E?text=Settings&font=roboto" width="440"><br><sub>Settings</sub></p>
+<p align="center"><img src="./assets/screenshots/workspaces.png" width="440"><br><sub>Workspaces</sub></p>
 </td>
 <td width="50%">
-<p align="center"><img src="https://placehold.co/440x260/0b0d12/AD8EE6?text=Wallpaper+Picker&font=roboto" width="440"><br><sub>Wallpaper Picker</sub></p>
+<p align="center"><img src="./assets/screenshots/launcher.png" width="440"><br><sub>Launcher</sub></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-<p align="center"><img src="https://placehold.co/440x260/0b0d12/7DCFFF?text=AI+Chat&font=roboto" width="440"><br><sub>AI Chat</sub></p>
+<p align="center"><img src="./assets/screenshots/ai-chat.png" width="440"><br><sub>AI Chat</sub></p>
 </td>
 <td width="50%">
-<p align="center"><img src="https://placehold.co/440x260/0b0d12/E0AF68?text=Bar+Styles&font=roboto" width="440"><br><sub>Bar Styles</sub></p>
+<p align="center"><img src="./assets/screenshots/wallpaper-picker.png" width="440"><br><sub>Wallpaper Picker</sub></p>
 </td>
 </tr>
 <tr>
+<td width="50%">
+<p align="center"><img src="./assets/screenshots/personalization.png" width="440"><br><sub>Personalization</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="./assets/screenshots/bar-full.png" width="440"><br><sub>Bar — Full Style</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<p align="center"><img src="./assets/screenshots/bar-dock.png" width="440"><br><sub>Bar — Dock Style</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="./assets/screenshots/ai-settings.png" width="440"><br><sub>AI Settings &amp; Hardware Advisor</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<p align="center"><img src="./assets/screenshots/plugins.png" width="440"><br><sub>Plugins</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="./assets/screenshots/workspace-profiles.png" width="440"><br><sub>Workspace Profiles</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<p align="center"><img src="./assets/screenshots/intelligence-assistant.png" width="440"><br><sub>Intelligence — Aphotic Assistant</sub></p>
+</td>
 <td width="50%">
 <p align="center"><img src="https://placehold.co/440x260/0b0d12/F7768E?text=Lock+Screen&font=roboto" width="440"><br><sub>Lock Screen</sub></p>
 </td>
+</tr>
+<tr>
 <td width="50%">
 <p align="center"><img src="https://placehold.co/440x260/0b0d12/AD8EE6?text=Screenshot+Picker&font=roboto" width="440"><br><sub>Screenshot Picker</sub></p>
 </td>
+<td width="50%"></td>
 </tr>
 </table>
 
