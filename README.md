@@ -43,7 +43,7 @@
 
 ## Preview
 
-One shell, reskinned live from a wallpaper. No rebuild, no relogin. Settings → Appearance open over **Tokyo Night**, **Lofi**, and **Gruvbox**, three of the eight themes that ship out of the box:
+One shell, reskinned live from a wallpaper. No rebuild, no relogin. The Agent Graph tab, live, over **Tokyo Night** — reskinned the same way across **Lofi** and **Gruvbox**, two more of the eight themes that ship out of the box:
 
 <p align="center">
   <img src="./assets/aphotic-preview.png" width="900">
