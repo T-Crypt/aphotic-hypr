@@ -27,7 +27,7 @@ aphotic_cmd_iso() {
             }
             [[ -d "$APHOTIC_ISO_PROFILE_DIR" ]] || {
                 aphotic_err "no archiso profile at ${APHOTIC_ISO_PROFILE_DIR}"
-                aphotic_log "TODO: scaffold releng-based profile here (packages.x86_64, airootfs/, profiledef.sh)"
+                aphotic_log "live/installer ISO building isn't built yet -- this command scaffolds nothing on its own. A real releng-based profile (packages.x86_64, airootfs/, profiledef.sh) needs to exist at that path first; that's planned as a future release, not something to expect working today."
                 return 1
             }
 
