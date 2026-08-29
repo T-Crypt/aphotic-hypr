@@ -1,0 +1,2 @@
+module qs.modules.keybinds
+KeybindsCheatsheetWindow 1.0 KeybindsCheatsheetWindow.qml

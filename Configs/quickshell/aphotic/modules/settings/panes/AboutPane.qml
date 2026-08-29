@@ -14,6 +14,14 @@ ColumnLayout {
 
     spacing: Tokens.spacing.medium
 
+    // Same fillHeight-spacer centering LauncherPane.qml uses -- About is
+    // the sparsest pane in the panel (a logo + three short text lines),
+    // and got visibly more top-heavy once SettingsPanel.qml's fixed
+    // height grew from 560 to 720.
+    Item {
+        Layout.fillHeight: true
+    }
+
     Logo {
         implicitWidth: 96
         implicitHeight: 96
@@ -44,21 +52,6 @@ ColumnLayout {
             cursorShape: Qt.PointingHandCursor
             acceptedButtons: Qt.NoButton
         }
-    }
-
-    StyledText {
-        Layout.topMargin: Tokens.spacing.medium
-        text: qsTr("Wallpaper art credits")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.label.medium
-    }
-
-    StyledText {
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
-        text: qsTr("All shipped theme wallpapers are original, hand-authored art created for this project — see themes/THEME_SPEC.md.")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.body.small
     }
 
     Process {

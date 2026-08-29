@@ -217,13 +217,38 @@ _aphotic_plugin_security_index_status() {
     jq -n --argjson trusted "$trusted" '{trusted: $trusted}'
 }
 
+# Clone APHOTIC_PLUGINS_REPO on first use, `git pull --ff-only` on later
+# ones -- install() used to just fail with "clone/pull the repo there
+# first" and expect a human to have already done that by hand outside
+# this tool, which is exactly why Settings -> Plugins' Install button
+# looked like it did nothing: the CLI's own real, correct stderr error
+# was never surfaced by the QML side (no stderr collector on that
+# Process -- see PluginsPane.qml), so it just silently failed every
+# single time on a machine that had never manually cloned the repo. A
+# pull failure (network hiccup, local edits under APHOTIC_PLUGINS_REPO)
+# is non-fatal -- falls through to whatever's on disk already rather
+# than blocking install, matching the "warn and continue" convention
+# this file already uses for hook failures.
+_aphotic_plugin_sync_repo() {
+    aphotic_require git || return 1
+    if [[ -d "${APHOTIC_PLUGINS_REPO}/.git" ]]; then
+        echo "Updating plugin repo: git -C ${APHOTIC_PLUGINS_REPO} pull --ff-only"
+        git -C "$APHOTIC_PLUGINS_REPO" pull --ff-only || aphotic_err "pull failed — continuing with the existing local checkout at ${APHOTIC_PLUGINS_REPO}"
+    else
+        echo "Cloning plugin repo: git clone ${APHOTIC_PLUGINS_GIT_URL} ${APHOTIC_PLUGINS_REPO}"
+        git clone "$APHOTIC_PLUGINS_GIT_URL" "$APHOTIC_PLUGINS_REPO" || { aphotic_err "clone failed: ${APHOTIC_PLUGINS_GIT_URL}"; return 1; }
+    fi
+}
+
 _aphotic_plugin_install() {
     local name="$1" link="$2" src dest
     [[ -n "$name" ]] || { aphotic_err "usage: aphotic plugin install <name> [--link]"; return 1; }
 
+    _aphotic_plugin_sync_repo || return 1
+
     src="${APHOTIC_PLUGINS_REPO}/${name}"
     if [[ ! -d "$src" ]] || [[ ! -f "${src}/plugin.toml" ]]; then
-        aphotic_err "no plugin '${name}' found under ${APHOTIC_PLUGINS_REPO} — clone/pull the aphotic-plugins repo there first"
+        aphotic_err "no plugin '${name}' in ${APHOTIC_PLUGINS_REPO} (repo synced okay, but this name isn't in it — check 'aphotic plugin list --remote')"
         return 1
     fi
 
@@ -235,13 +260,16 @@ _aphotic_plugin_install() {
 
     if [[ "$link" == "true" ]]; then
         ln -s "$src" "$dest"
-        aphotic_ok "linked ${name} -> ${src}"
+        echo "Linked ${name} -> ${src}"
     else
+        echo "Installing ${name}..."
         cp -r "$src" "$dest"
-        aphotic_ok "installed ${name}"
     fi
 
     find "$dest" -path "*/hooks/*" -type f -exec chmod +x {} \; 2>/dev/null || true
+
+    aphotic_ok "installed ${name}"
+    echo "PLUGIN INSTALLED: ${name}"
 }
 
 _aphotic_plugin_remove() {

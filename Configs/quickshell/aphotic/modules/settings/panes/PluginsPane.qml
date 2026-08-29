@@ -101,6 +101,20 @@ ColumnLayout {
         onExited: root.refresh()
     }
 
+    // Install now runs in a detached kitty terminal (see the Install
+    // button below) rather than a tracked Process, so there's no
+    // onExited to hook a refresh onto -- poll instead, same "cheap and
+    // self-correcting" convention as Themes.qml/Colours.qml's own state-
+    // file polling. 2s is frequent enough that "Install" flipping to
+    // "Installed" reads as prompt without re-running `aphotic plugin
+    // list` (two subprocess spawns) fast enough to matter.
+    Timer {
+        interval: 2000
+        running: true
+        repeat: true
+        onTriggered: root.refresh()
+    }
+
     function installedNames(): var {
         return root.installed.map(p => p.name);
     }
@@ -261,13 +275,20 @@ ColumnLayout {
 
         StyledRect {
             Layout.preferredWidth: 220
-            Layout.preferredHeight: 300
+            // Was 300, same fixed height as the browse column next to it --
+            // but with the search box gone (showSearch: false below) and 7
+            // real categories at ~60px/row with no inner spacing, 300 still
+            // clipped the list into its own inner scroll for no reason this
+            // box needs one. 400 fits all 7 without scrolling and keeps
+            // this column and the browse column matched (see below).
+            Layout.preferredHeight: 400
             radius: Tokens.rounding.large
             color: Colours.tPalette.m3surfaceContainer
 
             CategoryRail {
                 anchors.fill: parent
                 anchors.margins: Tokens.padding.medium
+                showSearch: false
                 currentCategory: root.selectedCategory
                 categories: root.categories
                 onCategorySelected: id => root.selectedCategory = id
@@ -276,7 +297,7 @@ ColumnLayout {
 
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 300
+            Layout.preferredHeight: 400
             spacing: Tokens.spacing.small
 
             // Security is the one category that can be legitimately
@@ -411,8 +432,28 @@ ColumnLayout {
                                     enabled: !availableRow.isInstalled
                                     cursorShape: availableRow.isInstalled ? Qt.ArrowCursor : Qt.PointingHandCursor
                                     onClicked: {
-                                        actionProc.command = ["aphotic", "plugin", "install", availableRow.modelData.name];
-                                        actionProc.running = true;
+                                        // Install used to run silently through
+                                        // actionProc (no stdout/stderr capture at
+                                        // all) -- on a machine with no local
+                                        // aphotic-plugins checkout yet, the real
+                                        // CLI failure (see cmd_plugin.sh) was
+                                        // discarded with zero UI feedback: the
+                                        // button just sat there. Routing through
+                                        // a real, visible terminal instead of
+                                        // trying to reimplement progress/error
+                                        // display in QML -- same CLI command
+                                        // either way (`aphotic plugin install`,
+                                        // now self-sufficient: clones/pulls the
+                                        // plugins repo itself, see
+                                        // _aphotic_plugin_sync_repo), just with
+                                        // real output the user can actually read,
+                                        // including the git clone/pull step.
+                                        // `--hold` keeps the window open after
+                                        // the command exits instead of it
+                                        // vanishing the instant install finishes
+                                        // (or fails). No windowrule floats
+                                        // kitty, so this tiles normally.
+                                        Quickshell.execDetached(["kitty", "--hold", "-T", `Installing ${availableRow.modelData.display_name}`, "aphotic", "plugin", "install", availableRow.modelData.name]);
                                     }
                                 }
                             }

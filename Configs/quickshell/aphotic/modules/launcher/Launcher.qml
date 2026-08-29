@@ -305,6 +305,18 @@ Item {
                                     }
                                     Keys.onDownPressed: root.useGrid ? grid.moveCurrentIndexDown() : list.incrementCurrentIndex()
                                     Keys.onUpPressed: root.useGrid ? grid.moveCurrentIndexUp() : list.decrementCurrentIndex()
+                                    Keys.onLeftPressed: event => {
+                                        if (root.useGrid)
+                                            grid.moveCurrentIndexLeft();
+                                        else
+                                            event.accepted = false;
+                                    }
+                                    Keys.onRightPressed: event => {
+                                        if (root.useGrid)
+                                            grid.moveCurrentIndexRight();
+                                        else
+                                            event.accepted = false;
+                                    }
                                 }
 
                                 StyledText {
@@ -412,8 +424,13 @@ Item {
                     }
                     default:
                         // Frequency-first sort, alphabetical tiebreak -- see
-                        // root.appResults above.
-                        return root.appResults.slice(0, Tokens.sizes.launcher.maxShown);
+                        // root.appResults above. Unsliced -- list.height
+                        // stays capped via `shown` below, but the full
+                        // result set is in the model so ListView can
+                        // scroll to reach entries past the visible window
+                        // (same pattern clipboard/project modes already
+                        // use), instead of silently truncating.
+                        return root.appResults;
                     }
                 }
                 onValuesChanged: list.currentIndex = 0
@@ -560,7 +577,12 @@ Item {
             cellHeight: Tokens.sizes.launcher.gridCellHeight
 
             model: ScriptModel {
-                values: root.useGrid ? root.appResults.slice(0, root.gridMaxShown) : []
+                // Unsliced -- grid.height stays capped to gridMaxShown's
+                // worth of rows (see shownRows above), but the full result
+                // set is in the model so GridView can scroll to reach
+                // entries past the visible window instead of silently
+                // truncating (matching the ListView fix above).
+                values: root.useGrid ? root.appResults : []
                 onValuesChanged: grid.currentIndex = 0
             }
 
