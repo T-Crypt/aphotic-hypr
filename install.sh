@@ -516,6 +516,8 @@ config_sync() {
   echo -e "  Packages:      untouched"
   echo -e "  aphotic.toml:  left as-is"
   echo -e "$COK - Config sync complete."
+
+  "$HOME/.local/bin/aphotic" whatsnew &>> "$INSTLOG" || true
 }
 
 main() {
@@ -776,6 +778,8 @@ except Exception:
     echo -e "  Exploit disclaimer: $([[ -f "$EXPLOIT_ACK_FILE" ]] && echo "acknowledged, see $EXPLOIT_ACK_FILE" || echo "not recorded")"
   fi
   echo -e "$COK - Install complete."
+
+  "$HOME/.local/bin/aphotic" whatsnew &>> "$INSTLOG" || true
 
   if [[ "$ISNVIDIA" == "true" ]]; then
     echo -e "$CAT - Since we attempted to setup an Nvidia GPU the script will now end and you should reboot."
