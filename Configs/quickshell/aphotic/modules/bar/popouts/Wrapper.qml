@@ -162,7 +162,25 @@ Item {
         HoverHandler {
             id: flyoutHover
             onHoveredChanged: {
-                if (!hovered)
+                // Entering the flyout also REVIVES hasCurrent, not just
+                // guards against clearing it (see hoveringFlyout above) --
+                // the bar's own hover-exit fires the instant the pointer
+                // leaves its thin strip, which for a tall/edge-clamped
+                // flyout (Settings, docked near the screen's far corner)
+                // can land the pointer in the gap between the bar and the
+                // flyout for a frame or two before the flyout is reached.
+                // That blip already set hasCurrent false, so simply
+                // entering the still-fading flyout used to do nothing --
+                // closeTimer ran to completion underneath the user's own
+                // cursor and the popout disappeared while they were
+                // hovering it. Reviving here means arriving anywhere
+                // inside the flyout while it's still visible (mid fade-out
+                // included) reliably keeps the SAME popout open, instead
+                // of only being able to prevent a close already in
+                // progress.
+                if (hovered)
+                    root.hasCurrent = true;
+                else
                     root.hasCurrent = false;
             }
         }

@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <em>A Hyprland setup built for four identities at once — developer environment, gaming rig, AI-assisted workflow, and security research box — without losing the minimalist bones it started from.</em>
+  <em>A Hyprland setup for four identities at once: developer environment, gaming rig, AI-assisted workflow, and security research box. It kept the minimalist bones it started from.</em>
 </p>
 
 <p align="center">
@@ -35,7 +35,7 @@
 
 ## Preview
 
-One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings → Appearance open over **HackTheBox**, **Nordic**, and **Windows 11**, three of the eight themes that ship out of the box:
+One shell, reskinned live from a wallpaper. No rebuild, no relogin. Settings → Appearance open over **Tokyo Night**, **Lofi**, and **Gruvbox**, three of the eight themes that ship out of the box:
 
 <p align="center">
   <img src="./assets/aphotic-preview.png" width="900">
@@ -47,45 +47,43 @@ One shell, reskinned live from a wallpaper — no rebuild, no relogin. Settings 
 
 ## Screenshots
 
+<!-- Placeholders below. Capture your own for each label, drop the file at
+     the matching assets/screenshots/<name>.png path, and swap the <img src>
+     to point at it. -->
+
+<p><sub>Placeholders below — swap each image for your own capture at the matching <code>assets/screenshots/</code> path.</sub></p>
+
 <table>
 <tr>
 <td width="50%">
-<p align="center"><img src="assets/screenshots/dashboard.png" width="440"><br><sub>Command Center — clock, calendar, media, Pomodoro, quick toggles, live weather</sub></p>
+<p align="center"><img src="https://placehold.co/440x260/0b0d12/7DCFFF?text=Dashboard&font=roboto" width="440"><br><sub>Dashboard</sub></p>
 </td>
 <td width="50%">
-<p align="center"><img src="assets/screenshots/settings-menu.png" width="440"><br><sub>Settings → Bar — live style previews, visibility, per-style options</sub></p>
-</td>
-</tr>
-<tr>
-<td width="50%">
-<p align="center"><img src="assets/screenshots/wallpaper-picker.png" width="440"><br><sub>Settings → Appearance — theme and wallpaper selection</sub></p>
-</td>
-<td width="50%">
-<p align="center"><img src="assets/screenshots/ai-assistant.png" width="440"><br><sub>Intelligence — quick-chat popout, Ollama/Claude/Gemini/ChatGPT</sub></p>
+<p align="center"><img src="https://placehold.co/440x260/0b0d12/E0AF68?text=Launcher&font=roboto" width="440"><br><sub>Launcher</sub></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-<p align="center"><img src="assets/screenshots/bar-full.png" width="440"><br><sub>Full bar style, live-recolored from a non-default Nordic wallpaper</sub></p>
+<p align="center"><img src="https://placehold.co/440x260/0b0d12/F7768E?text=Settings&font=roboto" width="440"><br><sub>Settings</sub></p>
 </td>
 <td width="50%">
-<p align="center"><img src="assets/screenshots/bar-dock.png" width="440"><br><sub>Dock bar style — floating macOS-inspired app dock</sub></p>
-</td>
-</tr>
-<tr>
-<td width="50%">
-<p align="center"><img src="assets/screenshots/bar-minimal.png" width="440"><br><sub>Minimal bar style — single-accent icon strip + desktop clock</sub></p>
-</td>
-<td width="50%">
-<p align="center"><img src="assets/screenshots/vscode-tiled.png" width="440"><br><sub>VS Code, Thunar, and Kitty tiled — consistent GTK/Qt/editor theming</sub></p>
+<p align="center"><img src="https://placehold.co/440x260/0b0d12/AD8EE6?text=Wallpaper+Picker&font=roboto" width="440"><br><sub>Wallpaper Picker</sub></p>
 </td>
 </tr>
 <tr>
 <td width="50%">
-<p align="center"><img src="assets/screenshots/terminal-neofetch.png" width="440"><br><sub>Kitty + neofetch</sub></p>
+<p align="center"><img src="https://placehold.co/440x260/0b0d12/7DCFFF?text=AI+Chat&font=roboto" width="440"><br><sub>AI Chat</sub></p>
 </td>
 <td width="50%">
-<p align="center"><img src="assets/screenshots/cli-output.png" width="440"><br><sub><code>aphotic --help</code> — the shell's own CLI</sub></p>
+<p align="center"><img src="https://placehold.co/440x260/0b0d12/E0AF68?text=Bar+Styles&font=roboto" width="440"><br><sub>Bar Styles</sub></p>
+</td>
+</tr>
+<tr>
+<td width="50%">
+<p align="center"><img src="https://placehold.co/440x260/0b0d12/F7768E?text=Lock+Screen&font=roboto" width="440"><br><sub>Lock Screen</sub></p>
+</td>
+<td width="50%">
+<p align="center"><img src="https://placehold.co/440x260/0b0d12/AD8EE6?text=Screenshot+Picker&font=roboto" width="440"><br><sub>Screenshot Picker</sub></p>
 </td>
 </tr>
 </table>
@@ -105,6 +103,30 @@ Eight themes ship out of the box, each a directory-per-theme wallpaper set with 
 
 Switch between them live with `aphotic theme next`/`prev` (or <kbd>Super</kbd> + <kbd>,</kbd>/<kbd>.</kbd>), pick one directly in Settings → Appearance, or build your own in the [Theme Creator](#settings--control-center). See [Theming](#theming) for how the palette actually gets generated and applied.
 
+<details>
+<summary><strong>CLI reference &amp; wallpaper pool</strong></summary>
+
+```bash
+aphotic theme list                   # list theme folders
+aphotic theme set <theme-name>       # apply a theme
+aphotic theme next / prev            # cycle themes
+aphotic scheme set -n <scheme-name>  # apply a named color scheme
+aphotic wallpaper -f <path>          # set a specific wallpaper
+aphotic wallpaper --random           # pick a random wallpaper
+aphotic wallpaper --fetch-extra      # download the larger community wallpaper pool
+```
+
+Each theme ships with 4-5 wallpapers committed directly in the repo (under 20MB total across all eight), enough to keep a fresh `git clone` small even on a slow connection. A larger curated pool (roughly 145MB across all themes, sourced from the community wallpaper repos credited at the bottom of this page) stays opt-in rather than bundled:
+
+```bash
+aphotic wallpaper --fetch-extra            # every theme's extra pool
+aphotic wallpaper --fetch-extra nordic     # just one theme
+```
+
+Both commands show the total download size first (skip the prompt with `-y`/`--yes`), verify each file's SHA-256 before keeping it, and only fetch what's still missing on a re-run. `install.sh` asks about this once near the end of setup, defaulting to **no** so a bandwidth-limited connection isn't stuck downloading wallpapers it never asked for.
+
+</details>
+
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
@@ -122,7 +144,7 @@ Switch between them live with `aphotic theme next`/`prev` (or <kbd>Super</kbd> +
 | Audio Visualizer | [Cava](https://github.com/karlstav/cava) |
 
 > [!NOTE]
-> Rofi shipped as the app launcher, clipboard/emoji/wallpaper pickers, and power menu through the earlier Waybar-based setup. All four are now covered natively by the Quickshell launcher (`SUPER+A`) — see [Launcher modes](#quickshell-shell) below. Rofi isn't installed by either profile anymore; nothing in this repo launches it.
+> Rofi shipped as the app launcher, clipboard/emoji/wallpaper pickers, and power menu through the earlier Waybar-based setup. All four are now covered natively by the Quickshell launcher (`SUPER+A`) — see [Launcher modes](#quickshell-shell) below. Rofi isn't installed by either profile now, and nothing in this repo launches it.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -130,13 +152,13 @@ Switch between them live with `aphotic theme next`/`prev` (or <kbd>Super</kbd> +
 
 ## Quickshell Shell
 
-Waybar, Mako, Swaylock, and Rofi have all been fully retired in favor of one hand-vendored [Quickshell](https://quickshell.org) shell, not an installed dependency: the QML is checked into `Configs/quickshell/aphotic/`, with no native C++ plugin required. Color comes from `wallust` the same as everything else — Quickshell doesn't bring its own theming engine.
+Waybar, Mako, Swaylock, and Rofi are retired in favor of one hand-vendored [Quickshell](https://quickshell.org) shell. It isn't an installed dependency: the QML lives in `Configs/quickshell/aphotic/`, and no native C++ plugin is required. Color comes from `wallust`, the same engine as everything else — Quickshell doesn't bring its own theming.
 
 | Module | Replaces | Notes |
 |---|---|---|
 | Bar | Waybar | Four swappable bar styles -- Full (dockable left/right/top/bottom, pill or square background), Dock (floating macOS-style app dock), Taskbar (Windows-style grouped task list), Minimal (Omarchy-style thin icon strip) -- switchable live from Settings → Bar, `aphotic bar style <name>`, or SUPER+CTRL+SHIFT+B to cycle. Full's workspaces/active window/tray/clock/status icons all keep their real hover popouts (see below). See [`docs/bar-styles.md`](docs/bar-styles.md) for how each style is built and a migration note for anyone with `barSkin: "minimal"` already saved |
 | Bar popouts | — | Hover any status icon, the tray, or the active window pill for a real detail panel — volume, Wi-Fi, Bluetooth, battery/power profile, agent sessions, host info, Pomodoro, window title, keyboard layout, lock state, live resource meter |
-| Launcher | Rofi (drun, clipboard, emoji, wallpaper) | One search box, mode switched by a prefix — see the table below |
+| Launcher | Rofi (drun, clipboard, emoji, wallpaper) | One search box, mode switched by a prefix — see [Launcher modes](#launcher-modes) below |
 | Screenshot picker | `grim`/`slurp` combo scripts | Drag-select a region with live client-window snapping and a freeze-mode preview — `SUPER+Shift+S` (see [Keybindings](#keybindings) for the freeze/clipboard variants); the plain `grim`/`slurp`/`swappy` combo stays on `SUPER+S` |
 | Notifications | Mako | Popup toasts, top-right — `SUPER+Shift+N` clears them all |
 | OSD | — | Volume/mic/brightness popups on change, enable flags and hide-delay configurable in Settings |
@@ -149,7 +171,8 @@ Waybar, Mako, Swaylock, and Rofi have all been fully retired in favor of one han
 
 Every module is a deliberately-scoped-down, hand-built implementation, not a kitchen-sink port — things needing a native C++ plugin (fingerprint/face auth, a calculator, Material-You scheme switching) were left out in favor of what Aphotic actually needs; the resource-meter and dashboard gaps a plugin would otherwise cover are hand-implemented instead (see Performance/System above), not skipped.
 
-### AI Chat
+<details>
+<summary><strong>AI Chat</strong> — four providers behind one interface, plus a local model manager and an optional Assistant</summary>
 
 The Command Center's AI Chat tab talks to four providers behind one interface, plus a fifth if you've installed the Assistant (see below):
 
@@ -159,11 +182,17 @@ The Command Center's AI Chat tab talks to four providers behind one interface, p
 - **Aphotic Assistant** (opt-in) — a local chatbot pinned to a fixed persona/system-prompt, installed via `install.sh` on NVIDIA machines that have (or add) the `ai` layer. Shows up as a fifth provider pill once installed, in both AI Chat and Intelligence. Picks its model via `llmfit`'s hardware-aware recommendation at install time (a small broadly-compatible default if `llmfit` isn't available), greets you once on first open, and Settings → AI shows its installed model with reinstall/uninstall controls. `install.sh --with-assistant`/`--no-assistant` skip the prompt; silently unavailable on non-NVIDIA machines.
 - **Agent module** (bar icon) — tracks three CLI providers, Claude Code/Codex/Ollama, behind one switchable icon: left-click for a session/token-usage or loaded-models panel, right-click launches the provider in a new terminal, middle-click cycles providers. Usage comes from a 15-minute local-transcript scan (aggregate token counts only, never prompts/responses — see [`docs/AGENT_TRACKING.md`](docs/AGENT_TRACKING.md)); surfacing the Claude Code hook's live per-session data in the panel is still open.
 
-### Intelligence
+</details>
+
+<details>
+<summary><strong>Intelligence</strong> — a right-docked quick-chat popout with persisted session history</summary>
 
 `SUPER+Shift+A` opens **Intelligence**, a right-docked quick-chat popout that stays out of the way until summoned — distinct from the Command Center's AI Chat tab (`SUPER+D`), which is a fixed tab inside a bigger overlay. Both share the same backend (`AiProviders`, `AiConfig`, `AiKeys`): same providers, same keys, same Ollama host. What Intelligence adds is real conversation history — every session (title, provider, model, full message log) persists to `~/.local/state/aphotic/intelligence-sessions.json`, survives a shell restart, and is independently switchable/renamable/deletable from a collapsible history panel. Each session remembers its own provider/model rather than always following the AI Chat tab's active pick; Settings → AI has a default-provider/model override for new sessions plus max-sessions/auto-prune-by-age limits. Replies render with minimal markdown (fenced code blocks get a monospace block, everything else is plain wrapped text) and, like the AI Chat tab, aren't streamed token-by-token yet (a real streaming rewrite across all four providers is future work, not silently stubbed).
 
-### Bar icons
+</details>
+
+<details>
+<summary><strong>Bar icons</strong> — host info, Pomodoro timer, Do Not Disturb</summary>
 
 Three small bar icons round out the QoL set, each with its own Personalization accent-color override:
 
@@ -171,7 +200,10 @@ Three small bar icons round out the QoL set, each with its own Personalization a
 - **Pomodoro timer** — 25/5 focus/break cycle, click to start/pause, hover for reset/skip, notified on phase change, with a matching Dashboard card.
 - **Do Not Disturb** (`SUPER+Shift+D`) — suppresses notification popups (they still land in history). Pomodoro's focus phase auto-engages it and auto-releases it when focus ends, without clobbering a DND you'd already turned on manually.
 
-### Launcher modes
+</details>
+
+<details id="launcher-modes">
+<summary><strong>Launcher modes</strong> — one search box, mode switched by a prefix character</summary>
 
 `SUPER+A` (or `SUPER+SPACE`) opens the launcher in app-search mode. Typing one of these characters first switches what you're searching, all inside the same box:
 
@@ -184,6 +216,8 @@ Three small bar icons round out the QoL set, each with its own Personalization a
 | `~` | Change wallpaper | Files in `~/.config/awww` |
 | `@` | Jump to a project — opens a terminal running `claude` plus an editor | Git repos found under `~/Projects`/`~/repos` (or `Settings.projectRoots`) |
 
+</details>
+
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
@@ -191,6 +225,9 @@ Three small bar icons round out the QoL set, each with its own Personalization a
 ## Settings — Control Center
 
 `SUPER+I` (or `qs -c aphotic ipc call settings toggle`) opens a full-screen panel — a searchable, scrollable category rail on the left, the selected category's controls on the right, sliding between them instead of a flat crossfade:
+
+<details>
+<summary><strong>Full category reference</strong></summary>
 
 | Category | What's in it |
 |---|---|
@@ -201,12 +238,14 @@ Three small bar icons round out the QoL set, each with its own Personalization a
 | Displays | Live per-monitor info — name, resolution, refresh rate, scale, primary badge (read-only; live resolution/scale editing isn't wired up yet, see the Displays entry in the roadmap for why) |
 | Clock / Date | 12-hour clock, show date in bar clock, desktop clock, weather location override + Celsius/Fahrenheit |
 | OSD / Notifications | Show/hide OSD, brightness/mic sliders, OSD hide delay, notification timeout |
-| AI | Active provider, Ollama host/model + manager, masked API keys, an `llmfit` Hardware Advisor, Model Storage (Ollama/GGUF directories), Intelligence session defaults, and Assistant status — see [AI Chat](#ai-chat) above |
+| AI | Active provider, Ollama host/model + manager, masked API keys, an `llmfit` Hardware Advisor, Model Storage (Ollama/GGUF directories), Intelligence session defaults, and Assistant status — see [AI Chat](#quickshell-shell) above |
 | Power & Security | Power profile switcher (Saver/Balanced/Performance), idle lock/screen-off/suspend timeouts (generates `hypridle.conf`), lockout info |
 | Workspace Profiles | Named, one-key launch groups — save a list of commands + target workspaces, launch them all at once via `hyprctl dispatch exec`. Not a live session snapshot (Hyprland/X11 apps don't expose one), just a saved replay list |
 | Plugins | Link to the [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) repo, an **Installed** list (enable/disable/remove, missing-dependency warnings), and a **Browse available** list pulled live from the repo's index, filterable by category (Dev/Security/Mobile/AI/Theming/Productivity) — install with one click. Security-category plugins stay hidden behind a separate trust step. See [Plugin system](#plugin-system) below |
 | System | Live `aphotic doctor` output, an Overview (theme, install profile, daemon status), Hardware (CPU/GPU/RAM/disk), and an on-demand package check |
 | About | Real Aphotic logo, version (read from `VERSION`), repo link, wallpaper art credits |
+
+</details>
 
 Every toggle here persists to `~/.local/state/aphotic/settings.json` and survives a shell restart. Adding a new setting is a data addition to an existing pane, not new UI — every row shares one component (`SettingsRow`, grouped into connected-card sections by `SettingsGroup`) for the icon-badge/title/description/control layout. Pane content and the category rail both scroll independently once they outgrow the panel, so a long pane never gets clipped. See [Preview](#preview) above for the panel itself, live across three different themes.
 
@@ -216,7 +255,7 @@ Every toggle here persists to `~/.local/state/aphotic/settings.json` and survive
 
 ## Plugin System
 
-Aphotic ships a small, real plugin mechanism (design in [`docs/PLUGIN_SYSTEM.md`](docs/PLUGIN_SYSTEM.md)): a plugin is a directory with a `plugin.toml` manifest and one or more hook scripts. Every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's `on_theme_change` hook with the freshly-resolved palette as JSON on stdin; a project opened from the launcher's `@` mode or a Workspace Profile launch fires `on_project_open`/`on_workspace_launch` for any plugin that declares interest in that specific hook. All hooks are fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall what it's piggybacking on. A `category` field (dev/security/mobile/ai/theming/productivity) drives filtering in `aphotic plugin list --remote` and Settings → Plugins; security-category plugins live in a separate index that stays untrusted (and unfetched) until explicitly opted into.
+Aphotic ships a small plugin mechanism (design in [`docs/PLUGIN_SYSTEM.md`](docs/PLUGIN_SYSTEM.md)): a plugin is a directory with a `plugin.toml` manifest and one or more hook scripts. Every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's `on_theme_change` hook with the freshly-resolved palette as JSON on stdin; a project opened from the launcher's `@` mode or a Workspace Profile launch fires `on_project_open`/`on_workspace_launch` for any plugin that declares interest in that specific hook. All hooks are fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall what it's piggybacking on. A `category` field (dev/security/mobile/ai/theming/productivity) drives filtering in `aphotic plugin list --remote` and Settings → Plugins; security-category plugins live in a separate index that stays untrusted (and unfetched) until explicitly opted into.
 
 Plugins are distributed from a separate, purpose-built repo, [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) — kept apart from the main dotfiles so plugins can version and release independently. `aphotic plugin list --remote` (and Settings → Plugins' **Browse available** list) reads that repo's lightweight `index.json` without needing a full clone; `aphotic plugin install <name>` (or the Settings UI's Install button) clones just that plugin locally. The first real plugin, **OpenRGB Sync**, sets your RGB lighting to the theme's accent color on every theme change.
 
@@ -233,15 +272,15 @@ aphotic plugin remove <name>
 
 ## Why Aphotic
 
-Most rices are a snapshot — a config someone tuned once and stopped touching, distributed as a pile of dotfiles you copy over your own and hope for the best. Aphotic is built to keep moving. Underneath the visuals is a small, deliberate piece of infrastructure:
+Most rices are a snapshot: a config someone tuned once and stopped touching, distributed as a pile of dotfiles you copy over your own and hope for the best. Aphotic is built to keep moving. Underneath the visuals is a small, deliberate piece of infrastructure:
 
-- **Declarative, not hardcoded.** Package sets live as data (`profiles/*.toml`), not as bash arrays buried in an install script. Changing what ships means editing a TOML file, not surgery on `install.sh`.
-- **Composable, not monolithic.** A base profile (`minimal` or `full`) plus any combination of layers (`gaming`, `dev`, `ai`, `exploit` and its sublayers) resolve into one merged package list at install time. Add a layer without touching the base; add a base without touching the layers.
-- **Safe to run twice.** Every install is snapshotted to a timestamped backup before anything changes, and the resolved choice is written to `aphotic.toml` so a re-run can detect and reuse it instead of asking the same questions again.
-- **Honest about what it will do.** `--dry-run` prints the entire install plan — every package, every layer, every detected system fact — and touches nothing. No surprises, no `sudo` running until you've actually agreed to something.
-- **Reversible.** `./uninstall.sh` restores your most recent backup on request. Trying Aphotic was never supposed to mean burning your current setup down first.
+- **Package sets are data.** They live in `profiles/*.toml`, not as bash arrays buried in an install script. Changing what ships means editing a TOML file, not doing surgery on `install.sh`.
+- **Profiles and layers compose.** A base profile (`minimal` or `full`) plus any combination of layers (`gaming`, `dev`, `ai`, `exploit` and its sublayers) resolve into one merged package list at install time. Add a layer without touching the base, or a base without touching the layers.
+- **Every install is safe to repeat.** Each run snapshots your configs to a timestamped backup first, and writes the resolved choice to `aphotic.toml` so a re-run reuses it instead of asking the same questions again.
+- **`--dry-run` shows the whole plan.** Every package, every layer, every detected system fact, before anything runs. No `sudo` prompt until you've agreed to something concrete.
+- **`./uninstall.sh` reverses it.** It restores your most recent backup on request. Trying Aphotic doesn't require burning your current setup down first.
 
-None of this is unique in isolation, but it's what turns a rice from something you install once into something you can actually keep living in.
+None of this is unique by itself. Together it turns a rice from something you install once into something you keep living in.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -258,13 +297,16 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Running with no flags launches a short wizard — profile, optional layers, theme — and writes your choices to `aphotic.toml`, which becomes the source of truth for every re-run after that.
+Running with no flags launches a short wizard: profile, optional layers, theme. It writes your choices to `aphotic.toml`, the source of truth for every re-run after that.
 
 > [!TIP]
 > Prefer to skip the prompts entirely:
 > ```
 > ./install.sh --profile full --with gaming,dev --dry-run
 > ```
+
+<details>
+<summary><strong>Full flag reference</strong></summary>
 
 | Flag | Effect |
 |---|---|
@@ -277,8 +319,10 @@ Running with no flags launches a short wizard — profile, optional layers, them
 | `--keep-backups <N>` | How many timestamped backups to retain before pruning. Defaults to 5. |
 | `-h`, `--help` | Full flag reference. |
 
+</details>
+
 > [!NOTE]
-> `--dry-run` is checked before anything else runs — no `sudo` prompt, no package installs, no filesystem writes happen ahead of it. Re-running `install.sh` later detects your last saved config in `aphotic.toml` and offers to reuse it without repeating the wizard.
+> `--dry-run` is checked before anything else runs — no `sudo` prompt, no package installs, no filesystem writes happen before it. Re-running `install.sh` later detects your last saved config in `aphotic.toml` and offers to reuse it without repeating the wizard.
 
 Custom apps live in `profiles/custom_apps.lst` (still readable at the repo root as a symlink, for anyone on an older clone) and are folded into the resolved package list automatically — no separate prompt needed.
 
@@ -333,6 +377,9 @@ Layers are additive and dedupe against the base and each other, so `--with gamin
 
 Aphotic's repo mirrors what actually gets installed, plus the machinery that decides what that is:
 
+<details>
+<summary><strong>Full repo layout</strong></summary>
+
 ```
 Aphotic-Hypr/
 ├── install.sh / uninstall.sh   Thin orchestrators — wizard or flags in, resolved plan out
@@ -361,6 +408,8 @@ Aphotic-Hypr/
         └── lib/aphotic/           aphotic CLI internals (commands/, globalcontrol.sh)
 ```
 
+</details>
+
 `install.sh` never hardcodes a package list — it resolves one at runtime by merging `profiles/base/<profile>.toml` with each selected `profiles/layers/<layer>.toml`, deduplicating as it goes. Everything downstream (backups, AUR helper choice, config copying) reads from that single resolved plan.
 
 `~/.config/hypr/custom.lua` is the one file `install.sh` never touches once it exists — put your own Hyprland tweaks there and a re-run or `aphotic update` won't clobber them, the same idea as ML4W's protected `custom.conf`.
@@ -383,61 +432,6 @@ Wallpaper-driven color generation, applied consistently across the stack:
 > [!TIP]
 > Thunar has a right-click **Set as Theme** action for building a theme straight from an image in `$HOME/Pictures` (avoid special characters at the front of the path). An SDDM sync script keeps your login screen's wallpaper matched to whatever's currently active.
 
-## Theme Picker Integration
-
-Aphotic now features a complete theming system with:
-- CLI commands for theme management (`aphotic theme list`, `set`, `next`, `prev`)
-- <kbd>Super</kbd> + <kbd>,</kbd> / <kbd>Super</kbd> + <kbd>.</kbd> keybinds to cycle themes without leaving the keyboard
-- Automatic palette regeneration when schemes change
-- State tracking for current theme and wallpaper
-- Integration with Quickshell's color system via wallust engine
-- Support for multiple color schemes (wallust backends and matugen variants)
-
-### Theme Commands
-
-```bash
-# List available themes
-aphotic theme list
-
-# Apply a specific theme
-aphotic theme set <theme-name>
-
-# Cycle through themes
-aphotic theme next    # Switch to next theme
-aphotic theme prev    # Switch to previous theme
-
-# Manage color schemes
-aphotic scheme set -n <scheme-name>  # Apply a named color scheme
-
-# Wallpaper management
-aphotic wallpaper -f <path>          # Set specific wallpaper
-aphotic wallpaper --random           # Pick random wallpaper
-aphotic wallpaper --fetch-extra      # Download the larger community wallpaper pool (see below)
-```
-
-The system automatically tracks your current theme and wallpaper state, enabling seamless cycling through themes and real-time palette updates when schemes are changed.
-
-### Wallpaper pool size (bandwidth-friendly by default)
-
-Every theme ships with 4-5 wallpapers committed directly in the repo (well
-under 20MB total across all 8) — enough that a fresh `git clone` stays
-small even on a slow connection. A much larger curated pool (~145MB
-across all themes, sourced from the community wallpaper repos linked in
-each theme's credits) is available on request rather than bundled by
-default:
-
-```bash
-aphotic wallpaper --fetch-extra            # every theme's extra pool
-aphotic wallpaper --fetch-extra nordic     # just one theme
-```
-
-Both prompt with the total download size first (skip the prompt with
-`-y`/`--yes`), verify each file's SHA-256 before keeping it, and are
-idempotent — re-running only fetches what's still missing. `install.sh`
-also asks about this once, near the end of setup, defaulting to **no**
-so a `curl`-limited connection isn't stuck downloading images it didn't
-ask for.
-
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
@@ -447,7 +441,7 @@ ask for.
 All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua) — grouped exactly as below. Every `qs -c aphotic ipc call ...` target the shell exposes has a keybind; anything below not bound to a key is intentionally IPC-only (scriptable, but not meant to be memorized).
 
 <details>
-<summary><strong>Launcher</strong> — see the <a href="#quickshell-shell">modes table</a> above for what each prefix does inside it</summary>
+<summary><strong>Launcher</strong> — see the <a href="#launcher-modes">modes table</a> above for what each prefix does inside it</summary>
 
 | Keys | Action |
 | :-- | :-- |
@@ -552,24 +546,22 @@ All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/ke
 | <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Tab</kbd> / <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Cycle forward/backward through open special (scratchpad) workspaces |
 
 > [!NOTE]
-> Special workspaces aren't created by a Aphotic keybind yet — cycling only does something once one exists (e.g. via `hyprctl dispatch movetoworkspace special:name`). A dedicated create/toggle bind is a small future addition, tracked in the [Roadmap](#roadmap).
+> Special workspaces aren't created by an Aphotic keybind yet — cycling only does something once one exists (e.g. via `hyprctl dispatch movetoworkspace special:name`). A dedicated create/toggle bind is a small future addition, tracked in the [Roadmap](#roadmap).
 
 </details>
 
-## Terminal Games
+<details>
+<summary><strong>Terminal games</strong> — a few small games built into the <code>aphotic</code> CLI</summary>
 
-Aphotic includes some fun terminal-based games accessible through the `aphotic play` command:
+`aphotic play` runs three small terminal games: Hangman (classic word-guessing), Snake, and a number-guessing game.
 
-- **Hangman**: Classic word-guessing game
-- **Snake**: Control a snake to eat food and grow longer
-- **Number Guessing**: Try to guess a randomly generated number
-
-Play them with:
 ```bash
 aphotic play hangman
 aphotic play snake
 aphotic play guess
 ```
+
+</details>
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -577,7 +569,7 @@ aphotic play guess
 
 ## Roadmap
 
-Aphotic reached **v1.0** on `main` — the Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, and a CI-tested installer are the shipped baseline, not a work in progress. Active development continues on `test`. Full shipped-item history moved to [`docs/CHANGELOG.md`](docs/CHANGELOG.md) so this list stays short — here's what's still open:
+Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, and a CI-tested installer are the shipped baseline. Active development continues on `test`. Full shipped-item history moved to [`docs/CHANGELOG.md`](docs/CHANGELOG.md) so this list stays short — here's what's still open:
 
 - **`matugen` as a second color engine** — next up. `theme.toml` reserves the config slot; wiring it in gives themes a real tonal-spot/vibrant/expressive variant picker alongside wallust.
 - **Settings panel expansion** — Network/Audio/Bluetooth pages matching the bar's existing popouts, plus a System-updates action (distinct from the current read-only doctor output).
@@ -587,7 +579,7 @@ Aphotic reached **v1.0** on `main` — the Quickshell shell, per-theme wallpaper
 - **Maintenance tooling** — release tagging and migration tooling; versioning and CI are already in place.
 - **AI-native differentiators, still open** — surfacing the agent hook's live per-session data as real per-session status in the panel (it writes the data, nothing reads it yet), AI chat context injection, and session handoff.
 
-Longer-term, the plan is a full wiki — install walkthroughs, theme authoring docs, and a troubleshooting reference — rather than trying to cram everything into this README forever.
+Longer-term, the plan is a full wiki: install walkthroughs, theme authoring docs, and a troubleshooting reference, instead of cramming everything into this README forever.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -598,13 +590,15 @@ Longer-term, the plan is a full wiki — install walkthroughs, theme authoring d
 <details>
 <summary><strong>Does this work outside Arch?</strong></summary>
 <br>
-Not currently by design. Aphotic assumes Arch/AUR and leans on that assumption throughout the installer — no distro branching is planned.
+Not currently, by design. Aphotic assumes Arch/AUR and leans on that assumption throughout the installer — no distro branching is planned.
 </details>
 
 <details>
 <summary><strong>Can I run this on top of an existing Hyprland setup?</strong></summary>
 <br>
 Yes. The installer snapshots your existing configs before touching anything (unless you pass <code>--no-backup</code>), and <code>./uninstall.sh</code> restores the most recent snapshot if you want to back out.
+<br><br>
+At the <strong>Deploying configs</strong> stage it asks <code>Would you like to copy config files? (y,n)</code> — answer <strong>y</strong> to actually apply Aphotic's <code>Configs/</code> over <code>~/.config/</code>. Answering <strong>n</strong> skips that copy, so packages install but your existing (or default) Hyprland config stays untouched and Aphotic won't actually take effect. Re-running <code>./install.sh</code> later (see <a href="#updating">Updating</a>) asks the same question again each time, so pulling new fixes still needs a <strong>y</strong> to land on disk.
 </details>
 
 <details>
@@ -644,7 +638,7 @@ above).
 
 Inspired by and built with gratitude toward [Tittu](https://github.com/prasanthrangan)'s minimalist Hyprland dotfiles — Aphotic started as a fork of that philosophy and has been growing its own identity ever since. The Quickshell shell's earliest visual direction also owes a debt to [caelestia-dots/shell](https://github.com/caelestia-dots/shell) — see [License](#license) for the attribution GPL-3.0 requires on the parts still built on it.
 
-Theme wallpapers (the curated set committed in each `Configs/awww/<theme>/` and the larger pool behind `aphotic wallpaper --fetch-extra`, see [Theme Picker Integration](#theme-picker-integration)) are pulled from the community wallpaper repos below — full credit to their authors and the original artists:
+Theme wallpapers (the curated set committed in each `Configs/awww/<theme>/` and the larger pool behind `aphotic wallpaper --fetch-extra`, see [Themes](#themes)) are pulled from the community wallpaper repos below — full credit to their authors and the original artists:
 
 - Gruvbox: [AngelJumbo/gruvbox-wallpapers](https://github.com/AngelJumbo/gruvbox-wallpapers), [vctrblck/gruvbox-wallpapers](https://github.com/vctrblck/gruvbox-wallpapers)
 - Nord: [Ahmosys/nordpapers](https://github.com/Ahmosys/nordpapers), [ChrisTitusTech/nord-background](https://github.com/ChrisTitusTech/nord-background), [dxnst/nord-backgrounds](https://github.com/dxnst/nord-backgrounds)
