@@ -56,9 +56,31 @@ resolve_assistant() {
 
 # Prints an Ollama tag on stdout and returns 0, or returns 1 with nothing
 # printed (caller falls back to ASSISTANT_FALLBACK_MODEL). Mirrors
-# services/ai/LlmFit.qml's guessOllamaTag() -- keep the two in sync if that
-# heuristic changes, since there's no shared implementation between bash
-# and QML to point at instead.
+# services/LlmFit.qml's guessOllamaTag() -- keep the two in sync if this
+# changes, since there's no shared implementation between bash and QML to
+# point at instead.
+#
+# Real bug found and fixed here (2026-08-29): this used to GUESS an Ollama
+# tag from any recommended model's raw name/param-count via regex, with no
+# check that the model was actually an Ollama-pullable one. llmfit's
+# recommendation pool is dominated by community fine-tunes in vLLM/AWQ/
+# GPTQ quantized formats (every field-tested candidate on a 24GB-VRAM
+# RTX 4090 had `ollama_name: null`) -- the guess heuristic happily turned
+# one of those into a plausible-looking tag like `louismuk/gemma:26.6b`,
+# which isn't a real Ollama registry entry. `ollama pull` for that tag
+# failed near-instantly (~200ms, confirmed via the ollama.service journal,
+# not assumed) with no visible error surfaced to the user beyond a generic
+# install warning -- `~/.config/aphotic/assistant-system-prompt.md` got
+# rendered (that step doesn't depend on the pull succeeding) but
+# `ai-config.json` was never written, so the Assistant silently never
+# became available as a provider despite the install otherwise finishing
+# and reporting done. Fixed: only trust a candidate that llmfit itself
+# marks as having a real Ollama tag (`ollama_name` populated) -- use that
+# tag directly, never a guess. When no candidate qualifies (the common
+# case on high-VRAM hardware today, where llmfit's top picks skew toward
+# non-Ollama formats), this correctly returns failure so the caller falls
+# through to the known-safe, always-real ASSISTANT_FALLBACK_MODEL instead
+# of a plausible-but-broken guess.
 resolve_assistant_model_via_llmfit() {
   command -v llmfit >/dev/null 2>&1 || return 1
 
@@ -75,7 +97,10 @@ resolve_assistant_model_via_llmfit() {
 import json, re, sys
 
 data = json.load(sys.stdin)
-candidates = [m for m in data.get("models", []) if m.get("fit_level") in ("Perfect", "Good")]
+candidates = [
+    m for m in data.get("models", [])
+    if m.get("fit_level") in ("Perfect", "Good") and m.get("ollama_name")
+]
 if not candidates:
     sys.exit(1)
 
@@ -85,19 +110,7 @@ def param_b(m):
 
 candidates.sort(key=param_b)
 mid = candidates[(len(candidates) - 1) // 2]
-
-def guess_tag(name, parameter_count):
-    slug = name.lower()
-    slug = re.sub(r"-instruct.*$", "", slug)
-    slug = re.sub(r"-chat.*$", "", slug)
-    slug = re.sub(r"-gguf.*$", "", slug, flags=re.I)
-    fam_match = re.match(r"^([a-z0-9.]+?)[-_]?\d+(?:\.\d+)?b\b", slug)
-    family = fam_match.group(1) if fam_match else re.split(r"[-_]", slug)[0]
-    size_match = re.search(r"[\d.]+[bB]", parameter_count or "")
-    size = size_match.group(0).lower() if size_match else ""
-    return f"{family}:{size}" if size else family
-
-print(guess_tag(mid.get("name", ""), mid.get("parameter_count", "")))
+print(mid["ollama_name"])
 PYEOF
 
   local tag rc
