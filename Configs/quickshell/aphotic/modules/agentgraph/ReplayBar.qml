@@ -126,10 +126,7 @@ ColumnLayout {
                         StateLayer {
                             anchors.fill: parent
                             radius: parent.radius
-                        }
-
-                        TapHandler {
-                            onTapped: {
+                            onClicked: {
                                 root.runId = chip.modelData.id;
                                 AgentGraphService.loadRun(chip.modelData.id);
                             }
@@ -173,10 +170,7 @@ ColumnLayout {
             StateLayer {
                 anchors.fill: parent
                 radius: parent.radius
-            }
-
-            TapHandler {
-                onTapped: parent.activated()
+                onClicked: parent.activated()
             }
         }
 
@@ -220,10 +214,7 @@ ColumnLayout {
             StateLayer {
                 anchors.fill: parent
                 radius: parent.radius
-            }
-
-            TapHandler {
-                onTapped: root.replay.speed = root.replay.speed >= 8 ? 1 : root.replay.speed * 2
+                onClicked: root.replay.speed = root.replay.speed >= 8 ? 1 : root.replay.speed * 2
             }
         }
 
@@ -332,10 +323,7 @@ ColumnLayout {
                             StateLayer {
                                 anchors.fill: parent
                                 radius: parent.radius
-                            }
-
-                            TapHandler {
-                                onTapped: root.replay.seekToIndex(block.modelData.index)
+                                onClicked: root.replay.seekToIndex(block.modelData.index)
                             }
                         }
                     }

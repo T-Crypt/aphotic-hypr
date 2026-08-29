@@ -546,10 +546,7 @@ Item {
             StateLayer {
                 anchors.fill: parent
                 radius: parent.radius
-            }
-
-            TapHandler {
-                onTapped: parent.activated()
+                onClicked: parent.activated()
             }
         }
 
