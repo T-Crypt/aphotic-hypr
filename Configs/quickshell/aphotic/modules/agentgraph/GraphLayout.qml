@@ -46,7 +46,9 @@ QtObject {
                 tool: "",
                 status: session.status,
                 parent: -1,
-                startedAt: session.startedAt ?? 0
+                startedAt: session.startedAt ?? 0,
+                cwd: session.cwd ?? "",
+                callCount: session.nodes.length
             });
 
             const visible = session.nodes.slice(-root.maxNodesPerSession);
@@ -62,9 +64,12 @@ QtObject {
                     tool: node.tool,
                     status: node.status,
                     agentType: node.agentType,
+                    agentId: node.agentId,
                     parent: -1,
                     parentId: node.parentId,
-                    startedAt: node.startedAt ?? 0
+                    startedAt: node.startedAt ?? 0,
+                    endedAt: node.endedAt ?? 0,
+                    durationMs: node.durationMs ?? 0
                 });
             }
 
@@ -72,7 +77,7 @@ QtObject {
                 const node = nodes[i];
                 const parent = node.parentId ? indexByNode[node.parentId] : undefined;
                 node.parent = parent === undefined ? rootIndex : parent;
-                edges.push({ a: node.parent, b: i, status: node.status, key: node.key });
+                edges.push({ a: node.parent, b: i, status: node.status, key: node.key, startedAt: node.startedAt });
             }
         }
 
