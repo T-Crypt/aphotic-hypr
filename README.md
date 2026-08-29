@@ -55,9 +55,10 @@ scrubbing and zoom:
 
 https://github.com/user-attachments/assets/c19b7bde-ad85-4359-b304-36e08b493f57
 
+
 **Agentic workflow, instant replay** - replaying 239 commit events, viewable progression 
 
-https://github.com/user-attachments/assets/342ef7bb-ee38-4f25-8677-3797e68aea71
+https://github.com/user-attachments/assets/2bf2c1c8-be3e-477f-955f-6debce1f7b14
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
