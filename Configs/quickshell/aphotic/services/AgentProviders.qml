@@ -139,16 +139,43 @@ Singleton {
     }
 
     // Live per-Claude-session activity from Configs/.local/lib/aphotic/
-    // agent_hook.sh -- one JSON file per running session, deleted on
-    // Stop. No FileView folder-watch API exists for "list of files in a
-    // directory that changes", so this re-lists via `ls` on the same
-    // 5s cadence as presence polling above.
+    // agent_hook.sh -- one JSON file per running session
+    // ({event, tool, updatedAt}, see that script's own header comment),
+    // deleted on Stop. Used to only `ls` the directory and keep the
+    // filenames -- real work on every Claude Code tool call
+    // (agent_hook.sh writes a file on every PreToolUse/PostToolUse/
+    // Notification) for zero effect, since nothing ever read a session
+    // file's actual content. Now reads each file's content in the same
+    // pass (one combined `for f in .../*.json; do ...; done` shell
+    // command rather than N separate reads, matching this file's own
+    // "minimize process spawns" convention elsewhere) -- one tab-
+    // separated "id<TAB>json" line per session, parsed below. No FileView
+    // folder-watch API exists for "list of files in a directory that
+    // changes", so this still re-lists on the same 5s cadence as
+    // presence polling above rather than reacting to individual file
+    // writes.
     Process {
         id: sessionLister
         stdout: StdioCollector {
             onStreamFinished: {
-                const ids = text.trim().split("\n").filter(l => l.endsWith(".json")).map(l => l.replace(/\.json$/, ""));
-                root._setStat(root._findIndex("claude"), { liveSessions: ids });
+                const sessions = text.split("\n").filter(l => l.length > 0).map(line => {
+                    const tab = line.indexOf("\t");
+                    if (tab === -1)
+                        return null;
+                    const id = line.slice(0, tab);
+                    try {
+                        const data = JSON.parse(line.slice(tab + 1));
+                        return {
+                            id: id,
+                            event: data.event ?? "",
+                            tool: data.tool ?? "",
+                            updatedAt: data.updatedAt ?? ""
+                        };
+                    } catch (e) {
+                        return null;
+                    }
+                }).filter(s => s !== null);
+                root._setStat(root._findIndex("claude"), { liveSessions: sessions });
             }
         }
     }
@@ -158,6 +185,9 @@ Singleton {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: sessionLister.exec(["sh", "-c", `ls "${Quickshell.env("HOME")}/.local/state/aphotic/agent-sessions" 2>/dev/null`])
+        onTriggered: {
+            const dir = `${Quickshell.env("HOME")}/.local/state/aphotic/agent-sessions`;
+            sessionLister.exec(["sh", "-c", `for f in "${dir}"/*.json; do [ -f "$f" ] && printf '%s\\t%s\\n' "$(basename "$f" .json)" "$(cat "$f")"; done 2>/dev/null`]);
+        }
     }
 }
