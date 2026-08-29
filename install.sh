@@ -32,6 +32,7 @@ LAYERS=""
 THEME=""
 ASSISTANT=""
 ACCEPT_EXPLOIT_DISCLAIMER=0
+NVIDIA_DRIVER_ACTION=""
 
 TOTAL_STAGES=7
 STAGE_COLORS=(35 36 33 34 32 36 35)
@@ -86,6 +87,16 @@ Usage: ./install.sh [options]
   --with-assistant               Install the Aphotic Assistant (local chatbot,
                                 needs an NVIDIA GPU; implies the ai layer)
   --no-assistant                 Skip the Aphotic Assistant, don't ask
+  --nvidia-driver <keep|reinstall>
+                                Only relevant if an NVIDIA driver is already
+                                installed: 'keep' leaves it alone (don't
+                                install nvidia-open-dkms on top of it),
+                                'reinstall' uninstalls whatever's there first
+                                and installs Aphotic's recommended
+                                nvidia-open-dkms. Interactive installs are
+                                asked; non-interactive ones (no TTY) without
+                                this flag default to 'keep' -- never touches
+                                a working driver without being told to.
   --dry-run                     Print planned actions, change nothing
   --no-backup                   Skip backing up existing configs
   --keep-backups <N>             Backups to retain (default: 5)
@@ -102,6 +113,7 @@ while [[ $# -gt 0 ]]; do
     --with-assistant) ASSISTANT="true"; shift ;;
     --no-assistant) ASSISTANT="false"; shift ;;
     --accept-exploit-disclaimer) ACCEPT_EXPLOIT_DISCLAIMER=1; shift ;;
+    --nvidia-driver) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1 (keep|reinstall)"; exit 1; }; NVIDIA_DRIVER_ACTION="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
     --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
@@ -174,6 +186,19 @@ detect_nvidia() {
   fi
 }
 
+# Real, reported bug this guards against: a user with an already-working
+# proprietary driver (nvidia/nvidia-dkms) ran install.sh and it blindly
+# tried to install nvidia-open-dkms on top, with zero check for what was
+# already there -- nvidia/nvidia-open (and their -dkms/-lts variants)
+# provide overlapping files, so pacman/the AUR helper either refuses on
+# a conflict or silently replaces a driver the user deliberately chose
+# and had working. Covers every real variant: proprietary (nvidia,
+# nvidia-lts, nvidia-dkms) and open (nvidia-open, nvidia-open-lts,
+# nvidia-open-dkms).
+detect_nvidia_driver_installed() {
+  pacman -Qq 2>/dev/null | grep -qE '^nvidia(-open)?(-lts|-dkms)?$'
+}
+
 # Installs the actual Nvidia kernel driver (+ matching kernel headers) via
 # DKMS. Nothing else in this script ever pulls in the driver itself -- the
 # Nvidia block below this used to only edit mkinitcpio.conf/modprobe.d and
@@ -185,6 +210,44 @@ detect_nvidia() {
 # nvidia-open-dkms targets Turing (RTX 20xx) and newer; pre-Turing cards
 # need the proprietary nvidia-dkms package instead.
 install_nvidia_driver() {
+  if detect_nvidia_driver_installed; then
+    local existing action="$NVIDIA_DRIVER_ACTION"
+    existing="$(pacman -Qq 2>/dev/null | grep -E '^nvidia(-open)?(-lts|-dkms)?$' | paste -sd, -)"
+
+    if [[ -z "$action" ]]; then
+      if [[ -t 0 ]]; then
+        echo -e "$CAT - An NVIDIA driver is already installed (${existing})."
+        read -rep $'[\e[1;33mACTION\e[0m] - Keep it as-is, or uninstall it and let Aphotic install its recommended nvidia-open-dkms? (keep,reinstall) [keep] ' NV_CHOICE
+        [[ "$NV_CHOICE" == "reinstall" ]] && action="reinstall" || action="keep"
+      else
+        # No TTY and no --nvidia-driver flag -- "should not fail for
+        # users" means the safe default is to never touch a driver the
+        # user already has working, not to guess.
+        echo -e "$CWR - NVIDIA driver already installed (${existing}) and this is a non-interactive install with no --nvidia-driver flag -- defaulting to 'keep' (Aphotic will not touch it). Pass --nvidia-driver reinstall to opt into replacing it instead."
+        action="keep"
+      fi
+    fi
+
+    if [[ "$action" == "keep" ]]; then
+      echo -e "$CNT - Keeping existing NVIDIA driver (${existing}) -- skipping Aphotic's own driver install."
+      # nvidia-utils (nvidia-smi) is a separate userspace package, not a
+      # driver -- doesn't conflict with proprietary or open, and the
+      # Dashboard's Performance tab needs it regardless of which driver
+      # variant the user is keeping, so still make sure it's present.
+      if ! pacman -Qq nvidia-utils &>/dev/null; then
+        install_software nvidia-utils
+      fi
+      return 0
+    fi
+
+    echo -e "$CNT - Uninstalling existing NVIDIA driver (${existing}) before installing Aphotic's recommended nvidia-open-dkms..."
+    # shellcheck disable=SC2086
+    "$AUR_HELPER" -R --noconfirm $(echo "$existing" | tr ',' ' ') &>> "$INSTLOG" || {
+      echo -e "$CER - Failed to remove the existing driver (${existing}) -- see ${INSTLOG}. Not proceeding with a fresh install on top of a driver that wouldn't uninstall cleanly."
+      return 1
+    }
+  fi
+
   echo -e "$CNT - Installing Nvidia driver..."
   local kernel_pkgs
   kernel_pkgs=$(pacman -Qq | grep -E '^linux(-lts|-zen|-hardened)?$' || true)
