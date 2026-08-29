@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-FileCopyrightText: Aphotic-Hypr contributors
+
 pragma Singleton
 pragma ComponentBehavior: Bound
 
