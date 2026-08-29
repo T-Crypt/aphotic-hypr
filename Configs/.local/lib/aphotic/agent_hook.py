@@ -149,7 +149,7 @@ except OSError:
 
 session_file = os.path.join(SESSIONS, "%s.json" % session_id)
 try:
-    if event in ("session_end", "stop"):
+    if event == "session_end":
         os.remove(session_file)
     else:
         atomic_write(session_file, json.dumps({
