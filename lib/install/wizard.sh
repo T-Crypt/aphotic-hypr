@@ -18,10 +18,10 @@ prompt_layers() {
 
   # Presets are a shortcut over the same layer list the questions below
   # build -- not a second mechanism. "Cherry-pick" is just answering them.
-  echo "Layer presets:"
-  echo "  1) Everything       -- gaming, dev, ai, and the default exploit bundle"
-  echo "  2) Daily driver     -- none of the above; a clean Hyprland desktop"
-  echo "  3) Cherry-pick      -- choose each layer yourself"
+  echo "Layer presets:" >&2
+  echo "  1) Everything       -- gaming, dev, ai, and the default exploit bundle" >&2
+  echo "  2) Daily driver     -- none of the above; a clean Hyprland desktop" >&2
+  echo "  3) Cherry-pick      -- choose each layer yourself" >&2
   read -rp "Preset? [1/2/3, default 3]: " answer
   case "$answer" in
     1)
