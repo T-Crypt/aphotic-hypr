@@ -174,6 +174,30 @@ detect_nvidia() {
   fi
 }
 
+# Installs the actual Nvidia kernel driver (+ matching kernel headers) via
+# DKMS. Nothing else in this script ever pulls in the driver itself -- the
+# Nvidia block below this used to only edit mkinitcpio.conf/modprobe.d and
+# assume a driver package would show up as a side dependency of something
+# else, which it doesn't. That left `nvidia`/`nvidia_modeset`/etc. absent
+# when mkinitcpio ran, so the initramfs/UKI was rebuilt with modules that
+# didn't exist yet (silently -- mkinitcpio only warns, it doesn't fail the
+# build) and the system fell back to no bound driver on the Nvidia GPU.
+# nvidia-open-dkms targets Turing (RTX 20xx) and newer; pre-Turing cards
+# need the proprietary nvidia-dkms package instead.
+install_nvidia_driver() {
+  echo -e "$CNT - Installing Nvidia driver..."
+  local kernel_pkgs
+  kernel_pkgs=$(pacman -Qq | grep -E '^linux(-lts|-zen|-hardened)?$' || true)
+  if [[ -z "$kernel_pkgs" ]]; then
+    echo -e "$CWR - Could not detect a linux/linux-lts/linux-zen/linux-hardened package; installing linux-headers as a best-effort fallback."
+    kernel_pkgs="linux"
+  fi
+  while IFS= read -r kpkg; do
+    [[ -n "$kpkg" ]] && install_software "${kpkg}-headers"
+  done <<< "$kernel_pkgs"
+  install_software nvidia-open-dkms
+}
+
 resolve_config() {
   if [[ -f "$APHOTIC_TOML" && -z "$PROFILE" && -z "$LAYERS" ]]; then
     local existing_profile existing_layers
@@ -272,6 +296,10 @@ except Exception:
     echo "$prep_pkgs" | sed 's/^/    - /'
     echo "  main packages:"
     echo "$main_pkgs" | sed 's/^/    - /'
+    if [[ "$ISNVIDIA" == "true" ]]; then
+      echo "  would install Nvidia driver: matching kernel headers + nvidia-open-dkms"
+      echo "  would regenerate initramfs/UKI (mkinitcpio -P)"
+    fi
     echo "  would install hyprland"
     if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
       ensure_blackarch_repo
@@ -339,12 +367,21 @@ except Exception:
   done <<< "$prep_pkgs"
 
   if [[ "$ISNVIDIA" == "true" ]]; then
+    install_nvidia_driver
     echo -e "$CNT - Configuring Nvidia modules..."
     sudo sed -i 's/MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
-    sudo mkinitcpio --config /etc/mkinitcpio.conf --generate /boot/initramfs-custom.img
     if ! sudo grep -qF "options nvidia-drm modeset=1" /etc/modprobe.d/nvidia.conf 2>/dev/null; then
       echo -e "options nvidia-drm modeset=1" | sudo tee -a /etc/modprobe.d/nvidia.conf &>> "$INSTLOG"
     fi
+    # -P (process every preset's configured targets) instead of a
+    # hand-picked /boot/initramfs-custom.img: on a UKI setup (systemd-boot
+    # with default_uki=.../arch-linux.efi and no default_image, which is
+    # what a stock Arch systemd-boot install gives you) a custom image path
+    # is never referenced by any boot entry, so the actual bootable
+    # image/UKI never picks up the Nvidia modules regardless of whether the
+    # driver package installed correctly.
+    echo -e "$CNT - Regenerating initramfs/UKI..."
+    sudo mkinitcpio -P &>> "$INSTLOG" || echo -e "$CWR - mkinitcpio failed to rebuild the initramfs/UKI; check $INSTLOG, then run 'sudo mkinitcpio -P' manually before rebooting."
   fi
   # Nvidia support has been built into the mainline "hyprland" package for a
   # while now; the "hyprland-nvidia" AUR package that used to carry the
