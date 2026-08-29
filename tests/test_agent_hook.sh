@@ -38,11 +38,17 @@ session_file="$APHOTIC_STATE_HOME/agent-sessions/abc123.json"
 [[ -f "$session_file" ]] || fail "PostToolUse did not create session file"
 grep -q '"tool":"Bash"' "$session_file" || fail "session file missing tool name"
 
+# Stop marks the session idle, it does not retire it -- SessionEnd does
+# that. See docs/AGENT_TRACKING.md's "Session retirement changed" note.
 echo '{"session_id":"abc123","hook_event_name":"Stop"}' | bash "$ROOT/Configs/.local/lib/aphotic/agent_hook.sh"
-[[ ! -f "$session_file" ]] || fail "Stop did not delete session file"
+[[ -f "$session_file" ]] || fail "Stop deleted the session file; it should only mark it idle"
+grep -q '"event":"Stop"' "$session_file" || fail "session file not updated with Stop event"
+
+echo '{"session_id":"abc123","hook_event_name":"SessionEnd"}' | bash "$ROOT/Configs/.local/lib/aphotic/agent_hook.sh"
+[[ ! -f "$session_file" ]] || fail "SessionEnd did not delete session file"
 
 echo '{"hook_event_name":"PostToolUse"}' | bash "$ROOT/Configs/.local/lib/aphotic/agent_hook.sh"
 # No session_id -- must exit 0 without creating anything under agent-sessions/.
 [[ ! -d "$APHOTIC_STATE_HOME/agent-sessions" ]] || [[ -z "$(ls -A "$APHOTIC_STATE_HOME/agent-sessions" 2>/dev/null)" ]] || fail "missing session_id should not create a file"
 
-echo "PASS: agent_hook writes on tool events, deletes on Stop, no-ops without session_id"
+echo "PASS: agent_hook writes on tool events, marks idle on Stop, deletes on SessionEnd, no-ops without session_id"
