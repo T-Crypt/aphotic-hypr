@@ -110,11 +110,24 @@ Item {
     }
 
     StyledClippingRect {
+        id: filmstripSurface
+
         anchors.fill: parent
         radius: Tokens.rounding.extraLarge
         color: Colours.palette.m3surfaceContainerHigh
         border.width: Config.border.thickness
         border.color: Colours.palette.m3outlineVariant
+
+        DepthLayer {
+            anchors.fill: parent
+            opacityScale: 0.7
+        }
+
+        DepthGradient {
+            anchors.fill: parent
+            radius: filmstripSurface.radius
+            baseColour: filmstripSurface.color
+        }
 
         Column {
             anchors.centerIn: parent
