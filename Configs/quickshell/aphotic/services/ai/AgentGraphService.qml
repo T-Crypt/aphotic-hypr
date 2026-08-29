@@ -139,7 +139,14 @@ Singleton {
     }
 
     function _apply(record): void {
-        const sessions = root._sessions.slice();
+        root._sessions = root.applyTo(root._sessions, record);
+    }
+
+    // The same reducer drives live ingestion and replay -- replay is a
+    // different clock over the same events, not a second derivation of what
+    // a session looks like. Anything that changes here changes both.
+    function applyTo(existing, record): var {
+        const sessions = existing.slice();
         let index = sessions.findIndex(s => s.id === record.sessionId);
         if (index === -1) {
             sessions.push(root._blankSession(record));
@@ -147,6 +154,7 @@ Singleton {
         }
         const session = Object.assign({}, sessions[index]);
         session.nodes = session.nodes.slice();
+        session.agentParents = Object.assign({}, session.agentParents);
         session.updatedAt = record.t ?? session.updatedAt;
 
         if (record.event === "session_end") {
@@ -170,7 +178,15 @@ Singleton {
             session.cwd = record.cwd;
 
         sessions[index] = session;
-        root._sessions = sessions;
+        return sessions;
+    }
+
+    function foldEvents(events, upTo: int): var {
+        let sessions = [];
+        const limit = Math.min(upTo, events.length);
+        for (let i = 0; i < limit; i++)
+            sessions = root.applyTo(sessions, events[i]);
+        return sessions;
     }
 
     // Claude Code gives no explicit parent for a subagent's tool calls --
