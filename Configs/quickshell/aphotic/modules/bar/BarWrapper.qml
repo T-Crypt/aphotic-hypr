@@ -35,7 +35,25 @@ Item {
     // "hidden" reserves no desktop space at all, matching a fully disabled
     // bar; "autohide" still reserves the thin sliver so windows don't tile
     // into the space the reveal-on-hover strip occupies.
-    readonly property int exclusiveZone: disabled || hiddenMode ? 0 : (Settings.barVisibility === "always" || screenState.bar ? contentWidth : Config.border.thickness)
+    //
+    // Settings._loaded gate: real, live-confirmed bug. Settings.barSkin's
+    // own QML default is "pill" (a full-bar skin) until its FileView loads
+    // the user's persisted value asynchronously -- so for anyone whose
+    // real config is "dock" (or "hidden"), hiddenMode is briefly FALSE at
+    // this window's very first layer-shell commit, and exclusiveZone briefly
+    // computes a real nonzero reservation before flipping back to 0 a
+    // moment later. That transient commit doesn't reliably shrink back down
+    // afterward (a known exclusive-zone-shrink quirk), leaving a real,
+    // permanent phantom reservation baked into hyprctl monitors' `.reserved`
+    // that no later value change corrects -- confirmed live via an
+    // isolation test forcing this property to a distinct constant and
+    // watching `.reserved` carry a fixed, un-shrinkable extra amount from
+    // the pre-load default. Treating "not loaded yet" the same as
+    // hiddenMode (0) is the safe direction: worst case a real bar very
+    // briefly reserves nothing it should have, self-correcting once
+    // Settings._loaded flips true, instead of the reverse (a wrong
+    // reservation that sticks for the rest of the session).
+    readonly property int exclusiveZone: !Settings._loaded || disabled || hiddenMode ? 0 : (Settings.barVisibility === "always" || screenState.bar ? contentWidth : Config.border.thickness)
     // "hidden" never reveals via hover -- isHovered only feeds visibility
     // in "autohide" mode, where the always-present sliver is the hover
     // target in the first place.
