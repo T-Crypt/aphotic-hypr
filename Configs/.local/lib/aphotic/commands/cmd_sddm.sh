@@ -67,7 +67,20 @@ _aphotic_sddm_sync() {
     local dest_conf="${APHOTIC_SDDM_THEME_DIR}/theme.conf"
 
     if [[ -w "${APHOTIC_SDDM_THEME_DIR}/Backgrounds" ]] && [[ -w "$dest_conf" ]]; then
-        cp "$image_path" "${APHOTIC_SDDM_THEME_DIR}/Backgrounds/" &&
+        # A destination file that already exists and isn't itself
+        # writable by us (e.g. a leftover from a `sudo cp` that ran
+        # before this function preferred the sudo-free path -- confirmed
+        # live: one such file, root-owned 644, sat here from an earlier
+        # sync that happened to have a cached sudo credential) makes
+        # plain `cp` fail with Permission Denied even though the
+        # directory itself is world-writable -- `cp` opens the
+        # destination for writing, which needs write on the FILE, not
+        # just the dir. `rm -f` first is safe and correct here
+        # specifically because directory write permission (already
+        # confirmed above) is what actually governs unlink/recreate, so
+        # this cleanly self-heals any such leftover going forward.
+        [[ -e "$dest_bg" ]] && [[ ! -w "$dest_bg" ]] && rm -f "$dest_bg" 2>/dev/null
+        cp "$image_path" "$dest_bg" &&
             sed -i "s|^Background=.*|Background=\"Backgrounds/${filename}\"|" "$dest_conf" &&
             aphotic_ok "sddm background synced to ${filename}"
         return
