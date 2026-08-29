@@ -200,12 +200,13 @@ Singleton {
         return sessions;
     }
 
-    // Claude Code gives no explicit parent for a subagent's tool calls --
-    // they carry agent_id and the PARENT session's session_id, nothing that
-    // names the Task call that spawned them. So the first tool call seen for
-    // an agent_id is bound to the most recent still-running Task node in that
-    // session, and every later call from the same agent_id inherits that
-    // binding. Documented heuristic, not a claimed guarantee.
+    // Parentage is an exact link, not a guess: the Agent/Task call's own
+    // PostToolUse response names the agent id it spawned (captured by
+    // agent_hook.py as spawnedAgentId), and every later event from that
+    // subagent carries the same id as agent_id. The fallback below only runs
+    // if that binding is missing -- and it deliberately does NOT require the
+    // Agent node to still be running, because an async Agent call completes
+    // *before* the subagent it launched makes its first tool call.
     function _parentFor(session, record): string {
         if (!record.agentId)
             return "";
@@ -247,11 +248,15 @@ Singleton {
 
     function _closeNode(session, record): void {
         const id = record.toolId ?? "";
+        if (record.spawnedAgentId && id)
+            session.agentParents[record.spawnedAgentId] = id;
         const index = session.nodes.findIndex(n => n.id === id);
         if (index === -1)
             return;
         const node = Object.assign({}, session.nodes[index]);
         node.status = record.event === "post_tool_use_failure" ? "errored" : "completed";
+        if (record.agentDescription)
+            node.agentDescription = record.agentDescription;
         node.endedAt = record.t ?? 0;
         node.durationMs = record.durationMs ?? (node.endedAt && node.startedAt ? node.endedAt - node.startedAt : 0);
         session.nodes[index] = node;
