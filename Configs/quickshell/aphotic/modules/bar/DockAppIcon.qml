@@ -26,8 +26,8 @@ Item {
     // and hide the glide entirely.
     property bool showHover: true
 
-    implicitWidth: Tokens.sizes.bar.innerWidth
-    implicitHeight: Tokens.sizes.bar.innerWidth
+    implicitWidth: Settings.barInnerWidth
+    implicitHeight: Settings.barInnerWidth
 
     scale: magnifyScale
     transformOrigin: growOrigin
