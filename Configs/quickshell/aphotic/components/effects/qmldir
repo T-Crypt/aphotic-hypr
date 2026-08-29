@@ -1,4 +1,5 @@
 module qs.components.effects
+BioluminescentGlow 1.0 BioluminescentGlow.qml
 ColouredIcon 1.0 ColouredIcon.qml
 Colouriser 1.0 Colouriser.qml
 Elevation 1.0 Elevation.qml

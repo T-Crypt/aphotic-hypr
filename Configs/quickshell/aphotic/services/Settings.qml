@@ -164,6 +164,17 @@ Singleton {
     property string statusIconHostInfoColor: ""
     property string statusIconPomodoroColor: ""
     property string statusIconDndColor: ""
+
+    // "Aphotic Depth" visual identity -- glow breathing + marine-snow
+    // particles layered on top of the existing wallust theme (see
+    // components/effects/BioluminescentGlow.qml, components/DepthLayer.qml,
+    // services/DepthFx.qml). "off" disables both entirely (today's static
+    // look); "subtle" (the first-install default) runs a reduced tier;
+    // "full" is the complete treatment. Defaulting to "subtle" rather than
+    // "full" so nobody's GPU load jumps on an upgrade without an explicit
+    // opt-in to the strongest tier.
+    property string depthEffects: "subtle"
+
     property string cursorTheme: "Bibata-Modern-Ice"
     property int cursorSize: 20
     // Papirus family, not an arbitrary icon theme, matches cmd_theme.sh's
@@ -272,6 +283,7 @@ Singleton {
             statusIconHostInfoColor: root.statusIconHostInfoColor,
             statusIconPomodoroColor: root.statusIconPomodoroColor,
             statusIconDndColor: root.statusIconDndColor,
+            depthEffects: root.depthEffects,
             cursorTheme: root.cursorTheme,
             cursorSize: root.cursorSize,
             iconTheme: root.iconTheme,
@@ -444,6 +456,7 @@ Singleton {
     onStatusIconHostInfoColorChanged: root._saveState()
     onStatusIconPomodoroColorChanged: root._saveState()
     onStatusIconDndColorChanged: root._saveState()
+    onDepthEffectsChanged: root._saveState()
     onCursorThemeChanged: {
         root._saveState();
         root._applyCursor();
@@ -593,6 +606,8 @@ Singleton {
                     root.statusIconPomodoroColor = data.statusIconPomodoroColor;
                 if (typeof data.statusIconDndColor === "string")
                     root.statusIconDndColor = data.statusIconDndColor;
+                if (typeof data.depthEffects === "string" && ["off", "subtle", "full"].includes(data.depthEffects))
+                    root.depthEffects = data.depthEffects;
                 if (typeof data.cursorTheme === "string")
                     root.cursorTheme = data.cursorTheme;
                 if (typeof data.cursorSize === "number")

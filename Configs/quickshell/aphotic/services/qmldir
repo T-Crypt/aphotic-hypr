@@ -3,6 +3,7 @@ singleton AgentProviders 1.0 AgentProviders.qml
 singleton Audio 1.0 Audio.qml
 singleton Brightness 1.0 Brightness.qml
 singleton Colours 1.0 Colours.qml
+singleton DepthFx 1.0 DepthFx.qml
 singleton DoNotDisturb 1.0 DoNotDisturb.qml
 singleton EmojiList 1.0 EmojiList.qml
 singleton HostInfo 1.0 HostInfo.qml
