@@ -12,9 +12,6 @@ import qs.services.ai
 ColumnLayout {
     id: root
 
-    width: 520
-    height: 420
-
     spacing: Tokens.spacing.medium
 
     readonly property var messages: []
@@ -71,8 +68,25 @@ ColumnLayout {
         }
     }
 
-    RowLayout {
+    // A Flow rather than a fixed RowLayout -- the provider list (plus the
+    // conditional Aphotic Assistant pill and Ollama model pill) can exceed
+    // the tab's width, and this tab's width in turn governs the Command
+    // Center frame's size (DashboardContent.qml sizes tabFrame off the
+    // active tab's implicit size). Wrapping instead of overflowing keeps
+    // every pill visible and keeps the frame sized to what's actually
+    // rendered, however many providers are configured.
+    //
+    // Layout.preferredWidth is required here, not just Layout.fillWidth:
+    // a Flow's own implicitWidth is its *unwrapped* natural width (as wide
+    // as needed to fit every pill on one line), and with nothing else
+    // pinning this column's width, that unwrapped width would win the
+    // ColumnLayout's own implicit-size calculation and get fed straight
+    // back down to the Flow -- so it always received exactly enough room
+    // to never wrap. Matching the chat list's width below breaks that
+    // loop and gives both a shared, stable column width.
+    Flow {
         Layout.fillWidth: true
+        Layout.preferredWidth: 480
         spacing: Tokens.spacing.small
 
         Repeater {
@@ -85,8 +99,8 @@ ColumnLayout {
                 readonly property bool active: providerPill.modelData.id === AiConfig.activeProvider
                 readonly property bool available: AiProviders.isAvailable(providerPill.modelData.id)
 
-                Layout.preferredHeight: 32
-                Layout.preferredWidth: pillLabel.implicitWidth + Tokens.padding.large * 2
+                height: 32
+                width: pillLabel.implicitWidth + Tokens.padding.large * 2
                 radius: Tokens.rounding.full
                 opacity: providerPill.available ? 1 : 0.4
                 color: providerPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
@@ -129,16 +143,12 @@ ColumnLayout {
             }
         }
 
-        Item {
-            Layout.fillWidth: true
-        }
-
         StyledRect {
             id: modelPill
 
             visible: AiConfig.activeProvider === "ollama"
-            Layout.preferredHeight: 32
-            Layout.preferredWidth: modelLabel.implicitWidth + Tokens.padding.large * 2
+            height: 32
+            width: modelLabel.implicitWidth + Tokens.padding.large * 2
             radius: Tokens.rounding.full
             color: Colours.tPalette.m3surfaceContainer
 
@@ -274,6 +284,8 @@ ColumnLayout {
     StyledRect {
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.preferredWidth: 480
+        Layout.preferredHeight: 300
         radius: Tokens.rounding.large
         color: Colours.tPalette.m3surfaceContainer
 
