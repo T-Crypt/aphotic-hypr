@@ -56,6 +56,19 @@ PanelWindow {
     // "always" is already that size anyway, and "hidden" must NOT grab the
     // wider area or it'd swallow clicks meant for whatever's underneath
     // even though the bar itself never shows.
+    // flyoutItem/agentFlyoutItem now sit flush against barWrapper with
+    // ZERO gap (see popouts/Wrapper.qml) rather than the previous
+    // Tokens.spacing.small offset -- matching caelestia-dots/shell's own
+    // popouts/ClipWrapper.qml, whose content sits at leftMargin: 0
+    // against a bar-flush parent when shown. The old gap was a literal,
+    // permanent dead zone in this mask: neither region below covered it,
+    // so a pointer crossing it left the layer-shell surface entirely and
+    // the compositor treated that pixel strip as click-through to the
+    // desktop, with zero hover events delivered while transiting -- the
+    // actual mechanism behind "can't reach the popout fast enough."
+    // Closing the gap to zero removes the dead zone outright; an earlier
+    // attempt to paper over it with a separate bridge Region (bridging a
+    // gap that shouldn't have existed) was reverted once this was found.
     mask: Region {
         item: Settings.barVisibility === "autohide" ? barWrapper.hoverTarget : barWrapper
 

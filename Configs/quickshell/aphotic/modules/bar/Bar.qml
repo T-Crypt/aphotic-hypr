@@ -174,8 +174,9 @@ Item {
     // All hit-testing/mapping happens against activeLayout rather than
     // root -- root's own (0,0) is the same point as activeLayout's (0,0)
     // (the hosting Loader fills root exactly), so positions received in
-    // root's coordinate space (from BarWrapper's HoverHandler/WheelHandler,
-    // which target this component) translate directly with no offset.
+    // root's coordinate space (from BarWrapper's hoverArea MouseArea/
+    // WheelHandler, which target this component) translate directly with
+    // no offset.
     function alongPoint(pos: real): point {
         return Settings.barHorizontal ? Qt.point(pos, height / 2) : Qt.point(width / 2, pos);
     }
@@ -189,8 +190,61 @@ Item {
         return Settings.barHorizontal ? c.x : c.y;
     }
 
+    // Along-axis start/size of an EntryWrapper's own hit region, in
+    // activeLayout's coordinate space -- the same space `pos` arrives in.
+    function entryRegion(entry: EntryWrapper): var {
+        if (!entry)
+            return null;
+        const start = Settings.barHorizontal ? entry.x : entry.y;
+        const size = Settings.barHorizontal ? entry.width : entry.height;
+        return {
+            start,
+            end: start + size
+        };
+    }
+
+    // Region-hysteresis lock: once a popout is open for a given bar entry,
+    // `checkPopout` used to fully re-resolve from scratch on every single
+    // pointer sample (every HoverHandler.onPointChanged tick), including
+    // deep re-matches against a sub-target inside the entry (which pill in
+    // StatusIcons, which index in Tray). Any ONE transient/borderline
+    // sample landing just outside a sub-target's own narrow bounds --
+    // between two pills, between two tray icons, or right at a matched-
+    // element's rounding edge -- fell through to an explicit `hasCurrent =
+    // false`, even though the pointer was still squarely over the SAME bar
+    // entry the whole time. Reported live as "hovering too long makes the
+    // popout stop appearing/updating": the longer a hover holds still near
+    // one of those internal seams, the more likely the next sample (fewer
+    // arrive once the pointer stops moving, so each one matters more) is
+    // exactly the kind of borderline sample that trips this.
+    //
+    // Fix, following caelestia-dots/shell's own bar popout model (which
+    // simply never clears hasCurrent on a sub-match miss within the same
+    // entry -- see modules/bar/Bar.qml's checkPopout upstream): stay
+    // "locked" on the current entry, and only tear down/re-resolve once
+    // the pointer's position has moved genuinely OUTSIDE that entry's own
+    // region (plus a small margin so the boundary itself isn't a hair
+    // trigger). A borderline sub-match miss while still inside the locked
+    // entry keeps the popout showing as-is instead of closing it.
+    readonly property real regionHysteresisMargin: 4
+    property EntryWrapper _lockedEntry: null
+
+    function withinLockedRegion(pos: real): bool {
+        const region = entryRegion(_lockedEntry);
+        if (!region)
+            return false;
+        return pos >= region.start - regionHysteresisMargin && pos <= region.end + regionHysteresisMargin;
+    }
+
     function checkPopout(pos: real): void {
-        const ch = childAlong(pos);
+        // Stay locked on the previously-resolved entry as long as the
+        // pointer is still within its region, even if a nested sub-match
+        // below (pill/tray index) misses this particular sample -- see
+        // the comment above. Only once the pointer truly leaves the
+        // locked entry's bounds do we fall through to a fresh
+        // nearest-match against the whole bar.
+        const ch = (popouts.hasCurrent && withinLockedRegion(pos)) ? _lockedEntry : childAlong(pos);
+        _lockedEntry = ch;
 
         if (ch?.entryId !== "tray")
             closeTray();
@@ -202,6 +256,15 @@ Item {
 
         const id = ch.entryId;
         const top = Settings.barHorizontal ? ch.x : ch.y;
+        // Whether this call is a re-evaluation of the SAME entry that's
+        // already showing a popout, vs. a fresh arrival at this entry --
+        // a sub-target miss (no matching pill/tray index for this exact
+        // sample) only closes the popout on fresh arrival. Re-evaluating
+        // the same already-open entry keeps whatever was last showing
+        // instead, per the region-hysteresis reasoning above: a single
+        // borderline sample shouldn't be able to blank out a popout the
+        // pointer never actually left.
+        const reevaluatingSameEntry = popouts.hasCurrent && ch === _lockedEntry;
 
         if (id === "statusIcons" && Config.bar.popouts.statusIcons) {
             // Tightly scoped to whichever pill (Connectivity/System/
@@ -218,17 +281,28 @@ Item {
                     break;
                 }
             }
-            if (matched) {
-                const localAlong = Settings.barHorizontal ? activeLayout.mapToItem(matched.icons, pos, 0).x : activeLayout.mapToItem(matched.icons, 0, pos).y;
-                const icon = BarHit.nearestAlong(matched.icons, localAlong);
-                if (icon) {
-                    popouts.currentName = icon.name;
-                    popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
-                    popouts.hasCurrent = true;
-                } else {
-                    popouts.hasCurrent = false;
-                }
-            } else {
+            // Computed directly from THIS call's own `pos`, not read from
+            // the pill's separately-maintained `hoveredEntry` -- an
+            // earlier version read `matched.pill.hoveredEntry` instead,
+            // reasoning that two independent hover pipelines (this outer
+            // one vs. the pill's own local MouseArea) computing the same
+            // match could disagree. That's true, but reading the pill's
+            // state introduced a WORSE race: on first entry into a pill
+            // (confirmed live approaching a horizontal bar's status pill
+            // from directly underneath), this outer handler's own first
+            // sample can fire before the pill's own MouseArea has updated
+            // `hoveredEntry` for that same pointer position, reading a
+            // stale/null value and failing to show a popout at all --
+            // worse than the disagreement it was meant to fix. Computing
+            // it directly here, from the same `pos` this call already
+            // has, has no such ordering dependency.
+            const localAlong = matched ? (Settings.barHorizontal ? activeLayout.mapToItem(matched.icons, pos, 0).x : activeLayout.mapToItem(matched.icons, 0, pos).y) : 0;
+            const icon = matched ? BarHit.nearestAlong(matched.icons, localAlong) : null;
+            if (icon) {
+                popouts.currentName = icon.name;
+                popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
+                popouts.hasCurrent = true;
+            } else if (!reevaluatingSameEntry) {
                 popouts.hasCurrent = false;
             }
         } else if (id === "tray" && Config.bar.popouts.tray) {
@@ -244,7 +318,7 @@ Item {
                     popouts.currentTrayItem = trayItem;
                     popouts.currentCenter = Qt.binding(() => root.centerAlong(trayItem));
                     popouts.hasCurrent = true;
-                } else {
+                } else if (!reevaluatingSameEntry) {
                     popouts.hasCurrent = false;
                 }
             } else {

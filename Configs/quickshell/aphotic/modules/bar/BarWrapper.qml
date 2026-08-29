@@ -174,9 +174,29 @@ Item {
     // mouse, so clicks still reach Bar.qml's own StateLayers/MouseAreas
     // underneath. Drives both the popout-on-hover system (checkPopout) and
     // the auto-show-on-hover bar state (isHovered) referenced by
-    // shouldBeVisible above -- neither was ever actually wired to real
-    // mouse input before this, so popouts could only be triggered by
-    // debug hacks and would never dismiss.
+    // shouldBeVisible above.
+    //
+    // REVERTED a same-day attempt to replace this with a plain MouseArea
+    // (matching caelestia-dots/shell's own Interactions.qml, which uses
+    // one). That swap broke something worse than it fixed: a MouseArea
+    // with hoverEnabled: true is NOT passive the way HoverHandler is --
+    // Qt Quick's traditional MouseArea event model consumes hover-move
+    // events for the topmost MouseArea covering a point and does not
+    // deliver them onward to overlapping/underlying MouseAreas the way
+    // HoverHandler (a newer, explicitly non-exclusive Pointer Handler)
+    // does. This top-level bar-covering MouseArea silently ate every
+    // hover event before Workspaces.qml's own workspace-hover MouseArea,
+    // StatusIcons.qml's pill MouseArea, and every status-icon component's
+    // own click/hover MouseArea underneath ever saw them -- reported live
+    // as "the highlight doesn't show up when hovering, the workspace
+    // toggle shows no highlight, everything that used to show active
+    // hover selection is gone." That regression was worse than the
+    // original popout-miss bug this was trying to fix, so it's reverted
+    // back to HoverHandler here. The real fix for missed
+    // HoverHandler samples (StatusIcons.qml's own per-pill handler, and
+    // Bar.qml's checkPopout logic) stays in place -- only the outer,
+    // whole-bar-covering layer needed to stay a HoverHandler specifically
+    // because it sits above every other interactive child in this file.
     HoverHandler {
         id: hoverHandler
 
@@ -191,8 +211,34 @@ Item {
         }
         onHoveredChanged: {
             root.isHovered = hovered;
-            if (!hovered && !root.popouts.hoveringFlyout)
-                root.popouts.hasCurrent = false;
+            // Deferred via Qt.callLater, not checked synchronously here --
+            // this component (BarWrapper.qml) and the flyout's own hover
+            // guard (popouts/Wrapper.qml's flyoutHover) live in two
+            // separate component trees, both independently reacting to
+            // the SAME physical pointer-motion event when the cursor
+            // crosses from the bar strip directly into the flush-adjacent
+            // flyout (zero gap between them, see popouts/Wrapper.qml).
+            // Qt Quick delivers each item's own hover-exit/hover-enter as
+            // a separate signal for that one motion sample, with no
+            // guarantee this handler's exit and the flyout's own enter
+            // land in a particular order within the same tick. Checking
+            // hoveringFlyout synchronously here could read its
+            // NOT-YET-UPDATED value if this handler happens to run first,
+            // closing a popout the cursor never actually left -- reported
+            // live as "the second the mouse hovers over the margin gap
+            // between the bar and the popout, it snaps away," reproducing
+            // on every single crossing regardless of bar orientation,
+            // which is exactly the signature of a same-tick ordering race
+            // rather than a geometry gap (the geometry itself has zero
+            // gap already). Qt.callLater defers this check to the next
+            // event-loop iteration, by which point BOTH handlers'
+            // synchronous work for this motion sample has already run,
+            // so hoveringFlyout reflects its real, settled value.
+            if (!hovered)
+                Qt.callLater(() => {
+                    if (!hoverHandler.hovered && !root.popouts.hoveringFlyout)
+                        root.popouts.hasCurrent = false;
+                });
         }
     }
 
