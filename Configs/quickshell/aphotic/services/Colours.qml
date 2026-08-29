@@ -131,6 +131,25 @@ Singleton {
         onLoadFailed: root._raw = {}
     }
 
+    // watchChanges alone does not reliably re-fire when wallust rewrites
+    // this file on every theme apply (confirmed live: instrumented
+    // onLoaded/onLoadFailed with console.log, applied several themes in a
+    // row via `aphotic theme set`, only the shell-startup load ever
+    // logged -- every subsequent external rewrite produced zero reload,
+    // leaving the whole shell frozen on whatever palette was active at
+    // launch). Same root cause and same fix as Themes.qml's statePath
+    // polling Timer (see its own comment) -- polling is the only
+    // mechanism this repo controls that survives repeated external
+    // rewrites of the same path. The file is a few hundred bytes, so
+    // re-reading it every second is free, and reload() on unchanged
+    // content is a no-op (same values back into the same properties).
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: paletteFile.reload()
+    }
+
     function _rawColor(key: string, fallback: string): color {
         return root._raw?.colors?.[key] ?? fallback;
     }

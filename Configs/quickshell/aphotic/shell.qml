@@ -17,6 +17,7 @@ import qs.modules.intelligence
 import qs.modules.notificationcenter
 import qs.modules.pkginstall
 import qs.modules.wallpaperpicker
+import qs.modules.keybinds
 import qs.services
 
 ShellRoot {
@@ -152,6 +153,15 @@ ShellRoot {
         }
     }
 
+    Variants {
+        id: keybindsCheatsheetWindows
+        model: Quickshell.screens
+
+        KeybindsCheatsheetWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
     // Backs both the per-target IpcHandlers below (kept as thin aliases
     // for back-compat -- `qs ipc call launcher toggle` etc. still work
     // unchanged) and the uniform `aphotic toggle(name)` dispatcher, so
@@ -210,6 +220,11 @@ ShellRoot {
             const win = root.focusedInstance(wallpaperPickerWindows);
             if (win)
                 win.screenState.wallpaperPicker = !win.screenState.wallpaperPicker;
+        },
+        keybindscheatsheet: () => {
+            const win = root.focusedInstance(keybindsCheatsheetWindows);
+            if (win)
+                win.screenState.keybindsCheatsheet = !win.screenState.keybindsCheatsheet;
         }
     })
 

@@ -30,8 +30,15 @@ RowLayout {
     // driftable copy.
     readonly property var categories: SettingsCategories.list
 
-    width: 980
-    height: 560
+    // Was 980x560 -- fixed since this panel first shipped with 5-6
+    // categories; 14 exist now (SettingsCategories.list) and several
+    // panes (AI, Network, Personalization) have grown dense enough that
+    // the old size left everything visibly cramped. Bumped, still a
+    // fixed size rather than screen-relative -- comfortably fits inside
+    // even this repo's smallest documented target (1920x1080) with
+    // margin, without needing per-screen sizing logic.
+    width: 1180
+    height: 720
     spacing: 0
 
     StyledRect {

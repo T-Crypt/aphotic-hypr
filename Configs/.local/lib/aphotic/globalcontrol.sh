@@ -34,6 +34,11 @@ APHOTIC_PLUGINS_STATE_FILE="${APHOTIC_STATE_HOME}/plugins.json"
 # Where `aphotic plugin install` looks for a local checkout of the
 # aphotic-plugins repo. Override for a dev checkout elsewhere.
 APHOTIC_PLUGINS_REPO="${APHOTIC_PLUGINS_REPO:-$HOME/aphotic-plugins}"
+# git-clonable, matches the org/repo APHOTIC_PLUGINS_INDEX_URL reads its
+# index.json from below -- `aphotic plugin install` clones here on first
+# use (see _aphotic_plugin_sync_repo in cmd_plugin.sh) rather than
+# requiring a manual clone beforehand.
+APHOTIC_PLUGINS_GIT_URL="${APHOTIC_PLUGINS_GIT_URL:-https://github.com/T-Crypt/aphotic-plugins.git}"
 APHOTIC_PLUGINS_INDEX_URL="${APHOTIC_PLUGINS_INDEX_URL:-https://raw.githubusercontent.com/T-Crypt/aphotic-plugins/main/index.json}"
 # Security-category plugins (Bloodhound, Caido, ...) live in a SEPARATE
 # index, not merged into the main one -- mirrors the exploit layer's
@@ -56,7 +61,7 @@ mkdir -p "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$APHOTIC_DATA_HOME" \
 export APHOTIC_VERSION APHOTIC_CONFIG_HOME APHOTIC_STATE_HOME APHOTIC_DATA_HOME \
        APHOTIC_RUNTIME_DIR APHOTIC_CONFIG_FILE APHOTIC_BACKUP_DIR APHOTIC_DOTS_DIR \
        QUICKSHELL_CONFIG_DIR APHOTIC_PLUGINS_DIR APHOTIC_PLUGINS_STATE_FILE \
-       APHOTIC_PLUGINS_REPO APHOTIC_PLUGINS_INDEX_URL APHOTIC_PLUGINS_SECURITY_INDEX_URL
+       APHOTIC_PLUGINS_REPO APHOTIC_PLUGINS_GIT_URL APHOTIC_PLUGINS_INDEX_URL APHOTIC_PLUGINS_SECURITY_INDEX_URL
 
 # ---- logging -----------------------------------------------------------
 _APHOTIC_DIM=$'\e[2m'; _APHOTIC_R=$'\e[0m'

@@ -24,6 +24,7 @@ hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c aphotic ipc call dashboard tog
 hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c aphotic ipc call settings toggle"), { description = "Toggle Settings" })
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifs clear"), { description = "Clear all notifications" })
 hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs -c aphotic ipc call notifications toggle"), { description = "Toggle Notification Center" })
+hl.bind(mainMod .. " + K", hl.dsp.exec_cmd("qs -c aphotic ipc call aphotic toggle keybindscheatsheet"), { description = "Toggle keybinds cheatsheet" })
 -- AUR/official package search + install (Arch-only; silently a no-op if
 -- neither yay nor paru is on PATH, see services/PkgSearch.qml)
 hl.bind(mainMod .. " + Y", hl.dsp.exec_cmd("qs -c aphotic ipc call pkginstall toggle"), { description = "Toggle package search/install" })

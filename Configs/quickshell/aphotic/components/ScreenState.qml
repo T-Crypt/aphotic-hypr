@@ -17,6 +17,7 @@ PersistentProperties {
     property bool notificationCenter
     property bool pkgInstall
     property bool wallpaperPicker
+    property bool keybindsCheatsheet
 
     // Dashboard state
     property int dashboardTab

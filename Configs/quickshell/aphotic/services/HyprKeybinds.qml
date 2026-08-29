@@ -79,6 +79,45 @@ Singleton {
         proc.running = true;
     }
 
+    // Categorization for the SUPER+K cheatsheet (modules/keybinds/) --
+    // keybinds.lua is a sequence of imperative hl.bind() calls, not a
+    // table with a category field (see this file's own header comment
+    // and docs/LEDGER.md's queued-items note on why this reads live from
+    // hyprctl instead of parsing that file), and Hyprland's bind schema
+    // has no room for a custom field of our own to survive the round
+    // trip through `hyprctl binds -j` even if one were added there. So
+    // this buckets by keyword match against the same `description` text
+    // the launcher's "!" mode already displays -- one heuristic instead
+    // of a second, driftable source of truth. Order matters: earlier
+    // rules must be more specific than later ones (e.g. "move window to
+    // workspace N" needs to land in Workspaces, not Windows, so the
+    // workspace check runs first).
+    readonly property var _categoryOrder: ["Aphotic Shell", "Windows", "Workspaces", "Apps & System", "Capture", "Media & Hardware"]
+
+    function _categoryFor(description: string): string {
+        const d = description.toLowerCase();
+        if (d.includes("to workspace") || d.includes("switch to workspace") || /^(next|previous) (special )?workspace$/.test(d) || d.includes("empty workspace"))
+            return "Workspaces";
+        if (/window|floating|pseudotile|split direction|\bgroup\b|fullscreen|\bpin\b/.test(d))
+            return "Windows";
+        if (d.includes("screenshot") || d.includes("color from screen"))
+            return "Capture";
+        if (/volume|brightness|microphone|\btrack\b|\bmedia\b|\baudio\b/.test(d))
+            return "Media & Hardware";
+        if (d.startsWith("open ") || d.includes("lock screen") || d.includes("power/logout"))
+            return "Apps & System";
+        return "Aphotic Shell";
+    }
+
+    // Grouped for the cheatsheet -- each group's items stay in the same
+    // alphabetical-by-description order `entries` is already sorted in,
+    // since filtering preserves relative order. Empty groups are omitted
+    // rather than rendered as a header with nothing under it.
+    readonly property var categorizedEntries: root._categoryOrder.map(cat => ({
+                category: cat,
+                items: root.entries.filter(e => root._categoryFor(e.description) === cat)
+            })).filter(g => g.items.length > 0)
+
     Process {
         id: proc
 

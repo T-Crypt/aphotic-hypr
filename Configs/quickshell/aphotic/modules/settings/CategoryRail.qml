@@ -13,6 +13,17 @@ ColumnLayout {
     required property string currentCategory
     required property var categories // [{ id, icon, label, description }]
 
+    // PluginsPane.qml reuses this component for its own much-shorter
+    // category filter (7 fixed categories, no reason to search) rather
+    // than duplicating the pill-list styling -- but the search box's
+    // placeholder ("Search settings…") is real navigation-rail-specific
+    // copy, and its ~48px pushed every category pill down by that much
+    // with nothing equivalent on the neighboring "Browse available"
+    // column, reading as visibly off-center between the two. Off by
+    // default would break the main Settings rail's own search, so this
+    // defaults true and only PluginsPane opts out.
+    property bool showSearch: true
+
     signal categorySelected(id: string)
 
     readonly property var filteredCategories: {
@@ -25,6 +36,7 @@ ColumnLayout {
     StyledRect {
         Layout.fillWidth: true
         Layout.preferredHeight: 36
+        visible: root.showSearch
         radius: Tokens.rounding.full
         color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
 
