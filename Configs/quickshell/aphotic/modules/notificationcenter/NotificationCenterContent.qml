@@ -63,6 +63,15 @@ Item {
             shadowVerticalOffset: 2
         }
 
+        // No DepthLayer here -- this card's own content (a dense
+        // notification list) is already visually busy, per Aphotic
+        // Depth's per-surface intensity guidance.
+        DepthGradient {
+            anchors.fill: parent
+            radius: card.radius
+            baseColour: card.color
+        }
+
         MouseArea {
             anchors.fill: parent
         }
@@ -119,6 +128,27 @@ Item {
                         anchors.fill: parent
                         radius: parent.radius
                         onClicked: NotificationHistory.markAllRead()
+                    }
+                }
+
+                Item {
+                    implicitWidth: dndIcon.implicitHeight + Tokens.padding.extraSmall * 2
+                    implicitHeight: dndIcon.implicitHeight + Tokens.padding.extraSmall * 2
+
+                    StateLayer {
+                        anchors.fill: parent
+                        radius: Tokens.rounding.full
+                        onClicked: DoNotDisturb.toggle()
+                    }
+
+                    MaterialIcon {
+                        id: dndIcon
+
+                        anchors.centerIn: parent
+                        text: DoNotDisturb.enabled ? "notifications_off" : "notifications"
+                        color: DoNotDisturb.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        fill: DoNotDisturb.enabled ? 1 : 0
+                        fontStyle: Tokens.font.icon.small
                     }
                 }
 

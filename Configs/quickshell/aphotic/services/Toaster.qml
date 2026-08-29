@@ -1,10 +1,21 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 
-// Hand-written no-op stand-in for Caelestia's native Toaster plugin type.
-// Notifications aren't vendored in Phase 1 (see plan sub-phase 3, "Notifications
-// — replaces Mako", not yet started) — this just keeps Audio.qml/Players.qml's
-// existing toast() calls from being a hard QML resolution error until then.
+// Real toasts via notify-send, the same convention every other
+// notification in this repo already uses (Pomodoro.qml, PkgSearch.qml,
+// Wallpapers.qml's engine-mismatch warning, areapicker/Picker.qml's
+// screenshot toast). Notifs.qml's NotificationServer is a *receiver* for
+// standard freedesktop notifications -- the same DBus door notify-send
+// itself knocks on -- not something a QML caller can push a local toast
+// into directly, so this goes out that door too rather than trying to
+// synthesize a NotifData bypassing the server contract.
 QtObject {
-    function toast(title: string, body: string, icon: string): void {}
+    function toast(title: string, body: string, icon: string): void {
+        const args = ["notify-send", "-a", "aphotic"];
+        if (icon)
+            args.push("-i", icon);
+        args.push(title, body);
+        Quickshell.execDetached(args);
+    }
 }

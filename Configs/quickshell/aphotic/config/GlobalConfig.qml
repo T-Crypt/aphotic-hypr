@@ -25,6 +25,21 @@ QtObject {
         readonly property real defaultExpireTimeout: 5000
     }
 
+    // Audio.qml and Players.qml gate their Toaster.toast() calls on these
+    // three flags -- referenced from day one, never actually declared
+    // here, so `GlobalConfig.utilities` read as undefined and the `if`
+    // guarding each toast call threw (TypeError: Cannot read properties
+    // of undefined) before toast() was ever reached. Toaster.qml's own
+    // no-op stub masked this too -- fixing the stub alone wouldn't have
+    // made these three toasts fire.
+    readonly property QtObject utilities: QtObject {
+        readonly property QtObject toasts: QtObject {
+            readonly property bool audioOutputChanged: true
+            readonly property bool audioInputChanged: true
+            readonly property bool nowPlaying: true
+        }
+    }
+
     // NetworkUsage.qml (vendored under Task 4) has always read
     // GlobalConfig.dashboard.resourceUpdateInterval, but nothing wired
     // the dashboard in until tonight, so this gap went unnoticed until

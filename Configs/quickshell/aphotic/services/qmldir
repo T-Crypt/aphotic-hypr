@@ -3,10 +3,12 @@ singleton AgentProviders 1.0 AgentProviders.qml
 singleton Audio 1.0 Audio.qml
 singleton Brightness 1.0 Brightness.qml
 singleton Colours 1.0 Colours.qml
+singleton DepthFx 1.0 DepthFx.qml
 singleton DoNotDisturb 1.0 DoNotDisturb.qml
 singleton EmojiList 1.0 EmojiList.qml
 singleton HostInfo 1.0 HostInfo.qml
 singleton Hypr 1.0 Hypr.qml
+singleton HyprKeybinds 1.0 HyprKeybinds.qml
 singleton LauncherUsage 1.0 LauncherUsage.qml
 singleton LlmFit 1.0 LlmFit.qml
 singleton ModelStorage 1.0 ModelStorage.qml

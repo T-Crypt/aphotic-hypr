@@ -1,0 +1,3 @@
+module qs.modules.wallpaperpicker
+WallpaperFilmstrip 1.0 WallpaperFilmstrip.qml
+WallpaperPickerWindow 1.0 WallpaperPickerWindow.qml

@@ -20,6 +20,7 @@ Item {
     property int state
 
     signal flashMsg
+    signal unlockSuccess
 
     function handleKey(event: var): void {
         if (passwd.active)
@@ -56,7 +57,11 @@ Item {
 
         onCompleted: res => {
             if (res === PamResult.Success) {
-                root.lock.locked = false;
+                // Fire the glow ripple immediately but hold the actual
+                // unlock for one beat -- an instant cut to desktop the
+                // moment PAM succeeds would never let the ripple be seen.
+                root.unlockSuccess();
+                unlockDelay.restart();
                 return;
             }
 
@@ -79,6 +84,12 @@ Item {
             if (root.state !== Pam.MaxTries)
                 root.state = Pam.None;
         }
+    }
+
+    Timer {
+        id: unlockDelay
+        interval: 700
+        onTriggered: root.lock.locked = false
     }
 
     Connections {

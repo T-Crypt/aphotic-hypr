@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.components
 import qs.config
 import qs.services
 
@@ -12,6 +13,8 @@ PanelWindow {
 
     required property var modelData
     screen: modelData
+
+    required property ScreenState screenState
 
     readonly property string currentWallpaper: Wallpapers.current
 
@@ -31,6 +34,111 @@ PanelWindow {
         id: backgroundContent
 
         anchors.fill: parent
+
+        // "Descent" intro: the shell surfaces into view rather than just
+        // appearing, echoing light fading in from depth on first map. Any
+        // input skips straight to the settled state -- this is a mood-
+        // setting flourish, not something that should ever make someone
+        // wait to start using their desktop.
+        //
+        // Uses an explicit, stoppable Animation rather than a Behavior:
+        // a Behavior can't be reliably snapped to its end value mid-flight
+        // (disabling it just freezes wherever the animation currently is),
+        // which would make "skippable" a lie the moment input arrives
+        // partway through the ~650ms transition.
+        property bool introSkipped: false
+
+        opacity: 0
+        scale: 1.04
+        transformOrigin: Item.Center
+
+        function skipIntro(): void {
+            if (backgroundContent.introSkipped)
+                return;
+            backgroundContent.introSkipped = true;
+            descentAnim.stop();
+            backgroundContent.opacity = 1;
+            backgroundContent.scale = 1;
+        }
+
+        ParallelAnimation {
+            id: descentAnim
+
+            NumberAnimation {
+                target: backgroundContent
+                property: "opacity"
+                to: 1
+                duration: Tokens.anim.durations.expressiveSlowSpatial
+                easing: Tokens.anim.expressiveSlowSpatial
+            }
+            NumberAnimation {
+                target: backgroundContent
+                property: "scale"
+                to: 1
+                duration: Tokens.anim.durations.expressiveSlowSpatial
+                easing: Tokens.anim.expressiveSlowSpatial
+            }
+        }
+
+        Timer {
+            interval: 16
+            running: true
+            onTriggered: {
+                if (!backgroundContent.introSkipped)
+                    descentAnim.start();
+            }
+        }
+
+        HoverHandler {
+            enabled: !backgroundContent.introSkipped
+            onPointChanged: backgroundContent.skipIntro()
+        }
+
+        TapHandler {
+            enabled: !backgroundContent.introSkipped
+            acceptedButtons: Qt.AllButtons
+            onTapped: backgroundContent.skipIntro()
+        }
+
+        // Desktop right-click menu -- TapHandler (not MouseArea) so it
+        // observes without grabbing the button, leaving normal
+        // left-click-through-to-desktop behaviour untouched.
+        property bool menuOpen: false
+        property real menuX: 0
+        property real menuY: 0
+
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: eventPoint => {
+                backgroundContent.menuX = eventPoint.position.x;
+                backgroundContent.menuY = eventPoint.position.y;
+                backgroundContent.menuOpen = true;
+            }
+        }
+
+        TapHandler {
+            acceptedButtons: Qt.LeftButton
+            enabled: backgroundContent.menuOpen
+            onTapped: backgroundContent.menuOpen = false
+        }
+
+        Loader {
+            id: contextMenuLoader
+
+            // Above the wallpaper/clock siblings below regardless of
+            // declaration order (QML stacks same-parent children by
+            // declaration order otherwise, and this is declared first).
+            z: 100
+            active: backgroundContent.menuOpen
+            asynchronous: false
+
+            sourceComponent: DesktopContextMenu {
+                screenState: root.screenState
+                menuX: backgroundContent.menuX
+                menuY: backgroundContent.menuY
+                onDismissed: backgroundContent.menuOpen = false
+            }
+        }
 
         Loader {
             id: wallpaperDisplay

@@ -12,6 +12,7 @@ ColumnLayout {
     id: root
 
     readonly property var accentPresets: ["", "#4A5A52", "#669B04", "#3B82F6", "#EF4444", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"]
+    readonly property var depthEffectsPresets: [{ value: "off", label: qsTr("Off") }, { value: "subtle", label: qsTr("Subtle") }, { value: "full", label: qsTr("Full") }]
 
     property var cursorThemes: []
     property var iconThemes: []
@@ -114,6 +115,33 @@ ColumnLayout {
                     onClicked: Settings.accentColorOverride = swatch.modelData
                 }
             }
+        }
+    }
+
+    StyledText {
+        Layout.topMargin: Tokens.spacing.small
+        text: qsTr("Depth effects")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.label.medium
+    }
+
+    StyledText {
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: qsTr("Breathing glow and ambient particles layered on top of your theme. Subtle is a lighter tier for lower-end GPUs; Off returns to flat, static highlights everywhere.")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+
+        SettingsPresetRow {
+            icon: "blur_on"
+            label: qsTr("Depth effects")
+            presets: root.depthEffectsPresets
+            value: Settings.depthEffects
+            onSelected: value => Settings.depthEffects = value
         }
     }
 

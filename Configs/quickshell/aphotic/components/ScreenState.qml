@@ -16,6 +16,7 @@ PersistentProperties {
     property bool intelligence
     property bool notificationCenter
     property bool pkgInstall
+    property bool wallpaperPicker
 
     // Dashboard state
     property int dashboardTab
@@ -26,4 +27,10 @@ PersistentProperties {
     // wallpaper picker instead of plain app search). Cleared by the
     // launcher itself once consumed.
     property string launcherPrefill: ""
+
+    // Settings: category id to jump straight to the next time the panel
+    // opens (set by the launcher's "?" settings-search mode). Cleared by
+    // SettingsWindow itself once consumed -- same one-shot handoff shape
+    // as launcherPrefill above.
+    property string settingsCategory: ""
 }

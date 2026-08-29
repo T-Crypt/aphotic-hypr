@@ -56,6 +56,17 @@ ColumnLayout {
             shadowVerticalOffset: 2
         }
 
+        DepthLayer {
+            anchors.fill: parent
+            opacityScale: 0.7
+        }
+
+        DepthGradient {
+            anchors.fill: parent
+            radius: parent.radius
+            baseColour: Colours.tPalette.m3surfaceContainer
+        }
+
         Loader {
             id: tabLoader
 
