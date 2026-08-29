@@ -12,7 +12,12 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 1.2.0
+
+A live Agent Graph tab for Claude Code sessions, plus Hyprland-native
+release banners like this one. See the README's Roadmap for the full list.
+
 ## 1.1.0
 
-Swappable bar styles, a live Agent Graph tab, and an opt-in local
-Aphotic Assistant. See the README's Roadmap for the full list.
+Swappable bar styles and an opt-in local Aphotic Assistant. See the
+README's Roadmap for the full list.
