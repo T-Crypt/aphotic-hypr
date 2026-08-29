@@ -15,11 +15,11 @@ def load_packages():
     pkgs = set()
     for base in sorted((ROOT / "profiles" / "base").glob("*.toml")):
         d = tomllib.load(open(base, "rb"))
-        for pkg in d["packages"].get("prep", []) + d["packages"].get("main", []):
+        for pkg in d.get("packages", {}).get("prep", []) + d.get("packages", {}).get("main", []):
             pkgs.add(pkg)
     for layer in sorted((ROOT / "profiles" / "layers").glob("*.toml")):
         d = tomllib.load(open(layer, "rb"))
-        for pkg in d["packages"].get("prep", []) + d["packages"].get("main", []):
+        for pkg in d.get("packages", {}).get("prep", []) + d.get("packages", {}).get("main", []):
             pkgs.add(pkg)
     return pkgs
 

@@ -2,7 +2,14 @@
 set -euo pipefail
 
 BLACKARCH_STRAP_URL="https://blackarch.org/strap.sh"
-BLACKARCH_STRAP_SHA1SUM_URL="https://blackarch.org/strap.sh.sha1sum"
+# blackarch.org moved the published checksum from /strap.sh.sha1sum (now a
+# soft-404 that serves the homepage with HTTP 200 instead of erroring) to
+# /checksums/strap -- same file BlackArch's own downloads.html now points
+# at. The old URL made ensure_blackarch_repo() below always fail its
+# checksum check (comparing the real strap.sh hash against garbage HTML),
+# silently blocking the BlackArch repo -- and with it every exploit-*
+# layer package that isn't also on the AUR or in Arch's official repos.
+BLACKARCH_STRAP_SHA1SUM_URL="https://blackarch.org/checksums/strap"
 BLACKARCH_KEYRING_PKG="blackarch-keyring"
 
 blackarch_repo_present() {
@@ -59,7 +66,11 @@ ensure_blackarch_repo() {
 
   expected_sum=$(awk '{print $1}' "$strap_sum")
   actual_sum=$(sha1sum "$strap_sh" | awk '{print $1}')
-  if [[ -z "$expected_sum" || "$expected_sum" != "$actual_sum" ]]; then
+  if ! [[ "$expected_sum" =~ ^[0-9a-f]{40}$ ]]; then
+    echo "$BLACKARCH_STRAP_SHA1SUM_URL didn't return a sha1sum (got: ${expected_sum:0:40}...) -- blackarch.org likely moved/renamed it again. Nothing was changed." >&2
+    return 1
+  fi
+  if [[ "$expected_sum" != "$actual_sum" ]]; then
     echo "BlackArch strap.sh checksum mismatch (expected $expected_sum, got $actual_sum) -- refusing to run it. Nothing was changed." >&2
     return 1
   fi
