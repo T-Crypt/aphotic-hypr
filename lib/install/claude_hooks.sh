@@ -52,3 +52,32 @@ configure_claude_code_hooks() {
     ' \
     "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
 }
+
+# The inverse of configure_claude_code_hooks, for a re-run where the user
+# de-selected the `ai` layer: drops only the entries pointing at this repo's
+# own agent_hook.sh and leaves every other hook the user has configured
+# untouched. Also prunes hook events left with no entries at all, so
+# settings.json doesn't accumulate empty arrays.
+remove_claude_code_hooks() {
+  local hook_script="$1"
+  local settings_file="$HOME/.claude/settings.json"
+
+  [[ -f "$settings_file" ]] || return 0
+
+  if ! jq -e . "$settings_file" >/dev/null 2>&1; then
+    echo "existing $settings_file is not valid JSON; leaving Claude Code hooks alone" >&2
+    return 1
+  fi
+
+  local tmp
+  tmp="$(mktemp)"
+  jq \
+    --arg cmd "$hook_script" \
+    '
+    (.hooks // {}) as $hooks
+    | .hooks = ($hooks
+        | with_entries(.value |= map(select((.hooks // []) | any(.command == $cmd) | not)))
+        | with_entries(select((.value | length) > 0)))
+    ' \
+    "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+}
