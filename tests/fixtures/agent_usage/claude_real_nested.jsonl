@@ -1,0 +1,4 @@
+{"type": "user", "timestamp": "2026-08-24T09:00:00Z", "message": {"role": "user", "content": "hi"}}
+{"type": "assistant", "timestamp": "2026-08-24T10:00:00Z", "message": {"model": "claude-sonnet-5", "usage": {"input_tokens": 2, "cache_read_input_tokens": 488576, "output_tokens": 844}}}
+{"type": "assistant", "timestamp": "2026-08-24T10:05:00Z", "message": {"model": "claude-sonnet-5", "usage": {"input_tokens": 3, "output_tokens": 151}}}
+{"type": "assistant", "timestamp": "2025-01-01T00:00:00Z", "message": {"model": "claude-sonnet-5", "usage": {"input_tokens": 999, "output_tokens": 999}}}

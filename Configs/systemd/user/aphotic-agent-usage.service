@@ -3,4 +3,14 @@ Description=Aphotic agent usage record updater
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/env aphotic agent usage-update
+# Not `/usr/bin/env aphotic` -- systemd --user services run with a
+# minimal environment that does NOT include ~/.local/bin in PATH (that
+# only happens in an interactive shell via .zshrc/.bashrc), so `env`
+# could never resolve the name. This failed silently on every single
+# run since this unit was added (confirmed live: `journalctl --user -u
+# aphotic-agent-usage.service` showed "env: 'aphotic': No such file or
+# directory" on every 15-minute trigger, going back to this machine's
+# last install) -- the Live Agent Activity Module's data was never
+# actually being updated by this timer. %h is systemd's own
+# user-home-directory specifier, resolved without relying on PATH.
+ExecStart=%h/.local/bin/aphotic agent usage-update

@@ -240,6 +240,64 @@ _aphotic_plugin_sync_repo() {
     fi
 }
 
+# Installs whatever this just-copied plugin's plugin.toml declares it
+# needs, in the SAME visible kitty terminal `aphotic plugin install`
+# already runs in (see PluginsPane.qml's Install button) -- not a second
+# spawned window -- so the user watches one continuous clone -> copy ->
+# deps -> done flow instead of piecing together output from two terminals.
+# Same "shell out to yay/paru in a real terminal, no --noconfirm" contract
+# `PkgSearch.qml`'s own install() already established for the package-
+# search pane (SUPER+Y) -- yay/paru's own interactive prompts (which
+# provider to pick, PKGBUILD review, sudo password) show up exactly as
+# they would from a manual `yay -S`, since AUR packages run arbitrary
+# build scripts and this repo doesn't silently auto-confirm that anywhere
+# else either.
+_aphotic_plugin_install_deps() {
+    local dest="$1" manifest="${dest}/plugin.toml" bin pkg helper=""
+    [[ -f "$manifest" ]] || return 0
+
+    command -v yay >/dev/null 2>&1 && helper="yay"
+    [[ -z "$helper" ]] && command -v paru >/dev/null 2>&1 && helper="paru"
+
+    local missing=()
+    while IFS= read -r bin; do
+        [[ -z "$bin" ]] && continue
+        command -v "$bin" >/dev/null 2>&1 || missing+=("$bin")
+    done < <(aphotic_toml_get_array "$manifest" requires binaries)
+
+    [[ ${#missing[@]} -eq 0 ]] && return 0
+
+    if [[ -z "$helper" ]]; then
+        aphotic_warn "missing dependencies (${missing[*]}) but no AUR helper (yay/paru) found on PATH -- install manually"
+        return 0
+    fi
+
+    # `[requires] packages = [...]` in plugin.toml is an optional,
+    # explicit override for the (uncommon) case where a binary's real
+    # package name differs from the binary name itself -- e.g. a plugin
+    # needing a `foo` binary that actually ships in an AUR package called
+    # `foo-bin`. Falls back to installing each missing binary's own name
+    # as the package name, which is correct for the common case (openrgb
+    # the binary really does come from a package literally named
+    # `openrgb`) without requiring every plugin manifest to spell out an
+    # otherwise-redundant packages list.
+    local explicit_pkgs=()
+    while IFS= read -r pkg; do
+        [[ -z "$pkg" ]] && continue
+        explicit_pkgs+=("$pkg")
+    done < <(aphotic_toml_get_array "$manifest" requires packages)
+
+    local to_install=("${missing[@]}")
+    [[ ${#explicit_pkgs[@]} -gt 0 ]] && to_install=("${explicit_pkgs[@]}")
+
+    echo "Installing dependencies via ${helper}: ${to_install[*]}"
+    if "$helper" -S "${to_install[@]}"; then
+        aphotic_ok "dependencies installed"
+    else
+        aphotic_warn "some dependencies failed to install -- check the output above, or install manually"
+    fi
+}
+
 _aphotic_plugin_install() {
     local name="$1" link="$2" src dest
     [[ -n "$name" ]] || { aphotic_err "usage: aphotic plugin install <name> [--link]"; return 1; }
@@ -267,6 +325,8 @@ _aphotic_plugin_install() {
     fi
 
     find "$dest" -path "*/hooks/*" -type f -exec chmod +x {} \; 2>/dev/null || true
+
+    _aphotic_plugin_install_deps "$dest"
 
     aphotic_ok "installed ${name}"
     echo "PLUGIN INSTALLED: ${name}"

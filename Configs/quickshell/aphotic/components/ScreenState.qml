@@ -10,8 +10,6 @@ PersistentProperties {
     property bool launcher
     property bool dashboard
     property bool settings
-    property bool utilities
-    property bool sidebar
     property bool agentPanel
     property bool intelligence
     property bool notificationCenter

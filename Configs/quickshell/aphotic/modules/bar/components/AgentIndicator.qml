@@ -22,11 +22,6 @@ Item {
     implicitWidth: root.showBackground ? Settings.barInnerWidth : icon.implicitWidth
     implicitHeight: root.showBackground ? Settings.barInnerWidth : icon.implicitHeight
 
-    BioluminescentGlow {
-        target: background
-        intensity: root.badgeCount > 0 ? DepthFx.glowIntensity : 0
-    }
-
     StyledRect {
         id: background
 
@@ -34,6 +29,30 @@ Item {
         anchors.fill: parent
         radius: Tokens.rounding.full
         color: Colours.palette.m3surfaceContainerHigh
+    }
+
+    // Was targeting `background` (the full pill), declared BEFORE it in
+    // z-order per BioluminescentGlow's normal "target hides the solid
+    // core" contract -- on Minimal (showBackground: false), root's own
+    // implicitWidth/Height collapse to icon.implicitWidth/Height, so
+    // `background`'s anchors.fill: parent happened to end up icon-sized
+    // there too, and the glow looked like a tight halo around the icon
+    // purely by that coincidence. On Full/Taskbar, `background` is the
+    // much bigger Settings.barInnerWidth pill every other bar entry uses,
+    // so the exact same glow wrapped that instead -- and sat BELOW the
+    // pill's own opaque fill in z-order, which hid all but a barely-
+    // visible sliver of it regardless (confirmed live: still nearly
+    // invisible even with intensity forced to 1). Targeting `icon`
+    // directly and moving this above `background` (but still below
+    // `icon`, so the glyph stays crisp on top of its own halo) makes the
+    // glow consistently "a halo around the icon" on every bar style, and
+    // actually visible against the background chip instead of hidden by
+    // it.
+    BioluminescentGlow {
+        target: icon
+        intensity: root.badgeCount > 0 ? DepthFx.glowIntensity : 0
+        glowBlur: 20
+        glowSpread: 0.3
     }
 
     MaterialIcon {

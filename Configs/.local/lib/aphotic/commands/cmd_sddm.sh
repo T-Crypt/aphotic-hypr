@@ -47,14 +47,39 @@ _aphotic_sddm_sync() {
         return 1
     fi
 
+    # install.sh's install_sddm() chowns this whole theme directory to
+    # the installing user right after extracting it (`sudo chown -R
+    # "$USER:$USER" .../sugar-candy`) specifically so ordinary desktop
+    # use doesn't need root after that point -- but this function always
+    # wrapped its cp/sed in `sudo` regardless, which only ever succeeded
+    # when a sudo credential happened to already be cached (e.g. right
+    # after an interactive `sudo -v`/install run) and no-op'd silently on
+    # every other automatic call (every theme/wallpaper change routes
+    # through this as a best-effort background call -- see Wallpapers.qml/
+    # cmd_theme.sh/wallswitcher.py), which is why this looked like it
+    # needed a human to trigger it by hand. Try writing directly first --
+    # correct and sudo-free on any machine that went through the normal
+    # installer -- and only fall back to sudo (still best-effort, still
+    # silently skips rather than blocking on a password prompt) for a
+    # theme directory some other setup left root-owned.
+    local filename; filename="$(basename "$image_path")"
+    local dest_bg="${APHOTIC_SDDM_THEME_DIR}/Backgrounds/${filename}"
+    local dest_conf="${APHOTIC_SDDM_THEME_DIR}/theme.conf"
+
+    if [[ -w "${APHOTIC_SDDM_THEME_DIR}/Backgrounds" ]] && [[ -w "$dest_conf" ]]; then
+        cp "$image_path" "${APHOTIC_SDDM_THEME_DIR}/Backgrounds/" &&
+            sed -i "s|^Background=.*|Background=\"Backgrounds/${filename}\"|" "$dest_conf" &&
+            aphotic_ok "sddm background synced to ${filename}"
+        return
+    fi
+
     if ! sudo -n true 2>/dev/null; then
-        aphotic_warn "sddm sync needs passwordless sudo to run automatically (see commands/README.md); run 'aphotic sddm sync' manually, or 'sudo -v' first"
+        aphotic_warn "sddm theme directory isn't user-writable and no passwordless sudo is available (see commands/README.md); run 'aphotic sddm sync' manually, or 'sudo -v' first"
         return 0
     fi
 
-    local filename; filename="$(basename "$image_path")"
     sudo cp "$image_path" "${APHOTIC_SDDM_THEME_DIR}/Backgrounds/" &&
-        sudo sed -i "s|^Background=.*|Background=\"Backgrounds/${filename}\"|" "${APHOTIC_SDDM_THEME_DIR}/theme.conf" &&
+        sudo sed -i "s|^Background=.*|Background=\"Backgrounds/${filename}\"|" "$dest_conf" &&
         aphotic_ok "sddm background synced to ${filename}"
 }
 
@@ -76,9 +101,16 @@ print(re.sub(r"\\(.)", r"\1", m.group(1)) if m else "")
         return 0
     fi
 
-    if ! sudo -n true 2>/dev/null; then
-        aphotic_warn "sddm greeting needs passwordless sudo to run automatically (see commands/README.md); run 'sudo -v' first, then retry"
-        return 0
+    # Same install.sh-chowns-the-theme-dir reasoning as _aphotic_sddm_sync
+    # above -- only fall back to requiring sudo when theme.conf genuinely
+    # isn't user-writable.
+    local need_sudo="false"
+    if [[ ! -w "$conf" ]]; then
+        need_sudo="true"
+        if ! sudo -n true 2>/dev/null; then
+            aphotic_warn "sddm theme.conf isn't user-writable and no passwordless sudo is available (see commands/README.md); run 'sudo -v' first, then retry"
+            return 0
+        fi
     fi
 
     # Edited via python's own string handling, not sed -- HeaderText can
@@ -105,7 +137,11 @@ open(out, "w").write(new_content)
         return 1
     fi
 
-    sudo cp "$tmp" "$conf" && rm -f "$tmp" && aphotic_ok "sddm greeting set to: ${text}"
+    if [[ "$need_sudo" == "true" ]]; then
+        sudo cp "$tmp" "$conf" && rm -f "$tmp" && aphotic_ok "sddm greeting set to: ${text}"
+    else
+        cp "$tmp" "$conf" && rm -f "$tmp" && aphotic_ok "sddm greeting set to: ${text}"
+    fi
 }
 
 aphotic_cmd_sddm() {

@@ -499,6 +499,8 @@ except Exception:
     systemctl --user enable aphotic-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
     echo -e "$CNT - Enabling the agent usage-tracking timer..."
     systemctl --user enable --now aphotic-agent-usage.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-agent-usage.timer; the bar's agent popout will show stale/no usage data until it's enabled manually."
+    echo -e "$CNT - Enabling the SDDM background sync timer..."
+    systemctl --user enable --now aphotic-sddm-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-sddm-sync.timer; the SDDM login background will only update via the per-theme-change best-effort call, not this periodic catch-up. Enable manually with 'systemctl --user enable --now aphotic-sddm-sync.timer'."
     echo -e "$CNT - Configuring the Claude Code hook for live agent session tracking..."
     if command -v jq >/dev/null 2>&1; then
       configure_claude_code_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/agent_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not update ~/.claude/settings.json; the bar's agent popout will only show session presence/count, not live per-session status. Wire it manually — see docs/AGENT_TRACKING.md."
