@@ -83,6 +83,17 @@ Item {
     // occlusion check isn't available cheaply via Hyprland's IPC.
     readonly property bool shouldShow: !Settings.dockAutoHide || !Hypr.activeToplevel || hoverHandler.hovered
 
+    // Was entirely absent -- Dock silently lost scroll-to-volume that
+    // every other bar style has (Full/Taskbar/Minimal all define this
+    // identically). Real feature gap, not a design choice like Minimal's
+    // deliberately sparse icon set -- fixed to match.
+    function handleWheel(pos: real, angleDelta: point): void {
+        if (angleDelta.y > 0)
+            Audio.incrementVolume();
+        else if (angleDelta.y < 0)
+            Audio.decrementVolume();
+    }
+
     implicitWidth: pill.width
     implicitHeight: pill.height
     width: Math.max(implicitWidth, hoverTarget.width)
@@ -229,6 +240,21 @@ Item {
             DockWorkspaces {
                 Layout.alignment: Qt.AlignCenter
                 screen: root.screen
+            }
+
+            // Was entirely absent -- Dock silently dropped battery/
+            // network/bluetooth/VPN visibility with no design rationale
+            // documented anywhere (unlike Minimal, whose sparse icon set
+            // is a deliberate, commented design choice). Hover popouts
+            // for these icons don't work here yet (Dock has no
+            // checkPopout/popout-positioning support at all -- a
+            // separate, larger feature gap, already tracked in
+            // docs/ROADMAP.md's Bar section), but the icons themselves
+            // showing real status is the actual "silently lost
+            // information" gap being fixed here.
+            StatusIcons {
+                Layout.alignment: Qt.AlignCenter
+                screenState: root.screenState
             }
 
             Clock {
