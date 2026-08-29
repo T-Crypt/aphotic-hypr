@@ -607,6 +607,9 @@ Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, 
 - **Dev environment** — deeper terminal and editor tooling on top of the `ai` layer (the AI Chat tab and the launcher's project switcher already cover the interactive side of this).
 - **Maintenance tooling** — release tagging and migration tooling; versioning and CI are already in place.
 - **AI-native differentiators, still open** — surfacing the agent hook's live per-session data as real per-session status in the panel (it writes the data, nothing reads it yet), AI chat context injection, and session handoff.
+- **GPU-native multi-agent execution graph, in progress** — concurrent Claude Code sessions rendered as one live, interactive graph instead of a flat session list. It's aimed at custom GPU-side rendering rather than stock shell widgets, because nothing off the shelf draws it the way it needs to move.
+- **True window-peek thumbnails, in progress** — Aero Peek-style window previews for Hyprland that actually show the window updating, not a frozen screenshot. Nothing in the Hyprland/Quickshell ecosystem ships this today, which is most of the appeal.
+- **Shader-driven telemetry materials, in progress** — bar and panel surfaces whose shaders react to live system and agent telemetry: CPU and GPU load, network throughput, agent activity. The shell ends up visually reflecting what the machine is actually doing.
 
 Longer-term, the plan is a full wiki: install walkthroughs, theme authoring docs, and a troubleshooting reference, instead of cramming everything into this README forever.
 
