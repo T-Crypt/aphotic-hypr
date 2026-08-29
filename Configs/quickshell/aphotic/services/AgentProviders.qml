@@ -28,6 +28,8 @@ Singleton {
         liveSessions: []
     }))
 
+    readonly property var ollamaLoadedModels: root.stats[root.providers.findIndex(p => p.id === "ollama")]?.loadedModels ?? []
+
     readonly property string selected: Settings.agentSelectedProvider
     readonly property int selectedIndex: providers.findIndex(p => p.id === root.selected)
 

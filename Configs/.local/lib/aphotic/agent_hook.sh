@@ -1,32 +1,16 @@
 #!/usr/bin/env bash
-# aphotic agent_hook — writes live per-session state for the bar's agent
-# popout. Invoked by Claude Code on PreToolUse/PostToolUse/Notification/
-# Stop. Must be fast and must never fail the hook (all steps are
-# best-effort) since a slow/failing hook blocks the calling session's own
-# tool execution.
+# aphotic agent_hook -- the single event pipeline behind both the bar's
+# agent popout (per-session status) and the agent graph surface. Invoked
+# by Claude Code on SessionStart/PreToolUse/PostToolUse/
+# PostToolUseFailure/Notification/Stop/SubagentStop/SessionEnd with the
+# event JSON piped to stdin. Must be fast and must never fail the hook
+# since a slow or failing hook blocks the calling session's own tool
+# execution -- hence exec (no extra process) into one python3 worker that
+# handles the whole payload, rather than the spawn-per-field this used to
+# do, and hence the unconditional exit 0 on the fallback path.
 set -u
 
-APHOTIC_STATE_HOME="${APHOTIC_STATE_HOME:-$HOME/.local/state/aphotic}"
-SESSIONS_DIR="$APHOTIC_STATE_HOME/agent-sessions"
+hook_dir="${BASH_SOURCE[0]%/*}"
+[[ "$hook_dir" == "${BASH_SOURCE[0]}" ]] && hook_dir="."
 
-payload="$(cat)"
-
-session_id="$(printf '%s' "$payload" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("session_id",""))' 2>/dev/null)"
-event="$(printf '%s' "$payload" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("hook_event_name",""))' 2>/dev/null)"
-tool="$(printf '%s' "$payload" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("tool_name",""))' 2>/dev/null)"
-
-[[ -n "$session_id" ]] || exit 0
-
-mkdir -p "$SESSIONS_DIR" 2>/dev/null || exit 0
-session_file="$SESSIONS_DIR/$session_id.json"
-
-if [[ "$event" == "Stop" ]]; then
-    rm -f "$session_file" 2>/dev/null
-    exit 0
-fi
-
-updated_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-tmp_file="$session_file.tmp.$$"
-printf '{"event":"%s","tool":"%s","updatedAt":"%s"}\n' "$event" "$tool" "$updated_at" > "$tmp_file" 2>/dev/null && mv -f "$tmp_file" "$session_file" 2>/dev/null
-
-exit 0
+exec python3 "$hook_dir/agent_hook.py" || exit 0
