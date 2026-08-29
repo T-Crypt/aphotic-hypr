@@ -26,15 +26,24 @@ Singleton {
     // quant strings) with no field mapping to Ollama's own registry
     // naming, so this is a heuristic, not a lookup. Callers must show the
     // guessed tag to the user before pulling it, never pull it silently.
+    // Real bug found and fixed here (2026-08-29): this used to GUESS an
+    // Ollama tag from the model's raw name/param-count via regex,
+    // regardless of whether the model was actually published to Ollama's
+    // registry under that guessed name. llmfit's recommendation pool is
+    // dominated by community fine-tunes in vLLM/AWQ/GPTQ quantized
+    // formats -- confirmed live, every field-tested recommendation on a
+    // 24GB-VRAM RTX 4090 had `ollama_name: null` -- so the guess produced
+    // plausible-looking but nonexistent tags (e.g.
+    // `louismuk/gemma:26.6b`), and the one-click pull button below would
+    // fail near-instantly against a tag that was never real. Fixed: only
+    // return a tag llmfit itself confirms is real (`model.ollama_name`);
+    // return "" otherwise, which the pull button's own
+    // `visible: recRow.tag.length > 0` already correctly hides instead of
+    // offering a pull that was always going to fail. Mirrors
+    // lib/install/assistant.sh's resolve_assistant_model_via_llmfit() --
+    // keep the two in sync if this changes.
     function guessOllamaTag(model: var): string {
-        if (!model || !model.name)
-            return "";
-        let slug = model.name.toLowerCase().replace(/-instruct.*$/, "").replace(/-chat.*$/, "").replace(/-gguf.*$/i, "");
-        const familyMatch = slug.match(/^([a-z0-9.]+?)[-_]?\d+(?:\.\d+)?b\b/);
-        const family = familyMatch ? familyMatch[1] : slug.split(/[-_]/)[0];
-        const sizeMatch = (model.parameter_count ?? "").match(/[\d.]+[bB]/);
-        const size = sizeMatch ? sizeMatch[0].toLowerCase() : "";
-        return size ? `${family}:${size}` : family;
+        return model?.ollama_name ?? "";
     }
 
     function scan(): void {

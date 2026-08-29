@@ -14,7 +14,29 @@ StyledRect {
     id: root
 
     required property NotifData modelData
-    readonly property bool hasAppIcon: modelData.appIcon.length > 0
+    // Prefers modelData.image (a real, separate freedesktop notification
+    // field -- "often something like a profile picture in instant
+    // messaging applications", per Quickshell's own docs) over appIcon
+    // when the sender provided one, since it's the more specific/richer
+    // of the two when both exist. Falls back to appIcon, then the
+    // generic keyword-matched glyph.
+    readonly property bool hasImage: modelData.image.length > 0
+    readonly property bool hasAppIcon: !hasImage && modelData.appIcon.length > 0
+    // Quickshell.iconPath()'s two-arg (icon, fallback) overload only
+    // resolves ICON-THEME NAMES via QIcon::fromTheme() -- confirmed by
+    // reading quickshell-mirror/quickshell's own
+    // src/core/iconimageprovider.cpp: the two-arg call never sets the
+    // separate `path=` parameter its own file-path fallback branch
+    // (`icon = QPixmap(path)`) depends on. The freedesktop notification
+    // spec explicitly allows app_icon to be EITHER a themed icon name OR
+    // a file:// URI/absolute path -- when a sending app uses the latter
+    // (common for Electron apps, some game launchers), the theme lookup
+    // fails silently and falls through to the "image-missing" fallback
+    // glyph, which is what "icons not properly rendering for certain
+    // notifications" actually was. Detecting the path/URI case and
+    // sourcing it directly (Image accepts a plain absolute path or
+    // file:// URI natively) fixes exactly that class of notification.
+    readonly property bool appIconIsPath: modelData.appIcon.startsWith("/") || modelData.appIcon.startsWith("file://")
     readonly property int bodyTextFormat: /[<*_`#\[\]]/.test(modelData.body) ? Text.MarkdownText : Text.PlainText
     readonly property bool critical: modelData.urgency === NotificationUrgency.Critical
 
@@ -76,19 +98,26 @@ StyledRect {
                     id: icon
 
                     asynchronous: true
-                    active: root.hasAppIcon
+                    active: root.hasImage || root.hasAppIcon
                     anchors.verticalCenter: parent.verticalCenter
                     width: Tokens.sizes.notifs.image
                     height: Tokens.sizes.notifs.image
 
                     sourceComponent: IconImage {
-                        source: Quickshell.iconPath(root.modelData.appIcon, "image-missing")
+                        // hasImage/hasAppIcon are mutually exclusive (see
+                        // their definitions above), and appIconIsPath
+                        // sources the raw path/URI directly instead of
+                        // routing it through Quickshell.iconPath()'s
+                        // theme-name-only resolver, which silently fails
+                        // for that case -- see the property comments above
+                        // for the full reasoning.
+                        source: root.hasImage ? root.modelData.image : (root.appIconIsPath ? root.modelData.appIcon : Quickshell.iconPath(root.modelData.appIcon, "image-missing"))
                         implicitSize: Tokens.sizes.notifs.image
                     }
                 }
 
                 Loader {
-                    active: !root.hasAppIcon
+                    active: !root.hasImage && !root.hasAppIcon
                     anchors.verticalCenter: parent.verticalCenter
 
                     sourceComponent: MaterialIcon {
