@@ -153,6 +153,47 @@ ColumnLayout {
             }
 
             SettingsRow {
+                icon: AiProviders.ollamaReachable ? "check_circle" : "power_settings_new"
+                label: qsTr("Status")
+                description: {
+                    if (AiProviders.startingOllama)
+                        return qsTr("Starting…");
+                    if (AiProviders.ollamaReachable)
+                        return qsTr("Running at %1").arg(AiConfig.ollamaHost);
+                    return qsTr("Not reachable at %1").arg(AiConfig.ollamaHost);
+                }
+
+                StyledRect {
+                    Layout.preferredHeight: 32
+                    Layout.preferredWidth: startLabel.implicitWidth + Tokens.padding.large * 2
+                    radius: Tokens.rounding.full
+                    visible: !AiProviders.ollamaReachable
+                    opacity: AiProviders.startingOllama ? 0.5 : 1
+                    color: Colours.palette.m3primary
+
+                    StyledText {
+                        id: startLabel
+                        anchors.centerIn: parent
+                        text: AiProviders.startingOllama ? qsTr("Starting…") : qsTr("Start Ollama")
+                        color: Colours.contrastOn(Colours.palette.m3primary)
+                        font: Tokens.font.label.small
+                    }
+
+                    StateLayer {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        disabled: AiProviders.startingOllama
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: !AiProviders.startingOllama
+                        onClicked: AiProviders.startOllama()
+                    }
+                }
+            }
+
+            SettingsRow {
                 icon: "memory"
                 label: qsTr("Model")
                 description: AiConfig.ollamaModel.length > 0 ? AiConfig.ollamaModel : qsTr("None selected")
