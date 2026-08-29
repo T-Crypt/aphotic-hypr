@@ -136,12 +136,6 @@ Singleton {
         if (session.status === "ended" && record.event !== "session_end")
             session.endedAt = 0;
 
-        // Observed on real data, not assumed: Claude Code emits session_end
-        // followed by session_start for the SAME session_id when the process
-        // restarts or a session resumes. So session_end is the end of a
-        // session *instance*, not proof the session is over -- any later
-        // event revives it, keeping the tool-call history it already had
-        // rather than starting from blank.
         if (record.event === "session_end") {
             session.status = "ended";
             session.endedAt = record.t ?? 0;
@@ -215,11 +209,15 @@ Singleton {
 
     function _closeNode(session, record): void {
         const id = record.toolId ?? "";
+        if (record.spawnedAgentId && id)
+            session.agentParents[record.spawnedAgentId] = id;
         const index = session.nodes.findIndex(n => n.id === id);
         if (index === -1)
             return;
         const node = Object.assign({}, session.nodes[index]);
         node.status = record.event === "post_tool_use_failure" ? "errored" : "completed";
+        if (record.agentDescription)
+            node.agentDescription = record.agentDescription;
         node.endedAt = record.t ?? 0;
         node.durationMs = record.durationMs ?? (node.endedAt && node.startedAt ? node.endedAt - node.startedAt : 0);
         session.nodes[index] = node;

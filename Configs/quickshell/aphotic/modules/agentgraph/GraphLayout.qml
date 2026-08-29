@@ -159,7 +159,7 @@ QtObject {
         const usableH = Math.max(80, root.areaHeight - inset * 2);
         const spanX = Math.max(1, maxX - minX);
         const spanY = Math.max(1, maxY - minY);
-        const scale = Math.min(1.35, Math.min(usableW / spanX, usableH / spanY));
+        const scale = Math.max(0.75, Math.min(1.35, Math.min(usableW / spanX, usableH / spanY)));
         const offsetX = root._centreX - ((minX + maxX) / 2) * scale;
         const offsetY = root._centreY - ((minY + maxY) / 2) * scale;
 
@@ -173,15 +173,26 @@ QtObject {
             return;
 
         const origin = positions[index];
-        const needed = (children.length * 46) / Math.max(0.6, spread);
-        const ring = Math.max(radius, needed);
-        const step = children.length === 1 ? 0 : spread / (children.length - 1);
-        const start = facing - spread / 2;
+        const spacing = 96;
+        const gap = 84;
+        let ring = Math.max(radius, isRoot ? 160 : 96, spacing / Math.max(0.4, spread));
+        let placed = 0;
 
-        for (let c = 0; c < children.length; c++) {
-            const angle = children.length === 1 ? facing : start + step * c;
-            positions[children[c]] = { x: origin.x + Math.cos(angle) * ring, y: origin.y + Math.sin(angle) * ring };
-            root._place(children[c], childrenOf, positions, angle, Math.PI * 0.8, root._subRadius, false);
+        while (placed < children.length) {
+            const capacity = Math.max(3, Math.floor((spread * ring) / spacing));
+            const count = Math.min(capacity, children.length - placed);
+            const step = count === 1 ? 0 : spread / (count - 1);
+            const start = facing - spread / 2;
+
+            for (let c = 0; c < count; c++) {
+                const angle = count === 1 ? facing : start + step * c;
+                const child = children[placed + c];
+                positions[child] = { x: origin.x + Math.cos(angle) * ring, y: origin.y + Math.sin(angle) * ring };
+                root._place(child, childrenOf, positions, angle, Math.PI * 0.8, root._subRadius, false);
+            }
+
+            placed += count;
+            ring += gap;
         }
     }
 

@@ -102,6 +102,22 @@ for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
     if value not in (None, ""):
         record[field] = value
 
+# The Agent tool's own PostToolUse response is the only place Claude Code
+# states which agent id a Task/Agent call spawned. Capturing it here is what
+# turns subagent parentage from a guess into an exact link: this record's
+# toolId is the parent of every later event carrying agent_id == spawnedAgentId.
+response = payload.get("tool_response")
+if isinstance(response, dict):
+    spawned = response.get("agentId")
+    if spawned:
+        record["spawnedAgentId"] = spawned
+    description = response.get("description")
+    if description:
+        record["agentDescription"] = description
+    resolved = response.get("resolvedModel")
+    if resolved:
+        record["agentModel"] = resolved
+
 try:
     os.makedirs(SESSIONS, exist_ok=True)
     os.makedirs(RUNS, exist_ok=True)
