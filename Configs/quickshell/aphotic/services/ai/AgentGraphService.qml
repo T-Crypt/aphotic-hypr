@@ -306,7 +306,7 @@ Singleton {
 
     Process {
         id: eventTail
-        running: true
+        running: InstallProfile.aiEnabled
         command: ["sh", "-c", `mkdir -p '${root._stateDir}' && : >> '${root._stateDir}/agent-events.jsonl' && exec tail -n 400 -F '${root._stateDir}/agent-events.jsonl'`]
         stdout: SplitParser {
             splitMarker: "\n"

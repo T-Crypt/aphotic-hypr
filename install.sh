@@ -29,6 +29,18 @@ NO_BACKUP=0
 KEEP_BACKUPS=5
 PROFILE=""
 LAYERS=""
+
+# Layers are carried as a comma-separated string all the way through, so
+# every gate needs the same exact-match test rather than a substring one --
+# "ai" must not match "aichat" or "exploit-ai".
+layer_selected() {
+  local needle="$1" name
+  IFS=',' read -ra _layer_list <<< "${LAYERS:-}"
+  for name in "${_layer_list[@]:-}"; do
+    [[ "$name" == "$needle" ]] && return 0
+  done
+  return 1
+}
 THEME=""
 ASSISTANT=""
 ACCEPT_EXPLOIT_DISCLAIMER=0
@@ -560,15 +572,29 @@ except Exception:
     done
     systemctl --user daemon-reload &>> "$INSTLOG"
     systemctl --user enable aphotic-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
-    echo -e "$CNT - Enabling the agent usage-tracking timer..."
-    systemctl --user enable --now aphotic-agent-usage.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-agent-usage.timer; the bar's agent popout will show stale/no usage data until it's enabled manually."
+    if layer_selected "ai"; then
+      echo -e "$CNT - Enabling the agent usage-tracking timer..."
+      systemctl --user enable --now aphotic-agent-usage.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-agent-usage.timer; the bar's agent popout will show stale/no usage data until it's enabled manually."
+    else
+      echo -e "$CNT - AI layer not selected; leaving the agent usage-tracking timer off."
+      systemctl --user disable --now aphotic-agent-usage.timer &>> "$INSTLOG" || true
+    fi
     echo -e "$CNT - Enabling the SDDM background sync timer..."
     systemctl --user enable --now aphotic-sddm-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-sddm-sync.timer; the SDDM login background will only update via the per-theme-change best-effort call, not this periodic catch-up. Enable manually with 'systemctl --user enable --now aphotic-sddm-sync.timer'."
-    echo -e "$CNT - Configuring the Claude Code hook for live agent session tracking..."
-    if command -v jq >/dev/null 2>&1; then
-      configure_claude_code_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/agent_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not update ~/.claude/settings.json; the bar's agent popout will only show session presence/count, not live per-session status. Wire it manually — see docs/AGENT_TRACKING.md."
-    else
-      echo -e "$CWR - jq not found; skipping Claude Code hook setup. Wire it manually — see docs/AGENT_TRACKING.md."
+    # Writing hooks into someone's ~/.claude/settings.json is not something to
+    # do to a user who never asked for the agent stack, so it follows the `ai`
+    # layer -- and de-selecting that layer on a re-run removes what a previous
+    # run added rather than leaving it behind.
+    if layer_selected "ai"; then
+      echo -e "$CNT - Configuring the Claude Code hook for live agent session tracking..."
+      if command -v jq >/dev/null 2>&1; then
+        configure_claude_code_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/agent_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not update ~/.claude/settings.json; the bar's agent popout will only show session presence/count, not live per-session status. Wire it manually — see docs/AGENT_TRACKING.md."
+      else
+        echo -e "$CWR - jq not found; skipping Claude Code hook setup. Wire it manually — see docs/AGENT_TRACKING.md."
+      fi
+    elif command -v jq >/dev/null 2>&1; then
+      echo -e "$CNT - AI layer not selected; removing any Aphotic Claude Code hook entries..."
+      remove_claude_code_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/agent_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not clean ~/.claude/settings.json; remove the aphotic agent_hook.sh entries by hand if they are still there."
     fi
 
     # Make sure `aphotic` (and anything else under ~/.local/bin) resolves on
