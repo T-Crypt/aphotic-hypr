@@ -134,12 +134,23 @@ MouseArea {
                     color: Qt.alpha(base.color, 1)
                 }
                 GradientStop {
-                    position: Math.min(Math.max(1 - 0.2 * root.endRadius / root.circleRadius, 0.01), 0.99)
+                    // circleRadius/endRadius are both 0 before the first
+                    // press (and whenever this StateLayer's bounds are
+                    // momentarily 0x0, e.g. Media.qml's icon collapsed to
+                    // width/height 0 while inactive) -- a literal 0/0 here
+                    // is NaN, which Qt.alpha() below rejects
+                    // (QColor::setAlphaF: invalid value nan), spamming the
+                    // log continuously since this binding lives on every
+                    // clickable surface in the shell. The ripple is
+                    // invisible at circleRadius 0 regardless (opacity 0 /
+                    // not yet pressed), so an epsilon floor on the
+                    // denominator changes nothing visible.
+                    position: Math.min(Math.max(1 - 0.2 * root.endRadius / Math.max(root.circleRadius, 0.001), 0.01), 0.99)
                     color: Qt.alpha(base.color, 1)
                 }
                 GradientStop {
                     position: 1
-                    color: Qt.alpha(base.color, Math.min(Math.max((root.circleRadius / root.endRadius - 0.9) / 0.1, 0), 1))
+                    color: Qt.alpha(base.color, Math.min(Math.max((root.circleRadius / Math.max(root.endRadius, 0.001) - 0.9) / 0.1, 0), 1))
                 }
             }
 
