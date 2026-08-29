@@ -4,6 +4,7 @@
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/lib/install/python.sh"
 source "$ROOT_DIR/lib/install/aur.sh"
+source "$ROOT_DIR/lib/install/multilib.sh"
 source "$ROOT_DIR/lib/install/backup.sh"
 source "$ROOT_DIR/lib/install/wizard.sh"
 source "$ROOT_DIR/lib/install/blackarch.sh"
@@ -279,6 +280,9 @@ except Exception:
     if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
       ensure_blackarch_repo
     fi
+    if [[ "$(any_layer_requires_multilib "$LAYERS")" == "true" ]]; then
+      ensure_multilib_repo
+    fi
     exit 0
   fi
 
@@ -311,6 +315,11 @@ except Exception:
   if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
     echo -e "$CNT - Enabling the BlackArch repo for the exploit-* layers that need it..."
     ensure_blackarch_repo || { echo -e "$CER - Failed to enable the BlackArch repo; BlackArch-backed exploit-* packages will fail to install. See docs/exploit-layer.md."; }
+  fi
+
+  if [[ "$(any_layer_requires_multilib "$LAYERS")" == "true" ]]; then
+    echo -e "$CNT - Enabling the multilib repo for the gaming layer's lib32-* packages..."
+    ensure_multilib_repo || { echo -e "$CER - Failed to enable the multilib repo; lib32-gamemode/lib32-mangohud will fail to resolve (an AUR helper may fuzzy-match them to broken AUR packages like lib32-gamemode-git instead)."; }
   fi
 
   print_stage 4 "Backup"
