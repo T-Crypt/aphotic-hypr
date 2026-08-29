@@ -1,12 +1,11 @@
 # Contributing to Aphotic-Hypr
 
 Aphotic-Hypr is a full custom Quickshell desktop environment for Hyprland,
-built in the same weight class as `end-4/dots-hyprland` and
-`caelestia-dots/shell` — everything is first-party (bar, launcher,
-notifications, OSD, lock, session menu, dashboard, area picker), not a
-wrapper around third-party tools. Contributions are welcome, but should
-fit the conventions already established so the project stays uniform as
-more hands touch it.
+built in the same weight class as `end-4/dots-hyprland` — everything is
+first-party (bar, launcher, notifications, OSD, lock, session menu,
+dashboard, area picker), not a wrapper around third-party tools.
+Contributions are welcome, but should fit the conventions already
+established so the project stays uniform as more hands touch it.
 
 ## Before you start
 
@@ -117,11 +116,11 @@ This project verifies live, not just "it parses":
 
 - Arch/AUR-only — no multi-distro installer branching.
 - No fingerprint/face auth on the lock screen.
-- Not vendoring caelestia's native C++ plugin. If your feature would
-  depend on functionality that plugin provides, either write a real
-  substitute (as was done for OSD sliders, session buttons, dashboard
-  cards) or document it as an explicit scope cut in your PR — never ship
-  a silent stub.
+- Not vendoring any native C++ plugin. If your feature would depend on
+  functionality only a native plugin could provide, either write a real
+  QML/JS substitute (as was done for OSD sliders, session buttons,
+  dashboard cards) or document it as an explicit scope cut in your PR —
+  never ship a silent stub.
 - Native DBus tray context menus are blocked on a Quickshell-side
   `QsMenuHandle` bridge — not something to work around locally.
 

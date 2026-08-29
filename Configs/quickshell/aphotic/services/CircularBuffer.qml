@@ -1,6 +1,6 @@
 import QtQuick
 
-// Hand-written stand-in for Caelestia's native CircularBuffer plugin type
+// Hand-written stand-in for a native CircularBuffer plugin type
 // (sparkline history buffer). Not used by any Phase 1 bar component — only
 // exists so NetworkUsage.qml's existing bindings/push() calls resolve.
 QtObject {

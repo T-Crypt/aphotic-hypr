@@ -6,9 +6,8 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 
-// Pure QML/proc-filesystem system monitor -- no native plugin needed
-// (unlike real caelestia's Cpu/Memory/Storage, which come from its C++
-// plugin). GPU name comes from `lspci` (always available, vendor-neutral).
+// Pure QML/proc-filesystem system monitor -- no native plugin needed.
+// GPU name comes from `lspci` (always available, vendor-neutral).
 // Live usage/temp needs vendor-specific tooling (nvidia-smi, radeontop,
 // intel_gpu_top) that may not be installed -- when none is found,
 // gpuStatsAvailable is false and the dashboard card shows "N/A" for

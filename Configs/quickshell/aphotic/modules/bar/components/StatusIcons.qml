@@ -130,12 +130,10 @@ Item {
                 }
 
                 // Plain MouseArea, not HoverHandler -- see BarWrapper.qml's
-                // matching hoverArea comment for the full reasoning
-                // (caelestia-dots/shell drives its equivalent hover state
-                // from a MouseArea's onPositionChanged too, and Aphotic's
+                // matching hoverArea comment for the full reasoning. A
                 // HoverHandler-based version could genuinely miss a fast
                 // or directional pointer entry into this pill, leaving the
-                // hover-highlight state stuck/null with no popout).
+                // hover-highlight state stuck/null with no popout.
                 MouseArea {
                     id: pillHover
 

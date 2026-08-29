@@ -78,11 +78,9 @@ Item {
     // own animation instead of one clean move. Real bug reported as the
     // popout feeling "snap-to"/sporadic rather than a uniform glide,
     // worst right after switching between two popouts of different sizes
-    // (exactly when width/height are mid-animation). Fixed the same way
-    // caelestia-dots/shell's own popout wrapper does it (see
-    // modules/bar/popouts/Wrapper.qml's nonAnimWidth/nonAnimHeight there)
-    // -- read the loader's raw, un-animated implicitWidth/implicitHeight
-    // for position math instead of the animating width/height, so x/y
+    // (exactly when width/height are mid-animation). Fixed by reading
+    // the loader's raw, un-animated implicitWidth/implicitHeight for
+    // position math instead of the animating width/height, so x/y
     // always animate toward a stable final target from the first frame.
     readonly property real nonAnimWidth: loader.item ? loader.item.implicitWidth + Tokens.padding.medium * 2 : 0
     readonly property real nonAnimHeight: loader.item ? loader.item.implicitHeight + Tokens.padding.medium * 2 : 0
@@ -115,10 +113,9 @@ Item {
         // Left/right-docked (vertical bar, see Settings.barHorizontal):
         // strip sits at local x in [0, barWidth] (root shares BarWindow's
         // origin, which is the screen edge in that mode) when docked left,
-        // so the flyout starts flush against it -- ZERO gap, matching
-        // caelestia-dots/shell's own popouts/ClipWrapper.qml (its content
-        // sits at `anchors.leftMargin: 0` against the bar-flush parent
-        // when shown, only offsetting when hidden/sliding off). Right-
+        // so the flyout starts flush against it -- ZERO gap (content sits
+        // at `anchors.leftMargin: 0` against the bar-flush parent when
+        // shown, only offsetting when hidden/sliding off). Right-
         // docked: the screen edge is at local x = windowWidth instead, so
         // the strip sits in [windowWidth - barWidth, windowWidth] and the
         // flyout must render on the other side of it, ending at
@@ -190,9 +187,7 @@ Item {
         }
 
         // Plain MouseArea, not HoverHandler -- see BarWrapper.qml's
-        // hoverArea comment for the general reasoning (caelestia-dots/
-        // shell drives all of its own equivalent hover state from
-        // MouseArea.onPositionChanged, never HoverHandler). No buttons
+        // hoverArea comment for the general reasoning. No buttons
         // accepted, so a click still reaches the popout content
         // underneath (Settings toggles, media seek bar, etc.).
         MouseArea {

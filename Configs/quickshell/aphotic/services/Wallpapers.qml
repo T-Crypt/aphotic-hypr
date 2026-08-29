@@ -72,7 +72,7 @@ Singleton {
         // ignored. Not implementing matugen here -- just making the
         // mismatch loud instead of silent, via a real notification
         // (Toaster.qml's toast() is a dead no-op stub left over from an
-        // unfinished Caelestia port, not what real toasts render through).
+        // earlier unfinished pass, not what real toasts render through).
         if (engineName && engineName !== "wallust")
             Quickshell.execDetached(["notify-send", "-u", "low", "Aphotic", `theme pins engine '${engineName}', but only wallust is wired up — using wallust`]);
 

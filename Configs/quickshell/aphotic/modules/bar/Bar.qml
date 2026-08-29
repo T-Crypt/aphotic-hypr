@@ -218,11 +218,10 @@ Item {
     // arrive once the pointer stops moving, so each one matters more) is
     // exactly the kind of borderline sample that trips this.
     //
-    // Fix, following caelestia-dots/shell's own bar popout model (which
-    // simply never clears hasCurrent on a sub-match miss within the same
-    // entry -- see modules/bar/Bar.qml's checkPopout upstream): stay
-    // "locked" on the current entry, and only tear down/re-resolve once
-    // the pointer's position has moved genuinely OUTSIDE that entry's own
+    // Fix: never clear hasCurrent on a sub-match miss within the same
+    // entry -- stay "locked" on the current entry, and only tear down/
+    // re-resolve once the pointer's position has moved genuinely OUTSIDE
+    // that entry's own
     // region (plus a small margin so the boundary itself isn't a hair
     // trigger). A borderline sub-match miss while still inside the locked
     // entry keeps the popout showing as-is instead of closing it.

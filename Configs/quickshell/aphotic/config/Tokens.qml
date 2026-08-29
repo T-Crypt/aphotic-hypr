@@ -1,12 +1,10 @@
 pragma Singleton
 import QtQuick
 
-// Values below match caelestia-dots/shell's native plugin defaults
-// (plugin/src/Caelestia/Config/tokens.cpp at the pinned commit) where a
+// Values below match the reference QML plugin's own defaults where a
 // real default exists, so this hand-written singleton renders the same
-// as upstream out of the box. `rounding` (not `radius`) matches the real
-// vendored QML's own naming — confirmed via grep, nothing here uses
-// "radius".
+// out of the box. `rounding` (not `radius`) matches that reference
+// naming — confirmed via grep, nothing here uses "radius".
 QtObject {
     readonly property QtObject padding: QtObject {
         readonly property int extraSmall: 4
@@ -115,10 +113,10 @@ QtObject {
         readonly property var expressiveSlowEffects: ({ type: Easing.BezierSpline, bezierCurve: [0.34, 0.88, 0.34, 1, 1, 1] })
     }
 
-    // Simplified stand-in for the native FontBuilder/QFont variable-axis
-    // system (plugin/src/Caelestia/Config/fontbuilder.cpp) -- still no
-    // real variable-font axis plumbing (vaxes()/fill()/grade()/width()
-    // remain harmless no-ops), but body/title/label now resolve to a
+    // Simplified stand-in for a native FontBuilder/QFont variable-axis
+    // system -- still no real variable-font axis plumbing
+    // (vaxes()/fill()/grade()/width() remain harmless no-ops), but
+    // body/title/label now resolve to a
     // real installed UI face (Inter, ttf inter-font) instead of falling
     // back to whatever the system default sans happens to be, so
     // font.weight actually selects a real designed weight face rather
@@ -188,11 +186,10 @@ QtObject {
         // monospace.
         readonly property var mono: _fontStyle(fontSize.small, fontSize.normal, fontSize.larger, "JetBrainsMono Nerd Font Mono")
         readonly property var icon: {
-            // Matches caelestia's real default (appearanceconfig.hpp:
-            // `m_icon->setDefaultFamily(QStringLiteral("Material Symbols
-            // Rounded"))`) — now installed on this system
-            // (ttf-material-symbols-variable), so icon glyph names render
-            // as real glyphs instead of literal fallback text.
+            // Matches the reference default (Material Symbols Rounded) —
+            // now installed on this system (ttf-material-symbols-variable),
+            // so icon glyph names render as real glyphs instead of
+            // literal fallback text.
             const iconFamily = "Material Symbols Rounded";
             const b = _fontBuilder(fontSize.normal, undefined, iconFamily);
             b.small = _fontBuilder(fontSize.small, undefined, iconFamily).build();
