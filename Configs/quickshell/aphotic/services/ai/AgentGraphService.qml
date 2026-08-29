@@ -9,11 +9,6 @@ import Quickshell
 import Quickshell.Io
 import qs.services
 
-// Single-sourced state for the agent graph surface. Owns the ONE event
-// pipeline shared with the bar's agent popout (Configs/.local/lib/aphotic/
-// agent_hook.sh writes it, this reads it) -- no consumer keeps its own copy
-// of session/node/edge state, and nothing here re-derives what
-// AgentProviders already tracks.
 Singleton {
     id: root
 
@@ -22,18 +17,9 @@ Singleton {
     readonly property int liveSessionCount: root._sessions.filter(s => s.status !== "ended").length
     readonly property int nodeCount: root._sessions.reduce((n, s) => n + s.nodes.length, 0)
 
-    // Set true only while a graph surface is actually on screen. The event
-    // tail keeps running either way (parsing a line costs nothing); this
-    // gates the expensive half -- layout relaxation in the renderer.
     property bool surfaceVisible: false
     readonly property bool shouldSimulate: root.surfaceVisible && root.nodeCount > 0
 
-    // Hardware tiering, resolved once from real signals rather than assumed:
-    // the same shell runs on a software-rendered dev VM and on a discrete-GPU
-    // workstation. Tiers scale how MUCH is simulated (node budget, tick
-    // rate), never how it looks -- every tier renders the same Aphotic visual
-    // language. Manual override values are "lite"/"standard"/"full"; "auto"
-    // (the default) resolves below.
     readonly property string tier: {
         const requested = Settings.agentGraphQuality;
         if (requested === "lite" || requested === "standard" || requested === "full")
@@ -44,15 +30,9 @@ Singleton {
     readonly property int maxNodesPerSession: root.tier === "full" ? 300 : root.tier === "standard" ? 150 : 60
     readonly property int layoutHz: root.tier === "lite" ? 30 : 60
     readonly property int maxEvents: root.tier === "full" ? 2400 : root.tier === "standard" ? 1200 : 600
-    // Edge particles are the "this graph is alive" signal, so they are never
-    // switched off by tier -- only thinned. A lite machine still sees flow
-    // along a working edge, just fewer packets in it.
     readonly property int edgeParticles: root.tier === "full" ? 6 : root.tier === "standard" ? 3 : 1
     readonly property bool anyRunning: root._sessions.some(s => s.status === "running")
 
-    // Ollama holding models resident is VRAM the graph should not compete
-    // for -- an AI-native shell that stutters the model it exists to monitor
-    // has its priorities backwards. One tier down while models are loaded.
     readonly property bool _gpuContended: AgentProviders.ollamaLoadedModels.length > 0
 
     readonly property string _detectedTier: {
@@ -105,9 +85,6 @@ Singleton {
         if (!record || !record.sessionId || !record.event)
             return;
 
-        // tail -F re-reads from the top when the hook rotates the log, and
-        // startup replays the tail on purpose, so every record has to be
-        // idempotent by key rather than assumed to arrive once.
         const key = root._key(record);
         if (root._seen[key])
             return;
@@ -145,9 +122,6 @@ Singleton {
         root._sessions = root.applyTo(root._sessions, record);
     }
 
-    // The same reducer drives live ingestion and replay -- replay is a
-    // different clock over the same events, not a second derivation of what
-    // a session looks like. Anything that changes here changes both.
     function applyTo(existing, record): var {
         const sessions = existing.slice();
         let index = sessions.findIndex(s => s.id === record.sessionId);
@@ -192,12 +166,6 @@ Singleton {
         return sessions;
     }
 
-    // Claude Code gives no explicit parent for a subagent's tool calls --
-    // they carry agent_id and the PARENT session's session_id, nothing that
-    // names the Task call that spawned them. So the first tool call seen for
-    // an agent_id is bound to the most recent still-running Task node in that
-    // session, and every later call from the same agent_id inherits that
-    // binding. Documented heuristic, not a claimed guarantee.
     function _parentFor(session, record): string {
         if (!record.agentId)
             return "";
@@ -249,9 +217,6 @@ Singleton {
         session.nodes[index] = node;
     }
 
-    // Replay reads a finished run's own archive (see agent_hook.py), not the
-    // live rotating log -- the live log is a tail by design and a run older
-    // than a few hundred events would already be gone from it.
     function refreshRuns(): void {
         runLister.running = false;
         runLister.command = ["sh", "-c", `ls -t '${root._stateDir}/agent-runs'/*.jsonl 2>/dev/null | head -n 25`];
@@ -314,8 +279,6 @@ Singleton {
         }
     }
 
-    // Ended sessions linger deliberately so a finished run doesn't vanish
-    // mid-glance; the renderer fades them out well before this prunes them.
     Timer {
         interval: 30000
         running: true

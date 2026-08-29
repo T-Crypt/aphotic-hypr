@@ -27,10 +27,6 @@ QtObject {
     property real _clockMs: 0
     property var _stamps: []
 
-    // Wall-clock gaps between events are mostly the user thinking, not the
-    // agent working, so anything longer than this collapses to it. A replay
-    // that faithfully reproduces a four-minute pause is a replay nobody
-    // watches.
     readonly property int maxGapMs: 1200
 
     onEventsChanged: root.reset()
@@ -93,9 +89,6 @@ QtObject {
         root._advanceTo(clamped);
     }
 
-    // Folding forward is incremental; only a backwards seek pays to refold
-    // from the start, which is what keeps playback from being O(n^2) over a
-    // long run.
     function _advanceTo(target: int): void {
         if (target === root._cursor)
             return;

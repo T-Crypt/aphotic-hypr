@@ -24,9 +24,6 @@ ColumnLayout {
 
     Component.onCompleted: AgentGraphService.refreshRuns()
 
-    // Blocks are laid out on the replay's own compressed clock, not on wall
-    // time, so a run with a four-minute pause in it still reads as a dense
-    // strip rather than one block and a lot of empty space.
     readonly property var lanes: {
         const events = root.replay.events;
         const stamps = root.replay.stamps;
