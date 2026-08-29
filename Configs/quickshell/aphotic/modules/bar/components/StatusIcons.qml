@@ -91,6 +91,29 @@ Item {
         rowSpacing: root.groupSpacing
         columnSpacing: root.groupSpacing
 
+        // Real bug, confirmed live with instrumented width logging (not
+        // guessed): in this state, only `anchors.right` is active for the
+        // along-axis (no opposing `anchors.left`), so QtQuick correctly
+        // leaves `width` un-derived from anchors -- but GridLayout, unlike
+        // some other item types, does NOT automatically keep its own
+        // `width` following its `implicitWidth` just because nothing else
+        // is driving it. Captured data: `groupLayout.width` stayed frozen
+        // at an early, stale value (`Settings.barInnerWidth`, from before
+        // the repeater had populated real icon content) while its real
+        // `implicitWidth` had long since grown to the icons' true combined
+        // width -- so `anchors.right`'s own position math
+        // (`x = root.width - groupLayout.width`) used that stale, too-small
+        // width, placing the pill well short of where the real content
+        // actually needed to start. Every icon still rendered (this
+        // GridLayout doesn't clip), just positioned as if the pill were
+        // much narrower than it truly was -- reported live as the
+        // rightmost status pill (Notifications/bell) rendering outside the
+        // Dock style's own outer pill boundary. Explicit `width:
+        // implicitWidth` here keeps it live-tracking instead of ever
+        // going stale. The default (non-"vertical") state doesn't need
+        // this: `anchors.left` + `anchors.right` together there already
+        // derive `width` correctly (a real opposing anchor pair, unlike
+        // this state's single line).
         states: State {
             name: "vertical"
             when: Settings.barHorizontal
@@ -101,6 +124,10 @@ Item {
                 anchors.top: root.top
                 anchors.bottom: root.bottom
                 anchors.right: root.right
+            }
+
+            PropertyChanges {
+                groupLayout.width: groupLayout.implicitWidth
             }
         }
 
