@@ -196,6 +196,11 @@ install_nvidia_driver() {
     [[ -n "$kpkg" ]] && install_software "${kpkg}-headers"
   done <<< "$kernel_pkgs"
   install_software nvidia-open-dkms
+  # nvidia-utils provides nvidia-smi -- without it the Dashboard's
+  # Performance tab has no way to read live NVIDIA GPU usage/temp and
+  # silently shows "N/A" forever, since the driver package alone doesn't
+  # carry the userspace query tools.
+  install_software nvidia-utils
 }
 
 resolve_config() {

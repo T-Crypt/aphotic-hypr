@@ -21,11 +21,25 @@ Singleton {
     readonly property real cpuPerc: _cpuPerc
     readonly property real cpuTemp: _cpuTemp
 
-    readonly property bool gpuDetected: _gpuName.length > 0
-    readonly property string gpuName: _gpuName
-    readonly property bool gpuStatsAvailable: _gpuStatsAvailable
-    readonly property real gpuPerc: _gpuPerc
-    readonly property real gpuTemp: _gpuTemp
+    // Every controller lspci reports (iGPU + any discrete card(s)), each
+    // with its own live stats -- lets a machine with more than one GPU
+    // (the common Intel/AMD-iGPU + NVIDIA/AMD-discrete combo) monitor
+    // whichever one the user picks instead of only ever the one the old
+    // single-GPU rank heuristic guessed was "the" GPU.
+    readonly property var gpus: _gpus
+    readonly property int selectedGpuIndex: _selectedGpuIndex
+    readonly property var selectedGpu: _gpus[_selectedGpuIndex] ?? null
+
+    readonly property bool gpuDetected: selectedGpu !== null
+    readonly property string gpuName: selectedGpu?.name ?? ""
+    readonly property bool gpuStatsAvailable: selectedGpu?.statsAvailable ?? false
+    readonly property real gpuPerc: selectedGpu?.perc ?? 0
+    readonly property real gpuTemp: selectedGpu?.temp ?? 0
+
+    function selectGpu(index: int): void {
+        if (index >= 0 && index < _gpus.length)
+            _selectedGpuIndex = index;
+    }
 
     readonly property real memPerc: _memTotal > 0 ? _memUsed / _memTotal : 0
     readonly property real memUsed: _memUsed
@@ -36,11 +50,9 @@ Singleton {
     property string _cpuName: ""
     property real _cpuPerc: 0
     property real _cpuTemp: 0
-    property string _gpuName: ""
-    property string _gpuVendor: ""
-    property bool _gpuStatsAvailable: false
-    property real _gpuPerc: 0
-    property real _gpuTemp: 0
+    // Each entry: { vendor, name, statsAvailable, perc, temp }
+    property var _gpus: []
+    property int _selectedGpuIndex: 0
     property real _memUsed: 0
     property real _memTotal: 0
     property var _disks: []
@@ -87,7 +99,8 @@ Singleton {
         // (bus 01+). `-m1` on the old grep meant this always picked the
         // iGPU on exactly that (very common) hardware combination -- an
         // i9-14900K + RTX 4090 reported "UHD Graphics 770", never the
-        // 4090 -- regardless of which one is actually doing any work.
+        // 4090 -- regardless of which one is actually doing any work. All
+        // detected GPUs are now kept (see root.gpus), not just one.
         command: ["sh", "-c", "lspci -mm 2>/dev/null | grep -i 'vga compatible controller\\|3d controller\\|display controller'"]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -98,53 +111,131 @@ Singleton {
                         device: (fields[3] ?? "").replace(/"/g, "")
                     };
                 });
-                // Prefer a discrete GPU over an integrated one when a
-                // system reports both -- Intel/AMD's own iGPU is never
-                // the one a "Performance" card exists to show on a
-                // machine that also has a real GPU, and it's the only
-                // one of the three vendor(s) that never gets a live
-                // usage/temp reading below anyway (see gpuStatsProc).
-                const rank = v => /nvidia/i.test(v) || /amd|ati/i.test(v) ? 1 : 0;
+                // Word-boundaried: an un-bounded /ati/i matches the "ati"
+                // inside "Corporation", which every lspci vendor string
+                // ends with -- that false match previously made EVERY
+                // vendor (including plain "Intel Corporation") rank as
+                // AMD-or-better, so this comparator was a no-op in
+                // practice and the first-listed (lowest PCI bus, i.e. the
+                // iGPU) entry always won regardless of what discrete GPU
+                // was present. Reproduced and confirmed outside QML before
+                // fixing -- this was not a hypothetical.
+                const detectVendor = v => /nvidia/i.test(v) ? "nvidia" : /\b(amd|ati)\b/i.test(v) ? "amd" : /intel/i.test(v) ? "intel" : "";
+                const rank = v => detectVendor(v) === "nvidia" || detectVendor(v) === "amd" ? 1 : 0;
                 candidates.sort((a, b) => rank(b.vendor) - rank(a.vendor));
-                const best = candidates[0];
-                root._gpuName = best ? (best.device || best.vendor || qsTr("Unknown GPU")) : qsTr("Unknown GPU");
-                root._gpuVendor = best ? (/nvidia/i.test(best.vendor) ? "nvidia" : /amd|ati/i.test(best.vendor) ? "amd" : /intel/i.test(best.vendor) ? "intel" : "") : "";
+
+                const prevSelectedVendor = root._gpus[root._selectedGpuIndex]?.vendor;
+                root._gpus = candidates.map(c => ({
+                            vendor: detectVendor(c.vendor),
+                            name: c.device || c.vendor || qsTr("Unknown GPU"),
+                            statsAvailable: false,
+                            perc: 0,
+                            temp: 0
+                        }));
+                // Keep the user's chosen GPU selected across a re-scan
+                // (hotplug is rare, but the name/list refresh isn't
+                // otherwise scheduled) by matching on vendor rather than
+                // assuming index stability; default to index 0 (the
+                // discrete GPU, after the sort above) the first time.
+                const rematch = prevSelectedVendor !== undefined ? root._gpus.findIndex(g => g.vendor === prevSelectedVendor) : -1;
+                root._selectedGpuIndex = rematch >= 0 ? rematch : 0;
                 gpuStatsProc.running = true;
             }
         }
     }
 
+    // Polls every detected GPU's live stats, not just the selected one --
+    // so switching the selector shows an already-warm reading instead of
+    // a blank "N/A" until the next 30s tick.
     Process {
         id: gpuStatsProc
+        property int _pendingIndex: 0
         command: {
-            switch (root._gpuVendor) {
+            const gpu = root._gpus[_pendingIndex];
+            if (!gpu)
+                return ["true"];
+            switch (gpu.vendor) {
             case "nvidia":
                 return ["nvidia-smi", "--query-gpu=utilization.gpu,temperature.gpu", "--format=csv,noheader,nounits"];
             case "amd":
-                return ["sh", "-c", "radeontop -d - -l 1 2>/dev/null | grep -o 'gpu [0-9.]*%' | grep -o '[0-9.]*'"];
+                // Usage from radeontop; temp from the amdgpu hwmon node
+                // directly rather than `sensors`, so this doesn't depend
+                // on lm-sensors being installed/configured.
+                return ["sh", "-c", "radeontop -d - -l 1 2>/dev/null | grep -o 'gpu [0-9.]*%' | grep -o '[0-9.]*'; for f in /sys/class/drm/card*/device/hwmon/hwmon*/temp1_input; do [ -r \"$f\" ] && cat \"$f\" && break; done"];
+            case "intel":
+                // Usage from intel_gpu_top's JSON sample (falls back to
+                // unavailable if it's not installed or needs privileges
+                // this process doesn't have -- caught by the isNaN check
+                // below, not a hard requirement); temp from the i915/xe
+                // hwmon node the same way AMD's does.
+                return ["sh", "-c", "timeout 1 intel_gpu_top -J -s 500 -n 1 2>/dev/null | grep -o '\"Render/3D/0\":[^}]*\"value\": *[0-9.]*' | grep -o '[0-9.]*$'; for f in /sys/class/drm/card*/device/hwmon/hwmon*/temp1_input; do [ -r \"$f\" ] && cat \"$f\" && break; done"];
             default:
                 return ["true"];
             }
         }
         stdout: StdioCollector {
             onStreamFinished: {
-                if (root._gpuVendor === "nvidia") {
-                    const parts = text.trim().split(",").map(s => parseFloat(s.trim()));
-                    if (parts.length >= 2 && !isNaN(parts[0])) {
-                        root._gpuPerc = parts[0] / 100;
-                        root._gpuTemp = parts[1];
-                        root._gpuStatsAvailable = true;
-                        return;
+                const idx = gpuStatsProc._pendingIndex;
+                const gpu = root._gpus[idx];
+                if (gpu) {
+                    const lines = text.trim().split("\n").map(s => s.trim()).filter(s => s.length > 0);
+                    // No object-spread support in Quickshell's JS engine
+                    // (confirmed live: `Unexpected token '...'` aborted
+                    // the whole shell on load) -- build the updated record
+                    // field-by-field instead.
+                    const updated = {
+                        vendor: gpu.vendor,
+                        name: gpu.name,
+                        statsAvailable: false,
+                        perc: gpu.perc,
+                        temp: gpu.temp
+                    };
+                    if (gpu.vendor === "nvidia") {
+                        const parts = lines[0]?.split(",").map(s => parseFloat(s.trim())) ?? [];
+                        if (parts.length >= 2 && !isNaN(parts[0])) {
+                            updated.perc = parts[0] / 100;
+                            updated.temp = parts[1];
+                            updated.statsAvailable = true;
+                        }
+                    } else if (gpu.vendor === "amd") {
+                        // radeontop's usage line (if it printed) comes
+                        // first; the hwmon millidegree reading is always
+                        // last.
+                        const perc = lines.length > 0 ? parseFloat(lines[0]) : NaN;
+                        const milli = lines.length > 0 ? parseInt(lines[lines.length - 1], 10) : NaN;
+                        const gotPerc = !isNaN(perc);
+                        const gotTemp = !isNaN(milli) && lines.length > 1;
+                        if (gotPerc)
+                            updated.perc = perc / 100;
+                        if (gotTemp)
+                            updated.temp = milli / 1000;
+                        updated.statsAvailable = gotPerc || gotTemp;
+                    } else if (gpu.vendor === "intel") {
+                        // intel_gpu_top's usage line (if it printed) comes
+                        // first; the hwmon millidegree reading is always
+                        // last -- mirrors the AMD parse above.
+                        const perc = lines.length > 1 ? parseFloat(lines[0]) : NaN;
+                        const milli = lines.length > 0 ? parseInt(lines[lines.length - 1], 10) : NaN;
+                        const gotPerc = !isNaN(perc);
+                        const gotTemp = !isNaN(milli) && lines.length > 0;
+                        if (gotPerc)
+                            updated.perc = perc / 100;
+                        if (gotTemp)
+                            updated.temp = milli / 1000;
+                        updated.statsAvailable = gotPerc || gotTemp;
                     }
-                } else if (root._gpuVendor === "amd") {
-                    const perc = parseFloat(text.trim());
-                    if (!isNaN(perc)) {
-                        root._gpuPerc = perc / 100;
-                        root._gpuStatsAvailable = true;
-                        return;
-                    }
+                    const gpus = root._gpus.slice();
+                    gpus[idx] = updated;
+                    root._gpus = gpus;
                 }
-                root._gpuStatsAvailable = false;
+
+                const nextIndex = gpuStatsProc._pendingIndex + 1;
+                if (nextIndex < root._gpus.length) {
+                    gpuStatsProc._pendingIndex = nextIndex;
+                    gpuStatsProc.running = true;
+                } else {
+                    gpuStatsProc._pendingIndex = 0;
+                }
             }
         }
     }
@@ -168,12 +259,47 @@ Singleton {
 
     Process {
         id: tempProc
-        command: ["sh", "-c", "cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 0"]
-        stdout: SplitParser {
-            onRead: data => {
-                const milli = parseInt(data.trim(), 10);
-                if (!isNaN(milli))
-                    root._cpuTemp = milli / 1000;
+        // Prefers `sensors -j` (coretemp's "Package id 0" on Intel,
+        // k10temp/zenpower's "Tctl" on AMD) over a fixed thermal_zone
+        // index -- which chip claims zone0 is registration-order
+        // dependent and is not reliably the CPU package sensor on every
+        // board. Falls back to thermal_zone0 only when lm-sensors isn't
+        // installed/configured at all.
+        command: ["sh", "-c", "sensors -j 2>/dev/null || cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null || echo 0"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const trimmed = text.trim();
+                let celsius = NaN;
+                try {
+                    const json = JSON.parse(trimmed);
+                    for (const chipName in json) {
+                        if (!/^(coretemp|k10temp|zenpower)/i.test(chipName))
+                            continue;
+                        const chip = json[chipName];
+                        for (const featName in chip) {
+                            if (!/^(package id 0|tctl|tdie)/i.test(featName))
+                                continue;
+                            const feat = chip[featName];
+                            for (const key in feat) {
+                                if (key.endsWith("_input")) {
+                                    celsius = parseFloat(feat[key]);
+                                    break;
+                                }
+                            }
+                            if (!isNaN(celsius))
+                                break;
+                        }
+                        if (!isNaN(celsius))
+                            break;
+                    }
+                } catch (e) {
+                    // Not JSON -- this was the thermal_zone0 millidegree fallback.
+                    const milli = parseInt(trimmed, 10);
+                    if (!isNaN(milli))
+                        celsius = milli / 1000;
+                }
+                if (!isNaN(celsius))
+                    root._cpuTemp = celsius;
             }
         }
     }
@@ -243,8 +369,10 @@ Singleton {
         triggeredOnStart: true
         onTriggered: {
             tempProc.running = true;
-            if (root._gpuVendor.length > 0)
+            if (root._gpus.length > 0 && !gpuStatsProc.running) {
+                gpuStatsProc._pendingIndex = 0;
                 gpuStatsProc.running = true;
+            }
         }
     }
 
