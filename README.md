@@ -45,7 +45,7 @@ One shell, reskinned live from a wallpaper. No rebuild, no relogin. Settings →
 
 <br>
 
-## Screenshots
+## Gallery
 
 <!-- All real captures. Add a new one by dropping the file at
      assets/screenshots/<name>.png and adding a matching <td> below. -->
