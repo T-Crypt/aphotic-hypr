@@ -13,6 +13,7 @@ ColumnLayout {
 
     readonly property var accentPresets: ["", "#4A5A52", "#669B04", "#3B82F6", "#EF4444", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"]
     readonly property var depthEffectsPresets: [{ value: "off", label: qsTr("Off") }, { value: "subtle", label: qsTr("Subtle") }, { value: "full", label: qsTr("Full") }]
+    readonly property var agentGraphPresets: [{ value: "auto", label: qsTr("Auto") }, { value: "lite", label: qsTr("Lite") }, { value: "standard", label: qsTr("Standard") }, { value: "full", label: qsTr("Full") }]
 
     property var cursorThemes: []
     property var iconThemes: []
@@ -142,6 +143,43 @@ ColumnLayout {
             presets: root.depthEffectsPresets
             value: Settings.depthEffects
             onSelected: value => Settings.depthEffects = value
+        }
+    }
+
+    StyledText {
+        Layout.topMargin: Tokens.spacing.small
+        text: qsTr("Agent graph")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.label.medium
+    }
+
+    StyledText {
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: qsTr("How much of the agent graph is simulated, not how it looks — every tier draws the same thing. Auto reads your GPU and eases off while Ollama has models loaded, so the graph never competes with a local model for VRAM.")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+
+        SettingsPresetRow {
+            icon: "hub"
+            label: qsTr("Detail")
+            presets: root.agentGraphPresets
+            value: Settings.agentGraphQuality
+            onSelected: value => Settings.agentGraphQuality = value
+        }
+
+        SettingsRow {
+            icon: "palette"
+            label: qsTr("Graph accent")
+
+            ColorPickerField {
+                value: Settings.agentGraphAccent
+                onValueChanged: Settings.agentGraphAccent = value
+            }
         }
     }
 

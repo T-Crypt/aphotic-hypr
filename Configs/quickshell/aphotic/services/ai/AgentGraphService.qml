@@ -129,6 +129,7 @@ Singleton {
             id: record.sessionId,
             status: "idle",
             model: record.model ?? "",
+            cwd: record.cwd ?? "",
             startedAt: record.t ?? 0,
             updatedAt: record.t ?? 0,
             endedAt: 0,
@@ -165,6 +166,8 @@ Singleton {
             session.status = "idle";
             session.model = record.model ?? session.model;
         }
+        if (record.cwd)
+            session.cwd = record.cwd;
 
         sessions[index] = session;
         root._sessions = sessions;

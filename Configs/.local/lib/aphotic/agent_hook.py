@@ -95,7 +95,7 @@ for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
                    ("agent_id", "agentId"), ("agent_type", "agentType"),
                    ("duration_ms", "durationMs"), ("notification_type", "notificationType"),
                    ("source", "source"), ("end_reason", "endReason"),
-                   ("model", "model")):
+                   ("model", "model"), ("cwd", "cwd")):
     value = payload.get(key)
     if value not in (None, ""):
         record[field] = value

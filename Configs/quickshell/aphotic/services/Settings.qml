@@ -116,6 +116,7 @@ Singleton {
     // for the same reason depthEffects defaults to "subtle": nobody's
     // machine should pick up load from an upgrade it never opted into.
     property string agentGraphQuality: "auto"
+    property string agentGraphAccent: ""
     property string ggufModelsDir: `${Quickshell.env("HOME")}/Models/gguf`
 
     property bool intelligenceEnabled: true
@@ -272,6 +273,7 @@ Singleton {
             minimalShowDnd: root.minimalShowDnd,
             agentSelectedProvider: root.agentSelectedProvider,
             agentGraphQuality: root.agentGraphQuality,
+            agentGraphAccent: root.agentGraphAccent,
             ggufModelsDir: root.ggufModelsDir,
             assistantWelcomeShown: root.assistantWelcomeShown,
             dndEnabled: root.dndEnabled,
@@ -577,6 +579,8 @@ Singleton {
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.agentGraphQuality === "string" && ["auto", "lite", "standard", "full"].includes(data.agentGraphQuality))
                     root.agentGraphQuality = data.agentGraphQuality;
+                if (typeof data.agentGraphAccent === "string")
+                    root.agentGraphAccent = data.agentGraphAccent;
                 if (typeof data.ggufModelsDir === "string" && data.ggufModelsDir.length > 0)
                     root.ggufModelsDir = data.ggufModelsDir;
                 if (typeof data.assistantWelcomeShown === "boolean")
