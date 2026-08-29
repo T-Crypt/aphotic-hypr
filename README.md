@@ -49,6 +49,18 @@ One shell, reskinned live from a wallpaper. No rebuild, no relogin. The Agent Gr
   <img src="./assets/aphotic-preview.png" width="900">
 </p>
 
+**Agentic workflow, live render** — 203 nodes across 2 active sessions, every
+Bash and Read call landing on the graph as the agent makes it, with replay
+scrubbing and zoom:
+
+<p align="center">
+  <video src="https://raw.githubusercontent.com/T-Crypt/aphotic-hypr/test/assets/agent-graph-live.mp4" width="900" controls muted loop></video>
+</p>
+
+<p align="center">
+  <sub><a href="https://raw.githubusercontent.com/T-Crypt/aphotic-hypr/test/assets/agent-graph-live.mp4">▶ Watch the live render</a> if the player doesn't load.</sub>
+</p>
+
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
 <br>
