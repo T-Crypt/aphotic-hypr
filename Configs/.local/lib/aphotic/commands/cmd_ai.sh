@@ -4,7 +4,7 @@
 # @cmd.desc: Check AI backend status, switch the active provider profile
 # @cmd.group: AI
 # @cmd.opt: status         | Show reachability of Claude Code / Ollama, loaded models
-# @cmd.opt: profile <name> | Switch the shell's AI-panel provider/model config
+# @cmd.opt: profile <provider>[:<model>] | Switch the AI panel's active provider (ollama/claude/codex/gemini/chatgpt), optionally the ollama model
 # @cmd.opt: fit [n]        | Hardware-aware model recommendations via llmfit (default top 3)
 
 aphotic_cmd_ai() {
@@ -32,11 +32,52 @@ aphotic_cmd_ai() {
             rm -f /tmp/aphotic-ollama-list
             ;;
         profile)
-            local name="${1:-}"
-            [[ -z "$name" ]] && { aphotic_err "usage: aphotic ai profile <name>"; return 1; }
-            aphotic_json_set "ai.activeProfile" "$name"
-            aphotic_ok "AI panel profile set to '${name}'"
-            aphotic_log "define profiles under ${APHOTIC_CONFIG_HOME}/ai-profiles/ (TODO)"
+            # Real bug this replaces: this used to write "ai.activeProfile"
+            # into shell.json (via aphotic_json_set, which always targets
+            # $APHOTIC_CONFIG_FILE) -- but the AI Chat panel's own config
+            # (activeProvider/ollamaModel/...) lives in a completely
+            # separate file, services/ai/AiConfig.qml's
+            # ~/.config/aphotic/ai-config.json, which nothing ever reads
+            # shell.json's "ai" key from. The old command genuinely could
+            # not have changed anything the panel showed, ever, and the
+            # "define profiles under .../ai-profiles/ (TODO)" log line
+            # promised a directory-of-named-presets system that was never
+            # built. Rebuilt as a real, working shortcut: <provider> or
+            # <provider>:<model> (model only meaningful for ollama, quietly
+            # ignored otherwise), writing directly to AiConfig's own
+            # ai-config.json in its own schema -- AiConfig's FileView
+            # already watches this path (same pattern Themes.qml/theme.json
+            # use), so a running shell picks this up live, no reload needed.
+            aphotic_require jq || return 1
+            local arg="${1:-}" provider model
+            [[ -z "$arg" ]] && { aphotic_err "usage: aphotic ai profile <provider>[:<model>] (provider: ollama, claude, codex, gemini, chatgpt)"; return 1; }
+            provider="${arg%%:*}"
+            model=""
+            [[ "$arg" == *:* ]] && model="${arg#*:}"
+
+            case "$provider" in
+                ollama|claude|codex|gemini|chatgpt) ;;
+                *)
+                    aphotic_err "unknown provider '${provider}' -- must be one of: ollama, claude, codex, gemini, chatgpt"
+                    return 1
+                    ;;
+            esac
+
+            local conf="${APHOTIC_CONFIG_HOME}/ai-config.json" tmp
+            mkdir -p "$APHOTIC_CONFIG_HOME"
+            [[ -f "$conf" ]] || echo '{}' > "$conf"
+            tmp="$(mktemp)"
+            if [[ -n "$model" && "$provider" == "ollama" ]]; then
+                jq --arg p "$provider" --arg m "$model" '.activeProvider = $p | .ollamaModel = $m' "$conf" > "$tmp"
+            else
+                jq --arg p "$provider" '.activeProvider = $p' "$conf" > "$tmp"
+            fi
+            mv "$tmp" "$conf"
+
+            if [[ -n "$model" && "$provider" != "ollama" ]]; then
+                aphotic_warn "':${model}' is ignored -- only the ollama profile has a model to set"
+            fi
+            aphotic_ok "AI panel profile set to '${provider}'$([ -n "$model" ] && [ "$provider" == "ollama" ] && echo " (model: ${model})")"
             ;;
         fit)
             aphotic_require jq || return 1
@@ -84,9 +125,13 @@ aphotic_cmd_ai() {
             cat <<HELP
 Usage: aphotic ai <status|profile|fit> [args]
 
-  status          Show Claude Code / Ollama reachability and loaded models
-  profile <name>  Switch the AI-panel's active provider/model profile
-  fit [n]         Hardware-aware model recommendations via llmfit (default top 3)
+  status                     Show Claude Code / Ollama reachability and loaded models
+  profile <provider>[:<model>]
+                             Switch the AI panel's active provider
+                             (ollama, claude, codex, gemini, chatgpt) --
+                             optionally set the model too (ollama only,
+                             e.g. 'ollama:llama3.1:8b')
+  fit [n]                    Hardware-aware model recommendations via llmfit (default top 3)
 HELP
             ;;
         *)
