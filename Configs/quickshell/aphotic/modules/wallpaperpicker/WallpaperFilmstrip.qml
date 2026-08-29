@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import qs.config
 import qs.components
 import qs.services
@@ -10,14 +11,21 @@ Item {
 
     required property ScreenState screenState
 
-    readonly property int cellWidth: 340
-    readonly property int cellHeight: 210
-    readonly property int cellSpacing: 24
+    readonly property int cellWidth: 300
+    readonly property int cellHeight: 169
+    readonly property int cellSpacing: 20
+    readonly property int slotPitch: cellWidth + cellSpacing
+    readonly property real centerScale: 1.35
+    readonly property int visibleSlots: 5
+
+    readonly property real flickDeceleration: 1000
+    readonly property real maxFlickVelocity: 4800
+    readonly property real singleStepVelocity: Math.sqrt(2 * flickDeceleration * slotPitch)
 
     property string _originalWallpaper: ""
 
-    implicitWidth: cellWidth * 3 + cellSpacing * 4 + Tokens.padding.large * 2
-    implicitHeight: cellHeight + label.implicitHeight + Tokens.spacing.large + Tokens.padding.large * 2
+    implicitWidth: slotPitch * visibleSlots + Tokens.padding.large * 2
+    implicitHeight: cellHeight * centerScale + caption.implicitHeight + Tokens.spacing.large + Tokens.padding.large * 2
 
     focus: true
 
@@ -25,17 +33,44 @@ Item {
         root.screenState.wallpaperPicker = false;
     }
 
-    // Live-preview scrolling already applied the real wallpaper on every
-    // step (see strip.onCurrentIndexChanged) -- Escape has to explicitly
-    // put the original one back, not just close, or "cancel" wouldn't
-    // actually cancel anything.
     function _revertAndClose(): void {
         Themes.setWallpaperInActiveTheme(root._originalWallpaper);
         root.screenState.wallpaperPicker = false;
     }
 
-    Keys.onLeftPressed: strip.decrementCurrentIndex()
-    Keys.onRightPressed: strip.incrementCurrentIndex()
+    function _clampVelocity(v: real): real {
+        return Math.max(-root.maxFlickVelocity, Math.min(root.maxFlickVelocity, v));
+    }
+
+    function _targetContentX(index: int): real {
+        const centerOffset = strip.width / 2 - root.cellWidth / 2;
+        const ideal = index * root.slotPitch - centerOffset;
+        const maxX = Math.max(0, strip.contentWidth - strip.width);
+        return Math.max(0, Math.min(ideal, maxX));
+    }
+
+    function _settle(): void {
+        settleAnim.to = root._targetContentX(strip.currentIndex);
+        settleAnim.restart();
+    }
+
+    function _flickToIndex(targetIndex: int): void {
+        const clamped = Math.max(0, Math.min(targetIndex, strip.count - 1));
+        const deltaItems = clamped - strip.currentIndex;
+        if (deltaItems === 0)
+            return;
+        const direction = Math.sign(deltaItems);
+        const distance = Math.abs(deltaItems) * root.slotPitch;
+        strip.flick(root._clampVelocity(-direction * Math.sqrt(2 * root.flickDeceleration * distance)), 0);
+    }
+
+    function _wheelImpulse(direction: int): void {
+        const combined = -strip.horizontalVelocity + direction * root.singleStepVelocity;
+        strip.flick(root._clampVelocity(-combined), 0);
+    }
+
+    Keys.onLeftPressed: root._flickToIndex(strip.currentIndex - 1)
+    Keys.onRightPressed: root._flickToIndex(strip.currentIndex + 1)
     Keys.onReturnPressed: root._commit()
     Keys.onEscapePressed: root._revertAndClose()
 
@@ -45,8 +80,32 @@ Item {
             if (!root.screenState.wallpaperPicker)
                 return;
             root._originalWallpaper = Themes.activeWallpaper;
-            strip.currentIndex = Themes.wallpapersInActiveTheme.indexOf(Themes.activeWallpaper);
+            const idx = Themes.wallpapersInActiveTheme.indexOf(Themes.activeWallpaper);
+            if (idx !== -1) {
+                strip.currentIndex = idx;
+                strip.positionViewAtIndex(idx, ListView.Center);
+            }
             root.forceActiveFocus();
+        }
+    }
+
+    Repeater {
+        model: Themes.wallpapersInActiveTheme
+
+        Item {
+            id: preload
+
+            required property string modelData
+
+            visible: false
+
+            Image {
+                source: `file://${Themes.awwwDir}/${Themes.activeTheme}/${preload.modelData}`
+                asynchronous: true
+                cache: true
+                sourceSize.width: root.cellWidth
+                sourceSize.height: root.cellHeight
+            }
         }
     }
 
@@ -64,25 +123,45 @@ Item {
             ListView {
                 id: strip
 
-                width: root.cellWidth * 3 + root.cellSpacing * 2
-                height: root.cellHeight
+                width: root.slotPitch * root.visibleSlots
+                height: root.cellHeight * root.centerScale
                 orientation: ListView.Horizontal
                 spacing: root.cellSpacing
                 clip: true
-                snapMode: ListView.SnapOneItem
-                highlightRangeMode: ListView.StrictlyEnforceRange
-                preferredHighlightBegin: width / 2 - root.cellWidth / 2
-                preferredHighlightEnd: width / 2 - root.cellWidth / 2
+                cacheBuffer: root.slotPitch * 2
+
+                snapMode: ListView.NoSnap
+
+                flickDeceleration: root.flickDeceleration
+                maximumFlickVelocity: root.maxFlickVelocity
+                boundsBehavior: Flickable.DragOverBounds
 
                 model: Themes.wallpapersInActiveTheme
+
+                onContentXChanged: {
+                    const idx = strip.indexAt(strip.contentX + strip.width / 2, strip.height / 2);
+                    if (idx !== -1 && idx !== strip.currentIndex)
+                        strip.currentIndex = idx;
+                }
 
                 onCurrentIndexChanged: {
                     if (currentIndex >= 0 && currentIndex < model.length)
                         Themes.setWallpaperInActiveTheme(model[currentIndex]);
                 }
 
+                onMovementEnded: root._settle()
+
+                SpringAnimation {
+                    id: settleAnim
+
+                    target: strip
+                    property: "contentX"
+                    spring: 2.2
+                    damping: 0.42
+                }
+
                 WheelHandler {
-                    onWheel: event => event.angleDelta.y < 0 ? strip.incrementCurrentIndex() : strip.decrementCurrentIndex()
+                    onWheel: event => root._wheelImpulse(event.angleDelta.y < 0 ? 1 : -1)
                 }
 
                 delegate: Item {
@@ -91,24 +170,41 @@ Item {
                     required property string modelData
                     required property int index
 
-                    readonly property int distance: Math.abs(index - strip.currentIndex)
+                    readonly property real itemCenterX: x + width / 2
+                    readonly property real viewCenterX: strip.contentX + strip.width / 2
+                    readonly property real distance: (itemCenterX - viewCenterX) / root.slotPitch
+                    readonly property real closeness: Math.max(0, 1 - Math.abs(distance))
 
                     width: root.cellWidth
                     height: root.cellHeight
-                    scale: Math.max(0.5, 1 - distance * 0.28)
-                    opacity: Math.max(0.35, 1 - distance * 0.3)
+                    y: (strip.height - height) / 2
+                    scale: Math.max(0.42, root.centerScale - Math.abs(distance) * 0.34)
+                    opacity: Math.max(0.25, 1 - Math.abs(distance) * 0.26)
 
-                    Behavior on scale {
-                        Anim {}
-                    }
-                    Behavior on opacity {
-                        Anim {}
+                    transform: Rotation {
+                        origin.x: delegate.width / 2
+                        origin.y: delegate.height / 2
+                        axis {
+                            x: 0
+                            y: 1
+                            z: 0
+                        }
+                        angle: Math.max(-32, Math.min(32, delegate.distance * -26))
                     }
 
                     StyledClippingRect {
                         anchors.fill: parent
                         radius: Tokens.rounding.large
                         color: Colours.tPalette.m3surfaceContainer
+
+                        layer.enabled: Math.abs(delegate.distance) < 1.6
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: Qt.tint(Colours.palette.m3shadow, Qt.alpha(Colours.palette.m3primary, 0.55 * delegate.closeness))
+                            shadowOpacity: 0.3 + 0.35 * delegate.closeness
+                            shadowBlur: 0.5 + 0.3 * delegate.closeness
+                            shadowVerticalOffset: 4
+                        }
 
                         Image {
                             anchors.fill: parent
@@ -123,18 +219,32 @@ Item {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: delegate.index === strip.currentIndex ? root._commit() : strip.currentIndex = delegate.index
+                        onClicked: delegate.index === strip.currentIndex ? root._commit() : root._flickToIndex(delegate.index)
                     }
                 }
             }
 
-            StyledText {
-                id: label
+            Column {
+                id: caption
 
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Themes.activeWallpaper
-                font: Tokens.font.body.medium
-                color: Colours.palette.m3onSurfaceVariant
+                spacing: Tokens.spacing.extraSmall
+
+                StyledText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: Themes.activeWallpaper
+                    font: Tokens.font.body.medium
+                    color: Colours.palette.m3onSurfaceVariant
+                    animate: true
+                }
+
+                StyledText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: `${strip.currentIndex + 1} / ${strip.count}`
+                    font: Tokens.font.label.small
+                    color: Colours.palette.m3onSurfaceVariant
+                    opacity: 0.7
+                }
             }
         }
     }
