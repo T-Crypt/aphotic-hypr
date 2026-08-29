@@ -78,15 +78,31 @@ Singleton {
             }
             // No saved host yet -- fall back to OLLAMA_BASE_URL if the
             // environment sets one (matches Ollama's own tooling
-            // convention), rather than staying blank when the user has
-            // already told their shell about a host.
+            // convention), then to the local loopback default
+            // (127.0.0.1:11434, Ollama's own default bind address) rather
+            // than staying blank forever. This is NOT the same class of
+            // default the comment above warns against -- that was about
+            // never hardcoding a specific REMOTE machine's LAN address
+            // (which would silently point every install at one person's
+            // server); loopback is always safe, it only ever means "this
+            // machine's own Ollama, if one happens to be running," and
+            // AiProviders' own reachability check already handles "set
+            // but nothing's actually listening" gracefully. Real bug this
+            // fixes: the `ai` layer installs and starts ollama.service
+            // unconditionally, and install.sh's Aphotic Assistant setup
+            // pulls a real model onto it -- but nothing ever told THIS
+            // config file about the host that's already running, so
+            // ollamaHostConfigured stayed false forever and both the
+            // Ollama provider AND the Assistant (assistantAvailable
+            // requires ollamaHostConfigured too) silently never became
+            // available despite everything being installed and running.
             if (!root.ollamaHost)
-                root.ollamaHost = Quickshell.env("OLLAMA_BASE_URL") ?? "";
+                root.ollamaHost = Quickshell.env("OLLAMA_BASE_URL") ?? "http://127.0.0.1:11434";
             root._loaded = true;
         }
         onLoadFailed: error => {
             if (!root.ollamaHost)
-                root.ollamaHost = Quickshell.env("OLLAMA_BASE_URL") ?? "";
+                root.ollamaHost = Quickshell.env("OLLAMA_BASE_URL") ?? "http://127.0.0.1:11434";
             root._loaded = true;
         }
     }

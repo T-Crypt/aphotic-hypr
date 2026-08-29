@@ -152,6 +152,20 @@ Item {
                 model: Themes.wallpapersInActiveTheme
 
                 onContentXChanged: {
+                    // This filmstrip's item tree stays alive even while the
+                    // picker window is hidden (only PanelWindow.visible
+                    // toggles). Switching themes from Settings elsewhere
+                    // reassigns Themes.wallpapersInActiveTheme, which resets
+                    // this (currently invisible) ListView's model -- Qt
+                    // resets contentX to 0 as part of that, re-entering this
+                    // handler and (via currentIndex below) calling back into
+                    // Themes.setWallpaperInActiveTheme while
+                    // QQuickItemView::setModel is still mid-update, which
+                    // segfaults deep in QQmlDelegateModel. None of this
+                    // logic is meaningful while the picker isn't open, so
+                    // skip it entirely rather than let it run reentrantly.
+                    if (!root.screenState.wallpaperPicker)
+                        return;
                     // Geometric center-detection (indexAt at the viewport's
                     // middle) can never resolve to one of the last/first
                     // couple of items once contentX is pinned at either
@@ -181,6 +195,10 @@ Item {
                 }
 
                 onCurrentIndexChanged: {
+                    // Same reentrancy hazard as onContentXChanged above --
+                    // skip while the picker is closed.
+                    if (!root.screenState.wallpaperPicker)
+                        return;
                     if (currentIndex >= 0 && currentIndex < model.length)
                         Themes.setWallpaperInActiveTheme(model[currentIndex]);
                 }
