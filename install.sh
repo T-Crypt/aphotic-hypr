@@ -271,11 +271,7 @@ except Exception:
     echo "$prep_pkgs" | sed 's/^/    - /'
     echo "  main packages:"
     echo "$main_pkgs" | sed 's/^/    - /'
-    if [[ "$ISNVIDIA" == "true" ]]; then
-      echo "  would install hyprland-nvidia"
-    else
-      echo "  would install hyprland"
-    fi
+    echo "  would install hyprland"
     if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
       ensure_blackarch_repo
     fi
@@ -340,14 +336,11 @@ except Exception:
     if ! sudo grep -qF "options nvidia-drm modeset=1" /etc/modprobe.d/nvidia.conf 2>/dev/null; then
       echo -e "options nvidia-drm modeset=1" | sudo tee -a /etc/modprobe.d/nvidia.conf &>> "$INSTLOG"
     fi
-
-    if "$AUR_HELPER" -Q hyprland &>> /dev/null ; then
-      "$AUR_HELPER" -R --noconfirm hyprland &>> "$INSTLOG"
-    fi
-    install_software hyprland-nvidia
-  else
-    install_software hyprland
   fi
+  # Nvidia support has been built into the mainline "hyprland" package for a
+  # while now; the "hyprland-nvidia" AUR package that used to carry the
+  # patches is gone, so both paths install the same package.
+  install_software hyprland
 
   while IFS= read -r pkg; do
     [[ -n "$pkg" ]] && install_software "$pkg"
@@ -553,5 +546,7 @@ except Exception:
     exec sudo systemctl start sddm &>> "$INSTLOG"
   fi
 }
+
+trap 'exit_code=$?; notice_exploit_failure "$exit_code"; exit "$exit_code"' EXIT
 
 main "$@"
