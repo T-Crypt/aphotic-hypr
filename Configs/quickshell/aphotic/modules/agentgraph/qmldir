@@ -1,0 +1,3 @@
+module qs.modules.agentgraph
+GraphLayout 1.0 GraphLayout.qml
+GraphView 1.0 GraphView.qml
