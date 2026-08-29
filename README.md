@@ -185,7 +185,7 @@ Waybar, Mako, Swaylock, and Rofi are retired in favor of one hand-vendored [Quic
 
 | Module | Replaces | Notes |
 |---|---|---|
-| Bar | Waybar | Four swappable bar styles -- Full (dockable left/right/top/bottom, pill or square background), Dock (floating macOS-style app dock), Taskbar (Windows-style grouped task list), Minimal (Omarchy-style thin icon strip) -- switchable live from Settings → Bar, `aphotic bar style <name>`, or SUPER+CTRL+SHIFT+B to cycle. Full's workspaces/active window/tray/clock/status icons all keep their real hover popouts (see below). See [`docs/bar-styles.md`](docs/bar-styles.md) for how each style is built and a migration note for anyone with `barSkin: "minimal"` already saved |
+| Bar | Waybar | Four swappable bar styles -- Full (dockable left/right/top/bottom, pill or square background), Dock (floating macOS-style app dock), Taskbar (Windows-style grouped task list), Minimal (Omarchy-style thin icon strip) -- switchable live from Settings → Bar, `aphotic bar style <name>`, or SUPER+CTRL+SHIFT+B to cycle. Full's workspaces/active window/tray/clock/status icons all keep their real hover popouts (see below). Anyone with `barSkin: "minimal"` already saved is migrated automatically |
 | Bar popouts | — | Hover any status icon, the tray, or the active window pill for a real detail panel — volume, Wi-Fi, Bluetooth, battery/power profile, agent sessions, host info, Pomodoro, window title, keyboard layout, lock state, live resource meter |
 | Launcher | Rofi (drun, clipboard, emoji, wallpaper) | One search box, mode switched by a prefix — see [Launcher modes](#launcher-modes) below |
 | Screenshot picker | `grim`/`slurp` combo scripts | Drag-select a region with live client-window snapping and a freeze-mode preview — `SUPER+Shift+S` (see [Keybindings](#keybindings) for the freeze/clipboard variants); the plain `grim`/`slurp`/`swappy` combo stays on `SUPER+S` |
@@ -194,7 +194,7 @@ Waybar, Mako, Swaylock, and Rofi are retired in favor of one hand-vendored [Quic
 | Lock screen | Swaylock | Real `ext-session-lock-v1` + real PAM auth via the system's own `/etc/pam.d/swaylock` service — `SUPER+L` |
 | Session/power menu | Rofi's powermenu | Lock, suspend, log out, hibernate, reboot, shut down — `SUPER+Backspace` |
 | Command Center | — | Tabbed dashboard overlay — Dashboard (clock/calendar/media, weather, Pomodoro, Wi-Fi/Bluetooth/DND quick toggles), Performance (live CPU/GPU/memory/storage/network cards), Workspaces (numbered grid, click to jump), Wallpapers (cycle/pick within the active theme live, without opening Settings), AI Chat (Claude/Ollama/Gemini/ChatGPT, see below) — `SUPER+D` |
-| Settings | — | Full-screen Control Center — searchable category rail (Appearance, Theme Creator, Personalization, Bar, Displays, Clock/Date, OSD/Notifications, AI, Power & Security, Workspace Profiles, System, About), cross-theme wallpaper picker, live doctor output — `SUPER+I` |
+| Settings | — | Full-screen Control Center — searchable category rail (Appearance, Theme Creator, Personalization, Bar, Launcher, Displays, Clock/Date, OSD/Notifications, AI, Power & Security, Network, Workspace Profiles, Plugins, System, About), cross-theme wallpaper picker, live doctor output — `SUPER+I` |
 | Intelligence | — | Right-docked quick-chat popout, separate from the Command Center's AI Chat tab — persisted session history, per-session provider/model, click-outside or `Esc` to dismiss — `SUPER+Shift+A` (see below) |
 | Eyedropper | — | Single-click screen color picker — samples one pixel via `grim`, copies its hex to the clipboard, confirms with a notification carrying a generated color swatch icon — `SUPER+Shift+C` |
 
@@ -209,7 +209,7 @@ The Command Center's AI Chat tab talks to four providers behind one interface, p
 - **Ollama model manager** (Settings → AI) — every installed model with live/idle status and VRAM usage, one click to set active, delete, or pull-by-name to download a new one, straight against Ollama's own REST API.
 - **Weather card** (Command Center → Dashboard) — current temperature/condition plus a 3-day forecast via Open-Meteo. Leave the location blank for IP-based auto-detection, or set an explicit city + Celsius/Fahrenheit in Settings → Clock/Date. The resolved location and last-good forecast are cached to disk, so a fresh shell start shows the last known weather immediately instead of a blank card.
 - **Aphotic Assistant** (opt-in) — a local chatbot pinned to a fixed persona/system-prompt, installed via `install.sh` on NVIDIA machines that have (or add) the `ai` layer. Shows up as a fifth provider pill once installed, in both AI Chat and Intelligence. Picks its model via `llmfit`'s hardware-aware recommendation at install time (a small broadly-compatible default if `llmfit` isn't available), greets you once on first open, and Settings → AI shows its installed model with reinstall/uninstall controls. `install.sh --with-assistant`/`--no-assistant` skip the prompt; silently unavailable on non-NVIDIA machines.
-- **Agent module** (bar icon) — tracks three CLI providers, Claude Code/Codex/Ollama, behind one switchable icon: left-click for a session/token-usage or loaded-models panel, right-click launches the provider in a new terminal, middle-click cycles providers. Usage comes from a 15-minute local-transcript scan (aggregate token counts only, never prompts/responses — see [`docs/AGENT_TRACKING.md`](docs/AGENT_TRACKING.md)); surfacing the Claude Code hook's live per-session data in the panel is still open.
+- **Agent module** (bar icon) — tracks three CLI providers, Claude Code/Codex/Ollama, behind one switchable icon: left-click for a session/token-usage or loaded-models panel, right-click launches the provider in a new terminal, middle-click cycles providers. Usage comes from a 15-minute local-transcript scan (aggregate token counts only, never prompts/responses); the Claude Code hook's live per-session data is read and rendered as real per-session rows in the panel. The agent stack as a whole follows the installer's `ai` layer — with it off, the hook is never wired and the module doesn't run.
 
 </details>
 
@@ -284,7 +284,7 @@ Every toggle here persists to `~/.local/state/aphotic/settings.json` and survive
 
 ## Plugin System
 
-Aphotic ships a small plugin mechanism (design in [`docs/PLUGIN_SYSTEM.md`](docs/PLUGIN_SYSTEM.md)): a plugin is a directory with a `plugin.toml` manifest and one or more hook scripts. Every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's `on_theme_change` hook with the freshly-resolved palette as JSON on stdin; a project opened from the launcher's `@` mode or a Workspace Profile launch fires `on_project_open`/`on_workspace_launch` for any plugin that declares interest in that specific hook. All hooks are fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall what it's piggybacking on. A `category` field (dev/security/mobile/ai/theming/productivity) drives filtering in `aphotic plugin list --remote` and Settings → Plugins; security-category plugins live in a separate index that stays untrusted (and unfetched) until explicitly opted into.
+Aphotic ships a small plugin mechanism (design docs live in the repo's maintainer notes): a plugin is a directory with a `plugin.toml` manifest and one or more hook scripts. Every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's `on_theme_change` hook with the freshly-resolved palette as JSON on stdin; a project opened from the launcher's `@` mode or a Workspace Profile launch fires `on_project_open`/`on_workspace_launch` for any plugin that declares interest in that specific hook. All hooks are fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall what it's piggybacking on. A `category` field (dev/security/mobile/ai/theming/productivity) drives filtering in `aphotic plugin list --remote` and Settings → Plugins; security-category plugins live in a separate index that stays untrusted (and unfetched) until explicitly opted into.
 
 Plugins are distributed from a separate, purpose-built repo, [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) — kept apart from the main dotfiles so plugins can version and release independently. `aphotic plugin list --remote` (and Settings → Plugins' **Browse available** list) reads that repo's lightweight `index.json` without needing a full clone; `aphotic plugin install <name>` (or the Settings UI's Install button) clones just that plugin locally. The first real plugin, **OpenRGB Sync**, sets your RGB lighting to the theme's accent color on every theme change.
 
@@ -341,12 +341,16 @@ Running with no flags launches a short wizard: profile, optional layers, theme. 
 |---|---|
 | `--profile <minimal\|full>` | Selects the base package set. Skips the profile prompt. |
 | `--with <layer,layer,...>` | Comma-separated layers to merge in: `gaming`, `dev`, `ai`, `exploit` (a convenience bundle of `exploit-recon`+`exploit-web`+`exploit-network`), or any individual `exploit-*` sublayer (`exploit-recon`, `exploit-web`, `exploit-network`, `exploit-passwords`, `exploit-wordlists`, `exploit-reversing`, `exploit-forensics`, `exploit-reporting`). Skips the layer prompts. |
-| `--accept-exploit-disclaimer` | Required alongside `--with` in non-interactive/scripted installs when any `exploit`/`exploit-*` layer is selected — accepts the authorized-use disclaimer without the interactive typed-confirmation prompt. See [`docs/exploit-layer.md`](docs/exploit-layer.md). |
+| `--accept-exploit-disclaimer` | Required alongside `--with` in non-interactive/scripted installs when any `exploit`/`exploit-*` layer is selected — accepts the authorized-use disclaimer without the interactive typed-confirmation prompt. The disclaimer text is shown in full before anything is installed. |
 | `--theme <name>` | Pre-selects a theme. Skips the theme prompt. |
+| `--with-assistant` / `--no-assistant` | Install (or skip) the Aphotic Assistant without being asked. `--with-assistant` implies the `ai` layer and needs an NVIDIA GPU. |
+| `--nvidia-driver <keep\|reinstall>` | Only relevant when an NVIDIA driver is already installed. `keep` leaves it alone, `reinstall` replaces it with Aphotic's recommended `nvidia-open-dkms`. Non-interactive runs default to `keep` — a working driver is never replaced without being told to. |
+| `--config-only` | Config sync only: back up, copy `Configs/` over `~/.config/`, restart the shell. No packages, no system prep, no wizard, no `sudo`, and `aphotic.toml` is left untouched. See [Config sync only](#config-sync-only). |
 | `--dry-run` | Prints the full resolved install plan and exits — nothing is installed, backed up, or written. |
 | `--no-backup` | Skips the pre-install config snapshot. Off by default; use with intent. |
 | `--keep-backups <N>` | How many timestamped backups to retain before pruning. Defaults to 5. |
 | `-h`, `--help` | Full flag reference. |
+| `-v`, `--version` | Prints the installed Aphotic version and exits. |
 
 </details>
 
@@ -364,6 +368,23 @@ git pull
 ```
 
 Aphotic detects your saved `aphotic.toml` and re-resolves your profile/layers against any changes upstream, snapshotting your current configs first exactly as a fresh install would.
+
+#### Config sync only
+
+Most updates are shell changes — Quickshell QML, Hyprland config, keybinds — with no package churn behind them. `--config-only` syncs just those:
+
+```
+cd Aphotic-Hypr
+git pull
+./install.sh --config-only
+```
+
+It backs up your current configs, copies `Configs/` over `~/.config/`, and restarts the shell. **No package installs, no system prep, no wizard, no `sudo` prompt**, and `aphotic.toml` is left exactly as it is — so your saved profile and layers are reused, never re-resolved or rewritten. Your `hypr/custom.lua` is preserved the same way a full run preserves it, and `--no-backup` works here too if you want to skip the snapshot.
+
+Use the full `./install.sh` instead when a release adds or removes packages, or when you want to change your profile/layers.
+
+> [!NOTE]
+> Once Aphotic is installed, `aphotic update` does the same job from anywhere — it pulls the repo, re-deploys configs, and reloads the shell in one step. `./install.sh --config-only` is the equivalent when you're already sitting in the repo, or when you want the config copy without the git pull.
 
 ### Uninstalling
 
@@ -393,8 +414,8 @@ A **profile** is the base package set. A **layer** is an optional add-on merged 
 |---|---|
 | `gaming` | GameMode, MangoHud (both with 32-bit variants), Steam. |
 | `dev` | Neovim, tmux, fzf, ripgrep, fd, lazygit. |
-| `ai` | Ollama as a local AI backend, plus [llmfit](https://github.com/AlexsJones/llmfit) for hardware-aware model recommendations — `aphotic ai fit` on the CLI, a Hardware Advisor + Model Storage card in Settings → AI. |
-| `exploit` | Offensive-security/CTF tooling, split into focused sublayers (`exploit-recon`, `-web`, `-network`, `-passwords`, `-wordlists`, `-reversing`, `-forensics`, `-reporting`) — `exploit` itself is a convenience bundle of recon+web+network. Most sublayers **enable the BlackArch repo**, which is less stable than Arch's official repos; `install.sh` prints a warning and asks for explicit confirmation before touching `/etc/pacman.conf`. Selecting any of them also requires accepting a one-time authorized-use disclaimer. See [`docs/exploit-layer.md`](docs/exploit-layer.md) for the full taxonomy, the disclaimer flow, and how to recover if a package breaks. |
+| `ai` | Ollama as a local AI backend, plus [llmfit](https://github.com/AlexsJones/llmfit) for hardware-aware model recommendations — `aphotic ai fit` on the CLI, a Hardware Advisor + Model Storage card in Settings → AI. This layer also turns on Aphotic's agent tooling: it wires Claude Code hooks into `~/.claude/settings.json` (merged with `jq`, never overwriting hooks you already have) and enables a local usage-tracking timer. Leave the layer off and none of that is installed or run; de-select it on a re-run and `install.sh` removes the hook entries it previously added. |
+| `exploit` | Offensive-security/CTF tooling, split into focused sublayers (`exploit-recon`, `-web`, `-network`, `-passwords`, `-wordlists`, `-reversing`, `-forensics`, `-reporting`) — `exploit` itself is a convenience bundle of recon+web+network. Most sublayers **enable the BlackArch repo**, which is less stable than Arch's official repos; `install.sh` prints a warning and asks for explicit confirmation before touching `/etc/pacman.conf`. Selecting any of them also requires accepting a one-time authorized-use disclaimer. `./install.sh --help` documents the full sublayer taxonomy and the disclaimer flow. |
 
 Layers are additive and dedupe against the base and each other, so `--with gaming,dev,ai` on top of `full` merges cleanly with no duplicate installs. Combine whatever fits: a `minimal` install with just `dev` is a lean coding box; `full` with `gaming` and `dev` is closer to a daily driver that also game-modes on demand.
 
@@ -430,7 +451,7 @@ Aphotic-Hypr/
     │   │                            SettingsRow/SettingsGroup/SettingsToggleRow/SettingsPresetRow, Logo, ...)
     │   └── modules/                bar/ (+ real popouts), launcher/ (apps/clip/emoji/windows/wallpaper),
     │                                areapicker/, notifications/, osd/, lock/, session/,
-    │                                dashboard/ (Command Center), settings/ (Control Center, 7 panes)
+    │                                dashboard/ (Command Center), settings/ (Control Center, 15 categories)
     ├── hypr/                     hyprland.lua, keybinds.lua, custom.lua (never overwritten, see below)
     └── .local/
         ├── bin/aphotic            aphotic CLI entry point, symlinked onto PATH by install.sh
@@ -598,7 +619,7 @@ aphotic play guess
 
 ## Roadmap
 
-Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, and a CI-tested installer are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history moved to [`docs/CHANGELOG.md`](docs/CHANGELOG.md) so this list stays short — here's what's still open:
+Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, and a CI-tested installer are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history lives in the repo's changelog so this list stays short — here's what's still open:
 
 - **`matugen` as a second color engine** — next up. `theme.toml` reserves the config slot; wiring it in gives themes a real tonal-spot/vibrant/expressive variant picker alongside wallust.
 - **Settings panel expansion** — Network/Audio/Bluetooth pages matching the bar's existing popouts, plus a System-updates action (distinct from the current read-only doctor output).
@@ -606,7 +627,7 @@ Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, 
 - **Gaming profile** — a real performance-mode toggle, MangoHud bar integration, Proton/Steam polish.
 - **Dev environment** — deeper terminal and editor tooling on top of the `ai` layer (the AI Chat tab and the launcher's project switcher already cover the interactive side of this).
 - **Maintenance tooling** — release tagging and migration tooling; versioning and CI are already in place.
-- **AI-native differentiators, still open** — surfacing the agent hook's live per-session data as real per-session status in the panel (it writes the data, nothing reads it yet), AI chat context injection, and session handoff.
+- **AI-native differentiators, still open** — AI chat context injection and session handoff. (Live per-session agent status now reads the hook's data and renders it in the panel; that half is shipped.)
 
 Longer-term, the plan is a full wiki: install walkthroughs, theme authoring docs, and a troubleshooting reference, instead of cramming everything into this README forever.
 
