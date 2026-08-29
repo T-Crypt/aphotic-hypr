@@ -47,10 +47,8 @@ One shell, reskinned live from a wallpaper. No rebuild, no relogin. Settings →
 
 ## Screenshots
 
-<!-- A couple of these (Lock Screen, Screenshot Picker) are still
-     placeholders. Capture your own, drop the file at the matching
-     assets/screenshots/<name>.png path, and swap the <img src> to point
-     at it. -->
+<!-- All real captures. Add a new one by dropping the file at
+     assets/screenshots/<name>.png and adding a matching <td> below. -->
 
 <table>
 <tr>
@@ -106,14 +104,8 @@ One shell, reskinned live from a wallpaper. No rebuild, no relogin. Settings →
 <p align="center"><img src="./assets/screenshots/intelligence-assistant.png" width="440"><br><sub>Intelligence — Aphotic Assistant</sub></p>
 </td>
 <td width="50%">
-<p align="center"><img src="https://placehold.co/440x260/0b0d12/F7768E?text=Lock+Screen&font=roboto" width="440"><br><sub>Lock Screen</sub></p>
+<p align="center"><img src="./assets/screenshots/theme-creator.png" width="440"><br><sub>Theme Creator</sub></p>
 </td>
-</tr>
-<tr>
-<td width="50%">
-<p align="center"><img src="https://placehold.co/440x260/0b0d12/AD8EE6?text=Screenshot+Picker&font=roboto" width="440"><br><sub>Screenshot Picker</sub></p>
-</td>
-<td width="50%"></td>
 </tr>
 </table>
 
