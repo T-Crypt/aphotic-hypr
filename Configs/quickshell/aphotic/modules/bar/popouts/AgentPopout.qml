@@ -97,6 +97,49 @@ ColumnLayout {
             font: Tokens.font.title.medium
         }
 
+        // Live per-session activity -- agent_hook.sh writes {event, tool,
+        // updatedAt} on every Claude Code tool call; this used to be read
+        // no further than the filename, so a real hook running on every
+        // single tool invocation had zero effect on what the popout
+        // showed. One row per currently-running session.
+        Repeater {
+            model: !detail.isOllama ? (detail.stat.liveSessions ?? []) : []
+
+            RowLayout {
+                required property var modelData
+
+                Layout.fillWidth: true
+                Layout.topMargin: Tokens.spacing.extraSmall
+                spacing: Tokens.spacing.small
+
+                MaterialIcon {
+                    text: {
+                        switch (parent.modelData.event) {
+                        case "PreToolUse": return "sync";
+                        case "PostToolUse": return "check_circle";
+                        case "Notification": return "notifications";
+                        default: return "circle";
+                        }
+                    }
+                    fontStyle: Tokens.font.icon.small
+                    color: parent.modelData.event === "PreToolUse" ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                }
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: parent.modelData.tool || parent.modelData.event || qsTr("Session %1").arg(parent.modelData.id.slice(0, 8))
+                    font: Tokens.font.label.medium
+                    elide: Text.ElideRight
+                }
+
+                StyledText {
+                    text: parent.modelData.event === "PreToolUse" ? qsTr("running") : qsTr("idle")
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.small
+                }
+            }
+        }
+
         StyledText {
             visible: !detail.isOllama && detail.stat.availability === "unavailable"
             text: qsTr("No usage data yet")
