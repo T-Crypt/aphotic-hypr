@@ -7,3 +7,6 @@ main = ["gamemode", "lib32-gamemode", "mangohud", "lib32-mangohud", "steam"]
 
 [gaming]
 enabled_by_default = true
+
+[layer]
+requires_multilib = true
