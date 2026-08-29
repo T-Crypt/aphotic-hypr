@@ -90,11 +90,11 @@ PanelWindow {
         // leaves exactly edgeMargin of gap on the docked side and none
         // on the other, with no manual arithmetic needed. Centered along
         // the long axis either way.
-        anchors.horizontalCenter: Settings.barHorizontal ? root.horizontalCenter : undefined
-        anchors.verticalCenter: Settings.barHorizontal ? undefined : root.verticalCenter
-        anchors.top: root.dockedBottom ? root.top : undefined
-        anchors.bottom: root.dockedTop ? root.bottom : undefined
-        anchors.left: root.dockedRight ? root.left : undefined
-        anchors.right: root.dockedLeft ? root.right : undefined
+        anchors.horizontalCenter: Settings.barHorizontal ? parent.horizontalCenter : undefined
+        anchors.verticalCenter: Settings.barHorizontal ? undefined : parent.verticalCenter
+        anchors.top: root.dockedBottom ? parent.top : undefined
+        anchors.bottom: root.dockedTop ? parent.bottom : undefined
+        anchors.left: root.dockedRight ? parent.left : undefined
+        anchors.right: root.dockedLeft ? parent.right : undefined
     }
 }
