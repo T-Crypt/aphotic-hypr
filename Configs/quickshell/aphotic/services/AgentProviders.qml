@@ -102,7 +102,7 @@ Singleton {
 
     Timer {
         interval: 5000
-        running: true
+        running: InstallProfile.aiEnabled
         repeat: true
         triggeredOnStart: true
         onTriggered: {
@@ -184,7 +184,7 @@ Singleton {
 
     Timer {
         interval: 5000
-        running: true
+        running: InstallProfile.aiEnabled
         repeat: true
         triggeredOnStart: true
         onTriggered: {
