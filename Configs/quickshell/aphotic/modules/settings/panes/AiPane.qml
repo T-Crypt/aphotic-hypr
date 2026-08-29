@@ -163,32 +163,40 @@ ColumnLayout {
                     return qsTr("Not reachable at %1").arg(AiConfig.ollamaHost);
                 }
 
-                StyledRect {
-                    Layout.preferredHeight: 32
-                    Layout.preferredWidth: startLabel.implicitWidth + Tokens.padding.large * 2
-                    radius: Tokens.rounding.full
-                    visible: !AiProviders.ollamaReachable
-                    opacity: AiProviders.startingOllama ? 0.5 : 1
-                    color: Colours.palette.m3primary
+                // Wrapped in a RowLayout, not a bare StyledRect, so
+                // Layout.preferredWidth/Height below actually apply -- see
+                // Hardware Advisor's Scan button fix (docs/LEDGER.md) for
+                // why a lone StyledRect dropped directly into SettingsRow's
+                // trailing slot (a plain Item, not a Layout) silently
+                // collapses to 0x0 instead.
+                RowLayout {
+                    StyledRect {
+                        Layout.preferredHeight: 32
+                        Layout.preferredWidth: startLabel.implicitWidth + Tokens.padding.large * 2
+                        radius: Tokens.rounding.full
+                        visible: !AiProviders.ollamaReachable
+                        opacity: AiProviders.startingOllama ? 0.5 : 1
+                        color: Colours.palette.m3primary
 
-                    StyledText {
-                        id: startLabel
-                        anchors.centerIn: parent
-                        text: AiProviders.startingOllama ? qsTr("Starting…") : qsTr("Start Ollama")
-                        color: Colours.contrastOn(Colours.palette.m3primary)
-                        font: Tokens.font.label.small
-                    }
+                        StyledText {
+                            id: startLabel
+                            anchors.centerIn: parent
+                            text: AiProviders.startingOllama ? qsTr("Starting…") : qsTr("Start Ollama")
+                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            font: Tokens.font.label.small
+                        }
 
-                    StateLayer {
-                        anchors.fill: parent
-                        radius: parent.radius
-                        disabled: AiProviders.startingOllama
-                    }
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            disabled: AiProviders.startingOllama
+                        }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: !AiProviders.startingOllama
-                        onClicked: AiProviders.startOllama()
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: !AiProviders.startingOllama
+                            onClicked: AiProviders.startOllama()
+                        }
                     }
                 }
             }
@@ -508,31 +516,37 @@ ColumnLayout {
                 label: qsTr("Recommended model for this system")
                 description: LlmFit.scanning ? qsTr("Scanning CPU/GPU…") : qsTr("Runs llmfit against your detected hardware")
 
-                StyledRect {
-                    Layout.preferredWidth: scanLabel.implicitWidth + Tokens.padding.large * 2
-                    Layout.preferredHeight: 32
-                    radius: Tokens.rounding.full
-                    opacity: LlmFit.scanning ? 0.5 : 1
-                    color: Colours.palette.m3primary
+                // See the RowLayout-wrap comment on the Start Ollama button
+                // above -- same fix, same reason (a bare StyledRect here
+                // has no real Layout parent, so its Layout.preferredWidth/
+                // Height are silently ignored and it collapses to 0x0).
+                RowLayout {
+                    StyledRect {
+                        Layout.preferredWidth: scanLabel.implicitWidth + Tokens.padding.large * 2
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        opacity: LlmFit.scanning ? 0.5 : 1
+                        color: Colours.palette.m3primary
 
-                    StyledText {
-                        id: scanLabel
-                        anchors.centerIn: parent
-                        text: LlmFit.scanning ? qsTr("Scanning…") : qsTr("Scan")
-                        color: Colours.contrastOn(Colours.palette.m3primary)
-                        font: Tokens.font.label.small
-                    }
+                        StyledText {
+                            id: scanLabel
+                            anchors.centerIn: parent
+                            text: LlmFit.scanning ? qsTr("Scanning…") : qsTr("Scan")
+                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            font: Tokens.font.label.small
+                        }
 
-                    StateLayer {
-                        anchors.fill: parent
-                        radius: parent.radius
-                        showHoverBackground: !LlmFit.scanning
-                    }
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            showHoverBackground: !LlmFit.scanning
+                        }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: !LlmFit.scanning
-                        onClicked: LlmFit.scan()
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: !LlmFit.scanning
+                            onClicked: LlmFit.scan()
+                        }
                     }
                 }
             }
@@ -573,32 +587,36 @@ ColumnLayout {
                     label: `${recRow.modelData.name} (${recRow.modelData.best_quant})`
                     description: qsTr("%1 fit · ~%2 tok/s · %3 params · score %4/100").arg(recRow.modelData.fit_level).arg(Math.round(recRow.modelData.estimated_tps)).arg(recRow.modelData.parameter_count).arg(Math.round(recRow.modelData.score))
 
-                    StyledRect {
-                        Layout.preferredWidth: pullLabel.implicitWidth + Tokens.padding.large * 2
-                        Layout.preferredHeight: 32
-                        radius: Tokens.rounding.full
-                        visible: recRow.tag.length > 0
-                        opacity: AiProviders.pulling ? 0.5 : 1
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    // See the RowLayout-wrap comment on the Start Ollama
+                    // button above -- same fix, same reason.
+                    RowLayout {
+                        StyledRect {
+                            Layout.preferredWidth: pullLabel.implicitWidth + Tokens.padding.large * 2
+                            Layout.preferredHeight: 32
+                            radius: Tokens.rounding.full
+                            visible: recRow.tag.length > 0
+                            opacity: AiProviders.pulling ? 0.5 : 1
+                            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
 
-                        StyledText {
-                            id: pullLabel
-                            anchors.centerIn: parent
-                            text: qsTr("Pull \"%1\"").arg(recRow.tag)
-                            color: Colours.palette.m3onSurfaceVariant
-                            font: Tokens.font.label.small
-                        }
+                            StyledText {
+                                id: pullLabel
+                                anchors.centerIn: parent
+                                text: qsTr("Pull \"%1\"").arg(recRow.tag)
+                                color: Colours.palette.m3onSurfaceVariant
+                                font: Tokens.font.label.small
+                            }
 
-                        StateLayer {
-                            anchors.fill: parent
-                            radius: parent.radius
-                            showHoverBackground: !AiProviders.pulling
-                        }
+                            StateLayer {
+                                anchors.fill: parent
+                                radius: parent.radius
+                                showHoverBackground: !AiProviders.pulling
+                            }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: !AiProviders.pulling
-                            onClicked: AiProviders.pullModel(recRow.tag)
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: !AiProviders.pulling
+                                onClicked: AiProviders.pullModel(recRow.tag)
+                            }
                         }
                     }
                 }
