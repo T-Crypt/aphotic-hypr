@@ -76,6 +76,17 @@ Item {
                         usage: SystemUsage.gpuStatsAvailable ? SystemUsage.gpuPerc : 0
                         temperature: SystemUsage.gpuStatsAvailable ? SystemUsage.gpuTemp : 0
                         accentColor: Colours.palette.m3secondary
+                        // Only shown when more than one GPU was detected
+                        // (e.g. an Intel/AMD iGPU alongside a discrete
+                        // NVIDIA/AMD card) -- a single-GPU machine never
+                        // renders this, matching the rest of this card's
+                        // "don't show controls with nothing to control"
+                        // convention.
+                        headerTrailingItem: SystemUsage.gpus.length > 1 ? gpuCycleButton : null
+
+                        GpuCycleButton {
+                            id: gpuCycleButton
+                        }
                     }
                 }
             }
@@ -143,7 +154,7 @@ Item {
         radius: Tokens.rounding.large
         color: Colours.tPalette.m3surfaceContainer
         visible: !Config.dashboard.performance.showCpu &&
-                 !(Config.dashboard.performance.showGpu && SystemUsage.gpuType !== "NONE") &&
+                 !(Config.dashboard.performance.showGpu && SystemUsage.gpuDetected) &&
                  !Config.dashboard.performance.showMemory &&
                  !Config.dashboard.performance.showStorage &&
                  !Config.dashboard.performance.showNetwork &&
@@ -314,9 +325,18 @@ Item {
     }
 
     component CardHeader: RowLayout {
+        id: cardHeader
+
         property string icon
         property string title
         property color accentColor: Colours.palette.m3primary
+        // Optional trailing control (e.g. the GPU card's device-cycle
+        // button) -- most cards leave this unset.
+        property Item trailingItem
+        onTrailingItemChanged: {
+            if (trailingItem)
+                trailingItem.parent = cardHeader;
+        }
 
         Layout.fillWidth: true
         spacing: Tokens.spacing.small
@@ -333,6 +353,38 @@ Item {
             text: parent.title
             font.pointSize: Tokens.fontSize.normal
             elide: Text.ElideRight
+        }
+    }
+
+    // Cycles SystemUsage's selected GPU on click -- only ever instantiated
+    // by the GPU HeroCard, and only shown when SystemUsage.gpus.length > 1
+    // (see the GPU Card Loader above). No tooltip component exists
+    // elsewhere in this codebase to reuse, so this relies on the swap
+    // icon plus the card title (which already names the selected GPU)
+    // rather than inventing one for a single call site.
+    component GpuCycleButton: StyledRect {
+        id: cycleButton
+
+        implicitWidth: 24
+        implicitHeight: 24
+        radius: Tokens.rounding.full
+        color: "transparent"
+
+        MaterialIcon {
+            anchors.centerIn: parent
+            text: "swap_horiz"
+            fontStyle: Tokens.font.icon.small
+            color: Colours.palette.m3onSurfaceVariant
+        }
+
+        StateLayer {
+            anchors.fill: parent
+            radius: cycleButton.radius
+            onClicked: {
+                const count = SystemUsage.gpus.length;
+                if (count > 1)
+                    SystemUsage.selectGpu((SystemUsage.selectedGpuIndex + 1) % count);
+            }
         }
     }
 
@@ -380,6 +432,10 @@ Item {
         property real usage: 0
         property real temperature: 0
         property color accentColor: Colours.palette.m3primary
+        // Passthrough to the internal CardHeader -- lets a specific card
+        // (the GPU one, for a device-cycle button) add a trailing control
+        // without every other HeroCard user needing to know about it.
+        property Item headerTrailingItem
         readonly property real maxTemp: 100
         readonly property real tempProgress: Math.min(1, Math.max(0, temperature / maxTemp))
         property real animatedUsage: 0
@@ -414,6 +470,7 @@ Item {
                 icon: heroCard.icon
                 title: heroCard.title
                 accentColor: heroCard.accentColor
+                trailingItem: heroCard.headerTrailingItem
             }
 
             RowLayout {

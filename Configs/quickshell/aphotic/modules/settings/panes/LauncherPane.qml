@@ -9,6 +9,16 @@ ColumnLayout {
 
     spacing: Tokens.spacing.largeIncreased
 
+    // This pane has only one setting -- top-anchoring it the way every
+    // other (denser) pane does leaves a large dead zone below and reads
+    // as misplaced rather than deliberate. Symmetric fillHeight spacers
+    // center the title+group block in whatever height SettingsPanel.qml
+    // hands the pane, without touching the top-anchored pattern every
+    // other pane still relies on.
+    Item {
+        Layout.fillHeight: true
+    }
+
     StyledText {
         text: qsTr("Launcher")
         font: Tokens.font.title.large
@@ -31,5 +41,9 @@ ColumnLayout {
             value: Settings.launcherStyle
             onSelected: value => Settings.launcherStyle = value
         }
+    }
+
+    Item {
+        Layout.fillHeight: true
     }
 }
