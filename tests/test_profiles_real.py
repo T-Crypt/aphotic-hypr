@@ -33,11 +33,27 @@ def test_gaming_layer_adds_packages():
 
 
 def test_exploit_layer_adds_packages():
+    # profiles/layers/exploit.toml deliberately has no [packages] block --
+    # lib/install/exploit_disclaimer.sh's expand_layer_bundles() expands
+    # its `bundles` list into the real sublayer files (exploit-recon,
+    # exploit-web, exploit-network) *before* merge_packages ever runs at
+    # real install time (see that file's own header comment), so passing
+    # the umbrella exploit.toml straight to merge_packages here can never
+    # see its packages -- this test was asserting against a shape that
+    # hasn't been true since that refactor. Passing the same three
+    # sublayers expand_layer_bundles() would resolve it to instead.
     result = merge_packages(
         str(ROOT / "profiles/base/full.toml"),
-        [str(ROOT / "profiles/layers/exploit.toml")],
+        [
+            str(ROOT / "profiles/layers/exploit-recon.toml"),
+            str(ROOT / "profiles/layers/exploit-web.toml"),
+            str(ROOT / "profiles/layers/exploit-network.toml"),
+        ],
     )
-    for pkg in ["nmap", "dirbuster", "sqlmap"]:
+    # dirbuster was replaced by gobuster in exploit-web.toml at some point
+    # and this test never got updated -- dirbuster doesn't appear
+    # anywhere else in the repo any more.
+    for pkg in ["nmap", "gobuster", "sqlmap"]:
         assert pkg in result["main"]
 
 
