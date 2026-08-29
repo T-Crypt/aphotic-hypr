@@ -24,11 +24,21 @@ kvantum = { template = "Aphotic.kvconfig", target = "~/.config/Kvantum/Aphotic/A
 # wallust itself never writes there either (it's not pywal, just
 # pywal-*compatible*), hence templating both by hand here instead.
 wal_colors = { template = "colors-wal-plain", target = "~/.cache/wal/colors", pywal = true }
-# Plugin-facing palette snapshot -- regenerated on every wallust run
-# (fixed-colorscheme theme or image-derived, doesn't matter), giving the
-# plugin system (see docs/PLUGIN_SYSTEM.md) one reliable, always-fresh
-# source for "the current resolved palette" without duplicating any of
-# the theme-resolution logic itself.
+# Palette snapshot -- regenerated on every wallust run (fixed-colorscheme
+# theme or image-derived, doesn't matter). Two consumers read this same
+# file: the plugin system (see docs/PLUGIN_SYSTEM.md), one reliable
+# always-fresh source for "the current resolved palette" without
+# duplicating any theme-resolution logic; and Quickshell's Colours.qml,
+# which used to be templated wholesale by its own `quickshell` entry
+# below -- a *tracked git source file* silently rewritten on every theme
+# switch, so `aphotic update` (`git pull`) hit a real checkout conflict
+# against ordinary desktop use (see docs/IN_FLIGHT.md item 3). Colours.qml
+# is a static file now; it just reads this one at runtime, same as the
+# plugin system already did. surfaceContainer/surfaceContainerHigh exist
+# only for Colours.qml (a plain background/foreground pair says nothing
+# about M3 surface elevation) -- computed here via wallust's own
+# darken/lighten filters rather than ported into QML/JS, so there's one
+# color-math implementation, not two that can drift out of sync.
 plugin_palette = { template = "colors-plugin-palette.json", target = "~/.local/state/aphotic/palette.json" }
 
 # Native Jinja2 templates: double-brace {{ color0 }} syntax, required for
@@ -37,5 +47,4 @@ plugin_palette = { template = "colors-plugin-palette.json", target = "~/.local/s
 hyprland = { template = "colors-hyprland.lua", target = "~/.config/hypr/colors.lua" }
 gtk = { template = "gtk.css", target = "~/.config/gtk-3.0/gtk.css" }
 gtk4 = { template = "gtk.css", target = "~/.config/gtk-4.0/gtk.css" }
-quickshell = { template = "colors-quickshell-colours.qml", target = "~/.config/quickshell/aphotic/services/Colours.qml" }
 wal_colors_json = { template = "colors-wal.json", target = "~/.cache/wal/colors.json" }

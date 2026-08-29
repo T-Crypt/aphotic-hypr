@@ -12,6 +12,10 @@ Scope {
 
     property bool active
 
+    function toggle(): void {
+        root.active = !root.active;
+    }
+
     Loader {
         active: root.active
 
@@ -51,7 +55,7 @@ Scope {
         target: "colorpicker"
 
         function toggle(): void {
-            root.active = !root.active;
+            root.toggle();
         }
     }
 }

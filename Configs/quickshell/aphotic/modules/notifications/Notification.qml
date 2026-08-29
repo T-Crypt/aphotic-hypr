@@ -6,6 +6,7 @@ import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import qs.config
 import qs.components
+import qs.components.effects
 import qs.services
 import qs.utils
 
@@ -22,6 +23,35 @@ StyledRect {
 
     implicitWidth: Tokens.sizes.notifs.width
     implicitHeight: inner.implicitHeight + Tokens.padding.medium * 2
+
+    // Bioluminescent flash-response on arrival, echoing the deep-sea cue
+    // this whole treatment is named for -- decays to nothing rather than
+    // looping, so it reads as a one-off reaction to the notification
+    // landing, not a persistent highlight.
+    BioluminescentGlow {
+        id: arrivalGlow
+
+        target: root
+        glowColour: root.critical ? Colours.palette.m3error : Colours.palette.m3primary
+        glowBlur: 26
+        intensity: 0
+        breathing: false
+
+        NumberAnimation on intensity {
+            id: flashAnim
+
+            running: false
+            from: DepthFx.glowIntensity * 1.4
+            to: 0
+            duration: 900
+            easing.type: Easing.OutQuad
+        }
+    }
+
+    Component.onCompleted: {
+        if (DepthFx.enabled)
+            flashAnim.start();
+    }
 
     MouseArea {
         anchors.fill: parent

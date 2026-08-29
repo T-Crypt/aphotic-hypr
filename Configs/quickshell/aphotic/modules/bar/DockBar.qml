@@ -125,8 +125,8 @@ Item {
         // literal "SNAP-to" behavior reported, and inconsistent with every
         // other bar style's Emphasized-eased motion.
         transform: Translate {
-            y: root.shouldShow ? 0 : (Settings.barPositionBottom ? pill.height : -pill.height)
-            x: Settings.barHorizontal ? 0 : (Settings.barPositionRight ? pill.width : -pill.width)
+            y: Settings.barHorizontal && !root.shouldShow ? (Settings.barPositionBottom ? pill.height : -pill.height) : 0
+            x: !Settings.barHorizontal && !root.shouldShow ? (Settings.barPositionRight ? pill.width : -pill.width) : 0
 
             Behavior on y {
                 Anim { type: Anim.Emphasized }
@@ -226,19 +226,18 @@ Item {
                 opacity: 0.6
             }
 
-            RowLayout {
+            DockWorkspaces {
                 Layout.alignment: Qt.AlignCenter
-                spacing: Tokens.spacing.small
+                screen: root.screen
+            }
 
-                DockWorkspaces {
-                    screen: root.screen
-                }
+            Clock {
+                Layout.alignment: Qt.AlignCenter
+                screenState: root.screenState
+            }
 
-                Clock {
-                    screenState: root.screenState
-                }
-
-                Tray {}
+            Tray {
+                Layout.alignment: Qt.AlignCenter
             }
         }
     }

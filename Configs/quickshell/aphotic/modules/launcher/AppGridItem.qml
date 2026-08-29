@@ -16,15 +16,17 @@ Item {
     width: GridView.view?.cellWidth ?? 0
     height: GridView.view?.cellHeight ?? 0
 
+    function execute(): void {
+        LauncherUsage.recordLaunch(root.modelData.id);
+        root.modelData.execute();
+        root.screenState.launcher = false;
+    }
+
     StateLayer {
         anchors.fill: parent
         anchors.margins: Tokens.spacing.extraSmall
         radius: Tokens.rounding.large
-        onClicked: {
-            LauncherUsage.recordLaunch(root.modelData.id);
-            root.modelData.execute();
-            root.screenState.launcher = false;
-        }
+        onClicked: root.execute()
     }
 
     Column {
