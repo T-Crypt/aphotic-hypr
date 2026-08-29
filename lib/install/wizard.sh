@@ -16,13 +16,33 @@ prompt_layers() {
   local layers=()
   local answer
 
+  # Presets are a shortcut over the same layer list the questions below
+  # build -- not a second mechanism. "Cherry-pick" is just answering them.
+  echo "Layer presets:" >&2
+  echo "  1) Everything       -- gaming, dev, ai, and the default exploit bundle" >&2
+  echo "  2) Daily driver     -- none of the above; a clean Hyprland desktop" >&2
+  echo "  3) Cherry-pick      -- choose each layer yourself" >&2
+  read -rp "Preset? [1/2/3, default 3]: " answer
+  case "$answer" in
+    1)
+      echo "gaming,dev,ai,exploit"
+      return 0
+      ;;
+    2)
+      echo ""
+      return 0
+      ;;
+  esac
+
   read -rp "Enable gaming layer? [y/N]: " answer
   [[ "$answer" =~ ^[Yy]$ ]] && layers+=("gaming")
 
   read -rp "Enable dev layer? [y/N]: " answer
   [[ "$answer" =~ ^[Yy]$ ]] && layers+=("dev")
 
-  read -rp "Enable ai layer? [y/N]: " answer
+  # Say what this actually does before asking: it is the only layer that
+  # writes into a config file outside this repo (~/.claude/settings.json).
+  read -rp "Enable ai layer? Adds the agent graph, AI chat and live Claude Code session tracking -- wires hooks into ~/.claude/settings.json and enables a usage-tracking timer [y/N]: " answer
   [[ "$answer" =~ ^[Yy]$ ]] && layers+=("ai")
 
   read -rp "Enable exploit/offensive-security tooling? Adds the BlackArch repo for most sublayers -- less stable than Arch's official repos, see docs/exploit-layer.md [y/N]: " answer

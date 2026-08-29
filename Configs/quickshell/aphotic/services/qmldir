@@ -9,6 +9,7 @@ singleton EmojiList 1.0 EmojiList.qml
 singleton HostInfo 1.0 HostInfo.qml
 singleton Hypr 1.0 Hypr.qml
 singleton HyprKeybinds 1.0 HyprKeybinds.qml
+singleton InstallProfile 1.0 InstallProfile.qml
 singleton LauncherUsage 1.0 LauncherUsage.qml
 singleton LlmFit 1.0 LlmFit.qml
 singleton ModelStorage 1.0 ModelStorage.qml

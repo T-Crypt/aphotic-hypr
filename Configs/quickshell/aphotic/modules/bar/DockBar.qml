@@ -117,8 +117,8 @@ Item {
         id: pill
 
         anchors.centerIn: parent
-        implicitWidth: Settings.barHorizontal ? layout.implicitWidth + Tokens.padding.medium * 2 : Tokens.sizes.bar.innerWidth + Tokens.padding.small * 2
-        implicitHeight: Settings.barHorizontal ? Tokens.sizes.bar.innerWidth + Tokens.padding.small * 2 : layout.implicitHeight + Tokens.padding.medium * 2
+        implicitWidth: Settings.barHorizontal ? layout.implicitWidth + Tokens.padding.medium * 2 : Settings.barInnerWidth + Tokens.padding.small * 2
+        implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth + Tokens.padding.small * 2 : layout.implicitHeight + Tokens.padding.medium * 2
 
         radius: Tokens.rounding.full
         color: Colours.tPalette.m3surfaceContainer

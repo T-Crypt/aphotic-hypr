@@ -20,6 +20,11 @@ hl.on("hyprland.start", function()
     -- warns and no-ops without passwordless sudo, same as everything
     -- else in commands/README.md's sudoers section.
     hl.exec_cmd("aphotic vpn autostart")
+    -- No-op unless the installed version changed since the last time this
+    -- ran (see cmd_whatsnew.sh) -- catches "git pull without a fresh
+    -- install.sh run" as well as the normal post-install case, which
+    -- already triggers this same command directly from install.sh.
+    hl.exec_cmd("aphotic whatsnew")
 
     -- Cursor theme/size, icon theme, and gtk-theme used to be hardcoded
     -- here, but that meant every reboot silently overwrote whatever was

@@ -84,17 +84,49 @@ PanelWindow {
         screen: root.screen
         screenState: root.screenState
 
-        // root's own thin-axis size is exactly dockBar's thickness +
-        // edgeMargin (see reservedThickness above) -- pinning the pill
-        // to the edge of root OPPOSITE the docked screen edge naturally
-        // leaves exactly edgeMargin of gap on the docked side and none
-        // on the other, with no manual arithmetic needed. Centered along
-        // the long axis either way.
-        anchors.horizontalCenter: Settings.barHorizontal ? parent.horizontalCenter : undefined
-        anchors.verticalCenter: Settings.barHorizontal ? undefined : parent.verticalCenter
-        anchors.top: root.dockedBottom ? parent.top : undefined
-        anchors.bottom: root.dockedTop ? parent.bottom : undefined
-        anchors.left: root.dockedRight ? parent.left : undefined
-        anchors.right: root.dockedLeft ? parent.right : undefined
+        // Plain x/y/width/height, NOT anchors -- the same pattern (and for
+        // the same reason) BarWindow.qml already uses for barWrapper.
+        //
+        // Measured, not theorised: with the six anchor lines this used to
+        // carry (horizontalCenter/verticalCenter/top/bottom/left/right,
+        // each a `cond ? parent.X : undefined` ternary), the live instance
+        // reported `dockBar = 72x72` while its own implicit size correctly
+        // reported `674x56.8`. 72 is this window's own `reservedThickness`
+        // -- its THIN axis -- applied to BOTH axes. Adding explicit
+        // `width: implicitWidth` / `height: implicitHeight` alongside those
+        // anchors did NOT help: it still measured 72x72, because an
+        // anchor-driven size overrides an explicit width/height binding
+        // outright. Only removing the anchors fixes it.
+        //
+        // Why the anchors misbehave is the same trap BarWrapper.qml
+        // documents at length: assigning `undefined` to an anchor does not
+        // reliably CLEAR a previously-bound anchor line. Settings load
+        // asynchronously, so this window starts up in whatever the QML
+        // defaults are (a vertical, left-docked bar) and then flips to the
+        // user's persisted orientation -- leaving anchors from the first
+        // state still bound alongside the second state's. Two opposing
+        // anchors on one axis make Qt derive that axis's size from the span
+        // between them, silently overriding everything else.
+        //
+        // Why it matters so much here: `mask` above is
+        // `Region { item: dockBar }`, so dockBar's bounds ARE the dock's
+        // entire Wayland pointer-input region. Collapsed to 72x72, only a
+        // 72px square in the middle of a 674px-wide pill accepted input at
+        // all -- while the pill still PAINTED in full (it is
+        // `anchors.centerIn: parent`, so it simply rendered outside its own
+        // parent's bounds, at `x: -301`). That is why the dock looked
+        // perfect in every screenshot while most of it was dead to both
+        // hover and clicks.
+        //
+        // Positioning below reproduces exactly what the anchors were meant
+        // to express: centered along the bar's length, and pinned to the
+        // edge of root OPPOSITE the docked screen edge, which leaves
+        // exactly edgeMargin of gap on the docked side and none on the
+        // other (root's thin axis is dockBar's thickness + edgeMargin --
+        // see reservedThickness above).
+        width: implicitWidth
+        height: implicitHeight
+        x: Settings.barHorizontal ? (parent.width - width) / 2 : (root.dockedLeft ? parent.width - width : 0)
+        y: Settings.barHorizontal ? (root.dockedTop ? parent.height - height : 0) : (parent.height - height) / 2
     }
 }
