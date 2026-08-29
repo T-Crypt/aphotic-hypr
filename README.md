@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/github/forks/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=F7768E&labelColor=0b0d12">
   <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=AD8EE6&labelColor=0b0d12">
   <img alt="License" src="https://img.shields.io/github/license/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=7DCFFF&labelColor=0b0d12">
+  <img alt="Status: Beta" src="https://img.shields.io/badge/status-beta-E0AF68?style=for-the-badge&labelColor=0b0d12">
 </p>
 
 <p align="center">
@@ -30,6 +31,13 @@
 </p>
 
 <sub><a id="-top"></a></sub>
+
+<br>
+
+> [!WARNING]
+> **Status: Beta.** Aphotic is currently at the version in [`VERSION`](VERSION) and considered beta software. Most core features are stable and in daily use, but this is still an actively evolving desktop shell — expect occasional rough edges, especially around newer modules and edge-case hardware/theme combinations.
+>
+> If something breaks, looks wrong, or behaves unexpectedly, please open an [Issue](../../issues) with as much detail as you can (theme, profile/layers used, GPU, and steps to reproduce). Bug reports and feedback are what move this out of beta — they're genuinely welcome.
 
 <br>
 
@@ -264,7 +272,7 @@ Three small bar icons round out the QoL set, each with its own Personalization a
 | Workspace Profiles | Named, one-key launch groups — save a list of commands + target workspaces, launch them all at once via `hyprctl dispatch exec`. Not a live session snapshot (Hyprland/X11 apps don't expose one), just a saved replay list |
 | Plugins | Link to the [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) repo, an **Installed** list (enable/disable/remove, missing-dependency warnings), and a **Browse available** list pulled live from the repo's index, filterable by category (Dev/Security/Mobile/AI/Theming/Productivity) — install with one click. Security-category plugins stay hidden behind a separate trust step. See [Plugin system](#plugin-system) below |
 | System | Live `aphotic doctor` output, an Overview (theme, install profile, daemon status), Hardware (CPU/GPU/RAM/disk), and an on-demand package check |
-| About | Real Aphotic logo, version (read from `VERSION`), repo link, wallpaper art credits |
+| About | Real Aphotic logo, version (read from `VERSION`), repo link |
 
 </details>
 
@@ -590,7 +598,7 @@ aphotic play guess
 
 ## Roadmap
 
-Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, and a CI-tested installer are the shipped baseline. Active development continues on `test`. Full shipped-item history moved to [`docs/CHANGELOG.md`](docs/CHANGELOG.md) so this list stays short — here's what's still open:
+Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, and a CI-tested installer are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history moved to [`docs/CHANGELOG.md`](docs/CHANGELOG.md) so this list stays short — here's what's still open:
 
 - **`matugen` as a second color engine** — next up. `theme.toml` reserves the config slot; wiring it in gives themes a real tonal-spot/vibrant/expressive variant picker alongside wallust.
 - **Settings panel expansion** — Network/Audio/Bluetooth pages matching the bar's existing popouts, plus a System-updates action (distinct from the current read-only doctor output).
