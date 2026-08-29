@@ -58,8 +58,18 @@ Singleton {
         id: checkProc
 
         command: ["sh", "-c", "command -v llmfit"]
-        onExited: {
-            root.available = checkProc.exitCode === 0;
+        // Real bug (2026-08-29): reading checkProc.exitCode as a plain
+        // property from inside a no-argument onExited handler returns
+        // undefined here -- the property isn't populated by the time this
+        // signal fires, a real Quickshell Process timing quirk (every
+        // other correct onExited handler in this codebase, e.g.
+        // AiProviders.qml's claudeAuthProc/codexAuthProc, captures the
+        // exit code as the signal's own argument instead). That made
+        // `checkProc.exitCode === 0` always false, so the Hardware
+        // Advisor permanently reported llmfit as not installed even when
+        // it genuinely was. Fixed by using the signal argument.
+        onExited: exitCode => {
+            root.available = exitCode === 0;
             root.checked = true;
         }
     }
