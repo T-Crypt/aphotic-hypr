@@ -5,8 +5,8 @@
 # @ver: 0.1.0
 # @usage: aphotic <command> [args]
 #
-# Modeled on hyde-shell's dispatch/discovery pattern and caelestia's IPC
-# verbs. Each subcommand lives in its own file under lib/aphotic/commands/
+# Modeled on hyde-shell's dispatch/discovery pattern. Each subcommand
+# lives in its own file under lib/aphotic/commands/
 # as cmd_<name>.sh and defines a single function aphotic_cmd_<name>().
 # Adding a command = adding a file. This dispatcher should not need edits
 # for new subcommands, only for new top-level aliases.

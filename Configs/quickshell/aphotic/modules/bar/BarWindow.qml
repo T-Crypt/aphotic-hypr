@@ -58,11 +58,11 @@ PanelWindow {
     // even though the bar itself never shows.
     // flyoutItem/agentFlyoutItem now sit flush against barWrapper with
     // ZERO gap (see popouts/Wrapper.qml) rather than the previous
-    // Tokens.spacing.small offset -- matching caelestia-dots/shell's own
-    // popouts/ClipWrapper.qml, whose content sits at leftMargin: 0
-    // against a bar-flush parent when shown. The old gap was a literal,
-    // permanent dead zone in this mask: neither region below covered it,
-    // so a pointer crossing it left the layer-shell surface entirely and
+    // Tokens.spacing.small offset -- the flyout's content sits at
+    // leftMargin: 0 against a bar-flush parent when shown. The old gap
+    // was a literal, permanent dead zone in this mask: neither region
+    // below covered it, so a pointer crossing it left the layer-shell
+    // surface entirely and
     // the compositor treated that pixel strip as click-through to the
     // desktop, with zero hover events delivered while transiting -- the
     // actual mechanism behind "can't reach the popout fast enough."

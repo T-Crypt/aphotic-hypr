@@ -12,8 +12,7 @@ StyledRect {
     required property string label
     property string description: ""
 
-    // Connected-list positioning (ported from caelestia's Nexus
-    // ConnectedRect pattern): a standalone row defaults to fully rounded
+    // Connected-list positioning: a standalone row defaults to fully rounded
     // on every corner (first=last=true). Rows placed inside a
     // SettingsGroup get these stamped automatically so consecutive rows
     // in one logical section render as a single seamless card, only the

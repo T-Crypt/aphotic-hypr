@@ -19,10 +19,10 @@ MouseArea {
 
     property bool onClient
 
-    // Real caelestia snaps to the focused client's own border/rounding
-    // (Hypr.options["general:border_size"]/["decoration:rounding"]) --
-    // this repo's vendored Hypr.qml never exposed that live-options API,
-    // so these are just reasonable fixed values instead.
+    // Snapping to the focused client's own border/rounding
+    // (Hypr.options["general:border_size"]/["decoration:rounding"]) would
+    // be more accurate, but this repo's Hypr.qml never exposed that
+    // live-options API, so these are just reasonable fixed values instead.
     readonly property real realBorderWidth: 2
     readonly property real realRounding: 0
 

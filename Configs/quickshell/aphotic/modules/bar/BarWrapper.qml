@@ -176,9 +176,8 @@ Item {
     // the auto-show-on-hover bar state (isHovered) referenced by
     // shouldBeVisible above.
     //
-    // REVERTED a same-day attempt to replace this with a plain MouseArea
-    // (matching caelestia-dots/shell's own Interactions.qml, which uses
-    // one). That swap broke something worse than it fixed: a MouseArea
+    // REVERTED a same-day attempt to replace this with a plain MouseArea.
+    // That swap broke something worse than it fixed: a MouseArea
     // with hoverEnabled: true is NOT passive the way HoverHandler is --
     // Qt Quick's traditional MouseArea event model consumes hover-move
     // events for the topmost MouseArea covering a point and does not

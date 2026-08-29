@@ -629,14 +629,11 @@ Install the <a href="https://addons.mozilla.org/en-US/firefox/addon/pywalfox/">P
 
 ## License
 
-[GPL-3.0](LICENSE) — required by, and compatible with, the vendored/adapted
-[caelestia-dots/shell](https://github.com/caelestia-dots/shell) QML this
-project's Quickshell shell builds on (see [Quickshell Shell](#quickshell-shell)
-above).
+[GPL-3.0](LICENSE).
 
 ## Credit
 
-Inspired by and built with gratitude toward [Tittu](https://github.com/prasanthrangan)'s minimalist Hyprland dotfiles — Aphotic started as a fork of that philosophy and has been growing its own identity ever since. The Quickshell shell's earliest visual direction also owes a debt to [caelestia-dots/shell](https://github.com/caelestia-dots/shell) — see [License](#license) for the attribution GPL-3.0 requires on the parts still built on it.
+Inspired by and built with gratitude toward [Tittu](https://github.com/prasanthrangan)'s minimalist Hyprland dotfiles — Aphotic started as a fork of that philosophy and has been growing its own identity ever since. The Quickshell shell's earliest visual direction also owes a debt to [caelestia-dots/shell](https://github.com/caelestia-dots/shell).
 
 Theme wallpapers (the curated set committed in each `Configs/awww/<theme>/` and the larger pool behind `aphotic wallpaper --fetch-extra`, see [Themes](#themes)) are pulled from the community wallpaper repos below — full credit to their authors and the original artists:
 

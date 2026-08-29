@@ -3,9 +3,8 @@ import QtQuick
 import Quickshell
 import qs.config
 
-// bar.* defaults below match caelestia-dots/shell's native plugin
-// defaults (plugin/src/Caelestia/Config/barconfig.hpp at the pinned
-// commit) except where noted — this repo has no config file/UI yet to
+// bar.* defaults below match the reference plugin's own defaults
+// except where noted — this repo has no config file/UI yet to
 // override these, so matching upstream's own defaults is the safer
 // choice absent a stated Aphotic-specific preference. border.* keeps
 // this repo's original (smaller) values from Task 2 rather than
@@ -127,8 +126,7 @@ QtObject {
         readonly property bool useFahrenheitPerformance: false
     }
 
-    // Matches caelestia-dots/shell's OsdConfig defaults
-    // (plugin/src/Caelestia/Config/osdconfig.hpp).
+    // Matches the reference plugin's own OsdConfig defaults.
     readonly property QtObject osd: QtObject {
         readonly property bool enabled: true
         readonly property int hideDelay: 2000
