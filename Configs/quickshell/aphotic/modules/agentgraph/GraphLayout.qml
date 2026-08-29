@@ -90,9 +90,6 @@ QtObject {
         root._radial();
     }
 
-    // Positions survive a rebuild by node key: sessions are replaced
-    // wholesale on every hook event, so seeding from scratch each time would
-    // make every node jump on every tool call.
     function _seed(): void {
         const positions = [];
         const held = root._held;
@@ -114,12 +111,6 @@ QtObject {
         root._positions = positions;
     }
 
-    // Radial: a call tree, laid out as one. Session roots ring the centre,
-    // each session's own calls fan out into the wedge pointing away from it,
-    // and a subagent's calls fan around the Agent node that spawned them.
-    // Deterministic and one-pass -- there is no steady-state cost at all once
-    // it has run, and an arriving node doesn't disturb the ones already
-    // placed the way a relaxing force layout does.
     function _radial(): void {
         const nodes = root._nodes;
         const positions = root._positions;
@@ -151,11 +142,6 @@ QtObject {
         root._commit();
     }
 
-    // Pills are a fixed pixel size but the graph's own extent isn't, so the
-    // placed result is normalised into the available area rather than
-    // trusting the radii to happen to fit. This is also what makes the
-    // surface size-agnostic -- a tab, a full overlay and a small popout all
-    // get a graph that fills them.
     function _fit(positions): void {
         if (positions.length === 0 || root.areaWidth <= 0 || root.areaHeight <= 0)
             return;
@@ -181,9 +167,6 @@ QtObject {
             positions[i] = { x: positions[i].x * scale + offsetX, y: positions[i].y * scale + offsetY };
     }
 
-    // Ring radius grows with how many children have to fit on it, so a
-    // session with thirty tool calls spaces them out instead of stacking
-    // them on top of each other at a fixed distance.
     function _place(index, childrenOf, positions, facing, spread, radius, isRoot): void {
         const children = childrenOf[index];
         if (!children || children.length === 0)

@@ -22,8 +22,6 @@ Item {
     readonly property bool empty: root.sessions.length === 0
     readonly property bool anyFlowing: graphLayout.edges.some(e => e.status === "running")
 
-    // Per-surface accent override, same contract as the per-icon overrides:
-    // empty string means follow the theme rather than storing a copy of it.
     readonly property color accent: Settings.agentGraphAccent ? Settings.agentGraphAccent : Colours.palette.m3primary
 
     property int hoveredIndex: -1
@@ -35,10 +33,6 @@ Item {
     property real panY: 0
     property bool interacting: false
 
-    // Detail thins out as the graph shrinks: labels first, then everything
-    // but the node itself. This is a legibility rule before it is a cost
-    // one -- fixed-size pills at ten sessions turn into text soup long
-    // before they turn into a frame budget problem.
     readonly property bool showLabels: root.zoom > 0.72
     readonly property bool showIcons: root.zoom > 0.42
 
@@ -109,9 +103,6 @@ Item {
         onTriggered: root.nowMs = Date.now()
     }
 
-    // One clock for every packet on every edge instead of an animation per
-    // packet: phase comes from the packet's index, so N particles cost one
-    // running animation, and it stops entirely when nothing is in flight.
     property real flowClock: 0
 
     implicitWidth: 760
@@ -134,10 +125,6 @@ Item {
         maxNodesPerSession: root.maxNodesPerSession
     }
 
-    // Repeater delegates must be Items, and ShapePath is not one -- a
-    // Repeater of ShapePath silently draws nothing. All edges of a given
-    // status therefore share one ShapePath fed by a PathMultiline, which is
-    // also three geometry nodes for the whole graph instead of one per edge.
     function _iconFor(tool: string): string {
         switch (tool) {
         case "Read":
@@ -261,10 +248,6 @@ Item {
                 }
             }
 
-            // The graph reads as alive or it reads as a diagram. Packets travel the
-            // edge of a call that is actually in flight; nothing moves on an edge
-            // that has already finished. Density comes from the hardware tier and is
-            // thinned, never switched off -- see AgentGraphService.edgeParticles.
             Repeater {
                 model: root.empty ? [] : graphLayout.edges
 
@@ -277,10 +260,6 @@ Item {
                     readonly property var to: graphLayout.positions[flow.modelData.b] ?? { x: 0, y: 0 }
                     readonly property bool flowing: flow.modelData.status === "running"
 
-                    // Packet speed carries how long the call has been in flight: a
-                    // fresh call streams quickly, one that has been grinding for a
-                    // while slows to a crawl. Integer multipliers only -- a
-                    // fractional one would jump at every wrap of the shared clock.
                     readonly property int speed: {
                         const elapsed = root.nowMs - (flow.modelData.startedAt ?? 0);
                         if (!flow.modelData.startedAt || elapsed > 20000)
@@ -352,11 +331,6 @@ Item {
                         Anim { type: Anim.EmphasizedSmall }
                     }
 
-                    // The shared Aphotic glow rather than a graph-specific highlight:
-                    // breathing while a call is in flight, held steady (not
-                    // breathing) while a session waits on the user, and persistent
-                    // in the error colour once something has failed. Declared before
-                    // the pill on purpose -- it renders a blurred shape behind it.
                     BioluminescentGlow {
                         target: pill
                         glowColour: node.stateColour
@@ -441,10 +415,6 @@ Item {
                     }
                 }
             }
-
-            // One tooltip for the whole view rather than one per node, and it
-            // reuses the tab/popout chrome (surfaceContainer + outlineVariant +
-            // extraLarge rounding) instead of introducing a second card style.
         }
 
         PinchHandler {

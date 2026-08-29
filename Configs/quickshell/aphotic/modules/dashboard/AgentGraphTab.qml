@@ -122,8 +122,6 @@ StyledRect {
             }
         }
 
-        // Replay is a different clock over the same renderer, never a second
-        // view -- the only thing that changes is where `sessions` comes from.
         GraphView {
             Layout.fillWidth: true
             Layout.fillHeight: true
