@@ -38,7 +38,13 @@ PanelWindow {
     WlrLayershell.namespace: "aphotic-dock"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.exclusionMode: ExclusionMode.Normal
-    WlrLayershell.exclusiveZone: root.reservedThickness
+    // 0 until Settings._loaded: same startup-race guard as BarWrapper.qml's
+    // own exclusiveZone (see its comment for the full story) -- barHorizontal/
+    // barPositionBottom/barPositionRight all read from Settings too, so
+    // before the persisted config loads this window could briefly commit a
+    // reservation on the wrong edge or at the wrong thickness, which then
+    // doesn't reliably shrink/move back down afterward.
+    WlrLayershell.exclusiveZone: Settings._loaded ? root.reservedThickness : 0
     color: "transparent"
 
     anchors.top: Settings.barHorizontal ? !Settings.barPositionBottom : true
