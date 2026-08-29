@@ -12,19 +12,27 @@ result=$(echo "" | prompt_profile)
 result=$(echo "minimal" | prompt_profile)
 [[ "$result" == "minimal" ]] || fail "expected 'minimal', got '$result'"
 
-result=$(printf "y\nn\ny\nn\n" | prompt_layers)
+result=$(printf "3\ny\nn\ny\nn\n" | prompt_layers)
 [[ "$result" == "gaming,ai" ]] || fail "expected 'gaming,ai', got '$result'"
 
+# preset 1: everything
+result=$(echo "1" | prompt_layers)
+[[ "$result" == "gaming,dev,ai,exploit" ]] || fail "expected 'gaming,dev,ai,exploit', got '$result'"
+
+# preset 2: daily driver, no layers
+result=$(echo "2" | prompt_layers)
+[[ "$result" == "" ]] || fail "expected '', got '$result'"
+
 # exploit enabled, default bundle accepted, no extra sublayers
-result=$(printf "n\nn\nn\ny\ny\nn\nn\nn\nn\n" | prompt_layers)
+result=$(printf "3\nn\nn\nn\ny\ny\nn\nn\nn\nn\n" | prompt_layers)
 [[ "$result" == "exploit" ]] || fail "expected 'exploit', got '$result'"
 
 # exploit enabled, declines default bundle, hand-picks recon + web only
-result=$(printf "n\nn\nn\ny\nn\ny\ny\nn\nn\nn\nn\nn\n" | prompt_layers)
+result=$(printf "3\nn\nn\nn\ny\nn\ny\ny\nn\nn\nn\nn\nn\n" | prompt_layers)
 [[ "$result" == "exploit-recon,exploit-web" ]] || fail "expected 'exploit-recon,exploit-web', got '$result'"
 
 # exploit enabled, default bundle accepted, passwords + wordlist opt-in
-result=$(printf "n\nn\nn\ny\ny\ny\ny\nn\nn\nn\n" | prompt_layers)
+result=$(printf "3\nn\nn\nn\ny\ny\ny\ny\nn\nn\nn\n" | prompt_layers)
 [[ "$result" == "exploit,exploit-passwords,exploit-wordlists" ]] || fail "expected 'exploit,exploit-passwords,exploit-wordlists', got '$result'"
 
 result=$(echo "" | prompt_theme)
