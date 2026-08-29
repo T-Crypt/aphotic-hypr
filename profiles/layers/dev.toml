@@ -3,4 +3,4 @@ name = "dev"
 description = "Terminal + editor polish"
 
 [packages]
-main = ["neovim", "tmux", "fzf", "ripgrep", "fd", "lazygit"]
+main = ["neovim", "tmux", "fzf", "ripgrep", "fd", "lazygit", "github-cli"]

@@ -3,4 +3,4 @@ name = "ai"
 description = "Local AI CLI backend (Ollama) plus llmfit hardware-aware model recommendations"
 
 [packages]
-main = ["ollama", "llmfit"]
+main = ["ollama", "llmfit", "claude-code"]
