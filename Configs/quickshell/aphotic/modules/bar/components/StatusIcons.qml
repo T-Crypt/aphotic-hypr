@@ -26,7 +26,24 @@ Item {
     // which pill's own bounds contain the hover position first, THEN
     // the nearest icon within just that pill -- tightly scoped to each
     // pill's real extent rather than one flat search across every icon
-    // regardless of which group it's visually in.
+    // regardless of which group it's visually in. checkPopout computes
+    // its own nearest-icon match directly from its own pointer sample
+    // (via BarHit.nearestAlong against `pill.icons`) rather than reading
+    // `pill.hoveredEntry` below -- an earlier version read `hoveredEntry`
+    // instead, to avoid two independent handlers (this pill's own local
+    // MouseArea vs. BarWrapper.qml's outer HoverHandler) disagreeing
+    // about which icon is hovered. That created a worse bug than the one
+    // it fixed: on first entry into a pill (confirmed live approaching a
+    // horizontal bar's status pill from directly underneath), the outer
+    // handler's own first sample can fire before this pill's own
+    // MouseArea has updated `hoveredEntry` for that same position,
+    // reading stale/null state and failing to show a popout at all.
+    // Each consumer now computes its own match independently from its
+    // own event stream -- `hoveredEntry` below only drives the HoverPill
+    // highlight, checkPopout never reads it.
+    //
+    // `pill` also carries its own `hoveredEntry`, kept live by the pill's
+    // own local MouseArea below, purely for the HoverPill highlight.
     readonly property var groupContainers: {
         const result = [];
         for (let i = 0; i < groupRepeater.count; i++) {
@@ -112,16 +129,30 @@ Item {
                     thickness: Settings.barHorizontal ? pill.height : pill.width
                 }
 
-                HoverHandler {
+                // Plain MouseArea, not HoverHandler -- see BarWrapper.qml's
+                // matching hoverArea comment for the full reasoning
+                // (caelestia-dots/shell drives its equivalent hover state
+                // from a MouseArea's onPositionChanged too, and Aphotic's
+                // HoverHandler-based version could genuinely miss a fast
+                // or directional pointer entry into this pill, leaving the
+                // hover-highlight state stuck/null with no popout).
+                MouseArea {
                     id: pillHover
-                    onPointChanged: {
-                        if (!pillHover.hovered)
-                            return;
-                        const local = pill.mapToItem(pillIcons, pillHover.point.position.x, pillHover.point.position.y);
+
+                    anchors.fill: parent
+                    acceptedButtons: Qt.NoButton
+                    hoverEnabled: true
+
+                    function updateHoveredEntry(x: real, y: real): void {
+                        const local = pill.mapToItem(pillIcons, x, y);
                         pill.hoveredEntry = BarHit.nearestAt(pillIcons, local.x, local.y);
                     }
-                    onHoveredChanged: {
-                        if (!pillHover.hovered)
+
+                    onPositionChanged: mouse => updateHoveredEntry(mouse.x, mouse.y)
+                    onContainsMouseChanged: {
+                        if (containsMouse)
+                            updateHoveredEntry(mouseX, mouseY);
+                        else
                             pill.hoveredEntry = null;
                     }
                 }

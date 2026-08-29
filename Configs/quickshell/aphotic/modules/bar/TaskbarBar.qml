@@ -30,6 +30,24 @@ Item {
         return item.mapToItem(root, item.implicitWidth / 2, 0).x;
     }
 
+    // Same region-hysteresis lock as Bar.qml's checkPopout -- see that
+    // file's comment for the full reasoning (reported live as "hovering
+    // too long makes the popout stop appearing/updating", root-caused to
+    // a single borderline sample -- between two pills, between two tray
+    // icons -- tripping an explicit hasCurrent = false even while the
+    // pointer was still squarely over the same bar child the whole time).
+    // TaskbarBar duplicates Bar.qml's hit-testing by hand (see the
+    // existing note in docs about this being a copy, not shared), so the
+    // fix has to be duplicated too.
+    readonly property real regionHysteresisMargin: 4
+    property Item _lockedChild: null
+
+    function withinLockedRegion(localPos: real): bool {
+        if (!_lockedChild)
+            return false;
+        return localPos >= _lockedChild.x - regionHysteresisMargin && localPos <= _lockedChild.x + _lockedChild.width + regionHysteresisMargin;
+    }
+
     function checkPopout(pos: real): void {
         // pos arrives in root's coordinate space (same convention Bar.qml
         // uses), but layout is inset from root by its own leftMargin --
@@ -38,7 +56,8 @@ Item {
         // layout's children (including tray/statusIcons's own local
         // geometry) or every hit-test below is off by that margin.
         const localPos = pos - layout.x;
-        const child = BarHit.nearestAlong(layout, localPos);
+        const child = (root.popouts.hasCurrent && withinLockedRegion(localPos)) ? _lockedChild : BarHit.nearestAlong(layout, localPos);
+        _lockedChild = child;
 
         if (child !== tray)
             root.closeTray();
@@ -47,6 +66,12 @@ Item {
             root.popouts.hasCurrent = false;
             return;
         }
+
+        // A sub-target miss (no matching pill/tray index for this exact
+        // sample) only closes the popout on fresh arrival at this child --
+        // re-evaluating the same already-open child keeps whatever was
+        // last showing instead. See the region-hysteresis comment above.
+        const reevaluatingSameChild = root.popouts.hasCurrent && child === _lockedChild;
 
         if (child === statusIcons && Config.bar.popouts.statusIcons) {
             // Same group-aware, tightly-scoped hit-testing as Bar.qml --
@@ -62,17 +87,16 @@ Item {
                     break;
                 }
             }
-            if (matched) {
-                const localX = layout.mapToItem(matched.icons, localPos, 0).x;
-                const icon = BarHit.nearestAlong(matched.icons, localX);
-                if (icon) {
-                    root.popouts.currentName = icon.name;
-                    root.popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
-                    root.popouts.hasCurrent = true;
-                } else {
-                    root.popouts.hasCurrent = false;
-                }
-            } else {
+            // Computed directly from THIS call's own localPos, not read
+            // from the pill's separately-maintained hoveredEntry -- see
+            // Bar.qml's matching comment for why reading the pill's own
+            // state introduced a worse first-entry race than it fixed.
+            const icon = matched ? BarHit.nearestAlong(matched.icons, layout.mapToItem(matched.icons, localPos, 0).x) : null;
+            if (icon) {
+                root.popouts.currentName = icon.name;
+                root.popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
+                root.popouts.hasCurrent = true;
+            } else if (!reevaluatingSameChild) {
                 root.popouts.hasCurrent = false;
             }
         } else if (child === tray && Config.bar.popouts.tray) {
@@ -86,7 +110,7 @@ Item {
                     root.popouts.currentTrayItem = trayItem;
                     root.popouts.currentCenter = Qt.binding(() => root.centerAlong(trayItem));
                     root.popouts.hasCurrent = true;
-                } else {
+                } else if (!reevaluatingSameChild) {
                     root.popouts.hasCurrent = false;
                 }
             } else {

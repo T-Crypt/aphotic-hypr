@@ -33,7 +33,24 @@ Item {
     // toggle or dragging the media seek bar) -- the flyout draws outside
     // the bar's own hover-tracked area, so leaving the bar to reach it
     // would otherwise look identical to "mouse left, dismiss".
-    readonly property bool hoveringFlyout: flyoutHover.hovered
+    //
+    // THE ACTUAL BUG, found here: this read `flyoutHover.hovered`.
+    // flyoutHover is a MouseArea (converted from HoverHandler earlier the
+    // same day), and MouseArea has no `hovered` property -- only
+    // `containsMouse`. That stale reference silently evaluated to
+    // `undefined` (falsy) ALWAYS, meaning `hoveringFlyout` was
+    // permanently false regardless of real cursor position, which made
+    // BarWrapper.qml's guard (`!root.popouts.hoveringFlyout`) permanently
+    // true -- the bar's own hover-exit closed the popout unconditionally
+    // the instant the cursor left the bar strip, even when it was moving
+    // straight into (or already sitting inside) the flyout. This is the
+    // literal, complete explanation for "the second the mouse hovers over
+    // the margin gap between the bar and the popout, it snaps away,
+    // doesn't matter what configuration" -- it reproduced on every single
+    // crossing, in every orientation, because the guard that was supposed
+    // to prevent exactly this never worked at all after the MouseArea
+    // conversion. Fixed: containsMouse is the real property.
+    readonly property bool hoveringFlyout: flyoutHover.containsMouse
 
     readonly property string category: currentName.startsWith("traymenu") ? "tray" : currentName
 
@@ -98,25 +115,38 @@ Item {
         // Left/right-docked (vertical bar, see Settings.barHorizontal):
         // strip sits at local x in [0, barWidth] (root shares BarWindow's
         // origin, which is the screen edge in that mode) when docked left,
-        // so the flyout starts just past it. Right-docked: the screen edge
-        // is at local x = windowWidth instead, so the strip sits in
-        // [windowWidth - barWidth, windowWidth] and the flyout must render
-        // on the other side of it, ending at windowWidth - barWidth -
-        // spacing and growing further left. Top/bottom-docked mirrors the
-        // same reasoning onto y/windowHeight instead. x/y are plain
-        // expressions of width/height here (not scale/transformOrigin),
-        // so the Behaviors on width/height below drag x/y along with them
-        // every frame, keeping the flyout's edge nearest the bar pinned in
-        // every docking mode as it grows/shrinks, rather than growing away
-        // from a fixed corner.
-        x: Settings.barHorizontal ? Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.width - root.nonAnimWidth) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - root.nonAnimWidth : root.barWidth + Tokens.spacing.small)
+        // so the flyout starts flush against it -- ZERO gap, matching
+        // caelestia-dots/shell's own popouts/ClipWrapper.qml (its content
+        // sits at `anchors.leftMargin: 0` against the bar-flush parent
+        // when shown, only offsetting when hidden/sliding off). Right-
+        // docked: the screen edge is at local x = windowWidth instead, so
+        // the strip sits in [windowWidth - barWidth, windowWidth] and the
+        // flyout must render on the other side of it, ending at
+        // windowWidth - barWidth and growing further left. Top/bottom-
+        // docked mirrors the same reasoning onto y/windowHeight instead.
+        // x/y are plain expressions of width/height here (not
+        // scale/transformOrigin), so the Behaviors on width/height below
+        // drag x/y along with them every frame, keeping the flyout's edge
+        // nearest the bar pinned in every docking mode as it grows/
+        // shrinks, rather than growing away from a fixed corner.
+        //
+        // A real gap here (previously Tokens.spacing.small) is not just a
+        // cosmetic choice -- it is a literal, un-hoverable dead zone
+        // between the bar's own hover-tracked area and the flyout's own
+        // (see BarWindow.qml's `mask: Region`, which only ever covers the
+        // bar's bounds and the flyout's own rect, nothing in between).
+        // Zero gap means there is no dead zone left to fall into or
+        // bridge -- this is the actual fix, not the bridgeItem hack
+        // below, which is now dead weight kept only until it's confirmed
+        // unneeded and removed.
+        x: Settings.barHorizontal ? Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.width - root.nonAnimWidth) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - root.nonAnimWidth : root.barWidth)
         // Clamp the along-axis edge -- Math.max alone kept the flyout from
         // starting before the screen's near edge but let it run off the
         // far edge uncorrected for any popout whose along-axis center sits
         // in the latter half of the bar (Settings, Resources), since this
         // window's own size matches the screen's on that axis and content
         // can't render past that boundary.
-        y: Settings.barHorizontal ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - root.nonAnimHeight : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.height - root.nonAnimHeight)
+        y: Settings.barHorizontal ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - root.nonAnimHeight : root.barWidth) : Math.min(Math.max(0, root.currentCenter - root.alongAxisAnchorRadius), root.screen.height - root.nonAnimHeight)
         width: root.nonAnimWidth
         height: root.nonAnimHeight
         radius: Tokens.rounding.medium
@@ -159,9 +189,20 @@ Item {
             shadowVerticalOffset: 2
         }
 
-        HoverHandler {
+        // Plain MouseArea, not HoverHandler -- see BarWrapper.qml's
+        // hoverArea comment for the general reasoning (caelestia-dots/
+        // shell drives all of its own equivalent hover state from
+        // MouseArea.onPositionChanged, never HoverHandler). No buttons
+        // accepted, so a click still reaches the popout content
+        // underneath (Settings toggles, media seek bar, etc.).
+        MouseArea {
             id: flyoutHover
-            onHoveredChanged: {
+
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            hoverEnabled: true
+
+            onContainsMouseChanged: {
                 // Entering the flyout also REVIVES hasCurrent, not just
                 // guards against clearing it (see hoveringFlyout above) --
                 // the bar's own hover-exit fires the instant the pointer
@@ -178,9 +219,36 @@ Item {
                 // included) reliably keeps the SAME popout open, instead
                 // of only being able to prevent a close already in
                 // progress.
-                if (hovered)
+                if (containsMouse) {
+                    flyoutHoverExitTimer.stop();
                     root.hasCurrent = true;
-                else
+                } else {
+                    // Debounced, not instant -- absorbs a same-frame
+                    // flicker right at a rounded corner (this flyout's own
+                    // radius) or while the flyout's width/height Behaviors
+                    // are still resizing the very geometry this handler
+                    // tracks, without making a genuine leave (mouse
+                    // actually moved away) feel laggy to close.
+                    flyoutHoverExitTimer.restart();
+                }
+            }
+        }
+
+        Timer {
+            id: flyoutHoverExitTimer
+            interval: 60
+            onTriggered: {
+                // containsMouse, not hovered -- flyoutHover is a
+                // MouseArea (see above), which has no `hovered` property.
+                // That stale reference always evaluated `!undefined` ==
+                // true, meaning this unconditionally closed on every fire
+                // regardless of the real current hover state. Functionally
+                // near-inert in practice (the entered branch above already
+                // calls stop() before this could fire while genuinely
+                // still hovering), but real, incorrect code -- fixed for
+                // correctness, not because it was reproduced as the cause
+                // of any specific reported symptom.
+                if (!flyoutHover.containsMouse)
                     root.hasCurrent = false;
             }
         }
@@ -274,8 +342,9 @@ Item {
         // popout is replacing whatever I'm hovering" instead of staying
         // put next to the agent icon. Same along-axis formula flyout
         // uses, just keyed on agentCenter.
-        x: Settings.barHorizontal ? Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.width - root.agentNonAnimWidth) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - Tokens.spacing.small - root.agentNonAnimWidth : root.barWidth + Tokens.spacing.small)
-        y: Settings.barHorizontal ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - Tokens.spacing.small - root.agentNonAnimHeight : root.barWidth + Tokens.spacing.small) : Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.height - root.agentNonAnimHeight)
+        // Zero gap against the bar, same reasoning as flyout above.
+        x: Settings.barHorizontal ? Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.width - root.agentNonAnimWidth) : (Settings.barPositionRight ? root.windowWidth - root.barWidth - root.agentNonAnimWidth : root.barWidth)
+        y: Settings.barHorizontal ? (Settings.barPositionBottom ? root.windowHeight - root.barWidth - root.agentNonAnimHeight : root.barWidth) : Math.min(Math.max(0, root.agentCenter - root.alongAxisAnchorRadius), root.screen.height - root.agentNonAnimHeight)
         width: root.agentNonAnimWidth
         height: root.agentNonAnimHeight
         radius: Tokens.rounding.medium
