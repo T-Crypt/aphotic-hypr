@@ -18,6 +18,39 @@ def test_valid_claude_transcript_sums_todays_tokens_only():
     assert claude["tokensByModel"] == [{"model": "claude-sonnet-5", "tokens": 425}]
 
 
+def test_real_claude_transcript_shape_nests_model_and_usage_under_message():
+    # Regression test for a real bug: this repo's own fixtures used a
+    # flat {"model": ..., "usage": ...} shape that doesn't match what
+    # Claude Code actually writes -- confirmed against a real machine's
+    # live transcripts, model/usage are nested under "message". The
+    # parser matched zero real entries ever, so todayTokens silently
+    # stayed 0 regardless of actual usage.
+    record = build_usage_record(NOW, {"claude": FIXTURES / "claude_real_nested.jsonl"})
+    claude = record["providers"]["claude"]
+    assert claude["availability"] == "available"
+    assert claude["todayTokens"] == (2 + 844) + (3 + 151)
+    assert claude["tokensByModel"] == [{"model": "claude-sonnet-5", "tokens": 1000}]
+
+
+def test_multiple_transcripts_for_one_provider_are_summed_not_picked_one():
+    # Regression test for a real bug: a machine with multiple Claude Code
+    # project directories (each its own transcript file under
+    # ~/.claude/projects/*/*.jsonl) was only ever looking at whichever one
+    # file glob() happened to enumerate first, silently showing 0 tokens
+    # for a genuinely active session sitting in any other file. A list of
+    # sources for one provider must be summed across all of them, not
+    # collapsed to one.
+    record = build_usage_record(
+        NOW,
+        {"claude": [FIXTURES / "claude_valid.jsonl", FIXTURES / "claude_valid_2.jsonl"]},
+    )
+    claude = record["providers"]["claude"]
+    assert claude["availability"] == "available"
+    assert claude["todayTokens"] == (100 + 50 + 200 + 75) + (10 + 5 + 300 + 100)
+    by_model = {m["model"]: m["tokens"] for m in claude["tokensByModel"]}
+    assert by_model == {"claude-sonnet-5": 425 + 15, "claude-opus-5": 400}
+
+
 def test_valid_codex_transcript():
     record = build_usage_record(NOW, {"codex": FIXTURES / "codex_valid.jsonl"})
     codex = record["providers"]["codex"]
