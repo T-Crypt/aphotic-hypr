@@ -19,8 +19,11 @@ Item {
     readonly property var stat: AgentProviders.stats[AgentProviders.selectedIndex] ?? AgentProviders.stats[0]
     readonly property int badgeCount: root.provider.id === "ollama" ? root.stat.loadedModels.length : root.stat.sessionCount
 
-    implicitWidth: root.showBackground ? Settings.barInnerWidth : icon.implicitWidth
-    implicitHeight: root.showBackground ? Settings.barInnerWidth : icon.implicitHeight
+    // Absent, not hidden, when the installer's `ai` layer is off -- the bar
+    // shouldn't leave a gap where a feature the user declined would go.
+    visible: InstallProfile.aiEnabled
+    implicitWidth: !root.visible ? 0 : root.showBackground ? Settings.barInnerWidth : icon.implicitWidth
+    implicitHeight: !root.visible ? 0 : root.showBackground ? Settings.barInnerWidth : icon.implicitHeight
 
     StyledRect {
         id: background

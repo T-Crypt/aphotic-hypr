@@ -11,13 +11,22 @@ ColumnLayout {
     required property ScreenState screenState
     property string currentTab: "dashboard"
 
+    // The AI tabs are absent, not empty, when the installer's `ai` layer is
+    // off -- see services/InstallProfile.qml.
     readonly property var tabs: [
         { id: "dashboard", icon: "dashboard", label: qsTr("Dashboard") },
         { id: "performance", icon: "monitoring", label: qsTr("Performance") },
         { id: "workspaces", icon: "grid_view", label: qsTr("Workspaces") },
-        { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") },
-        { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") }
-    ]
+        { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") }
+    ].concat(InstallProfile.aiEnabled ? [
+        { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") },
+        { id: "agentGraph", icon: "account_tree", label: qsTr("Agent Graph") }
+    ] : [])
+
+    onTabsChanged: {
+        if (!root.tabs.some(t => t.id === root.currentTab))
+            root.currentTab = "dashboard";
+    }
 
     spacing: Tokens.spacing.medium
 
@@ -91,6 +100,8 @@ ColumnLayout {
                     return wallpapersComp;
                 case "aiChat":
                     return aiChatComp;
+                case "agentGraph":
+                    return agentGraphComp;
                 default:
                     return dashboardComp;
                 }
@@ -133,5 +144,9 @@ ColumnLayout {
     Component {
         id: aiChatComp
         AiChatTab {}
+    }
+    Component {
+        id: agentGraphComp
+        AgentGraphTab {}
     }
 }
