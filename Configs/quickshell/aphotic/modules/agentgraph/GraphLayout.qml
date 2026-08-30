@@ -86,9 +86,31 @@ QtObject {
         return Qt.hsla(((hue % 360) + 360) % 360 / 360, 0.5, 0.62, 1);
     }
 
-    onSessionsChanged: root.rebuild()
+    function _hueForKey(key: string): int {
+        let hash = 0;
+        for (let i = 0; i < key.length; i++)
+            hash = (hash * 31 + key.charCodeAt(i)) | 0;
+        return Math.abs(hash) % 360;
+    }
+
+    function groupColorFor(sessionHue: real, agentId: string): color {
+        if (!Settings.agentGraphGroupByParent || !agentId)
+            return root.sessionColor(sessionHue);
+        return root.sessionColor(root._hueForKey(agentId));
+    }
+
+    property bool liveEnabled: Settings.agentGraphEnabled
+
+    onSessionsChanged: {
+        if (root.liveEnabled)
+            root.rebuild();
+    }
     onAreaWidthChanged: root.rebuild()
     onAreaHeightChanged: root.rebuild()
+    onLiveEnabledChanged: {
+        if (root.liveEnabled)
+            root.rebuild();
+    }
 
     function rebuild(): void {
         const nodes = [];
@@ -104,7 +126,7 @@ QtObject {
                 kind: "session",
                 sessionIndex: s,
                 sessionId: session.id,
-                label: session.model || session.id.slice(0, 8),
+                label: session.modelInfo?.label || session.id.slice(0, 8),
                 tool: "",
                 status: session.status,
                 parent: -1,
@@ -112,7 +134,12 @@ QtObject {
                 endedAt: session.endedAt ?? 0,
                 cwd: session.cwd ?? "",
                 callCount: session.nodes.length,
-                sessionColor: sessionColor
+                provider: session.modelInfo?.provider ?? "",
+                locality: session.modelInfo?.locality ?? "",
+                quant: session.modelInfo?.quant ?? "",
+                modelRaw: session.modelInfo?.raw ?? session.model ?? "",
+                sessionColor: sessionColor,
+                groupColor: sessionColor
             });
 
             const visible = session.nodes.slice(-root.maxNodesPerSession);
@@ -137,7 +164,8 @@ QtObject {
                     durationMs: node.durationMs ?? 0,
                     category: category,
                     categoryColor: root.categoryColor(category),
-                    sessionColor: sessionColor
+                    sessionColor: sessionColor,
+                    groupColor: root.groupColorFor(session.hue ?? 0, node.agentId)
                 });
             }
 

@@ -16,3 +16,14 @@ position = "top"          # top | left
 [system]
 nvidia = false
 aur_helper = "yay"
+
+# Optional overrides for the Bar agent-status popout / Agent Graph's
+# built-in harness/provider table (Configs/quickshell/aphotic/services/
+# ai/AgentRoles.qml). Omit entirely to use the built-in defaults -- known
+# harnesses (claude, codex, opencode, geminicli) and providers (ollama,
+# unsloth, lms, huggingface-cli) already ship correctly classified.
+# [agents.codex]
+# enabled = false   # hide Codex from the popout even if it's installed
+#
+# [agents.ollama]
+# role = "harness"  # only if you've wired something that makes this true
