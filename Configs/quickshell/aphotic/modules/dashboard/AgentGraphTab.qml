@@ -55,9 +55,11 @@ StyledRect {
                 Layout.fillWidth: true
                 text: root.replayMode
                     ? (replay.loaded ? qsTr("replaying %1 events").arg(replay.events.length) : qsTr("pick a run"))
-                    : AgentGraphService.liveSessionCount === 0
-                        ? qsTr("idle")
-                        : qsTr("%1 live · %2 nodes").arg(AgentGraphService.liveSessionCount).arg(AgentGraphService.nodeCount)
+                    : !Settings.agentGraphEnabled
+                        ? qsTr("paused · %1 nodes").arg(AgentGraphService.nodeCount)
+                        : AgentGraphService.liveSessionCount === 0
+                            ? qsTr("idle")
+                            : qsTr("%1 live · %2 nodes").arg(AgentGraphService.liveSessionCount).arg(AgentGraphService.nodeCount)
                 font: Tokens.font.label.small
                 color: Colours.palette.m3onSurfaceVariant
             }
