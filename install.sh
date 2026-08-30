@@ -16,7 +16,7 @@ source "$ROOT_DIR/lib/install/backup.sh"
 source "$ROOT_DIR/lib/install/wizard.sh"
 source "$ROOT_DIR/lib/install/blackarch.sh"
 source "$ROOT_DIR/lib/install/exploit_disclaimer.sh"
-source "$ROOT_DIR/lib/install/claude_hooks.sh"
+source "$ROOT_DIR/lib/install/conflicts.sh"
 source "$ROOT_DIR/lib/install/assistant.sh"
 source "$ROOT_DIR/lib/install/nvidia.sh"
 source "$ROOT_DIR/lib/install/packages.sh"
@@ -51,6 +51,7 @@ ASSISTANT=""
 ACCEPT_EXPLOIT_DISCLAIMER=0
 NVIDIA_DRIVER_ACTION=""
 OPT_IN=0
+STRIP_CONFLICTS=""
 
 TOTAL_STAGES=7
 STAGE_COLORS=(35 36 33 34 32 36 35)
@@ -128,6 +129,14 @@ Usage: ./install.sh [options]
                                 aphotic.toml is left exactly as it is. This
                                 is the "I just want the latest Quickshell/
                                 Hyprland config" path after a git pull.
+  --strip-conflicts              Remove already-installed packages that
+                                Aphotic's shell replaces (waybar, rofi/
+                                wofi, dunst/mako/swaync, etc.) without
+                                asking. Interactive installs are asked;
+                                non-interactive ones default to leaving
+                                them installed.
+  --keep-conflicts                Leave those packages alone without
+                                asking, even interactively.
   --dry-run                     Print planned actions, change nothing
   --no-backup                   Skip backing up existing configs
   --keep-backups <N>             Backups to retain (default: 5)
@@ -147,6 +156,8 @@ while [[ $# -gt 0 ]]; do
     --accept-exploit-disclaimer) ACCEPT_EXPLOIT_DISCLAIMER=1; shift ;;
     --nvidia-driver) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1 (keep|reinstall)"; exit 1; }; NVIDIA_DRIVER_ACTION="$2"; shift 2 ;;
     --config-only) CONFIG_ONLY=1; shift ;;
+    --strip-conflicts) STRIP_CONFLICTS="1"; shift ;;
+    --keep-conflicts) STRIP_CONFLICTS="0"; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
     --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
@@ -266,6 +277,7 @@ main() {
   echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password."
 
   print_stage 3 "System prep"
+  check_conflicting_packages
   configure_wifi_powersave
   ensure_base_devel
 
