@@ -146,8 +146,13 @@ ColumnLayout {
         }
     }
 
+    // This whole section only means something with the Agent Graph
+    // plugin installed+enabled -- otherwise it's exactly the dead,
+    // orphaned settings control §2.2 of APHOTIC_UNIFIED_VISION.md warns
+    // against (docs/archive/PLUGIN_SYSTEM.md manifest v3).
     StyledText {
         Layout.topMargin: Tokens.spacing.small
+        visible: PluginRegistry.isEnabled("agent-graph")
         text: qsTr("Agent graph")
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.label.medium
@@ -155,6 +160,7 @@ ColumnLayout {
 
     StyledText {
         Layout.fillWidth: true
+        visible: PluginRegistry.isEnabled("agent-graph")
         wrapMode: Text.Wrap
         text: qsTr("How much of the agent graph is simulated, not how it looks — every tier draws the same thing. Auto reads your GPU and eases off while Ollama has models loaded, so the graph never competes with a local model for VRAM.")
         color: Colours.palette.m3onSurfaceVariant
@@ -163,6 +169,7 @@ ColumnLayout {
 
     SettingsGroup {
         Layout.fillWidth: true
+        visible: PluginRegistry.isEnabled("agent-graph")
 
         SettingsPresetRow {
             icon: "hub"

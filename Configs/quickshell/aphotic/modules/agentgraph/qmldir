@@ -1,5 +1,0 @@
-module qs.modules.agentgraph
-GraphReplay 1.0 GraphReplay.qml
-GraphLayout 1.0 GraphLayout.qml
-GraphView 1.0 GraphView.qml
-ReplayBar 1.0 ReplayBar.qml
