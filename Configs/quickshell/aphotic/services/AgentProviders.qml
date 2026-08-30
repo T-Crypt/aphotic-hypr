@@ -25,22 +25,36 @@ import qs.services.ai
 // in this popout. Its loaded-model state is still tracked below, but only
 // as an internal GPU-contention signal for AgentGraphService, never as a
 // Bar tab.
+//
+// Bar-tab visibility is gated on the harness's own harness-hook plugin
+// being installed+enabled (PluginRegistry.isEnabled, manifest v3 -- see
+// docs/archive/PLUGIN_SYSTEM.md's "harness-hook capability"), not on live
+// process presence -- a deliberate divergence from Agent Graph's
+// AgentRoles.hasConfiguredHarness gate (which stays presence-based) and
+// from this file's own pre-plugin-architecture behavior, where a running
+// harness showed up in the bar with zero setup. Per direct instruction
+// (2026-08-30): the bar icon set should reflect what the user has
+// explicitly opted into via the plugin system, the same as any other
+// plugin-contributed surface (e.g. Agent Graph's Dashboard tab), not
+// what merely happens to be running right now.
 Singleton {
     id: root
 
     readonly property var _uiMeta: ({
-        "claude": { icon: "smart_toy", processName: "claude", launchCmd: ["claude"] },
-        "codex": { icon: "terminal", processName: "codex", launchCmd: ["codex"] },
-        "opencode": { icon: "terminal", processName: "opencode", launchCmd: ["opencode"] }
+        "claude": { icon: "smart_toy", processName: "claude", launchCmd: ["claude"], pluginName: "claude-hooks" },
+        "codex": { icon: "terminal", processName: "codex", launchCmd: ["codex"], pluginName: "codex-hooks" },
+        "opencode": { icon: "terminal", processName: "opencode", launchCmd: ["opencode"], pluginName: "opencode-hooks" }
     })
 
     // Set of active harness tabs: ids/enablement come from AgentRoles (the
-    // single-sourced role schema); icon/pgrep-name/launch command are Bar-
-    // specific UI metadata, not a classification concern. A harness with
-    // no _uiMeta entry (e.g. Gemini CLI -- no known package/binary in this
-    // repo yet) is skipped rather than shown with dead detection.
+    // single-sourced role schema) AND from whether that harness's own
+    // harness-hook plugin is installed+enabled; icon/pgrep-name/launch
+    // command/plugin name are Bar-specific UI metadata, not a
+    // classification concern. A harness with no _uiMeta entry (e.g.
+    // Gemini CLI -- no known package/binary in this repo yet) is skipped
+    // rather than shown with dead detection.
     readonly property var providers: AgentRoles.harnesses
-        .filter(h => root._uiMeta[h.id])
+        .filter(h => root._uiMeta[h.id] && PluginRegistry.isEnabled(root._uiMeta[h.id].pluginName))
         .map(h => ({
             id: h.id,
             label: h.label,
