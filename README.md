@@ -324,7 +324,7 @@ None of this is unique by itself. Together it turns a rice from something you in
 ## Install
 
 > [!IMPORTANT]
-> Aphotic assumes an Arch/AUR base with systemd as PID 1 (SDDM, bluetooth, and the shell itself all depend on it directly) — install.sh checks for this and refuses to run otherwise. It hasn't been tested on other distros and no distro branching is planned — see the [FAQ](#faq).
+> Aphotic assumes a **Base install of Arch Linux** (not CachyOS, Omarchy, etc. — those are only planned via the [Roadmap](#roadmap) and not supported in beta yet) with **systemd as PID 1** (SDDM, bluetooth, and the shell itself all depend on it directly) — install.sh checks for this and refuses to run otherwise. So far it has only been tested against the **Base Arch install** produced by **archinstall** with the **systemd bootloader**. It hasn't been tested on any other distro and no distro branching is planned — see the [FAQ](#faq).
 >
 > `install.sh` is built for a fresh Arch install, not a machine already carrying another rice. If waybar, rofi/wofi, dunst/mako/swaync, or another bar/launcher/notifier is already installed, it'll offer to remove it — leaving it in place is what caused [#41](https://github.com/T-Crypt/aphotic-hypr/issues/41)'s duplicate, unstyled bar. See `--strip-conflicts`/`--keep-conflicts` below.
 
@@ -333,6 +333,9 @@ git clone https://github.com/T-Crypt/Aphotic-Hypr && cd Aphotic-Hypr
 chmod +x install.sh
 ./install.sh
 ```
+
+> [!TIP]
+> During **archinstall**, add `git` plus an editor (`nano`, `vim`, or your preferred one) to the package list along with the base set — you'll need `git` to clone this repo, and an editor to tweak any files if necessary. This matters if you're coming from a derivative (CachyOS, Omarchy, etc.) rather than a plain Base Arch install.
 
 Running with no flags launches a short wizard: profile, optional layers, theme. It writes your choices to `aphotic.toml`, the source of truth for every re-run after that.
 
