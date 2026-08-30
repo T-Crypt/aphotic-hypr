@@ -51,7 +51,8 @@ ColumnLayout {
         "theme-hook": { icon: "palette", label: qsTr("Theme Hook") },
         "project-hook": { icon: "folder_open", label: qsTr("Project Hook") },
         "workspace-hook": { icon: "work", label: qsTr("Workspace Hook") },
-        "ui-surface": { icon: "dashboard", label: qsTr("UI Surface") }
+        "ui-surface": { icon: "dashboard", label: qsTr("UI Surface") },
+        "harness-hook": { icon: "smart_toy", label: qsTr("Harness Hook") }
     })
 
     function capabilityMeta(cap: string): var {
@@ -188,6 +189,7 @@ ColumnLayout {
         property var capabilities: []
         property var dashboardTab: null
         property var configKeys: []
+        property var externalConfig: []
 
         property bool first: true
         property bool last: true
@@ -305,6 +307,15 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     font: Tokens.font.label.small
                 }
+
+                StyledText {
+                    visible: pluginRow.externalConfig.length > 0
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: qsTr("Wires: %1").arg(pluginRow.externalConfig.join(", "))
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.small
+                }
             }
 
             Item {
@@ -414,6 +425,7 @@ ColumnLayout {
                 capabilities: installedRow.modelData.capabilities ?? []
                 dashboardTab: installedRow.modelData.ui?.dashboard_tab ?? null
                 configKeys: installedRow.modelData.owns?.config_keys ?? []
+                externalConfig: installedRow.modelData.owns?.external_config ?? []
 
                 RowLayout {
                     spacing: Tokens.spacing.small

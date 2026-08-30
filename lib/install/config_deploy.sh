@@ -103,7 +103,7 @@ deploy_user_configs() {
   # layer list, and "no layers" must not be read as "the user turned ai off" --
   # that would strip hooks and disable a timer nobody asked to remove.
   if [[ "$CONFIG_ONLY" == "1" && "$LAYERS_KNOWN" != "1" ]]; then
-    echo -e "$CWR - No aphotic.toml found; leaving the agent usage timer and Claude Code hooks exactly as they are."
+    echo -e "$CWR - No aphotic.toml found; leaving the agent usage timer exactly as it is."
   elif layer_selected "ai"; then
     echo -e "$CNT - Enabling the agent usage-tracking timer..."
     systemctl --user enable --now aphotic-agent-usage.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-agent-usage.timer; the bar's agent popout will show stale/no usage data until it's enabled manually."
@@ -113,22 +113,15 @@ deploy_user_configs() {
   fi
   echo -e "$CNT - Enabling the SDDM background sync timer..."
   systemctl --user enable --now aphotic-sddm-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-sddm-sync.timer; the SDDM login background will only update via the per-theme-change best-effort call, not this periodic catch-up. Enable manually with 'systemctl --user enable --now aphotic-sddm-sync.timer'."
-  # Writing hooks into someone's ~/.claude/settings.json is not something to
-  # do to a user who never asked for the agent stack, so it follows the `ai`
-  # layer -- and de-selecting that layer on a re-run removes what a previous
-  # run added rather than leaving it behind.
-  if [[ "$CONFIG_ONLY" == "1" && "$LAYERS_KNOWN" != "1" ]]; then
-    :
-  elif layer_selected "ai"; then
-    echo -e "$CNT - Configuring the Claude Code hook for live agent session tracking..."
-    if command -v jq >/dev/null 2>&1; then
-      configure_claude_code_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/agent_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not update ~/.claude/settings.json; the bar's agent popout will only show session presence/count, not live per-session status. Wire it manually — see docs/AGENT_TRACKING.md."
-    else
-      echo -e "$CWR - jq not found; skipping Claude Code hook setup. Wire it manually — see docs/AGENT_TRACKING.md."
-    fi
-  elif command -v jq >/dev/null 2>&1; then
-    echo -e "$CNT - AI layer not selected; removing any Aphotic Claude Code hook entries..."
-    remove_claude_code_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/agent_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not clean ~/.claude/settings.json; remove the aphotic agent_hook.sh entries by hand if they are still there."
+  # Harness hooks (Claude Code, Codex, OpenCode) are no longer wired by
+  # install.sh at all -- each is a harness-hook plugin (claude-hooks/
+  # codex-hooks/opencode-hooks in aphotic-plugins) a user opts into
+  # per docs/archive/PLUGIN_SYSTEM.md, same install/enable/disable/remove
+  # verbs as any other plugin, matching Agent Graph's own extraction. Only
+  # point at that here, once, when the ai layer is actually on -- install.sh
+  # itself never touches a harness's own config file anymore.
+  if [[ "$CONFIG_ONLY" != "1" || "$LAYERS_KNOWN" == "1" ]] && layer_selected "ai"; then
+    echo -e "$CNT - AI layer enabled. For live per-session agent tracking in the bar/dashboard, install a harness-hook plugin for whichever coding harness you use: aphotic plugin install claude-hooks (or codex-hooks / opencode-hooks). See 'aphotic plugin list --remote'."
   fi
 
   # Make sure `aphotic` (and anything else under ~/.local/bin) resolves on

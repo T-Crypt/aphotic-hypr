@@ -30,9 +30,11 @@ _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 # empty/null on a v1 or v2 manifest, same "optional field, no error"
 # contract v2's category addition already established.
 _aphotic_plugin_owns_json() {
-    local manifest="$1" keys
+    local manifest="$1" keys ext
     keys="$(aphotic_toml_get_array "$manifest" owns config_keys | jq -R . | jq -s .)"
-    jq -n --argjson config_keys "${keys:-[]}" '{config_keys: $config_keys}'
+    ext="$(aphotic_toml_get_array "$manifest" owns external_config | jq -R . | jq -s .)"
+    jq -n --argjson config_keys "${keys:-[]}" --argjson external_config "${ext:-[]}" \
+        '{config_keys: $config_keys, external_config: $external_config}'
 }
 
 _aphotic_plugin_ui_json() {
@@ -419,6 +421,72 @@ _aphotic_plugin_unlink_ui_module() {
     rm -f "${QUICKSHELL_CONFIG_DIR}/modules/plugins/${module_name}"
 }
 
+# harness-hook capability (added alongside the Claude/Codex/OpenCode
+# reconciliation onto `modular` -- see docs/archive/PLUGIN_SYSTEM.md's
+# "harness-hook capability" section). Unlike theme/project/workspace
+# hooks, a harness-hook plugin doesn't wait for Aphotic to fire an event
+# -- it wires its own translator into a *different* program's own config
+# (~/.claude/settings.json, ~/.codex/hooks.json, ~/.config/opencode/
+# plugins/) so that program calls back into Aphotic's shared agent_hook
+# pipeline on its own events. That external config has no concept of
+# Aphotic's `disabled` array, so wiring can't just be a one-time
+# install-time action the way `[ui.dashboard_tab]`'s symlink is --
+# `enable`/`disable` have to actively wire/unwire too, or a "disabled"
+# plugin would keep firing for real.
+#
+# [harness] table (`plugin.toml`, `capabilities` includes "harness-hook"):
+#   [harness]
+#   wire = "hooks/wire.sh"     # relative to the plugin's own directory
+#   unwire = "hooks/unwire.sh"
+# Both scripts are invoked with one argument: this shell's own
+# lib/aphotic directory (where agent_hook.sh/agent_hook.py live), so a
+# plugin's translator (if it has one, e.g. codex_hook.py) can find the
+# core sink without assuming a fixed clone path. Fire-and-forget within
+# reason -- a failure is surfaced (aphotic_err), never silently dropped,
+# but never fatal to install/enable/disable/remove either, matching
+# every other best-effort step in this file.
+_aphotic_plugin_lib_dir() {
+    local here
+    here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    echo "${LIB_DIR:-$(cd "${here}/.." && pwd)}"
+}
+
+_aphotic_plugin_has_harness_hook() {
+    local manifest="$1" caps
+    caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
+    grep -qx "harness-hook" <<<"$caps"
+}
+
+_aphotic_plugin_run_harness_lifecycle_script() {
+    local name="$1" key="$2" dir manifest script script_path
+    dir="$(_aphotic_plugin_dir "$name")"
+    manifest="${dir}/plugin.toml"
+    [[ -f "$manifest" ]] || return 0
+    _aphotic_plugin_has_harness_hook "$manifest" || return 0
+
+    script="$(aphotic_toml_get "$manifest" harness "$key")"
+    [[ -n "$script" ]] || return 0
+    script_path="${dir}/${script}"
+    if [[ ! -f "$script_path" ]]; then
+        aphotic_err "${name}: harness.${key} (${script}) not found"
+        return 1
+    fi
+    chmod +x "$script_path" 2>/dev/null || true
+
+    if ! "$script_path" "$(_aphotic_plugin_lib_dir)"; then
+        aphotic_err "${name}: harness.${key} script failed"
+        return 1
+    fi
+}
+
+_aphotic_plugin_wire_harness() {
+    _aphotic_plugin_run_harness_lifecycle_script "$1" wire
+}
+
+_aphotic_plugin_unwire_harness() {
+    _aphotic_plugin_run_harness_lifecycle_script "$1" unwire
+}
+
 # Real, live-confirmed architecture gap (2026-08-30): install.sh's
 # `deploy_user_configs` does `rm -rf`/`cp -R` over the WHOLE of
 # `Configs/quickshell/aphotic` -> `~/.config/quickshell/aphotic` on
@@ -470,6 +538,7 @@ _aphotic_plugin_install() {
     _aphotic_plugin_install_deps "$dest"
     _aphotic_plugin_registry_sync "$name"
     _aphotic_plugin_link_ui_module "$name"
+    _aphotic_plugin_wire_harness "$name" || true
 
     aphotic_ok "installed ${name}"
     echo "PLUGIN INSTALLED: ${name}"
@@ -480,6 +549,7 @@ _aphotic_plugin_remove() {
     [[ -n "$name" ]] || { aphotic_err "usage: aphotic plugin remove <name>"; return 1; }
     dest="$(_aphotic_plugin_dir "$name")"
     [[ -e "$dest" ]] || { aphotic_err "not installed: ${name}"; return 1; }
+    _aphotic_plugin_unwire_harness "$name" || true
     _aphotic_plugin_unlink_ui_module "$name"
     rm -rf "$dest"
     aphotic_plugin_set_enabled "$name" true # clear any disabled-state entry
@@ -535,10 +605,12 @@ aphotic_cmd_plugin() {
         enable)
             [[ -n "${1:-}" ]] || { aphotic_err "usage: aphotic plugin enable <name>"; return 1; }
             aphotic_plugin_set_enabled "$1" true && aphotic_ok "enabled ${1}"
+            _aphotic_plugin_wire_harness "$1" || true
             ;;
         disable)
             [[ -n "${1:-}" ]] || { aphotic_err "usage: aphotic plugin disable <name>"; return 1; }
             aphotic_plugin_set_enabled "$1" false && aphotic_ok "disabled ${1}"
+            _aphotic_plugin_unwire_harness "$1" || true
             ;;
         remove)
             _aphotic_plugin_remove "${1:-}"
