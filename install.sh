@@ -750,14 +750,28 @@ except Exception:
     fi
   fi
 
+  # Sync pacman DBs first: on a fresh/torn-down system /var/lib/pacman/sync/
+  # is empty, and without it both base-devel and makepkg -si fail with
+  # "database file for ... does not exist". This must precede yay's build.
+  ensure_pacman_db
+
   if ! command -v fakeroot >/dev/null 2>&1; then
     echo -e "$CNT - base-devel not found; installing it now (required to build AUR packages)."
     sudo pacman -S --needed --noconfirm base-devel &>> "$INSTLOG" || { echo -e "$CER - Failed to install base-devel. Install it manually: sudo pacman -S base-devel"; exit 1; }
   fi
 
   echo -e "$CNT - Resolving AUR helper..."
-  AUR_HELPER=$(ensure_aur_helper)
-  echo -e "$COK - Using AUR helper: $AUR_HELPER"
+  # `set -e` is off in the orchestrator, so a non-zero status from the command
+  # substitution must be captured explicitly or a failed yay install (which
+  # returns 1 from ensure_aur_helper) would silently leave AUR_HELPER empty.
+  AUR_HELPER=""
+  AUR_HELPER=$(ensure_aur_helper) || AUR_HELPER=""
+  if [[ -z "$AUR_HELPER" ]]; then
+    echo -e "$CWR - No AUR helper (yay/paru) is available on PATH. AUR packages will fail to resolve."
+    echo -e "$CWR   Fix it manually: sudo pacman -S --needed base-devel git && git clone https://aur.archlinux.org/yay.git /tmp/yay && cd /tmp/yay && makepkg -si"
+  else
+    echo -e "$COK - Using AUR helper: $AUR_HELPER"
+  fi
 
   if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
     echo -e "$CNT - Enabling the BlackArch repo for the exploit-* layers that need it..."
