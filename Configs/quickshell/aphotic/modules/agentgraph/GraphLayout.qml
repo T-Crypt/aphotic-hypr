@@ -28,6 +28,22 @@ QtObject {
     readonly property real _toolRadius: Math.min(root.areaWidth, root.areaHeight) * 0.19
     readonly property real _subRadius: Math.min(root.areaWidth, root.areaHeight) * 0.11
 
+    readonly property real fadeFloor: 0.35
+    readonly property real fadeHalfLifeMs: 900000
+
+    function fadeFor(node, nowMs: real): real {
+        if (!node || node.status === "running")
+            return 1;
+        if (node.kind === "session" && node.status !== "ended")
+            return 1;
+        const endedAt = node.endedAt || node.startedAt;
+        if (!endedAt)
+            return 1;
+        const age = Math.max(0, nowMs - endedAt);
+        const halved = Math.pow(0.5, age / root.fadeHalfLifeMs);
+        return root.fadeFloor + (1 - root.fadeFloor) * halved;
+    }
+
     onSessionsChanged: root.rebuild()
     onAreaWidthChanged: root.rebuild()
     onAreaHeightChanged: root.rebuild()
@@ -50,6 +66,7 @@ QtObject {
                 status: session.status,
                 parent: -1,
                 startedAt: session.startedAt ?? 0,
+                endedAt: session.endedAt ?? 0,
                 cwd: session.cwd ?? "",
                 callCount: session.nodes.length
             });
