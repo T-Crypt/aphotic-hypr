@@ -82,6 +82,18 @@ Item {
             WindowList.focus(match.address);
     }
 
+    function _sessionElapsedText(node): string {
+        if (!node.startedAt)
+            return "";
+        const end = node.endedAt || root.nowMs;
+        const ms = Math.max(0, end - node.startedAt);
+        if (ms < 60000)
+            return qsTr("%1s").arg(Math.round(ms / 1000));
+        if (ms < 3600000)
+            return qsTr("%1m").arg(Math.floor(ms / 60000));
+        return qsTr("%1h %2m").arg(Math.floor(ms / 3600000)).arg(Math.floor((ms % 3600000) / 60000));
+    }
+
     function _durationText(node): string {
         const ms = node.status === "running"
             ? Math.max(0, root.nowMs - (node.startedAt ?? 0))
@@ -426,6 +438,26 @@ Item {
 
                                     anchors.centerIn: parent
                                     text: [node.modelData.locality, node.modelData.quant].filter(Boolean).join(" · ")
+                                    font: Tokens.font.label.small
+                                    color: pill.ink
+                                }
+                            }
+
+                            StyledRect {
+                                id: detailBadge
+
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: node.isSession && root.showLabels && node.modelData.callCount > 0
+                                radius: Tokens.rounding.small
+                                color: Qt.alpha(pill.ink, 0.16)
+                                implicitWidth: detailText.implicitWidth + Tokens.padding.small
+                                implicitHeight: detailText.implicitHeight + Tokens.padding.extraSmall
+
+                                StyledText {
+                                    id: detailText
+
+                                    anchors.centerIn: parent
+                                    text: [qsTr("%1 calls").arg(node.modelData.callCount), root._sessionElapsedText(node.modelData)].filter(Boolean).join(" · ")
                                     font: Tokens.font.label.small
                                     color: pill.ink
                                 }
