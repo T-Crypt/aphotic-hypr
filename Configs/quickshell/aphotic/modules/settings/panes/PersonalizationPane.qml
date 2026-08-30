@@ -181,6 +181,13 @@ ColumnLayout {
                 onValueChanged: Settings.agentGraphAccent = value
             }
         }
+
+        SettingsToggleRow {
+            label: qsTr("Group by parent agent")
+            description: qsTr("Color-codes a subagent's own tool calls separately from its session — computed once when the graph updates, off by default")
+            checked: Settings.agentGraphGroupByParent
+            onToggled: state => Settings.agentGraphGroupByParent = state
+        }
     }
 
     StyledText {
