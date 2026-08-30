@@ -98,7 +98,7 @@ Item {
     Timer {
         interval: 1000
         repeat: true
-        running: root.visible && root.anyFlowing
+        running: root.visible
         triggeredOnStart: true
         onTriggered: root.nowMs = Date.now()
     }
@@ -310,8 +310,10 @@ Item {
                     readonly property bool hovered: root.hoveredIndex === node.index
                     readonly property bool selected: root.selectedIndex === node.index
                     readonly property color stateColour: node.errored ? Colours.palette.m3error : root.accent
+                    readonly property real fade: graphLayout.fadeFor(node.modelData, root.nowMs)
+                    readonly property real fadeScale: 0.9 + 0.1 * node.fade
 
-                    opacity: node.ended ? 0.5 : 1
+                    opacity: node.fade
 
                     Behavior on opacity {
                         Anim { type: Anim.DefaultEffects }
@@ -346,22 +348,18 @@ Item {
                         implicitWidth: Math.max(node.isSession ? 26 : 20, content.implicitWidth + (node.isSession ? Tokens.padding.large : Tokens.padding.medium))
                         implicitHeight: node.isSession ? 32 : 26
                         radius: Tokens.rounding.full
-                        scale: node.selected ? 1.12 : node.hovered ? 1.09 : node.running ? 1.06 : 1
+                        scale: node.fadeScale * (node.selected ? 1.12 : node.hovered ? 1.09 : node.running ? 1.06 : 1)
                         color: node.isSession
                             ? Qt.alpha(root.accent, node.ended ? 0.3 : 0.85)
                             : node.running
                                 ? Qt.alpha(root.accent, 0.8)
                                 : node.errored
                                     ? Qt.alpha(Colours.palette.m3error, 0.85)
-                                    : Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.92)
-                        border.width: 1
-                        border.color: node.isSession || node.running || node.errored
-                            ? "transparent"
-                            : Qt.alpha(Colours.palette.m3outlineVariant, 0.8)
+                                    : Qt.alpha(node.modelData.categoryColor ?? Colours.palette.m3surfaceContainerHigh, 0.92)
+                        border.width: 1.5
+                        border.color: Qt.alpha(node.modelData.sessionColor ?? Colours.palette.m3outlineVariant, node.isSession ? 0.85 : 0.55)
 
-                        readonly property color ink: node.isSession || node.running || node.errored
-                            ? Colours.contrastOn(pill.color)
-                            : Colours.palette.m3onSurfaceVariant
+                        readonly property color ink: Colours.contrastOn(pill.color)
 
                         Behavior on scale {
                             Anim { type: Anim.EmphasizedSmall }
@@ -455,7 +453,7 @@ Item {
         implicitWidth: tipContent.implicitWidth + Tokens.padding.large * 2
         implicitHeight: tipContent.implicitHeight + Tokens.padding.medium * 2
         radius: Tokens.rounding.large
-        color: Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.97)
+        color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.97)
         border.width: 1
         border.color: Colours.palette.m3outlineVariant
         z: 10
@@ -532,7 +530,7 @@ Item {
             implicitWidth: 28
             implicitHeight: 28
             radius: Tokens.rounding.full
-            color: Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.9)
+            color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.9)
             border.width: 1
             border.color: Colours.palette.m3outlineVariant
 
