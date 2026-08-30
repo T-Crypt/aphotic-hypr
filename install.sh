@@ -13,6 +13,7 @@ source "$ROOT_DIR/lib/install/claude_hooks.sh"
 source "$ROOT_DIR/lib/install/opencode_hooks.sh"
 source "$ROOT_DIR/lib/install/codex_hooks.sh"
 source "$ROOT_DIR/lib/install/assistant.sh"
+source "$ROOT_DIR/lib/install/conflicts.sh"
 # sourced libs each set -euo pipefail, which otherwise leaks into this
 # script's shell options since `set` is not scoped to the sourced file
 set +euo pipefail
@@ -33,6 +34,7 @@ NO_BACKUP=0
 KEEP_BACKUPS=5
 PROFILE=""
 LAYERS=""
+STRIP_CONFLICTS=""
 
 # Layers are carried as a comma-separated string all the way through, so
 # every gate needs the same exact-match test rather than a substring one --
@@ -119,6 +121,14 @@ Usage: ./install.sh [options]
                                 aphotic.toml is left exactly as it is. This
                                 is the "I just want the latest Quickshell/
                                 Hyprland config" path after a git pull.
+  --strip-conflicts              Remove already-installed packages that
+                                Aphotic's shell replaces (waybar, rofi/
+                                wofi, dunst/mako/swaync, etc.) without
+                                asking. Interactive installs are asked;
+                                non-interactive ones default to leaving
+                                them installed.
+  --keep-conflicts                Leave those packages alone without
+                                asking, even interactively.
   --dry-run                     Print planned actions, change nothing
   --no-backup                   Skip backing up existing configs
   --keep-backups <N>             Backups to retain (default: 5)
@@ -136,6 +146,8 @@ while [[ $# -gt 0 ]]; do
     --no-assistant) ASSISTANT="false"; shift ;;
     --accept-exploit-disclaimer) ACCEPT_EXPLOIT_DISCLAIMER=1; shift ;;
     --nvidia-driver) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1 (keep|reinstall)"; exit 1; }; NVIDIA_DRIVER_ACTION="$2"; shift 2 ;;
+    --strip-conflicts) STRIP_CONFLICTS="1"; shift ;;
+    --keep-conflicts) STRIP_CONFLICTS="0"; shift ;;
     --config-only) CONFIG_ONLY=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
@@ -565,6 +577,21 @@ main() {
   print_banner
 
   print_stage 1 "Preflight"
+
+  # Aphotic depends on systemd directly, not just as whatever happens to
+  # be PID 1 on Arch by default: SDDM, bluetooth.service, and the
+  # aphotic-shell.service user unit that runs the actual Quickshell bar
+  # (Configs/systemd/user/aphotic-shell.service) all assume it. A
+  # non-systemd base (e.g. Artix/OpenRC or runit) would get through the
+  # rest of this script and then have no working bar at all, with
+  # nothing pointing back at why -- so this checks and fails fast
+  # instead, for both a full install and --config-only (config-only
+  # still restarts aphotic-shell.service via systemctl --user).
+  if [[ ! -d /run/systemd/system ]]; then
+    echo -e "$CER - systemd isn't running as PID 1 (no /run/systemd/system) -- Aphotic isn't supported on a non-systemd base. Nothing has been changed."
+    exit 1
+  fi
+
   echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland."
 
   echo -e "$CNT - Checking for Physical or VM..."
@@ -665,6 +692,8 @@ except Exception:
   echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password."
 
   print_stage 3 "System prep"
+  check_conflicting_packages
+
   read -rep $'[\e[1;33mACTION\e[0m] - Would you like to disable WiFi powersave? (y,n) ' WIFI
   if [[ "$WIFI" == "Y" || "$WIFI" == "y" ]]; then
     if systemctl list-unit-files NetworkManager.service &>/dev/null; then
