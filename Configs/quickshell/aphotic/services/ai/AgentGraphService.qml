@@ -8,6 +8,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import qs.services.ai
 
 Singleton {
     id: root
@@ -112,11 +113,52 @@ Singleton {
         return Math.abs(hash) % 360;
     }
 
+    // Parsed once per session_start (see applyTo below), never per frame --
+    // a harness reports whatever backend it's actually using in the same
+    // `model` field regardless of whether that's a hosted cloud model or a
+    // local one served through a provider like unsloth/Ollama/LM Studio
+    // (e.g. "unsloth/Qwen3.8-27B-GGUF:Q4_K_M" vs "claude-opus-4-x"), so
+    // this is a string-classification problem, not a second process to
+    // detect. Known provider ids from AgentRoles take priority; a cloud/
+    // local heuristic on the string shape is the fallback for anything
+    // that doesn't name a known provider outright.
+    function parseModelInfo(modelString: string): var {
+        const raw = modelString ?? "";
+        if (!raw)
+            return { label: "", provider: "", locality: "", quant: "", raw: "" };
+
+        const lower = raw.toLowerCase();
+        let provider = "";
+        for (const p of AgentRoles.providers) {
+            if (lower.includes(p.id.toLowerCase())) {
+                provider = p.id;
+                break;
+            }
+        }
+
+        let locality = provider ? AgentRoles.localityFor(provider) : "";
+        if (!locality) {
+            if (/\.gguf\b/i.test(raw) || /\bQ\d(?:_\d)?(?:_K)?(?:_[SML])?\b/i.test(raw) || raw.includes("/"))
+                locality = "local";
+            else if (/^(claude|gpt|o[0-9]|gemini)[-:]/i.test(raw))
+                locality = "cloud";
+        }
+
+        const quantMatch = raw.match(/\bQ\d(?:_\d)?(?:_K)?(?:_[SML])?\b/i);
+        const ggufMatch = raw.match(/[\w.-]+\.gguf\b/i);
+        const quant = quantMatch ? quantMatch[0] : (ggufMatch ? ggufMatch[0] : "");
+
+        const label = raw.length > 28 ? `${raw.slice(0, 25)}…` : raw;
+
+        return { label: label, provider: provider, locality: locality, quant: quant, raw: raw };
+    }
+
     function _blankSession(record): var {
         return {
             id: record.sessionId,
             status: "idle",
             model: record.model ?? "",
+            modelInfo: root.parseModelInfo(record.model ?? ""),
             cwd: record.cwd ?? "",
             startedAt: record.t ?? 0,
             updatedAt: record.t ?? 0,
@@ -161,6 +203,7 @@ Singleton {
         } else if (record.event === "session_start") {
             session.status = "idle";
             session.model = record.model ?? session.model;
+            session.modelInfo = root.parseModelInfo(session.model);
         }
         if (record.cwd)
             session.cwd = record.cwd;
