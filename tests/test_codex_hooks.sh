@@ -21,8 +21,8 @@ HOOKS="$WORKDIR/.codex/hooks.json"
 HOME="$WORKDIR" configure_codex_hooks "$HOOK"
 [[ -f "$HOOKS" ]] || fail "hooks.json was not created"
 for event in SessionStart PreToolUse PostToolUse SubagentStop Stop SessionEnd; do
-    jq -e --arg cmd "$HOOK" --arg ev "$event" '.hooks[$ev][] | select(.hooks[0].command == $cmd)' "$HOOKS" >/dev/null \
-        || fail "missing $event hook entry"
+    jq -e --arg cmd "$HOOK" --arg ev "$event" '.hooks[$ev][] | select(.matcher == "" and .hooks[0].command == $cmd)' "$HOOKS" >/dev/null \
+        || fail "missing $event hook entry (or missing its matcher field)"
 done
 
 # PreToolUse/PostToolUse must run async -- Codex executes those two
@@ -32,7 +32,7 @@ jq -e --arg cmd "$HOOK" '.hooks.PreToolUse[0].hooks[0] | select(.command == $cmd
     || fail "PreToolUse hook is not async"
 jq -e --arg cmd "$HOOK" '.hooks.PostToolUse[0].hooks[0] | select(.command == $cmd and .async == true)' "$HOOKS" >/dev/null \
     || fail "PostToolUse hook is not async"
-jq -e --arg cmd "$HOOK" '.hooks.SessionEnd[0].hooks[0] | select(.command == $cmd and .timeout == 3)' "$HOOKS" >/dev/null \
+jq -e --arg cmd "$HOOK" '.hooks.SessionEnd[0].hooks[0] | select(.command == $cmd and .timeoutSec == 3)' "$HOOKS" >/dev/null \
     || fail "SessionEnd hook is not capped at Codex's 3s timeout"
 
 # Re-running must not duplicate the entry.

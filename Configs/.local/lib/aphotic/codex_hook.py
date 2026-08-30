@@ -63,13 +63,14 @@ def main():
 
     hook_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "agent_hook.py")
     try:
-        subprocess.run(
+        proc = subprocess.Popen(
             [sys.executable, hook_path],
-            input=json.dumps(record, separators=(",", ":")),
-            text=True,
-            capture_output=True,
-            timeout=5,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
+        proc.stdin.write(json.dumps(record, separators=(",", ":")).encode())
+        proc.stdin.close()
     except Exception:
         pass
     return 0

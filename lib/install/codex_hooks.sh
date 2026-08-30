@@ -54,14 +54,14 @@ configure_codex_hooks() {
   jq \
     --arg cmd "$hook_script" \
     '
-    def entry($timeout; $async):
-      {hooks: ([{type: "command", command: $cmd}
-        + (if $timeout > 0 then {timeout: $timeout} else {} end)
+    def entry($timeoutSec; $async):
+      {matcher: "", hooks: ([{type: "command", command: $cmd}
+        + (if $timeoutSec > 0 then {timeoutSec: $timeoutSec} else {} end)
         + (if $async then {async: true} else {} end)])};
-    def upsert($event; $timeout; $async):
+    def upsert($event; $timeoutSec; $async):
       .hooks[$event] = ((.hooks[$event] // [])
         | map(select((.hooks // []) | any(.command == $cmd) | not))
-        + [entry($timeout; $async)]);
+        + [entry($timeoutSec; $async)]);
     upsert("SessionStart"; 5; false)
     | upsert("PreToolUse"; 10; true)
     | upsert("PostToolUse"; 10; true)
