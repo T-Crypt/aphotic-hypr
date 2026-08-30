@@ -46,7 +46,7 @@
 One shell, reskinned live from a wallpaper. No rebuild, no relogin. The Agent Graph tab, live, over **Tokyo Night** — reskinned the same way across **Lofi** and **Gruvbox**, two more of the eight themes that ship out of the box:
 
 <p align="center">
-  <img src="./assets/aphotic-preview.png" width="900">
+  <img src="./assets/preview.png" width="900">
 </p>
 
 **Agentic workflow, live render** — 203 nodes across 2 active sessions, every
