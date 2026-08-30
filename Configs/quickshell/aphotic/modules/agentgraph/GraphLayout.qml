@@ -104,7 +104,7 @@ QtObject {
                 kind: "session",
                 sessionIndex: s,
                 sessionId: session.id,
-                label: session.model || session.id.slice(0, 8),
+                label: session.modelInfo?.label || session.id.slice(0, 8),
                 tool: "",
                 status: session.status,
                 parent: -1,
@@ -112,6 +112,10 @@ QtObject {
                 endedAt: session.endedAt ?? 0,
                 cwd: session.cwd ?? "",
                 callCount: session.nodes.length,
+                provider: session.modelInfo?.provider ?? "",
+                locality: session.modelInfo?.locality ?? "",
+                quant: session.modelInfo?.quant ?? "",
+                modelRaw: session.modelInfo?.raw ?? session.model ?? "",
                 sessionColor: sessionColor
             });
 

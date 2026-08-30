@@ -409,6 +409,26 @@ Item {
                                 radius: 2.5
                                 color: Qt.alpha(pill.ink, 0.7)
                             }
+
+                            StyledRect {
+                                id: modelBadge
+
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: node.isSession && root.showLabels && (node.modelData.locality || node.modelData.quant)
+                                radius: Tokens.rounding.small
+                                color: Qt.alpha(pill.ink, 0.16)
+                                implicitWidth: badgeText.implicitWidth + Tokens.padding.small
+                                implicitHeight: badgeText.implicitHeight + Tokens.padding.extraSmall
+
+                                StyledText {
+                                    id: badgeText
+
+                                    anchors.centerIn: parent
+                                    text: [node.modelData.locality, node.modelData.quant].filter(Boolean).join(" · ")
+                                    font: Tokens.font.label.small
+                                    color: pill.ink
+                                }
+                            }
                         }
                     }
                 }
@@ -505,6 +525,16 @@ Item {
                 font: Tokens.font.label.small
                 color: Colours.palette.m3outlineVariant
                 elide: Text.ElideLeft
+                maximumLineCount: 1
+                width: Math.min(implicitWidth, 260)
+            }
+
+            StyledText {
+                visible: text.length > 0
+                text: tip.node && tip.node.kind === "session" ? tip.node.modelRaw : ""
+                font: Tokens.font.label.small
+                color: Colours.palette.m3outlineVariant
+                elide: Text.ElideRight
                 maximumLineCount: 1
                 width: Math.min(implicitWidth, 260)
             }
