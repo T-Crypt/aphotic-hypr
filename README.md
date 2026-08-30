@@ -53,12 +53,7 @@ One shell, reskinned live from a wallpaper. No rebuild, no relogin. The Agent Gr
 Bash and Read call landing on the graph as the agent makes it, with replay
 scrubbing and zoom:
 
-https://github.com/user-attachments/assets/c19b7bde-ad85-4359-b304-36e08b493f57
-
-
-**Agentic workflow, instant replay** - replaying 239 commit events, viewable progression 
-
-https://github.com/user-attachments/assets/2bf2c1c8-be3e-477f-955f-6debce1f7b14
+https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
