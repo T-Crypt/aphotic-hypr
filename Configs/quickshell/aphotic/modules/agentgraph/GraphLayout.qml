@@ -4,6 +4,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.services
 
 QtObject {
     id: root
@@ -44,6 +45,43 @@ QtObject {
         return root.fadeFloor + (1 - root.fadeFloor) * halved;
     }
 
+    function categoryFor(tool: string): string {
+        switch (tool) {
+        case "Read":
+        case "Write":
+        case "Edit":
+        case "Glob":
+        case "Grep":
+        case "NotebookEdit":
+            return "file";
+        case "Bash":
+            return "shell";
+        case "WebFetch":
+        case "WebSearch":
+            return "web";
+        case "Agent":
+        case "Task":
+            return "agent";
+        default:
+            return "other";
+        }
+    }
+
+    function categoryColor(category: string): color {
+        switch (category) {
+        case "file":
+            return Colours.palette.m3secondary;
+        case "shell":
+            return Colours.palette.m3tertiary;
+        case "web":
+            return Colours.palette.m3primary;
+        case "agent":
+            return Qt.tint(Colours.palette.m3secondary, Qt.alpha(Colours.palette.m3tertiary, 0.5));
+        default:
+            return Colours.palette.m3surfaceContainerHigh;
+        }
+    }
+
     onSessionsChanged: root.rebuild()
     onAreaWidthChanged: root.rebuild()
     onAreaHeightChanged: root.rebuild()
@@ -74,6 +112,7 @@ QtObject {
             const visible = session.nodes.slice(-root.maxNodesPerSession);
             const indexByNode = ({});
             for (const node of visible) {
+                const category = root.categoryFor(node.tool);
                 indexByNode[node.id] = nodes.length;
                 nodes.push({
                     key: `${session.id}|${node.id}`,
@@ -89,7 +128,9 @@ QtObject {
                     parentId: node.parentId,
                     startedAt: node.startedAt ?? 0,
                     endedAt: node.endedAt ?? 0,
-                    durationMs: node.durationMs ?? 0
+                    durationMs: node.durationMs ?? 0,
+                    category: category,
+                    categoryColor: root.categoryColor(category)
                 });
             }
 

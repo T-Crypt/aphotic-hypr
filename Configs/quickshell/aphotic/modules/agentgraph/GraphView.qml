@@ -355,15 +355,13 @@ Item {
                                 ? Qt.alpha(root.accent, 0.8)
                                 : node.errored
                                     ? Qt.alpha(Colours.palette.m3error, 0.85)
-                                    : Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.92)
+                                    : Qt.alpha(node.modelData.categoryColor ?? Colours.palette.m3surfaceContainerHigh, 0.92)
                         border.width: 1
                         border.color: node.isSession || node.running || node.errored
                             ? "transparent"
                             : Qt.alpha(Colours.palette.m3outlineVariant, 0.8)
 
-                        readonly property color ink: node.isSession || node.running || node.errored
-                            ? Colours.contrastOn(pill.color)
-                            : Colours.palette.m3onSurfaceVariant
+                        readonly property color ink: Colours.contrastOn(pill.color)
 
                         Behavior on scale {
                             Anim { type: Anim.EmphasizedSmall }
