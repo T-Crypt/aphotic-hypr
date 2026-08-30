@@ -17,7 +17,7 @@ Item {
 
     readonly property var provider: AgentProviders.providers[AgentProviders.selectedIndex] ?? AgentProviders.providers[0]
     readonly property var stat: AgentProviders.stats[AgentProviders.selectedIndex] ?? AgentProviders.stats[0]
-    readonly property int badgeCount: root.provider.id === "ollama" ? root.stat.loadedModels.length : root.stat.sessionCount
+    readonly property int badgeCount: root.stat.sessionCount
 
     // Absent, not hidden, when the installer's `ai` layer is off -- the bar
     // shouldn't leave a gap where a feature the user declined would go.

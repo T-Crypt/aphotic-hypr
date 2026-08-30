@@ -4,31 +4,57 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import qs.services.ai
 
 // Presence + usage for the bar's agent indicator/panel, one entry per
-// tracked CLI. Two independent data sources feed `stats`: a 5s
-// pgrep/`ollama ps` presence poll (this file), and a 15s FileView read of
-// the aggregate record `aphotic agent usage-update` writes every 15
-// minutes (never parsed here -- this service only reads that file).
+// tracked harness (a CLI that runs a session and executes tool calls --
+// see AgentRoles.qml for the harness/provider distinction). Two
+// independent data sources feed `stats`: a 5s pgrep presence poll (this
+// file), and a 15s FileView read of the aggregate record `aphotic agent
+// usage-update` writes every 15 minutes (never parsed here -- this
+// service only reads that file).
+//
+// Ollama is deliberately NOT one of these entries: it's a provider, not a
+// harness, and a bare Ollama process has no session/command shape to show
+// in this popout. Its loaded-model state is still tracked below, but only
+// as an internal GPU-contention signal for AgentGraphService, never as a
+// Bar tab.
 Singleton {
     id: root
 
-    readonly property var providers: [
-        { id: "claude", label: qsTr("Claude Code"), icon: "smart_toy", processName: "claude", launchCmd: ["claude"] },
-        { id: "codex", label: qsTr("Codex"), icon: "terminal", processName: "codex", launchCmd: ["codex"] },
-        { id: "ollama", label: qsTr("Ollama"), icon: "dns", processName: null, launchCmd: ["ollama"] }
-    ]
+    readonly property var _uiMeta: ({
+        "claude": { icon: "smart_toy", processName: "claude", launchCmd: ["claude"] },
+        "codex": { icon: "terminal", processName: "codex", launchCmd: ["codex"] },
+        "opencode": { icon: "terminal", processName: "opencode", launchCmd: ["opencode"] }
+    })
+
+    // Set of active harness tabs: ids/enablement come from AgentRoles (the
+    // single-sourced role schema); icon/pgrep-name/launch command are Bar-
+    // specific UI metadata, not a classification concern. A harness with
+    // no _uiMeta entry (e.g. Gemini CLI -- no known package/binary in this
+    // repo yet) is skipped rather than shown with dead detection.
+    readonly property var providers: AgentRoles.harnesses
+        .filter(h => root._uiMeta[h.id])
+        .map(h => ({
+            id: h.id,
+            label: h.label,
+            icon: root._uiMeta[h.id].icon,
+            processName: root._uiMeta[h.id].processName,
+            launchCmd: root._uiMeta[h.id].launchCmd
+        }))
 
     property var stats: providers.map(() => ({
         sessionCount: 0,
-        loadedModels: [],
         todayTokens: 0,
         tokensByModel: [],
         availability: "unavailable",
         liveSessions: []
     }))
 
-    readonly property var ollamaLoadedModels: root.stats[root.providers.findIndex(p => p.id === "ollama")]?.loadedModels ?? []
+    // Ollama's loaded-model state, tracked independently of the harness
+    // `providers`/`stats` pair above -- AgentGraphService reads this to
+    // demote render tier when the GPU is busy serving a local model.
+    property var ollamaLoadedModels: []
 
     readonly property string selected: Settings.agentSelectedProvider
     readonly property int selectedIndex: providers.findIndex(p => p.id === root.selected)
@@ -38,21 +64,10 @@ Singleton {
         Settings.agentSelectedProvider = root.providers[next].id;
     }
 
-    // Right-click contract per spec: always launch (no focus-existing
-    // fallback) -- Ollama specifically launches `ollama run <model>` for
-    // its first loaded model rather than a bare launchCmd, and no-ops if
-    // no model is loaded (nothing sensible to launch).
     function launchSelected(): void {
         const provider = root.providers[root.selectedIndex];
         if (!provider)
             return;
-        if (provider.id === "ollama") {
-            const loaded = root.stats[root.selectedIndex]?.loadedModels ?? [];
-            if (loaded.length === 0)
-                return;
-            Quickshell.execDetached(["kitty", "-e", "ollama", "run", loaded[0]]);
-            return;
-        }
         Quickshell.execDetached(["kitty", "-e", ...provider.launchCmd]);
     }
 
@@ -89,13 +104,22 @@ Singleton {
     }
 
     Process {
+        id: opencodePgrep
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const n = parseInt(text.trim(), 10);
+                root._setStat(root._findIndex("opencode"), { sessionCount: isNaN(n) ? 0 : n });
+            }
+        }
+    }
+
+    Process {
         id: ollamaPs
         command: ["ollama", "ps"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n").slice(1).filter(l => l.length > 0);
-                const models = lines.map(l => l.trim().split(/\s+/)[0]).filter(Boolean);
-                root._setStat(root._findIndex("ollama"), { loadedModels: models });
+                root.ollamaLoadedModels = lines.map(l => l.trim().split(/\s+/)[0]).filter(Boolean);
             }
         }
     }
@@ -106,8 +130,12 @@ Singleton {
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            claudePgrep.exec(["pgrep", "-x", "-c", "claude"]);
-            codexPgrep.exec(["pgrep", "-x", "-c", "codex"]);
+            if (root._findIndex("claude") !== -1)
+                claudePgrep.exec(["pgrep", "-x", "-c", "claude"]);
+            if (root._findIndex("codex") !== -1)
+                codexPgrep.exec(["pgrep", "-x", "-c", "codex"]);
+            if (root._findIndex("opencode") !== -1)
+                opencodePgrep.exec(["pgrep", "-x", "-c", "opencode"]);
             ollamaPs.running = true;
         }
     }
@@ -122,14 +150,14 @@ Singleton {
                 const data = JSON.parse(text());
                 if (data.schemaVersion !== 1)
                     return;
-                for (const id of ["claude", "codex", "ollama"]) {
-                    const p = data.providers?.[id];
-                    if (!p)
+                for (const p of root.providers) {
+                    const usage = data.providers?.[p.id];
+                    if (!usage)
                         continue;
-                    root._setStat(root._findIndex(id), {
-                        availability: p.availability ?? "unavailable",
-                        todayTokens: p.todayTokens ?? 0,
-                        tokensByModel: p.tokensByModel ?? []
+                    root._setStat(root._findIndex(p.id), {
+                        availability: usage.availability ?? "unavailable",
+                        todayTokens: usage.todayTokens ?? 0,
+                        tokensByModel: usage.tokensByModel ?? []
                     });
                 }
             } catch (e) {
@@ -155,7 +183,10 @@ Singleton {
     // folder-watch API exists for "list of files in a directory that
     // changes", so this still re-lists on the same 5s cadence as
     // presence polling above rather than reacting to individual file
-    // writes.
+    // writes. Claude Code is currently the only harness with a hook
+    // system that populates this directory -- Codex/OpenCode stay
+    // presence-only (see docs/AGENT_TRACKING.md) until they ship an
+    // equivalent.
     Process {
         id: sessionLister
         stdout: StdioCollector {

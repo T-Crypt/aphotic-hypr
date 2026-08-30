@@ -575,7 +575,7 @@ Singleton {
                     root.taskbarGrouping = data.taskbarGrouping;
                 if (typeof data.minimalShowDnd === "boolean")
                     root.minimalShowDnd = data.minimalShowDnd;
-                if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "ollama"].includes(data.agentSelectedProvider))
+                if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "opencode"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.agentGraphQuality === "string" && ["auto", "lite", "standard", "full"].includes(data.agentGraphQuality))
                     root.agentGraphQuality = data.agentGraphQuality;
