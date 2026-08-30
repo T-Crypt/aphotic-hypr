@@ -31,6 +31,7 @@ Singleton {
     readonly property int layoutHz: root.tier === "lite" ? 30 : 60
     readonly property int maxEvents: root.tier === "full" ? 2400 : root.tier === "standard" ? 1200 : 600
     readonly property int edgeParticles: root.tier === "full" ? 6 : root.tier === "standard" ? 3 : 1
+    readonly property int replayStepEvents: root.tier === "full" ? 1 : root.tier === "standard" ? 2 : 6
     readonly property bool anyRunning: root._sessions.some(s => s.status === "running")
 
     readonly property bool _gpuContended: AgentProviders.ollamaLoadedModels.length > 0
@@ -104,6 +105,13 @@ Singleton {
         root._apply(record);
     }
 
+    function _hueForSession(id: string): int {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++)
+            hash = (hash * 31 + id.charCodeAt(i)) | 0;
+        return Math.abs(hash) % 360;
+    }
+
     function _blankSession(record): var {
         return {
             id: record.sessionId,
@@ -113,6 +121,7 @@ Singleton {
             startedAt: record.t ?? 0,
             updatedAt: record.t ?? 0,
             endedAt: 0,
+            hue: root._hueForSession(record.sessionId),
             nodes: [],
             agentParents: ({})
         };

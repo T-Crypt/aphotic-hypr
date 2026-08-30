@@ -21,11 +21,13 @@ QtObject {
     readonly property real progress: root.durationMs > 0 ? Math.min(1, root._clockMs / root.durationMs) : 0
     readonly property var stamps: root._stamps
     readonly property bool finished: root.loaded && root._cursor >= root.events.length
+    readonly property bool catchingUp: root._pendingTarget > root._cursor
 
     property int _cursor: 0
     property var _sessions: []
     property real _clockMs: 0
     property var _stamps: []
+    property int _pendingTarget: -1
 
     readonly property int maxGapMs: 1200
 
@@ -44,6 +46,7 @@ QtObject {
         root._stamps = stamps;
         root._clockMs = 0;
         root._cursor = 0;
+        root._pendingTarget = -1;
         root._sessions = [];
         root.playing = false;
     }
@@ -79,14 +82,23 @@ QtObject {
         let target = 0;
         while (target < root._stamps.length && root._stamps[target] <= root._clockMs)
             target++;
-        root._advanceTo(target);
+        root._queueTo(target);
     }
 
     function seekToIndex(index: int): void {
         root.playing = false;
         const clamped = Math.max(0, Math.min(root.events.length, index + 1));
         root._clockMs = clamped === 0 ? 0 : root._stamps[clamped - 1];
-        root._advanceTo(clamped);
+        root._queueTo(clamped);
+    }
+
+    function _queueTo(target: int): void {
+        if (target <= root._cursor) {
+            root._pendingTarget = -1;
+            root._advanceTo(target);
+            return;
+        }
+        root._pendingTarget = target;
     }
 
     function _advanceTo(target: int): void {
@@ -116,6 +128,18 @@ QtObject {
             root._advanceTo(target);
             if (root._cursor >= root.events.length)
                 root.playing = false;
+        }
+    }
+
+    property Timer _catchupTick: Timer {
+        interval: 40
+        repeat: true
+        running: root.catchingUp
+        onTriggered: {
+            const step = Math.min(AgentGraphService.replayStepEvents, root._pendingTarget - root._cursor);
+            root._advanceTo(root._cursor + Math.max(1, step));
+            if (root._cursor >= root._pendingTarget)
+                root._pendingTarget = -1;
         }
     }
 }

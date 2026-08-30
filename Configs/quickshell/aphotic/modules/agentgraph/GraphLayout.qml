@@ -4,6 +4,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.services
 
 QtObject {
     id: root
@@ -28,6 +29,63 @@ QtObject {
     readonly property real _toolRadius: Math.min(root.areaWidth, root.areaHeight) * 0.19
     readonly property real _subRadius: Math.min(root.areaWidth, root.areaHeight) * 0.11
 
+    readonly property real fadeFloor: 0.35
+    readonly property real fadeHalfLifeMs: 900000
+
+    function fadeFor(node, nowMs: real): real {
+        if (!node || node.status === "running")
+            return 1;
+        if (node.kind === "session" && node.status !== "ended")
+            return 1;
+        const endedAt = node.endedAt || node.startedAt;
+        if (!endedAt)
+            return 1;
+        const age = Math.max(0, nowMs - endedAt);
+        const halved = Math.pow(0.5, age / root.fadeHalfLifeMs);
+        return root.fadeFloor + (1 - root.fadeFloor) * halved;
+    }
+
+    function categoryFor(tool: string): string {
+        switch (tool) {
+        case "Read":
+        case "Write":
+        case "Edit":
+        case "Glob":
+        case "Grep":
+        case "NotebookEdit":
+            return "file";
+        case "Bash":
+            return "shell";
+        case "WebFetch":
+        case "WebSearch":
+            return "web";
+        case "Agent":
+        case "Task":
+            return "agent";
+        default:
+            return "other";
+        }
+    }
+
+    function categoryColor(category: string): color {
+        switch (category) {
+        case "file":
+            return Colours.palette.m3secondary;
+        case "shell":
+            return Colours.palette.m3tertiary;
+        case "web":
+            return Colours.palette.m3primary;
+        case "agent":
+            return Qt.tint(Colours.palette.m3secondary, Qt.alpha(Colours.palette.m3tertiary, 0.5));
+        default:
+            return Colours.palette.m3surfaceContainerHigh;
+        }
+    }
+
+    function sessionColor(hue: real): color {
+        return Qt.hsla(((hue % 360) + 360) % 360 / 360, 0.5, 0.62, 1);
+    }
+
     onSessionsChanged: root.rebuild()
     onAreaWidthChanged: root.rebuild()
     onAreaHeightChanged: root.rebuild()
@@ -40,6 +98,7 @@ QtObject {
         for (let s = 0; s < list.length; s++) {
             const session = list[s];
             const rootIndex = nodes.length;
+            const sessionColor = root.sessionColor(session.hue ?? 0);
             nodes.push({
                 key: session.id,
                 kind: "session",
@@ -50,13 +109,16 @@ QtObject {
                 status: session.status,
                 parent: -1,
                 startedAt: session.startedAt ?? 0,
+                endedAt: session.endedAt ?? 0,
                 cwd: session.cwd ?? "",
-                callCount: session.nodes.length
+                callCount: session.nodes.length,
+                sessionColor: sessionColor
             });
 
             const visible = session.nodes.slice(-root.maxNodesPerSession);
             const indexByNode = ({});
             for (const node of visible) {
+                const category = root.categoryFor(node.tool);
                 indexByNode[node.id] = nodes.length;
                 nodes.push({
                     key: `${session.id}|${node.id}`,
@@ -72,7 +134,10 @@ QtObject {
                     parentId: node.parentId,
                     startedAt: node.startedAt ?? 0,
                     endedAt: node.endedAt ?? 0,
-                    durationMs: node.durationMs ?? 0
+                    durationMs: node.durationMs ?? 0,
+                    category: category,
+                    categoryColor: root.categoryColor(category),
+                    sessionColor: sessionColor
                 });
             }
 
