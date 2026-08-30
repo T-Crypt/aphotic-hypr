@@ -158,6 +158,8 @@ ColumnLayout {
                 description: {
                     if (AiProviders.startingOllama)
                         return qsTr("Starting…");
+                    if (AiProviders.stoppingOllama)
+                        return qsTr("Stopping…");
                     if (AiProviders.ollamaReachable)
                         return qsTr("Running at %1").arg(AiConfig.ollamaHost);
                     return qsTr("Not reachable at %1").arg(AiConfig.ollamaHost);
@@ -170,6 +172,8 @@ ColumnLayout {
                 // trailing slot (a plain Item, not a Layout) silently
                 // collapses to 0x0 instead.
                 RowLayout {
+                    spacing: Tokens.spacing.small
+
                     StyledRect {
                         Layout.preferredHeight: 32
                         Layout.preferredWidth: startLabel.implicitWidth + Tokens.padding.large * 2
@@ -196,6 +200,35 @@ ColumnLayout {
                             anchors.fill: parent
                             enabled: !AiProviders.startingOllama
                             onClicked: AiProviders.startOllama()
+                        }
+                    }
+
+                    StyledRect {
+                        Layout.preferredHeight: 32
+                        Layout.preferredWidth: stopLabel.implicitWidth + Tokens.padding.large * 2
+                        radius: Tokens.rounding.full
+                        visible: AiProviders.ollamaReachable
+                        opacity: AiProviders.stoppingOllama ? 0.5 : 1
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        StyledText {
+                            id: stopLabel
+                            anchors.centerIn: parent
+                            text: AiProviders.stoppingOllama ? qsTr("Stopping…") : qsTr("Stop Ollama")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            disabled: AiProviders.stoppingOllama
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: !AiProviders.stoppingOllama
+                            onClicked: AiProviders.stopOllama()
                         }
                     }
                 }

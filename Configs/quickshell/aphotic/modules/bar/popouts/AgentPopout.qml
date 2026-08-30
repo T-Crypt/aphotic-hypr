@@ -49,6 +49,7 @@ ColumnLayout {
                 readonly property bool isSelected: modelData.id === AgentProviders.selected
 
                 Layout.fillWidth: true
+                implicitWidth: tabRow.implicitWidth + Tokens.padding.small * 2
                 implicitHeight: tabRow.implicitHeight + Tokens.padding.small * 2
                 radius: Tokens.rounding.normal
                 color: isSelected ? Colours.palette.m3secondaryContainer : "transparent"
@@ -86,24 +87,22 @@ ColumnLayout {
 
         readonly property int index: AgentProviders.selectedIndex
         readonly property var stat: AgentProviders.stats[index] ?? ({})
-        readonly property bool isOllama: AgentProviders.selected === "ollama"
 
         Layout.fillWidth: true
         spacing: Tokens.spacing.small / 2
 
         StyledText {
-            visible: !detail.isOllama
             text: qsTr("%1 session(s) running").arg(detail.stat.sessionCount ?? 0)
             font: Tokens.font.title.medium
         }
 
-        // Live per-session activity -- agent_hook.sh writes {event, tool,
-        // updatedAt} on every Claude Code tool call; this used to be read
-        // no further than the filename, so a real hook running on every
-        // single tool invocation had zero effect on what the popout
-        // showed. One row per currently-running session.
+        // Live per-session activity, sourced from AgentProviders'
+        // `agent-events.jsonl` tail -- `event` here is that log's own
+        // normalized name (pre_tool_use/post_tool_use/notification/...),
+        // not the raw Claude Code hook name. One row per currently-open
+        // session.
         Repeater {
-            model: !detail.isOllama ? (detail.stat.liveSessions ?? []) : []
+            model: detail.stat.liveSessions ?? []
 
             RowLayout {
                 required property var modelData
@@ -115,14 +114,15 @@ ColumnLayout {
                 MaterialIcon {
                     text: {
                         switch (parent.modelData.event) {
-                        case "PreToolUse": return "sync";
-                        case "PostToolUse": return "check_circle";
-                        case "Notification": return "notifications";
+                        case "pre_tool_use": return "sync";
+                        case "post_tool_use": return "check_circle";
+                        case "post_tool_use_failure": return "error";
+                        case "notification": return "notifications";
                         default: return "circle";
                         }
                     }
                     fontStyle: Tokens.font.icon.small
-                    color: parent.modelData.event === "PreToolUse" ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: parent.modelData.event === "pre_tool_use" ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                 }
 
                 StyledText {
@@ -133,7 +133,7 @@ ColumnLayout {
                 }
 
                 StyledText {
-                    text: parent.modelData.event === "PreToolUse" ? qsTr("running") : qsTr("idle")
+                    text: parent.modelData.event === "pre_tool_use" ? qsTr("running") : qsTr("idle")
                     color: Colours.palette.m3onSurfaceVariant
                     font: Tokens.font.label.small
                 }
@@ -141,28 +141,28 @@ ColumnLayout {
         }
 
         StyledText {
-            visible: !detail.isOllama && detail.stat.availability === "unavailable"
+            visible: detail.stat.availability === "unavailable"
             text: qsTr("No usage data yet")
             color: Colours.palette.m3onSurfaceVariant
             font: Tokens.font.body.small
         }
 
         StyledText {
-            visible: !detail.isOllama && detail.stat.availability === "unsupported"
+            visible: detail.stat.availability === "unsupported"
             text: qsTr("Usage tracking not supported for this CLI version")
             color: Colours.palette.m3onSurfaceVariant
             font: Tokens.font.body.small
         }
 
         StyledText {
-            visible: !detail.isOllama && detail.stat.availability === "available"
+            visible: detail.stat.availability === "available"
             text: qsTr("Today: %1 tokens").arg(detail.stat.todayTokens ?? 0)
             color: Colours.palette.m3onSurfaceVariant
             font: Tokens.font.body.small
         }
 
         Repeater {
-            model: !detail.isOllama && detail.stat.availability === "available" ? (detail.stat.tokensByModel ?? []) : []
+            model: detail.stat.availability === "available" ? (detail.stat.tokensByModel ?? []) : []
 
             RowLayout {
                 required property var modelData
@@ -183,13 +183,6 @@ ColumnLayout {
                     font: Tokens.font.label.medium
                 }
             }
-        }
-
-        StyledText {
-            visible: detail.isOllama
-            text: (detail.stat.loadedModels ?? []).length > 0 ? (detail.stat.loadedModels ?? []).join(", ") : qsTr("No models loaded")
-            font: Tokens.font.title.medium
-            wrapMode: Text.Wrap
         }
     }
 

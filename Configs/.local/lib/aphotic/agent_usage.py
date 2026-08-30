@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SCHEMA_VERSION = 1
-PROVIDER_IDS = ("claude", "codex", "ollama")
+PROVIDER_IDS = ("claude", "codex", "opencode")
 
 
 def _sum_transcript(path: Path, today: str) -> tuple[int, dict[str, int]]:

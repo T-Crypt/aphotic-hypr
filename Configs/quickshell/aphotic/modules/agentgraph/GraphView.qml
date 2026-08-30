@@ -82,6 +82,18 @@ Item {
             WindowList.focus(match.address);
     }
 
+    function _sessionElapsedText(node): string {
+        if (!node.startedAt)
+            return "";
+        const end = node.endedAt || root.nowMs;
+        const ms = Math.max(0, end - node.startedAt);
+        if (ms < 60000)
+            return qsTr("%1s").arg(Math.round(ms / 1000));
+        if (ms < 3600000)
+            return qsTr("%1m").arg(Math.floor(ms / 60000));
+        return qsTr("%1h %2m").arg(Math.floor(ms / 3600000)).arg(Math.floor((ms % 3600000) / 60000));
+    }
+
     function _durationText(node): string {
         const ms = node.status === "running"
             ? Math.max(0, root.nowMs - (node.startedAt ?? 0))
@@ -109,7 +121,7 @@ Item {
     implicitHeight: 460
 
     NumberAnimation on flowClock {
-        running: root.visible && root.anyFlowing
+        running: root.visible && root.anyFlowing && Settings.agentGraphEnabled
         loops: Animation.Infinite
         from: 0
         to: 1
@@ -356,9 +368,10 @@ Item {
                                 : node.errored
                                     ? Qt.alpha(Colours.palette.m3error, 0.85)
                                     : Qt.alpha(node.modelData.categoryColor ?? Colours.palette.m3surfaceContainerHigh, 0.92)
-                        border.width: 1.5
-                        border.color: Qt.alpha(node.modelData.sessionColor ?? Colours.palette.m3outlineVariant, node.isSession ? 0.85 : 0.55)
+                        border.width: pill.grouped ? 2.5 : 1.5
+                        border.color: Qt.alpha(node.modelData.groupColor ?? Colours.palette.m3outlineVariant, node.isSession ? 0.85 : (pill.grouped ? 0.9 : 0.55))
 
+                        readonly property bool grouped: Settings.agentGraphGroupByParent && node.modelData.kind === "subagent"
                         readonly property color ink: Colours.contrastOn(pill.color)
 
                         Behavior on scale {
@@ -408,6 +421,46 @@ Item {
                                 height: 5
                                 radius: 2.5
                                 color: Qt.alpha(pill.ink, 0.7)
+                            }
+
+                            StyledRect {
+                                id: modelBadge
+
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: node.isSession && root.showLabels && (node.modelData.locality || node.modelData.quant)
+                                radius: Tokens.rounding.small
+                                color: Qt.alpha(pill.ink, 0.16)
+                                implicitWidth: badgeText.implicitWidth + Tokens.padding.small
+                                implicitHeight: badgeText.implicitHeight + Tokens.padding.extraSmall
+
+                                StyledText {
+                                    id: badgeText
+
+                                    anchors.centerIn: parent
+                                    text: [node.modelData.locality, node.modelData.quant].filter(Boolean).join(" · ")
+                                    font: Tokens.font.label.small
+                                    color: pill.ink
+                                }
+                            }
+
+                            StyledRect {
+                                id: detailBadge
+
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: node.isSession && root.showLabels && node.modelData.callCount > 0
+                                radius: Tokens.rounding.small
+                                color: Qt.alpha(pill.ink, 0.16)
+                                implicitWidth: detailText.implicitWidth + Tokens.padding.small
+                                implicitHeight: detailText.implicitHeight + Tokens.padding.extraSmall
+
+                                StyledText {
+                                    id: detailText
+
+                                    anchors.centerIn: parent
+                                    text: [qsTr("%1 calls").arg(node.modelData.callCount), root._sessionElapsedText(node.modelData)].filter(Boolean).join(" · ")
+                                    font: Tokens.font.label.small
+                                    color: pill.ink
+                                }
                             }
                         }
                     }
@@ -505,6 +558,16 @@ Item {
                 font: Tokens.font.label.small
                 color: Colours.palette.m3outlineVariant
                 elide: Text.ElideLeft
+                maximumLineCount: 1
+                width: Math.min(implicitWidth, 260)
+            }
+
+            StyledText {
+                visible: text.length > 0
+                text: tip.node && tip.node.kind === "session" ? tip.node.modelRaw : ""
+                font: Tokens.font.label.small
+                color: Colours.palette.m3outlineVariant
+                elide: Text.ElideRight
                 maximumLineCount: 1
                 width: Math.min(implicitWidth, 260)
             }
