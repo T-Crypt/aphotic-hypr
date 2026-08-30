@@ -86,9 +86,18 @@ QtObject {
         return Qt.hsla(((hue % 360) + 360) % 360 / 360, 0.5, 0.62, 1);
     }
 
-    onSessionsChanged: root.rebuild()
+    property bool liveEnabled: Settings.agentGraphEnabled
+
+    onSessionsChanged: {
+        if (root.liveEnabled)
+            root.rebuild();
+    }
     onAreaWidthChanged: root.rebuild()
     onAreaHeightChanged: root.rebuild()
+    onLiveEnabledChanged: {
+        if (root.liveEnabled)
+            root.rebuild();
+    }
 
     function rebuild(): void {
         const nodes = [];
