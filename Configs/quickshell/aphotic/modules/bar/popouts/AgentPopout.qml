@@ -49,6 +49,7 @@ ColumnLayout {
                 readonly property bool isSelected: modelData.id === AgentProviders.selected
 
                 Layout.fillWidth: true
+                implicitWidth: tabRow.implicitWidth + Tokens.padding.small * 2
                 implicitHeight: tabRow.implicitHeight + Tokens.padding.small * 2
                 radius: Tokens.rounding.normal
                 color: isSelected ? Colours.palette.m3secondaryContainer : "transparent"
