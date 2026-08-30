@@ -215,7 +215,7 @@ The Command Center's AI Chat tab talks to four providers behind one interface, p
 - **Ollama model manager** (Settings → AI) — every installed model with live/idle status and VRAM usage, one click to set active, delete, or pull-by-name to download a new one, straight against Ollama's own REST API.
 - **Weather card** (Command Center → Dashboard) — current temperature/condition plus a 3-day forecast via Open-Meteo. Leave the location blank for IP-based auto-detection, or set an explicit city + Celsius/Fahrenheit in Settings → Clock/Date. The resolved location and last-good forecast are cached to disk, so a fresh shell start shows the last known weather immediately instead of a blank card.
 - **Aphotic Assistant** (opt-in) — a local chatbot pinned to a fixed persona/system-prompt, installed via `install.sh` on NVIDIA machines that have (or add) the `ai` layer. Shows up as a fifth provider pill once installed, in both AI Chat and Intelligence. Picks its model via `llmfit`'s hardware-aware recommendation at install time (a small broadly-compatible default if `llmfit` isn't available), greets you once on first open, and Settings → AI shows its installed model with reinstall/uninstall controls. `install.sh --with-assistant`/`--no-assistant` skip the prompt; silently unavailable on non-NVIDIA machines.
-- **Agent module** (bar icon) — tracks three CLI providers, Claude Code/Codex/Ollama, behind one switchable icon: left-click for a session/token-usage or loaded-models panel, right-click launches the provider in a new terminal, middle-click cycles providers. Usage comes from a 15-minute local-transcript scan (aggregate token counts only, never prompts/responses); the Claude Code hook's live per-session data is read and rendered as real per-session rows in the panel. The agent stack as a whole follows the installer's `ai` layer — with it off, the hook is never wired and the module doesn't run.
+- **Agent module** (bar icon) — tracks three agentic CLI harnesses, Claude Code/Codex/OpenCode, behind one switchable icon: left-click for a session/token-usage panel, right-click launches the harness in a new terminal, middle-click cycles between them. Ollama and other inference-only providers aren't harnesses and don't get a tab here — see [`docs/AGENT_TRACKING.md`](docs/AGENT_TRACKING.md) for the distinction. Usage comes from a 15-minute local-transcript scan (aggregate token counts only, never prompts/responses); the Claude Code and OpenCode hooks' live per-session data is read and rendered as real per-session rows in the panel, and Codex's hook wires the same way. The agent stack as a whole follows the installer's `ai` layer — with it off, hooks are never wired and the module doesn't run.
 
 </details>
 
@@ -333,7 +333,9 @@ None of this is unique by itself. Together it turns a rice from something you in
 ## Install
 
 > [!IMPORTANT]
-> Aphotic assumes an Arch/AUR base. It hasn't been tested on other distros and no distro branching is planned — see the [FAQ](#faq).
+> Aphotic assumes an Arch/AUR base with systemd as PID 1 (SDDM, bluetooth, and the shell itself all depend on it directly) — install.sh checks for this and refuses to run otherwise. It hasn't been tested on other distros and no distro branching is planned — see the [FAQ](#faq).
+>
+> `install.sh` is built for a fresh Arch install, not a machine already carrying another rice. If waybar, rofi/wofi, dunst/mako/swaync, or another bar/launcher/notifier is already installed, it'll offer to remove it — leaving it in place is what caused [#41](https://github.com/T-Crypt/aphotic-hypr/issues/41)'s duplicate, unstyled bar. See `--strip-conflicts`/`--keep-conflicts` below.
 
 ```
 git clone https://github.com/T-Crypt/Aphotic-Hypr && cd Aphotic-Hypr
@@ -366,6 +368,8 @@ Running with no flags installs Aphotic's daily-driver setup — full profile, no
 | `--theme <name>` | Pre-selects a theme. Skips the theme prompt. |
 | `--with-assistant` / `--no-assistant` | Install (or skip) the Aphotic Assistant without being asked. `--with-assistant` implies the `ai` layer and needs an NVIDIA GPU. |
 | `--nvidia-driver <keep\|reinstall>` | Only relevant when an NVIDIA driver is already installed. `keep` leaves it alone, `reinstall` replaces it with Aphotic's recommended `nvidia-open-dkms`. Non-interactive runs default to `keep` — a working driver is never replaced without being told to. |
+| `--strip-conflicts` | Remove already-installed packages Aphotic's shell replaces (waybar, rofi/wofi, dunst/mako/swaync, polybar, eww/ags, hyprpaper/swaybg, swayidle) without asking. Interactive installs are asked either way; non-interactive runs default to leaving them installed unless this is passed. |
+| `--keep-conflicts` | Leave those packages alone without asking, even interactively. |
 | `--config-only` | Config sync only: back up, copy `Configs/` over `~/.config/`, restart the shell. No packages, no system prep, no wizard, no `sudo`, and `aphotic.toml` is left untouched. See [Config sync only](#config-sync-only). |
 | `--dry-run` | Prints the full resolved install plan and exits — nothing is installed, backed up, or written. |
 | `--no-backup` | Skips the pre-install config snapshot. Off by default; use with intent. |

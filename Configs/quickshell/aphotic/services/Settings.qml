@@ -108,6 +108,7 @@ Singleton {
     }
 
     property string agentSelectedProvider: "claude"
+    property bool agentGraphEnabled: true
     // Node budget and layout tick rate for the agent graph surface, never
     // its visual treatment -- every tier renders the same look. "auto"
     // resolves from the detected GPU and demotes a tier while Ollama holds
@@ -118,6 +119,7 @@ Singleton {
     // machine should pick up load from an upgrade it never opted into.
     property string agentGraphQuality: "auto"
     property string agentGraphAccent: ""
+    property bool agentGraphGroupByParent: false
     property string ggufModelsDir: `${Quickshell.env("HOME")}/Models/gguf`
 
     property bool intelligenceEnabled: true
@@ -273,8 +275,10 @@ Singleton {
             taskbarGrouping: root.taskbarGrouping,
             minimalShowDnd: root.minimalShowDnd,
             agentSelectedProvider: root.agentSelectedProvider,
+            agentGraphEnabled: root.agentGraphEnabled,
             agentGraphQuality: root.agentGraphQuality,
             agentGraphAccent: root.agentGraphAccent,
+            agentGraphGroupByParent: root.agentGraphGroupByParent,
             ggufModelsDir: root.ggufModelsDir,
             assistantWelcomeShown: root.assistantWelcomeShown,
             dndEnabled: root.dndEnabled,
@@ -576,12 +580,16 @@ Singleton {
                     root.taskbarGrouping = data.taskbarGrouping;
                 if (typeof data.minimalShowDnd === "boolean")
                     root.minimalShowDnd = data.minimalShowDnd;
-                if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "ollama"].includes(data.agentSelectedProvider))
+                if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "opencode"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
+                if (typeof data.agentGraphEnabled === "boolean")
+                    root.agentGraphEnabled = data.agentGraphEnabled;
                 if (typeof data.agentGraphQuality === "string" && ["auto", "lite", "standard", "full"].includes(data.agentGraphQuality))
                     root.agentGraphQuality = data.agentGraphQuality;
                 if (typeof data.agentGraphAccent === "string")
                     root.agentGraphAccent = data.agentGraphAccent;
+                if (typeof data.agentGraphGroupByParent === "boolean")
+                    root.agentGraphGroupByParent = data.agentGraphGroupByParent;
                 if (typeof data.ggufModelsDir === "string" && data.ggufModelsDir.length > 0)
                     root.ggufModelsDir = data.ggufModelsDir;
                 if (typeof data.assistantWelcomeShown === "boolean")
