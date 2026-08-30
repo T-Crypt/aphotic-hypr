@@ -714,6 +714,22 @@ except Exception:
   fi
 
   print_stage 5 "Installing packages"
+  # Sync + upgrade before installing anything new (issue #41): Arch mirrors
+  # only ever carry the current package build, not the version that was
+  # current when the local db was last refreshed -- installing against a
+  # stale db can request a filename that's already been rotated off every
+  # mirror, which pacman reports as a plain 404 per-mirror rather than
+  # "your db is stale". `-Sy` alone is deliberately not used here: syncing
+  # the db without upgrading already-installed packages is a partial
+  # upgrade, which the Arch wiki calls out as unsupported and a real
+  # source of broken dependencies for whatever gets installed next.
+  echo -e "$CNT - Syncing package databases and upgrading the system..."
+  if [[ "$DRY_RUN" == "1" ]]; then
+    echo -e "$CNT - [dry-run] would run: sudo pacman -Syu --noconfirm"
+  else
+    sudo pacman -Syu --noconfirm &>> "$INSTLOG" || { echo -e "$CER - Failed to sync/upgrade the system package database. Re-run 'sudo pacman -Syu' by hand, resolve whatever it reports, then re-run install.sh."; exit 1; }
+  fi
+
   while IFS= read -r pkg; do
     [[ -n "$pkg" ]] && install_software "$pkg"
   done <<< "$prep_pkgs"
