@@ -415,6 +415,12 @@ deploy_user_configs() {
   mkdir -p "$HOME/.local/bin"
   ln -sf "$ROOT_DIR/Configs/.local/bin/aphotic" "$HOME/.local/bin/aphotic"
 
+  # The cp -R above just wiped modules/plugins/* (any installed
+  # ui-surface plugin's QML module symlink) along with the rest of
+  # quickshell/aphotic -- see docs/archive/PLUGIN_SYSTEM.md manifest v3.
+  # Re-link them now; a no-op if no such plugin is installed.
+  "$HOME/.local/bin/aphotic" plugin relink-ui-modules &>> "$INSTLOG" || true
+
   echo -e "$CNT - Enabling the Aphotic shell restart-supervision unit..."
   mkdir -p "$HOME/.config/systemd/user"
   # Same symlink treatment as above -- these three unit files are only

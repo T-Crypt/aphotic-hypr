@@ -5,6 +5,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import qs.services.ai
 
 // Single source of the harness/provider classification docs/archive/

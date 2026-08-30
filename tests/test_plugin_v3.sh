@@ -111,4 +111,59 @@ _aphotic_plugin_remove scratch-ui2 >/dev/null
 [[ -d "$(_aphotic_plugin_dir scratch-ui2)" ]] && fail "expected scratch-ui2's install dir to be gone after remove()"
 [[ "$(jq -r '.installed["scratch-ui2"] // "absent"' "$APHOTIC_PLUGINS_STATE_FILE")" == "absent" ]] || fail "expected remove() to have cleared scratch-ui2's registry entry too"
 
-echo "PASS: plugin v3 (owns/ui manifest fields, install/remove registry symmetry)"
+# --- ui module symlink: install links it, remove unlinks it, a bare
+# ui-surface *without* a qml/qmldir (like scratch-ui above) is a no-op ---
+# Real bug, caught live 2026-08-30: a plugin's same-directory `pragma
+# Singleton` sibling does not reliably resolve without a real qmldir +
+# explicit import, and that import can't resolve at all unless the
+# plugin's qml/ dir is symlinked into the shell's own qs.* import root.
+# See _aphotic_plugin_link_ui_module's own comment.
+
+[[ -e "${QUICKSHELL_CONFIG_DIR}/modules/plugins/scratchTab" ]] && fail "scratch-ui/scratch-ui2 ship no qml/qmldir -- expected no symlink to have been created for them"
+
+PLUGDIR3="$APHOTIC_PLUGINS_DIR/scratch-modular"
+mkdir -p "$PLUGDIR3/qml"
+cat > "$PLUGDIR3/plugin.toml" <<'EOF'
+[plugin]
+name = "scratch-modular"
+display_name = "Scratch Modular"
+description = "test ui-surface plugin with a real qmldir"
+version = "1.0.0"
+capabilities = ["ui-surface"]
+
+[ui.dashboard_tab]
+id = "scratchModularTab"
+component = "qml/ScratchModularTab.qml"
+EOF
+cat > "$PLUGDIR3/qml/qmldir" <<'EOF'
+module qs.modules.plugins.scratchModular
+ScratchModularTab 1.0 ScratchModularTab.qml
+EOF
+echo "// placeholder" > "$PLUGDIR3/qml/ScratchModularTab.qml"
+
+link_path="${QUICKSHELL_CONFIG_DIR}/modules/plugins/scratchModular"
+[[ -e "$link_path" ]] && fail "link should not exist before install links it"
+_aphotic_plugin_link_ui_module scratch-modular
+[[ -L "$link_path" ]] || fail "expected _aphotic_plugin_link_ui_module to create a symlink at $link_path"
+[[ "$(readlink -f "$link_path")" == "$(readlink -f "$PLUGDIR3/qml")" ]] || fail "expected the symlink to point at the plugin's qml/ dir"
+
+_aphotic_plugin_unlink_ui_module scratch-modular
+[[ -e "$link_path" ]] && fail "expected _aphotic_plugin_unlink_ui_module to remove the symlink"
+
+# --- relink-all: simulates install.sh's deploy_user_configs wiping
+# QUICKSHELL_CONFIG_DIR/modules/plugins/* on every config redeploy ---
+
+_aphotic_plugin_link_ui_module scratch-modular
+rm -rf "${QUICKSHELL_CONFIG_DIR}/modules/plugins" # the redeploy wipes this
+[[ -e "$link_path" ]] && fail "sanity: link should be gone after simulating a config redeploy"
+_aphotic_plugin_relink_all_ui_modules
+[[ -L "$link_path" ]] || fail "expected relink-all to restore the symlink after a simulated config redeploy"
+
+# A disabled plugin must not get relinked.
+aphotic_plugin_set_enabled scratch-modular false
+rm -rf "${QUICKSHELL_CONFIG_DIR}/modules/plugins"
+_aphotic_plugin_relink_all_ui_modules
+[[ -e "$link_path" ]] && fail "expected relink-all to skip a disabled plugin"
+aphotic_plugin_set_enabled scratch-modular true
+
+echo "PASS: plugin v3 (owns/ui manifest fields, install/remove registry symmetry, ui-module symlink + relink-all)"

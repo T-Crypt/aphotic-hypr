@@ -378,6 +378,67 @@ _aphotic_plugin_registry_remove() {
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
 }
 
+# A `ui-surface` plugin's own QML files (AgentGraphTab.qml, etc.) need
+# to reference each other -- crucially, a `pragma Singleton` sibling
+# like AgentGraphService.qml -- through a real `import`, exactly like
+# every first-party qs.* module does (see e.g. services/ai/AiProviders.qml
+# importing its own qs.services.ai for its AiKeys/AiConfig siblings).
+# Confirmed live (2026-08-30): same-directory `pragma Singleton` access
+# with NO qmldir/import does *not* reliably resolve when the root file
+# was reached via a dynamic `Loader.source` URL rather than Quickshell's
+# own static tree-scan -- it silently returns undefined instead of the
+# singleton instance. So a plugin's `qml/` directory needs a real
+# qmldir (shipped in the plugin itself, e.g. `module qs.modules.plugins
+# .agentGraph`) AND needs to physically sit inside the shell's own `qs.*`
+# import root for that module import to resolve at all. This symlinks it
+# there -- the one thing besides the plugin's own directory that
+# `install`/`remove` touch on disk, and exactly the kind of "what a
+# plugin touches outside itself" fact the registry (`owns`) exists to
+# make auditable. Only done for a plugin that actually ships a `qml/
+# qmldir` -- a hook-only plugin has nothing to link.
+_aphotic_plugin_ui_module_name() {
+    # kebab-case plugin name -> camelCase QML module segment (QML import
+    # identifiers can't contain '-'). "agent-graph" -> "agentGraph".
+    echo "$1" | sed -E 's/-([a-z0-9])/\U\1/g'
+}
+
+_aphotic_plugin_link_ui_module() {
+    local name="$1" dest module_name link_path
+    dest="$(_aphotic_plugin_dir "$name")"
+    [[ -f "${dest}/qml/qmldir" ]] || return 0
+
+    module_name="$(_aphotic_plugin_ui_module_name "$name")"
+    link_path="${QUICKSHELL_CONFIG_DIR}/modules/plugins/${module_name}"
+    mkdir -p "${QUICKSHELL_CONFIG_DIR}/modules/plugins"
+    ln -sfn "${dest}/qml" "$link_path"
+}
+
+_aphotic_plugin_unlink_ui_module() {
+    local name="$1" module_name
+    module_name="$(_aphotic_plugin_ui_module_name "$name")"
+    rm -f "${QUICKSHELL_CONFIG_DIR}/modules/plugins/${module_name}"
+}
+
+# Real, live-confirmed architecture gap (2026-08-30): install.sh's
+# `deploy_user_configs` does `rm -rf`/`cp -R` over the WHOLE of
+# `Configs/quickshell/aphotic` -> `~/.config/quickshell/aphotic` on
+# every run (not a symlink -- see that function's own comment on why
+# most of the tree is a one-shot copy). `modules/plugins/<name>` lives
+# *inside* that same tree, so every config refresh silently deletes it
+# along with everything else, breaking any installed `ui-surface`
+# plugin until this is called again. This is that "again" -- idempotent,
+# safe to call after any config redeploy, and install.sh now does so
+# (see its own deploy_user_configs). Also callable by hand:
+# `aphotic plugin relink-ui-modules`.
+_aphotic_plugin_relink_all_ui_modules() {
+    local name
+    while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        aphotic_plugin_is_enabled "$name" || continue
+        _aphotic_plugin_link_ui_module "$name"
+    done < <(aphotic_plugin_names)
+}
+
 _aphotic_plugin_install() {
     local name="$1" link="$2" src dest
     [[ -n "$name" ]] || { aphotic_err "usage: aphotic plugin install <name> [--link]"; return 1; }
@@ -408,6 +469,7 @@ _aphotic_plugin_install() {
 
     _aphotic_plugin_install_deps "$dest"
     _aphotic_plugin_registry_sync "$name"
+    _aphotic_plugin_link_ui_module "$name"
 
     aphotic_ok "installed ${name}"
     echo "PLUGIN INSTALLED: ${name}"
@@ -418,6 +480,7 @@ _aphotic_plugin_remove() {
     [[ -n "$name" ]] || { aphotic_err "usage: aphotic plugin remove <name>"; return 1; }
     dest="$(_aphotic_plugin_dir "$name")"
     [[ -e "$dest" ]] || { aphotic_err "not installed: ${name}"; return 1; }
+    _aphotic_plugin_unlink_ui_module "$name"
     rm -rf "$dest"
     aphotic_plugin_set_enabled "$name" true # clear any disabled-state entry
     _aphotic_plugin_registry_remove "$name"
@@ -480,6 +543,16 @@ aphotic_cmd_plugin() {
         remove)
             _aphotic_plugin_remove "${1:-}"
             ;;
+        relink-ui-modules)
+            # Plumbing subcommand — called from install.sh's
+            # deploy_user_configs after it re-copies Configs/quickshell/
+            # aphotic over ~/.config/quickshell/aphotic (which wipes
+            # modules/plugins/* along with everything else). Also safe
+            # to run by hand if a ui-surface plugin's Dashboard tab goes
+            # missing after any manual config resync.
+            _aphotic_plugin_relink_all_ui_modules
+            aphotic_ok "relinked ui-surface plugin modules"
+            ;;
         run-theme-hooks)
             # Plumbing subcommand — called from cmd_theme.sh and from
             # QML (Wallpapers.qml/Themes.qml) and wallswitcher.py after
@@ -527,6 +600,12 @@ Usage: aphotic plugin <list|install|enable|disable|remove|...> [args]
   enable <name>               Re-enable an installed plugin
   disable <name>               Disable without uninstalling
   remove <name>                Uninstall
+  relink-ui-modules             Re-link every enabled ui-surface plugin's
+                              QML module into the shell's config tree --
+                              run this if a plugin's Dashboard tab goes
+                              missing after a manual config resync
+                              (install.sh's --config-only already does
+                              this automatically)
   trust-security-index         Opt into the separate security-category
                               plugin index (warns first; see docs)
   untrust-security-index       Revoke that opt-in
