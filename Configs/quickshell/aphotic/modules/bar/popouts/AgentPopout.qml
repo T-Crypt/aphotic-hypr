@@ -86,13 +86,11 @@ ColumnLayout {
 
         readonly property int index: AgentProviders.selectedIndex
         readonly property var stat: AgentProviders.stats[index] ?? ({})
-        readonly property bool isOllama: AgentProviders.selected === "ollama"
 
         Layout.fillWidth: true
         spacing: Tokens.spacing.small / 2
 
         StyledText {
-            visible: !detail.isOllama
             text: qsTr("%1 session(s) running").arg(detail.stat.sessionCount ?? 0)
             font: Tokens.font.title.medium
         }
@@ -103,7 +101,7 @@ ColumnLayout {
         // single tool invocation had zero effect on what the popout
         // showed. One row per currently-running session.
         Repeater {
-            model: !detail.isOllama ? (detail.stat.liveSessions ?? []) : []
+            model: detail.stat.liveSessions ?? []
 
             RowLayout {
                 required property var modelData
@@ -141,28 +139,28 @@ ColumnLayout {
         }
 
         StyledText {
-            visible: !detail.isOllama && detail.stat.availability === "unavailable"
+            visible: detail.stat.availability === "unavailable"
             text: qsTr("No usage data yet")
             color: Colours.palette.m3onSurfaceVariant
             font: Tokens.font.body.small
         }
 
         StyledText {
-            visible: !detail.isOllama && detail.stat.availability === "unsupported"
+            visible: detail.stat.availability === "unsupported"
             text: qsTr("Usage tracking not supported for this CLI version")
             color: Colours.palette.m3onSurfaceVariant
             font: Tokens.font.body.small
         }
 
         StyledText {
-            visible: !detail.isOllama && detail.stat.availability === "available"
+            visible: detail.stat.availability === "available"
             text: qsTr("Today: %1 tokens").arg(detail.stat.todayTokens ?? 0)
             color: Colours.palette.m3onSurfaceVariant
             font: Tokens.font.body.small
         }
 
         Repeater {
-            model: !detail.isOllama && detail.stat.availability === "available" ? (detail.stat.tokensByModel ?? []) : []
+            model: detail.stat.availability === "available" ? (detail.stat.tokensByModel ?? []) : []
 
             RowLayout {
                 required property var modelData
@@ -183,13 +181,6 @@ ColumnLayout {
                     font: Tokens.font.label.medium
                 }
             }
-        }
-
-        StyledText {
-            visible: detail.isOllama
-            text: (detail.stat.loadedModels ?? []).length > 0 ? (detail.stat.loadedModels ?? []).join(", ") : qsTr("No models loaded")
-            font: Tokens.font.title.medium
-            wrapMode: Text.Wrap
         }
     }
 
