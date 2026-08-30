@@ -324,7 +324,9 @@ None of this is unique by itself. Together it turns a rice from something you in
 ## Install
 
 > [!IMPORTANT]
-> Aphotic assumes an Arch/AUR base. It hasn't been tested on other distros and no distro branching is planned — see the [FAQ](#faq).
+> Aphotic assumes an Arch/AUR base with systemd as PID 1 (SDDM, bluetooth, and the shell itself all depend on it directly) — install.sh checks for this and refuses to run otherwise. It hasn't been tested on other distros and no distro branching is planned — see the [FAQ](#faq).
+>
+> `install.sh` is built for a fresh Arch install, not a machine already carrying another rice. If waybar, rofi/wofi, dunst/mako/swaync, or another bar/launcher/notifier is already installed, it'll offer to remove it — leaving it in place is what caused [#41](https://github.com/T-Crypt/aphotic-hypr/issues/41)'s duplicate, unstyled bar. See `--strip-conflicts`/`--keep-conflicts` below.
 
 ```
 git clone https://github.com/T-Crypt/Aphotic-Hypr && cd Aphotic-Hypr
@@ -351,6 +353,8 @@ Running with no flags launches a short wizard: profile, optional layers, theme. 
 | `--theme <name>` | Pre-selects a theme. Skips the theme prompt. |
 | `--with-assistant` / `--no-assistant` | Install (or skip) the Aphotic Assistant without being asked. `--with-assistant` implies the `ai` layer and needs an NVIDIA GPU. |
 | `--nvidia-driver <keep\|reinstall>` | Only relevant when an NVIDIA driver is already installed. `keep` leaves it alone, `reinstall` replaces it with Aphotic's recommended `nvidia-open-dkms`. Non-interactive runs default to `keep` — a working driver is never replaced without being told to. |
+| `--strip-conflicts` | Remove already-installed packages Aphotic's shell replaces (waybar, rofi/wofi, dunst/mako/swaync, polybar, eww/ags, hyprpaper/swaybg, swayidle) without asking. Interactive installs are asked either way; non-interactive runs default to leaving them installed unless this is passed. |
+| `--keep-conflicts` | Leave those packages alone without asking, even interactively. |
 | `--config-only` | Config sync only: back up, copy `Configs/` over `~/.config/`, restart the shell. No packages, no system prep, no wizard, no `sudo`, and `aphotic.toml` is left untouched. See [Config sync only](#config-sync-only). |
 | `--dry-run` | Prints the full resolved install plan and exits — nothing is installed, backed up, or written. |
 | `--no-backup` | Skips the pre-install config snapshot. Off by default; use with intent. |
