@@ -108,6 +108,7 @@ Singleton {
     }
 
     property string agentSelectedProvider: "claude"
+    property bool agentGraphEnabled: true
     // Node budget and layout tick rate for the agent graph surface, never
     // its visual treatment -- every tier renders the same look. "auto"
     // resolves from the detected GPU and demotes a tier while Ollama holds
@@ -273,6 +274,7 @@ Singleton {
             taskbarGrouping: root.taskbarGrouping,
             minimalShowDnd: root.minimalShowDnd,
             agentSelectedProvider: root.agentSelectedProvider,
+            agentGraphEnabled: root.agentGraphEnabled,
             agentGraphQuality: root.agentGraphQuality,
             agentGraphAccent: root.agentGraphAccent,
             agentGraphGroupByParent: root.agentGraphGroupByParent,
@@ -579,6 +581,8 @@ Singleton {
                     root.minimalShowDnd = data.minimalShowDnd;
                 if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "opencode"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
+                if (typeof data.agentGraphEnabled === "boolean")
+                    root.agentGraphEnabled = data.agentGraphEnabled;
                 if (typeof data.agentGraphQuality === "string" && ["auto", "lite", "standard", "full"].includes(data.agentGraphQuality))
                     root.agentGraphQuality = data.agentGraphQuality;
                 if (typeof data.agentGraphAccent === "string")

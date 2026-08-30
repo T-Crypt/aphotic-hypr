@@ -109,7 +109,7 @@ Item {
     implicitHeight: 460
 
     NumberAnimation on flowClock {
-        running: root.visible && root.anyFlowing
+        running: root.visible && root.anyFlowing && Settings.agentGraphEnabled
         loops: Animation.Infinite
         from: 0
         to: 1

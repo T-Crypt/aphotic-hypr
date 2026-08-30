@@ -99,9 +99,18 @@ QtObject {
         return root.sessionColor(root._hueForKey(agentId));
     }
 
-    onSessionsChanged: root.rebuild()
+    property bool liveEnabled: Settings.agentGraphEnabled
+
+    onSessionsChanged: {
+        if (root.liveEnabled)
+            root.rebuild();
+    }
     onAreaWidthChanged: root.rebuild()
     onAreaHeightChanged: root.rebuild()
+    onLiveEnabledChanged: {
+        if (root.liveEnabled)
+            root.rebuild();
+    }
 
     function rebuild(): void {
         const nodes = [];
