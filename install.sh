@@ -367,6 +367,32 @@ deploy_user_configs() {
     cp "$CUSTOM_LUA" "$CUSTOM_LUA_BACKUP"
   fi
 
+  # Same reasoning as custom.lua above -- real bug, reported live (#45):
+  # the exclusion from the symlink loop below only protects monitors.lua
+  # from being tracked to the repo's own generic placeholder going
+  # forward, it does nothing about the cp -R two lines down, which
+  # clobbers it with that placeholder on every single run regardless.
+  MONITORS_LUA="$HOME/.config/hypr/monitors.lua"
+  MONITORS_LUA_BACKUP=""
+  if [[ -f "$MONITORS_LUA" ]]; then
+    MONITORS_LUA_BACKUP=$(mktemp)
+    cp "$MONITORS_LUA" "$MONITORS_LUA_BACKUP"
+  fi
+
+  # Same bug, different file (also #45): Configs/gtk-3.0/settings.ini is
+  # only ever a starting-point default (adw-gtk3-dark/Cantarell 11/etc) --
+  # nothing in wallust's own template targets (gtk.css, not settings.ini)
+  # or PersonalizationPane.qml ever regenerates it, so it's purely a user
+  # editing surface (nwg-look writes straight into this file for GTK
+  # theme/font/cursor changes). No prior protection at all, unlike custom.lua
+  # and monitors.lua above.
+  GTK3_SETTINGS="$HOME/.config/gtk-3.0/settings.ini"
+  GTK3_SETTINGS_BACKUP=""
+  if [[ -f "$GTK3_SETTINGS" ]]; then
+    GTK3_SETTINGS_BACKUP=$(mktemp)
+    cp "$GTK3_SETTINGS" "$GTK3_SETTINGS_BACKUP"
+  fi
+
   cp -R "$ROOT_DIR/Configs/"* "$HOME/.config/"
 
   # A handful of paths under Configs/ need to track repo edits directly
@@ -393,7 +419,11 @@ deploy_user_configs() {
   #     copy is only a generic "output='', mode=preferred" placeholder.
   #     Symlinking this one was a real regression, caught live: it threw
   #     away this machine's pinned "Virtual-1, 1920x1080" for the
-  #     placeholder's "preferred", which negotiated down to 1280x800.
+  #     placeholder's "preferred", which negotiated down to 1280x800. Gets
+  #     the same backup/restore treatment as custom.lua above (see the
+  #     restore immediately below) since excluding it here only stops the
+  #     symlink loop from tracking it -- the cp -R two lines up still
+  #     clobbers it with the placeholder on every run otherwise.
   #   - hyprland.lua: install.sh appends `require("nvidia")` to it below
   #     when Nvidia is detected -- a symlink would write that append
   #     straight into the tracked repo file instead of a local copy, and
@@ -424,6 +454,18 @@ deploy_user_configs() {
     cp "$CUSTOM_LUA_BACKUP" "$CUSTOM_LUA"
     rm -f "$CUSTOM_LUA_BACKUP"
     echo -e "$CNT - Preserved your existing hypr/custom.lua"
+  fi
+
+  if [[ -n "$MONITORS_LUA_BACKUP" ]]; then
+    cp "$MONITORS_LUA_BACKUP" "$MONITORS_LUA"
+    rm -f "$MONITORS_LUA_BACKUP"
+    echo -e "$CNT - Preserved your existing hypr/monitors.lua"
+  fi
+
+  if [[ -n "$GTK3_SETTINGS_BACKUP" ]]; then
+    cp "$GTK3_SETTINGS_BACKUP" "$GTK3_SETTINGS"
+    rm -f "$GTK3_SETTINGS_BACKUP"
+    echo -e "$CNT - Preserved your existing gtk-3.0/settings.ini"
   fi
 
   mkdir -p "$HOME/.local/bin"
