@@ -49,8 +49,8 @@ ColumnLayout {
         id: tabFrame
 
         Layout.alignment: Qt.AlignHCenter
-        Layout.preferredWidth: tabLoader.implicitWidth + Tokens.padding.extraLarge * 2
-        Layout.preferredHeight: tabLoader.implicitHeight + Tokens.padding.extraLarge * 2
+        Layout.preferredWidth: (root.currentTab === "agentGraph" ? agentGraphLoader.implicitWidth : tabLoader.implicitWidth) + Tokens.padding.extraLarge * 2
+        Layout.preferredHeight: (root.currentTab === "agentGraph" ? agentGraphLoader.implicitHeight : tabLoader.implicitHeight) + Tokens.padding.extraLarge * 2
         radius: Tokens.rounding.extraLarge
         color: Qt.alpha(Colours.tPalette.m3surfaceContainer, 0.85)
         border.width: 1
@@ -101,7 +101,7 @@ ColumnLayout {
                 case "aiChat":
                     return aiChatComp;
                 case "agentGraph":
-                    return agentGraphComp;
+                    return null;
                 default:
                     return dashboardComp;
                 }
@@ -116,6 +116,21 @@ ColumnLayout {
                 id: fadeInTimer
                 interval: 1
                 onTriggered: tabLoader.opacity = 1
+            }
+        }
+
+        Loader {
+            id: agentGraphLoader
+
+            anchors.centerIn: parent
+            active: InstallProfile.aiEnabled
+            asynchronous: true
+            visible: agentGraphLoader.opacity > 0
+            opacity: root.currentTab === "agentGraph" ? 1 : 0
+            sourceComponent: agentGraphComp
+
+            Behavior on opacity {
+                Anim { type: Anim.DefaultEffects }
             }
         }
     }
@@ -147,6 +162,8 @@ ColumnLayout {
     }
     Component {
         id: agentGraphComp
-        AgentGraphTab {}
+        AgentGraphTab {
+            visible: agentGraphLoader.opacity > 0
+        }
     }
 }
