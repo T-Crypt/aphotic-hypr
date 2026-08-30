@@ -104,6 +104,13 @@ Singleton {
         root._apply(record);
     }
 
+    function _hueForSession(id: string): int {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++)
+            hash = (hash * 31 + id.charCodeAt(i)) | 0;
+        return Math.abs(hash) % 360;
+    }
+
     function _blankSession(record): var {
         return {
             id: record.sessionId,
@@ -113,6 +120,7 @@ Singleton {
             startedAt: record.t ?? 0,
             updatedAt: record.t ?? 0,
             endedAt: 0,
+            hue: root._hueForSession(record.sessionId),
             nodes: [],
             agentParents: ({})
         };
