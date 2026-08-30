@@ -11,6 +11,7 @@ source "$ROOT_DIR/lib/install/blackarch.sh"
 source "$ROOT_DIR/lib/install/exploit_disclaimer.sh"
 source "$ROOT_DIR/lib/install/claude_hooks.sh"
 source "$ROOT_DIR/lib/install/opencode_hooks.sh"
+source "$ROOT_DIR/lib/install/codex_hooks.sh"
 source "$ROOT_DIR/lib/install/assistant.sh"
 # sourced libs each set -euo pipefail, which otherwise leaks into this
 # script's shell options since `set` is not scoped to the sourced file
@@ -474,6 +475,30 @@ deploy_user_configs() {
   else
     echo -e "$CNT - AI layer not selected; removing the Aphotic OpenCode hook plugin..."
     remove_opencode_hook &>> "$INSTLOG" || echo -e "$CWR - Could not remove ~/.config/opencode/plugins/opencode_hook.js; remove it by hand if it's still there."
+  fi
+
+  # Same `ai`-layer opt-in as the Claude Code hook and the OpenCode plugin
+  # above. Codex reads hooks from its own dedicated user-level hooks.json
+  # (~/.codex/hooks.json, kept separate from config.toml on purpose), which
+  # configure_codex_hooks upserts with jq exactly like claude_hooks.sh does
+  # for ~/.claude/settings.json; codex_hook.sh translates Codex's wire
+  # payload into the stdin shape agent_hook.py already expects and tags it
+  # harness=codex. Codex only runs non-managed hooks once they're trusted
+  # in-session (`/hooks`), so the post-install note tells the user to do
+  # that once -- see lib/install/codex_hooks.sh and docs/AGENT_TRACKING.md.
+  if [[ "$CONFIG_ONLY" == "1" && "$LAYERS_KNOWN" != "1" ]]; then
+    :
+  elif layer_selected "ai"; then
+    echo -e "$CNT - Configuring the Codex hook for live agent session tracking..."
+    if command -v jq >/dev/null 2>&1; then
+      configure_codex_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/codex_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not update ~/.codex/hooks.json; the bar's agent popout will only show session presence/count for Codex, not live per-session status. Wire it manually — see docs/AGENT_TRACKING.md."
+      echo -e "$CWR - Codex hooks are written, but Codex only runs hooks it trusts: start codex once, open /hooks, and trust the Aphotic entries (or pass --dangerously-bypass-hook-trust to a single invocation). See docs/AGENT_TRACKING.md."
+    else
+      echo -e "$CWR - jq not found; skipping Codex hook setup. Wire it manually — see docs/AGENT_TRACKING.md."
+    fi
+  elif command -v jq >/dev/null 2>&1; then
+    echo -e "$CNT - AI layer not selected; removing any Aphotic Codex hook entries..."
+    remove_codex_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/codex_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not clean ~/.codex/hooks.json; remove the aphotic codex_hook.sh entries by hand if they are still there."
   fi
 
   # Make sure `aphotic` (and anything else under ~/.local/bin) resolves on
