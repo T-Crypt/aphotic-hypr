@@ -4,31 +4,72 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import qs.services.ai
 
 // Presence + usage for the bar's agent indicator/panel, one entry per
-// tracked CLI. Two independent data sources feed `stats`: a 5s
-// pgrep/`ollama ps` presence poll (this file), and a 15s FileView read of
-// the aggregate record `aphotic agent usage-update` writes every 15
-// minutes (never parsed here -- this service only reads that file).
+// tracked harness (a CLI that runs a session and executes tool calls --
+// see AgentRoles.qml for the harness/provider distinction). Three
+// independent data sources feed `stats`: a live tail of the same
+// `agent-events.jsonl` stream AgentGraphService reads (real-time
+// `sessionCount`/`liveSessions` for any harness whose hook has fired at
+// least once -- see `_hasLiveEvents`), a much-slower pgrep reconcile
+// that only fills in `sessionCount` for a harness the tail has never
+// heard from (no hook configured -- see docs/AGENT_TRACKING.md section
+// 1's "no setup required" guarantee), and an inotify-backed FileView
+// read of the aggregate record `aphotic agent usage-update` writes
+// every 15 minutes (never parsed here -- this service only reads that
+// file).
+//
+// Ollama is deliberately NOT one of these entries: it's a provider, not a
+// harness, and a bare Ollama process has no session/command shape to show
+// in this popout. Its loaded-model state is still tracked below, but only
+// as an internal GPU-contention signal for AgentGraphService, never as a
+// Bar tab.
 Singleton {
     id: root
 
-    readonly property var providers: [
-        { id: "claude", label: qsTr("Claude Code"), icon: "smart_toy", processName: "claude", launchCmd: ["claude"] },
-        { id: "codex", label: qsTr("Codex"), icon: "terminal", processName: "codex", launchCmd: ["codex"] },
-        { id: "ollama", label: qsTr("Ollama"), icon: "dns", processName: null, launchCmd: ["ollama"] }
-    ]
+    readonly property var _uiMeta: ({
+        "claude": { icon: "smart_toy", processName: "claude", launchCmd: ["claude"] },
+        "codex": { icon: "terminal", processName: "codex", launchCmd: ["codex"] },
+        "opencode": { icon: "terminal", processName: "opencode", launchCmd: ["opencode"] }
+    })
+
+    // Set of active harness tabs: ids/enablement come from AgentRoles (the
+    // single-sourced role schema); icon/pgrep-name/launch command are Bar-
+    // specific UI metadata, not a classification concern. A harness with
+    // no _uiMeta entry (e.g. Gemini CLI -- no known package/binary in this
+    // repo yet) is skipped rather than shown with dead detection.
+    readonly property var providers: AgentRoles.harnesses
+        .filter(h => root._uiMeta[h.id])
+        .map(h => ({
+            id: h.id,
+            label: h.label,
+            icon: root._uiMeta[h.id].icon,
+            processName: root._uiMeta[h.id].processName,
+            launchCmd: root._uiMeta[h.id].launchCmd
+        }))
 
     property var stats: providers.map(() => ({
         sessionCount: 0,
-        loadedModels: [],
         todayTokens: 0,
         tokensByModel: [],
         availability: "unavailable",
         liveSessions: []
     }))
 
-    readonly property var ollamaLoadedModels: root.stats[root.providers.findIndex(p => p.id === "ollama")]?.loadedModels ?? []
+    // Ollama's loaded-model state, tracked independently of the harness
+    // `providers`/`stats` pair above -- AgentGraphService reads this to
+    // demote render tier when the GPU is busy serving a local model.
+    property var ollamaLoadedModels: []
+
+    // { harnessId: { sessionId: {id, event, tool, updatedAt} } }, built
+    // entirely from the event tail below -- one entry per still-open
+    // session, removed on that session's `session_end`.
+    property var _liveByHarness: ({})
+    // { harnessId: true } once that harness's hook has written at least
+    // one event -- gates the pgrep reconcile timer below out of ever
+    // overwriting a harness the tail is already authoritative for.
+    property var _hasLiveEvents: ({})
 
     readonly property string selected: Settings.agentSelectedProvider
     readonly property int selectedIndex: providers.findIndex(p => p.id === root.selected)
@@ -38,21 +79,10 @@ Singleton {
         Settings.agentSelectedProvider = root.providers[next].id;
     }
 
-    // Right-click contract per spec: always launch (no focus-existing
-    // fallback) -- Ollama specifically launches `ollama run <model>` for
-    // its first loaded model rather than a bare launchCmd, and no-ops if
-    // no model is loaded (nothing sensible to launch).
     function launchSelected(): void {
         const provider = root.providers[root.selectedIndex];
         if (!provider)
             return;
-        if (provider.id === "ollama") {
-            const loaded = root.stats[root.selectedIndex]?.loadedModels ?? [];
-            if (loaded.length === 0)
-                return;
-            Quickshell.execDetached(["kitty", "-e", "ollama", "run", loaded[0]]);
-            return;
-        }
         Quickshell.execDetached(["kitty", "-e", ...provider.launchCmd]);
     }
 
@@ -68,23 +98,69 @@ Singleton {
         root.stats = next;
     }
 
+    // One line of `agent-events.jsonl` (same schema AgentGraphService
+    // tails -- see its header) in, `stats[harness].{sessionCount,
+    // liveSessions}` out. Replaces both the old `ls`+`cat` directory
+    // poll (AGF-08) and, for any harness that reaches here at least
+    // once, the pgrep poll below (AGF-07).
+    function _ingestSessionEvent(line: string): void {
+        let record;
+        try {
+            record = JSON.parse(line);
+        } catch (e) {
+            return;
+        }
+        if (!record || !record.sessionId || !record.event)
+            return;
+
+        const harness = record.harness || "claude";
+        if (!root._hasLiveEvents[harness])
+            root._hasLiveEvents = Object.assign({}, root._hasLiveEvents, { [harness]: true });
+
+        const sessions = Object.assign({}, root._liveByHarness[harness] ?? {});
+        if (record.event === "session_end") {
+            delete sessions[record.sessionId];
+        } else {
+            sessions[record.sessionId] = {
+                id: record.sessionId,
+                event: record.event,
+                tool: record.tool ?? "",
+                updatedAt: record.timestamp ?? ""
+            };
+        }
+        root._liveByHarness = Object.assign({}, root._liveByHarness, { [harness]: sessions });
+
+        const list = Object.values(sessions);
+        root._setStat(root._findIndex(harness), { liveSessions: list, sessionCount: list.length });
+    }
+
+    function _reconcilePgrepCount(providerId: string, n: int): void {
+        // The event tail is authoritative the moment a harness's hook has
+        // fired once -- never let a slow, coarser pgrep sample stomp a
+        // real-time count with a stale one.
+        if (root._hasLiveEvents[providerId])
+            return;
+        root._setStat(root._findIndex(providerId), { sessionCount: isNaN(n) ? 0 : n });
+    }
+
     Process {
         id: claudePgrep
         stdout: StdioCollector {
-            onStreamFinished: {
-                const n = parseInt(text.trim(), 10);
-                root._setStat(root._findIndex("claude"), { sessionCount: isNaN(n) ? 0 : n });
-            }
+            onStreamFinished: root._reconcilePgrepCount("claude", parseInt(text.trim(), 10))
         }
     }
 
     Process {
         id: codexPgrep
         stdout: StdioCollector {
-            onStreamFinished: {
-                const n = parseInt(text.trim(), 10);
-                root._setStat(root._findIndex("codex"), { sessionCount: isNaN(n) ? 0 : n });
-            }
+            onStreamFinished: root._reconcilePgrepCount("codex", parseInt(text.trim(), 10))
+        }
+    }
+
+    Process {
+        id: opencodePgrep
+        stdout: StdioCollector {
+            onStreamFinished: root._reconcilePgrepCount("opencode", parseInt(text.trim(), 10))
         }
     }
 
@@ -94,8 +170,7 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n").slice(1).filter(l => l.length > 0);
-                const models = lines.map(l => l.trim().split(/\s+/)[0]).filter(Boolean);
-                root._setStat(root._findIndex("ollama"), { loadedModels: models });
+                root.ollamaLoadedModels = lines.map(l => l.trim().split(/\s+/)[0]).filter(Boolean);
             }
         }
     }
@@ -105,10 +180,27 @@ Singleton {
         running: InstallProfile.aiEnabled
         repeat: true
         triggeredOnStart: true
+        onTriggered: ollamaPs.running = true
+    }
+
+    // Presence reconcile, not the primary signal (AGF-07): the event
+    // tail below drives `sessionCount` in real time for any harness with
+    // a hook wired. This only exists to keep section 1 of
+    // docs/AGENT_TRACKING.md's "no setup required" promise for a harness
+    // that never fires a hook event at all -- correctness there doesn't
+    // need 5s freshness, so this fires 12x slower than it used to.
+    Timer {
+        interval: 60000
+        running: InstallProfile.aiEnabled
+        repeat: true
+        triggeredOnStart: true
         onTriggered: {
-            claudePgrep.exec(["pgrep", "-x", "-c", "claude"]);
-            codexPgrep.exec(["pgrep", "-x", "-c", "codex"]);
-            ollamaPs.running = true;
+            if (root._findIndex("claude") !== -1)
+                claudePgrep.exec(["pgrep", "-x", "-c", "claude"]);
+            if (root._findIndex("codex") !== -1)
+                codexPgrep.exec(["pgrep", "-x", "-c", "codex"]);
+            if (root._findIndex("opencode") !== -1)
+                opencodePgrep.exec(["pgrep", "-x", "-c", "opencode"]);
         }
     }
 
@@ -122,14 +214,14 @@ Singleton {
                 const data = JSON.parse(text());
                 if (data.schemaVersion !== 1)
                     return;
-                for (const id of ["claude", "codex", "ollama"]) {
-                    const p = data.providers?.[id];
-                    if (!p)
+                for (const p of root.providers) {
+                    const usage = data.providers?.[p.id];
+                    if (!usage)
                         continue;
-                    root._setStat(root._findIndex(id), {
-                        availability: p.availability ?? "unavailable",
-                        todayTokens: p.todayTokens ?? 0,
-                        tokensByModel: p.tokensByModel ?? []
+                    root._setStat(root._findIndex(p.id), {
+                        availability: usage.availability ?? "unavailable",
+                        todayTokens: usage.todayTokens ?? 0,
+                        tokensByModel: usage.tokensByModel ?? []
                     });
                 }
             } catch (e) {
@@ -140,56 +232,29 @@ Singleton {
         }
     }
 
-    // Live per-Claude-session activity from Configs/.local/lib/aphotic/
-    // agent_hook.sh -- one JSON file per running session
-    // ({event, tool, updatedAt}, see that script's own header comment),
-    // deleted on Stop. Used to only `ls` the directory and keep the
-    // filenames -- real work on every Claude Code tool call
-    // (agent_hook.sh writes a file on every PreToolUse/PostToolUse/
-    // Notification) for zero effect, since nothing ever read a session
-    // file's actual content. Now reads each file's content in the same
-    // pass (one combined `for f in .../*.json; do ...; done` shell
-    // command rather than N separate reads, matching this file's own
-    // "minimize process spawns" convention elsewhere) -- one tab-
-    // separated "id<TAB>json" line per session, parsed below. No FileView
-    // folder-watch API exists for "list of files in a directory that
-    // changes", so this still re-lists on the same 5s cadence as
-    // presence polling above rather than reacting to individual file
-    // writes.
+    // Live per-session activity, replacing what used to be a 5s
+    // `ls`-then-`cat` of Configs/.local/lib/aphotic/agent_hook.py's
+    // per-session snapshot directory (AGF-08) -- that re-listed the
+    // whole directory on a timer for content that changes on every tool
+    // call, real work for zero effect since nothing ever reacted faster
+    // than the poll anyway. This tails `agent-events.jsonl` instead --
+    // the exact same rotating event log AgentGraphService already holds
+    // a `tail -F` on (see that file's header for the schema and the
+    // idempotency/rotation reasoning) -- so presence updates the instant
+    // a hook fires rather than up to 5s later, and there is one thing
+    // being watched on disk instead of two. `_ingestSessionEvent` builds
+    // `_liveByHarness` incrementally and keys everything off the
+    // record's own `harness` field (defaults to "claude" when absent,
+    // same as AgentGraphService), so Claude, Codex and OpenCode sessions
+    // all route to their own provider's tab with no per-harness branch
+    // here.
     Process {
-        id: sessionLister
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const sessions = text.split("\n").filter(l => l.length > 0).map(line => {
-                    const tab = line.indexOf("\t");
-                    if (tab === -1)
-                        return null;
-                    const id = line.slice(0, tab);
-                    try {
-                        const data = JSON.parse(line.slice(tab + 1));
-                        return {
-                            id: id,
-                            event: data.event ?? "",
-                            tool: data.tool ?? "",
-                            updatedAt: data.updatedAt ?? ""
-                        };
-                    } catch (e) {
-                        return null;
-                    }
-                }).filter(s => s !== null);
-                root._setStat(root._findIndex("claude"), { liveSessions: sessions });
-            }
-        }
-    }
-
-    Timer {
-        interval: 5000
+        id: sessionEventTail
         running: InstallProfile.aiEnabled
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            const dir = `${Quickshell.env("HOME")}/.local/state/aphotic/agent-sessions`;
-            sessionLister.exec(["sh", "-c", `for f in "${dir}"/*.json; do [ -f "$f" ] && printf '%s\\t%s\\n' "$(basename "$f" .json)" "$(cat "$f")"; done 2>/dev/null`]);
+        command: ["sh", "-c", `mkdir -p '${Quickshell.env("HOME")}/.local/state/aphotic' && : >> '${Quickshell.env("HOME")}/.local/state/aphotic/agent-events.jsonl' && exec tail -n 400 -F '${Quickshell.env("HOME")}/.local/state/aphotic/agent-events.jsonl'`]
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root._ingestSessionEvent(data)
         }
     }
 }

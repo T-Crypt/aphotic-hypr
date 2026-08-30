@@ -188,6 +188,21 @@ main() {
   print_banner
 
   print_stage 1 "Preflight"
+
+  # Aphotic depends on systemd directly, not just as whatever happens to
+  # be PID 1 on Arch by default: SDDM, bluetooth.service, and the
+  # aphotic-shell.service user unit that runs the actual Quickshell bar
+  # (Configs/systemd/user/aphotic-shell.service) all assume it. A
+  # non-systemd base (e.g. Artix/OpenRC or runit) would get through the
+  # rest of this script and then have no working bar at all, with
+  # nothing pointing back at why -- so this checks and fails fast
+  # instead, for both a full install and --config-only (config-only
+  # still restarts aphotic-shell.service via systemctl --user).
+  if [[ ! -d /run/systemd/system ]]; then
+    echo -e "$CER - systemd isn't running as PID 1 (no /run/systemd/system) -- Aphotic isn't supported on a non-systemd base. Nothing has been changed."
+    exit 1
+  fi
+
   echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland."
   detect_environment
 
@@ -256,6 +271,7 @@ main() {
         echo "  would pull model: $ASSISTANT_FALLBACK_MODEL [fallback -- llmfit not installed yet]"
       fi
     fi
+    echo "  would run: sudo pacman -Syu --noconfirm"
     echo "  prep packages:"
     echo "$prep_pkgs" | sed 's/^/    - /'
     echo "  main packages:"
@@ -279,11 +295,26 @@ main() {
   print_stage 3 "System prep"
   check_conflicting_packages
   configure_wifi_powersave
+
+  # Sync pacman DBs first: on a fresh/torn-down system /var/lib/pacman/sync/
+  # is empty, and without it both base-devel and makepkg -si fail with
+  # "database file for ... does not exist". This must precede yay's build.
+  ensure_pacman_db
+
   ensure_base_devel
 
   echo -e "$CNT - Resolving AUR helper..."
-  AUR_HELPER=$(ensure_aur_helper)
-  echo -e "$COK - Using AUR helper: $AUR_HELPER"
+  # `set -e` is off in the orchestrator, so a non-zero status from the command
+  # substitution must be captured explicitly or a failed yay install (which
+  # returns 1 from ensure_aur_helper) would silently leave AUR_HELPER empty.
+  AUR_HELPER=""
+  AUR_HELPER=$(ensure_aur_helper) || AUR_HELPER=""
+  if [[ -z "$AUR_HELPER" ]]; then
+    echo -e "$CWR - No AUR helper (yay/paru) is available on PATH. AUR packages will fail to resolve."
+    echo -e "$CWR   Fix it manually: sudo pacman -S --needed base-devel git && git clone https://aur.archlinux.org/yay.git /tmp/yay && cd /tmp/yay && makepkg -si"
+  else
+    echo -e "$COK - Using AUR helper: $AUR_HELPER"
+  fi
 
   if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
     echo -e "$CNT - Enabling the BlackArch repo for the exploit-* layers that need it..."
@@ -312,6 +343,20 @@ main() {
   fi
 
   print_stage 5 "Installing packages"
+  # Sync + upgrade before installing anything new (issue #41): Arch mirrors
+  # only ever carry the current package build, not the version that was
+  # current when the local db was last refreshed -- installing against a
+  # stale db can request a filename that's already been rotated off every
+  # mirror, which pacman reports as a plain 404 per-mirror rather than
+  # "your db is stale". `-Sy` alone is deliberately not used here: syncing
+  # the db without upgrading already-installed packages is a partial
+  # upgrade, which the Arch wiki calls out as unsupported and a real
+  # source of broken dependencies for whatever gets installed next.
+  # (No DRY_RUN branch here -- the dry-run plan above already exits before
+  # Stage 5 is ever reached, see the upfront "[dry-run] plan" block.)
+  echo -e "$CNT - Syncing package databases and upgrading the system..."
+  sudo pacman -Syu --noconfirm &>> "$INSTLOG" || { echo -e "$CER - Failed to sync/upgrade the system package database. Re-run 'sudo pacman -Syu' by hand, resolve whatever it reports, then re-run install.sh."; exit 1; }
+
   install_package_list "$prep_pkgs"
 
   setup_nvidia
