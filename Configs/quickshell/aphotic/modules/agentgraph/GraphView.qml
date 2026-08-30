@@ -453,7 +453,7 @@ Item {
         implicitWidth: tipContent.implicitWidth + Tokens.padding.large * 2
         implicitHeight: tipContent.implicitHeight + Tokens.padding.medium * 2
         radius: Tokens.rounding.large
-        color: Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.97)
+        color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.97)
         border.width: 1
         border.color: Colours.palette.m3outlineVariant
         z: 10
@@ -530,7 +530,7 @@ Item {
             implicitWidth: 28
             implicitHeight: 28
             radius: Tokens.rounding.full
-            color: Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.9)
+            color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.9)
             border.width: 1
             border.color: Colours.palette.m3outlineVariant
 

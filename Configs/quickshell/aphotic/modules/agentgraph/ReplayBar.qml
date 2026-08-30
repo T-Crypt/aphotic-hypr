@@ -111,7 +111,7 @@ ColumnLayout {
                         implicitWidth: chipLabel.implicitWidth + Tokens.padding.medium
                         implicitHeight: 24
                         radius: Tokens.rounding.full
-                        color: chip.active ? Colours.palette.m3primary : Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.9)
+                        color: chip.active ? Colours.palette.m3primary : Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.9)
                         border.width: 1
                         border.color: chip.active ? "transparent" : Colours.palette.m3outlineVariant
 
@@ -156,7 +156,7 @@ ColumnLayout {
             implicitWidth: 28
             implicitHeight: 28
             radius: Tokens.rounding.full
-            color: accented ? Colours.palette.m3primary : Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.9)
+            color: accented ? Colours.palette.m3primary : Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.9)
             border.width: 1
             border.color: accented ? "transparent" : Colours.palette.m3outlineVariant
 
@@ -199,7 +199,7 @@ ColumnLayout {
             implicitWidth: speedLabel.implicitWidth + Tokens.padding.medium
             implicitHeight: 26
             radius: Tokens.rounding.full
-            color: Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.9)
+            color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.9)
             border.width: 1
             border.color: Colours.palette.m3outlineVariant
 
