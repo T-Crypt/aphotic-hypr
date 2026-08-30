@@ -74,8 +74,18 @@ export const AphoticAgentTracking = async ({ directory }) => {
       }
     },
     "chat.params": async input => {
-      if (input.sessionID && input.model)
-        models.set(input.sessionID, `${input.model.providerID}/${input.model.modelID}`);
+      if (!input.sessionID || !input.model)
+        return;
+      const resolved = `${input.model.providerID}/${input.model.id}`;
+      const isNew = models.get(input.sessionID) !== resolved;
+      models.set(input.sessionID, resolved);
+      // session.created fires before the first chat.params call, so the
+      // model is always unknown at that point -- send a follow-up
+      // SessionStart-shaped update the first time it resolves (or changes
+      // mid-session) so the graph label picks it up instead of staying on
+      // the session id fallback.
+      if (isNew && known.has(input.sessionID))
+        send({ session_id: input.sessionID, hook_event_name: "SessionStart", model: resolved });
     },
     "tool.execute.before": async input => {
       toolStarts.set(input.callID, Date.now());
