@@ -15,13 +15,21 @@ Item {
     // to it. Minimal is icon-only with no chips anywhere, so it opts out.
     property bool showBackground: true
 
-    readonly property var provider: AgentProviders.providers[AgentProviders.selectedIndex] ?? AgentProviders.providers[0]
-    readonly property var stat: AgentProviders.stats[AgentProviders.selectedIndex] ?? AgentProviders.stats[0]
-    readonly property int badgeCount: root.stat.sessionCount
+    // Fall back to a plain empty object, not undefined -- `providers` is
+    // legitimately empty when zero harness-hook plugins are installed
+    // (see `visible` below), and property bindings below still evaluate
+    // even while this item is invisible.
+    readonly property var provider: AgentProviders.providers[AgentProviders.selectedIndex] ?? AgentProviders.providers[0] ?? ({})
+    readonly property var stat: AgentProviders.stats[AgentProviders.selectedIndex] ?? AgentProviders.stats[0] ?? ({})
+    readonly property int badgeCount: root.stat.sessionCount ?? 0
 
-    // Absent, not hidden, when the installer's `ai` layer is off -- the bar
-    // shouldn't leave a gap where a feature the user declined would go.
-    visible: InstallProfile.aiEnabled
+    // Absent, not hidden, when the installer's `ai` layer is off, or when
+    // the `ai` layer is on but zero harness-hook plugins are installed+
+    // enabled (AgentProviders.providers empty -- see that file's own
+    // header) -- the bar shouldn't leave a gap where a feature the user
+    // declined would go, and `root.provider` below is undefined once
+    // `providers` is empty, so this guard is load-bearing, not cosmetic.
+    visible: InstallProfile.aiEnabled && AgentProviders.providers.length > 0
     implicitWidth: !root.visible ? 0 : root.showBackground ? Settings.barInnerWidth : icon.implicitWidth
     implicitHeight: !root.visible ? 0 : root.showBackground ? Settings.barInnerWidth : icon.implicitHeight
 
