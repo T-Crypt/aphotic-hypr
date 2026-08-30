@@ -183,32 +183,39 @@ Singleton {
     // folder-watch API exists for "list of files in a directory that
     // changes", so this still re-lists on the same 5s cadence as
     // presence polling above rather than reacting to individual file
-    // writes. Claude Code is currently the only harness with a hook
-    // system that populates this directory -- Codex/OpenCode stay
-    // presence-only (see docs/AGENT_TRACKING.md) until they ship an
-    // equivalent.
+    // writes. Each session file now carries which harness produced it
+    // (agent_hook.py's "harness" field, added when OpenCode's hook shipped
+    // -- absent/older files default to "claude"), so sessions route to
+    // their own provider's tab instead of assuming everything is Claude's.
+    // Codex has no hook system yet and stays presence-only (see
+    // docs/AGENT_TRACKING.md) until it ships an equivalent.
     Process {
         id: sessionLister
         stdout: StdioCollector {
             onStreamFinished: {
-                const sessions = text.split("\n").filter(l => l.length > 0).map(line => {
+                const byHarness = ({});
+                for (const line of text.split("\n")) {
+                    if (line.length === 0)
+                        continue;
                     const tab = line.indexOf("\t");
                     if (tab === -1)
-                        return null;
+                        continue;
                     const id = line.slice(0, tab);
                     try {
                         const data = JSON.parse(line.slice(tab + 1));
-                        return {
+                        const harness = data.harness || "claude";
+                        (byHarness[harness] = byHarness[harness] ?? []).push({
                             id: id,
                             event: data.event ?? "",
                             tool: data.tool ?? "",
                             updatedAt: data.updatedAt ?? ""
-                        };
+                        });
                     } catch (e) {
-                        return null;
+                        continue;
                     }
-                }).filter(s => s !== null);
-                root._setStat(root._findIndex("claude"), { liveSessions: sessions });
+                }
+                for (const p of root.providers)
+                    root._setStat(root._findIndex(p.id), { liveSessions: byHarness[p.id] ?? [] });
             }
         }
     }

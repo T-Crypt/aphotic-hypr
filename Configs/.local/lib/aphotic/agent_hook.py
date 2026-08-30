@@ -97,10 +97,12 @@ for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
                    ("agent_id", "agentId"), ("agent_type", "agentType"),
                    ("duration_ms", "durationMs"), ("notification_type", "notificationType"),
                    ("source", "source"), ("end_reason", "endReason"),
-                   ("model", "model"), ("cwd", "cwd")):
+                   ("model", "model"), ("cwd", "cwd"), ("harness", "harness")):
     value = payload.get(key)
     if value not in (None, ""):
         record[field] = value
+
+harness = payload.get("harness") or "claude"
 
 # The Agent tool's own PostToolUse response is the only place Claude Code
 # states which agent id a Task/Agent call spawned. Capturing it here is what
@@ -156,6 +158,7 @@ try:
             "event": raw_event,
             "tool": record.get("tool", ""),
             "updatedAt": stamp,
+            "harness": harness,
         }, separators=(",", ":")) + "\n")
 except OSError:
     pass

@@ -10,6 +10,7 @@ source "$ROOT_DIR/lib/install/wizard.sh"
 source "$ROOT_DIR/lib/install/blackarch.sh"
 source "$ROOT_DIR/lib/install/exploit_disclaimer.sh"
 source "$ROOT_DIR/lib/install/claude_hooks.sh"
+source "$ROOT_DIR/lib/install/opencode_hooks.sh"
 source "$ROOT_DIR/lib/install/assistant.sh"
 # sourced libs each set -euo pipefail, which otherwise leaks into this
 # script's shell options since `set` is not scoped to the sourced file
@@ -459,6 +460,20 @@ deploy_user_configs() {
   elif command -v jq >/dev/null 2>&1; then
     echo -e "$CNT - AI layer not selected; removing any Aphotic Claude Code hook entries..."
     remove_claude_code_hooks "$ROOT_DIR/Configs/.local/lib/aphotic/agent_hook.sh" &>> "$INSTLOG" || echo -e "$CWR - Could not clean ~/.claude/settings.json; remove the aphotic agent_hook.sh entries by hand if they are still there."
+  fi
+
+  # Same `ai`-layer opt-in as the Claude Code hook above, same
+  # add-on-select/remove-on-deselect symmetry -- see lib/install/
+  # opencode_hooks.sh for why this is a symlink into OpenCode's own plugin
+  # auto-discovery directory rather than a settings.json merge.
+  if [[ "$CONFIG_ONLY" == "1" && "$LAYERS_KNOWN" != "1" ]]; then
+    :
+  elif layer_selected "ai"; then
+    echo -e "$CNT - Configuring the OpenCode hook for live agent session tracking..."
+    configure_opencode_hook "$ROOT_DIR/Configs/.local/lib/aphotic/opencode_hook.js" &>> "$INSTLOG" || echo -e "$CWR - Could not symlink into ~/.config/opencode/plugins/; the bar's agent popout will only show session presence/count for OpenCode, not live per-session status. Wire it manually — see docs/AGENT_TRACKING.md."
+  else
+    echo -e "$CNT - AI layer not selected; removing the Aphotic OpenCode hook plugin..."
+    remove_opencode_hook &>> "$INSTLOG" || echo -e "$CWR - Could not remove ~/.config/opencode/plugins/opencode_hook.js; remove it by hand if it's still there."
   fi
 
   # Make sure `aphotic` (and anything else under ~/.local/bin) resolves on
