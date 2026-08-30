@@ -43,7 +43,7 @@
 
 ## Preview
 
-One shell, reskinned live from a wallpaper. No rebuild, no relogin. The Agent Graph tab, live, over **Tokyo Night** — reskinned the same way across **Lofi** and **Gruvbox**, two more of the eight themes that ship out of the box:
+One shell, reskinned live from a wallpaper. No rebuild, no relogin. The Agent Graph tab (an installable plugin — see [Plugin System](#plugin-system)), live, over **Tokyo Night** — reskinned the same way across **Lofi** and **Gruvbox**, two more of the eight themes that ship out of the box:
 
 <p align="center">
   <img src="./assets/preview.png" width="900">
@@ -290,9 +290,15 @@ Every toggle here persists to `~/.local/state/aphotic/settings.json` and survive
 
 ## Plugin System
 
-Aphotic ships a small plugin mechanism (design docs live in the repo's maintainer notes): a plugin is a directory with a `plugin.toml` manifest and one or more hook scripts. Every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's `on_theme_change` hook with the freshly-resolved palette as JSON on stdin; a project opened from the launcher's `@` mode or a Workspace Profile launch fires `on_project_open`/`on_workspace_launch` for any plugin that declares interest in that specific hook. All hooks are fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall what it's piggybacking on. A `category` field (dev/security/mobile/ai/theming/productivity) drives filtering in `aphotic plugin list --remote` and Settings → Plugins; security-category plugins live in a separate index that stays untrusted (and unfetched) until explicitly opted into.
+Aphotic base is the shell, rice/theming, Settings, and core Quickshell modules — everything else, AI capabilities included, is an independently installable/removable plugin. A plugin is a directory with a `plugin.toml` manifest (manifest v3) declaring what it is and what it touches:
 
-Plugins are distributed from a separate, purpose-built repo, [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) — kept apart from the main dotfiles so plugins can version and release independently. `aphotic plugin list --remote` (and Settings → Plugins' **Browse available** list) reads that repo's lightweight `index.json` without needing a full clone; `aphotic plugin install <name>` (or the Settings UI's Install button) clones just that plugin locally. The first real plugin, **OpenRGB Sync**, sets your RGB lighting to the theme's accent color on every theme change.
+- **Hooks** — every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's `on_theme_change` hook with the freshly-resolved palette as JSON on stdin; a project opened from the launcher's `@` mode or a Workspace Profile launch fires `on_project_open`/`on_workspace_launch` for any plugin declaring interest. All hooks are fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall what it's piggybacking on.
+- **`[owns]`** — declares the config keys a plugin's presence affects, so install/remove stays auditable instead of each plugin hand-rolling its own cleanup logic.
+- **`[ui.dashboard_tab]`** — lets a plugin contribute a real Command Center tab, loaded dynamically at runtime (no shell rebuild) and gone the instant the plugin is disabled or removed, no leftover UI. **Agent Graph** (live tool-call graph + run replay for Claude Code/Codex, see [Preview](#preview)) is the flagship example — fully out of the base shell, only activates once the `ai` layer is enabled *and* a harness is actually configured.
+
+A `category` field (dev/security/mobile/ai/theming/productivity) drives filtering in `aphotic plugin list --remote` and Settings → Plugins; security-category plugins live in a separate index that stays untrusted (and unfetched) until explicitly opted into.
+
+Plugins are distributed from a separate, purpose-built repo, [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) — kept apart from the main dotfiles so plugins can version and release independently. `aphotic plugin list --remote` (and Settings → Plugins' **Browse available** list) reads that repo's lightweight `index.json` without needing a full clone; `aphotic plugin install <name>` (or the Settings UI's Install button) clones just that plugin locally, auto-syncing the registry repo first if it isn't already on disk — no manual clone step required. Besides Agent Graph, the registry also carries **OpenRGB Sync** (RGB lighting synced to the theme's accent color), **direnv Notice**, and **Workspace Session Log** — all hook-only plugins, no dashboard tab.
 
 ```
 aphotic plugin list [--remote] [--json]   # installed, or browse the remote index
@@ -300,6 +306,9 @@ aphotic plugin install <name> [--link]    # clone (or symlink, for local dev) a 
 aphotic plugin enable|disable <name>
 aphotic plugin remove <name>
 ```
+
+> [!NOTE]
+> Gaming, Dev, and Security don't have their own plugins yet — the shared substrate they'd sit on (a resource-engine core) is still ahead. `ai` is the only domain with real plugins today.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -631,7 +640,7 @@ aphotic play guess
 
 ## Roadmap
 
-Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, and a CI-tested installer are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history lives in the repo's changelog so this list stays short — here's what's still open:
+Aphotic is at **v2.0.0**. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, a CI-tested installer, and the modular plugin architecture (base shell + independently installable capabilities, see [Plugin System](#plugin-system)) are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history lives in the repo's changelog so this list stays short — here's what's still open:
 
 - **`matugen` as a second color engine** — next up. `theme.toml` reserves the config slot; wiring it in gives themes a real tonal-spot/vibrant/expressive variant picker alongside wallust.
 - **Settings panel gaps** — a Sidebar module, a System-updates action (distinct from the current read-only doctor output), a Theme-palette swatch view, and a Widgets tab. Live per-monitor resolution/scale editing in the Displays pane is blocked on a real Hyprland limitation (`hyprctl keyword monitor` doesn't reapply), not just unbuilt. (Network is already shipped — NetworkManager-backed VPN status/connect in Settings → Network, plus a bar icon; Audio/Bluetooth already get real hover popouts off the bar, see [Bar popouts](#quickshell-shell).)

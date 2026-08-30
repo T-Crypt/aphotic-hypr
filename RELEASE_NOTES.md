@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.0
+
+A modular plugin architecture — Agent Graph now installs as a plugin, and a rewritten `install.sh` defaults to zero prompts. See the README's Roadmap for the full list.
+
 ## 1.2.0
 
 A live Agent Graph tab for Claude Code sessions, plus Hyprland-native
