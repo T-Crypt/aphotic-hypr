@@ -332,13 +332,18 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Running with no flags launches a short wizard: profile, optional layers, theme. It writes your choices to `aphotic.toml`, the source of truth for every re-run after that.
+Running with no flags installs Aphotic's daily-driver setup — full profile, no optional layers — with zero prompts. It writes your choices to `aphotic.toml`, the source of truth for every re-run after that.
 
 > [!TIP]
-> Prefer to skip the prompts entirely:
+> Want gaming/dev/ai/exploit layers? Either pick them directly:
 > ```
 > ./install.sh --profile full --with gaming,dev --dry-run
 > ```
+> or launch the interactive picker (profile, optional layers, theme):
+> ```
+> ./install.sh --opt-in
+> ```
+> Layers can always be added later by re-running either form.
 
 <details>
 <summary><strong>Full flag reference</strong></summary>
@@ -347,6 +352,7 @@ Running with no flags launches a short wizard: profile, optional layers, theme. 
 |---|---|
 | `--profile <minimal\|full>` | Selects the base package set. Skips the profile prompt. |
 | `--with <layer,layer,...>` | Comma-separated layers to merge in: `gaming`, `dev`, `ai`, `exploit` (a convenience bundle of `exploit-recon`+`exploit-web`+`exploit-network`), or any individual `exploit-*` sublayer (`exploit-recon`, `exploit-web`, `exploit-network`, `exploit-passwords`, `exploit-wordlists`, `exploit-reversing`, `exploit-forensics`, `exploit-reporting`). Skips the layer prompts. |
+| `--opt-in` | Interactive layer picker (preset or cherry-pick prompts). Without this flag (and without `--profile`/`--with`), a fresh install defaults to the daily-driver setup instead. |
 | `--accept-exploit-disclaimer` | Required alongside `--with` in non-interactive/scripted installs when any `exploit`/`exploit-*` layer is selected — accepts the authorized-use disclaimer without the interactive typed-confirmation prompt. The disclaimer text is shown in full before anything is installed. |
 | `--theme <name>` | Pre-selects a theme. Skips the theme prompt. |
 | `--with-assistant` / `--no-assistant` | Install (or skip) the Aphotic Assistant without being asked. `--with-assistant` implies the `ai` layer and needs an NVIDIA GPU. |
