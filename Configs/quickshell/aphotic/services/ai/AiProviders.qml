@@ -345,10 +345,20 @@ Singleton {
         }
     }
 
+    // Gated on the same install-time signal AgentProviders.qml's presence
+    // poll already uses -- without the `ai` layer, `claude`/`codex` aren't
+    // installed and probing for them on every shell start just produces
+    // "Process failed to start" log noise (see issue #43). Ollama is
+    // included too since it ships with the same layer; refreshOllamaModels()
+    // stays callable on demand (Settings -> AI's refresh action, the
+    // ollamaHostChanged handler above) for anyone pointing at a host that
+    // wasn't set up through this layer at all.
     Component.onCompleted: {
-        root.refreshOllamaModels();
-        root.refreshClaudeAuth();
-        root.refreshCodexAuth();
+        if (InstallProfile.aiEnabled) {
+            root.refreshOllamaModels();
+            root.refreshClaudeAuth();
+            root.refreshCodexAuth();
+        }
     }
 
     function isAvailable(providerId: string): bool {
