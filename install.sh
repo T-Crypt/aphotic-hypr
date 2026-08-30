@@ -736,20 +736,6 @@ except Exception:
   print_stage 3 "System prep"
   check_conflicting_packages
 
-  read -rep $'[\e[1;33mACTION\e[0m] - Would you like to disable WiFi powersave? (y,n) ' WIFI
-  if [[ "$WIFI" == "Y" || "$WIFI" == "y" ]]; then
-    if systemctl list-unit-files NetworkManager.service &>/dev/null; then
-      echo -e "$CNT - Disabling WiFi powersave..."
-      LOC="/etc/NetworkManager/conf.d/wifi-powersave.conf"
-      if ! sudo grep -qF "wifi.powersave = 2" "$LOC" 2>/dev/null; then
-        echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a "$LOC" &>> "$INSTLOG"
-      fi
-      sudo systemctl restart NetworkManager &>> "$INSTLOG"
-    else
-      echo -e "$CWR - NetworkManager isn't installed; skipping WiFi powersave config."
-    fi
-  fi
-
   # Sync pacman DBs first: on a fresh/torn-down system /var/lib/pacman/sync/
   # is empty, and without it both base-devel and makepkg -si fail with
   # "database file for ... does not exist". This must precede yay's build.
