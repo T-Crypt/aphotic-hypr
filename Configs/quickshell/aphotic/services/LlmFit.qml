@@ -63,7 +63,7 @@ Singleton {
         // undefined here -- the property isn't populated by the time this
         // signal fires, a real Quickshell Process timing quirk (every
         // other correct onExited handler in this codebase, e.g.
-        // AiProviders.qml's claudeAuthProc/codexAuthProc, captures the
+        // AiProviders.qml's claudeAuthProc, captures the
         // exit code as the signal's own argument instead). That made
         // `checkProc.exitCode === 0` always false, so the Hardware
         // Advisor permanently reported llmfit as not installed even when

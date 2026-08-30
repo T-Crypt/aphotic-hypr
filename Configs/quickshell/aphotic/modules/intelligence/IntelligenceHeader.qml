@@ -106,7 +106,7 @@ ColumnLayout {
 
     // Fixed-width provider labels + an unbounded Ollama model name can
     // together exceed the panel's width. This used to scroll horizontally
-    // with no visible affordance, so pills like "Codex" silently ended up
+    // with no visible affordance, so pills like "ChatGPT" silently ended up
     // off-screen with no hint they existed. Wrapping onto additional lines
     // instead keeps every pill visible and reachable with a plain click --
     // the card has vertical room to spare for it.

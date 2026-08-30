@@ -4,7 +4,7 @@
 # @cmd.desc: Check AI backend status, switch the active provider profile
 # @cmd.group: AI
 # @cmd.opt: status         | Show reachability of Claude Code / Ollama, loaded models
-# @cmd.opt: profile <provider>[:<model>] | Switch the AI panel's active provider (ollama/claude/codex/gemini/chatgpt), optionally the ollama model
+# @cmd.opt: profile <provider>[:<model>] | Switch the AI panel's active provider (ollama/claude/gemini/chatgpt), optionally the ollama model
 # @cmd.opt: fit [n]        | Hardware-aware model recommendations via llmfit (default top 3)
 
 aphotic_cmd_ai() {
@@ -50,15 +50,15 @@ aphotic_cmd_ai() {
             # use), so a running shell picks this up live, no reload needed.
             aphotic_require jq || return 1
             local arg="${1:-}" provider model
-            [[ -z "$arg" ]] && { aphotic_err "usage: aphotic ai profile <provider>[:<model>] (provider: ollama, claude, codex, gemini, chatgpt)"; return 1; }
+            [[ -z "$arg" ]] && { aphotic_err "usage: aphotic ai profile <provider>[:<model>] (provider: ollama, claude, gemini, chatgpt)"; return 1; }
             provider="${arg%%:*}"
             model=""
             [[ "$arg" == *:* ]] && model="${arg#*:}"
 
             case "$provider" in
-                ollama|claude|codex|gemini|chatgpt) ;;
+                ollama|claude|gemini|chatgpt) ;;
                 *)
-                    aphotic_err "unknown provider '${provider}' -- must be one of: ollama, claude, codex, gemini, chatgpt"
+                    aphotic_err "unknown provider '${provider}' -- must be one of: ollama, claude, gemini, chatgpt"
                     return 1
                     ;;
             esac
@@ -128,7 +128,7 @@ Usage: aphotic ai <status|profile|fit> [args]
   status                     Show Claude Code / Ollama reachability and loaded models
   profile <provider>[:<model>]
                              Switch the AI panel's active provider
-                             (ollama, claude, codex, gemini, chatgpt) --
+                             (ollama, claude, gemini, chatgpt) --
                              optionally set the model too (ollama only,
                              e.g. 'ollama:llama3.1:8b')
   fit [n]                    Hardware-aware model recommendations via llmfit (default top 3)

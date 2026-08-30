@@ -16,15 +16,6 @@ Singleton {
     readonly property var _baseProviders: [
         { id: "ollama", label: "Ollama", requiresApiKey: false },
         { id: "claude", label: "Claude", requiresApiKey: false },
-        // "Codex" is the CLI-subprocess sibling of "Claude" (its own login
-        // session, not an API key -- see codexAvailable below), distinct
-        // from "ChatGPT" below, which stays a real, separate raw-HTTP
-        // provider that genuinely needs an API key. Codex's own OAuth
-        // session isn't a usable bearer token for the public
-        // api.openai.com REST API any more than claude.ai's own session
-        // would be for api.anthropic.com -- conflating the two would have
-        // been architecturally wrong, not just a naming choice.
-        { id: "codex", label: "Codex", requiresApiKey: false },
         { id: "gemini", label: "Gemini", requiresApiKey: true },
         { id: "chatgpt", label: "ChatGPT", requiresApiKey: true }
     ]
@@ -50,37 +41,18 @@ Singleton {
     // checks the CLI's own real auth state instead -- see
     // claudeLoggedIn/refreshClaudeAuth below.
     readonly property bool claudeAvailable: root.claudeLoggedIn
-    // UNVERIFIED (2026-08-29): `codex` isn't installed on this machine
-    // (confirmed: `command -v codex` fails, and it's in neither the
-    // official repos nor AUR under that exact name) and there was no
-    // real binary to test the actual auth-status command/output shape
-    // against, unlike claudeAvailable above, which WAS verified live.
-    // `codex login status` and the exec-mode invocation in sendMessage()
-    // below are both a good-faith best guess at OpenAI's real Codex CLI
-    // surface, not confirmed. Treat this the same way the rest of this
-    // session treats an unverified fix: real risk it's wrong, needs a
-    // live check against the actual installed binary before trusting it
-    // -- see docs/LEDGER.md.
-    readonly property bool codexAvailable: root.codexLoggedIn
     readonly property bool geminiAvailable: AiKeys.hasGeminiKey
     readonly property bool chatgptAvailable: AiKeys.hasOpenaiKey
 
     property bool claudeCliPresent: false
     property bool claudeLoggedIn: false
-    property bool codexCliPresent: false
-    property bool codexLoggedIn: false
 
     // Re-checkable on demand (the Settings pane calls this on a manual
     // refresh) since logging in happens outside this shell entirely (a
-    // real `claude login`/`codex login` in a terminal) -- there's no live
-    // signal this process could otherwise observe to know the moment
-    // that finishes.
+    // real `claude login` in a terminal) -- there's no live signal this
+    // process could otherwise observe to know the moment that finishes.
     function refreshClaudeAuth(): void {
         claudeAuthProc.running = true;
-    }
-
-    function refreshCodexAuth(): void {
-        codexAuthProc.running = true;
     }
 
     Process {
@@ -107,34 +79,6 @@ Singleton {
             // result, not an error.
             if (exitCode !== 0 && !root.claudeCliPresent)
                 root.claudeLoggedIn = false;
-        }
-    }
-
-    // See codexAvailable's comment above -- `codex login status` and its
-    // JSON output shape are a best-effort guess, not confirmed against a
-    // real binary. Written defensively (checks a couple of plausible key
-    // names) so a close-but-not-exact real output shape has a chance of
-    // still working, but this needs a real live test before it's trusted.
-    Process {
-        id: codexAuthProc
-        command: ["codex", "login", "status"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.codexCliPresent = true;
-                try {
-                    const data = JSON.parse(text);
-                    root.codexLoggedIn = data.loggedIn === true || data.logged_in === true || data.authenticated === true;
-                } catch (e) {
-                    // Some CLI status subcommands print human-readable
-                    // text instead of JSON -- a plain substring check as
-                    // a last resort, still better than assuming false.
-                    root.codexLoggedIn = /logged in|authenticated/i.test(text) && !/not logged in|not authenticated/i.test(text);
-                }
-            }
-        }
-        onExited: exitCode => {
-            if (exitCode !== 0 && !root.codexCliPresent)
-                root.codexLoggedIn = false;
         }
     }
 
@@ -306,7 +250,6 @@ Singleton {
     Component.onCompleted: {
         root.refreshOllamaModels();
         root.refreshClaudeAuth();
-        root.refreshCodexAuth();
     }
 
     function isAvailable(providerId: string): bool {
@@ -314,7 +257,6 @@ Singleton {
         case "ollama": return root.ollamaAvailable;
         case "assistant": return root.assistantAvailable;
         case "claude": return root.claudeAvailable;
-        case "codex": return root.codexAvailable;
         case "gemini": return root.geminiAvailable;
         case "chatgpt": return root.chatgptAvailable;
         default: return false;
@@ -362,10 +304,6 @@ Singleton {
                 // below would be actively wrong here, since setting
                 // ANTHROPIC_API_KEY does nothing for this provider.
                 root.errorReceived(requestId, !root.claudeCliPresent ? qsTr("The claude CLI isn't installed.") : qsTr("Not logged in to Claude. Run `claude login` in a terminal, then refresh."));
-            } else if (provider === "codex") {
-                // Same reasoning as claude above -- see codexAvailable's
-                // comment for why this is unverified.
-                root.errorReceived(requestId, !root.codexCliPresent ? qsTr("The codex CLI isn't installed.") : qsTr("Not logged in to Codex. Run `codex login` in a terminal, then refresh."));
             } else {
                 root.errorReceived(requestId, qsTr("No API key configured for %1. Set %2 to enable.").arg(label).arg(root.requiredEnvVar(provider)));
             }
@@ -379,15 +317,6 @@ Singleton {
         case "claude":
             claudeProc.command = ["claude", "-p", text, "--disallowed-tools", "*"];
             claudeProc.running = true;
-            break;
-        case "codex":
-            // UNVERIFIED (see codexAvailable's comment): `codex exec` is a
-            // good-faith guess at the CLI's real non-interactive
-            // prompt-and-exit invocation, modeled on `claude -p`'s shape.
-            // Needs a live test against the real binary before this is
-            // trusted -- see docs/LEDGER.md.
-            codexProc.command = ["codex", "exec", text];
-            codexProc.running = true;
             break;
         case "gemini":
             geminiProc.command = ["curl", "-s", "-m", "30",
@@ -440,25 +369,6 @@ Singleton {
         stderr: StdioCollector {
             onStreamFinished: {
                 if (text.trim().length > 0 && claudeProc.exitCode !== 0)
-                    root.errorReceived(root.activeRequestId, text.trim());
-            }
-        }
-    }
-
-    // UNVERIFIED (see codexAvailable's comment): mirrors claudeProc's
-    // StdioCollector pattern exactly, on the assumption `codex exec` behaves
-    // like a plain prompt-and-exit CLI call the same way `claude -p` does.
-    Process {
-        id: codexProc
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.responseReceived(root.activeRequestId, text.trim());
-                root._finish();
-            }
-        }
-        stderr: StdioCollector {
-            onStreamFinished: {
-                if (text.trim().length > 0 && codexProc.exitCode !== 0)
                     root.errorReceived(root.activeRequestId, text.trim());
             }
         }

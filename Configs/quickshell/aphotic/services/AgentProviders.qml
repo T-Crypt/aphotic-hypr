@@ -15,7 +15,7 @@ Singleton {
 
     readonly property var providers: [
         { id: "claude", label: qsTr("Claude Code"), icon: "smart_toy", processName: "claude", launchCmd: ["claude"] },
-        { id: "codex", label: qsTr("Codex"), icon: "terminal", processName: "codex", launchCmd: ["codex"] },
+        { id: "codex", label: qsTr("ChatGPT"), icon: "terminal", processName: "codex", launchCmd: ["codex"] },
         { id: "ollama", label: qsTr("Ollama"), icon: "dns", processName: null, launchCmd: ["ollama"] }
     ]
 
