@@ -86,6 +86,19 @@ QtObject {
         return Qt.hsla(((hue % 360) + 360) % 360 / 360, 0.5, 0.62, 1);
     }
 
+    function _hueForKey(key: string): int {
+        let hash = 0;
+        for (let i = 0; i < key.length; i++)
+            hash = (hash * 31 + key.charCodeAt(i)) | 0;
+        return Math.abs(hash) % 360;
+    }
+
+    function groupColorFor(sessionHue: real, agentId: string): color {
+        if (!Settings.agentGraphGroupByParent || !agentId)
+            return root.sessionColor(sessionHue);
+        return root.sessionColor(root._hueForKey(agentId));
+    }
+
     onSessionsChanged: root.rebuild()
     onAreaWidthChanged: root.rebuild()
     onAreaHeightChanged: root.rebuild()
@@ -116,7 +129,8 @@ QtObject {
                 locality: session.modelInfo?.locality ?? "",
                 quant: session.modelInfo?.quant ?? "",
                 modelRaw: session.modelInfo?.raw ?? session.model ?? "",
-                sessionColor: sessionColor
+                sessionColor: sessionColor,
+                groupColor: sessionColor
             });
 
             const visible = session.nodes.slice(-root.maxNodesPerSession);
@@ -141,7 +155,8 @@ QtObject {
                     durationMs: node.durationMs ?? 0,
                     category: category,
                     categoryColor: root.categoryColor(category),
-                    sessionColor: sessionColor
+                    sessionColor: sessionColor,
+                    groupColor: root.groupColorFor(session.hue ?? 0, node.agentId)
                 });
             }
 
