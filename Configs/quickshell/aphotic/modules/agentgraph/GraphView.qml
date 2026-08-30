@@ -356,9 +356,10 @@ Item {
                                 : node.errored
                                     ? Qt.alpha(Colours.palette.m3error, 0.85)
                                     : Qt.alpha(node.modelData.categoryColor ?? Colours.palette.m3surfaceContainerHigh, 0.92)
-                        border.width: 1.5
-                        border.color: Qt.alpha(node.modelData.sessionColor ?? Colours.palette.m3outlineVariant, node.isSession ? 0.85 : 0.55)
+                        border.width: pill.grouped ? 2.5 : 1.5
+                        border.color: Qt.alpha(node.modelData.groupColor ?? Colours.palette.m3outlineVariant, node.isSession ? 0.85 : (pill.grouped ? 0.9 : 0.55))
 
+                        readonly property bool grouped: Settings.agentGraphGroupByParent && node.modelData.kind === "subagent"
                         readonly property color ink: Colours.contrastOn(pill.color)
 
                         Behavior on scale {

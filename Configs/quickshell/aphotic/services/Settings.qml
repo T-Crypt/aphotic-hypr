@@ -117,6 +117,7 @@ Singleton {
     // machine should pick up load from an upgrade it never opted into.
     property string agentGraphQuality: "auto"
     property string agentGraphAccent: ""
+    property bool agentGraphGroupByParent: false
     property string ggufModelsDir: `${Quickshell.env("HOME")}/Models/gguf`
 
     property bool intelligenceEnabled: true
@@ -274,6 +275,7 @@ Singleton {
             agentSelectedProvider: root.agentSelectedProvider,
             agentGraphQuality: root.agentGraphQuality,
             agentGraphAccent: root.agentGraphAccent,
+            agentGraphGroupByParent: root.agentGraphGroupByParent,
             ggufModelsDir: root.ggufModelsDir,
             assistantWelcomeShown: root.assistantWelcomeShown,
             dndEnabled: root.dndEnabled,
@@ -581,6 +583,8 @@ Singleton {
                     root.agentGraphQuality = data.agentGraphQuality;
                 if (typeof data.agentGraphAccent === "string")
                     root.agentGraphAccent = data.agentGraphAccent;
+                if (typeof data.agentGraphGroupByParent === "boolean")
+                    root.agentGraphGroupByParent = data.agentGraphGroupByParent;
                 if (typeof data.ggufModelsDir === "string" && data.ggufModelsDir.length > 0)
                     root.ggufModelsDir = data.ggufModelsDir;
                 if (typeof data.assistantWelcomeShown === "boolean")
