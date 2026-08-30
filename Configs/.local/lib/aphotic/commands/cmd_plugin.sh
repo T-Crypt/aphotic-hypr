@@ -23,6 +23,38 @@
 
 _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 
+# Manifest v3 additions (see docs/archive/PLUGIN_SYSTEM.md): [owns] and
+# [ui.<surface-kind>] -- only `dashboard_tab` is shipped so far, the
+# natural extension point for a second UI-surface kind (a bar module, a
+# Settings pane) once a second plugin actually needs one. Both read as
+# empty/null on a v1 or v2 manifest, same "optional field, no error"
+# contract v2's category addition already established.
+_aphotic_plugin_owns_json() {
+    local manifest="$1" keys
+    keys="$(aphotic_toml_get_array "$manifest" owns config_keys | jq -R . | jq -s .)"
+    jq -n --argjson config_keys "${keys:-[]}" '{config_keys: $config_keys}'
+}
+
+_aphotic_plugin_ui_json() {
+    local manifest="$1" id icon label component
+    id="$(aphotic_toml_get "$manifest" ui.dashboard_tab id)"
+    icon="$(aphotic_toml_get "$manifest" ui.dashboard_tab icon)"
+    label="$(aphotic_toml_get "$manifest" ui.dashboard_tab label)"
+    component="$(aphotic_toml_get "$manifest" ui.dashboard_tab component)"
+
+    if [[ -z "$component" ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    jq -n \
+        --arg id "${id:-}" \
+        --arg icon "${icon:-}" \
+        --arg label "${label:-}" \
+        --arg component "$component" \
+        '{dashboard_tab: {id: $id, icon: $icon, label: $label, component: $component}}'
+}
+
 _aphotic_plugin_describe() {
     local name="$1" dir manifest display desc version category caps enabled missing bin
     dir="$(_aphotic_plugin_dir "$name")"
@@ -52,7 +84,9 @@ _aphotic_plugin_describe() {
         --argjson capabilities "${caps:-[]}" \
         --argjson enabled "$enabled" \
         --argjson missing_binaries "$missing" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries}'
+        --argjson owns "$(_aphotic_plugin_owns_json "$manifest")" \
+        --argjson ui "$(_aphotic_plugin_ui_json "$manifest")" \
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui}'
 }
 
 _aphotic_plugin_list_installed_json() {
@@ -298,6 +332,52 @@ _aphotic_plugin_install_deps() {
     fi
 }
 
+# Records/refreshes what `aphotic plugin install <name>` just installed
+# in APHOTIC_PLUGINS_STATE_FILE's "installed" map -- this is the
+# registry §2.2 of APHOTIC_UNIFIED_VISION.md asks for, recording per-
+# installed-plugin what it owns so remove can reverse it symmetrically.
+# It's also what PluginRegistry.qml (Quickshell side) reads to resolve
+# ui-surface tabs -- one JSON object, two consumers, kept in sync here
+# rather than duplicated. Called at the end of install(); enable/disable
+# don't touch it, since aphotic_plugin_is_enabled already layers on top
+# via the same file's "disabled" array.
+_aphotic_plugin_registry_sync() {
+    local name="$1" dir manifest version caps owns ui tmp
+    aphotic_require jq || return 1
+    dir="$(_aphotic_plugin_dir "$name")"
+    manifest="${dir}/plugin.toml"
+    [[ -f "$manifest" ]] || return 1
+
+    version="$(aphotic_toml_get "$manifest" plugin version)"
+    caps="$(aphotic_toml_get_array "$manifest" plugin capabilities | jq -R . | jq -s .)"
+    owns="$(_aphotic_plugin_owns_json "$manifest")"
+    ui="$(_aphotic_plugin_ui_json "$manifest")"
+
+    [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
+    tmp="$(mktemp)"
+    jq --arg n "$name" \
+       --arg version "${version:-0.0.0}" \
+       --argjson capabilities "${caps:-[]}" \
+       --argjson owns "$owns" \
+       --argjson ui "$ui" \
+       '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui}})' \
+       "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+}
+
+# Reverse of the above -- called from remove(). Deleting the registry
+# entry is what makes a ui-surface plugin's tab disappear from the
+# running shell (PluginRegistry.qml's dashboardTabs recomputes off this
+# same file, watched live via FileView) without the shell needing to
+# know anything else changed.
+_aphotic_plugin_registry_remove() {
+    local name="$1" tmp
+    aphotic_require jq || return 1
+    [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || return 0
+    tmp="$(mktemp)"
+    jq --arg n "$name" 'if .installed then .installed |= del(.[$n]) else . end' \
+       "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+}
+
 _aphotic_plugin_install() {
     local name="$1" link="$2" src dest
     [[ -n "$name" ]] || { aphotic_err "usage: aphotic plugin install <name> [--link]"; return 1; }
@@ -327,6 +407,7 @@ _aphotic_plugin_install() {
     find "$dest" -path "*/hooks/*" -type f -exec chmod +x {} \; 2>/dev/null || true
 
     _aphotic_plugin_install_deps "$dest"
+    _aphotic_plugin_registry_sync "$name"
 
     aphotic_ok "installed ${name}"
     echo "PLUGIN INSTALLED: ${name}"
@@ -339,6 +420,7 @@ _aphotic_plugin_remove() {
     [[ -e "$dest" ]] || { aphotic_err "not installed: ${name}"; return 1; }
     rm -rf "$dest"
     aphotic_plugin_set_enabled "$name" true # clear any disabled-state entry
+    _aphotic_plugin_registry_remove "$name"
     aphotic_ok "removed ${name}"
 }
 
