@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 import qs.services.ai
 
 // Uniform interface over the four AI Chat providers. Claude is the only
@@ -163,6 +164,7 @@ Singleton {
     // is that missing signal, updated explicitly on every attempt.
     property bool ollamaReachable: false
     property bool startingOllama: false
+    property bool stoppingOllama: false
 
     function refreshOllamaModels(): void {
         if (!AiConfig.ollamaHostConfigured) {
@@ -192,6 +194,13 @@ Singleton {
         root.startingOllama = true;
         Quickshell.execDetached(["ollama", "serve"]);
         ollamaStartupRetry.restart();
+    }
+
+    function stopOllama(): void {
+        if (root.stoppingOllama || !root.ollamaReachable)
+            return;
+        root.stoppingOllama = true;
+        ollamaStopProc.exec(["sh", "-c", "pkill -x ollama"]);
     }
 
     function refreshRunningModels(): void {
@@ -262,8 +271,41 @@ Singleton {
             root.refreshOllamaModels();
             if (root.ollamaReachable || attempts >= 8) {
                 stop();
+                if (!root.ollamaReachable)
+                    Toaster.toast(qsTr("Couldn't start Ollama"), qsTr("Not reachable at %1 after starting -- check the ollama binary is installed").arg(AiConfig.ollamaHost), "error");
                 attempts = 0;
                 root.startingOllama = false;
+            }
+        }
+        onRunningChanged: if (running) attempts = 0
+    }
+
+    Process {
+        id: ollamaStopProc
+        onExited: exitCode => {
+            if (exitCode === 127) {
+                root.stoppingOllama = false;
+                Toaster.toast(qsTr("Couldn't stop Ollama"), qsTr("pkill isn't available on this system"), "error");
+                return;
+            }
+            ollamaStopRetry.restart();
+        }
+    }
+
+    Timer {
+        id: ollamaStopRetry
+        interval: 500
+        repeat: true
+        property int attempts: 0
+        onTriggered: {
+            attempts += 1;
+            root.refreshOllamaModels();
+            if (!root.ollamaReachable || attempts >= 6) {
+                stop();
+                if (root.ollamaReachable)
+                    Toaster.toast(qsTr("Couldn't stop Ollama"), qsTr("Still reachable at %1 -- it may be running as the system service (sudo systemctl stop ollama)").arg(AiConfig.ollamaHost), "error");
+                attempts = 0;
+                root.stoppingOllama = false;
             }
         }
         onRunningChanged: if (running) attempts = 0
