@@ -356,10 +356,8 @@ Item {
                                 : node.errored
                                     ? Qt.alpha(Colours.palette.m3error, 0.85)
                                     : Qt.alpha(node.modelData.categoryColor ?? Colours.palette.m3surfaceContainerHigh, 0.92)
-                        border.width: 1
-                        border.color: node.isSession || node.running || node.errored
-                            ? "transparent"
-                            : Qt.alpha(Colours.palette.m3outlineVariant, 0.8)
+                        border.width: 1.5
+                        border.color: Qt.alpha(node.modelData.sessionColor ?? Colours.palette.m3outlineVariant, node.isSession ? 0.85 : 0.55)
 
                         readonly property color ink: Colours.contrastOn(pill.color)
 

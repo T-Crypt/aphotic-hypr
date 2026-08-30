@@ -82,6 +82,10 @@ QtObject {
         }
     }
 
+    function sessionColor(hue: real): color {
+        return Qt.hsla(((hue % 360) + 360) % 360 / 360, 0.5, 0.62, 1);
+    }
+
     onSessionsChanged: root.rebuild()
     onAreaWidthChanged: root.rebuild()
     onAreaHeightChanged: root.rebuild()
@@ -94,6 +98,7 @@ QtObject {
         for (let s = 0; s < list.length; s++) {
             const session = list[s];
             const rootIndex = nodes.length;
+            const sessionColor = root.sessionColor(session.hue ?? 0);
             nodes.push({
                 key: session.id,
                 kind: "session",
@@ -106,7 +111,8 @@ QtObject {
                 startedAt: session.startedAt ?? 0,
                 endedAt: session.endedAt ?? 0,
                 cwd: session.cwd ?? "",
-                callCount: session.nodes.length
+                callCount: session.nodes.length,
+                sessionColor: sessionColor
             });
 
             const visible = session.nodes.slice(-root.maxNodesPerSession);
@@ -130,7 +136,8 @@ QtObject {
                     endedAt: node.endedAt ?? 0,
                     durationMs: node.durationMs ?? 0,
                     category: category,
-                    categoryColor: root.categoryColor(category)
+                    categoryColor: root.categoryColor(category),
+                    sessionColor: sessionColor
                 });
             }
 
