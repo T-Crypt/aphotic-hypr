@@ -66,7 +66,7 @@ StyledRect {
                 implicitWidth: replayLabel.implicitWidth + Tokens.padding.medium
                 implicitHeight: 24
                 radius: Tokens.rounding.full
-                color: root.replayMode ? Colours.palette.m3primary : Qt.alpha(Colours.tPalette.m3surfaceContainerHigh, 0.9)
+                color: root.replayMode ? Colours.palette.m3primary : Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.9)
                 border.width: 1
                 border.color: root.replayMode ? "transparent" : Colours.palette.m3outlineVariant
 
@@ -122,6 +122,7 @@ StyledRect {
         GraphView {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            visible: root.visible
             sessions: root.replayMode ? replay.sessions : AgentGraphService.sessions
         }
 
