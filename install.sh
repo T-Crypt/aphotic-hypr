@@ -294,7 +294,6 @@ main() {
 
   print_stage 3 "System prep"
   check_conflicting_packages
-  configure_wifi_powersave
 
   # Sync pacman DBs first: on a fresh/torn-down system /var/lib/pacman/sync/
   # is empty, and without it both base-devel and makepkg -si fail with

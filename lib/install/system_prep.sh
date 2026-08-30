@@ -2,27 +2,6 @@
 # lib/install/system_prep.sh
 set -euo pipefail
 
-configure_wifi_powersave() {
-  confirm "Would you like to disable WiFi powersave?" n || return 0
-
-  if ! systemctl list-unit-files NetworkManager.service &>/dev/null; then
-    echo -e "$CWR - NetworkManager isn't installed; skipping WiFi powersave config."
-    return 0
-  fi
-
-  if [[ "$DRY_RUN" == "1" ]]; then
-    echo -e "$CNT - [dry-run] would disable WiFi powersave via NetworkManager"
-    return 0
-  fi
-
-  echo -e "$CNT - Disabling WiFi powersave..."
-  local loc="/etc/NetworkManager/conf.d/wifi-powersave.conf"
-  if ! sudo grep -qF "wifi.powersave = 2" "$loc" 2>/dev/null; then
-    echo -e "[connection]\nwifi.powersave = 2" | sudo tee -a "$loc" &>> "$INSTLOG"
-  fi
-  sudo systemctl restart NetworkManager &>> "$INSTLOG"
-}
-
 ensure_base_devel() {
   command -v fakeroot >/dev/null 2>&1 && return 0
   echo -e "$CNT - base-devel not found; installing it now (required to build AUR packages)."
