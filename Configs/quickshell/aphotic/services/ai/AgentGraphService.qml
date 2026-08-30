@@ -31,6 +31,7 @@ Singleton {
     readonly property int layoutHz: root.tier === "lite" ? 30 : 60
     readonly property int maxEvents: root.tier === "full" ? 2400 : root.tier === "standard" ? 1200 : 600
     readonly property int edgeParticles: root.tier === "full" ? 6 : root.tier === "standard" ? 3 : 1
+    readonly property int replayStepEvents: root.tier === "full" ? 1 : root.tier === "standard" ? 2 : 6
     readonly property bool anyRunning: root._sessions.some(s => s.status === "running")
 
     readonly property bool _gpuContended: AgentProviders.ollamaLoadedModels.length > 0
