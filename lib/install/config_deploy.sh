@@ -80,13 +80,23 @@ deploy_user_configs() {
   #     (since cp -R can no longer "reset" a symlinked target the way it
   #     resets a plain file) re-running install.sh would keep appending
   #     duplicate require lines with nothing ever clearing them.
+  # Real bug, reproduced live: `rm -rf` immediately followed by `ln -sfn`
+  # leaves the destination briefly absent. If Hyprland reloads its config
+  # in that exact gap for keybinds.lua, it sees the module missing and
+  # trips emergency mode. `ln -sfn` alone (no preceding rm) already
+  # replaces an existing file or symlink atomically -- rm -rf is only
+  # needed for the one-time case where the destination is still a real
+  # directory (never true after the first successful deploy, since
+  # everything here becomes a symlink), so it's now conditional instead
+  # of unconditional.
   for entry in "$ROOT_DIR/Configs/hypr/"*; do
     name="$(basename "$entry")"
     case "$name" in
       custom.lua|monitors.lua|hyprland.lua) continue ;;
     esac
-    rm -rf "$HOME/.config/hypr/$name"
-    ln -sfn "$entry" "$HOME/.config/hypr/$name"
+    dest="$HOME/.config/hypr/$name"
+    [[ -d "$dest" && ! -L "$dest" ]] && rm -rf "$dest"
+    ln -sfn "$entry" "$dest"
   done
   chmod +x "$HOME/.config/hypr/scripts/"*
 
@@ -214,6 +224,24 @@ install_vscode_extensions() {
   tar -xf "$ROOT_DIR/src/extensions.tar.gz" -C "$HOME/.vscode/"
 }
 
+# Real bug, reproduced live: `systemctl --user restart aphotic-shell
+# .service` only manages whatever's already in the unit's own cgroup --
+# a `qs -c aphotic` process from before a symlink race (see
+# deploy_user_configs above), a crash, or a manual launch predates the
+# service's current Main PID and isn't touched by the restart at all, so
+# it survives alongside the fresh instance and duplicates the bar. Kill
+# anything matching that isn't the service's current Main PID before
+# restarting, so the restart always converges on exactly one process.
+kill_orphan_qs_processes() {
+  local service_pid pid
+  service_pid=$(systemctl --user show -p MainPID --value aphotic-shell.service 2>/dev/null || echo 0)
+  while IFS= read -r pid; do
+    [[ -z "$pid" || "$pid" == "$service_pid" ]] && continue
+    echo -e "$CWR - Found an orphaned qs -c aphotic process (PID $pid, not owned by aphotic-shell.service) -- killing it before restart." | tee -a "$INSTLOG"
+    kill "$pid" 2>/dev/null || true
+  done < <(pgrep -f "qs -c aphotic" 2>/dev/null)
+}
+
 config_sync() {
   TOTAL_STAGES=3
   print_stage 1 "Backup"
@@ -233,6 +261,7 @@ config_sync() {
 
   print_stage 3 "Restarting the shell"
   if systemctl --user is-enabled aphotic-shell.service &>/dev/null; then
+    kill_orphan_qs_processes
     systemctl --user restart aphotic-shell.service &>> "$INSTLOG" && echo -e "$COK - Restarted aphotic-shell.service." || echo -e "$CWR - Could not restart aphotic-shell.service; restart Quickshell manually (SUPER+B)."
   else
     echo -e "$CNT - aphotic-shell.service isn't enabled; restart Quickshell manually (SUPER+B) to pick up the new config."
