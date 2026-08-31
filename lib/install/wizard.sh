@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Layers are carried as a comma-separated string all the way through, so
+# every gate needs the same exact-match test rather than a substring one --
+# "ai" must not match "aichat" or "exploit-ai".
+layer_selected() {
+  local needle="$1" name
+  IFS=',' read -ra _layer_list <<< "${LAYERS:-}"
+  for name in "${_layer_list[@]:-}"; do
+    [[ "$name" == "$needle" ]] && return 0
+  done
+  return 1
+}
+
 prompt_profile() {
   local answer
   read -rp "Profile? [minimal/full] (full): " answer
@@ -86,6 +98,104 @@ prompt_theme() {
   local answer
   read -rp "Theme? (default): " answer
   echo "${answer:-default}"
+}
+
+# Reads aphotic.toml's [install].layers as a CSV, or "" if the file/key is
+# missing. Shared by load_saved_config() and main()'s previous-layers
+# lookup for the exploit-disclaimer re-acknowledgment diff, so the two
+# don't carry their own slightly-different copies of the same tomllib call.
+read_saved_layers() {
+  local toml="$1"
+  [[ -f "$toml" ]] || { echo ""; return 0; }
+  "$PYTHON_BIN" -c '
+import sys, tomllib
+try:
+    d = tomllib.load(open(sys.argv[1], "rb"))
+    print(",".join(d.get("install", {}).get("layers", [])))
+except Exception:
+    print("")
+' "$toml" 2>/dev/null || echo ""
+}
+
+# Config-sync mode still needs to know the selected layers (the `ai` layer
+# gates the Claude Code hook wiring in config_deploy.sh), but it must never
+# prompt -- the whole point of the flag is a non-interactive config
+# refresh.
+load_saved_config() {
+  [[ -f "$APHOTIC_TOML" ]] || return 0
+  LAYERS_KNOWN=1
+  local saved_profile saved_theme
+  saved_profile=$("$PYTHON_BIN" -c '
+import sys, tomllib
+try:
+    print(tomllib.load(open(sys.argv[1], "rb")).get("install", {}).get("profile", ""))
+except Exception:
+    print("")
+' "$APHOTIC_TOML" 2>/dev/null)
+  saved_theme=$("$PYTHON_BIN" -c '
+import sys, tomllib
+try:
+    print(tomllib.load(open(sys.argv[1], "rb")).get("theme", {}).get("name", ""))
+except Exception:
+    print("")
+' "$APHOTIC_TOML" 2>/dev/null)
+  [[ -z "$PROFILE" ]] && PROFILE="$saved_profile"
+  [[ -z "$LAYERS" ]] && LAYERS="$(read_saved_layers "$APHOTIC_TOML")"
+  [[ -z "$THEME" ]] && THEME="$saved_theme"
+}
+
+# Resolves PROFILE/LAYERS/THEME for a fresh (non---config-only) install.
+#
+# Default, with none of --profile/--with/--opt-in passed, is the
+# zero-prompt "daily driver" path -- full profile, no optional layers. A
+# brand-new Arch/Hyprland user shouldn't have to know what a "layer" or
+# "profile" is before they can finish installing; --opt-in restores the
+# full interactive cherry-pick wizard below for anyone who wants it, and
+# any of --profile/--with/--theme passed directly always wins over both.
+#
+# This is a deliberate judgment call, not a mechanical default: real
+# layer packages still only install via this terminal flow today (no
+# other mechanism exists yet), so the wizard itself isn't going away, just
+# no longer imposed on every fresh install by default. See the PR
+# description for the fuller reasoning and why a post-first-launch picker
+# isn't built here instead.
+resolve_config() {
+  # Reuses detect.sh's already-computed findings (stage 1) rather than
+  # re-querying aphotic.toml here -- the whole point of a consolidated
+  # detection pass is that later stages consume it instead of repeating it.
+  if [[ "$DETECTED_APHOTIC_INSTALL" == "1" && -z "$PROFILE" && -z "$LAYERS" ]]; then
+    echo -e "$CNT - Existing config found (profile=$DETECTED_APHOTIC_PROFILE, layers=${DETECTED_APHOTIC_LAYERS:-none})."
+    if [[ -t 0 ]]; then
+      if confirm "Reinstall same config?" y; then
+        PROFILE="$DETECTED_APHOTIC_PROFILE"
+        LAYERS="$DETECTED_APHOTIC_LAYERS"
+      fi
+    else
+      # No TTY to ask -- reuse rather than silently fall through to the
+      # zero-prompt daily-driver default below, which would quietly drop
+      # whatever layers a previous run had already selected.
+      echo -e "$CNT - Non-interactive install with an existing config and no --profile/--with -- reusing it."
+      PROFILE="$DETECTED_APHOTIC_PROFILE"
+      LAYERS="$DETECTED_APHOTIC_LAYERS"
+    fi
+  fi
+
+  if [[ -z "$PROFILE" && -z "$LAYERS" && "$OPT_IN" != "1" ]]; then
+    echo -e "$CNT - No --profile/--with/--opt-in given -- installing the daily-driver setup (full profile, no optional layers: gaming/dev/ai/exploit)."
+    echo -e "$CNT - Run with --opt-in for the interactive layer picker, or --with gaming,dev,ai,exploit to pick layers directly. Layers can always be added later by re-running install.sh."
+    PROFILE="full"
+    LAYERS=""
+    [[ -z "$THEME" ]] && THEME="default"
+    # Return here, not just fall through -- LAYERS="" is this branch's real
+    # answer (no optional layers), and the -z checks below can't tell that
+    # apart from "not resolved yet," which would otherwise re-trigger
+    # prompt_layers right after promising a zero-prompt path.
+    return 0
+  fi
+
+  [[ -z "$PROFILE" ]] && PROFILE=$(prompt_profile)
+  [[ -z "$LAYERS" ]] && LAYERS=$(prompt_layers)
+  [[ -z "$THEME" ]] && THEME=$(prompt_theme)
 }
 
 write_aphotic_toml() {

@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.0
+
+A modular plugin architecture — AI agent hooks (Claude Code/Codex/OpenCode) and Agent Graph are now opt-in plugins, not automatic: run `aphotic plugin install claude-hooks` (or codex-hooks/opencode-hooks/agent-graph) to keep them. See the README's Install section for details.
+
 ## 1.2.0
 
 A live Agent Graph tab for Claude Code sessions, plus Hyprland-native

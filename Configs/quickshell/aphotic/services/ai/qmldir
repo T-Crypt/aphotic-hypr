@@ -1,5 +1,4 @@
 module qs.services.ai
-singleton AgentGraphService 1.0 AgentGraphService.qml
 singleton AgentRoles 1.0 AgentRoles.qml
 singleton AiConfig 1.0 AiConfig.qml
 singleton AiKeys 1.0 AiKeys.qml

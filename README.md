@@ -43,7 +43,7 @@
 
 ## Preview
 
-One shell, reskinned live from a wallpaper. No rebuild, no relogin. The Agent Graph tab, live, over **Tokyo Night** — reskinned the same way across **Lofi** and **Gruvbox**, two more of the eight themes that ship out of the box:
+One shell, reskinned live from a wallpaper. No rebuild, no relogin. The Agent Graph tab (an installable plugin — see [Plugin System](#plugin-system)), live, over **Tokyo Night** — reskinned the same way across **Lofi** and **Gruvbox**, two more of the eight themes that ship out of the box:
 
 <p align="center">
   <img src="./assets/preview.png" width="900">
@@ -215,7 +215,7 @@ The Command Center's AI Chat tab talks to four providers behind one interface, p
 - **Ollama model manager** (Settings → AI) — every installed model with live/idle status and VRAM usage, one click to set active, delete, or pull-by-name to download a new one, straight against Ollama's own REST API.
 - **Weather card** (Command Center → Dashboard) — current temperature/condition plus a 3-day forecast via Open-Meteo. Leave the location blank for IP-based auto-detection, or set an explicit city + Celsius/Fahrenheit in Settings → Clock/Date. The resolved location and last-good forecast are cached to disk, so a fresh shell start shows the last known weather immediately instead of a blank card.
 - **Aphotic Assistant** (opt-in) — a local chatbot pinned to a fixed persona/system-prompt, installed via `install.sh` on NVIDIA machines that have (or add) the `ai` layer. Shows up as a fifth provider pill once installed, in both AI Chat and Intelligence. Picks its model via `llmfit`'s hardware-aware recommendation at install time (a small broadly-compatible default if `llmfit` isn't available), greets you once on first open, and Settings → AI shows its installed model with reinstall/uninstall controls. `install.sh --with-assistant`/`--no-assistant` skip the prompt; silently unavailable on non-NVIDIA machines.
-- **Agent module** (bar icon) — tracks three agentic CLI harnesses, Claude Code/Codex/OpenCode, behind one switchable icon: left-click for a session/token-usage panel, right-click launches the harness in a new terminal, middle-click cycles between them. Ollama and other inference-only providers aren't harnesses and don't get a tab here — see [`docs/AGENT_TRACKING.md`](docs/AGENT_TRACKING.md) for the distinction. Usage comes from a 15-minute local-transcript scan (aggregate token counts only, never prompts/responses); the Claude Code and OpenCode hooks' live per-session data is read and rendered as real per-session rows in the panel, and Codex's hook wires the same way. The agent stack as a whole follows the installer's `ai` layer — with it off, hooks are never wired and the module doesn't run.
+- **Agent module** (bar icon) — tracks agentic CLI harnesses (Claude Code, Codex, OpenCode) behind one switchable icon: left-click for a session/token-usage panel, right-click launches the harness in a new terminal, middle-click cycles between them. Ollama and other inference-only providers aren't harnesses and don't get a tab here — see [`docs/AGENT_TRACKING.md`](docs/AGENT_TRACKING.md) for the distinction. Each harness's icon only appears once its own harness-hook plugin (`claude-hooks`/`codex-hooks`/`opencode-hooks`, `aphotic plugin install <name>`) is installed and enabled — see [Plugin System](#plugin-system) below. Usage comes from a 15-minute local-transcript scan (aggregate token counts only, never prompts/responses); an installed hook plugin's live per-session data is read and rendered as real per-session rows in the panel.
 
 </details>
 
@@ -290,9 +290,16 @@ Every toggle here persists to `~/.local/state/aphotic/settings.json` and survive
 
 ## Plugin System
 
-Aphotic ships a small plugin mechanism (design docs live in the repo's maintainer notes): a plugin is a directory with a `plugin.toml` manifest and one or more hook scripts. Every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's `on_theme_change` hook with the freshly-resolved palette as JSON on stdin; a project opened from the launcher's `@` mode or a Workspace Profile launch fires `on_project_open`/`on_workspace_launch` for any plugin that declares interest in that specific hook. All hooks are fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall what it's piggybacking on. A `category` field (dev/security/mobile/ai/theming/productivity) drives filtering in `aphotic plugin list --remote` and Settings → Plugins; security-category plugins live in a separate index that stays untrusted (and unfetched) until explicitly opted into.
+Aphotic base is the shell, rice/theming, Settings, and core Quickshell modules — everything else, AI capabilities included, is an independently installable/removable plugin. A plugin is a directory with a `plugin.toml` manifest (manifest v3) declaring what it is and what it touches:
 
-Plugins are distributed from a separate, purpose-built repo, [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) — kept apart from the main dotfiles so plugins can version and release independently. `aphotic plugin list --remote` (and Settings → Plugins' **Browse available** list) reads that repo's lightweight `index.json` without needing a full clone; `aphotic plugin install <name>` (or the Settings UI's Install button) clones just that plugin locally. The first real plugin, **OpenRGB Sync**, sets your RGB lighting to the theme's accent color on every theme change.
+- **Hooks** — every theme apply (`aphotic theme`, the Wallpapers picker, or `wallswitcher.py`) fires each enabled plugin's `on_theme_change` hook with the freshly-resolved palette as JSON on stdin; a project opened from the launcher's `@` mode or a Workspace Profile launch fires `on_project_open`/`on_workspace_launch` for any plugin declaring interest. All hooks are fire-and-forget, backgrounded, with a 5-second timeout so a slow or broken plugin can't stall what it's piggybacking on.
+- **`[harness]` (the `harness-hook` capability)** — for a plugin that wires itself into a *different* program's own config instead of reacting to an Aphotic event: **Claude Code**, **Codex**, and **OpenCode**'s agent-hook wiring (live per-session tracking in the bar/dashboard, see [Preview](#preview)) are each their own plugin (`claude-hooks`/`codex-hooks`/`opencode-hooks`) rather than baked-in core files. Install/enable runs the plugin's `wire` script; disable/remove runs `unwire` — since the "enabled" state lives in the harness's own config file, not something Aphotic can gate from its own side the way a UI surface can.
+- **`[owns]`** — declares the config keys and/or external config a plugin's presence affects, so install/remove stays auditable instead of each plugin hand-rolling its own cleanup logic.
+- **`[ui.dashboard_tab]`** — lets a plugin contribute a real Command Center tab, loaded dynamically at runtime (no shell rebuild) and gone the instant the plugin is disabled or removed, no leftover UI. **Agent Graph** (live tool-call graph + run replay for Claude Code/Codex/OpenCode, see [Preview](#preview)) is the flagship example — fully out of the base shell, only activates once the `ai` layer is enabled *and* a harness is actually configured.
+
+A `category` field (dev/security/mobile/ai/theming/productivity) drives filtering in `aphotic plugin list --remote` and Settings → Plugins; security-category plugins live in a separate index that stays untrusted (and unfetched) until explicitly opted into.
+
+Plugins are distributed from a separate, purpose-built repo, [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) — kept apart from the main dotfiles so plugins can version and release independently. `aphotic plugin list --remote` (and Settings → Plugins' **Browse available** list) reads that repo's lightweight `index.json` without needing a full clone; `aphotic plugin install <name>` (or the Settings UI's Install button) clones just that plugin locally, auto-syncing the registry repo first if it isn't already on disk — no manual clone step required. Besides Agent Graph and the three harness-hook plugins above, the registry also carries **OpenRGB Sync** (RGB lighting synced to the theme's accent color), **direnv Notice**, and **Workspace Session Log** — all hook-only plugins, no dashboard tab.
 
 ```
 aphotic plugin list [--remote] [--json]   # installed, or browse the remote index
@@ -300,6 +307,9 @@ aphotic plugin install <name> [--link]    # clone (or symlink, for local dev) a 
 aphotic plugin enable|disable <name>
 aphotic plugin remove <name>
 ```
+
+> [!NOTE]
+> Gaming, Dev, and Security don't have their own plugins yet — the shared substrate they'd sit on (a resource-engine core) is still ahead. `ai` is the only domain with real plugins today.
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -328,6 +338,9 @@ None of this is unique by itself. Together it turns a rice from something you in
 >
 > `install.sh` is built for a fresh Arch install, not a machine already carrying another rice. If waybar, rofi/wofi, dunst/mako/swaync, or another bar/launcher/notifier is already installed, it'll offer to remove it — leaving it in place is what caused [#41](https://github.com/T-Crypt/aphotic-hypr/issues/41)'s duplicate, unstyled bar. See `--strip-conflicts`/`--keep-conflicts` below.
 
+> [!WARNING]
+> **Upgrading from before v2.0.0?** Claude Code/Codex/OpenCode agent-hook wiring (live per-session status in the bar/dashboard) and Agent Graph are no longer installed automatically with the `ai` layer — they're opt-in plugins now, same as everything else in the [Plugin System](#plugin-system). `git pull && ./install.sh --config-only` will *not* bring them back on its own. Run `aphotic plugin install claude-hooks` (or `codex-hooks`/`opencode-hooks`, and `agent-graph` for the Dashboard tab) once, after updating, to keep the exact behavior you had before.
+
 ```
 git clone https://github.com/T-Crypt/Aphotic-Hypr && cd Aphotic-Hypr
 chmod +x install.sh
@@ -337,13 +350,18 @@ chmod +x install.sh
 > [!TIP]
 > During **archinstall**, add `git` plus an editor (`nano`, `vim`, or your preferred one) to the package list along with the base set — you'll need `git` to clone this repo, and an editor to tweak any files if necessary. This matters if you're coming from a derivative (CachyOS, Omarchy, etc.) rather than a plain Base Arch install.
 
-Running with no flags launches a short wizard: profile, optional layers, theme. It writes your choices to `aphotic.toml`, the source of truth for every re-run after that.
+Running with no flags installs Aphotic's daily-driver setup — full profile, no optional layers — with zero prompts. It writes your choices to `aphotic.toml`, the source of truth for every re-run after that.
 
 > [!TIP]
-> Prefer to skip the prompts entirely:
+> Want gaming/dev/ai/exploit layers? Either pick them directly:
 > ```
 > ./install.sh --profile full --with gaming,dev --dry-run
 > ```
+> or launch the interactive picker (profile, optional layers, theme):
+> ```
+> ./install.sh --opt-in
+> ```
+> Layers can always be added later by re-running either form.
 
 <details>
 <summary><strong>Full flag reference</strong></summary>
@@ -352,6 +370,7 @@ Running with no flags launches a short wizard: profile, optional layers, theme. 
 |---|---|
 | `--profile <minimal\|full>` | Selects the base package set. Skips the profile prompt. |
 | `--with <layer,layer,...>` | Comma-separated layers to merge in: `gaming`, `dev`, `ai`, `exploit` (a convenience bundle of `exploit-recon`+`exploit-web`+`exploit-network`), or any individual `exploit-*` sublayer (`exploit-recon`, `exploit-web`, `exploit-network`, `exploit-passwords`, `exploit-wordlists`, `exploit-reversing`, `exploit-forensics`, `exploit-reporting`). Skips the layer prompts. |
+| `--opt-in` | Interactive layer picker (preset or cherry-pick prompts). Without this flag (and without `--profile`/`--with`), a fresh install defaults to the daily-driver setup instead. |
 | `--accept-exploit-disclaimer` | Required alongside `--with` in non-interactive/scripted installs when any `exploit`/`exploit-*` layer is selected — accepts the authorized-use disclaimer without the interactive typed-confirmation prompt. The disclaimer text is shown in full before anything is installed. |
 | `--theme <name>` | Pre-selects a theme. Skips the theme prompt. |
 | `--with-assistant` / `--no-assistant` | Install (or skip) the Aphotic Assistant without being asked. `--with-assistant` implies the `ai` layer and needs an NVIDIA GPU. |
@@ -632,7 +651,7 @@ aphotic play guess
 
 ## Roadmap
 
-Aphotic reached **v1.0** on `main`. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, and a CI-tested installer are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history lives in the repo's changelog so this list stays short — here's what's still open:
+Aphotic is at **v2.0.0**. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, a CI-tested installer, and the modular plugin architecture (base shell + independently installable capabilities, see [Plugin System](#plugin-system)) are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history lives in the repo's changelog so this list stays short — here's what's still open:
 
 - **`matugen` as a second color engine** — next up. `theme.toml` reserves the config slot; wiring it in gives themes a real tonal-spot/vibrant/expressive variant picker alongside wallust.
 - **Settings panel gaps** — a Sidebar module, a System-updates action (distinct from the current read-only doctor output), a Theme-palette swatch view, and a Widgets tab. Live per-monitor resolution/scale editing in the Displays pane is blocked on a real Hyprland limitation (`hyprctl keyword monitor` doesn't reapply), not just unbuilt. (Network is already shipped — NetworkManager-backed VPN status/connect in Settings → Network, plus a bar icon; Audio/Bluetooth already get real hover popouts off the bar, see [Bar popouts](#quickshell-shell).)

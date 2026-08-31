@@ -4,12 +4,24 @@ import QtQuick.Effects
 import qs.config
 import qs.components
 import qs.services
+import qs.services.ai
 
 ColumnLayout {
     id: root
 
     required property ScreenState screenState
     property string currentTab: "dashboard"
+
+    // Agent Graph is a plugin (docs/archive/PLUGIN_SYSTEM.md manifest v3),
+    // not core -- its dashboard tab only exists when the "ai" layer is on
+    // AND the plugin is installed+enabled AND at least one harness is
+    // actually configured (APHOTIC_UNIFIED_VISION.md §2.4). The first two
+    // are the generic plugin-system gate (PluginRegistry); the harness
+    // check is this one plugin's own extra activation rule, not something
+    // every ui-surface plugin needs, so it stays a call-site condition
+    // rather than a manifest field.
+    readonly property bool agentGraphAvailable: InstallProfile.aiEnabled && PluginRegistry.isEnabled("agent-graph") && AgentRoles.hasConfiguredHarness
+    readonly property var _agentGraphTab: PluginRegistry.dashboardTabs.find(t => t.plugin === "agent-graph")
 
     // The AI tabs are absent, not empty, when the installer's `ai` layer is
     // off -- see services/InstallProfile.qml.
@@ -19,8 +31,9 @@ ColumnLayout {
         { id: "workspaces", icon: "grid_view", label: qsTr("Workspaces") },
         { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") }
     ].concat(InstallProfile.aiEnabled ? [
-        { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") },
-        { id: "agentGraph", icon: "account_tree", label: qsTr("Agent Graph") }
+        { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") }
+    ] : []).concat(root.agentGraphAvailable && root._agentGraphTab ? [
+        { id: root._agentGraphTab.id, icon: root._agentGraphTab.icon, label: root._agentGraphTab.label }
     ] : [])
 
     onTabsChanged: {
@@ -123,11 +136,15 @@ ColumnLayout {
             id: agentGraphLoader
 
             anchors.centerIn: parent
-            active: InstallProfile.aiEnabled
+            // No static `import` of the plugin's own QML module anywhere
+            // in core -- `source` is a plain file:// URL resolved from
+            // the plugin registry, so the shell compiles and runs
+            // identically whether or not this plugin is installed.
+            active: root.agentGraphAvailable && root._agentGraphTab !== undefined
             asynchronous: true
             visible: agentGraphLoader.opacity > 0
             opacity: root.currentTab === "agentGraph" ? 1 : 0
-            sourceComponent: agentGraphComp
+            source: root.agentGraphAvailable && root._agentGraphTab ? root._agentGraphTab.componentUrl : ""
 
             Behavior on opacity {
                 Anim { type: Anim.DefaultEffects }
@@ -159,11 +176,5 @@ ColumnLayout {
     Component {
         id: aiChatComp
         AiChatTab {}
-    }
-    Component {
-        id: agentGraphComp
-        AgentGraphTab {
-            visible: agentGraphLoader.opacity > 0
-        }
     }
 }

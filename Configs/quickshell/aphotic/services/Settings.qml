@@ -112,7 +112,8 @@ Singleton {
     // Node budget and layout tick rate for the agent graph surface, never
     // its visual treatment -- every tier renders the same look. "auto"
     // resolves from the detected GPU and demotes a tier while Ollama holds
-    // models resident (see services/ai/AgentGraphService.qml); "lite",
+    // models resident (see the agent-graph plugin's AgentGraphService.qml,
+    // docs/archive/PLUGIN_SYSTEM.md manifest v3); "lite",
     // "standard" and "full" pin it. Defaults to "auto" rather than "full"
     // for the same reason depthEffects defaults to "subtle": nobody's
     // machine should pick up load from an upgrade it never opted into.
