@@ -51,6 +51,11 @@ IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp")
 
 
 def list_themes():
+    """Return a sorted list of theme directory names in the awww directory.
+
+    Each theme is represented by a subdirectory under `awww_dir`. Returns
+    an empty list if the awww directory does not exist.
+    """
     if not os.path.isdir(awww_dir):
         return []
     return sorted(
@@ -60,6 +65,11 @@ def list_themes():
 
 
 def list_wallpapers(theme):
+    """List image files for `theme` in the awww directory.
+
+    Returns a sorted list of filenames that match IMAGE_EXTS. If the
+    specified theme directory does not exist, an empty list is returned.
+    """
     theme_dir = os.path.join(awww_dir, theme)
     if not os.path.isdir(theme_dir):
         return []
@@ -70,6 +80,11 @@ def list_wallpapers(theme):
 
 
 def read_state():
+    """Read the persisted theme state JSON and return (theme, wallpaper).
+
+    If the state file is missing or malformed, returns the empty pair
+    ("", "") to indicate no valid current state.
+    """
     try:
         with open(state_path) as f:
             data = json.load(f)
@@ -79,6 +94,12 @@ def read_state():
 
 
 def write_state(theme, wallpaper):
+    """Atomically persist the chosen theme and wallpaper to state_path.
+
+    The function writes to a per-process temporary file and renames it over
+    the real path to avoid leaving a partial file that concurrent readers
+    (like Themes.qml) might try to parse.
+    """
     # Atomic write: a plain open(state_path, "w") truncates the file
     # before writing the new content, so any read landing in that window
     # (Themes.qml watching the file, or this same script fired again by
@@ -98,6 +119,14 @@ def write_state(theme, wallpaper):
 
 
 def parse_engine_pin(theme):
+    """Parse a theme's theme.toml and return engine/icon/gtk pins.
+
+    Reads the theme's theme.toml and extracts known keys from the
+    [engine], [icons], and [gtk] sections. Returns a tuple with
+    (backend, palette, colorscheme, style, papirus_color, icon_theme,
+    cursor_theme, gtk_theme, engine_name, scheme, contrast). Missing
+    fields are empty strings.
+    """
     toml_path = os.path.join(awww_dir, theme, "theme.toml")
     backend = ""
     palette = ""
@@ -167,6 +196,14 @@ qtct_paths = (
 # (so it still takes effect even if the shell isn't running at all). Only
 # applies while the matching Settings.qml *UserSet flag is still false.
 def apply_theme_pins(icon_theme, cursor_theme, gtk_theme):
+    """Apply pinned icon/cursor/GTK themes if the user hasn't overridden them.
+
+    Only updates settings.json when the corresponding "UserSet" flag is
+    not true. When applying a pin, also fire detached system commands to
+    apply the change immediately where possible (gsettings, hyprctl), and
+    update qt5ct/qt6ct configs when present. IO errors are ignored to
+    keep the function robust in varied environments.
+    """
     if not (icon_theme or cursor_theme or gtk_theme):
         return
     try:
@@ -215,6 +252,15 @@ def apply_theme_pins(icon_theme, cursor_theme, gtk_theme):
 
 
 def apply_wallpaper(theme, wallpaper):
+    """Apply `wallpaper` from `theme`.
+
+    This performs the full apply flow: tell awww to display the image,
+    run the theme's pinned colour engine -- matugen, or wallust (or a
+    fixed colorscheme) -- to generate palettes, copy the wallpaper for
+    the launcher, run detached plugin hooks, apply any pinned
+    icon/cursor/GTK themes, persist state, and fire best-effort
+    integration commands (pywalfox, aphotic reload/sddm sync).
+    """
     image_path = os.path.join(awww_dir, theme, wallpaper)
 
     # `awww img` only hands the image to the awww-daemon and returns --
