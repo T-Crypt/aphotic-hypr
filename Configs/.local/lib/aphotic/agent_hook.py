@@ -71,99 +71,104 @@ def trim():
     atomic_write(EVENTS, "".join(lines))
 
 
-try:
-    payload = json.load(sys.stdin)
-except Exception:
-    sys.exit(0)
+def main():
+    try:
+        payload = json.load(sys.stdin)
+    except Exception:
+        sys.exit(0)
 
-session_id = payload.get("session_id") or ""
-raw_event = payload.get("hook_event_name") or ""
-event = EVENT_NAMES.get(raw_event)
-if not session_id or not event:
-    sys.exit(0)
+    session_id = payload.get("session_id") or ""
+    raw_event = payload.get("hook_event_name") or ""
+    event = EVENT_NAMES.get(raw_event)
+    if not session_id or not event:
+        sys.exit(0)
 
-now = time.time()
-stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+    now = time.time()
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
 
-record = {
-    "v": 1,
-    "sessionId": session_id,
-    "event": event,
-    "status": STATUS.get(event, "idle"),
-    "timestamp": stamp,
-    "t": int(now * 1000),
-}
-for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
-                   ("agent_id", "agentId"), ("agent_type", "agentType"),
-                   ("duration_ms", "durationMs"), ("notification_type", "notificationType"),
-                   ("source", "source"), ("end_reason", "endReason"),
-                   ("model", "model"), ("cwd", "cwd"), ("harness", "harness")):
-    value = payload.get(key)
-    if value not in (None, ""):
-        record[field] = value
+    record = {
+        "v": 1,
+        "sessionId": session_id,
+        "event": event,
+        "status": STATUS.get(event, "idle"),
+        "timestamp": stamp,
+        "t": int(now * 1000),
+    }
+    for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
+                       ("agent_id", "agentId"), ("agent_type", "agentType"),
+                       ("duration_ms", "durationMs"), ("notification_type", "notificationType"),
+                       ("source", "source"), ("end_reason", "endReason"),
+                       ("model", "model"), ("cwd", "cwd"), ("harness", "harness")):
+        value = payload.get(key)
+        if value not in (None, ""):
+            record[field] = value
 
-harness = payload.get("harness") or "claude"
+    harness = payload.get("harness") or "claude"
 
-# The Agent tool's own PostToolUse response is the only place Claude Code
-# states which agent id a Task/Agent call spawned. Capturing it here is what
-# turns subagent parentage from a guess into an exact link: this record's
-# toolId is the parent of every later event carrying agent_id == spawnedAgentId.
-response = payload.get("tool_response")
-if isinstance(response, dict):
-    spawned = response.get("agentId")
-    if spawned:
-        record["spawnedAgentId"] = spawned
-    description = response.get("description")
-    if description:
-        record["agentDescription"] = description
-    resolved = response.get("resolvedModel")
-    if resolved:
-        record["agentModel"] = resolved
+    # The Agent tool's own PostToolUse response is the only place Claude Code
+    # states which agent id a Task/Agent call spawned. Capturing it here is what
+    # turns subagent parentage from a guess into an exact link: this record's
+    # toolId is the parent of every later event carrying agent_id == spawnedAgentId.
+    response = payload.get("tool_response")
+    if isinstance(response, dict):
+        spawned = response.get("agentId")
+        if spawned:
+            record["spawnedAgentId"] = spawned
+        description = response.get("description")
+        if description:
+            record["agentDescription"] = description
+        resolved = response.get("resolvedModel")
+        if resolved:
+            record["agentModel"] = resolved
 
-try:
-    os.makedirs(SESSIONS, exist_ok=True)
-    os.makedirs(RUNS, exist_ok=True)
-except OSError:
-    sys.exit(0)
+    try:
+        os.makedirs(SESSIONS, exist_ok=True)
+        os.makedirs(RUNS, exist_ok=True)
+    except OSError:
+        sys.exit(0)
 
-line = json.dumps(record, separators=(",", ":")) + "\n"
+    line = json.dumps(record, separators=(",", ":")) + "\n"
 
-try:
-    with open(EVENTS, "a") as fh:
-        fh.write(line)
-    trim()
-except OSError:
-    pass
-
-# The live log above is a small rotating tail -- replaying a finished run
-# needs its own durable copy, so every event is also appended to a
-# per-session archive, capped by run count and per-run size so a runaway
-# session can't fill the disk.
-run_file = os.path.join(RUNS, "%s.jsonl" % session_id)
-try:
-    if not os.path.exists(run_file) or os.path.getsize(run_file) < MAX_RUN_BYTES:
-        with open(run_file, "a") as fh:
+    try:
+        with open(EVENTS, "a") as fh:
             fh.write(line)
-    if event == "session_start":
-        prune_runs()
-except OSError:
-    pass
+        trim()
+    except OSError:
+        pass
 
-session_file = os.path.join(SESSIONS, "%s.json" % session_id)
-try:
-    if event == "session_end":
-        os.remove(session_file)
-    else:
-        atomic_write(session_file, json.dumps({
-            "event": raw_event,
-            "tool": record.get("tool", ""),
-            "updatedAt": stamp,
-            "harness": harness,
-        }, separators=(",", ":")) + "\n")
-except OSError:
-    pass
+    # The live log above is a small rotating tail -- replaying a finished run
+    # needs its own durable copy, so every event is also appended to a
+    # per-session archive, capped by run count and per-run size so a runaway
+    # session can't fill the disk.
+    run_file = os.path.join(RUNS, "%s.jsonl" % session_id)
+    try:
+        if not os.path.exists(run_file) or os.path.getsize(run_file) < MAX_RUN_BYTES:
+            with open(run_file, "a") as fh:
+                fh.write(line)
+        if event == "session_start":
+            prune_runs()
+    except OSError:
+        pass
 
-try:
-    sweep(now)
-except OSError:
-    pass
+    session_file = os.path.join(SESSIONS, "%s.json" % session_id)
+    try:
+        if event == "session_end":
+            os.remove(session_file)
+        else:
+            atomic_write(session_file, json.dumps({
+                "event": raw_event,
+                "tool": record.get("tool", ""),
+                "updatedAt": stamp,
+                "harness": harness,
+            }, separators=(",", ":")) + "\n")
+    except OSError:
+        pass
+
+    try:
+        sweep(now)
+    except OSError:
+        pass
+
+
+if __name__ == "__main__":
+    main()
