@@ -277,8 +277,8 @@ Three small bar icons round out the QoL set, each with its own Personalization a
 | Power & Security | Power profile switcher (Saver/Balanced/Performance), idle lock/screen-off/suspend timeouts (generates `hypridle.conf`), lockout info |
 | Workspace Profiles | Named, one-key launch groups — save a list of commands + target workspaces, launch them all at once via `hyprctl dispatch exec`. Not a live session snapshot (Hyprland/X11 apps don't expose one), just a saved replay list |
 | Plugins | Link to the [`aphotic-plugins`](https://github.com/T-Crypt/aphotic-plugins) repo, an **Installed** list (enable/disable/remove, missing-dependency warnings), and a **Browse available** list pulled live from the repo's index, filterable by category (Dev/Security/Mobile/AI/Theming/Productivity) — install with one click. Security-category plugins stay hidden behind a separate trust step. See [Plugin system](#plugin-system) below |
-| System | Live `aphotic doctor` output, an Overview (theme, install profile, daemon status), Hardware (CPU/GPU/RAM/disk), and an on-demand package check |
-| About | Real Aphotic logo, version (read from `VERSION`), repo link |
+| System | Live `aphotic doctor` output, an Overview (theme, install profile, daemon status), Hardware (CPU/GPU/RAM/disk), an on-demand package check (Aphotic's own package list against upstream repos), and a separate pending-update check (your system's own official/AUR updates) that can run on-demand or on an off/daily/weekly schedule — advisory only, never applies anything itself |
+| About | Real Aphotic logo, version (read from `VERSION`), repo link, a release-notes link, the license, and a check-for-updates action that compares against the latest GitHub release and runs `aphotic update` when one's available |
 
 </details>
 

@@ -134,6 +134,12 @@ Singleton {
     // 0 = never auto-prune by age.
     property int intelligenceAutoPruneDays: 30
 
+    // Settings -> System's scheduled package-update check (advisory only,
+    // never auto-applies -- see aphotic-package-check.service). "off" is
+    // the shipped default; the systemd timer itself stays installed but
+    // disabled until a user opts in here.
+    property string packageCheckFrequency: "off" // "off" | "daily" | "weekly"
+
     property bool assistantWelcomeShown: false
 
     // Suppresses notification popups only -- notifications still land in
@@ -321,7 +327,8 @@ Singleton {
             intelligenceDefaultProvider: root.intelligenceDefaultProvider,
             intelligenceDefaultModel: root.intelligenceDefaultModel,
             intelligenceMaxSessions: root.intelligenceMaxSessions,
-            intelligenceAutoPruneDays: root.intelligenceAutoPruneDays
+            intelligenceAutoPruneDays: root.intelligenceAutoPruneDays,
+            packageCheckFrequency: root.packageCheckFrequency
         }, null, 2));
     }
 
@@ -676,6 +683,8 @@ Singleton {
                     root.intelligenceMaxSessions = data.intelligenceMaxSessions;
                 if (typeof data.intelligenceAutoPruneDays === "number")
                     root.intelligenceAutoPruneDays = data.intelligenceAutoPruneDays;
+                if (typeof data.packageCheckFrequency === "string" && ["off", "daily", "weekly"].includes(data.packageCheckFrequency))
+                    root.packageCheckFrequency = data.packageCheckFrequency;
             } catch (e) {
                 // No state file yet, or malformed -- keep the Config.qml/
                 // GlobalConfig.qml defaults already set above.
