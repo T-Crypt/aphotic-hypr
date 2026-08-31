@@ -3,9 +3,10 @@
 # @cmd: theme
 # @cmd.desc: List, set, or cycle themes
 # @cmd.group: CONFIG
-# @cmd.opt: list        | List installed themes
-# @cmd.opt: set <name>  | Apply a theme by name
-# @cmd.opt: next|prev   | Cycle to the next/previous theme
+# @cmd.opt: list           | List installed themes
+# @cmd.opt: set <name>     | Apply a theme by name
+# @cmd.opt: next|prev      | Cycle to the next/previous theme
+# @cmd.opt: ensure-default | Apply the install-time theme if none is set yet (startup.lua only)
 #
 # Themes live as directories under APHOTIC_AWWW_DIR, each with a
 # theme.toml manifest (see Aphotic-Hypr/themes/THEME_SPEC.md) — this is
@@ -206,10 +207,56 @@ _aphotic_theme_apply() {
     return 0
 }
 
+# Applies the install-time-configured theme (aphotic.toml's [theme].name)
+# if no theme has ever been set on this machine yet (no theme.json) --
+# called once from Hyprland's startup.lua so a fresh install actually
+# shows a wallpaper on first boot instead of "No wallpaper set" until
+# SUPER+SHIFT+W is used manually. A no-op once theme.json exists, so a
+# later Hyprland restart never clobbers a theme the user already
+# switched to.
+_aphotic_theme_ensure_default() {
+    [[ -f "$APHOTIC_THEME_STATE_FILE" ]] && return 0
+
+    # `awww img` needs the daemon's socket up; poll instead of assuming a
+    # fixed startup.lua sleep was long enough on this machine.
+    local waited=0
+    while ! awww query -j &>/dev/null; do
+        sleep 0.5
+        waited=$((waited + 1))
+        if [[ $waited -ge 20 ]]; then
+            aphotic_warn "awww-daemon never came up after 10s, skipping first-boot theme apply"
+            return 1
+        fi
+    done
+
+    # Same fixed clone-path convention InstallProfile.qml uses for
+    # aphotic.toml -- see that file's comment for why it's not derived
+    # from the running script's own location.
+    local toml="${HOME}/Aphotic-Hypr/aphotic.toml"
+    local theme_name; theme_name="$(_aphotic_toml_get "$toml" theme name || true)"
+
+    if [[ -z "$theme_name" ]] || [[ ! -d "$(_aphotic_theme_dir "$theme_name")" ]]; then
+        local dir
+        for dir in "$APHOTIC_AWWW_DIR"/*/; do
+            [[ -d "$dir" ]] || continue
+            theme_name="$(basename "$dir")"
+            break
+        done
+    fi
+
+    if [[ -z "$theme_name" ]]; then
+        aphotic_err "no theme folders found in ${APHOTIC_AWWW_DIR}, nothing to apply"
+        return 1
+    fi
+
+    _aphotic_theme_apply "$theme_name"
+}
+
 aphotic_cmd_theme() {
     local sub="${1:-}"; shift || true
     case "$sub" in
         list) _aphotic_theme_list ;;
+        ensure-default) _aphotic_theme_ensure_default ;;
         set)
             local name="${1:-}"
             [[ -z "$name" ]] && { aphotic_err "usage: aphotic theme set <name>"; return 1; }
@@ -268,11 +315,14 @@ aphotic_cmd_theme() {
             ;;
         ""|-h|--help)
             cat <<HELP
-Usage: aphotic theme <list|set|next|prev> [name]
+Usage: aphotic theme <list|set|next|prev|ensure-default> [name]
 
-  list         List theme folders (${APHOTIC_AWWW_DIR})
-  set <name>   Apply a theme (its declared default wallpaper)
-  next / prev  Cycle themes
+  list            List theme folders (${APHOTIC_AWWW_DIR})
+  set <name>      Apply a theme (its declared default wallpaper)
+  next / prev     Cycle themes
+  ensure-default  Apply the install-time theme if none is set yet (no-op
+                  once a theme has ever been applied); called once from
+                  Hyprland's startup.lua, not meant for everyday use
 HELP
             ;;
         *)
