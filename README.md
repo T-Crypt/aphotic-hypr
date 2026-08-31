@@ -338,6 +338,9 @@ None of this is unique by itself. Together it turns a rice from something you in
 >
 > `install.sh` is built for a fresh Arch install, not a machine already carrying another rice. If waybar, rofi/wofi, dunst/mako/swaync, or another bar/launcher/notifier is already installed, it'll offer to remove it — leaving it in place is what caused [#41](https://github.com/T-Crypt/aphotic-hypr/issues/41)'s duplicate, unstyled bar. See `--strip-conflicts`/`--keep-conflicts` below.
 
+> [!WARNING]
+> **Upgrading from before v2.0.0?** Claude Code/Codex/OpenCode agent-hook wiring (live per-session status in the bar/dashboard) and Agent Graph are no longer installed automatically with the `ai` layer — they're opt-in plugins now, same as everything else in the [Plugin System](#plugin-system). `git pull && ./install.sh --config-only` will *not* bring them back on its own. Run `aphotic plugin install claude-hooks` (or `codex-hooks`/`opencode-hooks`, and `agent-graph` for the Dashboard tab) once, after updating, to keep the exact behavior you had before.
+
 ```
 git clone https://github.com/T-Crypt/Aphotic-Hypr && cd Aphotic-Hypr
 chmod +x install.sh
