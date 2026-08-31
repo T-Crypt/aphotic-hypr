@@ -143,6 +143,30 @@ aphotic_toml_get_array() {
     ' "$file" | tr ',' '\n' | sed -e 's/^[[:space:]]*"\?//' -e 's/"\?[[:space:]]*$//' -e '/^$/d'
 }
 
+# ---- colour engines -------------------------------------------------------
+# theme.toml's [engine].name selects which engine renders a theme's
+# palette (themes/THEME_SPEC.md); this is the matugen side, shared by
+# cmd_theme.sh's apply path and cmd_scheme.sh's regenerate path. Templates
+# and output targets come from ~/.config/matugen/config.toml.
+#
+# --prefer is not optional: matugen refuses to choose between an image's
+# candidate source colours without a terminal to prompt on, which is every
+# call made from here.
+aphotic_matugen_run() {
+    local image="$1" scheme="${2:-}" style="${3:-}" contrast="${4:-}"
+
+    if ! command -v matugen >/dev/null 2>&1; then
+        aphotic_warn "matugen not found, skipping palette regeneration"
+        return 1
+    fi
+
+    local cmd=(matugen image "$image" --prefer saturation -q)
+    [[ -n "$scheme" ]] && cmd+=(-t "$scheme")
+    [[ -n "$style" ]] && cmd+=(-m "$style")
+    [[ -n "$contrast" ]] && cmd+=(--contrast "$contrast")
+    "${cmd[@]}"
+}
+
 # ---- plugin helpers -------------------------------------------------------
 # List installed plugin directory names (each has a plugin.toml).
 aphotic_plugin_names() {

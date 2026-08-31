@@ -103,6 +103,13 @@ deploy_user_configs() {
   rm -rf "$HOME/.config/wallust"
   ln -sfn "$ROOT_DIR/Configs/wallust" "$HOME/.config/wallust"
 
+  # Same treatment for the second colour engine (themes/THEME_SPEC.md's
+  # [engine].name) -- config.toml plus its templates are repo source that
+  # nothing writes back to, so a symlink keeps template edits live instead
+  # of needing a re-deploy.
+  rm -rf "$HOME/.config/matugen"
+  ln -sfn "$ROOT_DIR/Configs/matugen" "$HOME/.config/matugen"
+
   # Just the selector file -- Kvantum/Aphotic/Aphotic.kvconfig alongside
   # it is wallust template *output* (wallust.toml's `kvantum` entry), not
   # repo source, and must stay a real file wallust can keep overwriting.
