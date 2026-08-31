@@ -14,7 +14,7 @@ maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
 ## 2.0.0
 
-A modular plugin architecture — Agent Graph now installs as a plugin, and a rewritten `install.sh` defaults to zero prompts. See the README's Roadmap for the full list.
+A modular plugin architecture — AI agent hooks (Claude Code/Codex/OpenCode) and Agent Graph are now opt-in plugins, not automatic: run `aphotic plugin install claude-hooks` (or codex-hooks/opencode-hooks/agent-graph) to keep them. See the README's Install section for details.
 
 ## 1.2.0
 
