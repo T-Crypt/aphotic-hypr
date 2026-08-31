@@ -33,6 +33,12 @@ STATUS = {
 
 
 def atomic_write(path, text):
+    """Write `text` to `path` atomically.
+
+    The function writes to a temporary file in the same directory and then
+    atomically replaces the destination with os.replace. This avoids leaving a
+    partially-written file if the process is interrupted.
+    """
     tmp = "%s.tmp.%d" % (path, os.getpid())
     with open(tmp, "w") as fh:
         fh.write(text)
@@ -40,6 +46,12 @@ def atomic_write(path, text):
 
 
 def sweep(now):
+    """Remove stale per-session JSON files from the sessions directory.
+
+    Any session file whose modification time is older than STALE_SECONDS
+    is removed. Fail silently on filesystem errors to avoid crashing the
+    hook worker: this script must never raise in normal operation.
+    """
     for name in os.listdir(SESSIONS):
         if not name.endswith(".json"):
             continue
@@ -52,6 +64,12 @@ def sweep(now):
 
 
 def prune_runs():
+    """Prune old per-session run archive files to limit disk usage.
+
+    Keeps at most MAX_RUNS recent run files (sorted by modification time) and
+    deletes older ones. Any filesystem error is ignored to keep the worker
+    robust against transient IO failures.
+    """
     runs = [os.path.join(RUNS, n) for n in os.listdir(RUNS) if n.endswith(".jsonl")]
     if len(runs) <= MAX_RUNS:
         return
@@ -64,6 +82,12 @@ def prune_runs():
 
 
 def trim():
+    """Trim the live events file to a bounded tail.
+
+    If the EVENTS file grows larger than MAX_BYTES, keep only the last
+    KEEP_LINES lines and rewrite the file atomically. This keeps the
+    live in-repo tail small while longer archives are preserved per-run.
+    """
     if os.path.getsize(EVENTS) <= MAX_BYTES:
         return
     with open(EVENTS) as fh:
