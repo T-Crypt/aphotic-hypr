@@ -28,13 +28,18 @@ Singleton {
         onFileChanged: root.generation++
     }
 
-    // Bumped on every setWallpaper() call, and stamped onto wallustProc
+    // Bumped on every setWallpaper() call, and stamped onto engineProc
     // right before each exec() -- see the onExited guard below for why.
     property int _generation: 0
 
+    // engineName picks which colour engine renders the palette; the rest
+    // of these are that engine's own knobs (scheme/contrast are matugen's,
+    // backend/palette/colorscheme are wallust's) -- see
+    // themes/THEME_SPEC.md.
+    //
     // backend/palette let a theme's theme.toml pin a specific wallust
-    // engine mode (see themes/THEME_SPEC.md) for wallpapers that need
-    // something other than Configs/wallust/wallust.toml's own defaults --
+    // engine mode for wallpapers that need something other than
+    // Configs/wallust/wallust.toml's own defaults --
     // both are optional, an empty string means "let wallust use its own
     // configured default" rather than forcing a value. colorscheme is a
     // different engine mode entirely: a fixed palette read from
@@ -61,38 +66,42 @@ Singleton {
     // relied on by Settings.qml's cursorApplyProc), so only the
     // most-recently-clicked theme's processes ever survive to write
     // anything or animate anything.
-    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var, iconTheme: var, cursorTheme: var, gtkTheme: var, engineName: var): void {
+    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var, iconTheme: var, cursorTheme: var, gtkTheme: var, engineName: var, scheme: var, contrast: var): void {
         root._generation++;
 
-        // [engine].name is documented (themes/THEME_SPEC.md) as accepting
-        // "wallust" | "matugen", but nothing here (or in cmd_theme.sh/
-        // wallswitcher.py) has ever actually read it -- every apply path
-        // always runs wallust regardless, so a theme pinning matugen
-        // silently got wallust instead with zero indication anything was
-        // ignored. Not implementing matugen here -- just making the
-        // mismatch loud instead of silent, via a real notification
-        // (Toaster.qml's toast() is a dead no-op stub left over from an
-        // earlier unfinished pass, not what real toasts render through).
-        if (engineName && engineName !== "wallust")
-            Quickshell.execDetached(["notify-send", "-u", "low", "Aphotic", `theme pins engine '${engineName}', but only wallust is wired up — using wallust`]);
+        // Toaster.qml's toast() is a dead no-op stub left over from an
+        // earlier unfinished pass, not what real toasts render through.
+        if (engineName && engineName !== "wallust" && engineName !== "matugen")
+            Quickshell.execDetached(["notify-send", "-u", "low", "Aphotic", `theme pins unknown engine '${engineName}' — using wallust`]);
 
         awwwProc.exec(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
         cpProc.exec(["cp", path, root.path]);
 
-        let wallustCmd;
-        if (colorscheme) {
-            wallustCmd = ["wallust", "cs", colorscheme, "--format", "pywal"];
-        } else {
-            wallustCmd = ["wallust", "run", path];
-            if (backend)
-                wallustCmd.push("-b", backend);
-            if (palette)
-                wallustCmd.push("-p", palette);
+        let engineCmd;
+        if (engineName === "matugen") {
+            // --prefer is not optional: matugen refuses to choose between
+            // an image's candidate source colours without a terminal to
+            // prompt on.
+            engineCmd = ["matugen", "image", path, "--prefer", "saturation", "-q"];
+            if (scheme)
+                engineCmd.push("-t", scheme);
             if (style)
-                wallustCmd.push("-S", style);
+                engineCmd.push("-m", style);
+            if (contrast)
+                engineCmd.push("--contrast", contrast);
+        } else if (colorscheme) {
+            engineCmd = ["wallust", "cs", colorscheme, "--format", "pywal"];
+        } else {
+            engineCmd = ["wallust", "run", path];
+            if (backend)
+                engineCmd.push("-b", backend);
+            if (palette)
+                engineCmd.push("-p", palette);
+            if (style)
+                engineCmd.push("-S", style);
         }
-        wallustProc.taggedGeneration = root._generation;
-        wallustProc.exec(wallustCmd);
+        engineProc.taggedGeneration = root._generation;
+        engineProc.exec(engineCmd);
 
         // Folder-icon accent pin -- see cmd_theme.sh's _aphotic_theme_apply
         // for why this needs sudo and only no-ops silently (same class of
@@ -126,7 +135,8 @@ Singleton {
     }
 
     // Only the theme-hook run (and, transitively, anything reading
-    // palette.json) needs to wait for wallust to actually finish -- that
+    // palette.json) needs to wait for the colour engine to actually
+    // finish -- that
     // used to be `&&`-chained into one shell command specifically because
     // execDetached has no completion signal at all. A real Process does,
     // so this now runs off onExited instead, with the generation tag
@@ -136,12 +146,12 @@ Singleton {
     // a later exec() already preempted it and that later run's own
     // onExited will fire the hooks once *it* actually finishes.
     Process {
-        id: wallustProc
+        id: engineProc
 
         property int taggedGeneration: 0
 
         onExited: exitCode => {
-            if (wallustProc.taggedGeneration !== root._generation)
+            if (engineProc.taggedGeneration !== root._generation)
                 return;
             if (exitCode === 0)
                 Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
