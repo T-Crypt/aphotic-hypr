@@ -121,11 +121,11 @@ def write_state(theme, wallpaper):
 def parse_engine_pin(theme):
     """Parse a theme's theme.toml and return engine/icon/gtk pins.
 
-    Reads Configs in each theme's theme.toml and extracts known keys from
-    the [engine], [icons], and [gtk] sections. Returns a tuple with
+    Reads the theme's theme.toml and extracts known keys from the
+    [engine], [icons], and [gtk] sections. Returns a tuple with
     (backend, palette, colorscheme, style, papirus_color, icon_theme,
-    cursor_theme, gtk_theme, engine_name). Missing fields are empty
-    strings.
+    cursor_theme, gtk_theme, engine_name, scheme, contrast). Missing
+    fields are empty strings.
     """
     toml_path = os.path.join(awww_dir, theme, "theme.toml")
     backend = ""
@@ -255,9 +255,10 @@ def apply_wallpaper(theme, wallpaper):
     """Apply `wallpaper` from `theme`.
 
     This performs the full apply flow: tell awww to display the image,
-    run wallust (or a fixed colorscheme) to generate palettes, copy the
-    wallpaper for the launcher, run detached plugin hooks, apply any
-    pinned icon/cursor/GTK themes, persist state, and fire best-effort
+    run the theme's pinned colour engine -- matugen, or wallust (or a
+    fixed colorscheme) -- to generate palettes, copy the wallpaper for
+    the launcher, run detached plugin hooks, apply any pinned
+    icon/cursor/GTK themes, persist state, and fire best-effort
     integration commands (pywalfox, aphotic reload/sddm sync).
     """
     image_path = os.path.join(awww_dir, theme, wallpaper)
