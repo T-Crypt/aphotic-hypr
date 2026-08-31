@@ -20,14 +20,24 @@ display_name = "Tokyo Night"
 description = "Neon purples and blues, city-at-night palette."
 
 [engine]
-name = "wallust"        # "wallust" | "matugen" (matugen not wired yet — Phase 3;
-                        # pinning it doesn't error, but all three apply sites now
-                        # notify-send a warning and use wallust anyway, rather
-                        # than silently ignoring the pin)
+name = "wallust"        # "wallust" | "matugen" — which colour engine renders
+                        # this theme's palette. Omit for wallust. See
+                        # "Choosing a colour engine" below.
+
+# wallust-only knobs (ignored under matugen):
 backend = "fastresize"  # wallust -b: full | resized | wal | thumb | fastresize
 palette = "kmeans"      # wallust -p: salience | ansi | kmeans
 colorscheme = "some-name"  # fixed palette, see below — mutually exclusive with backend/palette
-style = "light"         # wallust -S: dark | light — omit for dark (the default for every theme but Latte)
+
+# matugen-only knobs (ignored under wallust):
+scheme = "scheme-vibrant"  # matugen -t: scheme-content | scheme-expressive |
+                           # scheme-fidelity | scheme-fruit-salad |
+                           # scheme-monochrome | scheme-neutral | scheme-rainbow |
+                           # scheme-tonal-spot (default) | scheme-vibrant | scheme-smart
+contrast = "0.3"           # matugen --contrast: -1 (minimum) .. 0 (M3 spec) .. 1 (maximum)
+
+# shared:
+style = "light"         # wallust -S / matugen -m: dark | light — omit for dark (the default for every theme but Latte)
 
 [icons]
 papirus_color = "green"     # one of `papirus-folders --list`, see below
@@ -48,12 +58,12 @@ default = "wallpaper-one.jpg"   # shown first when the theme is selected
 ```
 
 Every field under `[engine]` is a **pin**, not a requirement — if a theme
-omits `theme.toml` entirely, or omits `[engine]`, Aphotic falls back to
-`Configs/wallust/wallust.toml`'s own top-level `backend`/`palette`
-defaults. A theme only needs to declare a pin when its wallpapers need
-something different from the default (e.g. a theme built around
-low-contrast pastel art might pin `palette = "ansi"` because `kmeans`
-picks muddy clusters on it).
+omits `theme.toml` entirely, omits `[engine]`, or omits `[engine].name`,
+Aphotic uses wallust with `Configs/wallust/wallust.toml`'s own top-level
+`backend`/`palette` defaults. A theme only needs to declare a pin when
+its wallpapers need something different from the default (e.g. a theme
+built around low-contrast pastel art might pin `palette = "ansi"` because
+`kmeans` picks muddy clusters on it).
 
 `[wallpaper].default` matters because a theme folder can hold more than
 one image — it's the one shown/applied when you switch *into* the theme
@@ -61,6 +71,62 @@ for the first time. After that, Aphotic remembers which wallpaper within
 the theme you last had active (`~/.local/state/aphotic/theme.json`), so
 returning to a theme resumes where you left it rather than resetting to
 `default`.
+
+### Choosing a colour engine (`[engine].name`)
+
+Aphotic ships two colour engines. Both derive a palette from the theme's
+current wallpaper and both write the *same* set of output files, so
+switching a theme between them changes how the colours are chosen, not
+which apps get themed:
+
+| | `wallust` (default) | `matugen` |
+|---|---|---|
+| Config | `Configs/wallust/wallust.toml` | `Configs/matugen/config.toml` |
+| Produces | ANSI `color0`–`color15` | real Material You 3 roles |
+| Knobs | `backend`, `palette`, `colorscheme` | `scheme`, `contrast` |
+| Shared knobs | `style` (`-S`) | `style` (`-m`) |
+
+All four apply sites — `aphotic theme set`/`next`/`prev` (`cmd_theme.sh`),
+Settings → Appearance and the wallpaper picker (`Wallpapers.qml`),
+SUPER+W (`wallswitcher.py`), and `aphotic scheme set` (`cmd_scheme.sh`) —
+read this key and dispatch to the named engine. A name that is neither
+`wallust` nor `matugen` warns and falls back to wallust.
+
+**Palette snapshot.** Both engines write
+`~/.local/state/aphotic/palette.json`, the one "current resolved palette"
+file the plugin system and `Colours.qml` read. wallust's snapshot is
+unchanged: `background`/`foreground`/`cursor`/`surfaceContainer`/
+`surfaceContainerHigh` plus a `colors` object of `color0`–`color15`.
+matugen's carries those same keys — so anything already reading the file
+keeps working — plus `"engine": "matugen"` and a `roles` object holding
+its real M3 roles (`primary`, `onPrimary`, `secondaryContainer`,
+`outlineVariant`, …). `Colours.qml` branches on that `roles` object: when
+it's there those values are used directly, and when it isn't (every
+wallust theme) each role resolves to exactly the ANSI-derived value it
+always did. wallust output is never passed through matugen's vocabulary
+or the reverse.
+
+The `colors` block in a matugen snapshot is a compatibility shim for the
+consumers whose file format *is* 16 ANSI slots (kitty, cava, swaylock,
+`~/.cache/wal/*`, and third-party plugins). Material You is a four-hue
+system, so those 16 slots are filled from M3's four hue roles plus the
+neutrals and some slots necessarily repeat — the magenta pair shares the
+primary hue, the cyan pair the secondary. `Colours.qml` never reads this
+block under matugen.
+
+**Contrast.** wallust's `check_contrast = true` is a real, load-bearing
+fix (see "Readable contrast and light themes" below) and stays on for
+every wallust run. matugen has no equivalent flag and doesn't need one:
+its roles come from M3 tonal palettes, where a role's legibility against
+its paired surface is fixed by the tone it's generated at (`outline` at
+tone 60 against a tone-6 surface, for example) rather than checked after
+the fact. matugen's `--contrast` is a *different* knob — it shifts the
+whole scheme's contrast level from −1 to 1 — and is exposed as
+`[engine].contrast` for themes that want a flatter or punchier look.
+
+None of the 8 shipped themes pin `matugen` today; like
+`[engine].colorscheme`, the mechanism is real and tested but currently
+unused by the presets.
 
 ### Folder-icon accent (`[icons].papirus_color`)
 
@@ -155,8 +221,10 @@ call across all three theme-apply sites — no per-theme opt-in needed.
 contrast check wallust generates for — light-background/dark-foreground
 instead of the default dark/light. Latte is the only shipped theme
 that sets it (`style = "light"`); every other theme omits it and gets
-wallust's own default (`dark`). This only affects wallust's own
-image-derived generation — it doesn't touch `Colours.qml`'s separate,
+wallust's own default (`dark`). Under matugen the same key becomes
+`-m dark|light`, selecting which side of every generated M3 role the
+snapshot records. Either way this only affects the engine's own
+generation — it doesn't touch `Colours.qml`'s separate,
 currently-hardcoded `light: false`, which drives a couple of
 Quickshell-side visual tweaks (icon weight, desktop clock inversion)
 independently and would need its own theme.toml-driven wiring to

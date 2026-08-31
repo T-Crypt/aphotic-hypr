@@ -18,8 +18,9 @@ Singleton {
     readonly property string awwwDir: `${Quickshell.env("HOME")}/.config/awww`
     readonly property string statePath: `${Quickshell.env("HOME")}/.local/state/aphotic/theme.json`
 
-    // Each entry: { name, displayName, description, backend, palette, colorscheme,
-    // style, papirusColor, defaultWallpaper, wallpapers: [...] }
+    // Each entry: { name, displayName, description, engineName, scheme, contrast,
+    // backend, palette, colorscheme, style, papirusColor, defaultWallpaper,
+    // wallpapers: [...] }
     property list<var> themes: []
     property string activeTheme: ""
     property string activeWallpaper: ""
@@ -118,7 +119,7 @@ Singleton {
                 return;
             root._pendingApply = null;
             const fullPath = `${root.awwwDir}/${p.themeName}/${p.file}`;
-            Wallpapers.setWallpaper(fullPath, p.info.backend ?? "", p.info.palette ?? "", p.info.colorscheme ?? "", p.info.style ?? "", p.info.papirusColor ?? "", p.info.iconTheme ?? "", p.info.cursorTheme ?? "", p.info.gtkTheme ?? "", p.info.engineName ?? "");
+            Wallpapers.setWallpaper(fullPath, p.info.backend ?? "", p.info.palette ?? "", p.info.colorscheme ?? "", p.info.style ?? "", p.info.papirusColor ?? "", p.info.iconTheme ?? "", p.info.cursorTheme ?? "", p.info.gtkTheme ?? "", p.info.engineName ?? "", p.info.scheme ?? "", p.info.contrast ?? "");
         }
     }
 
@@ -294,6 +295,8 @@ Singleton {
                         displayName: toml.theme?.display_name ?? t.name,
                         description: toml.theme?.description ?? "",
                         engineName: toml.engine?.name ?? "",
+                        scheme: toml.engine?.scheme ?? "",
+                        contrast: toml.engine?.contrast ?? "",
                         backend: toml.engine?.backend ?? "",
                         palette: toml.engine?.palette ?? "",
                         colorscheme: toml.engine?.colorscheme ?? "",

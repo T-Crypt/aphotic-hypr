@@ -189,7 +189,7 @@ Every `aphotic` subcommand, not only theme/wallpaper: [CLI Reference](https://gi
 
 ## Quickshell Shell
 
-Waybar, Mako, Swaylock, and Rofi are retired in favor of one hand-vendored [Quickshell](https://quickshell.org) shell. It isn't an installed dependency: the QML lives in `Configs/quickshell/aphotic/`, and no native C++ plugin is required. Color comes from `wallust`, the same engine as everything else. Quickshell doesn't bring its own theming.
+Waybar, Mako, Swaylock, and Rofi are retired in favor of one hand-vendored [Quickshell](https://quickshell.org) shell. It isn't an installed dependency: the QML lives in `Configs/quickshell/aphotic/`, and no native C++ plugin is required. Color comes from whichever colour engine the active theme pins — `wallust` by default, or `matugen` — the same engine as everything else. Quickshell doesn't bring its own theming.
 
 | Module | Replaces | Notes |
 |---|---|---|
@@ -441,7 +441,7 @@ A **profile** is the base package set. A **layer** is an optional add-on merged 
 
 | Profile | What you get |
 |---|---|
-| `minimal` | Hyprland, Quickshell, Kitty, awww, plus the binaries the always-loaded Quickshell shell itself needs (wallust, grim/slurp/swappy, brightnessctl, swaylock-effects). The bare tiling desktop, nothing else. |
+| `minimal` | Hyprland, Quickshell, Kitty, awww, plus the binaries the always-loaded Quickshell shell itself needs (wallust and matugen, grim/slurp/swappy, brightnessctl, swaylock-effects). The bare tiling desktop, nothing else. |
 | `full` | Everything in `minimal`, plus the complete Aphotic experience: theming (Pywal, Pywalfox, Dracula GTK/icons), shell tooling (ZSH, Powerlevel10k, Starship), media (mpv, Cava, Swappy), file management (Thunar plus archive/GVFS plugins), Bluetooth, SDDM, and more. |
 
 | Layer | Adds |
@@ -508,9 +508,8 @@ Full list (apps, windows, workspaces, media, screen capture, terminal games, and
 
 ## Roadmap
 
-Aphotic is at **v2.0.0**. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, a CI-tested installer, and the modular plugin architecture (base shell + independently installable capabilities, see [Plugin System](#plugin-system)) are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history lives in the repo's changelog, kept short on purpose. Still open:
+Aphotic is at **v2.0.0**. The Quickshell shell, per-theme wallpapers, the unified theme/wallpaper/scheme state contract, two selectable colour engines (wallust and matugen — see [Theme spec](themes/THEME_SPEC.md)), a CI-tested installer, and the modular plugin architecture (base shell + independently installable capabilities, see [Plugin System](#plugin-system)) are the shipped baseline. Active development continues directly on `main` via PR (see [Contributing](CONTRIBUTING.md)). Full shipped-item history lives in the repo's changelog, kept short on purpose. Still open:
 
-- **`matugen` as a second color engine**: next up. `theme.toml` reserves the config slot; wiring it in gives themes a real tonal-spot/vibrant/expressive variant picker alongside wallust.
 - **Settings panel gaps**: a Sidebar module, a System-updates action (distinct from the current read-only doctor output), a Theme-palette swatch view, and a Widgets tab. Live per-monitor resolution/scale editing in the Displays pane is blocked on a real Hyprland limitation (`hyprctl keyword monitor` doesn't reapply), not only unbuilt. (Network is already shipped: NetworkManager-backed VPN status/connect in Settings → Network, plus a bar icon; Audio/Bluetooth already get real hover popouts off the bar, see [Bar popouts](#quickshell-shell).)
 - **Dock and Minimal bar styles have no hover-popout system at all**: Full and Taskbar do (volume, Wi-Fi, Bluetooth, battery, etc. on hover); picking Dock or Minimal currently means losing that layer of detail entirely, not only a cosmetic gap.
 - **Keyboard scratchpad workflow**: `SUPER+Ctrl+Tab` already cycles between open special workspaces, but nothing yet creates/toggles one from the keyboard; a dedicated create/toggle bind is a small follow-up.

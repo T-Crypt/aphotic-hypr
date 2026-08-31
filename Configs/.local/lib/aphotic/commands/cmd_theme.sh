@@ -86,7 +86,7 @@ _aphotic_theme_apply() {
     fi
 
     local image_path="${dir}/${wallpaper_file}"
-    local backend palette colorscheme style papirus_color icon_theme cursor_theme gtk_theme engine_name
+    local backend palette colorscheme style papirus_color icon_theme cursor_theme gtk_theme engine_name scheme contrast
     backend="$(_aphotic_toml_get "${dir}/theme.toml" engine backend)"
     palette="$(_aphotic_toml_get "${dir}/theme.toml" engine palette)"
     colorscheme="$(_aphotic_toml_get "${dir}/theme.toml" engine colorscheme)"
@@ -96,22 +96,20 @@ _aphotic_theme_apply() {
     cursor_theme="$(_aphotic_toml_get "${dir}/theme.toml" icons cursor_theme)"
     gtk_theme="$(_aphotic_toml_get "${dir}/theme.toml" gtk theme)"
     engine_name="$(_aphotic_toml_get "${dir}/theme.toml" engine name)"
+    scheme="$(_aphotic_toml_get "${dir}/theme.toml" engine scheme)"
+    contrast="$(_aphotic_toml_get "${dir}/theme.toml" engine contrast)"
 
-    # [engine].name is documented (themes/THEME_SPEC.md) as accepting
-    # "wallust" | "matugen", but nothing here (or in Themes.qml/
-    # wallswitcher.py) has ever actually read it -- every apply path
-    # always runs wallust regardless of what this key says, so a theme
-    # pinning matugen silently got wallust instead with zero indication
-    # anything was ignored. Not implementing matugen here (real, separate
-    # follow-up work) -- just making the mismatch loud instead of silent.
-    if [[ -n "$engine_name" && "$engine_name" != "wallust" ]]; then
-        aphotic_warn "theme '${theme_name}' pins [engine].name = '${engine_name}', but only wallust is wired up -- using wallust anyway"
+    if [[ -n "$engine_name" && "$engine_name" != "wallust" && "$engine_name" != "matugen" ]]; then
+        aphotic_warn "theme '${theme_name}' pins unknown [engine].name = '${engine_name}' -- using wallust"
     fi
 
     aphotic_require awww || return 1
     awww img "$image_path" --transition-type wipe --transition-angle 30 --transition-step 90
 
-    if command -v wallust >/dev/null 2>&1; then
+    if [[ "$engine_name" == "matugen" ]]; then
+        aphotic_matugen_run "$image_path" "$scheme" "$style" "$contrast" \
+            || aphotic_warn "matugen failed for theme '${theme_name}', palette left unchanged"
+    elif command -v wallust >/dev/null 2>&1; then
         if [[ -n "$colorscheme" ]]; then
             # Fixed palette pin (theme.toml's [engine].colorscheme) --
             # reads Configs/wallust/colorschemes/<name>.json instead of
