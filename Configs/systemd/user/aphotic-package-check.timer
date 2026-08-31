@@ -1,0 +1,9 @@
+[Unit]
+Description=Run aphotic-package-check.service on a schedule
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
