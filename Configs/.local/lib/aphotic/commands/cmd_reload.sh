@@ -50,6 +50,21 @@ EOF
     # falls back to the manual pkill+relaunch for a dev/debug session
     # where `qs -c aphotic` was started bypassing the service entirely.
     if systemctl --user list-unit-files aphotic-shell.service >/dev/null 2>&1; then
+        # `systemctl restart` only manages whatever's already in the
+        # unit's own cgroup -- a `qs -c aphotic` process that predates the
+        # service's current Main PID (a prior crash, a manual launch, the
+        # deploy_user_configs symlink race) survives the restart
+        # untouched and duplicates the bar. Kill anything matching that
+        # isn't the current Main PID first, same fix as config_sync's
+        # --config-only restart step (lib/install/config_deploy.sh).
+        local service_pid pid
+        service_pid=$(systemctl --user show -p MainPID --value aphotic-shell.service 2>/dev/null || echo 0)
+        while IFS= read -r pid; do
+            [[ -z "$pid" || "$pid" == "$service_pid" ]] && continue
+            aphotic_warn "found an orphaned qs -c aphotic process (PID $pid, not owned by aphotic-shell.service) -- killing it before restart"
+            kill "$pid" 2>/dev/null || true
+        done < <(pgrep -f "qs -c aphotic" 2>/dev/null)
+
         aphotic_log "restarting quickshell daemon (aphotic-shell.service)..."
         systemctl --user restart aphotic-shell.service
         aphotic_ok "quickshell daemon restarted"
