@@ -15,12 +15,19 @@ import qs.services
 // reads -- and this file just reads it too, at runtime, via the FileView
 // below. See docs/IN_FLIGHT.md item 3 for the full writeup.
 //
-// wallust has no native Material You role generation (that's matugen's
-// job, still optional/unused here per the roadmap), so ANSI-style
-// color0-15 are mapped onto M3 role names by convention (color4=blue->
-// primary, color1=red->error, color2=green->tertiary) -- same mapping the
-// old per-theme template used, just resolved here instead of at
-// template-render time.
+// wallust has no native Material You role generation, so under wallust
+// ANSI-style color0-15 are mapped onto M3 role names by convention
+// (color4=blue->primary, color1=red->error, color2=green->tertiary) --
+// same mapping the old per-theme template used, just resolved here
+// instead of at template-render time.
+//
+// matugen does generate real M3 roles, so its snapshot stamps itself
+// "engine": "matugen" and carries a `roles` object wallust's never has
+// (see Configs/matugen/config.toml and themes/THEME_SPEC.md's
+// [engine].name). _role() below is the branch: under matugen those role
+// values win outright, and under wallust every property falls back to
+// exactly the ANSI-derived value it has always used, so a wallust theme
+// resolves byte-for-byte as before.
 //
 // "on" (text/foreground) roles are NOT derived by blindly darkening the
 // accent color — some wallust palettes produce dark, desaturated accents,
@@ -154,6 +161,12 @@ Singleton {
         return root._raw?.colors?.[key] ?? fallback;
     }
 
+    readonly property string engine: root._raw?.engine ?? "wallust"
+
+    function _role(name: string, fallback: color): color {
+        return root.engine === "matugen" ? (root._raw?.roles?.[name] ?? fallback) : fallback;
+    }
+
     readonly property QtObject palette: QtObject {
         // Settings' Personalization pane can override just the primary
         // accent -- purely additive on top of the wallust-derived value,
@@ -161,25 +174,30 @@ Singleton {
         // this whole file was regenerated per-theme) nothing can silently
         // discard this check anymore since Colours.qml itself is no
         // longer template output.
-        readonly property color m3primary: Settings.accentColorOverride.length > 0 ? Settings.accentColorOverride : root._rawColor("color4", "#5A6089")
-        readonly property color m3onPrimary: root.contrastOn(m3primary)
+        readonly property color m3primary: Settings.accentColorOverride.length > 0 ? Settings.accentColorOverride : root._role("primary", root._rawColor("color4", "#5A6089"))
+        // The override replaces the engine's own primary, so matugen's
+        // matching onPrimary no longer describes it -- fall back to the
+        // measured pick for whatever the user chose.
+        readonly property color m3onPrimary: Settings.accentColorOverride.length > 0 ? root.contrastOn(m3primary) : root._role("onPrimary", root.contrastOn(m3primary))
         readonly property color m3primaryOnSurface: root.legibleAccent(m3primary, m3surfaceContainerHigh)
-        readonly property color m3secondary: root._rawColor("color7", "#F9EEDA")
+        readonly property color m3secondary: root._role("secondary", root._rawColor("color7", "#F9EEDA"))
         readonly property color m3secondaryOnSurface: root.legibleAccent(m3secondary, m3surfaceContainerHigh)
-        readonly property color m3secondaryContainer: Qt.tint(m3surfaceContainerHigh, Qt.alpha(m3secondary, 0.24))
-        readonly property color m3onSecondaryContainer: root.legibleAccent(m3secondary, m3secondaryContainer)
-        readonly property color m3tertiary: root._rawColor("color2", "#4B836F")
-        readonly property color m3onTertiary: root.contrastOn(m3tertiary)
+        readonly property color m3secondaryContainer: root._role("secondaryContainer", Qt.tint(m3surfaceContainerHigh, Qt.alpha(m3secondary, 0.24)))
+        readonly property color m3onSecondaryContainer: root._role("onSecondaryContainer", root.legibleAccent(m3secondary, m3secondaryContainer))
+        readonly property color m3tertiary: root._role("tertiary", root._rawColor("color2", "#4B836F"))
+        readonly property color m3onTertiary: root._role("onTertiary", root.contrastOn(m3tertiary))
         readonly property color m3tertiaryOnSurface: root.legibleAccent(m3tertiary, m3surfaceContainerHigh)
-        readonly property color m3error: root._rawColor("color1", "#BC7541")
-        readonly property color m3onError: root.contrastOn(m3error)
-        readonly property color m3onSurface: root.contrastOn(m3surfaceContainer)
-        readonly property color m3onSurfaceVariant: root.mutedOn(m3surfaceContainer, m3onSurface, 0.35)
-        readonly property color m3outlineVariant: root._rawColor("color8", "#535355")
-        // surfaceContainer/surfaceContainerHigh aren't ANSI slots -- they're
-        // background darken(0.05)/lighten(0.12), computed wallust-side (see
-        // colors-plugin-palette.json) so there's one color-math
-        // implementation instead of a second one ported into QML/JS.
+        readonly property color m3error: root._role("error", root._rawColor("color1", "#BC7541"))
+        readonly property color m3onError: root._role("onError", root.contrastOn(m3error))
+        readonly property color m3onSurface: root._role("onSurface", root.contrastOn(m3surfaceContainer))
+        readonly property color m3onSurfaceVariant: root._role("onSurfaceVariant", root.mutedOn(m3surfaceContainer, m3onSurface, 0.35))
+        readonly property color m3outlineVariant: root._role("outlineVariant", root._rawColor("color8", "#535355"))
+        // surfaceContainer/surfaceContainerHigh aren't ANSI slots -- under
+        // wallust they're background darken(0.05)/lighten(0.12), computed
+        // wallust-side (see colors-plugin-palette.json) so there's one
+        // color-math implementation instead of a second one ported into
+        // QML/JS; under matugen they're the real M3 roles of the same name.
+        // Both engines write them at the same top level, so no branch here.
         readonly property color m3surfaceContainer: root._raw?.surfaceContainer ?? "#000000"
         readonly property color m3surfaceContainerHigh: root._raw?.surfaceContainerHigh ?? "#1F1F1F"
         readonly property color m3shadow: "#000000"
