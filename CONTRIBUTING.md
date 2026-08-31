@@ -99,7 +99,7 @@ subcommand.
 - `install.sh` must stay **idempotent** after partial application — if a
   contribution adds an install stage, guard repeated appends (`tee -a`,
   `>>`) with a grep check first, matching the existing PATH-export/
-  wifi-powersave/nvidia-modprobe pattern.
+  nvidia-modprobe pattern.
 - If your change adds a binary dependency the shell shells out to (bar,
   OSD, area-picker, session menu, etc.), add it to **both**
   `profiles/base/full.toml` and `profiles/base/minimal.toml` — the
