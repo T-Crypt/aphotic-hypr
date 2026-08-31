@@ -19,6 +19,13 @@ PROVIDER_IDS = ("claude", "codex", "opencode")
 
 
 def _sum_transcript(path: Path, today: str) -> tuple[int, dict[str, int]]:
+    """Sum token usage in a single transcript file for `today`.
+
+    Reads a transcript file line-by-line where each line is JSON. The
+    function is defensive about the JSON shape: real transcripts nest
+    model/usage under a "message" object while test fixtures may use a
+    flat top-level shape. Returns (total_tokens, tokens_by_model).
+    """
     total = 0
     by_model: dict[str, int] = {}
     with path.open("r", encoding="utf-8", errors="ignore") as f:
@@ -57,6 +64,17 @@ def _sum_transcript(path: Path, today: str) -> tuple[int, dict[str, int]]:
 
 
 def build_usage_record(now: datetime, sources: dict[str, Path | list[Path]]) -> dict:
+    """Build a compact usage record aggregating today's token counts.
+
+    Parameters:
+    - now: current datetime used to determine "today" (UTC-aware datetime
+      is recommended to match transcript timestamps).
+    - sources: mapping from provider id (keys from PROVIDER_IDS) to either a
+      Path or an iterable of Paths pointing at transcript jsonl files.
+
+    Returns a dict suitable for writing to disk which summarizes per-provider
+    availability, today's token total, and a ranked tokens-by-model list.
+    """
     today = now.strftime("%Y-%m-%d")
     providers: dict[str, dict] = {}
     for provider_id in PROVIDER_IDS:
@@ -103,6 +121,12 @@ def build_usage_record(now: datetime, sources: dict[str, Path | list[Path]]) -> 
 
 
 def write_record_atomically(path: Path, record: dict) -> None:
+    """Write `record` to `path` atomically as JSON.
+
+    Creates parent directories if necessary, writes to a temporary file and
+    then atomically replaces the destination. Indented JSON is used for
+    readability when humans inspect the file.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(path.suffix + ".tmp")
     tmp_path.write_text(json.dumps(record, indent=2))
@@ -110,6 +134,13 @@ def write_record_atomically(path: Path, record: dict) -> None:
 
 
 def main(argv: list[str]) -> int:
+    """CLI entrypoint.
+
+    Expects a single argument: the directory where the generated
+    `agent-usage.json` will be written. Scans well-known transcript paths in
+    the user's home directory for supported providers and writes the
+    aggregated record.
+    """
     if len(argv) != 1:
         print("usage: agent_usage.py <state-dir>", file=sys.stderr)
         return 2
