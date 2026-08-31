@@ -14,6 +14,8 @@ ColumnLayout {
     property string doctorOutput: qsTr("Running aphotic doctor…")
     property string packageCheckOutput: ""
     property bool packageCheckRunning: false
+    property string pendingUpdatesOutput: ""
+    property bool pendingUpdatesRunning: false
 
     property string profileName: ""
     property string profileLayers: ""
@@ -333,6 +335,129 @@ ColumnLayout {
         font: Tokens.font.mono.small
         color: Colours.palette.m3onSurface
         text: root.packageCheckOutput
+    }
+
+    // Distinct from "Package check" above -- that verifies Aphotic's own
+    // profiles/*.toml package list still resolves against upstream repos
+    // (a maintainer/CI concern). This is advisory-only for the user's own
+    // system: are there pending pacman/AUR updates. Never applies
+    // anything itself, matching every other "surface, don't act"
+    // convention already in this codebase (Resource Engine, the AI
+    // triage guardrail) -- applying is still a manual `sudo pacman -Syu`/
+    // AUR-helper call the notification text spells out.
+    SettingsGroup {
+        Layout.fillWidth: true
+        Layout.topMargin: Tokens.spacing.medium
+
+        SettingsPresetRow {
+            icon: "update"
+            label: qsTr("Pending update check")
+            presets: [{
+                    value: "off",
+                    label: qsTr("Off")
+                }, {
+                    value: "daily",
+                    label: qsTr("Daily")
+                }, {
+                    value: "weekly",
+                    label: qsTr("Weekly")
+                }]
+            value: Settings.packageCheckFrequency
+            onSelected: value => {
+                Settings.packageCheckFrequency = value;
+                packageCheckTimerProc.command = ["aphotic", "packages", "set-timer", value];
+                packageCheckTimerProc.running = true;
+            }
+        }
+
+        StyledText {
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            text: qsTr("Notifies (Hyprland banner) when official or AUR updates are pending -- never installs them. \"Check now\" below runs the same check immediately, printed here instead of as a notification.")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.small
+        }
+
+        RowLayout {
+            Layout.topMargin: Tokens.spacing.small
+            Layout.fillWidth: true
+            spacing: Tokens.spacing.medium
+
+            StyledText {
+                Layout.fillWidth: true
+                visible: root.pendingUpdatesRunning
+                text: qsTr("Checking…")
+                color: Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.label.small
+            }
+
+            StyledRect {
+                Layout.preferredHeight: 28
+                Layout.preferredWidth: pendingCheckLabel.implicitWidth + Tokens.padding.medium * 2
+                radius: Tokens.rounding.full
+                color: Colours.tPalette.m3surfaceContainer
+                opacity: root.pendingUpdatesRunning ? 0.5 : 1
+
+                StyledText {
+                    id: pendingCheckLabel
+                    anchors.centerIn: parent
+                    text: qsTr("Check now")
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.small
+                }
+
+                StateLayer {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    disabled: root.pendingUpdatesRunning
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: !root.pendingUpdatesRunning
+                    onClicked: {
+                        root.pendingUpdatesRunning = true;
+                        root.pendingUpdatesOutput = "";
+                        pendingUpdatesProc.running = true;
+                    }
+                }
+            }
+        }
+
+        StyledText {
+            visible: root.pendingUpdatesOutput.length > 0
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            textFormat: Text.PlainText
+            font: Tokens.font.mono.small
+            color: Colours.palette.m3onSurface
+            text: root.pendingUpdatesOutput
+        }
+    }
+
+    Process {
+        id: pendingUpdatesProc
+        command: ["aphotic", "packages", "check"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.pendingUpdatesOutput = text.trim().length > 0 ? text.trim() : qsTr("No pending updates.");
+                root.pendingUpdatesRunning = false;
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim().length > 0)
+                    root.pendingUpdatesOutput = text.trim();
+                root.pendingUpdatesRunning = false;
+            }
+        }
+    }
+
+    // Fire-and-forget -- enabling/disabling a --user timer is near-
+    // instant and this pane has nowhere meaningful to show its own
+    // success/failure beyond what journalctl --user already covers.
+    Process {
+        id: packageCheckTimerProc
     }
 
     // Every package referenced across profiles/*.toml gets two live HTTP

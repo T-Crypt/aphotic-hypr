@@ -1,0 +1,8 @@
+[Unit]
+Description=Check for pending Aphotic system package updates (advisory only)
+
+[Service]
+Type=oneshot
+# Absolute path, not `/usr/bin/env aphotic` -- systemd --user's PATH
+# doesn't include ~/.local/bin, so a bare `aphotic` can't resolve.
+ExecStart=%h/.local/bin/aphotic packages check --notify
