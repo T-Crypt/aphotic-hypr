@@ -15,6 +15,12 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("blueman-applet")
     hl.exec_cmd("nm-applet --indicator")
     hl.exec_cmd("sleep 1 && awww-daemon")
+    -- No-op once a theme has ever been applied (checks for theme.json) --
+    -- a fresh install has neither, so nothing in this file previously
+    -- ever told awww-daemon what to show, leaving "No wallpaper set"
+    -- until SUPER+SHIFT+W was used manually. Polls for the daemon's
+    -- socket itself rather than assuming the sleep above was long enough.
+    hl.exec_cmd("aphotic theme ensure-default")
     -- Connects only if Settings.vpnAutoConnect is true (checked inside
     -- the command itself, see cmd_vpn.sh's `autostart` subcommand) --
     -- warns and no-ops without passwordless sudo, same as everything
