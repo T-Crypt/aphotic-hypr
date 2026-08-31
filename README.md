@@ -571,6 +571,10 @@ Install the <a href="https://addons.mozilla.org/en-US/firefox/addon/pywalfox/">P
 
 <br>
 
+## Documentation updates
+
+- 2026-08-31: Added docstrings and inline comments to several Python modules to improve maintainability (lib/toml/merge.py, Configs/.local/lib/aphotic/agent_hook.py, Configs/.local/lib/aphotic/agent_usage.py, scripts/check-packages.py, Configs/hypr/scripts/wallswitcher.py).
+
 ## License
 
 [GPL-3.0](LICENSE).

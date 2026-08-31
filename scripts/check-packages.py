@@ -12,6 +12,11 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_packages():
+    """Collect package names referenced in profiles TOML files.
+
+    Scans profiles/base/*.toml and profiles/layers/*.toml for `packages.prep`
+    and `packages.main` lists, returning a set of unique package names.
+    """
     pkgs = set()
     for base in sorted((ROOT / "profiles" / "base").glob("*.toml")):
         d = tomllib.load(open(base, "rb"))
@@ -25,6 +30,13 @@ def load_packages():
 
 
 def check_official(pkg):
+    """Return True if `pkg` exists in official Arch repos, False if not,
+    or None on transient error.
+
+    Uses the Arch packages search JSON endpoint. None is returned for
+    network or parsing errors to allow the caller to treat the result as
+    unavailable rather than definitively missing.
+    """
     url = f"https://archlinux.org/packages/search/json/?name={pkg}"
     try:
         with urllib.request.urlopen(url, timeout=10) as r:
@@ -35,6 +47,11 @@ def check_official(pkg):
 
 
 def check_aur(pkg):
+    """Return True if `pkg` exists in the AUR, False if not, or None on error.
+
+    Uses the official AUR RPC endpoint. Network or parse errors return None
+    so callers can distinguish between missing and temporarily unknown.
+    """
     url = f"https://aur.archlinux.org/rpc/v5/info/{pkg}"
     try:
         with urllib.request.urlopen(url, timeout=10) as r:
@@ -45,6 +62,12 @@ def check_aur(pkg):
 
 
 def main():
+    """CLI entrypoint: verify packages referenced by profiles.
+
+    Prints each package with its status (official/AUR/NOT FOUND). Exits with
+    status 1 if any packages are not found so CI or local checks can detect
+    broken references.
+    """
     pkgs = load_packages()
     missing = []
     for pkg in sorted(pkgs):
