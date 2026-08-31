@@ -29,25 +29,16 @@ resolve_assistant() {
     return
   fi
 
-  local ans
   if [[ ",$LAYERS," == *",ai,"* ]]; then
-    if read -rep $'[\e[1;33mACTION\e[0m] - Install the Aphotic Assistant, a local chatbot that helps you personalize your setup? (Y/n) ' ans; then
-      if [[ "$ans" == "n" || "$ans" == "N" ]]; then
-        ASSISTANT="false"
-      else
-        ASSISTANT="true"
-      fi
+    if confirm "Install the Aphotic Assistant, a local chatbot that helps you personalize your setup?" y; then
+      ASSISTANT="true"
     else
       ASSISTANT="false"
     fi
   else
-    if read -rep $'[\e[1;33mACTION\e[0m] - The Aphotic Assistant is a local chatbot, but it needs the ai layer (Ollama). Add the ai layer and install it? (y/N) ' ans; then
-      if [[ "$ans" == "y" || "$ans" == "Y" ]]; then
-        ASSISTANT="true"
-        LAYERS="${LAYERS:+$LAYERS,}ai"
-      else
-        ASSISTANT="false"
-      fi
+    if confirm "The Aphotic Assistant is a local chatbot, but it needs the ai layer (Ollama). Add the ai layer and install it?" n; then
+      ASSISTANT="true"
+      LAYERS="${LAYERS:+$LAYERS,}ai"
     else
       ASSISTANT="false"
     fi

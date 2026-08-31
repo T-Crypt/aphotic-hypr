@@ -42,6 +42,23 @@ ColumnLayout {
 
     readonly property var filteredAvailable: root.selectedCategory === "all" ? root.available : root.available.filter(p => p.category === root.selectedCategory)
 
+    // Icon + label for each known `capabilities` tag (manifest v3, see
+    // docs/archive/PLUGIN_SYSTEM.md §7.1). An unrecognized tag (a future
+    // capability, or a third-party plugin's own) falls back to a generic
+    // icon and the raw string rather than needing this map updated --
+    // same "no dead UI, no silent gap" spirit `[owns]` was built for.
+    readonly property var capabilityMetaMap: ({
+        "theme-hook": { icon: "palette", label: qsTr("Theme Hook") },
+        "project-hook": { icon: "folder_open", label: qsTr("Project Hook") },
+        "workspace-hook": { icon: "work", label: qsTr("Workspace Hook") },
+        "ui-surface": { icon: "dashboard", label: qsTr("UI Surface") },
+        "harness-hook": { icon: "smart_toy", label: qsTr("Harness Hook") }
+    })
+
+    function capabilityMeta(cap: string): var {
+        return root.capabilityMetaMap[cap] ?? { icon: "extension", label: cap };
+    }
+
     function refresh(): void {
         root.refreshing = true;
         installedProc.running = true;
@@ -117,6 +134,198 @@ ColumnLayout {
 
     function installedNames(): var {
         return root.installed.map(p => p.name);
+    }
+
+    // Small pill, same idiom as the "Installed"/"Install"/GitHub-link
+    // pills already in this file (StyledRect, radius.full, sized to
+    // content) rather than CategoryRail's larger nav-icon chip -- that
+    // shape belongs to the category filter, not a per-row badge.
+    component CapabilityChip: StyledRect {
+        id: chip
+
+        required property string capability
+
+        readonly property var meta: root.capabilityMeta(chip.capability)
+
+        implicitWidth: chipRow.implicitWidth + Tokens.padding.medium * 2
+        implicitHeight: chipRow.implicitHeight + Tokens.padding.small * 2
+        radius: Tokens.rounding.full
+        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+        RowLayout {
+            id: chipRow
+            anchors.centerIn: parent
+            spacing: Tokens.spacing.extraSmall
+
+            MaterialIcon {
+                text: chip.meta.icon
+                color: Colours.palette.m3onSurfaceVariant
+                fontStyle: Tokens.font.icon.small
+            }
+
+            StyledText {
+                text: chip.meta.label
+                color: Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.label.small
+            }
+        }
+    }
+
+    // SettingsRow's own single-line description leaves no room for
+    // capability chips / a dashboard-tab disclosure / an owns-config-keys
+    // line, and it exposes no slot for extra content below the
+    // description -- so plugin rows use this local lookalike instead of
+    // extending the shared component (docs/archive/PLUGIN_SYSTEM.md
+    // §7.1 keeps this pass scoped to PluginsPane.qml). Same chrome
+    // (SettingsGroup stamps first/last on any child exposing those
+    // properties, duck-typed by name, so this still chains into one
+    // connected card exactly like a real SettingsRow would).
+    component PluginRow: StyledRect {
+        id: pluginRow
+
+        required property string icon
+        required property string label
+        property string description: ""
+        property var capabilities: []
+        property var dashboardTab: null
+        property var configKeys: []
+        property var externalConfig: []
+
+        property bool first: true
+        property bool last: true
+
+        default property alias trailing: trailingSlot.data
+
+        Layout.fillWidth: true
+        implicitHeight: rowLayout.implicitHeight + Tokens.padding.large * 2
+
+        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        topLeftRadius: pluginRow.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+        topRightRadius: pluginRow.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+        bottomLeftRadius: pluginRow.last ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+        bottomRightRadius: pluginRow.last ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+
+        Behavior on topLeftRadius {
+            Anim { type: Anim.DefaultEffects }
+        }
+        Behavior on topRightRadius {
+            Anim { type: Anim.DefaultEffects }
+        }
+        Behavior on bottomLeftRadius {
+            Anim { type: Anim.DefaultEffects }
+        }
+        Behavior on bottomRightRadius {
+            Anim { type: Anim.DefaultEffects }
+        }
+
+        RowLayout {
+            id: rowLayout
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Tokens.padding.large
+            spacing: Tokens.spacing.medium
+
+            StyledRect {
+                Layout.preferredWidth: 36
+                Layout.preferredHeight: 36
+                Layout.alignment: Qt.AlignTop
+                radius: Tokens.rounding.medium
+                color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                MaterialIcon {
+                    anchors.centerIn: parent
+                    text: pluginRow.icon
+                    color: Colours.palette.m3onSurfaceVariant
+                    fontStyle: Tokens.font.icon.medium
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Tokens.spacing.extraSmall
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: pluginRow.label
+                    elide: Text.ElideRight
+                    font: Tokens.font.body.medium
+                }
+
+                StyledText {
+                    visible: pluginRow.description.length > 0
+                    Layout.fillWidth: true
+                    text: pluginRow.description
+                    elide: Text.ElideRight
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.small
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Tokens.spacing.extraSmall
+                    visible: pluginRow.capabilities.length > 0
+                    spacing: Tokens.spacing.extraSmall
+
+                    Repeater {
+                        model: pluginRow.capabilities
+
+                        CapabilityChip {
+                            required property string modelData
+                            capability: modelData
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Tokens.spacing.extraSmall
+                    visible: pluginRow.dashboardTab !== null
+                    spacing: Tokens.spacing.extraSmall
+
+                    MaterialIcon {
+                        text: pluginRow.dashboardTab?.icon ?? "dashboard"
+                        color: Colours.palette.m3onSurfaceVariant
+                        fontStyle: Tokens.font.icon.small
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: qsTr("Adds a Dashboard tab: %1").arg(pluginRow.dashboardTab?.label ?? "")
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.small
+                    }
+                }
+
+                StyledText {
+                    visible: pluginRow.configKeys.length > 0
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: qsTr("Uses settings: %1").arg(pluginRow.configKeys.join(", "))
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.small
+                }
+
+                StyledText {
+                    visible: pluginRow.externalConfig.length > 0
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: qsTr("Wires: %1").arg(pluginRow.externalConfig.join(", "))
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.small
+                }
+            }
+
+            Item {
+                id: trailingSlot
+
+                Layout.alignment: Qt.AlignTop
+                Layout.preferredWidth: childrenRect.width
+                Layout.preferredHeight: childrenRect.height
+            }
+        }
     }
 
     Component.onCompleted: root.refresh()
@@ -200,7 +409,7 @@ ColumnLayout {
         Repeater {
             model: root.installed
 
-            SettingsRow {
+            PluginRow {
                 id: installedRow
 
                 required property var modelData
@@ -213,6 +422,10 @@ ColumnLayout {
                         return qsTr("Missing dependency: %1").arg(missing.join(", "));
                     return installedRow.modelData.description;
                 }
+                capabilities: installedRow.modelData.capabilities ?? []
+                dashboardTab: installedRow.modelData.ui?.dashboard_tab ?? null
+                configKeys: installedRow.modelData.owns?.config_keys ?? []
+                externalConfig: installedRow.modelData.owns?.external_config ?? []
 
                 RowLayout {
                     spacing: Tokens.spacing.small
@@ -397,7 +610,7 @@ ColumnLayout {
                     Repeater {
                         model: root.filteredAvailable
 
-                        SettingsRow {
+                        PluginRow {
                             id: availableRow
 
                             required property var modelData
@@ -406,6 +619,8 @@ ColumnLayout {
                             icon: "extension"
                             label: `${availableRow.modelData.display_name}  ·  v${availableRow.modelData.version}`
                             description: availableRow.modelData.description
+                            capabilities: availableRow.modelData.capabilities ?? []
+                            dashboardTab: availableRow.modelData.ui?.dashboard_tab ?? null
 
                             StyledRect {
                                 implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2

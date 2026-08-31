@@ -1,5 +1,6 @@
 # Claude Code working docs - not part of the shipped rice
 docs/
+CLAUDE.md
 .superpowers/
 .claude/
 
