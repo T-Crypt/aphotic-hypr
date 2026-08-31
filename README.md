@@ -563,8 +563,8 @@ Install the <a href="https://addons.mozilla.org/en-US/firefox/addon/pywalfox/">P
 ## Star History
 
 <p align="center">
-  <a href="https://star-history.com/#T-Crypt/Aphotic-Hypr&Date">
-    <img src="https://api.star-history.com/svg?repos=T-Crypt/Aphotic-Hypr&type=Date" width="600">
+  <a href="https://www.star-history.com/?type=date&repos=T-Crypt%2FAphotic-Hypr">
+    <img src="https://api.star-history.com/svg?repos=T-Crypt/Aphotic-Hypr&type=date" width="600">
   </a>
 </p>
 
