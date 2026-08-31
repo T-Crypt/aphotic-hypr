@@ -36,14 +36,28 @@ aphotic_cmd_scheme() {
 
             if [[ -n "$current_theme" ]] && [[ -n "$current_wallpaper" ]] && [[ -f "${APHOTIC_AWWW_DIR}/${current_theme}/${current_wallpaper}" ]]; then
                 local image_path="${APHOTIC_AWWW_DIR}/${current_theme}/${current_wallpaper}"
+                local theme_toml="${APHOTIC_AWWW_DIR}/${current_theme}/theme.toml"
 
-                if command -v wallust >/dev/null 2>&1; then
+                source "${COMMANDS_DIR}/cmd_theme.sh"
+                local engine_name
+                engine_name="$(_aphotic_toml_get "$theme_toml" engine name)"
+
+                if [[ "$engine_name" == "matugen" ]]; then
                     aphotic_log "regenerating palette for scheme '${name}' using wallpaper: ${image_path}"
 
-                    source "${COMMANDS_DIR}/cmd_theme.sh"
+                    local scheme style contrast
+                    scheme="$(_aphotic_toml_get "$theme_toml" engine scheme)"
+                    style="$(_aphotic_toml_get "$theme_toml" engine style)"
+                    contrast="$(_aphotic_toml_get "$theme_toml" engine contrast)"
+
+                    aphotic_matugen_run "$image_path" "$scheme" "$style" "$contrast" \
+                        && aphotic_ok "palette regenerated for scheme '${name}'"
+                elif command -v wallust >/dev/null 2>&1; then
+                    aphotic_log "regenerating palette for scheme '${name}' using wallpaper: ${image_path}"
+
                     local backend palette
-                    backend="$(_aphotic_toml_get "${APHOTIC_AWWW_DIR}/${current_theme}/theme.toml" engine backend)"
-                    palette="$(_aphotic_toml_get "${APHOTIC_AWWW_DIR}/${current_theme}/theme.toml" engine palette)"
+                    backend="$(_aphotic_toml_get "$theme_toml" engine backend)"
+                    palette="$(_aphotic_toml_get "$theme_toml" engine palette)"
 
                     local wallust_cmd=(wallust run "$image_path")
                     [[ -n "$backend" ]] && wallust_cmd+=(-b "$backend")

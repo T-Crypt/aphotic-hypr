@@ -137,8 +137,10 @@ def parse_engine_pin(theme):
     cursor_theme = ""
     gtk_theme = ""
     engine_name = ""
+    scheme = ""
+    contrast = ""
     if not os.path.isfile(toml_path):
-        return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name
+        return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name, scheme, contrast
     section = ""
     with open(toml_path) as f:
         for raw in f:
@@ -164,6 +166,10 @@ def parse_engine_pin(theme):
                     style = value
                 elif key == "name":
                     engine_name = value
+                elif key == "scheme":
+                    scheme = value
+                elif key == "contrast":
+                    contrast = value
             elif section == "icons":
                 if key == "papirus_color":
                     papirus_color = value
@@ -173,7 +179,7 @@ def parse_engine_pin(theme):
                     cursor_theme = value
             elif section == "gtk" and key == "theme":
                 gtk_theme = value
-    return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name
+    return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name, scheme, contrast
 
 
 settings_path = os.path.expanduser("~/.local/state/aphotic/settings.json")
@@ -266,19 +272,23 @@ def apply_wallpaper(theme, wallpaper):
     # jarring cut. A short fade is smooth without adding any wait.
     run_optional(["awww", "img", "--transition-type", "fade", "--transition-duration", "0.45", "--transition-fps", "60", image_path])
 
-    backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name = parse_engine_pin(theme)
+    backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name, scheme, contrast = parse_engine_pin(theme)
 
-    # [engine].name is documented (themes/THEME_SPEC.md) as accepting
-    # "wallust" | "matugen", but nothing here (or in cmd_theme.sh/
-    # Wallpapers.qml) has ever actually read it -- every apply path always
-    # runs wallust regardless, so a theme pinning matugen silently got
-    # wallust instead with zero indication anything was ignored. Not
-    # implementing matugen here -- just making the mismatch loud instead
-    # of silent.
-    if engine_name and engine_name != "wallust":
-        print(f"theme '{theme}' pins engine '{engine_name}', but only wallust is wired up — using wallust")
+    if engine_name and engine_name not in ("wallust", "matugen"):
+        print(f"theme '{theme}' pins unknown engine '{engine_name}' — using wallust")
 
-    if colorscheme:
+    if engine_name == "matugen":
+        # --prefer is not optional: matugen refuses to choose between an
+        # image's candidate source colours without a terminal to prompt on.
+        matugen_cmd = ["matugen", "image", image_path, "--prefer", "saturation", "-q"]
+        if scheme:
+            matugen_cmd += ["-t", scheme]
+        if style:
+            matugen_cmd += ["-m", style]
+        if contrast:
+            matugen_cmd += ["--contrast", contrast]
+        run_optional(matugen_cmd)
+    elif colorscheme:
         # Fixed palette pin -- see cmd_theme.sh's _aphotic_theme_apply for
         # why some themes (HackTheBox's real green/navy scheme) pin an
         # exact colorscheme file instead of deriving from the image.
