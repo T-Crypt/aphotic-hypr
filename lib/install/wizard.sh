@@ -94,10 +94,71 @@ prompt_layers() {
   echo "${layers[*]}"
 }
 
+# Reads [theme].display_name out of a theme.toml -- deliberately a
+# purpose-built grep/awk pass rather than pulling in aphotic_toml_get
+# from globalcontrol.sh (not sourced here, and this install-time-only
+# read doesn't need the shared shell's full TOML helper).
+_wizard_theme_display_name() {
+  local toml="$1"
+  [[ -f "$toml" ]] || return 0
+  awk '
+    /^\[theme\]/ { insec=1; next }
+    /^\[/ { insec=0 }
+    insec && /^display_name[[:space:]]*=/ {
+      sub(/^[^=]*=[[:space:]]*/, "");
+      gsub(/^"|"$/, "");
+      print;
+      exit
+    }
+  ' "$toml"
+}
+
+# Themes live as directories under Configs/awww/ (see
+# themes/THEME_SPEC.md) -- computed from this script's own path rather
+# than a global like ROOT_DIR so this stays callable in isolation (tests
+# source wizard.sh directly without setting ROOT_DIR).
+_wizard_repo_dir() {
+  cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd
+}
+
 prompt_theme() {
-  local answer
-  read -rp "Theme? (default): " answer
-  echo "${answer:-default}"
+  local repo_dir names=() labels=() dir name label answer default_idx=1 i
+
+  repo_dir="$(_wizard_repo_dir)"
+  for dir in "$repo_dir"/Configs/awww/*/; do
+    [[ -d "$dir" ]] || continue
+    name="$(basename "$dir")"
+    label="$(_wizard_theme_display_name "${dir}theme.toml")"
+    names+=("$name")
+    labels+=("${label:-$name}")
+  done
+
+  if [[ ${#names[@]} -eq 0 ]]; then
+    # No theme folders found (shouldn't happen in a real clone) -- fall
+    # back to a name rather than leaving THEME empty, since downstream
+    # `aphotic theme set` treats an unresolvable name as an error, not a
+    # silent no-op.
+    echo "tokyonight"
+    return 0
+  fi
+
+  for i in "${!names[@]}"; do
+    [[ "${names[$i]}" == "tokyonight" ]] && default_idx=$((i + 1))
+  done
+
+  echo "Available themes:" >&2
+  for i in "${!names[@]}"; do
+    printf '  %d) %-12s %s\n' "$((i + 1))" "${names[$i]}" "${labels[$i]}" >&2
+  done
+  read -rp "Theme? [1-${#names[@]}] (default ${default_idx} - ${names[$((default_idx - 1))]}): " answer
+  answer="${answer:-$default_idx}"
+
+  if [[ "$answer" =~ ^[0-9]+$ ]] && (( answer >= 1 && answer <= ${#names[@]} )); then
+    echo "${names[$((answer - 1))]}"
+  else
+    echo -e "$CWR - Invalid selection, using ${names[$((default_idx - 1))]}." >&2
+    echo "${names[$((default_idx - 1))]}"
+  fi
 }
 
 # Reads aphotic.toml's [install].layers as a CSV, or "" if the file/key is
@@ -185,7 +246,7 @@ resolve_config() {
     echo -e "$CNT - Run with --opt-in for the interactive layer picker, or --with gaming,dev,ai,exploit to pick layers directly. Layers can always be added later by re-running install.sh."
     PROFILE="full"
     LAYERS=""
-    [[ -z "$THEME" ]] && THEME="default"
+    [[ -z "$THEME" ]] && THEME="tokyonight"
     # Return here, not just fall through -- LAYERS="" is this branch's real
     # answer (no optional layers), and the -z checks below can't tell that
     # apart from "not resolved yet," which would otherwise re-trigger

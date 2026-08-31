@@ -35,8 +35,16 @@ result=$(printf "3\nn\nn\nn\ny\nn\ny\ny\nn\nn\nn\nn\nn\n" | prompt_layers)
 result=$(printf "3\nn\nn\nn\ny\ny\ny\ny\nn\nn\nn\n" | prompt_layers)
 [[ "$result" == "exploit,exploit-passwords,exploit-wordlists" ]] || fail "expected 'exploit,exploit-passwords,exploit-wordlists', got '$result'"
 
-result=$(echo "" | prompt_theme)
-[[ "$result" == "default" ]] || fail "expected 'default', got '$result'"
+CWR="[WARNING]"
+
+result=$(echo "" | prompt_theme 2>/dev/null)
+[[ "$result" == "tokyonight" ]] || fail "expected default 'tokyonight', got '$result'"
+
+result=$(echo "1" | prompt_theme 2>/dev/null)
+[[ "$result" == "gruvbox" ]] || fail "expected 'gruvbox' for selection 1, got '$result'"
+
+result=$(echo "99" | prompt_theme 2>/dev/null)
+[[ "$result" == "tokyonight" ]] || fail "expected fallback to 'tokyonight' for out-of-range selection, got '$result'"
 
 WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
