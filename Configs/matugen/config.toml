@@ -1,0 +1,66 @@
+# Aphotic's matugen config — the second color engine, selected per-theme
+# via theme.toml's [engine].name = "matugen" (see themes/THEME_SPEC.md).
+#
+# Every target below mirrors one of Configs/wallust/wallust.toml's
+# [templates] entries, writing the exact same file, so switching a theme
+# between the two engines swaps which tool renders these and nothing
+# else. The two template sets are separate files because the two engines
+# have different template languages and different color vocabularies —
+# wallust renders ANSI color0-15, matugen renders real Material You
+# roles.
+#
+# matugen's own syntax is `{{ colors.<role>.default.hex }}`; a single
+# literal `{` passes through untouched, so unlike wallust (which needs a
+# per-template pywal-compat vs. native-Jinja2 split) one syntax covers
+# Lua tables and CSS rule blocks too.
+#
+# `default` resolves to whichever of dark/light the run's `-m` mode
+# selected — that's theme.toml's [engine].style, the same key wallust
+# passes to `-S`.
+
+[config]
+
+[templates.kitty]
+input_path = "~/.config/matugen/templates/colors-kitty.conf"
+output_path = "~/.config/kitty/colors-kitty.conf"
+
+[templates.cava]
+input_path = "~/.config/matugen/templates/colors-cava"
+output_path = "~/.config/cava/config"
+
+[templates.swaylock]
+input_path = "~/.config/matugen/templates/colors-swaylock"
+output_path = "~/.config/swaylock/config"
+
+[templates.kvantum]
+input_path = "~/.config/matugen/templates/Aphotic.kvconfig"
+output_path = "~/.config/Kvantum/Aphotic/Aphotic.kvconfig"
+
+[templates.hyprland]
+input_path = "~/.config/matugen/templates/colors-hyprland.lua"
+output_path = "~/.config/hypr/colors.lua"
+
+[templates.gtk]
+input_path = "~/.config/matugen/templates/gtk.css"
+output_path = "~/.config/gtk-3.0/gtk.css"
+
+[templates.gtk4]
+input_path = "~/.config/matugen/templates/gtk.css"
+output_path = "~/.config/gtk-4.0/gtk.css"
+
+[templates.wal_colors]
+input_path = "~/.config/matugen/templates/colors-wal-plain"
+output_path = "~/.cache/wal/colors"
+
+[templates.wal_colors_json]
+input_path = "~/.config/matugen/templates/colors-wal.json"
+output_path = "~/.cache/wal/colors.json"
+
+# Palette snapshot — the matugen-shaped counterpart of wallust's
+# plugin_palette entry, written to the same path so there is exactly one
+# "current resolved palette" file no matter which engine produced it.
+# Discriminated by its own "engine" key and by carrying a `roles` object
+# wallust's snapshot never has; see the template itself.
+[templates.plugin_palette]
+input_path = "~/.config/matugen/templates/colors-plugin-palette.json"
+output_path = "~/.local/state/aphotic/palette.json"
