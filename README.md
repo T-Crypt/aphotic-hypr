@@ -160,6 +160,8 @@ aphotic wallpaper --fetch-extra nordic     # only one theme
 
 Both commands show the total download size first (skip the prompt with `-y`/`--yes`), verify each file's SHA-256 before keeping it, and only fetch what's still missing on a re-run. `install.sh` asks about this once near the end of setup, defaulting to **no** so a bandwidth-limited connection isn't stuck downloading wallpapers it never asked for.
 
+Every `aphotic` subcommand, not only theme/wallpaper: [CLI Reference](https://github.com/T-Crypt/Aphotic-Hypr/wiki/CLI-Reference).
+
 </details>
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
@@ -191,7 +193,7 @@ Waybar, Mako, Swaylock, and Rofi are retired in favor of one hand-vendored [Quic
 
 | Module | Replaces | Notes |
 |---|---|---|
-| Bar | Waybar | Four swappable bar styles -- Full (dockable left/right/top/bottom, pill or square background), Dock (floating macOS-style app dock), Taskbar (Windows-style grouped task list), Minimal (Omarchy-style thin icon strip) -- switchable live from Settings → Bar, `aphotic bar style <name>`, or SUPER+CTRL+SHIFT+B to cycle. Full's workspaces/active window/tray/clock/status icons all keep their real hover popouts (see below). Anyone with `barSkin: "minimal"` already saved is migrated automatically |
+| Bar | Waybar | Four swappable bar styles (Full, Dock, Taskbar, Minimal), switchable live from Settings → Bar, `aphotic bar style <name>`, or SUPER+CTRL+SHIFT+B to cycle. Full's workspaces/active window/tray/clock/status icons all keep their real hover popouts (see below). Full detail on all four styles: [Bar Styles](https://github.com/T-Crypt/Aphotic-Hypr/wiki/Bar-Styles) |
 | Bar popouts | — | Hover any status icon, the tray, or the active window pill for a real detail panel: volume, Wi-Fi, Bluetooth, battery/power profile, agent sessions, host info, Pomodoro, window title, keyboard layout, lock state, live resource meter |
 | Launcher | Rofi (drun, clipboard, emoji, wallpaper) | One search box, mode switched by a prefix. See [Launcher modes](#launcher-modes) below |
 | Screenshot picker | `grim`/`slurp` combo scripts | Drag-select a region with live client-window snapping and a freeze-mode preview, `SUPER+Shift+S` (see [Keybindings](#keybindings) for the freeze/clipboard variants); the plain `grim`/`slurp`/`swappy` combo stays on `SUPER+S` |
@@ -446,8 +448,8 @@ A **profile** is the base package set. A **layer** is an optional add-on merged 
 |---|---|
 | `gaming` | GameMode, MangoHud (both with 32-bit variants), Steam. |
 | `dev` | Neovim, tmux, fzf, ripgrep, fd, lazygit. |
-| `ai` | Ollama as a local AI backend, plus [llmfit](https://github.com/AlexsJones/llmfit) for hardware-aware model recommendations: `aphotic ai fit` on the CLI, a Hardware Advisor + Model Storage card in Settings → AI. This layer also turns on Aphotic's agent tooling: it wires Claude Code hooks into `~/.claude/settings.json` (merged with `jq`, never overwriting hooks you already have) and enables a local usage-tracking timer. Leave the layer off and none of that is installed or run; de-select it on a re-run and `install.sh` removes the hook entries it previously added. |
-| `exploit` | Offensive-security/CTF tooling, split into focused sublayers (`exploit-recon`, `-web`, `-network`, `-passwords`, `-wordlists`, `-reversing`, `-forensics`, `-reporting`). `exploit` itself is a convenience bundle of recon+web+network. Most sublayers **enable the BlackArch repo**, which is less stable than Arch's official repos; `install.sh` prints a warning and asks for explicit confirmation before touching `/etc/pacman.conf`. Selecting any of them also requires accepting a one-time authorized-use disclaimer. `./install.sh --help` documents the full sublayer taxonomy and the disclaimer flow. |
+| `ai` | Ollama as a local AI backend, plus [llmfit](https://github.com/AlexsJones/llmfit) for hardware-aware model recommendations: `aphotic ai fit` on the CLI, a Hardware Advisor + Model Storage card in Settings → AI. This layer also enables a local agent-usage-tracking timer (session count/token usage for the bar's agent popout, see [Agent module](#quickshell-shell)). It does **not** wire any harness's hooks automatically: those are separate opt-in plugins (`claude-hooks`/`codex-hooks`/`opencode-hooks`, see [Plugin System](#plugin-system)). Leave the layer off and none of this installs or runs; de-select it on a re-run and `install.sh` disables the timer. |
+| `exploit` | Offensive-security/CTF tooling, split into focused sublayers (`exploit-recon`, `-web`, `-network`, `-passwords`, `-wordlists`, `-reversing`, `-forensics`, `-reporting`); most enable the BlackArch repo and require accepting a one-time authorized-use disclaimer first. Full sublayer taxonomy and the disclaimer flow: [Security](https://github.com/T-Crypt/Aphotic-Hypr/wiki/Security). A separate, not-yet-started **Security domain** (engagement-mode visual state, a passive scope guardian, an evidence recorder) is planned on top of this layer as opt-in plugins: see [Roadmap](#roadmap). |
 
 Layers are additive and dedupe against the base and each other, so `--with gaming,dev,ai` on top of `full` merges cleanly with no duplicate installs. Combine whatever fits: a `minimal` install with only `dev` is a lean coding box; `full` with `gaming` and `dev` is closer to a daily driver that also game-modes on demand.
 
@@ -457,44 +459,11 @@ Layers are additive and dedupe against the base and each other, so `--with gamin
 
 ## Architecture
 
-Aphotic's repo mirrors what gets installed, plus the machinery that decides what that is:
-
-<details>
-<summary><strong>Full repo layout</strong></summary>
-
-```
-Aphotic-Hypr/
-├── install.sh / uninstall.sh   Thin orchestrators: wizard or flags in, resolved plan out
-├── aphotic.toml                 Generated on first install: the resolved source of truth
-├── lib/
-│   ├── install/                 Wizard prompts, AUR helper detection, backups, config linking
-│   └── toml/                    Profile + layer merge logic
-├── profiles/
-│   ├── base/                    minimal.toml, full.toml
-│   └── layers/                  gaming.toml, dev.toml, ai.toml, exploit.toml (meta) + exploit-*.toml sublayers
-├── themes/                      Swappable theme presets (THEME_SPEC.md documents the contract)
-└── Configs/                     Mirrors ~/.config: the configs that land on disk
-    ├── systemd/user/              aphotic-shell.service: Restart=on-failure supervision for qs
-    ├── quickshell/aphotic/        Hand-vendored Quickshell shell (see below)
-    │   ├── config/                Tokens/Config/GlobalConfig singletons (hand-written, no native plugin)
-    │   ├── services/               Colours (wallust-generated), Audio, Hypr, Players, Notifs, ...
-    │   │   └── ai/                   AiConfig/AiKeys/AiProviders: Command Center's AI Chat + Settings → AI backend
-    │   ├── components/             Shared UI primitives (StyledText, MaterialIcon, StateLayer,
-    │   │                            SettingsRow/SettingsGroup/SettingsToggleRow/SettingsPresetRow, Logo, ...)
-    │   └── modules/                bar/ (+ real popouts), launcher/ (apps/clip/emoji/windows/wallpaper),
-    │                                areapicker/, notifications/, osd/, lock/, session/,
-    │                                dashboard/ (Command Center), settings/ (Control Center, 15 categories)
-    ├── hypr/                     hyprland.lua, keybinds.lua, custom.lua (never overwritten, see below)
-    └── .local/
-        ├── bin/aphotic            aphotic CLI entry point, symlinked onto PATH by install.sh
-        └── lib/aphotic/           aphotic CLI internals (commands/, globalcontrol.sh)
-```
-
-</details>
-
-`install.sh` never hardcodes a package list. It resolves one at runtime by merging `profiles/base/<profile>.toml` with each selected `profiles/layers/<layer>.toml`, deduplicating as it goes. Everything downstream (backups, AUR helper choice, config copying) reads from that single resolved plan.
+Aphotic's repo mirrors what gets installed, plus the machinery that decides what that is. `install.sh` never hardcodes a package list: it resolves one at runtime by merging `profiles/base/<profile>.toml` with each selected `profiles/layers/<layer>.toml`, deduplicating as it goes, and everything downstream (backups, AUR helper choice, config copying) reads from that single resolved plan.
 
 `~/.config/hypr/custom.lua` is the one file `install.sh` never touches once it exists. Put your own Hyprland tweaks there and a re-run or `aphotic update` won't clobber them, the same idea as ML4W's protected `custom.conf`.
+
+Full repo layout, module-by-module, on the wiki: [Architecture](https://github.com/T-Crypt/Aphotic-Hypr/wiki/Architecture).
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -520,130 +489,18 @@ Wallpaper-driven color generation, applied consistently across the stack:
 
 ## Keybindings
 
-All keybinds live in one place, [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua), grouped exactly as below. Every `qs -c aphotic ipc call ...` target the shell exposes has a keybind; anything below not bound to a key is intentionally IPC-only (scriptable, but not meant to be memorized).
-
-<details>
-<summary><strong>Launcher</strong>: see the <a href="#launcher-modes">modes table</a> above for what each prefix does inside it</summary>
+All keybinds live in one place, [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua). A few of the most-used ones:
 
 | Keys | Action |
 | :-- | :-- |
-| <kbd>Super</kbd> + <kbd>A</kbd> or <kbd>Super</kbd> + <kbd>Space</kbd> | Open the launcher (apps, clipboard, emoji, windows, wallpaper) |
-
-</details>
-
-<details>
-<summary><strong>Apps & tools</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>T</kbd> | Launch Kitty |
-| <kbd>Super</kbd> + <kbd>E</kbd> | Launch Thunar |
-| <kbd>Super</kbd> + <kbd>C</kbd> | Launch VS Code |
-| <kbd>Super</kbd> + <kbd>F</kbd> | Launch Firefox |
-| <kbd>Super</kbd> + <kbd>S</kbd> | Screenshot: simple region select via `grim`/`slurp`/`swappy`, no extra frills |
-| <kbd>Super</kbd> + <kbd>W</kbd> | Change wallpaper (random pick); open the launcher and type `~` to pick a specific one instead |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>W</kbd> | Open the launcher's wallpaper picker directly |
-| <kbd>Super</kbd> + <kbd>,</kbd> / <kbd>Super</kbd> + <kbd>.</kbd> | Cycle to the previous/next theme, same as `aphotic theme prev`/`next` |
-
-</details>
-
-<details>
-<summary><strong>Quickshell surfaces</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>D</kbd> | Command Center (tabbed dashboard overlay) |
+| <kbd>Super</kbd> + <kbd>A</kbd> | Open the launcher |
+| <kbd>Super</kbd> + <kbd>D</kbd> | Command Center (tabbed dashboard) |
 | <kbd>Super</kbd> + <kbd>I</kbd> | Settings Control Center |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd> | Intelligence quick-chat popout |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> | Clear all notifications |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | Toggle Do Not Disturb |
 | <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
-| <kbd>Super</kbd> + <kbd>Backspace</kbd> | Session / power menu: lock, suspend, log out, hibernate, reboot, shut down |
-| <kbd>Super</kbd> + <kbd>M</kbd> | `wlogout` (fallback power menu) |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | Screenshot picker |
 | <kbd>Super</kbd> + <kbd>B</kbd> | Restart Quickshell |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> | Cycle bar style (Full → Dock → Taskbar → Minimal) |
 
-</details>
-
-<details>
-<summary><strong>Screen capture</strong>: the real Quickshell picker (drag-select with live client-window snapping and a freeze-mode preview), distinct from the plain Super+S script above</summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | Open the picker |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> | Open the picker in freeze-mode (screen freezes first, then select) |
-| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd> | Open the picker, copy to clipboard only (no file saved) |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd> | Freeze-mode + clipboard-only combined |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> | Eyedropper: click a pixel to copy its hex color to the clipboard |
-
-</details>
-
-<details>
-<summary><strong>Media, audio & brightness</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>XF86AudioPlay</kbd> / <kbd>XF86AudioPause</kbd> | Play/pause the active MPRIS player |
-| <kbd>XF86AudioNext</kbd> / <kbd>XF86AudioPrev</kbd> | Next/previous track |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>O</kbd> | Cycle audio output device |
-| <kbd>XF86AudioRaiseVolume</kbd> / <kbd>XF86AudioLowerVolume</kbd> | Volume up/down |
-| <kbd>XF86AudioMute</kbd> | Toggle mute |
-| <kbd>XF86AudioMicMute</kbd> | Toggle mic mute |
-| <kbd>XF86MonBrightnessUp</kbd> / <kbd>XF86MonBrightnessDown</kbd> | Brightness up/down |
-
-</details>
-
-<details>
-<summary><strong>Windows & layout</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>Q</kbd> | Close the focused window |
-| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>Q</kbd> | Force-kill the focused window |
-| <kbd>Super</kbd> + <kbd>V</kbd> | Toggle floating |
-| <kbd>Super</kbd> + <kbd>P</kbd> | Toggle pseudo-tiling |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>F</kbd> | Toggle pin (keep window on every workspace) |
-| <kbd>Super</kbd> + <kbd>J</kbd> | Toggle split direction |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle fullscreen |
-| <kbd>Super</kbd> + <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>/<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> | Move focus between windows |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>/<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> | Move (swap) the focused window in a direction |
-| <kbd>Alt</kbd> + <kbd>Tab</kbd> | Cycle to the next window |
-| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Cycle to the previous window |
-| <kbd>Super</kbd> + <kbd>G</kbd> | Toggle group |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>H</kbd> / <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>L</kbd> | Cycle group tabs backward/forward |
-| <kbd>Super</kbd> + <kbd>LMB</kbd> drag | Move window |
-| <kbd>Super</kbd> + <kbd>RMB</kbd> drag | Resize window |
-
-</details>
-
-<details>
-<summary><strong>Workspaces</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Switch to workspace |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Move window to workspace |
-| <kbd>Super</kbd> + Scroll | Cycle workspaces |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>&darr;</kbd> | Jump to the nearest empty workspace |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Tab</kbd> / <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Cycle forward/backward through open special (scratchpad) workspaces |
-
-> [!NOTE]
-> Special workspaces aren't created by an Aphotic keybind yet. Cycling only does something once one exists (e.g. via `hyprctl dispatch movetoworkspace special:name`). A dedicated create/toggle bind is a small future addition, tracked in the [Roadmap](#roadmap).
-
-</details>
-
-<details>
-<summary><strong>Terminal games</strong>: a few small games built into the <code>aphotic</code> CLI</summary>
-
-`aphotic play` runs three small terminal games: Hangman (classic word-guessing), Snake, and a number-guessing game.
-
-```bash
-aphotic play hangman
-aphotic play snake
-aphotic play guess
-```
-
-</details>
+Full list (apps, windows, workspaces, media, screen capture, terminal games, and every IPC-only target) on the wiki: [Keybindings](https://github.com/T-Crypt/Aphotic-Hypr/wiki/Keybindings).
 
 <div align="right"><a href="#-top">🡅 back to top</a></div>
 
@@ -659,8 +516,9 @@ Aphotic is at **v2.0.0**. The Quickshell shell, per-theme wallpapers, the unifie
 - **Keyboard scratchpad workflow**: `SUPER+Ctrl+Tab` already cycles between open special workspaces, but nothing yet creates/toggles one from the keyboard; a dedicated create/toggle bind is a small follow-up.
 - **Gaming profile**: a real performance-mode toggle that frees GPU VRAM (unloads resident Ollama models) before Steam/Proton launches, MangoHud bar integration, and general Proton/Steam polish.
 - **Dev environment**: a git-status bar module, a build/test-status OSD, and code-aware clipboard history, on top of the `ai` layer's AI Chat tab and the launcher's project switcher, which already cover the interactive side of this.
+- **Security domain**: not the `exploit` layer's package set, which already ships. An engagement-mode visual state (unmissable bar/wallpaper signal while a VPN/engagement is active), a passive scope guardian (advisory-only outbound-target checking), and a local evidence recorder, on the same opt-in-plugin model as the AI domain's harness hooks.
 - **Maintenance tooling**: release tagging is live (GitHub Releases, starting at v2.0.0). Migration tooling is still ahead.
-- **Wider distribution**: right now the only install path is `git clone` + `install.sh`. A live/bootable ISO, genuine multi-distro support, and an AUR package (`yay -S aphotic-shell`, no clone required) are all real candidates, ideally converging rather than picked one at a time. No other Hyprland-based rice or distro currently targets all four identities (dev, gaming, AI, security) Aphotic does in one setup; most, like Omarchy, are dev-focused. That's the case for closing the distribution gap rather than leaving `git clone` as the only door in.
+- **Wider distribution**: right now the only working install path is `git clone` + `install.sh`. `aphotic iso build` already exists as a CLI command, but it's a scaffold, not a working builder yet. It errors out on purpose until a real archiso profile (`packages.x86_64`, `airootfs/`, `profiledef.sh`) exists at `iso/profile/`, which nobody has authored. That, genuine multi-distro support, and an AUR package (`yay -S aphotic-shell`, no clone required) are all real candidates, ideally converging rather than picked one at a time. No other Hyprland-based rice or distro currently targets all four identities (dev, gaming, AI, security) Aphotic does in one setup; most, like Omarchy, are dev-focused. That's the case for closing the distribution gap rather than leaving `git clone` as the only door in.
 - **AI-native differentiators, still open**: AI chat context injection and session handoff. (Live per-session agent status now reads the hook's data and renders it in the panel, and the Agent Graph tab above covers live multi-session visibility; both shipped.)
 - **Shader-driven telemetry materials**: bar and panel surfaces whose shaders react to live system and agent telemetry: CPU and GPU load, network throughput, agent activity. First rung of a longer GPU-rendering track; not yet started.
 - **True window-peek thumbnails**: Aero Peek-style window previews for Hyprland that show the window updating, not a frozen screenshot. Nothing in the Hyprland/Quickshell ecosystem ships this today, which is most of the appeal. Depends on the shader work above landing first.
