@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.components
+import qs.config
 import qs.modules.bar
 import qs.modules.launcher
 import qs.modules.notifications
@@ -18,7 +19,9 @@ import qs.modules.notificationcenter
 import qs.modules.pkginstall
 import qs.modules.wallpaperpicker
 import qs.modules.keybinds
+import qs.modules.negotiation
 import qs.services
+import qs.services.profile
 
 ShellRoot {
     id: root
@@ -242,6 +245,112 @@ ShellRoot {
                 fn();
             else
                 console.warn(`aphotic toggle: unknown name '${name}'`);
+        }
+    }
+
+    // Mounted only while the Resource Engine actually has a conflict to
+    // ask about, so a base install with no opt-in profile carries no
+    // negotiation surface at all rather than a hidden one per screen.
+    // Unmount is held for one animation duration (same closeTimer shape as
+    // PkgInstallWindow) so answering the prompt plays the card's fade-out
+    // instead of the window vanishing under it.
+    readonly property bool negotiationOpen: ResourceEngine.pending !== null
+    property bool negotiationMounted: false
+
+    onNegotiationOpenChanged: {
+        if (root.negotiationOpen) {
+            negotiationCloseTimer.stop();
+            root.negotiationMounted = true;
+        } else {
+            negotiationCloseTimer.restart();
+        }
+    }
+
+    Timer {
+        id: negotiationCloseTimer
+        interval: Tokens.anim.durations.normal
+        onTriggered: root.negotiationMounted = false
+    }
+
+    LazyLoader {
+        active: root.negotiationMounted
+
+        NegotiationWindow {}
+    }
+
+    // The profile substrate's inspection/drive surface (Phase 0 --
+    // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than
+    // inside the singletons so declaring the IPC target doesn't
+    // instantiate them: ProfileEngine, ProfileEvents and StateSnapshot
+    // stay uncreated until a plugin (or one of these calls) first touches
+    // them. Profile *registration* is deliberately not here -- a
+    // descriptor carries hooks, which don't cross an IPC boundary.
+    IpcHandler {
+        target: "profile"
+
+        function state(): string {
+            return JSON.stringify({
+                profiles: Object.keys(ProfileEngine.profiles),
+                active: ProfileEngine.activeIds,
+                phases: ProfileEngine.states,
+                resources: ResourceEngine.resources,
+                claims: ResourceEngine.claims,
+                pending: ResourceEngine.pending,
+                pendingCount: ResourceEngine.pendingCount,
+                dormant: ResourceEngine.dormant,
+                snapshots: StateSnapshot.capturedIds,
+                lastRestore: StateSnapshot.lastRestore,
+                subscribers: ProfileEvents.subscriberCount
+            }, null, 2);
+        }
+
+        function declare(resource: string, spec: string): string {
+            try {
+                return ResourceEngine.declareResource(resource, JSON.parse(spec || "{}")) ? "ok" : "rejected";
+            } catch (e) {
+                return `bad spec: ${e}`;
+            }
+        }
+
+        function claim(json: string): string {
+            try {
+                const negotiation = ResourceEngine.register(JSON.parse(json));
+                return negotiation ? `negotiation ${negotiation.id}` : "ok";
+            } catch (e) {
+                return `bad claim: ${e}`;
+            }
+        }
+
+        function release(id: string): string {
+            ResourceEngine.release(id);
+            return "ok";
+        }
+
+        function resolve(decision: string): string {
+            if (!ResourceEngine.pending)
+                return "nothing pending";
+            return ResourceEngine.resolve(decision) ? "ok" : `expected one of ${ResourceEngine.decisions.join("/")}`;
+        }
+
+        function activate(id: string, trigger: string): string {
+            return ProfileEngine.activate(id, trigger) ? ProfileEngine.phaseOf(id) : "refused";
+        }
+
+        function deactivate(id: string, reason: string): string {
+            return ProfileEngine.deactivate(id, reason) ? ProfileEngine.phaseOf(id) : "refused";
+        }
+
+        function snapshot(id: string, parts: string): string {
+            return JSON.stringify(StateSnapshot.capture(id, parts ? parts.split(",") : []), null, 2);
+        }
+
+        function restore(id: string): string {
+            return StateSnapshot.restore(id) ? "started" : "no snapshot";
+        }
+
+        function reset(): string {
+            ResourceEngine.reset();
+            return "ok";
         }
     }
 
