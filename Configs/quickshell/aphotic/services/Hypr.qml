@@ -34,6 +34,12 @@ Singleton {
     property bool numLock: false
 
     signal configReloaded
+    // Re-emitted so anything that needs the compositor's raw stream
+    // (services/profile/ProfileEvents.qml) hangs off this one handler
+    // instead of opening a second Connections on Hyprland itself. Emitted
+    // after the v2 filter below, so subscribers see the same
+    // once-per-event stream this file acts on rather than duplicates.
+    signal rawEvent(name: string, data: string)
 
     function dispatch(request: string): void {
         Hyprland.dispatch(request);
@@ -85,6 +91,8 @@ Singleton {
             const n = event.name;
             if (n.endsWith("v2"))
                 return;
+
+            root.rawEvent(n, event.data ?? "");
 
             if (n === "configreloaded") {
                 root.configReloaded();
