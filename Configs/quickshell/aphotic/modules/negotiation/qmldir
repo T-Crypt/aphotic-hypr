@@ -1,0 +1,3 @@
+module qs.modules.negotiation
+NegotiationContent 1.0 NegotiationContent.qml
+NegotiationWindow 1.0 NegotiationWindow.qml
