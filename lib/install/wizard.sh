@@ -13,28 +13,51 @@ layer_selected() {
   return 1
 }
 
+
+# Every question below is worded for someone whose first Arch install this
+# is: no bare layer names, no "AUR"/"multilib"/"repo" without a line of
+# context, and the concrete programs each choice installs spelled out. The
+# order and number of reads is load-bearing -- tests/test_wizard.sh drives
+# these by feeding positional answers, and the guided flow reuses them
+# rather than carrying a second copy.
+
 prompt_profile() {
   local answer
-  read -rp "Profile? [minimal/full] (full): " answer
-  answer="${answer:-full}"
-  if [[ "$answer" != "minimal" && "$answer" != "full" ]]; then
-    echo "full"
-  else
-    echo "$answer"
-  fi
+  cat >&2 <<'EOF'
+  1) Full desktop  (recommended)
+     Everything a day-to-day machine needs: the Aphotic desktop plus
+     Firefox, a file manager, a terminal, an image and video player,
+     fonts, Bluetooth and audio support.
+
+  2) Just the desktop
+     Only what Aphotic itself needs to run. No browser, no media player,
+     no fonts beyond the ones the desktop uses -- you install the
+     programs you want yourself afterwards.
+
+EOF
+  read -rp "Your choice? [1-2, default 1 - full desktop]: " answer
+  case "$answer" in
+    2|minimal) echo "minimal" ;;
+    *) echo "full" ;;
+  esac
 }
 
+# prompt_layers [default-preset] -- default-preset is which option an empty
+# answer takes (3, cherry-pick, for --opt-in; the guided flow passes 2, so
+# pressing Enter through a first install adds nothing).
 prompt_layers() {
+  local default_preset="${1:-3}"
   local layers=()
   local answer
 
-  # Presets are a shortcut over the same layer list the questions below
-  # build -- not a second mechanism. "Cherry-pick" is just answering them.
-  echo "Layer presets:" >&2
-  echo "  1) Everything       -- gaming, dev, ai, and the default exploit bundle" >&2
-  echo "  2) Daily driver     -- none of the above; a clean Hyprland desktop" >&2
-  echo "  3) Cherry-pick      -- choose each layer yourself" >&2
-  read -rp "Preset? [1/2/3, default 3]: " answer
+  # Presets are a shortcut over the same questions below -- not a second
+  # mechanism. "One by one" is just answering them.
+  echo "Optional extra tool sets:" >&2
+  echo "  1) All of them      -- gaming, development, AI and security tools" >&2
+  echo "  2) None             -- just the desktop; add any of these later" >&2
+  echo "  3) Choose one by one" >&2
+  read -rp "Your choice? [1-3, default $default_preset]: " answer
+  answer="${answer:-$default_preset}"
   case "$answer" in
     1)
       echo "gaming,dev,ai,exploit"
@@ -46,47 +69,84 @@ prompt_layers() {
       ;;
   esac
 
-  read -rp "Enable gaming layer? [y/N]: " answer
+  cat >&2 <<'EOF'
+
+  Gaming
+    Steam, plus GameMode and MangoHud -- one tunes the system while a game
+    is running, the other shows framerate and temperatures on screen. This
+    also switches on "multilib", an official Arch package collection that
+    is off by default and carries the 32-bit libraries many games need.
+EOF
+  read -rp "  Install the gaming tools? [y/N]: " answer
   [[ "$answer" =~ ^[Yy]$ ]] && layers+=("gaming")
 
-  read -rp "Enable dev layer? [y/N]: " answer
+  cat >&2 <<'EOF'
+
+  Development
+    Neovim, tmux, fzf, ripgrep, fd, lazygit and the GitHub command line --
+    a terminal-based coding setup. Adding these does not change any editor
+    or shell you already use.
+EOF
+  read -rp "  Install the development tools? [y/N]: " answer
   [[ "$answer" =~ ^[Yy]$ ]] && layers+=("dev")
 
-  # Say what this actually does before asking: it is the only layer that
-  # writes into a config file outside this repo (~/.claude/settings.json).
-  read -rp "Enable ai layer? Adds the agent graph, AI chat and live Claude Code session tracking -- wires hooks into ~/.claude/settings.json and enables a usage-tracking timer [y/N]: " answer
+  # Say what this actually does before asking: it is the only choice here
+  # that writes into a config file outside this project's own files
+  # (~/.claude/settings.json).
+  cat >&2 <<'EOF'
+
+  AI features
+    Ollama, which runs language models locally on this machine, plus
+    Aphotic's agent graph, AI chat panel and live Claude Code session
+    tracking. This is the only choice here that writes outside Aphotic's
+    own files: it adds hooks to ~/.claude/settings.json and switches on a
+    timer that records how much you use those tools. What it records stays
+    in your home folder.
+EOF
+  read -rp "  Install the AI features? [y/N]: " answer
   [[ "$answer" =~ ^[Yy]$ ]] && layers+=("ai")
 
-  read -rp "Enable exploit/offensive-security tooling? Adds the BlackArch repo for most sublayers -- less stable than Arch's official repos, see docs/exploit-layer.md [y/N]: " answer
+  cat >&2 <<'EOF'
+
+  Security / penetration-testing tools
+    Scanners and testing tools for networks, websites and files. Most of
+    them are not in Arch's own package collections and come from BlackArch
+    instead: a large third-party collection that moves fast and breaks
+    more often than Arch's. You will be asked separately before it is
+    added, and asked to agree that you will only use these tools on
+    systems you own or have written permission to test.
+EOF
+  read -rp "  Install security tools? [y/N]: " answer
   if [[ "$answer" =~ ^[Yy]$ ]]; then
-    read -rp "  Use the default bundle (recon + web + network)? [Y/n]: " answer
+    echo "    The usual starting set is recon + web + network." >&2
+    read -rp "    Use that starting set? [Y/n]: " answer
     if [[ ! "$answer" =~ ^[Nn]$ ]]; then
       layers+=("exploit")
     else
-      read -rp "  Enable exploit-recon (nmap, amass, subfinder, theHarvester, recon-ng)? [y/N]: " answer
+      read -rp "    Recon -- finds hosts, subdomains and open ports (nmap, amass, subfinder, theHarvester, recon-ng)? [y/N]: " answer
       [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-recon")
 
-      read -rp "  Enable exploit-web (Burp Suite CE, sqlmap, ffuf, gobuster, nikto, ZAP)? [y/N]: " answer
+      read -rp "    Web -- tests websites and web apps (Burp Suite CE, sqlmap, ffuf, gobuster, nikto, ZAP)? [y/N]: " answer
       [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-web")
 
-      read -rp "  Enable exploit-network (Wireshark, aircrack-ng, bettercap, tcpdump)? [y/N]: " answer
+      read -rp "    Network -- captures and inspects network traffic (Wireshark, aircrack-ng, bettercap, tcpdump)? [y/N]: " answer
       [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-network")
     fi
 
-    read -rp "  Enable exploit-passwords (John the Ripper, hashcat, Hydra)? [y/N]: " answer
+    read -rp "    Passwords -- tries to recover passwords from stored hashes (John the Ripper, hashcat, Hydra)? [y/N]: " answer
     if [[ "$answer" =~ ^[Yy]$ ]]; then
       layers+=("exploit-passwords")
-      read -rp "    Also fetch the rockyou wordlist? ~130MB decompressed, from the OWASP SecLists project -- always separate, never bundled automatically [y/N]: " answer
+      read -rp "      Also download the rockyou list of common passwords? ~130MB, from the OWASP SecLists project -- always a separate choice, never included on its own [y/N]: " answer
       [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-wordlists")
     fi
 
-    read -rp "  Enable exploit-reversing (Ghidra, radare2, Cutter, gdb+pwndbg, binwalk)? [y/N]: " answer
+    read -rp "    Reverse engineering -- takes compiled programs apart to see what they do (Ghidra, radare2, Cutter, gdb + pwndbg, binwalk)? [y/N]: " answer
     [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-reversing")
 
-    read -rp "  Enable exploit-forensics (Autopsy, Sleuth Kit, Volatility 3)? [y/N]: " answer
+    read -rp "    Digital forensics -- examines disk images and memory dumps (Autopsy, Sleuth Kit, Volatility 3)? [y/N]: " answer
     [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-forensics")
 
-    read -rp "  Enable exploit-reporting (engagement report scaffolding, aphotic report CLI)? [y/N]: " answer
+    read -rp "    Report writing -- templates and an 'aphotic report' command for writing up findings? [y/N]: " answer
     [[ "$answer" =~ ^[Yy]$ ]] && layers+=("exploit-reporting")
   fi
 
@@ -146,17 +206,20 @@ prompt_theme() {
     [[ "${names[$i]}" == "tokyonight" ]] && default_idx=$((i + 1))
   done
 
-  echo "Available themes:" >&2
+  echo "Colours. Each theme restyles the whole desktop -- bar, menus," >&2
+  echo "notifications and wallpapers. You can change it at any time" >&2
+  echo "afterwards with 'aphotic theme set <name>'." >&2
+  echo "" >&2
   for i in "${!names[@]}"; do
     printf '  %d) %-12s %s\n' "$((i + 1))" "${names[$i]}" "${labels[$i]}" >&2
   done
-  read -rp "Theme? [1-${#names[@]}] (default ${default_idx} - ${names[$((default_idx - 1))]}): " answer
+  read -rp "Your choice? [1-${#names[@]}, default ${default_idx} - ${names[$((default_idx - 1))]}]: " answer
   answer="${answer:-$default_idx}"
 
   if [[ "$answer" =~ ^[0-9]+$ ]] && (( answer >= 1 && answer <= ${#names[@]} )); then
     echo "${names[$((answer - 1))]}"
   else
-    echo -e "$CWR - Invalid selection, using ${names[$((default_idx - 1))]}." >&2
+    echo -e "$CWR - That isn't one of the numbers listed, using ${names[$((default_idx - 1))]}." >&2
     echo "${names[$((default_idx - 1))]}"
   fi
 }
@@ -205,29 +268,29 @@ except Exception:
   [[ -z "$THEME" ]] && THEME="$saved_theme"
 }
 
-# Resolves PROFILE/LAYERS/THEME for a fresh (non---config-only) install.
+# Resolves PROFILE/LAYERS/THEME for a flag-driven (non---config-only)
+# install -- the guided path takes guided_configure() in
+# lib/install/guided.sh instead, and never reaches this function.
 #
-# Default, with none of --profile/--with/--opt-in passed, is the
-# zero-prompt "daily driver" path -- full profile, no optional layers. A
-# brand-new Arch/Hyprland user shouldn't have to know what a "layer" or
-# "profile" is before they can finish installing; --opt-in restores the
-# full interactive cherry-pick wizard below for anyone who wants it, and
-# any of --profile/--with/--theme passed directly always wins over both.
+# Default here, with none of --profile/--with/--opt-in passed, is still
+# the zero-prompt "daily driver" path -- full profile, no optional layers.
+# That is what a piped/no-TTY install gets (a bare `./install.sh` on a
+# terminal now gets the guided flow instead), and --opt-in still restores
+# the cherry-pick pickers above for anyone who wants only those; any of
+# --profile/--with/--theme passed directly always wins over both.
 #
 # This is a deliberate judgment call, not a mechanical default: real
 # layer packages still only install via this terminal flow today (no
-# other mechanism exists yet), so the wizard itself isn't going away, just
-# no longer imposed on every fresh install by default. See the PR
-# description for the fuller reasoning and why a post-first-launch picker
-# isn't built here instead.
+# other mechanism exists yet), so the pickers aren't going away, just no
+# longer imposed on every fresh install by default.
 resolve_config() {
   # Reuses detect.sh's already-computed findings (stage 1) rather than
   # re-querying aphotic.toml here -- the whole point of a consolidated
   # detection pass is that later stages consume it instead of repeating it.
   if [[ "$DETECTED_APHOTIC_INSTALL" == "1" && -z "$PROFILE" && -z "$LAYERS" ]]; then
-    echo -e "$CNT - Existing config found (profile=$DETECTED_APHOTIC_PROFILE, layers=${DETECTED_APHOTIC_LAYERS:-none})."
+    echo -e "$CNT - Aphotic is already installed here (profile=$DETECTED_APHOTIC_PROFILE, extras=${DETECTED_APHOTIC_LAYERS:-none})."
     if [[ -t 0 ]]; then
-      if confirm "Reinstall same config?" y; then
+      if confirm "Install it again with those same choices?" y; then
         PROFILE="$DETECTED_APHOTIC_PROFILE"
         LAYERS="$DETECTED_APHOTIC_LAYERS"
       fi
@@ -243,7 +306,7 @@ resolve_config() {
 
   if [[ -z "$PROFILE" && -z "$LAYERS" && "$OPT_IN" != "1" ]]; then
     echo -e "$CNT - No --profile/--with/--opt-in given -- installing the daily-driver setup (full profile, no optional layers: gaming/dev/ai/exploit)."
-    echo -e "$CNT - Run with --opt-in for the interactive layer picker, or --with gaming,dev,ai,exploit to pick layers directly. Layers can always be added later by re-running install.sh."
+    echo -e "$CNT - Run ./install.sh with no options at all for the guided setup, --opt-in for just the layer picker, or --with gaming,dev,ai,exploit to pick layers directly. Layers can always be added later by re-running install.sh."
     PROFILE="full"
     LAYERS=""
     [[ -z "$THEME" ]] && THEME="tokyonight"
