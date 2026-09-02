@@ -1,5 +1,6 @@
 module qs.modules.settings
 AboutPane 1.0 panes/AboutPane.qml
+AdvancedPane 1.0 panes/AdvancedPane.qml
 AiPane 1.0 panes/AiPane.qml
 AppearancePane 1.0 panes/AppearancePane.qml
 BarPane 1.0 panes/BarPane.qml
@@ -7,6 +8,7 @@ BarStylePreviewCard 1.0 panes/BarStylePreviewCard.qml
 CategoryRail 1.0 CategoryRail.qml
 ClockPane 1.0 panes/ClockPane.qml
 DisplaysPane 1.0 panes/DisplaysPane.qml
+LanguagePane 1.0 panes/LanguagePane.qml
 LauncherPane 1.0 panes/LauncherPane.qml
 NetworkPane 1.0 panes/NetworkPane.qml
 OsdPane 1.0 panes/OsdPane.qml

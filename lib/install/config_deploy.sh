@@ -29,6 +29,16 @@ deploy_user_configs() {
     cp "$MONITORS_LUA" "$MONITORS_LUA_BACKUP"
   fi
 
+  # Same reasoning again: keyboard.lua is written by the shell's Language
+  # pane and is per-machine, so the repo copy is only an empty stub that the
+  # cp -R below would otherwise stamp over the user's chosen layout.
+  KEYBOARD_LUA="$HOME/.config/hypr/keyboard.lua"
+  KEYBOARD_LUA_BACKUP=""
+  if [[ -f "$KEYBOARD_LUA" ]]; then
+    KEYBOARD_LUA_BACKUP=$(mktemp)
+    cp "$KEYBOARD_LUA" "$KEYBOARD_LUA_BACKUP"
+  fi
+
   # Same bug, different file (also #45): Configs/gtk-3.0/settings.ini is
   # only ever a starting-point default (adw-gtk3-dark/Cantarell 11/etc) --
   # nothing in wallust's own template targets (gtk.css, not settings.ini)
@@ -92,7 +102,7 @@ deploy_user_configs() {
   for entry in "$ROOT_DIR/Configs/hypr/"*; do
     name="$(basename "$entry")"
     case "$name" in
-      custom.lua|monitors.lua|hyprland.lua) continue ;;
+      custom.lua|monitors.lua|keyboard.lua|hyprland.lua) continue ;;
     esac
     dest="$HOME/.config/hypr/$name"
     [[ -d "$dest" && ! -L "$dest" ]] && rm -rf "$dest"
@@ -127,6 +137,12 @@ deploy_user_configs() {
     cp "$MONITORS_LUA_BACKUP" "$MONITORS_LUA"
     rm -f "$MONITORS_LUA_BACKUP"
     echo -e "$CNT - Preserved your existing hypr/monitors.lua"
+  fi
+
+  if [[ -n "$KEYBOARD_LUA_BACKUP" ]]; then
+    cp "$KEYBOARD_LUA_BACKUP" "$KEYBOARD_LUA"
+    rm -f "$KEYBOARD_LUA_BACKUP"
+    echo -e "$CNT - Preserved your existing hypr/keyboard.lua"
   fi
 
   if [[ -n "$GTK3_SETTINGS_BACKUP" ]]; then
