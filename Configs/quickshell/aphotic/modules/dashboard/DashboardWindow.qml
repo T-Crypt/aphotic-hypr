@@ -40,4 +40,14 @@ PanelWindow {
         anchors.centerIn: parent
         screenState: root.screenState
     }
+
+    // Gated on the state rather than this window's own `visible`: the
+    // loader evaluates `active` during its own completion, before the
+    // window's visible binding has settled, and would latch a watch open
+    // for the whole session.
+    LazyLoader {
+        active: root.screenState.dashboard
+
+        SystemUsageWatch {}
+    }
 }
