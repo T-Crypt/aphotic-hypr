@@ -14,6 +14,23 @@ Singleton {
 
     readonly property bool enabled: Settings.dndEnabled
     property bool _pomodoroForced: false
+    property bool _gamingForced: false
+
+    // The Gaming profile's APPLY/RESTORE pair, following the same rule the
+    // Pomodoro handler below documents: its own forced-tracking flag, never
+    // _pomodoroForced, so a game ending can't clear DND the user had turned
+    // on themselves -- or that Pomodoro is still holding.
+    function setGamingActive(active: bool): void {
+        if (active) {
+            if (!Settings.dndEnabled) {
+                Settings.dndEnabled = true;
+                root._gamingForced = true;
+            }
+        } else if (root._gamingForced) {
+            Settings.dndEnabled = false;
+            root._gamingForced = false;
+        }
+    }
 
     function toggle(): void {
         Settings.dndEnabled = !Settings.dndEnabled;

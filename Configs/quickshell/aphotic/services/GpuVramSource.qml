@@ -48,15 +48,17 @@ QtObject {
     readonly property bool declared: root._declared
 
     // Zero idle cost: the scan only runs when there is something to
-    // arbitrate *against*. A base install with a GPU but no local model
-    // loaded pays nothing -- capacity is still declared (one probe, at
-    // startup), but nothing polls, and the claims this file registered
-    // are dropped rather than left to go stale.
+    // arbitrate *against* -- a claim this file did not register itself, or
+    // a PID a profile has adopted. A base install with a GPU but no local
+    // model loaded and no game running pays nothing: capacity is still
+    // declared (one probe, at startup), but nothing polls, and the claims
+    // this file registered are dropped rather than left to go stale.
     //
     // Excluding its own claims from that test is what stops the scan
     // keeping itself alive forever once it has run a single time.
-    readonly property bool scanning: root._declared && root.vendor === "nvidia" && root._hasForeignClaim
+    readonly property bool scanning: root._declared && root.vendor === "nvidia" && (root._hasForeignClaim || root._hasAdoptions)
 
+    readonly property bool _hasAdoptions: Object.keys(root._adopted).length > 0
     readonly property bool _hasForeignClaim: (ResourceEngine.claims ?? []).some(c => c.resource === root.resource && !root._isMine(c.id))
 
     // Deferred, not called straight from the handler: `scanning` is
@@ -71,7 +73,7 @@ QtObject {
     }
 
     function _isMine(id: string): bool {
-        return id.startsWith(root.claimPrefix);
+        return id.startsWith(root.claimPrefix) || root._isAdoptedId(id);
     }
 
     function _releaseAll(): void {
@@ -79,6 +81,42 @@ QtObject {
             if (root._isMine(claim.id))
                 ResourceEngine.release(claim.id);
         }
+    }
+
+    // PIDs a profile has taken ownership of, pid -> {owner, priority}.
+    // The scan below registers every process holding VRAM through one
+    // loop, and consults this only to decide the claim's id/owner/
+    // priority -- so an adopted PID cannot end up with both a generic
+    // gpu-proc- claim and a profile-owned one. Keeping a single
+    // registration path makes that structural rather than something the
+    // two call sites have to agree about.
+    property var _adopted: ({})
+
+    function adopt(pid: int, owner: string, priority: string): void {
+        if (!pid || !owner)
+            return;
+        const next = Object.assign({}, root._adopted);
+        next[String(pid)] = {
+            owner: owner,
+            priority: priority === "foreground" ? "foreground" : "background"
+        };
+        root._adopted = next;
+        ResourceEngine.release(`${root.claimPrefix}${pid}`);
+    }
+
+    function unadopt(pid: int): void {
+        const key = String(pid);
+        if (!Object.prototype.hasOwnProperty.call(root._adopted, key))
+            return;
+        const owned = root._adopted[key];
+        const next = Object.assign({}, root._adopted);
+        delete next[key];
+        root._adopted = next;
+        ResourceEngine.release(root._adoptedId(key, owned.owner));
+    }
+
+    function _adoptedId(pid: string, owner: string): string {
+        return `${owner}-proc-${pid}`;
     }
 
     property bool _declared: false
@@ -212,28 +250,40 @@ QtObject {
                 continue;
 
             const name = root._displayName(proc.path);
-            const id = `${root.claimPrefix}${proc.pid}`;
+            const owned = root._adopted[proc.pid] ?? null;
+            const owner = owned ? owned.owner : name;
+            const id = owned ? root._adoptedId(proc.pid, owner) : `${root.claimPrefix}${proc.pid}`;
             seen[id] = true;
 
             const known = ResourceEngine.claimById(id);
-            if (known && known.owner === name && Math.abs(known.amount - proc.amount) < root.claimDeadbandMb)
+            if (known && known.owner === owner && Math.abs(known.amount - proc.amount) < root.claimDeadbandMb)
                 continue;
 
             ResourceEngine.register({
                 id: id,
-                owner: name,
+                owner: owner,
                 resource: root.resource,
                 amount: proc.amount,
-                priority: "background",
+                priority: owned ? owned.priority : "background",
                 label: name,
                 origin: "dynamic"
             });
         }
 
         for (const claim of ResourceEngine.claims) {
-            if (root._isMine(claim.id) && !seen[claim.id])
+            if (claim.origin !== "dynamic" || seen[claim.id])
+                continue;
+            if (root._isMine(claim.id))
                 ResourceEngine.release(claim.id);
         }
+    }
+
+    function _isAdoptedId(id: string): bool {
+        for (const pid of Object.keys(root._adopted)) {
+            if (id === root._adoptedId(pid, root._adopted[pid].owner))
+                return true;
+        }
+        return false;
     }
 
     property Process _capacityProc: Process {
