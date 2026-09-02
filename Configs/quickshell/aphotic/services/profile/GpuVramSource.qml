@@ -41,6 +41,42 @@ QtObject {
 
     readonly property bool declared: root._declared
 
+    // PIDs a profile has taken ownership of, pid -> {owner, priority}.
+    // The scan below registers every process holding VRAM through one
+    // loop, and consults this only to decide the claim's id/owner/
+    // priority -- so an adopted PID cannot end up with both a generic
+    // gpu-proc- claim and a profile-owned one. Keeping a single
+    // registration path makes that structural rather than something the
+    // two call sites have to agree about.
+    property var _adopted: ({})
+
+    function adopt(pid: int, owner: string, priority: string): void {
+        if (!pid || !owner)
+            return;
+        const next = Object.assign({}, root._adopted);
+        next[String(pid)] = {
+            owner: owner,
+            priority: priority === "foreground" ? "foreground" : "background"
+        };
+        root._adopted = next;
+        ResourceEngine.release(`${root.claimPrefix}${pid}`);
+    }
+
+    function unadopt(pid: int): void {
+        const key = String(pid);
+        if (!Object.prototype.hasOwnProperty.call(root._adopted, key))
+            return;
+        const owned = root._adopted[key];
+        const next = Object.assign({}, root._adopted);
+        delete next[key];
+        root._adopted = next;
+        ResourceEngine.release(root._adoptedId(key, owned.owner));
+    }
+
+    function _adoptedId(pid: string, owner: string): string {
+        return `${owner}-proc-${pid}`;
+    }
+
     property bool _declared: false
     property string _probeVendor: ""
 
@@ -154,28 +190,40 @@ QtObject {
                 continue;
 
             const name = proc.path.split("/").pop() || proc.path;
-            const id = `${root.claimPrefix}${proc.pid}`;
+            const owned = root._adopted[proc.pid] ?? null;
+            const owner = owned ? owned.owner : name;
+            const id = owned ? root._adoptedId(proc.pid, owner) : `${root.claimPrefix}${proc.pid}`;
             seen[id] = true;
 
             const known = ResourceEngine.claimById(id);
-            if (known && known.owner === name && Math.abs(known.amount - proc.amount) < root.claimDeadbandMb)
+            if (known && known.owner === owner && Math.abs(known.amount - proc.amount) < root.claimDeadbandMb)
                 continue;
 
             ResourceEngine.register({
                 id: id,
-                owner: name,
+                owner: owner,
                 resource: root.resource,
                 amount: proc.amount,
-                priority: "background",
+                priority: owned ? owned.priority : "background",
                 label: name,
                 origin: "dynamic"
             });
         }
 
         for (const claim of ResourceEngine.claims) {
-            if (claim.id.startsWith(root.claimPrefix) && !seen[claim.id])
+            if (claim.origin !== "dynamic" || seen[claim.id])
+                continue;
+            if (claim.id.startsWith(root.claimPrefix) || root._isAdoptedId(claim.id))
                 ResourceEngine.release(claim.id);
         }
+    }
+
+    function _isAdoptedId(id: string): bool {
+        for (const pid of Object.keys(root._adopted)) {
+            if (id === root._adoptedId(pid, root._adopted[pid].owner))
+                return true;
+        }
+        return false;
     }
 
     property Process _capacityProc: Process {
