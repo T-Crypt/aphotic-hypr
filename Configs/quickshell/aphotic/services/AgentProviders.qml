@@ -74,7 +74,11 @@ Singleton {
     // Ollama's loaded-model state, tracked independently of the harness
     // `providers`/`stats` pair above -- AgentGraphService reads this to
     // demote render tier when the GPU is busy serving a local model.
-    property var ollamaLoadedModels: []
+    // Derived from AiProviders' single background /api/ps poll rather than
+    // a second 5s `ollama ps` subprocess of its own: that CLI call ignored
+    // AiConfig.ollamaHost, so it only ever reported a *local* Ollama, and
+    // it needed the ollama binary in PATH to say anything at all.
+    readonly property var ollamaLoadedModels: AiProviders.ollamaRunningModels.map(m => m.name)
 
     // { harnessId: { sessionId: {id, event, tool, updatedAt} } }, built
     // entirely from the event tail below -- one entry per still-open
@@ -176,25 +180,6 @@ Singleton {
         stdout: StdioCollector {
             onStreamFinished: root._reconcilePgrepCount("opencode", parseInt(text.trim(), 10))
         }
-    }
-
-    Process {
-        id: ollamaPs
-        command: ["ollama", "ps"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const lines = text.trim().split("\n").slice(1).filter(l => l.length > 0);
-                root.ollamaLoadedModels = lines.map(l => l.trim().split(/\s+/)[0]).filter(Boolean);
-            }
-        }
-    }
-
-    Timer {
-        interval: 5000
-        running: InstallProfile.aiEnabled
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: ollamaPs.running = true
     }
 
     // Presence reconcile, not the primary signal (AGF-07): the event
