@@ -50,6 +50,44 @@ detect_conflicting_ui_packages() {
   return 0
 }
 
+# Shown once, by whichever of the two entry points below gets there
+# first: the guided flow asks up front (so nothing is uninstalled after
+# the summary the user already accepted), a flag-driven install asks
+# in the system-prep stage as it always has.
+_announce_conflicting_packages() {
+  local pkg
+  echo -e "\n$CAT - These programs are already installed and do the same jobs as parts of Aphotic's desktop:"
+  for pkg in "$@"; do
+    echo -e "    - $pkg  ($(conflicting_package_role "$pkg"))"
+  done
+  echo -e "$CWR - Left in place they usually start themselves from your old setup's config, and you end up with two"
+  echo -e "$CWR   bars, two app launchers, or duplicate notifications. That is the most common reason a finished"
+  echo -e "$CWR   install looks broken (issue #41). Nothing else on this machine needs them."
+  CONFLICTS_ANNOUNCED=1
+}
+
+# Guided-flow entry point: asks the question early and only records the
+# answer in STRIP_CONFLICTS. The removal itself still happens in
+# check_conflicting_packages below, during system prep, after the guided
+# summary has been accepted -- so this never uninstalls anything at the
+# point it is asked.
+prompt_conflicting_packages() {
+  local found=() pkg
+  while IFS= read -r pkg; do
+    [[ -n "$pkg" ]] && found+=("$pkg")
+  done < <(detect_conflicting_ui_packages)
+
+  [[ ${#found[@]} -eq 0 ]] && return 0
+  [[ -n "${STRIP_CONFLICTS:-}" ]] && return 0
+
+  _announce_conflicting_packages "${found[@]}"
+  if confirm "Uninstall them as part of this install?" y; then
+    STRIP_CONFLICTS="1"
+  else
+    STRIP_CONFLICTS="0"
+  fi
+}
+
 # Interactive by default (matches install_nvidia_driver's keep/reinstall
 # gate): asks once, defaults to removing since that's what avoids issue
 # #41's failure mode, but never removes anything without either an
@@ -65,17 +103,16 @@ check_conflicting_packages() {
 
   [[ ${#found[@]} -eq 0 ]] && return 0
 
-  echo -e "$CAT - Found packages already installed that Aphotic's shell replaces:"
-  for pkg in "${found[@]}"; do
-    echo -e "    - $pkg  ($(conflicting_package_role "$pkg"))"
-  done
-  echo -e "$CWR - Left running, these commonly autostart from an old WM config and fight Aphotic's shell for the same role -- this is what issue #41 turned out to be."
+  [[ "${CONFLICTS_ANNOUNCED:-0}" == "1" ]] || _announce_conflicting_packages "${found[@]}"
 
   local action="${STRIP_CONFLICTS:-}"
   if [[ -z "$action" ]]; then
     if [[ -t 0 ]]; then
-      read -rep $'[\e[1;33mACTION\e[0m] - Remove them now? (Y,n) ' STRIP_CHOICE
-      [[ "$STRIP_CHOICE" == "n" || "$STRIP_CHOICE" == "N" ]] && action="0" || action="1"
+      if confirm "Uninstall them now?" y; then
+        action="1"
+      else
+        action="0"
+      fi
     else
       echo -e "$CWR - Non-interactive install with no --strip-conflicts/--keep-conflicts flag -- leaving them installed. Pass --strip-conflicts to remove them automatically instead."
       action="0"
@@ -83,7 +120,7 @@ check_conflicting_packages() {
   fi
 
   if [[ "$action" != "1" ]]; then
-    echo -e "$CNT - Leaving ${found[*]} installed. Remove by hand later if you hit duplicate bars/launchers/notifications: sudo pacman -Rns ${found[*]}"
+    echo -e "$CNT - Leaving ${found[*]} installed. If you do end up with duplicate bars, launchers or notifications, remove them later with: sudo pacman -Rns ${found[*]}"
     return 0
   fi
 
