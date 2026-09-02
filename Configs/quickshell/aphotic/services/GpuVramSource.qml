@@ -8,6 +8,12 @@ import qs.services.profile
 // The one place "gpu-vram" is ever declared, and the catch-all claim
 // source for GPU memory held by anything that isn't a domain plugin.
 //
+// Lives here rather than in services/profile/ because it is not part of
+// the substrate: it reads hardware on a timer, and services/profile/ is
+// the dormant engine, which owns no timer and no file watch (an invariant
+// tests/test_profile_substrate.sh enforces). This is a consumer that
+// feeds the engine, not part of it.
+//
 // Capacity is vendor-routed off SystemUsage.selectedGpu.vendor rather
 // than re-detected here -- that singleton already enumerates every
 // controller via lspci at startup and is the repo's single source of GPU
@@ -40,6 +46,42 @@ QtObject {
     readonly property string vendor: SystemUsage.selectedGpu?.vendor ?? ""
 
     readonly property bool declared: root._declared
+
+    // Zero idle cost: the scan only runs when there is something to
+    // arbitrate *against* -- a claim this file did not register itself, or
+    // a PID a profile has adopted. A base install with a GPU but no local
+    // model loaded and no game running pays nothing: capacity is still
+    // declared (one probe, at startup), but nothing polls, and the claims
+    // this file registered are dropped rather than left to go stale.
+    //
+    // Excluding its own claims from that test is what stops the scan
+    // keeping itself alive forever once it has run a single time.
+    readonly property bool scanning: root._declared && root.vendor === "nvidia" && (root._hasForeignClaim || root._hasAdoptions)
+
+    readonly property bool _hasAdoptions: Object.keys(root._adopted).length > 0
+    readonly property bool _hasForeignClaim: (ResourceEngine.claims ?? []).some(c => c.resource === root.resource && !root._isMine(c.id))
+
+    // Deferred, not called straight from the handler: `scanning` is
+    // derived from ResourceEngine.claims, and releasing claims inside its
+    // own change handler mutates that dependency mid-evaluation. QML sees
+    // the reentrancy as a binding loop on `claims`, breaks the binding,
+    // and every claims-derived property (including ResourceEngine's own
+    // `dormant`) silently goes stale. Confirmed live before this fix.
+    onScanningChanged: {
+        if (!root.scanning)
+            Qt.callLater(root._releaseAll);
+    }
+
+    function _isMine(id: string): bool {
+        return id.startsWith(root.claimPrefix) || root._isAdoptedId(id);
+    }
+
+    function _releaseAll(): void {
+        for (const claim of ResourceEngine.claims) {
+            if (root._isMine(claim.id))
+                ResourceEngine.release(claim.id);
+        }
+    }
 
     // PIDs a profile has taken ownership of, pid -> {owner, priority}.
     // The scan below registers every process holding VRAM through one
@@ -182,7 +224,15 @@ QtObject {
         return found;
     }
 
+    // A scan can still be in flight when the gate closes (the model
+    // unloaded, the game exited). Without this the late result
+    // re-registers everything _releaseAll() just dropped, leaving claims
+    // behind with the timer already stopped and nothing left to clear
+    // them.
     function _syncProcesses(text: string): void {
+        if (!root.scanning)
+            return;
+
         const seen = ({});
 
         for (const proc of root._parseProcesses(text)) {
@@ -213,7 +263,7 @@ QtObject {
         for (const claim of ResourceEngine.claims) {
             if (claim.origin !== "dynamic" || seen[claim.id])
                 continue;
-            if (claim.id.startsWith(root.claimPrefix) || root._isAdoptedId(claim.id))
+            if (root._isMine(claim.id))
                 ResourceEngine.release(claim.id);
         }
     }
@@ -251,12 +301,13 @@ QtObject {
     }
 
     // Catch-all background accounting, deliberately slower than the 5s
-    // cadence Ollama's own /api/ps poll runs at.
+    // cadence Ollama's own /api/ps poll runs at, and only while something
+    // is actually contending (see `scanning`).
     property Timer _processPoll: Timer {
         interval: 12000
         repeat: true
         triggeredOnStart: true
-        running: root._declared && root.vendor === "nvidia"
+        running: root.scanning
         onTriggered: root._processProc.running = true
     }
 }
