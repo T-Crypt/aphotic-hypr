@@ -77,7 +77,8 @@ _aphotic_plugin_describe() {
         command -v "$bin" >/dev/null 2>&1 || missing="$(jq --arg b "$bin" '. + [$b]' <<<"$missing")"
     done < <(aphotic_toml_get_array "$manifest" requires binaries)
 
-    jq -n \
+    local entry
+    entry="$(jq -n \
         --arg name "$name" \
         --arg display_name "${display:-$name}" \
         --arg description "${desc:-}" \
@@ -88,7 +89,24 @@ _aphotic_plugin_describe() {
         --argjson missing_binaries "$missing" \
         --argjson owns "$(_aphotic_plugin_owns_json "$manifest")" \
         --argjson ui "$(_aphotic_plugin_ui_json "$manifest")" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui}'
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui}')"
+
+    # The registry entry the shell actually reads is written by
+    # _aphotic_plugin_registry_sync out of these same four manifest
+    # fields, so "drifted" is exactly: what a sync would write now versus
+    # what is stored. Nothing kept the two in step -- a plugin whose files
+    # were changed in place (a manual edit, a `git pull` under a --link
+    # install, a half-finished install) left the shell reading a stale
+    # capability/ui entry with nothing reporting it. Comparing this
+    # function's own output rather than rebuilding the registry shape a
+    # second time is deliberate: a second description of that shape is the
+    # class of bug the flag exists to catch.
+    local stored expected drifted="false"
+    expected="$(jq -cS '{version, capabilities, owns, ui}' <<<"$entry")"
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    [[ "$expected" != "$stored" ]] && drifted="true"
+
+    jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"
 }
 
 _aphotic_plugin_list_installed_json() {
@@ -704,7 +722,10 @@ aphotic_cmd_plugin() {
                 if [[ "$(echo "$data" | jq 'length')" -eq 0 ]]; then
                     aphotic_log "no plugins installed — see 'aphotic plugin list --remote'"
                 else
-                    echo "$data" | jq -r '.[] | "\(.name)\t\(.display_name)\t\(if .enabled then "enabled" else "disabled" end)\t\(.version)"' | column -t -s $'\t'
+                    echo "$data" | jq -r '.[] | "\(.name)\t\(.display_name)\t\(if .enabled then "enabled" else "disabled" end)\t\(.version)\t\(if .drifted then "stale registry entry" else "" end)"' | column -t -s $'\t'
+                    if [[ "$(echo "$data" | jq '[.[] | select(.drifted)] | length')" -gt 0 ]]; then
+                        aphotic_warn "$(echo "$data" | jq -r '[.[] | select(.drifted) | .name] | join(", ")'): installed files no longer match the registry entry the shell reads -- 'aphotic plugin update <name>' rewrites it"
+                    fi
                 fi
             fi
             ;;
