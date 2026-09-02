@@ -544,6 +544,87 @@ _aphotic_plugin_install() {
     echo "PLUGIN INSTALLED: ${name}"
 }
 
+# Refresh an installed plugin's payload from the repo in place. The only
+# path before this was remove-then-install, which clears the plugin's
+# disabled-state entry and unwires/rewires its harness hooks -- so
+# picking up a bugfix release meant silently re-enabling a plugin the
+# user had turned off. This keeps both, and stages the copy so a failed
+# update leaves the working install alone rather than a half-copied tree.
+_aphotic_plugin_update_one() {
+    local name="$1" src dest staged from to
+    dest="$(_aphotic_plugin_dir "$name")"
+    [[ -e "$dest" ]] || { aphotic_err "not installed: ${name}"; return 1; }
+
+    src="${APHOTIC_PLUGINS_REPO}/${name}"
+    if [[ ! -d "$src" ]] || [[ ! -f "${src}/plugin.toml" ]]; then
+        aphotic_err "no plugin '${name}' in ${APHOTIC_PLUGINS_REPO}"
+        return 1
+    fi
+
+    to="$(aphotic_toml_get "${src}/plugin.toml" plugin version)"
+
+    # A --link install already points at the checkout, so its files are
+    # current by construction; only the registry entry can be stale.
+    if [[ -L "$dest" ]]; then
+        _aphotic_plugin_registry_sync "$name"
+        aphotic_ok "${name} is a linked install, refreshed its registry entry (${to:-0.0.0})"
+        return 0
+    fi
+
+    # The registry entry, not the installed manifest, is what the shell
+    # reads and what `plugin list` reports, so it is the "before" worth
+    # naming -- a manual file sync leaves the manifest current and the
+    # registry behind, which manifest-to-manifest would call unchanged.
+    from=""
+    if [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] && command -v jq >/dev/null 2>&1; then
+        from="$(jq -r --arg n "$name" '.installed[$n].version // ""' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    fi
+    [[ -n "$from" ]] || from="$(aphotic_toml_get "${dest}/plugin.toml" plugin version)"
+
+    staged="${dest}.updating"
+    rm -rf "$staged"
+    if ! cp -r "$src" "$staged"; then
+        rm -rf "$staged"
+        aphotic_err "failed to stage update for ${name}, left the installed copy alone"
+        return 1
+    fi
+    find "$staged" -path "*/hooks/*" -type f -exec chmod +x {} \; 2>/dev/null || true
+    rm -rf "$dest"
+    mv "$staged" "$dest"
+
+    _aphotic_plugin_install_deps "$dest"
+    _aphotic_plugin_registry_sync "$name"
+    _aphotic_plugin_link_ui_module "$name"
+    if aphotic_plugin_is_enabled "$name"; then
+        _aphotic_plugin_wire_harness "$name" || true
+    fi
+
+    if [[ "$from" == "$to" ]]; then
+        aphotic_ok "refreshed ${name} (${from:-0.0.0}, unchanged)"
+    else
+        aphotic_ok "updated ${name} ${from:-0.0.0} -> ${to:-0.0.0}"
+    fi
+    echo "PLUGIN UPDATED: ${name}"
+}
+
+_aphotic_plugin_update() {
+    local target="$1" name rc=0
+    [[ -n "$target" ]] || { aphotic_err "usage: aphotic plugin update <name>|--all"; return 1; }
+
+    _aphotic_plugin_sync_repo || return 1
+
+    if [[ "$target" != "--all" ]]; then
+        _aphotic_plugin_update_one "$target"
+        return $?
+    fi
+
+    while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        _aphotic_plugin_update_one "$name" || rc=1
+    done < <(aphotic_plugin_names)
+    return "$rc"
+}
+
 _aphotic_plugin_remove() {
     local name="$1" dest
     [[ -n "$name" ]] || { aphotic_err "usage: aphotic plugin remove <name>"; return 1; }
@@ -612,6 +693,9 @@ aphotic_cmd_plugin() {
             aphotic_plugin_set_enabled "$1" false && aphotic_ok "disabled ${1}"
             _aphotic_plugin_unwire_harness "$1" || true
             ;;
+        update)
+            _aphotic_plugin_update "${1:-}"
+            ;;
         remove)
             _aphotic_plugin_remove "${1:-}"
             ;;
@@ -656,7 +740,7 @@ aphotic_cmd_plugin() {
             ;;
         -h|--help|"")
             cat <<EOF
-Usage: aphotic plugin <list|install|enable|disable|remove|...> [args]
+Usage: aphotic plugin <list|install|update|enable|disable|remove|...> [args]
 
   list [--remote] [--json] [--category <name>]
                               List installed plugins (or --remote: what's
@@ -669,6 +753,10 @@ Usage: aphotic plugin <list|install|enable|disable|remove|...> [args]
                               aphotic-plugins (APHOTIC_PLUGINS_REPO,
                               default ~/aphotic-plugins). --link symlinks
                               instead of copying, for plugin development.
+  update <name>|--all         Refresh an installed plugin's files from
+                              the repo, keeping its enabled/disabled
+                              state and harness wiring. --all updates
+                              every installed plugin.
   enable <name>               Re-enable an installed plugin
   disable <name>               Disable without uninstalling
   remove <name>                Uninstall
