@@ -36,8 +36,40 @@ Singleton {
     readonly property real gpuTemp: selectedGpu?.temp ?? 0
 
     function selectGpu(index: int): void {
-        if (index >= 0 && index < _gpus.length)
-            _selectedGpuIndex = index;
+        if (index < 0 || index >= _gpus.length || index === _selectedGpuIndex)
+            return;
+        _selectedGpuIndex = index;
+        root._pollGpu();
+    }
+
+    // CPU temperature and GPU utilisation/temperature have no
+    // always-visible consumer: the bar reads cpuPerc and memPerc and
+    // nothing else. Everything that shows the rest -- the Command
+    // Center's performance tab, Settings' System pane, the bar's
+    // resources popout -- is a surface the user opens, so each mounts a
+    // SystemUsageWatch while it is on screen and nothing polls in
+    // between. Same "sleeping until seen" shape as GpuVramSource's
+    // `scanning` gate.
+    readonly property bool detailedMonitoring: root._watchers > 0
+
+    function beginDetailedMonitoring(): void {
+        root._watchers = root._watchers + 1;
+    }
+
+    function endDetailedMonitoring(): void {
+        root._watchers = Math.max(0, root._watchers - 1);
+    }
+
+    // Only the selected GPU. Polling every detected controller kept a
+    // second card's reading warm for the moment the user cycles the
+    // selector, at the cost of a process per card on every tick forever
+    // -- and where intel-gpu-tools is installed the iGPU's branch is a
+    // one-second intel_gpu_top run, for a card nothing is displaying.
+    // selectGpu() polls the newly chosen card immediately instead, which
+    // is fresher than a reading up to a tick old.
+    function _pollGpu(): void {
+        if (root._gpus.length > 0 && !gpuStatsProc.running)
+            gpuStatsProc.running = true;
     }
 
     readonly property real memPerc: _memTotal > 0 ? _memUsed / _memTotal : 0
@@ -55,6 +87,7 @@ Singleton {
     property real _memUsed: 0
     property real _memTotal: 0
     property var _disks: []
+    property int _watchers: 0
 
     property var _prevCpu: null
 
@@ -138,19 +171,16 @@ Singleton {
                 // discrete GPU, after the sort above) the first time.
                 const rematch = prevSelectedVendor !== undefined ? root._gpus.findIndex(g => g.vendor === prevSelectedVendor) : -1;
                 root._selectedGpuIndex = rematch >= 0 ? rematch : 0;
-                gpuStatsProc.running = true;
+                if (root.detailedMonitoring)
+                    root._pollGpu();
             }
         }
     }
 
-    // Polls every detected GPU's live stats, not just the selected one --
-    // so switching the selector shows an already-warm reading instead of
-    // a blank "N/A" until the next 30s tick.
     Process {
         id: gpuStatsProc
-        property int _pendingIndex: 0
         command: {
-            const gpu = root._gpus[_pendingIndex];
+            const gpu = root._gpus[root._selectedGpuIndex];
             if (!gpu)
                 return ["true"];
             switch (gpu.vendor) {
@@ -174,7 +204,7 @@ Singleton {
         }
         stdout: StdioCollector {
             onStreamFinished: {
-                const idx = gpuStatsProc._pendingIndex;
+                const idx = root._selectedGpuIndex;
                 const gpu = root._gpus[idx];
                 if (gpu) {
                     const lines = text.trim().split("\n").map(s => s.trim()).filter(s => s.length > 0);
@@ -226,14 +256,6 @@ Singleton {
                     const gpus = root._gpus.slice();
                     gpus[idx] = updated;
                     root._gpus = gpus;
-                }
-
-                const nextIndex = gpuStatsProc._pendingIndex + 1;
-                if (nextIndex < root._gpus.length) {
-                    gpuStatsProc._pendingIndex = nextIndex;
-                    gpuStatsProc.running = true;
-                } else {
-                    gpuStatsProc._pendingIndex = 0;
                 }
             }
         }
@@ -361,17 +383,17 @@ Singleton {
         }
     }
 
+    // triggeredOnStart is what makes opening a surface feel instant: the
+    // gate going true fires a tick immediately rather than leaving the
+    // card blank for up to 30s.
     Timer {
         interval: 30000
-        running: true
+        running: root.detailedMonitoring
         repeat: true
         triggeredOnStart: true
         onTriggered: {
             tempProc.running = true;
-            if (root._gpus.length > 0 && !gpuStatsProc.running) {
-                gpuStatsProc._pendingIndex = 0;
-                gpuStatsProc.running = true;
-            }
+            root._pollGpu();
         }
     }
 
