@@ -307,7 +307,16 @@ _aphotic_plugin_sync_repo() {
 # build scripts and this repo doesn't silently auto-confirm that anywhere
 # else either.
 _aphotic_plugin_install_deps() {
-    local dest="$1" manifest="${dest}/plugin.toml" bin pkg helper=""
+    # Two statements, not one: bash 5.3 changed `local` to expand every
+    # assignment word before creating any of the locals, so the old
+    # single-statement `local dest="$1" manifest="${dest}/plugin.toml"`
+    # read an unset `dest` and resolved manifest to literally
+    # "/plugin.toml". That file never exists, so this function hit its
+    # `[[ -f "$manifest" ]] || return 0` guard and returned immediately --
+    # plugin dependency installation has been silently dead on any bash
+    # 5.3+ system.
+    local dest="$1"
+    local manifest="${dest}/plugin.toml" bin pkg helper=""
     [[ -f "$manifest" ]] || return 0
 
     command -v yay >/dev/null 2>&1 && helper="yay"
