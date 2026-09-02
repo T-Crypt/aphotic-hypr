@@ -24,6 +24,15 @@ Singleton {
     // silently stripped one. Only an explicit config turns a layer off.
     readonly property bool aiEnabled: !root._known || root.hasLayer("ai")
     readonly property bool gamingEnabled: !root._known || root.hasLayer("gaming")
+    readonly property bool devEnabled: !root._known || root.hasLayer("dev")
+
+    // No `security` layer exists: the Security pillar's install-time
+    // footprint is the exploit family (`exploit` plus its sublayers), and
+    // a bare `security.toml` stub would be a file install.sh never offers
+    // rather than real plumbing. If the pillar ever needs selecting
+    // independently of the tooling, that is when the layer gets added --
+    // with wizard wiring, not as a placeholder.
+    readonly property bool securityEnabled: !root._known || root._layers.some(l => l === "exploit" || l.startsWith("exploit-"))
 
     property string _profile: ""
     property var _layers: []
