@@ -23,6 +23,7 @@ Singleton {
     // clone with no aphotic.toml yet should see the shell they cloned, not a
     // silently stripped one. Only an explicit config turns a layer off.
     readonly property bool aiEnabled: !root._known || root.hasLayer("ai")
+    readonly property bool gamingEnabled: !root._known || root.hasLayer("gaming")
 
     property string _profile: ""
     property var _layers: []

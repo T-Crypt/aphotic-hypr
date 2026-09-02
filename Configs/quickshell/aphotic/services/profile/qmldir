@@ -3,4 +3,5 @@ singleton ProfileEngine 1.0 ProfileEngine.qml
 singleton ProfileEvents 1.0 ProfileEvents.qml
 singleton ResourceEngine 1.0 ResourceEngine.qml
 singleton StateSnapshot 1.0 StateSnapshot.qml
+GamingProfile 1.0 GamingProfile.qml
 RingBuffer 1.0 RingBuffer.qml
