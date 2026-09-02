@@ -13,15 +13,23 @@ import qs.services.profile
 // lifecycle.
 //
 // DETECT is gamemoded's own session-bus signals. Quickshell 0.3.1 exposes
-// no generic DBus client (only DBusMenu's tray types), so this shells
-// gdbus the same way the rest of the shell talks to system services.
-// `gdbus monitor` is an event stream, not a poll: no timer, nothing runs
-// between games.
+// no generic DBus client (only DBusMenu's tray types), so this shells out
+// the same way the rest of the shell talks to system services. It is an
+// event stream, not a poll: no timer, nothing runs between games.
 //
-// Subscribing does activate gamemoded if it isn't already up. That is
-// accepted rather than worked around: the alternative is polling for the
-// daemon's existence, which is strictly worse than one idle daemon on a
-// machine where the gaming layer was explicitly enabled.
+// The subscription is a bare match rule rather than `gdbus monitor
+// --dest com.feralinteractive.GameMode`, because addressing the name is
+// what makes the bus *auto-activate* it: that spawned gamemoded at shell
+// start, before any game existed, and gamemoded has no idle-exit, so it
+// then stayed resident for the whole session. A match rule observes the
+// same signals without ever addressing the name, so gamemoded runs only
+// when something actually starts it -- gamemoderun, or the user's own
+// gamemoded.service. Both halves verified live; see the PR.
+//
+// Nothing here ever stops gamemoded. If this shell never starts it there
+// is nothing to tear down, and killing a daemon the user may have
+// enabled deliberately would be exactly the sort of destructive
+// automatic action the project rules prohibit.
 QtObject {
     id: root
 
@@ -107,20 +115,36 @@ QtObject {
             ProfileEngine.deactivate(root.profileId, "gamemode");
     }
 
+    // dbus-monitor prints a signal across several lines -- the member on
+    // one, its arguments on the following ones -- unlike gdbus, which put
+    // the whole thing on a single line. So the member is latched here and
+    // applied to the first int32 that follows it.
+    property string _pendingMember: ""
+
     function _onLine(line: string): void {
-        const registered = line.match(/GameRegistered \((\d+),/);
-        if (registered) {
-            root._add(parseInt(registered[1], 10));
+        const member = line.match(/member=(GameRegistered|GameUnregistered)/);
+        if (member) {
+            root._pendingMember = member[1];
             return;
         }
-        const unregistered = line.match(/GameUnregistered \((\d+),/);
-        if (unregistered)
-            root._remove(parseInt(unregistered[1], 10));
+        if (!root._pendingMember)
+            return;
+
+        const pid = line.match(/^\s*int32\s+(\d+)/);
+        if (!pid)
+            return;
+
+        const member_ = root._pendingMember;
+        root._pendingMember = "";
+        if (member_ === "GameRegistered")
+            root._add(parseInt(pid[1], 10));
+        else
+            root._remove(parseInt(pid[1], 10));
     }
 
     property Process _monitorProc: Process {
         running: root.enabled
-        command: ["gdbus", "monitor", "--session", "--dest", "com.feralinteractive.GameMode"]
+        command: ["dbus-monitor", "--session", "type='signal',interface='com.feralinteractive.GameMode'"]
         stdout: SplitParser {
             onRead: line => root._onLine(line)
         }
@@ -142,8 +166,13 @@ QtObject {
 
     // Catches a game already registered when the shell starts or reloads
     // mid-session -- the signal stream only carries transitions.
+    //
+    // Guarded on gamemoded already running, because addressing the name
+    // is what auto-activates it, which is the whole thing this branch
+    // stops doing. If the daemon is not up there is no game to catch, so
+    // the guard costs nothing in the case that matters.
     property Process _listProc: Process {
-        command: ["gdbus", "call", "--session", "--dest", "com.feralinteractive.GameMode", "--object-path", "/com/feralinteractive/GameMode", "--method", "com.feralinteractive.GameMode.ListGames"]
+        command: ["sh", "-c", "pgrep -x gamemoded >/dev/null 2>&1 && gdbus call --session --dest com.feralinteractive.GameMode --object-path /com/feralinteractive/GameMode --method com.feralinteractive.GameMode.ListGames"]
         stdout: StdioCollector {
             onStreamFinished: {
                 for (const entry of text.match(/\(\d+, objectpath/g) ?? [])
