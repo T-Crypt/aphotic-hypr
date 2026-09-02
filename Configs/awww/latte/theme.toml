@@ -5,6 +5,12 @@ description = "Light theme, soft cream tones with a latte-art motif."
 [engine]
 style = "light"
 
+[palette]
+anchor = "latte-anchor"
+max_hue_shift = 25
+max_sat_shift = 15
+max_light_shift = 12
+
 [icons]
 papirus_color = "brown"
 

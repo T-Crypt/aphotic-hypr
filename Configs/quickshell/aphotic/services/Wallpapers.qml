@@ -32,6 +32,10 @@ Singleton {
     // right before each exec() -- see the onExited guard below for why.
     property int _generation: 0
 
+    // theme.toml's [palette] table for the run currently in flight, or
+    // null when this theme doesn't opt into clamping -- see _startClamp.
+    property var _pendingClamp: null
+
     // engineName picks which colour engine renders the palette; the rest
     // of these are that engine's own knobs (scheme/contrast are matugen's,
     // backend/palette/colorscheme are wallust's) -- see
@@ -66,7 +70,11 @@ Singleton {
     // relied on by Settings.qml's cursorApplyProc), so only the
     // most-recently-clicked theme's processes ever survive to write
     // anything or animate anything.
-    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var, iconTheme: var, cursorTheme: var, gtkTheme: var, engineName: var, scheme: var, contrast: var): void {
+    // paletteClamp is theme.toml's [palette] table, or null/undefined when
+    // the theme doesn't opt in: { theme, anchor, maxHueShift, maxSatShift,
+    // maxLightShift }. Passed as one object rather than five more
+    // positional arguments purely because this signature is already long.
+    function setWallpaper(path: string, backend: var, palette: var, colorscheme: var, style: var, papirusColor: var, iconTheme: var, cursorTheme: var, gtkTheme: var, engineName: var, scheme: var, contrast: var, paletteClamp: var): void {
         root._generation++;
 
         // Toaster.qml's toast() is a dead no-op stub left over from an
@@ -76,6 +84,18 @@ Singleton {
 
         awwwProc.exec(["awww", "img", path, "--transition-type", "wipe", "--transition-angle", "30", "--transition-step", "90"]);
         cpProc.exec(["cp", path, root.path]);
+
+        // Only the image-derived wallust path has a raw palette to clamp:
+        // [engine].colorscheme is already a fixed palette, and matugen
+        // would need its seed colour clamped pre-generation instead (see
+        // themes/THEME_SPEC.md).
+        root._pendingClamp = null;
+        if (paletteClamp && paletteClamp.anchor && engineName !== "matugen") {
+            if (colorscheme)
+                Quickshell.execDetached(["notify-send", "-u", "low", "Aphotic", "theme sets both [engine].colorscheme and [palette].anchor — using the fixed colorscheme"]);
+            else
+                root._pendingClamp = paletteClamp;
+        }
 
         let engineCmd;
         if (engineName === "matugen") {
@@ -153,8 +173,80 @@ Singleton {
         onExited: exitCode => {
             if (engineProc.taggedGeneration !== root._generation)
                 return;
-            if (exitCode === 0)
+            if (exitCode !== 0)
+                return;
+            if (root._pendingClamp)
+                root._startClamp(root._pendingClamp);
+            else
                 Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
+        }
+    }
+
+    // Palette clamp (theme.toml's [palette] table -- see
+    // themes/THEME_SPEC.md). Mirrors cmd_theme.sh's
+    // _aphotic_theme_clamp_palette: rewrite the raw image-derived palette
+    // wallust just cached into a clamped colorscheme file, then re-run
+    // every template from it with `wallust cs`, the same path
+    // [engine].colorscheme already takes.
+    //
+    // Two more Processes chained off engineProc's onExited rather than one
+    // `sh -c` line, for the same reason engineProc itself exists: each step
+    // carries the generation tag, so a theme picked mid-clamp preempts this
+    // one instead of racing it into the shared template output files. The
+    // theme hooks stay the last link in the chain either way -- a failed
+    // clamp leaves the unclamped palette applied, which is still a
+    // complete, valid palette for the hooks to read.
+    function _startClamp(clamp: var): void {
+        const home = Quickshell.env("HOME");
+        // The CLI's lib/ lives in the dots checkout, not under ~/.local
+        // (install.sh only symlinks ~/.local/bin/aphotic) -- same env-var-
+        // with-default resolution AboutPane.qml uses to read VERSION.
+        const dotsDir = Quickshell.env("APHOTIC_DOTS_DIR") || `${home}/Aphotic-Hypr`;
+        const cmd = [
+            "python3", `${dotsDir}/Configs/.local/lib/aphotic/palette_clamp.py`,
+            `${home}/.cache/wal/colors.json`,
+            `${home}/.config/wallust/colorschemes/${clamp.anchor}.json`,
+            "-o", `${home}/.config/wallust/colorschemes/${clamp.theme}-live.json`
+        ];
+        if (clamp.maxHueShift)
+            cmd.push("--max-hue-shift", `${clamp.maxHueShift}`);
+        if (clamp.maxSatShift)
+            cmd.push("--max-sat-shift", `${clamp.maxSatShift}`);
+        if (clamp.maxLightShift)
+            cmd.push("--max-light-shift", `${clamp.maxLightShift}`);
+
+        clampProc.liveScheme = `${clamp.theme}-live`;
+        clampProc.taggedGeneration = root._generation;
+        clampProc.exec(cmd);
+    }
+
+    Process {
+        id: clampProc
+
+        property int taggedGeneration: 0
+        property string liveScheme: ""
+
+        onExited: exitCode => {
+            if (clampProc.taggedGeneration !== root._generation)
+                return;
+            if (exitCode !== 0) {
+                Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
+                return;
+            }
+            csProc.taggedGeneration = root._generation;
+            csProc.exec(["wallust", "cs", clampProc.liveScheme, "--format", "pywal"]);
+        }
+    }
+
+    Process {
+        id: csProc
+
+        property int taggedGeneration: 0
+
+        onExited: {
+            if (csProc.taggedGeneration !== root._generation)
+                return;
+            Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
         }
     }
 }

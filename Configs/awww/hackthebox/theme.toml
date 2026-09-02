@@ -6,6 +6,12 @@ description = "Dark, tech/sci-fi accents."
 backend = "fastresize"
 palette = "kmeans"
 
+[palette]
+anchor = "hackthebox-anchor"
+max_hue_shift = 20
+max_sat_shift = 15
+max_light_shift = 12
+
 [icons]
 papirus_color = "green"
 

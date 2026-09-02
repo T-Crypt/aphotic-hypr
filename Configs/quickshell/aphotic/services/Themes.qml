@@ -119,7 +119,14 @@ Singleton {
                 return;
             root._pendingApply = null;
             const fullPath = `${root.awwwDir}/${p.themeName}/${p.file}`;
-            Wallpapers.setWallpaper(fullPath, p.info.backend ?? "", p.info.palette ?? "", p.info.colorscheme ?? "", p.info.style ?? "", p.info.papirusColor ?? "", p.info.iconTheme ?? "", p.info.cursorTheme ?? "", p.info.gtkTheme ?? "", p.info.engineName ?? "", p.info.scheme ?? "", p.info.contrast ?? "");
+            const paletteClamp = p.info.paletteAnchor ? {
+                theme: p.themeName,
+                anchor: p.info.paletteAnchor,
+                maxHueShift: p.info.paletteMaxHueShift ?? "",
+                maxSatShift: p.info.paletteMaxSatShift ?? "",
+                maxLightShift: p.info.paletteMaxLightShift ?? ""
+            } : null;
+            Wallpapers.setWallpaper(fullPath, p.info.backend ?? "", p.info.palette ?? "", p.info.colorscheme ?? "", p.info.style ?? "", p.info.papirusColor ?? "", p.info.iconTheme ?? "", p.info.cursorTheme ?? "", p.info.gtkTheme ?? "", p.info.engineName ?? "", p.info.scheme ?? "", p.info.contrast ?? "", paletteClamp);
         }
     }
 
@@ -301,6 +308,10 @@ Singleton {
                         palette: toml.engine?.palette ?? "",
                         colorscheme: toml.engine?.colorscheme ?? "",
                         style: toml.engine?.style ?? "",
+                        paletteAnchor: toml.palette?.anchor ?? "",
+                        paletteMaxHueShift: toml.palette?.max_hue_shift ?? "",
+                        paletteMaxSatShift: toml.palette?.max_sat_shift ?? "",
+                        paletteMaxLightShift: toml.palette?.max_light_shift ?? "",
                         papirusColor: toml.icons?.papirus_color ?? "",
                         iconTheme: toml.icons?.icon_theme ?? "",
                         cursorTheme: toml.icons?.cursor_theme ?? "",

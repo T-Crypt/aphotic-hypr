@@ -2,6 +2,12 @@
 display_name = "Rose Pine"
 description = "Muted rose, gold, and pine-green."
 
+[palette]
+anchor = "rosepine-anchor"
+max_hue_shift = 30
+max_sat_shift = 20
+max_light_shift = 15
+
 [icons]
 papirus_color = "magenta"
 

@@ -182,6 +182,74 @@ def parse_engine_pin(theme):
     return backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name, scheme, contrast
 
 
+def parse_palette_pin(theme):
+    """Return a theme's [palette] clamp pins as a dict of strings.
+
+    Kept separate from parse_engine_pin's tuple because this table is
+    optional and self-contained: an empty "anchor" means the theme never
+    opted into clamping and the derived palette is used as-is.
+    """
+    toml_path = os.path.join(awww_dir, theme, "theme.toml")
+    pins = {"anchor": "", "max_hue_shift": "", "max_sat_shift": "", "max_light_shift": ""}
+    if not os.path.isfile(toml_path):
+        return pins
+    section = ""
+    with open(toml_path) as f:
+        for raw in f:
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("[") and line.endswith("]"):
+                section = line[1:-1]
+                continue
+            if section != "palette" or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            if key in pins:
+                pins[key] = value.strip().strip('"')
+    return pins
+
+
+# Mirrors cmd_theme.sh's _aphotic_theme_clamp_palette -- see that function
+# and themes/THEME_SPEC.md's "Clamped palettes" section. Rewrites the raw
+# image-derived palette wallust just cached into a clamped colorscheme
+# file, then re-runs every template from it via `wallust cs`.
+def apply_palette_clamp(theme, pins):
+    """Clamp the freshly derived palette toward the theme's anchor."""
+    if not pins["anchor"]:
+        return
+    schemes_dir = os.path.expanduser("~/.config/wallust/colorschemes")
+    anchor_file = os.path.join(schemes_dir, f"{pins['anchor']}.json")
+    raw_file = os.path.expanduser("~/.cache/wal/colors.json")
+    if not os.path.isfile(anchor_file):
+        print(f"theme '{theme}' pins [palette].anchor = '{pins['anchor']}' but {anchor_file} is missing — applying unclamped palette")
+        return
+    if not os.path.isfile(raw_file):
+        return
+
+    # The CLI's lib/ lives in the dots checkout, not under ~/.local --
+    # install.sh only symlinks ~/.local/bin/aphotic.
+    dots_dir = os.environ.get("APHOTIC_DOTS_DIR") or os.path.expanduser("~/Aphotic-Hypr")
+    live = os.path.join(schemes_dir, f"{theme}-live.json")
+    cmd = [
+        "python3", os.path.join(dots_dir, "Configs/.local/lib/aphotic/palette_clamp.py"),
+        raw_file, anchor_file, "-o", live,
+    ]
+    for flag, key in (("--max-hue-shift", "max_hue_shift"),
+                      ("--max-sat-shift", "max_sat_shift"),
+                      ("--max-light-shift", "max_light_shift")):
+        if pins[key]:
+            cmd += [flag, pins[key]]
+
+    try:
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        print(f"palette clamp failed for '{theme}' — applying unclamped palette")
+        return
+    run_optional(["wallust", "cs", f"{theme}-live", "--format", "pywal"])
+
+
 settings_path = os.path.expanduser("~/.local/state/aphotic/settings.json")
 qtct_paths = (
     os.path.expanduser("~/.config/qt5ct/qt5ct.conf"),
@@ -274,9 +342,14 @@ def apply_wallpaper(theme, wallpaper):
     run_optional(["awww", "img", "--transition-type", "fade", "--transition-duration", "0.45", "--transition-fps", "60", image_path])
 
     backend, palette, colorscheme, style, papirus_color, icon_theme, cursor_theme, gtk_theme, engine_name, scheme, contrast = parse_engine_pin(theme)
+    palette_pins = parse_palette_pin(theme)
 
     if engine_name and engine_name not in ("wallust", "matugen"):
         print(f"theme '{theme}' pins unknown engine '{engine_name}' — using wallust")
+    if colorscheme and palette_pins["anchor"]:
+        # A fixed colorscheme derives nothing from the image, so there's
+        # no raw palette for the clamp to bound.
+        print(f"theme '{theme}' sets both [engine].colorscheme and [palette].anchor — using the fixed colorscheme, skipping the clamp")
 
     if engine_name == "matugen":
         # --prefer is not optional: matugen refuses to choose between an
@@ -303,7 +376,8 @@ def apply_wallpaper(theme, wallpaper):
         if style:
             wallust_cmd += ["-S", style]
         run_optional(wallust_cmd)
-    
+        apply_palette_clamp(theme, palette_pins)
+
     # In-process copy -- cheaper than spawning `cp` for what's just a
     # few-MB file, and nothing after this depends on it landing first.
     try:
