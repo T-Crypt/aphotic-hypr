@@ -23,6 +23,27 @@ def test_full_profile_has_expected_packages():
     assert result["main"].count("firefox") == 1
 
 
+def test_full_profile_ships_thunars_thumbnailer():
+    """Thunar renders no thumbnails itself -- it asks the Tumbler D-Bus
+    service. Shipping thunar without tumbler leaves every file in the file
+    manager showing its generic MIME icon, which is what a user reads as a
+    half-finished rice. Nothing in the repo references these by name, so
+    this guards them against being pruned as unused."""
+    result = merge_packages(str(ROOT / "profiles/base/full.toml"), [])
+    assert "thunar" in result["main"]
+    for pkg in ["tumbler", "ffmpegthumbnailer", "poppler-glib", "webp-pixbuf-loader"]:
+        assert pkg in result["main"], f"{pkg} missing -- Thunar previews will be broken"
+
+
+def test_minimal_profile_has_no_file_manager_or_thumbnailer():
+    """minimal ships no thunar, so it has no reason to carry the
+    thumbnailing stack either -- unlike a binary the Quickshell shell
+    shells out to, which has to be in both profiles."""
+    result = merge_packages(str(ROOT / "profiles/base/minimal.toml"), [])
+    assert "thunar" not in result["main"]
+    assert "tumbler" not in result["main"]
+
+
 def test_gaming_layer_adds_packages():
     result = merge_packages(
         str(ROOT / "profiles/base/full.toml"),
