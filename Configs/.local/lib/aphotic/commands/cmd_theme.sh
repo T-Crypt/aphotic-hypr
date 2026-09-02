@@ -247,6 +247,55 @@ _aphotic_theme_remove() {
     fi
 }
 
+# Palette clamp (theme.toml's [palette] table -- see themes/THEME_SPEC.md).
+# `wallust run` derives every slot from the image alone, so one odd colour
+# in a wallpaper can drag a theme's accent well outside its own look. This
+# pulls the raw derived palette back toward the theme's anchor palette by
+# at most the declared per-theme margins and re-runs every template from
+# the clamped result via `wallust cs` -- the same path [engine].colorscheme
+# already uses, so nothing downstream knows clamping happened. Opt-in:
+# themes with no [palette].anchor never reach here.
+_aphotic_theme_clamp_palette() {
+    local theme_name="$1" dir="$2"
+    local anchor; anchor="$(_aphotic_toml_get "${dir}/theme.toml" palette anchor)"
+    [[ -n "$anchor" ]] || return 0
+
+    command -v python3 >/dev/null 2>&1 || {
+        aphotic_warn "python3 not found, skipping palette clamp for '${theme_name}'"
+        return 0
+    }
+
+    local schemes_dir="${XDG_CONFIG_HOME:-$HOME/.config}/wallust/colorschemes"
+    local anchor_file="${schemes_dir}/${anchor}.json"
+    if [[ ! -f "$anchor_file" ]]; then
+        aphotic_warn "theme '${theme_name}' pins [palette].anchor = '${anchor}' but ${anchor_file} is missing -- applying unclamped palette"
+        return 0
+    fi
+
+    local raw="${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors.json"
+    if [[ ! -f "$raw" ]]; then
+        aphotic_warn "no derived palette at ${raw} -- applying unclamped palette"
+        return 0
+    fi
+
+    local max_hue max_sat max_light
+    max_hue="$(_aphotic_toml_get "${dir}/theme.toml" palette max_hue_shift)"
+    max_sat="$(_aphotic_toml_get "${dir}/theme.toml" palette max_sat_shift)"
+    max_light="$(_aphotic_toml_get "${dir}/theme.toml" palette max_light_shift)"
+
+    local live="${schemes_dir}/${theme_name}-live.json"
+    local clamp_cmd=(python3 "${LIB_DIR}/palette_clamp.py" "$raw" "$anchor_file" -o "$live")
+    [[ -n "$max_hue" ]] && clamp_cmd+=(--max-hue-shift "$max_hue")
+    [[ -n "$max_sat" ]] && clamp_cmd+=(--max-sat-shift "$max_sat")
+    [[ -n "$max_light" ]] && clamp_cmd+=(--max-light-shift "$max_light")
+
+    if "${clamp_cmd[@]}"; then
+        wallust cs "${theme_name}-live" --format pywal
+    else
+        aphotic_warn "palette clamp failed for '${theme_name}' -- applying unclamped palette"
+    fi
+}
+
 # Apply theme_name/wallpaper_file: run awww + wallust with any engine
 # pins from theme.toml, then persist state. wallpaper_file may be
 # empty to fall back to the theme's declared default (or its first
@@ -289,6 +338,12 @@ _aphotic_theme_apply() {
         aphotic_warn "theme '${theme_name}' pins unknown [engine].name = '${engine_name}' -- using wallust"
     fi
 
+    # [engine].colorscheme is a fixed palette with no image derivation at
+    # all, so there's no raw palette for [palette].anchor to clamp.
+    if [[ -n "$colorscheme" ]] && [[ -n "$(_aphotic_toml_get "${dir}/theme.toml" palette anchor)" ]]; then
+        aphotic_warn "theme '${theme_name}' sets both [engine].colorscheme and [palette].anchor -- using the fixed colorscheme, skipping the clamp"
+    fi
+
     aphotic_require awww || return 1
     awww img "$image_path" --transition-type wipe --transition-angle 30 --transition-step 90
 
@@ -311,6 +366,7 @@ _aphotic_theme_apply() {
             [[ -n "$palette" ]] && wallust_cmd+=(-p "$palette")
             [[ -n "$style" ]] && wallust_cmd+=(-S "$style")
             "${wallust_cmd[@]}"
+            _aphotic_theme_clamp_palette "$theme_name" "$dir"
         fi
     else
         aphotic_warn "wallust not found, skipping palette regeneration"
