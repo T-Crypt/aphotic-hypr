@@ -315,6 +315,17 @@ Singleton {
     // full installed-models list above.
     Process {
         id: ollamaPsProc
+        // Unlike ollamaModels (kept stale on purpose above), a resident-in-
+        // VRAM list read from a host that answered nothing is definitionally
+        // wrong -- nothing is loaded if the server is gone. Clearing on a
+        // hard curl failure is what lets OllamaClaims' claims drop when
+        // Ollama stops, instead of the claim table carrying a model that
+        // no longer exists.
+        onExited: exitCode => {
+            root.ollamaReachable = exitCode === 0;
+            if (exitCode !== 0)
+                root.ollamaRunningModels = [];
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -343,6 +354,30 @@ Singleton {
             root.pulling = false;
             root.refreshOllamaModels();
         }
+    }
+
+    // Ollama's VRAM footprint has to be tracked whether or not Settings is
+    // open: Settings -> AI's own 5s timer only runs while that pane is
+    // visible, and the Resource Engine claims below have to keep matching
+    // reality when nothing is on screen. Ollama publishes no model
+    // load/unload event, so polling /api/ps is the only source there is.
+    // Backs off to 30s while the host isn't answering so a machine with no
+    // Ollama running isn't paying for a curl every five seconds, and holds
+    // off entirely mid-start/stop so it can't fight those retry timers over
+    // ollamaReachable.
+    Timer {
+        id: ollamaPsPoll
+        interval: root.ollamaReachable ? 5000 : 30000
+        repeat: true
+        triggeredOnStart: true
+        running: InstallProfile.aiEnabled && AiConfig.ollamaHostConfigured && !root.startingOllama && !root.stoppingOllama
+        onTriggered: root.refreshRunningModels()
+    }
+
+    OllamaClaims {
+        runningModels: root.ollamaRunningModels
+        host: AiConfig.ollamaHost
+        enabled: InstallProfile.aiEnabled && AiConfig.ollamaHostConfigured
     }
 
     // Gated on the same install-time signal AgentProviders.qml's presence
