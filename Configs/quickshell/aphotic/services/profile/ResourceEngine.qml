@@ -237,16 +237,33 @@ Singleton {
         return root._negotiation(spec, claimant, claim, "capacity", total, budget);
     }
 
-    // Whoever the prompt will offer to suspend: the cheapest thing to give
-    // up first (background before foreground), then the largest claim,
-    // so the offer is deterministic rather than registration-order luck.
+    // Whoever the prompt will name: something that can actually stop,
+    // ahead of anything that can't. Only claims whose owner has a
+    // graceful-stop hook are real candidates, and among those the
+    // cheapest to give up goes first (background before foreground, then
+    // largest), so the offer is deterministic rather than
+    // registration-order luck.
+    //
+    // When nothing on the resource can stop, the prompt is informational
+    // rather than actionable (NegotiationContent disables Suspend and
+    // says why), so ranking by "cheapest to give up" stops meaning
+    // anything -- and picking the largest *background* claim actively
+    // misleads: with a game and a local model both on the GPU, the
+    // largest remaining background claim is the shell itself, so a
+    // multi-gigabyte overage was being reported against ~225 MB of
+    // compositor. Falling back to the largest claim outright names the
+    // thing actually holding the memory. It does not make that thing
+    // stoppable -- canSuspend still gates the button.
     function _incumbent(others: var): var {
-        const ranked = others.slice().sort((a, b) => {
+        const stoppable = others.filter(c => ProfileEngine.canSuspend(c.owner));
+        if (stoppable.length === 0)
+            return others.slice().sort((a, b) => b.amount - a.amount)[0] ?? null;
+
+        return stoppable.sort((a, b) => {
             if (a.priority !== b.priority)
                 return a.priority === "background" ? -1 : 1;
             return b.amount - a.amount;
-        });
-        return ranked[0] ?? null;
+        })[0] ?? null;
     }
 
     function _negotiation(spec: var, claimant: var, requestor: var, reason: string, total: real, budget: real): var {
