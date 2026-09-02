@@ -330,6 +330,28 @@ _aphotic_plugin_install_deps() {
 
     [[ ${#missing[@]} -eq 0 ]] && return 0
 
+    # `[requires] install_script = "hooks/x.sh"` -- an escape hatch for a
+    # dependency the AUR can't supply correctly. The fallback below maps a
+    # missing binary to a package of the same name, which is right for the
+    # common case but actively wrong when no such package exists: `codex`
+    # has no AUR package, so `yay -S codex` resolves to `codex-bin`, an
+    # unrelated Electron app that pulls a multi-GB chromium build. A
+    # plugin that knows its own dependency's real install path says so
+    # here and core runs that instead -- same trust model as [harness]
+    # wire/unwire, which already execute plugin-shipped scripts.
+    local install_script
+    install_script="$(aphotic_toml_get "$manifest" requires install_script)"
+    if [[ -n "$install_script" ]]; then
+        local script_path="${dest}/${install_script}"
+        if [[ -x "$script_path" ]]; then
+            echo "Installing dependencies (${missing[*]}) via the plugin's own ${install_script}"
+            "$script_path" || aphotic_warn "${install_script} exited non-zero -- install ${missing[*]} manually"
+        else
+            aphotic_warn "plugin.toml declares [requires].install_script = '${install_script}' but ${script_path} is not executable -- install ${missing[*]} manually"
+        fi
+        return 0
+    fi
+
     if [[ -z "$helper" ]]; then
         aphotic_warn "missing dependencies (${missing[*]}) but no AUR helper (yay/paru) found on PATH -- install manually"
         return 0
