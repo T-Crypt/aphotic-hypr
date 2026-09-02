@@ -247,10 +247,33 @@ Singleton {
     // same as AgentGraphService), so Claude, Codex and OpenCode sessions
     // all route to their own provider's tab with no per-harness branch
     // here.
+    //
+    // Two tails, not one. The claim above that this leaves "one thing
+    // being watched on disk instead of two" was true only until the
+    // agent-graph plugin kept its own `tail -F` on the same file --
+    // observed live as sibling PIDs, `tail -n 400` (this one) and
+    // `tail -n 150` (the plugin's, scoped by agentGraphHistoryLines).
+    // Collapsing them needs a core-owned event bus the plugin subscribes
+    // to, which is a real cross-repo API and is scoped as its own item
+    // rather than half-built here.
+    //
+    // Scoped by the same user-facing setting the plugin uses, so one knob
+    // means one replay depth for this file, with a floor: this tail feeds
+    // presence reconstruction, not a graph, and a user who sets the graph
+    // to show no history still expects the bar to know which sessions are
+    // live. Read once at spawn (same as the plugin's) -- a changed value
+    // takes effect on the next shell start, which is enough for a
+    // backlog-depth knob.
+    readonly property int _historyLines: {
+        const configured = Settings.agentGraphHistoryLines;
+        const wanted = (typeof configured === "number" && isFinite(configured)) ? configured : 400;
+        return Math.max(200, wanted);
+    }
+
     Process {
         id: sessionEventTail
         running: InstallProfile.aiEnabled
-        command: ["sh", "-c", `mkdir -p '${Quickshell.env("HOME")}/.local/state/aphotic' && : >> '${Quickshell.env("HOME")}/.local/state/aphotic/agent-events.jsonl' && exec tail -n 400 -F '${Quickshell.env("HOME")}/.local/state/aphotic/agent-events.jsonl'`]
+        command: ["sh", "-c", `mkdir -p '${Quickshell.env("HOME")}/.local/state/aphotic' && : >> '${Quickshell.env("HOME")}/.local/state/aphotic/agent-events.jsonl' && exec tail -n ${root._historyLines} -F '${Quickshell.env("HOME")}/.local/state/aphotic/agent-events.jsonl'`]
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => root._ingestSessionEvent(data)
