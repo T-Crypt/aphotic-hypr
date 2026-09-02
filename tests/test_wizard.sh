@@ -12,6 +12,12 @@ result=$(echo "" | prompt_profile)
 result=$(echo "minimal" | prompt_profile)
 [[ "$result" == "minimal" ]] || fail "expected 'minimal', got '$result'"
 
+result=$(echo "1" | prompt_profile)
+[[ "$result" == "full" ]] || fail "expected menu choice 1 to be 'full', got '$result'"
+
+result=$(echo "2" | prompt_profile)
+[[ "$result" == "minimal" ]] || fail "expected menu choice 2 to be 'minimal', got '$result'"
+
 result=$(printf "3\ny\nn\ny\nn\n" | prompt_layers)
 [[ "$result" == "gaming,ai" ]] || fail "expected 'gaming,ai', got '$result'"
 
@@ -34,6 +40,18 @@ result=$(printf "3\nn\nn\nn\ny\nn\ny\ny\nn\nn\nn\nn\nn\n" | prompt_layers)
 # exploit enabled, default bundle accepted, passwords + wordlist opt-in
 result=$(printf "3\nn\nn\nn\ny\ny\ny\ny\nn\nn\nn\n" | prompt_layers)
 [[ "$result" == "exploit,exploit-passwords,exploit-wordlists" ]] || fail "expected 'exploit,exploit-passwords,exploit-wordlists', got '$result'"
+
+# An empty answer takes the default preset, which is the caller's to pick:
+# --opt-in leaves it at 3 (ask each one), the guided flow passes 2 (none),
+# so pressing Enter through a first install adds nothing.
+result=$(printf "\nn\nn\nn\nn\n" | prompt_layers)
+[[ "$result" == "" ]] || fail "expected an empty answer to default to preset 3's questions, got '$result'"
+
+result=$(echo "" | prompt_layers 2)
+[[ "$result" == "" ]] || fail "expected default preset 2 to select no layers, got '$result'"
+
+result=$(echo "" | prompt_layers 1)
+[[ "$result" == "gaming,dev,ai,exploit" ]] || fail "expected default preset 1 to select everything, got '$result'"
 
 CWR="[WARNING]"
 
