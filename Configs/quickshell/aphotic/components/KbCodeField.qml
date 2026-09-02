@@ -1,25 +1,38 @@
 import QtQuick
 import qs.config
-import qs.components
+import qs.services
 
 // Single-line text field for entering xkb codes (layout, variant, model,
-// rules). Mirrors the AI pane's entry boxes (Host / Pull new model): a
-// pill StyledRect lifted a layer above the containing SettingsRow, with a
-// native TextInput so glyphs keep the theme's onSurface color (a
-// QtQuick.Controls TextField with a null background rendered un-themed,
-// near-black text). `text` seeds the field; pressing Enter emits
-// `submitted` with the trimmed, lowercased value.
+// rules). Sized with implicit dimensions rather than Layout attached
+// properties because SettingsRow's trailing slot is a plain Item, where
+// Layout.* is both unresolvable and ignored. `text` seeds the field; the
+// value is committed on Enter or on losing focus.
 StyledRect {
     id: root
 
+    property alias placeholderText: placeholder.text
     property string text: ""
-    property string placeholderText: ""
+    // An "add to a list" entry rather than a bound value: clears after each
+    // submit, and only submits on Enter, so clicking away never appends
+    // whatever half-typed code was left sitting in it.
+    property bool clearOnSubmit: false
     signal submitted(value: string)
 
-    Layout.preferredWidth: 160
-    Layout.preferredHeight: 32
+    function commit(): void {
+        const v = input.text.trim().toLowerCase();
+        input.text = root.clearOnSubmit ? "" : v;
+        root.submitted(v);
+    }
+
+    implicitWidth: 180
+    implicitHeight: 32
     radius: Tokens.rounding.full
     color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+    onTextChanged: {
+        if (!input.activeFocus)
+            input.text = root.text;
+    }
 
     TextInput {
         id: input
@@ -33,16 +46,18 @@ StyledRect {
         color: Colours.palette.m3onSurface
         text: root.text
 
-        Keys.onReturnPressed: {
-            const v = input.text.trim().toLowerCase();
-            root.submitted(v);
+        onAccepted: root.commit()
+        onActiveFocusChanged: {
+            if (!input.activeFocus && !root.clearOnSubmit)
+                root.commit();
         }
 
         StyledText {
+            id: placeholder
+
             visible: input.text.length === 0
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            text: root.placeholderText
             color: Colours.palette.m3onSurfaceVariant
             font: Tokens.font.label.small
         }

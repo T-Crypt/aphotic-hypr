@@ -573,7 +573,7 @@ Item {
             rightMargin: Tokens.padding.large
             clip: true
             currentIndex: 0
-            cellWidth: width / Tokens.sizes.launcher.gridColumns
+            cellWidth: (width - leftMargin - rightMargin) / Tokens.sizes.launcher.gridColumns
             cellHeight: Tokens.sizes.launcher.gridCellHeight
 
             model: ScriptModel {

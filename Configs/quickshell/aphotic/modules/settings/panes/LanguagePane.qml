@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import qs.config
 import qs.components
 import qs.services
@@ -15,21 +14,20 @@ ColumnLayout {
     // simply shows no pill as active -- the raw value still applies.
     readonly property var layoutPresets: [
         { value: "us", label: qsTr("US") },
-        { value: "us_intl", label: qsTr("US Intl") },
         { value: "gb", label: qsTr("UK") },
         { value: "de", label: qsTr("German") },
         { value: "fr", label: qsTr("French") },
         { value: "es", label: qsTr("Spanish") },
-        { value: "pt", label: qsTr("Portuguese") },
         { value: "it", label: qsTr("Italian") },
+        { value: "pt", label: qsTr("Portuguese") },
+        { value: "br", label: qsTr("Brazilian") },
         { value: "ru", label: qsTr("Russian") },
         { value: "jp", label: qsTr("Japanese") },
         { value: "cn", label: qsTr("Chinese") },
-        { value: "br", label: qsTr("Brazilian") },
         { value: "se", label: qsTr("Swedish") },
-        { value: "fi", label: qsTr("Finnish") },
         { value: "no", label: qsTr("Norwegian") },
         { value: "dk", label: qsTr("Danish") },
+        { value: "fi", label: qsTr("Finnish") },
         { value: "pl", label: qsTr("Polish") },
         { value: "tr", label: qsTr("Turkish") },
         { value: "ar", label: qsTr("Arabic") },
@@ -51,214 +49,204 @@ ColumnLayout {
         { value: "grp:win_space_toggle", label: qsTr("Super+Space") }
     ]
 
+    function layoutLabel(code: string): string {
+        const match = root.layoutPresets.find(p => p.value === code);
+        return match ? match.label : code;
+    }
+
+    function moveLayout(from: int, to: int): void {
+        const arr = [...Settings.additionalKbLayouts];
+        const moved = arr[from];
+        arr[from] = arr[to];
+        arr[to] = moved;
+        Settings.additionalKbLayouts = arr;
+    }
+
     spacing: Tokens.spacing.largeIncreased
 
     StyledText {
-        text: qsTr("Language / Keyboard")
+        text: qsTr("Language")
         font: Tokens.font.title.large
     }
 
     StyledText {
-        text: qsTr("Primary layout")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.label.medium
-    }
-
-    StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Your main keyboard layout. The full list of valid codes comes from xkb — the pills below are just the most common. If yours isn't listed, type it below and press Enter.")
+        text: qsTr("Your keyboard layout, in xkb codes. The pills are the common ones -- any other code works too, typed by hand. Everything here is written to ~/.config/hypr/keyboard.lua and applied to the running session immediately.")
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.body.small
     }
 
-    SettingsGroup {
+    ColumnLayout {
         Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
 
-        SettingsPresetRow {
-            icon: "keyboard"
-            label: qsTr("Primary layout")
-            presets: root.layoutPresets
-            value: Settings.kbLayout
-            onSelected: value => Settings.kbLayout = value
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Primary layout")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
         }
 
-        SettingsRow {
-            icon: "edit"
-            label: qsTr("Custom code")
+        SettingsGroup {
+            Layout.fillWidth: true
 
-            KbCodeField {
-                text: Settings.kbLayout
-                onSubmitted: value => Settings.kbLayout = value
+            SettingsPresetRow {
+                icon: "keyboard"
+                label: qsTr("Layout")
+                presets: root.layoutPresets
+                value: Settings.kbLayout
+                onSelected: value => Settings.kbLayout = value
             }
-        }
-    }
-
-    StyledText {
-        Layout.topMargin: Tokens.spacing.small
-        text: qsTr("Additional layouts")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.label.medium
-    }
-
-    StyledText {
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
-        text: qsTr("Add extra layouts to switch between with your group-toggle key (set below). Choosing a layout from the list keeps your second-plus layouts orderable; type a custom code and press Enter to add it directly.")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.body.small
-    }
-
-    SettingsGroup {
-        Layout.fillWidth: true
-
-        SettingsRow {
-            icon: "add"
-            label: qsTr("Add layout")
-
-            KbCodeField {
-                placeholderText: qsTr("e.g. de, fr, jp…")
-                onSubmitted: value => {
-                    const clean = value.trim().toLowerCase();
-                    if (clean.length === 0 || Settings.additionalKbLayouts.includes(clean))
-                        return;
-                    Settings.additionalKbLayouts = [...Settings.additionalKbLayouts, clean];
-                }
-            }
-        }
-
-        Repeater {
-            model: Settings.additionalKbLayouts
 
             SettingsRow {
-                required property string modelData
-                required property int index
+                icon: "edit"
+                label: qsTr("Custom code")
+                description: qsTr("Any xkb code not listed above -- press Enter to apply")
 
-                icon: "language"
-                label: root.additionalRowLabel(modelData)
-                last: index === Settings.additionalKbLayouts.length - 1
+                KbCodeField {
+                    text: Settings.kbLayout
+                    placeholderText: qsTr("e.g. ua")
+                    onSubmitted: value => Settings.kbLayout = value
+                }
+            }
 
-                RowLayout {
-                    spacing: Tokens.spacing.medium
+            SettingsPresetRow {
+                icon: "tune"
+                label: qsTr("Variant")
+                description: qsTr("Applies to the primary layout only")
+                presets: root.variantPresets
+                value: Settings.kbVariant
+                onSelected: value => Settings.kbVariant = value
+            }
+        }
+    }
 
-                    Item {
-                        Layout.fillWidth: true
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Additional layouts")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsRow {
+                icon: "add"
+                label: qsTr("Add a layout")
+                description: qsTr("Press Enter to add it to the switch order below")
+
+                KbCodeField {
+                    placeholderText: qsTr("e.g. de, fr, jp")
+                    clearOnSubmit: true
+                    onSubmitted: value => {
+                        if (value.length === 0 || value === Settings.kbLayout || Settings.additionalKbLayouts.includes(value))
+                            return;
+                        Settings.additionalKbLayouts = [...Settings.additionalKbLayouts, value];
                     }
+                }
+            }
 
-                    MaterialIcon {
-                        text: "arrow_upward"
-                        color: Colours.palette.m3onSurfaceVariant
-                        fontStyle: Tokens.font.icon.small
-                        visible: index > 0
+            Repeater {
+                model: Settings.additionalKbLayouts
 
-                        StateLayer {
-                            anchors.fill: parent
-                            anchors.margins: -Tokens.padding.small
-                            radius: Tokens.rounding.full
-                            onClicked: {
-                                const arr = [...Settings.additionalKbLayouts];
-                                const t = arr[index - 1];
-                                arr[index - 1] = arr[index];
-                                arr[index] = t;
-                                Settings.additionalKbLayouts = arr;
+                SettingsRow {
+                    id: layoutRow
+
+                    required property string modelData
+                    required property int index
+
+                    icon: "language"
+                    label: root.layoutLabel(layoutRow.modelData)
+                    description: layoutRow.modelData
+
+                    RowLayout {
+                        spacing: Tokens.spacing.small
+
+                        MaterialIcon {
+                            text: "arrow_upward"
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+                            visible: layoutRow.index > 0
+
+                            StateLayer {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                radius: Tokens.rounding.full
+                                onClicked: root.moveLayout(layoutRow.index, layoutRow.index - 1)
                             }
                         }
-                    }
 
-                    MaterialIcon {
-                        text: "arrow_downward"
-                        color: Colours.palette.m3onSurfaceVariant
-                        fontStyle: Tokens.font.icon.small
-                        visible: index < Settings.additionalKbLayouts.length - 1
+                        MaterialIcon {
+                            text: "arrow_downward"
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+                            visible: layoutRow.index < Settings.additionalKbLayouts.length - 1
 
-                        StateLayer {
-                            anchors.fill: parent
-                            anchors.margins: -Tokens.padding.small
-                            radius: Tokens.rounding.full
-                            onClicked: {
-                                const arr = [...Settings.additionalKbLayouts];
-                                const t = arr[index + 1];
-                                arr[index + 1] = arr[index];
-                                arr[index] = t;
-                                Settings.additionalKbLayouts = arr;
+                            StateLayer {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                radius: Tokens.rounding.full
+                                onClicked: root.moveLayout(layoutRow.index, layoutRow.index + 1)
                             }
                         }
-                    }
 
-                    MaterialIcon {
-                        text: "close"
-                        color: Colours.palette.m3onSurfaceVariant
-                        fontStyle: Tokens.font.icon.small
+                        MaterialIcon {
+                            text: "delete"
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
-                            anchors.fill: parent
-                            anchors.margins: -Tokens.padding.small
-                            radius: Tokens.rounding.full
-                            onClicked: Settings.additionalKbLayouts = Settings.additionalKbLayouts.filter((_, i) => i !== index)
+                            StateLayer {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                radius: Tokens.rounding.full
+                                onClicked: Settings.additionalKbLayouts = Settings.additionalKbLayouts.filter((_, i) => i !== layoutRow.index)
+                            }
                         }
                     }
                 }
             }
         }
-    }
 
-    StyledText {
-        Layout.topMargin: Tokens.spacing.small
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
-        visible: Settings.additionalKbLayouts.length === 0
-        text: qsTr("No additional layouts yet. Add one above to enable multi-layout switching.")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.body.small
-    }
-
-    StyledText {
-        Layout.topMargin: Tokens.spacing.small
-        text: qsTr("Variant & switch key")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.label.medium
-    }
-
-    SettingsGroup {
-        Layout.fillWidth: true
-
-        SettingsPresetRow {
-            icon: "tune"
-            label: qsTr("Variant")
-            description: qsTr("Only applies to the primary layout")
-            presets: root.variantPresets
-            value: Settings.kbVariant
-            onSelected: value => Settings.kbVariant = value
-        }
-
-        SettingsPresetRow {
-            icon: "swap_horiz"
-            label: qsTr("Layout switch key")
-            visible: Settings.additionalKbLayouts.length > 0
-            presets: root.switchOptionsPresets
-            value: Settings.kbOptions
-            onSelected: value => Settings.kbOptions = value
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            visible: Settings.additionalKbLayouts.length === 0
+            text: qsTr("No additional layouts yet -- add one to enable layout switching.")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.body.small
         }
     }
 
-    StyledText {
-        Layout.topMargin: Tokens.spacing.small
-        visible: Settings.additionalKbLayouts.length === 0
-        text: qsTr("Add a second layout above to choose a layout-switch key.")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.body.small
-    }
-
-    StyledText {
+    ColumnLayout {
         Layout.fillWidth: true
-        wrapMode: Text.Wrap
-        text: qsTr("These are written to ~/.config/hypr/custom.lua — the override file install.sh never overwrites — and applied immediately via the compositor's live config API.")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.body.small
-    }
+        spacing: Tokens.spacing.extraSmall
+        visible: Settings.additionalKbLayouts.length > 0
 
-    function additionalRowLabel(code: string): string {
-        const match = root.layoutPresets.find(p => p.value === code);
-        return match ? match.label : code;
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Switching")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsPresetRow {
+                icon: "swap_horiz"
+                label: qsTr("Switch key")
+                description: qsTr("Cycles through %1 in order").arg([Settings.kbLayout || "us", ...Settings.additionalKbLayouts].join(", "))
+                presets: root.switchOptionsPresets
+                value: Settings.kbOptions
+                onSelected: value => Settings.kbOptions = value
+            }
+        }
     }
 }
