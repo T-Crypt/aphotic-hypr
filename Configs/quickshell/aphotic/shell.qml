@@ -284,7 +284,17 @@ ShellRoot {
     // rather than under services/ai because it is core resource
     // accounting, not an AI surface -- Ollama only ever claims against
     // the resource this declares.
-    GpuVramSource {}
+    GpuVramSource {
+        id: gpuVramSource
+    }
+
+    // The Gaming profile claims its game's VRAM through GpuVramSource's
+    // adoption seam rather than registering a claim of its own, so the
+    // generic scanner and this profile can never both describe the same
+    // PID.
+    GamingProfile {
+        gpuVram: gpuVramSource
+    }
 
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than
