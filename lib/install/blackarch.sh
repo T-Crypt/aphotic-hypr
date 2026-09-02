@@ -19,22 +19,28 @@ blackarch_repo_present() {
 print_blackarch_warning() {
   cat <<'EOF'
 
-[WARNING] The "exploit" layer adds the BlackArch repo to /etc/pacman.conf.
-BlackArch is a large, fast-moving repo layered on top of Arch, and it is
-not held to the same stability bar as Arch's own official repos:
-  - Some BlackArch packages shadow/replace official ones (its own rebuilds
-    of common tools are the classic case) if a later `sudo pacman -Syu`
-    pulls one in without you noticing.
-  - The repo occasionally ships a broken package between fixes.
+[WARNING] The security tools you picked are not in Arch's own package
+collections. They come from BlackArch, and this script would add it to
+your system's list of package sources (/etc/pacman.conf).
 
-If something breaks after enabling it:
-  - Force-reinstall the official copy of a broken package:
+BlackArch is a third-party collection of a few thousand security tools,
+maintained separately from Arch and held to a lower stability bar than
+Arch's own official sources:
+  - Some BlackArch packages replace official Arch ones with their own
+    rebuilds, which a later `sudo pacman -Syu` can pull in without you
+    noticing.
+  - It occasionally ships a broken package between fixes.
+
+If something breaks after adding it:
+  - Put the official copy of a package back:
       sudo pacman -S extra/<package>
   - Remove BlackArch entirely: delete the [blackarch] block this script
     appends to /etc/pacman.conf, then:
       sudo pacman -R blackarch-keyring
       sudo pacman -Syyuu
   - Full walkthrough: docs/exploit-layer.md
+
+Everything else in this install works the same either way.
 
 EOF
 }

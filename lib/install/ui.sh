@@ -13,6 +13,12 @@ set -euo pipefail
 # argument -- unlike `echo -e` -- never interprets `\e` itself.
 _ui_action_tag() { printf '%b' "${CAC:-[ACTION]}"; }
 
+# Keep every <prompt> here to one short line and echo any explanation
+# above the call instead: `read -e` hands the prompt to readline, which
+# redraws a prompt longer than the terminal width as a truncated "<...end
+# of prompt" fragment, so a wordy question silently loses its beginning on
+# an 80-column terminal.
+#
 # confirm <prompt> [default: y|n] -- returns 0 for yes, 1 for no. A closed/
 # exhausted stdin (read failing outright, not just an empty Enter) always
 # resolves to "no" regardless of the requested default -- matching what

@@ -14,6 +14,7 @@ source "$ROOT_DIR/lib/install/aur.sh"
 source "$ROOT_DIR/lib/install/multilib.sh"
 source "$ROOT_DIR/lib/install/backup.sh"
 source "$ROOT_DIR/lib/install/wizard.sh"
+source "$ROOT_DIR/lib/install/guided.sh"
 source "$ROOT_DIR/lib/install/blackarch.sh"
 source "$ROOT_DIR/lib/install/exploit_disclaimer.sh"
 source "$ROOT_DIR/lib/install/conflicts.sh"
@@ -52,6 +53,18 @@ ACCEPT_EXPLOIT_DISCLAIMER=0
 NVIDIA_DRIVER_ACTION=""
 OPT_IN=0
 STRIP_CONFLICTS=""
+COPY_CONFIGS=""
+EXTRA_WALLPAPERS=""
+ACTIVATE_STARSHIP=""
+ACTIVATE_ZSH=""
+
+# The guided path (lib/install/guided.sh) is what a first-time user gets:
+# it only engages for `./install.sh` with no options at all, on a real
+# terminal. Any flag at all -- and any non-TTY stdin, i.e. CI or a piped
+# install -- keeps the exact flag-driven/zero-prompt behavior it had
+# before, which is what every scripted caller depends on.
+GUIDED=0
+FLAGS_SEEN=0
 
 TOTAL_STAGES=7
 STAGE_COLORS=(35 36 33 34 32 36 35)
@@ -86,6 +99,12 @@ print_help() {
   cat <<'EOF'
 Usage: ./install.sh [options]
 
+  Run with no options on a terminal for the guided setup: a few plain
+  questions, then a summary to accept before anything is changed. Every
+  option below opts out of that and takes the same flag-driven path as
+  before (no options + no terminal, e.g. CI or a piped install, still
+  installs the zero-prompt daily-driver default).
+
   --profile <minimal|full>     Select base profile (skips wizard prompt)
   --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai,exploit
                                 ("exploit" is a convenience bundle of
@@ -96,9 +115,9 @@ Usage: ./install.sh [options]
                                 enables the BlackArch repo unless its own
                                 sublayer doesn't need it (e.g. -reporting,
                                 -wordlists).
-  --opt-in                      Interactive layer picker (preset or
-                                cherry-pick prompts). Without this flag (and
-                                without --profile/--with), a fresh install
+  --opt-in                      Just the interactive layer picker, without
+                                the rest of the guided setup. Without any
+                                flag and without a terminal, a fresh install
                                 defaults to the daily-driver setup -- full
                                 profile, no optional layers -- with zero
                                 prompts. Layers can always be added later by
@@ -146,6 +165,13 @@ EOF
 }
 
 while [[ $# -gt 0 ]]; do
+  # -h/--help and -v/--version exit before this matters, so every flag that
+  # reaches the parser body means "not a bare invocation" -- see GUIDED.
+  case "$1" in
+    -h|--help) print_help; exit 0 ;;
+    -v|--version) cat "$ROOT_DIR/VERSION"; exit 0 ;;
+  esac
+  FLAGS_SEEN=1
   case "$1" in
     --profile) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; PROFILE="$2"; shift 2 ;;
     --with) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; LAYERS="$2"; shift 2 ;;
@@ -161,11 +187,13 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
     --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
-    -h|--help) print_help; exit 0 ;;
-    -v|--version) cat "$ROOT_DIR/VERSION"; exit 0 ;;
     *) echo -e "$CER - Unknown option: $1"; print_help; exit 1 ;;
   esac
 done
+
+if [[ "$FLAGS_SEEN" == "0" ]] && [[ -t 0 ]]; then
+  GUIDED=1
+fi
 
 if ! [[ "$KEEP_BACKUPS" =~ ^[0-9]+$ ]]; then
   echo -e "$CER - --keep-backups requires a non-negative integer, got: $KEEP_BACKUPS"
@@ -203,7 +231,11 @@ main() {
     exit 1
   fi
 
-  echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland."
+  if [[ "$GUIDED" == "1" ]]; then
+    guided_intro
+  else
+    echo -e "$CNT - You are about to execute a script that would attempt to setup Hyprland."
+  fi
   detect_environment
 
   if [[ "$CONFIG_ONLY" == "1" ]]; then
@@ -221,7 +253,11 @@ main() {
   # on both sides of the diff.
   PREV_LAYERS="$DETECTED_APHOTIC_LAYERS"
 
-  resolve_config
+  if [[ "$GUIDED" == "1" ]]; then
+    guided_configure
+  else
+    resolve_config
+  fi
   LAYERS=$(expand_layer_bundles "$LAYERS")
 
   exploit_disclaimer_gate "$PREV_LAYERS"
@@ -229,15 +265,23 @@ main() {
   BLACKARCH_CONSENT_GIVEN=0
   if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" && "$DRY_RUN" != "1" ]]; then
     print_blackarch_warning
-    if confirm "Continue enabling BlackArch for the exploit-* layers that need it?" n; then
+    if confirm "Add BlackArch and install those tools?" n; then
       BLACKARCH_CONSENT_GIVEN=1
     else
-      echo -e "$CWR - Skipping the BlackArch-backed exploit-* layers."
+      echo -e "$CWR - Not adding BlackArch, so the security tools that need it are dropped from this install. Everything else carries on."
       LAYERS=$(strip_layers_matching "$LAYERS" _predicate_requires_blackarch)
     fi
   fi
 
   ISNVIDIA="$DETECTED_NVIDIA_PRESENT"
+
+  # Step 4 has to run before resolve_assistant (which would otherwise ask
+  # its own question) and before the summary, since it feeds both.
+  if [[ "$GUIDED" == "1" ]]; then
+    guided_step_addons
+    prompt_conflicting_packages
+  fi
+
   resolve_assistant
 
   local layer_paths=()
@@ -290,7 +334,11 @@ main() {
     exit 0
   fi
 
-  echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password."
+  if [[ "$GUIDED" == "1" ]]; then
+    guided_plan_and_confirm "$prep_pkgs" "$main_pkgs"
+  else
+    echo -e "$CNT - This script will run some commands that require sudo. You will be prompted to enter your password."
+  fi
 
   print_stage 3 "System prep"
   check_conflicting_packages
@@ -373,8 +421,23 @@ main() {
   enable_core_services
 
   print_stage 6 "Deploying configs"
+  # COPY_CONFIGS is "" (nobody has decided -- ask) or 1/0. The guided flow
+  # sets it to 1 rather than asking: a desktop with none of its configs
+  # deployed isn't a working install, so it belongs in the summary, not in
+  # a prompt whose default was "no".
   CFG_COPIED=0
-  if confirm "Would you like to copy config files?" n; then
+  local want_configs=0
+  if [[ -n "$COPY_CONFIGS" ]]; then
+    [[ "$COPY_CONFIGS" == "1" ]] && want_configs=1
+  else
+    echo -e "$CNT - Without Aphotic's config files you get Hyprland with none of Aphotic's desktop."
+    echo -e "$CNT   Whatever is in ~/.config now was backed up in the previous step."
+    if confirm "Install Aphotic's config files into ~/.config?" n; then
+      want_configs=1
+    fi
+  fi
+
+  if [[ "$want_configs" == "1" ]]; then
     CFG_COPIED=1
     deploy_user_configs
     setup_login_manager_theme

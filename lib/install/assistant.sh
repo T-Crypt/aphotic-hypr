@@ -30,13 +30,17 @@ resolve_assistant() {
   fi
 
   if [[ ",$LAYERS," == *",ai,"* ]]; then
-    if confirm "Install the Aphotic Assistant, a local chatbot that helps you personalize your setup?" y; then
+    echo -e "\n$CNT - The Aphotic Assistant is a chatbot that runs entirely on this machine and can"
+    echo -e "$CNT   answer questions about your desktop. It downloads a language model of a few GB."
+    if confirm "Install the Aphotic Assistant?" y; then
       ASSISTANT="true"
     else
       ASSISTANT="false"
     fi
   else
-    if confirm "The Aphotic Assistant is a local chatbot, but it needs the ai layer (Ollama). Add the ai layer and install it?" n; then
+    echo -e "\n$CNT - The Aphotic Assistant is a chatbot that runs entirely on this machine, but it"
+    echo -e "$CNT   needs the AI extras (Ollama) you didn't select, and downloads a model of a few GB."
+    if confirm "Add the AI extras and install the Assistant?" n; then
       ASSISTANT="true"
       LAYERS="${LAYERS:+$LAYERS,}ai"
     else

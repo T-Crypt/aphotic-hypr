@@ -104,8 +104,12 @@ except Exception:
   # which is where line 241 of the old monolithic install.sh used to ask it.
   if [[ -n "$DETECTED_NVIDIA_DRIVER" && -z "$NVIDIA_DRIVER_ACTION" && "$DRY_RUN" != "1" ]]; then
     if [[ -t 0 ]]; then
-      echo -e "$CAT - An NVIDIA driver is already installed (${DETECTED_NVIDIA_DRIVER})."
-      if confirm "Uninstall it and let Aphotic install its recommended nvidia-open-dkms instead of keeping it?" n; then
+      echo -e "\n$CAT - A driver for your NVIDIA graphics card is already installed: ${DETECTED_NVIDIA_DRIVER}."
+      echo -e "  Aphotic normally installs nvidia-open-dkms, NVIDIA's own open-source driver. Switching to it"
+      echo -e "  means removing the driver you have first, and swapping graphics drivers can leave you with no"
+      echo -e "  picture until you reboot."
+      echo -e "  Recommended: keep the one you already have -- Aphotic works fine on it."
+      if confirm "Replace it with nvidia-open-dkms?" n; then
         NVIDIA_DRIVER_ACTION="reinstall"
       else
         NVIDIA_DRIVER_ACTION="keep"
