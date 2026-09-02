@@ -6,6 +6,7 @@ ColorPickerField 1.0 ColorPickerField.qml
 ColorWheel 1.0 ColorWheel.qml
 DepthGradient 1.0 DepthGradient.qml
 DepthLayer 1.0 DepthLayer.qml
+KbCodeField 1.0 KbCodeField.qml
 Logo 1.0 Logo.qml
 MaterialIcon 1.0 MaterialIcon.qml
 ScreenState 1.0 ScreenState.qml

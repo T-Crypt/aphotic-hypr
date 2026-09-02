@@ -117,6 +117,8 @@ RowLayout {
                         return themeCreatorComp;
                     case "personalization":
                         return personalizationComp;
+                    case "language":
+                        return languageComp;
                     case "bar":
                         return barComp;
                     case "launcher":
@@ -139,6 +141,8 @@ RowLayout {
                         return pluginsComp;
                     case "system":
                         return systemComp;
+                    case "advanced":
+                        return advancedComp;
                     case "about":
                         return aboutComp;
                     default:
@@ -238,6 +242,10 @@ RowLayout {
         PersonalizationPane {}
     }
     Component {
+        id: languageComp
+        LanguagePane {}
+    }
+    Component {
         id: barComp
         BarPane {}
     }
@@ -280,6 +288,10 @@ RowLayout {
     Component {
         id: systemComp
         SystemPane {}
+    }
+    Component {
+        id: advancedComp
+        AdvancedPane {}
     }
     Component {
         id: aboutComp

@@ -11,8 +11,11 @@ ColumnLayout {
 
     spacing: 0
 
+    // visibleChildren rather than children: a row hidden by its own
+    // `visible:` binding must not claim the last slot, or the group renders
+    // its rounded bottom corners on something nobody can see.
     function _updatePositions(): void {
-        const rows = root.children.filter(c => "first" in c && "last" in c);
+        const rows = root.visibleChildren.filter(c => "first" in c && "last" in c);
         for (let i = 0; i < rows.length; i++) {
             rows[i].first = i === 0;
             rows[i].last = i === rows.length - 1;
@@ -20,5 +23,6 @@ ColumnLayout {
     }
 
     onChildrenChanged: root._updatePositions()
+    onVisibleChildrenChanged: root._updatePositions()
     Component.onCompleted: root._updatePositions()
 }
