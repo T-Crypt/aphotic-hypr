@@ -84,9 +84,13 @@ for b in $(grep -ohE '(exec\(\[|command:\s*\[)"[^"]+"' "$SUB"/*.qml "$UI"/*.qml 
   case "$b" in
     sh) ;;
     hyprctl) ;;
-    # glib2, declared in both base profiles -- the Gaming profile's
-    # gamemode D-Bus subscription (Quickshell exposes no DBus client).
+    # glib2 / dbus, both declared in both base profiles -- the Gaming
+    # profile's gamemode D-Bus subscription (Quickshell exposes no DBus
+    # client). dbus-monitor takes a bare match rule so that subscribing
+    # never auto-activates gamemoded; gdbus is the one-shot ListGames
+    # catch-up call, itself guarded on the daemon already running.
     gdbus) ;;
+    dbus-monitor) ;;
     *) fail "substrate spawns '$b', which this test does not know to be a declared base dependency" ;;
   esac
 done
