@@ -278,6 +278,14 @@ ShellRoot {
         NegotiationWindow {}
     }
 
+    // Declares "gpu-vram" (vendor-routed off SystemUsage's existing
+    // detection) and keeps the catch-all per-process claims for GPU
+    // memory held by anything that isn't a domain plugin. Mounted here
+    // rather than under services/ai because it is core resource
+    // accounting, not an AI surface -- Ollama only ever claims against
+    // the resource this declares.
+    GpuVramSource {}
+
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than
     // inside the singletons so declaring the IPC target doesn't

@@ -9,12 +9,10 @@ import qs.services.profile
 // first foreground claimant to arrive (Gaming, once it exists) negotiates
 // against a measured number instead of a placeholder.
 //
-// Capacity is declared here rather than in ResourceEngine because the
-// engine never probes hardware (see its header). nvidia-smi is the only
-// total-VRAM source this repo can currently trust; on an AMD/Intel
-// machine nothing is declared at all, which leaves "gpu-vram" undeclared
-// and therefore never arbitrated -- the correct degrade, not a gap to
-// paper over with a guessed capacity.
+// Capacity for "gpu-vram" belongs to GpuVramSource, not here -- one place
+// declares the resource, everything else only claims against it. Claims
+// registered before it is declared are tracked and simply never
+// arbitrated, so there is no ordering requirement between the two.
 //
 // Everything is driven off the runningModels the parent hands in, so this
 // owns no poll of its own; AiProviders' single background /api/ps timer is
@@ -29,19 +27,23 @@ QtObject {
     readonly property string owner: "ollama"
     readonly property string resource: "gpu-vram"
 
-    property bool _probed: false
-    property bool _declared: false
+    property bool _registered: false
 
-    onEnabledChanged: root._probe()
+    onEnabledChanged: root._register()
     onRunningModelsChanged: root._sync()
 
-    Component.onCompleted: root._probe()
+    Component.onCompleted: root._register()
 
-    function _probe(): void {
-        if (root._probed || !root.enabled)
+    function _register(): void {
+        if (root._registered || !root.enabled)
             return;
-        root._probed = true;
-        root._probeProc.running = true;
+        root._registered = true;
+        ProfileEngine.register({
+            id: root.owner,
+            label: qsTr("Ollama"),
+            gracefulStop: claim => root._unload(claim?.id ?? "")
+        });
+        root._sync();
     }
 
     // Re-registers only what actually changed: register() is an upsert
@@ -57,7 +59,7 @@ QtObject {
     // suspend -- offering to stop a CPU-resident model to free VRAM it was
     // never holding.
     function _sync(): void {
-        if (!root._declared)
+        if (!root._registered)
             return;
 
         const resident = {};
@@ -99,38 +101,6 @@ QtObject {
             model: id,
             keep_alive: 0
         })]);
-    }
-
-    // `sh -c` with a command -v guard rather than execing nvidia-smi
-    // directly: the binary is absent on most machines and a missing
-    // command is a Process-failed-to-start log line on every shell start
-    // (issue #43), where this just prints nothing.
-    property Process _probeProc: Process {
-        command: ["sh", "-c", "command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                // Summed across cards because size_vram from /api/ps is
-                // itself a total across every GPU Ollama loaded onto --
-                // capacity has to be the same aggregate the claims are.
-                const total = text.trim().split("\n").map(line => parseInt(line.trim(), 10)).filter(v => !isNaN(v) && v > 0).reduce((a, b) => a + b, 0);
-                if (total <= 0)
-                    return;
-
-                ResourceEngine.declareResource(root.resource, {
-                    label: qsTr("GPU VRAM"),
-                    unit: "MB",
-                    capacity: total,
-                    safetyMargin: 0.1
-                });
-                ProfileEngine.register({
-                    id: root.owner,
-                    label: qsTr("Ollama"),
-                    gracefulStop: claim => root._unload(claim?.id ?? "")
-                });
-                root._declared = true;
-                root._sync();
-            }
-        }
     }
 
     property Process _unloadProc: Process {}
