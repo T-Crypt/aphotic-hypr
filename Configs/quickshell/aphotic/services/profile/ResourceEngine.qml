@@ -38,6 +38,19 @@ Singleton {
 
     readonly property bool dormant: root._claims.length === 0 && root._queue.length === 0
 
+    // Resources that have claims but no declared capacity. _contentionFor
+    // skips those deliberately -- an undeclared resource has nothing to
+    // compare against -- but that skip used to be invisible, so a
+    // declaration lost after startup (reset(), a declarant that cached
+    // "I declared" and diverged) left arbitration dead with nothing
+    // reading any differently: claims still register, `dormant` still
+    // says false, and no negotiation can ever be raised again. This makes
+    // that state something a caller can see instead of something it has
+    // to infer. Empty is the healthy answer.
+    readonly property var unarbitrated: root._claims
+        .map(c => c.resource)
+        .filter((r, i, all) => all.indexOf(r) === i && !root._resources[r])
+
     readonly property real defaultSafetyMargin: 0.1
 
     signal claimRegistered(claim: var)
