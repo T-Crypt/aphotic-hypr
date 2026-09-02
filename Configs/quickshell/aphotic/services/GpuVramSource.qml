@@ -45,7 +45,22 @@ QtObject {
     readonly property int claimDeadbandMb: 64
     readonly property string vendor: SystemUsage.selectedGpu?.vendor ?? ""
 
-    readonly property bool declared: root._declared
+    // Read back from the engine rather than cached here. A local flag is
+    // a second copy of a fact ResourceEngine already owns, and
+    // ResourceEngine.reset() clears its copy only -- which left _probe()
+    // early-returning forever, so gpu-vram was never re-declared and
+    // every negotiation on it was silently impossible for the rest of
+    // the session. Derived, the two cannot disagree.
+    readonly property bool declared: !!(ResourceEngine.resources ?? ({}))[root.resource]
+
+    // Whatever dropped the declaration -- a reset, an undeclare -- the
+    // file that owns this resource re-asserts it. Deferred for the reason
+    // onScanningChanged is: this is a handler on a property derived from
+    // ResourceEngine's own state, re-entering it to declare.
+    onDeclaredChanged: {
+        if (!root.declared)
+            Qt.callLater(root._probe);
+    }
 
     // Zero idle cost: the scan only runs when there is something to
     // arbitrate *against* -- a claim this file did not register itself, or
@@ -56,7 +71,7 @@ QtObject {
     //
     // Excluding its own claims from that test is what stops the scan
     // keeping itself alive forever once it has run a single time.
-    readonly property bool scanning: root._declared && root.vendor === "nvidia" && (root._hasForeignClaim || root._hasAdoptions)
+    readonly property bool scanning: root.declared && root.vendor === "nvidia" && (root._hasForeignClaim || root._hasAdoptions)
 
     readonly property bool _hasAdoptions: Object.keys(root._adopted).length > 0
     readonly property bool _hasForeignClaim: (ResourceEngine.claims ?? []).some(c => c.resource === root.resource && !root._isMine(c.id))
@@ -119,7 +134,6 @@ QtObject {
         return `${owner}-proc-${pid}`;
     }
 
-    property bool _declared: false
     property string _probeVendor: ""
 
     onVendorChanged: root._probe()
@@ -127,7 +141,7 @@ QtObject {
     Component.onCompleted: root._probe()
 
     function _probe(): void {
-        if (root._declared || !root.vendor)
+        if (root.declared || root._capacityProc.running || !root.vendor)
             return;
 
         switch (root.vendor) {
@@ -173,7 +187,6 @@ QtObject {
             capacity: mb,
             safetyMargin: 0.1
         });
-        root._declared = true;
     }
 
     // Ollama is excluded because OllamaClaims registers a precise
