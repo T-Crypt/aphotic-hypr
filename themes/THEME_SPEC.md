@@ -275,6 +275,39 @@ knows clamping happened. All three apply sites (`cmd_theme.sh`,
 `Wallpapers.qml`, `wallswitcher.py`) do this. A missing anchor file warns
 and leaves the unclamped palette applied rather than failing the switch.
 
+**The hue clamp assumes slot→hue stability, which only `palette = "ansi"`
+gives you.** The clamp compares slot to slot: raw `color6` against anchor
+`color6`. That is only meaningful if a slot holds the same *kind* of hue
+from one wallpaper to the next. Measured as circular hue spread across
+each theme's own shipped wallpapers:
+
+| theme | `[engine].palette` | spread of `color1`–`color6` |
+|---|---|---|
+| nordic | `ansi` | 1°–8° |
+| gruvbox | kmeans (default) | 13°–75° |
+| tokyonight | kmeans (default) | 52°–103° |
+| lofi | kmeans (default) | 74°–125° |
+
+`ansi` orders slots by the classic TTY convention (`color1` red-ish,
+`color2` green-ish, …), so a slot means the same thing every time and the
+clamp does exactly what it says: Nordic's `color1 #B77142` → `#C36F36`,
+a small push toward the theme's own orange. `kmeans` and `salience` order
+slots by cluster prominence instead, so `color6` can be neon blue in one
+wallpaper and dusty pink in another. Clamping *those* slot-to-slot rotates
+toward whatever hue happened to land in that slot for the anchor
+wallpaper, which is arbitrary — Tokyo Night's `color6 #2DB0F0` (neon blue)
+becomes `#C16BA3` (pink) for exactly this reason.
+
+So a theme that wants the hue ceiling to mean anything should pin
+`[engine].palette = "ansi"` alongside `[palette].anchor`. A theme that
+wants to keep kmeans should set `max_hue_shift = 180` (which disables the
+hue clamp; it can never exceed 180° of circular distance) and rely on the
+saturation and lightness ceilings alone — those are slot-order-independent
+and still stop a wallpaper from blowing out a theme's intensity. Matching
+raw colours to their *nearest* anchor hue instead of their same-numbered
+slot would remove this constraint, but that is a different algorithm from
+the one implemented here.
+
 **Mutually exclusive with `[engine].colorscheme`.** A fixed colorscheme
 derives nothing from the image, so there is no raw palette to clamp; a
 theme setting both warns and keeps the fixed colorscheme.

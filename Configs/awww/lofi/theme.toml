@@ -2,6 +2,12 @@
 display_name = "Lofi"
 description = "Soft glowing pastels, cozy low-fi art."
 
+[palette]
+anchor = "lofi-anchor"
+max_hue_shift = 35
+max_sat_shift = 20
+max_light_shift = 15
+
 [icons]
 papirus_color = "pink"
 
