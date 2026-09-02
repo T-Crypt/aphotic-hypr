@@ -316,6 +316,7 @@ ShellRoot {
                 pending: ResourceEngine.pending,
                 pendingCount: ResourceEngine.pendingCount,
                 dormant: ResourceEngine.dormant,
+                unarbitrated: ResourceEngine.unarbitrated,
                 snapshots: StateSnapshot.capturedIds,
                 lastRestore: StateSnapshot.lastRestore,
                 subscribers: ProfileEvents.subscriberCount
