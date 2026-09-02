@@ -146,6 +146,20 @@ Singleton {
     // disabled until a user opts in here.
     property string packageCheckFrequency: "off" // "off" | "daily" | "weekly"
 
+    // Keyboard layout configuration -- persisted to ~/.config/hypr/custom.lua
+    // (the user-override file that install.sh never clobbers). These only
+    // matter if the user has explicitly set them via the Language pane;
+    // leaving them empty keeps hyprland.lua's own defaults intact.
+    property string kbLayout: ""
+    property string kbVariant: ""
+    property string kbOptions: ""
+    property string kbModel: ""
+    property string kbRules: ""
+    // Additional layouts for multi-language switching (array of xkb codes
+    // appended to kb_layout, resulting in e.g. "us,de,fr"). Empty =
+    // single layout only.
+    property var additionalKbLayouts: []
+
     property bool assistantWelcomeShown: false
 
     // Suppresses notification popups only -- notifications still land in
@@ -335,7 +349,13 @@ Singleton {
             intelligenceDefaultModel: root.intelligenceDefaultModel,
             intelligenceMaxSessions: root.intelligenceMaxSessions,
             intelligenceAutoPruneDays: root.intelligenceAutoPruneDays,
-            packageCheckFrequency: root.packageCheckFrequency
+            packageCheckFrequency: root.packageCheckFrequency,
+            kbLayout: root.kbLayout,
+            kbVariant: root.kbVariant,
+            kbOptions: root.kbOptions,
+            kbModel: root.kbModel,
+            kbRules: root.kbRules,
+            additionalKbLayouts: root.additionalKbLayouts
         }, null, 2));
     }
 
@@ -375,6 +395,69 @@ Singleton {
 
     Process {
         id: idleApplyProc
+    }
+
+    // Writes the keyboard layout settings to ~/.config/hypr/custom.lua and
+    // applies them to the running compositor live. custom.lua persists the
+    // choice across restarts (it's the user-override file install.sh never
+    // clobbers, loaded last by Hyprland), while the live step uses the Lua
+    // parser's runtime API because a plain config reload does not re-probe
+    // already-attached keyboard devices -- and `hyprctl keyword` is refused
+    // outright under the Lua parser ("keyword can't work with non-legacy
+    // parsers"), exactly as StateSnapshot.qml already documents for monitors.
+    // The runtime equivalent is `hyprctl eval 'hl.config({...})'`, which
+    // merges only what we pass, followed by switchxkblayout to force every
+    // keyboard onto the first (newly redefined) layout group.
+    function _applyKbLayout(): void {
+        if (!root._loaded)
+            return;
+
+        const allLayouts = [root.kbLayout, ...root.additionalKbLayouts].filter(s => s.length > 0);
+        const layoutStr = allLayouts.join(",");
+
+        // Input keys are set by passing an `input` table inside the
+        // `hl.config()` call -- Hyprland's Lua config API (since 0.55)
+        // exposes these as keys of the global `hl.config` table, not as a
+        // bare global named `input`. Multiple hl.config() invocations each
+        // update only what they pass, so this merges just the keyboard keys
+        // over hyprland.lua's values.
+        const keys = [];
+        if (layoutStr.length > 0) keys.push(`kb_layout  = "${layoutStr}"`);
+        if (root.kbVariant.length > 0) keys.push(`kb_variant = "${root.kbVariant}"`);
+        if (root.kbModel.length > 0) keys.push(`kb_model   = "${root.kbModel}"`);
+        if (root.kbOptions.length > 0) keys.push(`kb_options = "${root.kbOptions}"`);
+        if (root.kbRules.length > 0) keys.push(`kb_rules   = "${root.kbRules}"`);
+
+        const hasConfig = keys.length > 0;
+        const luaConfig = hasConfig ? `hl.config({ input = { ${keys.join(", ")} } })` : "";
+
+        // human-readable custom.lua for persistence/startup
+        const confPath = `${Quickshell.env("HOME")}/.config/hypr/custom.lua`;
+        const persisted = hasConfig
+            ? "hl.config({\n    input = {\n" + keys.map(k => `        ${k},`).join("\n") + "\n    },\n})"
+            : "";
+
+        // Escape single quotes for the sh -c wrapper: quote '"'"' in the
+        // eval string so the Lua stays intact through both sh and hyprctl.
+        const evalArg = luaConfig.replace(/'/g, `'"'"'`);
+
+        const applyPart = hasConfig
+            ? `hyprctl eval '${evalArg}' >/dev/null 2>&1\nhyprctl switchxkblayout all 0 >/dev/null 2>&1`
+            : "true";
+
+        // The heredoc delimiter must sit alone on its own line -- appending
+        // the apply step with ` && ` would land it on the same line and bake
+        // it into custom.lua. So mkdir+cat run as one &&-chain, then a
+        // literal newline, then the apply commands.
+        const script = `mkdir -p "$(dirname '${confPath}')" && ${
+            hasConfig ? `cat > '${confPath}' <<'APHOTIC_CUSTOM_EOF'\n${persisted}\nAPHOTIC_CUSTOM_EOF` : `> '${confPath}'`
+        }\n${applyPart}`;
+
+        kbApplyProc.exec(["sh", "-c", script]);
+    }
+
+    Process {
+        id: kbApplyProc
     }
 
     // Applies the current cursor/icon theme to the running session --
@@ -537,6 +620,30 @@ Singleton {
     onIntelligenceDefaultModelChanged: root._saveState()
     onIntelligenceMaxSessionsChanged: root._saveState()
     onIntelligenceAutoPruneDaysChanged: root._saveState()
+    onKbLayoutChanged: {
+        root._saveState();
+        root._applyKbLayout();
+    }
+    onKbVariantChanged: {
+        root._saveState();
+        root._applyKbLayout();
+    }
+    onKbOptionsChanged: {
+        root._saveState();
+        root._applyKbLayout();
+    }
+    onKbModelChanged: {
+        root._saveState();
+        root._applyKbLayout();
+    }
+    onKbRulesChanged: {
+        root._saveState();
+        root._applyKbLayout();
+    }
+    onAdditionalKbLayoutsChanged: {
+        root._saveState();
+        root._applyKbLayout();
+    }
 
     FileView {
         id: stateFile
@@ -694,6 +801,18 @@ Singleton {
                     root.intelligenceAutoPruneDays = data.intelligenceAutoPruneDays;
                 if (typeof data.packageCheckFrequency === "string" && ["off", "daily", "weekly"].includes(data.packageCheckFrequency))
                     root.packageCheckFrequency = data.packageCheckFrequency;
+                if (typeof data.kbLayout === "string")
+                    root.kbLayout = data.kbLayout;
+                if (typeof data.kbVariant === "string")
+                    root.kbVariant = data.kbVariant;
+                if (typeof data.kbOptions === "string")
+                    root.kbOptions = data.kbOptions;
+                if (typeof data.kbModel === "string")
+                    root.kbModel = data.kbModel;
+                if (typeof data.kbRules === "string")
+                    root.kbRules = data.kbRules;
+                if (Array.isArray(data.additionalKbLayouts))
+                    root.additionalKbLayouts = data.additionalKbLayouts;
             } catch (e) {
                 // No state file yet, or malformed -- keep the Config.qml/
                 // GlobalConfig.qml defaults already set above.
@@ -709,6 +828,7 @@ Singleton {
             root._applyQtIconTheme();
             root._applyGtkTheme();
             root._applyIdleConfig();
+            root._applyKbLayout();
         }
         onLoadFailed: error => {
             root._loaded = true;
@@ -717,6 +837,7 @@ Singleton {
             root._applyQtIconTheme();
             root._applyGtkTheme();
             root._applyIdleConfig();
+            root._applyKbLayout();
         }
     }
 
