@@ -120,6 +120,12 @@ Singleton {
     property string agentGraphQuality: "auto"
     property string agentGraphAccent: ""
     property bool agentGraphGroupByParent: false
+    // How much of the event log the agent graph replays when it starts
+    // following it. 0 means start live and show only what happens from
+    // here forward. Trading history for a lighter surface is the user's
+    // call, not a workaround: the replay cost itself is bounded by the
+    // graph's own rebuild coalescing.
+    property int agentGraphHistoryLines: 150
     property string ggufModelsDir: `${Quickshell.env("HOME")}/Models/gguf`
 
     property bool intelligenceEnabled: true
@@ -285,6 +291,7 @@ Singleton {
             agentGraphQuality: root.agentGraphQuality,
             agentGraphAccent: root.agentGraphAccent,
             agentGraphGroupByParent: root.agentGraphGroupByParent,
+            agentGraphHistoryLines: root.agentGraphHistoryLines,
             ggufModelsDir: root.ggufModelsDir,
             assistantWelcomeShown: root.assistantWelcomeShown,
             dndEnabled: root.dndEnabled,
@@ -597,6 +604,8 @@ Singleton {
                     root.agentGraphAccent = data.agentGraphAccent;
                 if (typeof data.agentGraphGroupByParent === "boolean")
                     root.agentGraphGroupByParent = data.agentGraphGroupByParent;
+                if (typeof data.agentGraphHistoryLines === "number" && data.agentGraphHistoryLines >= 0)
+                    root.agentGraphHistoryLines = Math.min(2000, Math.floor(data.agentGraphHistoryLines));
                 if (typeof data.ggufModelsDir === "string" && data.ggufModelsDir.length > 0)
                     root.ggufModelsDir = data.ggufModelsDir;
                 if (typeof data.assistantWelcomeShown === "boolean")

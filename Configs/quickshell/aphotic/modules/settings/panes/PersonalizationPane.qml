@@ -14,6 +14,7 @@ ColumnLayout {
     readonly property var accentPresets: ["", "#4A5A52", "#669B04", "#3B82F6", "#EF4444", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"]
     readonly property var depthEffectsPresets: [{ value: "off", label: qsTr("Off") }, { value: "subtle", label: qsTr("Subtle") }, { value: "full", label: qsTr("Full") }]
     readonly property var agentGraphPresets: [{ value: "auto", label: qsTr("Auto") }, { value: "lite", label: qsTr("Lite") }, { value: "standard", label: qsTr("Standard") }, { value: "full", label: qsTr("Full") }]
+    readonly property var agentGraphHistoryPresets: [{ value: 0, label: qsTr("Live only") }, { value: 150, label: qsTr("150") }, { value: 400, label: qsTr("400") }, { value: 1000, label: qsTr("1000") }]
 
     property var cursorThemes: []
     property var iconThemes: []
@@ -213,6 +214,15 @@ ColumnLayout {
             description: qsTr("Color-codes a subagent's own tool calls separately from its session — computed once when the graph updates, off by default")
             checked: Settings.agentGraphGroupByParent
             onToggled: state => Settings.agentGraphGroupByParent = state
+        }
+
+        SettingsPresetRow {
+            icon: "history"
+            label: qsTr("Catch-up history")
+            description: qsTr("How many past events the graph replays when it starts following the log. Live only opens with an empty graph and grows from new activity.")
+            presets: root.agentGraphHistoryPresets
+            value: Settings.agentGraphHistoryLines
+            onSelected: value => Settings.agentGraphHistoryLines = value
         }
     }
 
