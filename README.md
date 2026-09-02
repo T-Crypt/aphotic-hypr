@@ -246,7 +246,17 @@ aphotic theme prev
 aphotic wallpaper --random
 ```
 
+> [!TIP]
+> Thunar has a right-click **Set as Theme** action for building a theme
+> straight from an image in `$HOME/Pictures` (avoid special characters at
+> the front of the path). An SDDM sync script keeps your login screen's
+> wallpaper matched to whatever's currently active.
+
 ## Installation
+
+> [!IMPORTANT]
+> Aphotic assumes an Arch/AUR base. It hasn't been tested on other distros
+> and no distro branching is planned — see the [FAQ](#faq).
 
 Clone the repository:
 
@@ -261,10 +271,46 @@ Run the installer:
 ./install.sh
 ```
 
+> [!TIP]
+> Prefer to skip the prompts entirely:
+> ```
+> ./install.sh --profile full --with gaming,dev --dry-run
+> ```
+
 The installer supports profiles and optional features without requiring
 every component to be installed.
 
 See the installation documentation for available options.
+
+> [!NOTE]
+> `--dry-run` is checked before anything else runs — no `sudo` prompt, no
+> package installs, no filesystem writes happen ahead of it. Re-running
+> `install.sh` later detects your last saved config in `aphotic.toml` and
+> offers to reuse it without repeating the wizard.
+
+Custom apps live in `profiles/custom_apps.lst` (still readable at the repo root as a symlink, for anyone on an older clone) and are folded into the resolved package list automatically — no separate prompt needed.
+
+### Updating
+
+``` bash
+cd Aphotic-Hypr
+git pull
+./install.sh
+```
+
+Aphotic detects your saved `aphotic.toml` and re-resolves your profile/layers against any changes upstream, snapshotting your current configs first exactly as a fresh install would.
+
+### Uninstalling
+
+> [!CAUTION]
+> Something went sideways? `./uninstall.sh` restores your most recent
+> backup — no manual archaeology through `~/.config-backup/`.
+
+``` bash
+./uninstall.sh
+```
+
+Pass `--purge-packages` if you also want it to remove everything your profile installed (behind its own separate confirmation).
 
 ## Stack
 
@@ -277,6 +323,12 @@ See the installation documentation for available options.
 | Wallpaper | awww |
 | Shell | ZSH / Starship |
 | Audio visualizer | Cava |
+
+> [!NOTE]
+> Rofi shipped as the app launcher, clipboard/emoji/wallpaper pickers, and
+> power menu through the earlier Waybar-based setup. All four are now
+> covered natively by the Quickshell launcher (`SUPER+A`). Rofi isn't
+> installed by either profile anymore; nothing in this repo launches it.
 
 ## Performance
 
@@ -297,6 +349,123 @@ The shell favors:
 
 The Resource Engine extends this approach to active workloads instead of
 treating system resources as static configuration.
+
+## Keybindings
+
+All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua) — grouped exactly as below. Every `qs -c aphotic ipc call ...` target the shell exposes has a keybind; anything below not bound to a key is intentionally IPC-only (scriptable, but not meant to be memorized).
+
+<details>
+<summary><strong>Launcher</strong></summary>
+
+| Keys | Action |
+| :-- | :-- |
+| <kbd>Super</kbd> + <kbd>A</kbd> or <kbd>Super</kbd> + <kbd>Space</kbd> | Open the launcher (apps, clipboard, emoji, windows, wallpaper) |
+
+</details>
+
+<details>
+<summary><strong>Apps &amp; tools</strong></summary>
+
+| Keys | Action |
+| :-- | :-- |
+| <kbd>Super</kbd> + <kbd>T</kbd> | Launch Kitty |
+| <kbd>Super</kbd> + <kbd>E</kbd> | Launch Thunar |
+| <kbd>Super</kbd> + <kbd>C</kbd> | Launch VS Code |
+| <kbd>Super</kbd> + <kbd>F</kbd> | Launch Firefox |
+| <kbd>Super</kbd> + <kbd>S</kbd> | Screenshot — simple region select via `grim`/`slurp`/`swappy` |
+| <kbd>Super</kbd> + <kbd>W</kbd> | Change wallpaper (random pick) |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>W</kbd> | Open the launcher's wallpaper picker directly |
+| <kbd>Super</kbd> + <kbd>,</kbd> / <kbd>Super</kbd> + <kbd>.</kbd> | Cycle to the previous/next theme |
+
+</details>
+
+<details>
+<summary><strong>Quickshell surfaces</strong></summary>
+
+| Keys | Action |
+| :-- | :-- |
+| <kbd>Super</kbd> + <kbd>D</kbd> | Command Center (tabbed dashboard overlay) |
+| <kbd>Super</kbd> + <kbd>I</kbd> | Settings Control Center |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd> | Intelligence quick-chat popout |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> | Clear all notifications |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | Toggle Do Not Disturb |
+| <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
+| <kbd>Super</kbd> + <kbd>Backspace</kbd> | Session / power menu |
+| <kbd>Super</kbd> + <kbd>M</kbd> | `wlogout` (fallback power menu) |
+| <kbd>Super</kbd> + <kbd>B</kbd> | Restart Quickshell |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> | Cycle bar style (Full → Dock → Taskbar → Minimal) |
+
+</details>
+
+<details>
+<summary><strong>Screen capture</strong></summary>
+
+| Keys | Action |
+| :-- | :-- |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | Open the picker |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> | Open the picker in freeze-mode |
+| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd> | Open the picker, copy to clipboard only |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd> | Freeze-mode + clipboard-only combined |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> | Eyedropper — click a pixel to copy its hex color |
+
+</details>
+
+<details>
+<summary><strong>Media, audio &amp; brightness</strong></summary>
+
+| Keys | Action |
+| :-- | :-- |
+| <kbd>XF86AudioPlay</kbd> / <kbd>XF86AudioPause</kbd> | Play/pause the active MPRIS player |
+| <kbd>XF86AudioNext</kbd> / <kbd>XF86AudioPrev</kbd> | Next/previous track |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>O</kbd> | Cycle audio output device |
+| <kbd>XF86AudioRaiseVolume</kbd> / <kbd>XF86AudioLowerVolume</kbd> | Volume up/down |
+| <kbd>XF86AudioMute</kbd> | Toggle mute |
+| <kbd>XF86AudioMicMute</kbd> | Toggle mic mute |
+| <kbd>XF86MonBrightnessUp</kbd> / <kbd>XF86MonBrightnessDown</kbd> | Brightness up/down |
+
+</details>
+
+<details>
+<summary><strong>Windows &amp; layout</strong></summary>
+
+| Keys | Action |
+| :-- | :-- |
+| <kbd>Super</kbd> + <kbd>Q</kbd> | Close the focused window |
+| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>Q</kbd> | Force-kill the focused window |
+| <kbd>Super</kbd> + <kbd>V</kbd> | Toggle floating |
+| <kbd>Super</kbd> + <kbd>P</kbd> | Toggle pseudo-tiling |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>F</kbd> | Toggle pin (keep window on every workspace) |
+| <kbd>Super</kbd> + <kbd>J</kbd> | Toggle split direction |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle fullscreen |
+| <kbd>Super</kbd> + <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>/<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> | Move focus between windows |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>/<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> | Move (swap) the focused window in a direction |
+| <kbd>Alt</kbd> + <kbd>Tab</kbd> | Cycle to the next window |
+| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Cycle to the previous window |
+| <kbd>Super</kbd> + <kbd>G</kbd> | Toggle group |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>H</kbd> / <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>L</kbd> | Cycle group tabs backward/forward |
+| <kbd>Super</kbd> + <kbd>LMB</kbd> drag | Move window |
+| <kbd>Super</kbd> + <kbd>RMB</kbd> drag | Resize window |
+
+</details>
+
+<details>
+<summary><strong>Workspaces</strong></summary>
+
+| Keys | Action |
+| :-- | :-- |
+| <kbd>Super</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Switch to workspace |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Move window to workspace |
+| <kbd>Super</kbd> + Scroll | Cycle workspaces |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>&darr;</kbd> | Jump to the nearest empty workspace |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Tab</kbd> / <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Cycle forward/backward through open special (scratchpad) workspaces |
+
+> [!NOTE]
+> Special workspaces aren't created by an Aphotic keybind yet — cycling
+> only does something once one exists (e.g. via
+> `hyprctl dispatch movetoworkspace special:name`). A dedicated
+> create/toggle bind is a small future addition.
+
+</details>
 
 ## Documentation
 
