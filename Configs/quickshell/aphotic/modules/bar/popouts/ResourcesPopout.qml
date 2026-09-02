@@ -7,6 +7,12 @@ import qs.services
 ColumnLayout {
     id: root
 
+    // This popout is built and destroyed with the hover that shows it
+    // (popouts/Wrapper.qml's Loader), so its own lifetime is the gate --
+    // no surrounding LazyLoader needed the way the dashboard and settings
+    // windows need one.
+    SystemUsageWatch {}
+
     // Fixed implicitWidth (not width!) so Layout.fillWidth + elide on the
     // CPU/disk secondary lines actually constrain their text instead of
     // reporting their full unelided implicitWidth upward. This has to be
