@@ -75,12 +75,11 @@ DETECTED_APHOTIC_INSTALL=0
 
 # --- step 4: pressing Enter turns nothing on
 DETECTED_NVIDIA_PRESENT="true" DETECTED_NVIDIA_DRIVER=""
-LAYERS="" ASSISTANT="" EXTRA_WALLPAPERS="" ACTIVATE_STARSHIP="" ACTIVATE_ZSH="" COPY_CONFIGS=""
+LAYERS="" ASSISTANT="" ACTIVATE_STARSHIP="" ACTIVATE_ZSH="" COPY_CONFIGS=""
 GUIDED_STEP=3 GUIDED_STEPS=4
 answers '\n'
 guided_step_addons < "$WORKDIR/answers" > "$WORKDIR/out" 2>&1
 [[ "$ASSISTANT" == "false" ]] || fail "expected the assistant off by default, got '$ASSISTANT'"
-[[ "$EXTRA_WALLPAPERS" == "0" ]] || fail "expected extra wallpapers off by default, got '$EXTRA_WALLPAPERS'"
 [[ "$ACTIVATE_STARSHIP" == "0" ]] || fail "expected starship off by default, got '$ACTIVATE_STARSHIP'"
 [[ "$ACTIVATE_ZSH" == "0" ]] || fail "expected zsh off by default, got '$ACTIVATE_ZSH'"
 [[ "$COPY_CONFIGS" == "1" ]] || fail "guided installs must always deploy configs, got '$COPY_CONFIGS'"
@@ -88,12 +87,11 @@ grep -q "No add-ons selected" "$WORKDIR/out" || fail "expected the empty selecti
 grep -q "Step 4 of 4" "$WORKDIR/out" || fail "expected the add-ons step numbered 4"
 
 # --- step 4: numbers select, garbage is reported and ignored
-answers '1 3 nope 9\n'
+answers '1 2 nope 9\n'
 guided_step_addons < "$WORKDIR/answers" > "$WORKDIR/out" 2>&1
 [[ "$ASSISTANT" == "true" ]] || fail "expected add-on 1 (assistant) selected"
-[[ "$ACTIVATE_STARSHIP" == "1" ]] || fail "expected add-on 3 (starship) selected"
-[[ "$EXTRA_WALLPAPERS" == "0" ]] || fail "expected add-on 2 left alone"
-[[ "$ACTIVATE_ZSH" == "0" ]] || fail "expected add-on 4 left alone"
+[[ "$ACTIVATE_STARSHIP" == "1" ]] || fail "expected add-on 2 (starship) selected"
+[[ "$ACTIVATE_ZSH" == "0" ]] || fail "expected add-on 3 left alone"
 grep -q 'Ignoring "nope"' "$WORKDIR/out" || fail "expected non-numeric input to be reported"
 grep -q 'Ignoring "9"' "$WORKDIR/out" || fail "expected out-of-range input to be reported"
 grep -q "Add-ons: Aphotic Assistant, starship prompt" "$WORKDIR/out" \
@@ -104,13 +102,13 @@ DETECTED_NVIDIA_PRESENT="false"
 answers '1\n'
 guided_step_addons < "$WORKDIR/answers" > "$WORKDIR/out" 2>&1
 [[ "$ASSISTANT" == "false" ]] || fail "the assistant must not be offered without an NVIDIA card"
-[[ "$EXTRA_WALLPAPERS" == "1" ]] || fail "expected 1 to be the wallpaper pack when the assistant row is absent"
+[[ "$ACTIVATE_STARSHIP" == "1" ]] || fail "expected 1 to be starship when the assistant row is absent"
 grep -q "Aphotic Assistant" "$WORKDIR/out" && fail "assistant row shown without an NVIDIA card"
 
 # --- the summary gate: declining stops without touching anything
 DETECTED_NVIDIA_PRESENT="true" DETECTED_NVIDIA_DRIVER="nvidia-dkms" NVIDIA_DRIVER_ACTION="keep"
 PROFILE="full" LAYERS="gaming,ai" THEME="tokyonight" NO_BACKUP=0
-ASSISTANT="false" EXTRA_WALLPAPERS=0 ACTIVATE_STARSHIP=0 ACTIVATE_ZSH=0
+ASSISTANT="false" ACTIVATE_STARSHIP=0 ACTIVATE_ZSH=0
 answers 'n\n'
 set +e
 output=$(guided_plan_and_confirm "qt6-wayland
