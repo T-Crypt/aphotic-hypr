@@ -24,6 +24,19 @@ QtObject {
 
     readonly property string resource: "gpu-vram"
     readonly property string claimPrefix: "gpu-proc-"
+
+    // Smallest change that is worth re-registering an existing claim for.
+    // register() re-runs contention on every call, and a conflict answered
+    // with "keep" is deliberately re-raisable once the claims change -- so
+    // without a deadband the compositor's own idle drift re-opens the
+    // prompt. Measured on this desktop: Hyprland alone swings ~20 MB and
+    // the shell ~15 MB while nothing is happening, and one such blip was
+    // enough to re-raise a negotiation the user had just answered.
+    //
+    // Compared against the *registered* amount rather than the previous
+    // sample, so a slow real drift still lands: error against reality is
+    // bounded by this value instead of accumulating.
+    readonly property int claimDeadbandMb: 64
     readonly property string vendor: SystemUsage.selectedGpu?.vendor ?? ""
 
     readonly property bool declared: root._declared
@@ -99,35 +112,60 @@ QtObject {
         return name === "ollama" || name === "ollama_llama_server" || path.indexOf("/ollama/") !== -1;
     }
 
+    function _unescape(value: string): string {
+        return value.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+    }
+
+    // <type> is deliberately not read at all. A process holding VRAM
+    // holds it whether the driver calls it C, G or C+G, and branching on
+    // the letter is exactly how a C+G workload ends up mishandled as some
+    // unrecognised third kind -- mpv reports C+G here, live. Ollama is
+    // recognised by path instead, which is type-independent.
+    //
+    // used_memory carries its unit here ("9218 MiB"), unlike the
+    // --format=nounits CSV this replaced; parseInt stops at the space,
+    // and an "N/A" entry becomes NaN and is dropped.
+    function _parseProcesses(xml: string): var {
+        const found = [];
+        for (const block of xml.match(/<process_info>[\s\S]*?<\/process_info>/g) ?? []) {
+            const field = tag => {
+                const m = block.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
+                return m ? m[1].trim() : "";
+            };
+            const pid = field("pid");
+            const path = root._unescape(field("process_name"));
+            const amount = parseInt(field("used_memory"), 10);
+            if (!pid || !path || isNaN(amount) || amount <= 0)
+                continue;
+            found.push({
+                pid: pid,
+                path: path,
+                amount: amount
+            });
+        }
+        return found;
+    }
+
     function _syncProcesses(text: string): void {
         const seen = ({});
 
-        for (const line of text.trim().split("\n")) {
-            if (line.length === 0)
-                continue;
-            const parts = line.split(",").map(s => s.trim());
-            if (parts.length < 3)
+        for (const proc of root._parseProcesses(text)) {
+            if (root._isOllama(proc.path))
                 continue;
 
-            const pid = parts[0];
-            const amount = parseInt(parts[1], 10);
-            const path = parts.slice(2).join(",");
-            if (!pid || isNaN(amount) || amount <= 0 || root._isOllama(path))
-                continue;
-
-            const name = path.split("/").pop() || path;
-            const id = `${root.claimPrefix}${pid}`;
+            const name = proc.path.split("/").pop() || proc.path;
+            const id = `${root.claimPrefix}${proc.pid}`;
             seen[id] = true;
 
             const known = ResourceEngine.claimById(id);
-            if (known && known.amount === amount && known.owner === name)
+            if (known && known.owner === name && Math.abs(known.amount - proc.amount) < root.claimDeadbandMb)
                 continue;
 
             ResourceEngine.register({
                 id: id,
                 owner: name,
                 resource: root.resource,
-                amount: amount,
+                amount: proc.amount,
                 priority: "background",
                 label: name,
                 origin: "dynamic"
@@ -146,15 +184,19 @@ QtObject {
         }
     }
 
-    // NVIDIA only: this is the sole structured per-process GPU *memory*
-    // source nvidia-smi offers. `pmon` lists graphics processes too but
-    // reports no framebuffer figure (verified live -- its columns are
-    // utilisation percentages), and AMD exposes per-process VRAM only
-    // through DRM fdinfo (drm-resident-vram in /proc/<pid>/fdinfo/<fd>,
-    // kernel 5.14+), which needs a real parser and real hardware to
-    // verify before it can be trusted here.
+    // `-q -x` rather than --query-compute-apps: the CSV query flags only
+    // ever report C-type processes, so a game -- a G-type process -- was
+    // invisible to arbitration entirely. There is no --query-graphics-apps
+    // (verified against driver 610's own --help), and the XML block is the
+    // only structured source covering every type. Scraping plain
+    // nvidia-smi's process table would be the fragile alternative.
+    //
+    // AMD exposes per-process VRAM only through DRM fdinfo
+    // (drm-resident-vram in /proc/<pid>/fdinfo/<fd>, kernel 5.14+), which
+    // needs a real parser and real hardware to verify before it can be
+    // trusted here.
     property Process _processProc: Process {
-        command: ["sh", "-c", "command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-compute-apps=pid,used_memory,process_name --format=csv,noheader,nounits"]
+        command: ["sh", "-c", "command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -q -x"]
         stdout: StdioCollector {
             onStreamFinished: root._syncProcesses(text)
         }
