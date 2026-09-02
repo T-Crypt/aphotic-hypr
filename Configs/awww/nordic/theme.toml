@@ -5,6 +5,12 @@ description = "Cool blue-gray tones."
 [engine]
 palette = "ansi"
 
+[palette]
+anchor = "nordic-anchor"
+max_hue_shift = 20
+max_sat_shift = 15
+max_light_shift = 12
+
 [icons]
 papirus_color = "nordic"
 

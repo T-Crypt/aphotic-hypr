@@ -39,6 +39,11 @@ contrast = "0.3"           # matugen --contrast: -1 (minimum) .. 0 (M3 spec) .. 
 # shared:
 style = "light"         # wallust -S / matugen -m: dark | light — omit for dark (the default for every theme but Latte)
 
+[palette]
+anchor = "some-name"    # bound how far a wallpaper's derived palette may
+                        # drift from the theme's own look. Optional, off
+                        # unless set — see "Clamped palettes" below.
+
 [icons]
 papirus_color = "green"     # one of `papirus-folders --list`, see below
 icon_theme = "Papirus-Dark" # optional, see "Icon/cursor/GTK theme pins" below
@@ -206,6 +211,114 @@ theme (`cmd_theme.sh`, `Wallpapers.qml`'s `setWallpaper`, and
 --format pywal` instead of `wallust run <image>` when it's set —
 `backend`/`palette` are ignored in that case, since they're
 image-generation-only knobs.
+
+### Clamped palettes (`[palette].anchor`)
+
+`[engine].colorscheme` above is the all-or-nothing answer to palette
+drift: no image derivation at all. `[palette]` is the middle setting.
+Every wallpaper still derives its own distinct palette — that
+individuality is the point — but how far that palette may drift from the
+theme's own look is bounded, tighter for a narrow, earthy theme like
+Gruvbox than for something with more range like Rosé Pine. Without it, a
+wallpaper that happens to contain an off-palette colour (a pink sign in a
+photo, a badly-chosen community download) can push the whole system's
+accent somewhere the theme was never meant to go.
+
+```toml
+[palette]
+anchor = "gruvbox-anchor"   # ref: Configs/wallust/colorschemes/<name>.json
+max_hue_shift = 20          # degrees, optional, default 20
+max_sat_shift = 15          # percentage points, optional, default 15
+max_light_shift = 12        # percentage points, optional, default 12
+```
+
+Like `[engine]`, this is a declared pin, not implicit behaviour: a theme
+with no `[palette].anchor` behaves exactly as it always has, and clamping
+rolls out theme by theme.
+
+`anchor` names a pywal-format file under
+`Configs/wallust/colorschemes/<name>.json` — the same directory and format
+`[engine].colorscheme` reads, holding the palette this theme's colours are
+measured against. `scripts/generate-theme-anchors.sh` bootstraps one per
+theme by deriving the palette of that theme's `[wallpaper].default` image
+(in an isolated wallust config/cache dir, so it never disturbs the live
+session), writing `<theme>-anchor.json`. Generating an anchor doesn't opt
+a theme in; that's the separate `[palette].anchor` edit.
+
+The clamp itself (`Configs/.local/lib/aphotic/palette_clamp.py`) runs
+after the normal `wallust run <image>`, which always leaves the raw,
+unclamped palette at `~/.cache/wal/colors.json` via wallust.toml's
+`wal_colors_json` template. Per slot, both the raw and anchor colour are
+converted to HSL and:
+
+- **Hue** is a circular clamp: within `max_hue_shift` of the anchor it
+  passes through untouched; past it, the raw hue is rotated *toward* the
+  anchor by exactly `max_hue_shift` rather than snapped onto it, so a
+  wallpaper at the ceiling still keeps its own direction of drift.
+- **Saturation** and **lightness** are clipped to `anchor ± max_sat_shift`
+  / `anchor ± max_light_shift`.
+- `background`, `foreground`, `cursor`, `color0`, `color7`, `color8` and
+  `color15` are **exempt from lightness clamping** — only their
+  saturation is bounded. Their lightness is what `check_contrast = true`
+  (see below) is already guaranteeing, and clamping it toward an anchor
+  would fight that check on a very dark or very light wallpaper. The
+  hue-bearing accent slots (`color1`–`color6`, `color9`–`color14`) get
+  the full treatment.
+
+The clamped result is written to
+`Configs/wallust/colorschemes/<theme>-live.json` (gitignored, regenerated
+on every apply) and applied with `wallust cs <theme>-live --format pywal`
+— literally the `[engine].colorscheme` code path, so every template
+(kitty, GTK, hyprland, cava, swaylock, the plugin palette snapshot) is
+re-rendered from the clamped colours and nothing downstream of wallust
+knows clamping happened. All three apply sites (`cmd_theme.sh`,
+`Wallpapers.qml`, `wallswitcher.py`) do this. A missing anchor file warns
+and leaves the unclamped palette applied rather than failing the switch.
+
+**The hue clamp assumes slot→hue stability, which only `palette = "ansi"`
+gives you.** The clamp compares slot to slot: raw `color6` against anchor
+`color6`. That is only meaningful if a slot holds the same *kind* of hue
+from one wallpaper to the next. Measured as circular hue spread across
+each theme's own shipped wallpapers:
+
+| theme | `[engine].palette` | spread of `color1`–`color6` |
+|---|---|---|
+| nordic | `ansi` | 1°–8° |
+| gruvbox | kmeans (default) | 13°–75° |
+| tokyonight | kmeans (default) | 52°–103° |
+| lofi | kmeans (default) | 74°–125° |
+
+`ansi` orders slots by the classic TTY convention (`color1` red-ish,
+`color2` green-ish, …), so a slot means the same thing every time and the
+clamp does exactly what it says: Nordic's `color1 #B77142` → `#C36F36`,
+a small push toward the theme's own orange. `kmeans` and `salience` order
+slots by cluster prominence instead, so `color6` can be neon blue in one
+wallpaper and dusty pink in another. Clamping *those* slot-to-slot rotates
+toward whatever hue happened to land in that slot for the anchor
+wallpaper, which is arbitrary — Tokyo Night's `color6 #2DB0F0` (neon blue)
+becomes `#C16BA3` (pink) for exactly this reason.
+
+So a theme that wants the hue ceiling to mean anything should pin
+`[engine].palette = "ansi"` alongside `[palette].anchor`. A theme that
+wants to keep kmeans should set `max_hue_shift = 180` (which disables the
+hue clamp; it can never exceed 180° of circular distance) and rely on the
+saturation and lightness ceilings alone — those are slot-order-independent
+and still stop a wallpaper from blowing out a theme's intensity. Matching
+raw colours to their *nearest* anchor hue instead of their same-numbered
+slot would remove this constraint, but that is a different algorithm from
+the one implemented here.
+
+**Mutually exclusive with `[engine].colorscheme`.** A fixed colorscheme
+derives nothing from the image, so there is no raw palette to clamp; a
+theme setting both warns and keeps the fixed colorscheme.
+
+**matugen themes can't use this.** matugen doesn't derive a palette that
+can be post-processed the way ANSI slots can — it generates M3 roles from
+a single seed colour, and its `-s/--source-color` flag takes that seed
+explicitly. Clamping there would have to happen on the seed *before*
+generation, a different mechanism from this one. `[palette]` is ignored
+under `[engine].name = "matugen"`; none of the shipped themes pin matugen
+today.
 
 ### Readable contrast and light themes
 
