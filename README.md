@@ -1,13 +1,15 @@
-::: {align="center"}
-# Aphotic
+<p align="center">
+  <img src="assets/aphotic-banner.svg" alt="Aphotic — Hyprland dotfiles, after dark" width="900">
+</p>
 
-**Hyprland dotfiles built around Quickshell, modular profiles, and
-optional runtime features.**
-
-[![Stars](https://img.shields.io/github/stars/T-Crypt/Aphotic-Hypr?style=flat-square)](https://github.com/T-Crypt/Aphotic-Hypr/stargazers)
-[![Issues](https://img.shields.io/github/issues/T-Crypt/Aphotic-Hypr?style=flat-square)](https://github.com/T-Crypt/Aphotic-Hypr/issues)
-[![License](https://img.shields.io/github/license/T-Crypt/Aphotic-Hypr?style=flat-square)](LICENSE)
-:::
+<p align="center">
+  <img src="https://img.shields.io/github/stars/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=7DCFFF&labelColor=0b0d12">
+  <img src="https://img.shields.io/github/issues/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=E0AF68&labelColor=0b0d12">
+  <img src="https://img.shields.io/github/forks/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=F7768E&labelColor=0b0d12">
+  <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=AD8EE6&labelColor=0b0d12">
+  <img alt="License" src="https://img.shields.io/github/license/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=7DCFFF&labelColor=0b0d12">
+  <img alt="Status: Beta" src="https://img.shields.io/badge/status-beta-E0AF68?style=for-the-badge&labelColor=0b0d12">
+</p>
 
 ## Overview
 
