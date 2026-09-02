@@ -47,8 +47,15 @@ EOF
     # --user restart` when the unit exists -- the exact same path the
     # SUPER+B keybind already uses (see keybinds.lua) -- so there's a
     # single source of truth for "restart the shell" instead of two. Only
-    # falls back to the manual pkill+relaunch for a dev/debug session
-    # where `qs -c aphotic` was started bypassing the service entirely.
+    # falls back to the manual relaunch for a dev/debug session where
+    # `qs -c aphotic` was started bypassing the service entirely.
+    #
+    # Both paths go through aphotic_shell_stop/_start (globalcontrol.sh)
+    # rather than pkill and nohup, so the daemon's own Process children
+    # are reaped instead of reparenting to init once per restart. The
+    # service path was never the leaky one -- systemd's cgroup already
+    # covers it -- but its orphan-killing loop above is outside that
+    # cgroup and was.
     if systemctl --user list-unit-files aphotic-shell.service >/dev/null 2>&1; then
         # `systemctl restart` only manages whatever's already in the
         # unit's own cgroup -- a `qs -c aphotic` process that predates the
@@ -62,23 +69,24 @@ EOF
         while IFS= read -r pid; do
             [[ -z "$pid" || "$pid" == "$service_pid" ]] && continue
             aphotic_warn "found an orphaned qs -c aphotic process (PID $pid, not owned by aphotic-shell.service) -- killing it before restart"
-            kill "$pid" 2>/dev/null || true
-        done < <(pgrep -f "qs -c aphotic" 2>/dev/null)
+            # Not in the unit's cgroup, so systemd will not take its
+            # helper processes down with it either.
+            aphotic_shell_stop "$pid"
+        done < <(aphotic_shell_pids)
 
         aphotic_log "restarting quickshell daemon (aphotic-shell.service)..."
         systemctl --user restart aphotic-shell.service
         aphotic_ok "quickshell daemon restarted"
-    elif pgrep -f "qs -c aphotic" >/dev/null 2>&1; then
+    elif aphotic_shell_running; then
         aphotic_log "restarting quickshell daemon..."
-        pkill -f "qs -c aphotic" >/dev/null 2>&1
+        # shellcheck disable=SC2046 # deliberate word splitting: one PID per arg
+        aphotic_shell_stop $(aphotic_shell_pids)
         sleep 0.5
-        nohup qs -c aphotic >/dev/null 2>&1 &
-        disown
+        aphotic_shell_start
         aphotic_ok "quickshell daemon restarted"
     else
         aphotic_warn "quickshell daemon not running — starting it"
-        nohup qs -c aphotic >/dev/null 2>&1 &
-        disown
+        aphotic_shell_start
         aphotic_ok "quickshell daemon started"
     fi
 

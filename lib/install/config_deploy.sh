@@ -239,14 +239,33 @@ install_vscode_extensions() {
 # it survives alongside the fresh instance and duplicates the bar. Kill
 # anything matching that isn't the service's current Main PID before
 # restarting, so the restart always converges on exactly one process.
+#
+# Anchored on the command itself, and the daemon's own children go with
+# it: an unmatched `pgrep -f "qs -c aphotic"` also matches any script
+# whose command line mentions it, and a plain `kill` of the daemon leaves
+# its `nmcli monitor` / `dbus-monitor` / `tail` children to reparent to
+# init, one set per run. Kept self-contained rather than sourcing the
+# CLI's globalcontrol.sh, which the installer does not otherwise pull in.
 kill_orphan_qs_processes() {
-  local service_pid pid
+  local service_pid pid pgid child
+  local -a stragglers
   service_pid=$(systemctl --user show -p MainPID --value aphotic-shell.service 2>/dev/null || echo 0)
   while IFS= read -r pid; do
     [[ -z "$pid" || "$pid" == "$service_pid" ]] && continue
     echo -e "$CWR - Found an orphaned qs -c aphotic process (PID $pid, not owned by aphotic-shell.service) -- killing it before restart." | tee -a "$INSTLOG"
-    kill "$pid" 2>/dev/null || true
-  done < <(pgrep -f "qs -c aphotic" 2>/dev/null)
+    pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
+    if [[ -n "$pgid" && "$pgid" == "$pid" ]]; then
+      kill -TERM -- "-${pgid}" 2>/dev/null || true
+      continue
+    fi
+    stragglers=()
+    while IFS= read -r child; do
+      [[ -n "$child" ]] && stragglers+=("$child")
+    done < <(pgrep -P "$pid" 2>/dev/null)
+    kill -TERM "$pid" 2>/dev/null || true
+    [[ ${#stragglers[@]} -gt 0 ]] && kill -TERM "${stragglers[@]}" 2>/dev/null
+  done < <(pgrep -f '^(/[^ ]*/)?qs -c aphotic$' 2>/dev/null)
+  return 0
 }
 
 config_sync() {

@@ -36,15 +36,15 @@ HELP
             # bars on screen until the stray was killed by hand). pgrep
             # is the same check CONTRIBUTING.md's own verification
             # section already tells contributors to run by hand
-            # (`pgrep -f "qs -c aphotic"`) -- reused here so the CLI
-            # enforces what the docs already ask a human to check.
-            if pgrep -f "qs -c aphotic" >/dev/null 2>&1; then
+            # (`pgrep -f "qs -c aphotic"`) -- reused here, via the
+            # anchored helper, so the CLI enforces what the docs already
+            # ask a human to check without also matching its own caller.
+            if aphotic_shell_running; then
                 aphotic_warn "a quickshell daemon is already running -- use 'aphotic reload' to restart it, not 'aphotic shell' again"
                 return 1
             fi
             aphotic_log "starting quickshell daemon (qs -c aphotic)..."
-            nohup qs -c aphotic >>"${APHOTIC_STATE_HOME}/shell.log" 2>&1 &
-            disown
+            aphotic_shell_start "${APHOTIC_STATE_HOME}/shell.log"
             aphotic_ok "daemon started, logging to ${APHOTIC_STATE_HOME}/shell.log"
             ;;
         *)

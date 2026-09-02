@@ -167,6 +167,66 @@ aphotic_matugen_run() {
     "${cmd[@]}"
 }
 
+# ---- shell daemon process management --------------------------------------
+# Anchored on the command itself. `pgrep -f "qs -c aphotic"` matches any
+# process whose command line merely *contains* that string, which includes
+# the scripts that call these helpers -- `pkill -f "qs -c aphotic"` in
+# cmd_reload killed its own caller that way, live.
+APHOTIC_SHELL_PATTERN='^(/[^ ]*/)?qs -c aphotic$'
+
+aphotic_shell_pids() {
+    pgrep -f "$APHOTIC_SHELL_PATTERN" 2>/dev/null || true
+}
+
+aphotic_shell_running() {
+    [[ -n "$(aphotic_shell_pids)" ]]
+}
+
+# Quickshell does not reap its Process children when the daemon takes a
+# SIGTERM: `nmcli monitor`, `dbus-monitor` and the agent-events `tail`s
+# reparent to init and one fresh set accumulates per restart. Counted on a
+# machine using the manual path (no aphotic-shell.service): 121 strays
+# holding 1.0 GiB RSS, the oldest 13 h. Only the quiet ones survive -- a
+# `tail -F` on a file that keeps growing dies of SIGPIPE first, which is
+# why the leak read as smaller than it was. A machine on the service path
+# has none of this: systemd's KillMode=control-group already takes the
+# whole cgroup down (verified on the dev VM: 0 strays).
+#
+# The group is only safe to signal when the daemon leads it. Started from
+# a terminal it inherits that terminal's job group, and `kill -- -PGID`
+# there would take the user's own shell down with it -- so the group kill
+# is gated on leadership, and aphotic_shell_start uses setsid to make that
+# true for anything it launches.
+aphotic_shell_stop() {
+    local pid pgid child
+    local -a stragglers
+    for pid in "$@"; do
+        [[ -n "$pid" ]] || continue
+        pgid=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')
+        if [[ -n "$pgid" && "$pgid" == "$pid" ]]; then
+            kill -TERM -- "-${pgid}" 2>/dev/null || true
+            continue
+        fi
+        # Not a group leader (started from a terminal, or by an older
+        # aphotic that did not setsid), so the group is not ours to
+        # signal. Collect the children first -- once the parent is gone
+        # they reparent to init and there is nothing left to find them by.
+        stragglers=()
+        while IFS= read -r child; do
+            [[ -n "$child" ]] && stragglers+=("$child")
+        done < <(pgrep -P "$pid" 2>/dev/null)
+        kill -TERM "$pid" 2>/dev/null || true
+        [[ ${#stragglers[@]} -gt 0 ]] && kill -TERM "${stragglers[@]}" 2>/dev/null
+    done
+    return 0
+}
+
+aphotic_shell_start() {
+    local log="${1:-/dev/null}"
+    setsid qs -c aphotic >>"$log" 2>&1 &
+    disown
+}
+
 # ---- plugin helpers -------------------------------------------------------
 # List installed plugin directory names (each has a plugin.toml).
 aphotic_plugin_names() {
