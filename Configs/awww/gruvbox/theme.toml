@@ -2,6 +2,12 @@
 display_name = "Gruvbox"
 description = "Warm retro earth tones."
 
+[palette]
+anchor = "gruvbox-anchor"
+max_hue_shift = 20
+max_sat_shift = 15
+max_light_shift = 12
+
 [icons]
 papirus_color = "orange"
 
