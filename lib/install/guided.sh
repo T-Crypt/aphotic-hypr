@@ -168,11 +168,6 @@ guided_step_addons() {
      turns on the AI extras it runs from.")
   fi
 
-  n=$((n + 1)); keys+=("wallpapers")
-  lines+=("  $n) Community wallpaper pack
-     About 145MB of extra wallpapers. Every theme already comes with its
-     own, so this only adds more to choose from.")
-
   n=$((n + 1)); keys+=("starship")
   lines+=("  $n) A better terminal prompt (starship)
      Shows the folder you are in, the git branch and similar, in place of
@@ -219,7 +214,6 @@ EOF
   done
 
   ASSISTANT="false"
-  EXTRA_WALLPAPERS=0
   ACTIVATE_STARSHIP=0
   ACTIVATE_ZSH=0
 
@@ -228,7 +222,6 @@ EOF
     [[ "${picked[$i]}" == "1" ]] || continue
     case "${keys[$i]}" in
       assistant) ASSISTANT="true"; chosen+=("Aphotic Assistant") ;;
-      wallpapers) EXTRA_WALLPAPERS=1; chosen+=("community wallpaper pack") ;;
       starship) ACTIVATE_STARSHIP=1; chosen+=("starship prompt") ;;
       zsh) ACTIVATE_ZSH=1; chosen+=("zsh as your shell") ;;
     esac
@@ -281,7 +274,6 @@ guided_plan_and_confirm() {
 
   local addons=()
   [[ "$ASSISTANT" == "true" ]] && addons+=("Aphotic Assistant")
-  [[ "${EXTRA_WALLPAPERS:-0}" == "1" ]] && addons+=("community wallpaper pack")
   [[ "${ACTIVATE_STARSHIP:-0}" == "1" ]] && addons+=("starship prompt")
   [[ "${ACTIVATE_ZSH:-0}" == "1" ]] && addons+=("zsh as your login shell")
   if [[ ${#addons[@]} -eq 0 ]]; then

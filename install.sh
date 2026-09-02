@@ -4,8 +4,8 @@
 # Orchestrator only: parse flags, source the lib/install/*.sh stage
 # modules, and call them in order. Every stage's actual body lives in
 # lib/install/ -- see that directory for detection, prompts, package
-# install, NVIDIA, config deploy, shell activation, wallpapers, and the
-# Hyprland launch offer.
+# install, NVIDIA, config deploy, shell activation, and the Hyprland
+# launch offer.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/lib/install/ui.sh"
@@ -25,7 +25,6 @@ source "$ROOT_DIR/lib/install/detect.sh"
 source "$ROOT_DIR/lib/install/system_prep.sh"
 source "$ROOT_DIR/lib/install/config_deploy.sh"
 source "$ROOT_DIR/lib/install/shell_activation.sh"
-source "$ROOT_DIR/lib/install/wallpapers.sh"
 source "$ROOT_DIR/lib/install/hyprland_launch.sh"
 # sourced libs each set -euo pipefail, which otherwise leaks into this
 # script's shell options since `set` is not scoped to the sourced file
@@ -54,7 +53,6 @@ NVIDIA_DRIVER_ACTION=""
 OPT_IN=0
 STRIP_CONFLICTS=""
 COPY_CONFIGS=""
-EXTRA_WALLPAPERS=""
 ACTIVATE_STARSHIP=""
 ACTIVATE_ZSH=""
 
@@ -447,7 +445,6 @@ main() {
   print_stage 7 "Shell setup"
   activate_starship
   activate_zsh
-  offer_extra_wallpapers
 
   write_aphotic_toml "$APHOTIC_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)"
 
