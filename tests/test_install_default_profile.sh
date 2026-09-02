@@ -21,14 +21,15 @@ status=$?
 echo "$output" | grep -q "profile: full" || fail "expected the bare invocation to default to profile: full"
 echo "$output" | grep -q "^  layers: $" || fail "expected the bare invocation to default to no layers"
 echo "$output" | grep -qi "daily-driver setup" || fail "expected a note explaining the zero-prompt default"
-echo "$output" | grep -q "Layer presets:" && fail "bare invocation must not show the interactive layer picker"
+echo "$output" | grep -q "Optional extra tool sets:" && fail "bare invocation must not show the interactive layer picker"
 
 [[ ! -f aphotic.toml ]] || fail "dry-run should not have written aphotic.toml"
 
-# --opt-in restores the interactive wizard: answer profile, preset 1
+# --opt-in restores just the pickers (not the guided flow, which only
+# engages with no flags at all on a TTY): answer profile, preset 1
 # (everything), theme.
 output=$(printf "full\n1\ndefault\n" | bash install.sh --dry-run --opt-in 2>&1)
-echo "$output" | grep -q "Layer presets:" || fail "expected --opt-in to show the interactive layer picker"
+echo "$output" | grep -q "Optional extra tool sets:" || fail "expected --opt-in to show the interactive layer picker"
 echo "$output" | grep -q "layers: gaming,dev,ai,exploit-recon,exploit-web,exploit-network" \
   || fail "expected --opt-in preset 1 to resolve to the full layer set"
 
