@@ -1,8 +1,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import qs.config
 import qs.components
 import qs.services
@@ -35,7 +37,76 @@ Item {
         id: landingComp
 
         ColumnLayout {
+            id: landing
+
             spacing: Tokens.spacing.largeIncreased
+
+            // Names of downloaded themes that came from the community
+            // index rather than shipping with Aphotic -- badges the grid
+            // below. Comes from `aphotic theme list --json`'s `core` field
+            // (cmd_theme.sh) rather than a second copy of
+            // APHOTIC_CORE_THEMES kept here, so the two never drift.
+            property var communityNames: []
+            // "Available to download" list, kept separate from the
+            // locally-scanned Themes.themes grid so an available entry is
+            // never indistinguishable from an already-downloaded theme.
+            property var communityAvailable: []
+            readonly property var communityFiltered: landing.communityAvailable.filter(t => !Themes.themes.some(th => th.name === t.name))
+
+            function refreshCommunity(): void {
+                installedCoreProc.running = true;
+                communityRemoteProc.running = true;
+            }
+
+            Process {
+                id: installedCoreProc
+                command: ["aphotic", "theme", "list", "--json"]
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        try {
+                            landing.communityNames = JSON.parse(text).filter(t => !t.core).map(t => t.name);
+                        } catch (e) {
+                            landing.communityNames = [];
+                        }
+                    }
+                }
+            }
+
+            Process {
+                id: communityRemoteProc
+                command: ["aphotic", "theme", "list", "--remote", "--json"]
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        try {
+                            landing.communityAvailable = JSON.parse(text);
+                        } catch (e) {
+                            landing.communityAvailable = [];
+                        }
+                    }
+                }
+            }
+
+            // No enable/disable, no category filter, no security-trust
+            // gate here -- those are plugin-specific concepts (see
+            // PluginsPane.qml) that don't apply to a directory of
+            // wallpapers. Downloading runs as a tracked Process (not a
+            // detached terminal like `aphotic plugin install`) since a
+            // `cp -r` never needs an interactive AUR prompt.
+            Process {
+                id: downloadProc
+                onExited: {
+                    // Themes.qml's own scan (scanProc) has no public
+                    // rescan() to call here -- a freshly downloaded theme
+                    // won't show in the grid above until the shell
+                    // restarts. Re-running the two Processes above at
+                    // least moves the entry out of "available to
+                    // download" and picks up its `core: false` badge once
+                    // Themes.themes does notice it.
+                    landing.refreshCommunity();
+                }
+            }
+
+            Component.onCompleted: landing.refreshCommunity()
 
             StyledText {
                 text: qsTr("Appearance")
@@ -65,6 +136,7 @@ Item {
 
                         required property var modelData
                         readonly property bool active: themeCard.modelData.name === Themes.activeTheme
+                        readonly property bool community: landing.communityNames.includes(themeCard.modelData.name)
 
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -89,6 +161,26 @@ Item {
                             font: Tokens.font.body.medium
                         }
 
+                        MaterialIcon {
+                            id: communityBadge
+
+                            visible: themeCard.community
+                            anchors.top: parent.top
+                            anchors.right: parent.right
+                            anchors.margins: Tokens.padding.small
+                            text: "public"
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+
+                            ToolTip.visible: badgeHover.hovered
+                            ToolTip.text: qsTr("Downloaded from the community theme index")
+                            ToolTip.delay: 500
+
+                            HoverHandler {
+                                id: badgeHover
+                            }
+                        }
+
                         StateLayer {
                             anchors.fill: parent
                             radius: parent.radius
@@ -107,6 +199,108 @@ Item {
             }
 
             StyledText {
+                Layout.topMargin: Tokens.spacing.small
+                text: qsTr("Community Themes")
+                color: Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.label.medium
+            }
+
+            StyledText {
+                visible: landing.communityFiltered.length === 0
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: qsTr("Couldn't reach the aphotic-themes index (offline, or the repo isn't public yet).")
+                color: Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.body.small
+            }
+
+            Flow {
+                Layout.fillWidth: true
+                visible: landing.communityFiltered.length > 0
+                spacing: Tokens.spacing.medium
+
+                Repeater {
+                    model: landing.communityFiltered
+
+                    StyledRect {
+                        id: communityCard
+
+                        required property var modelData
+
+                        width: 220
+                        implicitHeight: communityCol.implicitHeight + Tokens.padding.large * 2
+                        radius: Tokens.rounding.medium
+                        color: Colours.tPalette.m3surfaceContainer
+
+                        ColumnLayout {
+                            id: communityCol
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.margins: Tokens.padding.large
+                            spacing: Tokens.spacing.extraSmall
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: communityCard.modelData.display_name
+                                font: Tokens.font.body.medium
+                            }
+
+                            StyledText {
+                                visible: (communityCard.modelData.description ?? "").length > 0
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                                maximumLineCount: 2
+                                elide: Text.ElideRight
+                                text: communityCard.modelData.description ?? ""
+                                color: Colours.palette.m3onSurfaceVariant
+                                font: Tokens.font.label.small
+                            }
+
+                            StyledText {
+                                Layout.topMargin: Tokens.spacing.extraSmall
+                                text: qsTr("%1 wallpapers · %2").arg(communityCard.modelData.wallpaper_count ?? 0).arg(ModelStorage.formatBytes(communityCard.modelData.approx_size_bytes ?? 0))
+                                color: Colours.palette.m3onSurfaceVariant
+                                font: Tokens.font.label.small
+                            }
+
+                            StyledRect {
+                                Layout.topMargin: Tokens.spacing.small
+                                Layout.alignment: Qt.AlignLeft
+                                implicitWidth: downloadLabel.implicitWidth + Tokens.padding.large * 2
+                                implicitHeight: 28
+                                radius: Tokens.rounding.full
+                                color: Colours.palette.m3primary
+
+                                StyledText {
+                                    id: downloadLabel
+                                    anchors.centerIn: parent
+                                    text: qsTr("Download")
+                                    color: Colours.contrastOn(Colours.palette.m3primary)
+                                    font: Tokens.font.label.small
+                                }
+
+                                StateLayer {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        downloadProc.command = ["aphotic", "theme", "download", communityCard.modelData.name];
+                                        downloadProc.running = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            StyledText {
                 visible: Themes.wallpapersInActiveTheme.length > 1
                 Layout.topMargin: Tokens.spacing.small
                 text: qsTr("Wallpaper")
@@ -115,15 +309,12 @@ Item {
             }
 
             Flow {
-                // A theme can now hold a couple dozen wallpapers (see
-                // `aphotic wallpaper --fetch-extra`) rather than the single
-                // curated one every theme shipped with when this was
-                // written -- a RowLayout never wraps, so it just ran every
-                // pill off the right edge of the panel once a theme
-                // actually had more than a handful. Flow wraps onto more
-                // rows instead, and the pane's own Flickable (see
-                // SettingsPanel.qml) already scrolls for the height that
-                // adds.
+                // A theme can hold more than one curated wallpaper -- a
+                // RowLayout never wraps, so it just ran every pill off the
+                // right edge of the panel once a theme had more than a
+                // handful. Flow wraps onto more rows instead, and the
+                // pane's own Flickable (see SettingsPanel.qml) already
+                // scrolls for the height that adds.
                 visible: Themes.wallpapersInActiveTheme.length > 1
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.small

@@ -48,6 +48,16 @@ APHOTIC_PLUGINS_INDEX_URL="${APHOTIC_PLUGINS_INDEX_URL:-https://raw.githubuserco
 # below and cmd_plugin.sh's trust-security-index subcommand.
 APHOTIC_PLUGINS_SECURITY_INDEX_URL="${APHOTIC_PLUGINS_SECURITY_INDEX_URL:-https://raw.githubusercontent.com/T-Crypt/aphotic-plugins-security/main/index.json}"
 
+# Community theme index (see themes/THEME_SPEC.md and cmd_theme.sh's
+# `download`/`update`/`remove`). Same clone/pull-a-repo shape as the
+# plugin block above, but a theme is just a directory + theme.toml with
+# no enable/disable state -- "is this theme downloaded" is answered by
+# APHOTIC_AWWW_DIR itself, so unlike APHOTIC_PLUGINS_STATE_FILE there's
+# no state file to track here.
+APHOTIC_THEMES_REPO="${APHOTIC_THEMES_REPO:-$HOME/aphotic-themes}"
+APHOTIC_THEMES_GIT_URL="${APHOTIC_THEMES_GIT_URL:-https://github.com/T-Crypt/aphotic-themes.git}"
+APHOTIC_THEMES_INDEX_URL="${APHOTIC_THEMES_INDEX_URL:-https://raw.githubusercontent.com/T-Crypt/aphotic-themes/main/index.json}"
+
 # one-time migration: noctis -> aphotic config path
 _APHOTIC_OLD_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/noctis"
 if [[ -d "$_APHOTIC_OLD_CONFIG_HOME" ]] && [[ ! -e "$APHOTIC_CONFIG_HOME" ]]; then
@@ -61,7 +71,8 @@ mkdir -p "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$APHOTIC_DATA_HOME" \
 export APHOTIC_VERSION APHOTIC_CONFIG_HOME APHOTIC_STATE_HOME APHOTIC_DATA_HOME \
        APHOTIC_RUNTIME_DIR APHOTIC_CONFIG_FILE APHOTIC_BACKUP_DIR APHOTIC_DOTS_DIR \
        QUICKSHELL_CONFIG_DIR APHOTIC_PLUGINS_DIR APHOTIC_PLUGINS_STATE_FILE \
-       APHOTIC_PLUGINS_REPO APHOTIC_PLUGINS_GIT_URL APHOTIC_PLUGINS_INDEX_URL APHOTIC_PLUGINS_SECURITY_INDEX_URL
+       APHOTIC_PLUGINS_REPO APHOTIC_PLUGINS_GIT_URL APHOTIC_PLUGINS_INDEX_URL APHOTIC_PLUGINS_SECURITY_INDEX_URL \
+       APHOTIC_THEMES_REPO APHOTIC_THEMES_GIT_URL APHOTIC_THEMES_INDEX_URL
 
 # ---- logging -----------------------------------------------------------
 _APHOTIC_DIM=$'\e[2m'; _APHOTIC_R=$'\e[0m'

@@ -1,21 +1,51 @@
 #!/usr/bin/env bash
 # aphotic theme — switch between installed Aphotic themes.
 # @cmd: theme
-# @cmd.desc: List, set, or cycle themes
+# @cmd.desc: List, set, cycle, or download themes
 # @cmd.group: CONFIG
-# @cmd.opt: list           | List installed themes
-# @cmd.opt: set <name>     | Apply a theme by name
-# @cmd.opt: next|prev      | Cycle to the next/previous theme
-# @cmd.opt: ensure-default | Apply the install-time theme if none is set yet (startup.lua only)
+# @cmd.opt: list [--remote] [--json]  | List downloaded (or available-remote) themes
+# @cmd.opt: set <name>                | Apply a theme by name
+# @cmd.opt: next|prev                 | Cycle to the next/previous theme
+# @cmd.opt: download <name>           | Download a theme from APHOTIC_THEMES_REPO
+# @cmd.opt: update <name>|--all       | Refresh a downloaded theme's files from the repo
+# @cmd.opt: remove <name>             | Delete a downloaded (non-core) theme
+# @cmd.opt: ensure-default            | Apply the install-time theme if none is set yet (startup.lua only)
 #
 # Themes live as directories under APHOTIC_AWWW_DIR, each with a
 # theme.toml manifest (see Aphotic-Hypr/themes/THEME_SPEC.md) — this is
 # the same layout Themes.qml scans and the same state file
 # (theme.json) that Themes.qml and wallswitcher.py read/write, so the
 # CLI, the launcher, and the SUPER+W keybind all stay in sync.
+#
+# download/update/remove pull additional community themes from a remote
+# aphotic-themes index -- same clone/pull-a-repo shape as `aphotic plugin
+# install` (cmd_plugin.sh), but not the plugin system: no hooks, no
+# capabilities, no enable/disable state. "Downloaded" just means the
+# directory exists under APHOTIC_AWWW_DIR, same contract _aphotic_theme_list
+# already uses -- there's no separate state file to track it.
 
 APHOTIC_AWWW_DIR="${APHOTIC_AWWW_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/awww}"
 APHOTIC_THEME_STATE_FILE="${APHOTIC_STATE_HOME}/theme.json"
+
+# Themes that ship in this repo can never be taken out with `theme
+# remove` -- read from the checked-out repo rather than hardcoded here,
+# so this stays correct as the curated set changes instead of drifting.
+APHOTIC_CORE_THEMES=()
+if [[ -d "${APHOTIC_DOTS_DIR}/Configs/awww" ]]; then
+    for _aphotic_core_dir in "${APHOTIC_DOTS_DIR}/Configs/awww"/*/; do
+        [[ -d "$_aphotic_core_dir" ]] || continue
+        APHOTIC_CORE_THEMES+=("$(basename "$_aphotic_core_dir")")
+    done
+    unset _aphotic_core_dir
+fi
+
+_aphotic_theme_is_core() {
+    local name="$1" core
+    for core in "${APHOTIC_CORE_THEMES[@]:-}"; do
+        [[ "$core" == "$name" ]] && return 0
+    done
+    return 1
+}
 
 # _aphotic_toml_get (the flat theme.toml reader) now lives in
 # globalcontrol.sh, shared with cmd_plugin.sh's plugin.toml reading —
@@ -47,6 +77,29 @@ _aphotic_theme_list() {
     fi
 }
 
+# `core` lets AppearancePane.qml badge community-downloaded themes
+# without keeping its own duplicate copy of APHOTIC_CORE_THEMES.
+_aphotic_theme_list_json() {
+    aphotic_require jq || return 1
+    mkdir -p "$APHOTIC_AWWW_DIR"
+    local dir name display core entries=()
+    for dir in "$APHOTIC_AWWW_DIR"/*/; do
+        [[ -d "$dir" ]] || continue
+        name="$(basename "$dir")"
+        display="$(_aphotic_toml_get "${dir}theme.toml" theme display_name)"
+        core="false"
+        _aphotic_theme_is_core "$name" && core="true"
+        entries+=("$(jq -n --arg name "$name" --arg display_name "${display:-$name}" --argjson core "$core" \
+            '{name: $name, display_name: $display_name, core: $core}')")
+    done
+    printf '%s\n' "${entries[@]:-}" | jq -s 'map(select(. != null))'
+}
+
+_aphotic_theme_list_remote_json() {
+    aphotic_require curl || return 1
+    curl -fsSL -m 10 "$APHOTIC_THEMES_INDEX_URL" 2>/dev/null || echo '{"themes": []}'
+}
+
 # Read {theme, wallpaper} out of theme.json. Prints two lines: theme, wallpaper.
 _aphotic_theme_read_state() {
     if [[ -f "$APHOTIC_THEME_STATE_FILE" ]]; then
@@ -60,6 +113,138 @@ _aphotic_theme_write_state() {
     local theme="$1" wallpaper="$2" tmp
     tmp="$(mktemp)"
     jq -n --arg t "$theme" --arg w "$wallpaper" '{theme: $t, wallpaper: $w}' > "$tmp" && mv "$tmp" "$APHOTIC_THEME_STATE_FILE"
+}
+
+# Clone APHOTIC_THEMES_REPO on first use, `git pull --ff-only` on later
+# ones -- mirrors _aphotic_plugin_sync_repo (cmd_plugin.sh) exactly. A
+# pull failure is non-fatal, falls through to whatever's on disk already.
+_aphotic_theme_sync_repo() {
+    aphotic_require git || return 1
+    if [[ -d "${APHOTIC_THEMES_REPO}/.git" ]]; then
+        echo "Updating theme repo: git -C ${APHOTIC_THEMES_REPO} pull --ff-only"
+        git -C "$APHOTIC_THEMES_REPO" pull --ff-only || aphotic_err "pull failed — continuing with the existing local checkout at ${APHOTIC_THEMES_REPO}"
+    else
+        echo "Cloning theme repo: git clone ${APHOTIC_THEMES_GIT_URL} ${APHOTIC_THEMES_REPO}"
+        git clone "$APHOTIC_THEMES_GIT_URL" "$APHOTIC_THEMES_REPO" || { aphotic_err "clone failed: ${APHOTIC_THEMES_GIT_URL}"; return 1; }
+    fi
+}
+
+_aphotic_theme_download() {
+    local name="$1" src dest
+    [[ -n "$name" ]] || { aphotic_err "usage: aphotic theme download <name>"; return 1; }
+
+    _aphotic_theme_sync_repo || return 1
+
+    src="${APHOTIC_THEMES_REPO}/${name}"
+    if [[ ! -d "$src" ]] || [[ ! -f "${src}/theme.toml" ]]; then
+        aphotic_err "no theme '${name}' in ${APHOTIC_THEMES_REPO} (repo synced okay, but this name isn't in it — check 'aphotic theme list --remote')"
+        return 1
+    fi
+
+    dest="$(_aphotic_theme_dir "$name")"
+    if [[ -e "$dest" ]]; then
+        aphotic_err "already downloaded: ${dest} (use 'aphotic theme update ${name}' to refresh it)"
+        return 1
+    fi
+
+    echo "Downloading ${name}..."
+    cp -r "$src" "$dest"
+
+    aphotic_ok "downloaded ${name}"
+    echo "THEME DOWNLOADED: ${name}"
+}
+
+# Staged swap (never a naked `rm -rf` on the live directory) -- mirrors
+# _aphotic_plugin_update_one's rename dance, minus the registry/harness
+# bits that don't apply to a theme.
+_aphotic_theme_update_one() {
+    local name="$1" src dest staged previous
+    dest="$(_aphotic_theme_dir "$name")"
+    [[ -e "$dest" ]] || { aphotic_err "not downloaded: ${name}"; return 1; }
+
+    src="${APHOTIC_THEMES_REPO}/${name}"
+    if [[ ! -d "$src" ]] || [[ ! -f "${src}/theme.toml" ]]; then
+        aphotic_err "no theme '${name}' in ${APHOTIC_THEMES_REPO}"
+        return 1
+    fi
+
+    staged="${dest}.updating"
+    rm -rf "$staged"
+    if ! cp -r "$src" "$staged"; then
+        rm -rf "$staged"
+        aphotic_err "failed to stage update for ${name}, left the downloaded copy alone"
+        return 1
+    fi
+
+    previous="${dest}.previous"
+    rm -rf "$previous"
+    if ! mv "$dest" "$previous"; then
+        rm -rf "$staged"
+        aphotic_err "could not move ${name}'s downloaded copy aside, left it alone"
+        return 1
+    fi
+    if ! mv "$staged" "$dest"; then
+        mv "$previous" "$dest"
+        rm -rf "$staged"
+        aphotic_err "could not swap in the update for ${name}, restored the downloaded copy"
+        return 1
+    fi
+    rm -rf "$previous"
+
+    aphotic_ok "updated ${name}"
+    echo "THEME UPDATED: ${name}"
+}
+
+_aphotic_theme_update() {
+    local target="$1" rc=0
+    [[ -n "$target" ]] || { aphotic_err "usage: aphotic theme update <name>|--all"; return 1; }
+
+    _aphotic_theme_sync_repo || return 1
+
+    if [[ "$target" != "--all" ]]; then
+        _aphotic_theme_update_one "$target"
+        return $?
+    fi
+
+    local dir name
+    for dir in "$APHOTIC_AWWW_DIR"/*/; do
+        [[ -d "$dir" ]] || continue
+        name="$(basename "$dir")"
+        _aphotic_theme_is_core "$name" && continue
+        _aphotic_theme_update_one "$name" || rc=1
+    done
+    return "$rc"
+}
+
+_aphotic_theme_remove() {
+    local name="$1" dest
+    [[ -n "$name" ]] || { aphotic_err "usage: aphotic theme remove <name>"; return 1; }
+    if _aphotic_theme_is_core "$name"; then
+        aphotic_err "${name} ships with Aphotic — not something 'theme remove' can take out"
+        return 1
+    fi
+
+    dest="$(_aphotic_theme_dir "$name")"
+    [[ -e "$dest" ]] || { aphotic_err "not downloaded: ${name}"; return 1; }
+
+    local was_active; was_active="$(_aphotic_theme_read_state | head -n1)"
+    rm -rf "$dest"
+    aphotic_ok "removed ${name}"
+
+    # Same alphabetically-first fallback _aphotic_theme_ensure_default
+    # uses -- don't leave theme.json pointing at a theme that's gone.
+    [[ "$was_active" == "$name" ]] || return 0
+    local dir fallback=""
+    for dir in "$APHOTIC_AWWW_DIR"/*/; do
+        [[ -d "$dir" ]] || continue
+        fallback="$(basename "$dir")"
+        break
+    done
+    if [[ -n "$fallback" ]]; then
+        _aphotic_theme_apply "$fallback"
+    else
+        aphotic_warn "no themes remain in ${APHOTIC_AWWW_DIR}"
+    fi
 }
 
 # Apply theme_name/wallpaper_file: run awww + wallust with any engine
@@ -253,7 +438,33 @@ _aphotic_theme_ensure_default() {
 aphotic_cmd_theme() {
     local sub="${1:-}"; shift || true
     case "$sub" in
-        list) _aphotic_theme_list ;;
+        list)
+            local remote="false" as_json="false"
+            while [[ $# -gt 0 ]]; do
+                case "$1" in
+                    --remote) remote="true" ;;
+                    --json) as_json="true" ;;
+                esac
+                shift
+            done
+
+            if [[ "$remote" == "true" ]]; then
+                aphotic_require jq || return 1
+                local data; data="$(_aphotic_theme_list_remote_json)"
+                if [[ "$as_json" == "true" ]]; then
+                    echo "$data" | jq '.themes // []'
+                else
+                    echo "$data" | jq -r '(.themes // [])[] | "\(.name)\t\(.display_name)\t\(.version)\t\(.wallpaper_count) wallpapers\t\(if .approx_size_bytes >= 1000000 then (.approx_size_bytes/1000000*10|round/10|tostring)+"MB" else ((.approx_size_bytes/1000|round)|tostring)+"KB" end)\t\(.description)"' | column -t -s $'\t'
+                fi
+            elif [[ "$as_json" == "true" ]]; then
+                _aphotic_theme_list_json
+            else
+                _aphotic_theme_list
+            fi
+            ;;
+        download) _aphotic_theme_download "${1:-}" ;;
+        update) _aphotic_theme_update "${1:-}" ;;
+        remove) _aphotic_theme_remove "${1:-}" ;;
         ensure-default) _aphotic_theme_ensure_default ;;
         set)
             local name="${1:-}"
@@ -313,14 +524,25 @@ aphotic_cmd_theme() {
             ;;
         ""|-h|--help)
             cat <<HELP
-Usage: aphotic theme <list|set|next|prev|ensure-default> [name]
+Usage: aphotic theme <list|set|next|prev|download|update|remove|ensure-default> [args]
 
-  list            List theme folders (${APHOTIC_AWWW_DIR})
-  set <name>      Apply a theme (its declared default wallpaper)
-  next / prev     Cycle themes
-  ensure-default  Apply the install-time theme if none is set yet (no-op
-                  once a theme has ever been applied); called once from
-                  Hyprland's startup.lua, not meant for everyday use
+  list [--remote] [--json]  List theme folders (${APHOTIC_AWWW_DIR}), or
+                             --remote: what's available from
+                             APHOTIC_THEMES_INDEX_URL
+  set <name>                Apply a theme (its declared default wallpaper)
+  next / prev                Cycle themes
+  download <name>            Download a theme from a local checkout of
+                             aphotic-themes (APHOTIC_THEMES_REPO, default
+                             ~/aphotic-themes)
+  update <name>|--all       Refresh a downloaded theme's files from the
+                             repo. --all updates every community-downloaded
+                             theme (skips the ones that ship with Aphotic)
+  remove <name>              Delete a downloaded theme; refuses to take out
+                             one of the themes that ships with Aphotic
+  ensure-default             Apply the install-time theme if none is set
+                             yet (no-op once a theme has ever been
+                             applied); called once from Hyprland's
+                             startup.lua, not meant for everyday use
 HELP
             ;;
         *)
