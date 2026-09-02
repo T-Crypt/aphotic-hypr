@@ -12,20 +12,20 @@ ColumnLayout {
     required property ScreenState screenState
     property string currentTab: "dashboard"
 
-    // The graph surface is the most expensive thing the dashboard can
-    // hold -- a GraphLayout and a full node/edge delegate tree, per
-    // monitor -- and it used to be built as soon as the dashboard
-    // content existed, whether or not anyone ever picked its tab.
-    // Latched rather than tracking `currentTab` directly so switching
-    // away keeps the built graph and its held layout positions.
-    // Initial value covers starting *on* that tab, where no change signal
-    // ever fires; the handler latches it for every later selection.
-    property bool _agentGraphOpened: root.currentTab === "agentGraph"
+    // Latched rather than tracking `currentTab` so switching away keeps the
+    // built graph and its laid-out node positions. Plain state, not a
+    // binding seeded from `currentTab`: a seeded binding stays live until
+    // the first imperative write, so starting on this tab and switching
+    // away would re-evaluate it to false and tear the graph down again.
+    property bool _agentGraphOpened: false
 
-    onCurrentTabChanged: {
+    function _latchAgentGraph(): void {
         if (root.currentTab === "agentGraph")
             root._agentGraphOpened = true;
     }
+
+    onCurrentTabChanged: root._latchAgentGraph()
+    Component.onCompleted: root._latchAgentGraph()
 
     // Agent Graph is a plugin (docs/archive/PLUGIN_SYSTEM.md manifest v3),
     // not core -- its dashboard tab only exists when the "ai" layer is on
@@ -77,11 +77,10 @@ ColumnLayout {
         id: tabFrame
 
         Layout.alignment: Qt.AlignHCenter
-        // Whichever loader owns the active tab; both report 0 while one is
-        // unloading and the other is still building, which is every first
-        // switch to the graph now that it loads on demand. Holding the
-        // last real size across that gap is what stops the frame
-        // collapsing to bare padding and springing back open.
+        // Both loaders report 0 while one unloads and the other builds
+        // async, which is every first switch to the graph now that it
+        // loads on demand. Holding the last real size across that gap is
+        // what stops the frame collapsing to bare padding.
         readonly property real tabWidth: root.currentTab === "agentGraph" ? agentGraphLoader.implicitWidth : tabLoader.implicitWidth
         readonly property real tabHeight: root.currentTab === "agentGraph" ? agentGraphLoader.implicitHeight : tabLoader.implicitHeight
 
