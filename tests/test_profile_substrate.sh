@@ -102,4 +102,24 @@ done
 grep -q 'hyprctl' "$QS/services/Hypr.qml" \
   || fail "hyprctl is no longer spawned by the base shell -- the substrate now adds it as a new dependency and it must be declared in both profiles/base/*.toml"
 
+# A declaration lost after startup used to kill arbitration silently:
+# ResourceEngine.reset() clears its resource table, GpuVramSource kept its
+# own `_declared` flag, and the two diverged -- gpu-vram was never
+# re-declared and no negotiation on it could ever be raised again, with
+# nothing reading any differently. Two guards so that cannot come back.
+
+# 1. A declarant must not cache "I declared" alongside the engine's copy.
+GVS="$QS/services/GpuVramSource.qml"
+[[ -f "$GVS" ]] || fail "missing $GVS"
+grep -qE '^\s*readonly property bool declared:.*ResourceEngine\.resources' "$GVS" \
+  || fail "GpuVramSource.declared must be derived from ResourceEngine.resources, not cached -- a private flag diverges from reset()"
+code "$GVS" | grep -qE '(property bool _declared|_declared\s*=)' \
+  && fail "GpuVramSource keeps a private cached declaration flag again -- that is the divergence B-10 was"
+
+# 2. Claims on an undeclared resource must stay observable, not silent.
+grep -q 'readonly property var unarbitrated:' "$SUB/ResourceEngine.qml" \
+  || fail "ResourceEngine no longer exposes 'unarbitrated' -- dead arbitration goes back to being invisible"
+grep -q 'unarbitrated: ResourceEngine.unarbitrated' "$QS/shell.qml" \
+  || fail "the profile IPC state no longer reports unarbitrated"
+
 echo "PASS: profile substrate"
