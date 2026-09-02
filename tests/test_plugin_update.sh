@@ -124,6 +124,32 @@ _aphotic_plugin_update --all >/dev/null 2>&1
 [[ "$(jq -r '.installed["scratch-link"].version' "$APHOTIC_PLUGINS_STATE_FILE")" == "2.2.0" ]] \
     || fail "expected --all to update scratch-link"
 
+# --- --all skips disabled plugins, but naming one still updates it ---
+#
+# install_deps runs `yay -S` for missing [requires] binaries, so a blanket
+# --all must not act on plugins the user has turned off.
+
+aphotic_plugin_set_enabled scratch-upd false
+write_manifest "1.6.0" '"keyOne"'
+sed -i 's/version = "2.2.0"/version = "2.3.0"/' "$LSRC/plugin.toml"
+out="$(_aphotic_plugin_update --all 2>&1)"
+[[ "$(aphotic_toml_get "$DEST/plugin.toml" plugin version)" == "1.5.0" ]] \
+    || fail "expected --all to skip the disabled scratch-upd"
+[[ "$(jq -r '.installed["scratch-link"].version' "$APHOTIC_PLUGINS_STATE_FILE")" == "2.3.0" ]] \
+    || fail "expected --all to still update the enabled scratch-link"
+grep -q "scratch-upd" <<<"$out" \
+    || fail "expected --all to name the disabled plugin it skipped"
+_aphotic_plugin_update scratch-upd >/dev/null 2>&1
+[[ "$(aphotic_toml_get "$DEST/plugin.toml" plugin version)" == "1.6.0" ]] \
+    || fail "expected an explicitly named disabled plugin to still update"
+aphotic_plugin_is_enabled scratch-upd && fail "expected the explicit update to leave it disabled"
+aphotic_plugin_set_enabled scratch-upd true
+
+# --- the swap never leaves the install path missing, and rolls back ---
+
+[[ ! -e "${DEST}.previous" ]] || fail "expected update to clean up its rollback copy"
+[[ ! -e "${DEST}.updating" ]] || fail "expected update to clean up its staging dir"
+
 # --- not-installed and missing-name are errors, not silent no-ops ---
 
 _aphotic_plugin_update nonexistent >/dev/null 2>&1 && fail "expected update of an uninstalled plugin to fail"
