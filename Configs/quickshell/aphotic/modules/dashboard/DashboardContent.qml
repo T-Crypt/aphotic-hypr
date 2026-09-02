@@ -12,6 +12,21 @@ ColumnLayout {
     required property ScreenState screenState
     property string currentTab: "dashboard"
 
+    // Latched rather than tracking `currentTab` so switching away keeps the
+    // built graph and its laid-out node positions. Plain state, not a
+    // binding seeded from `currentTab`: a seeded binding stays live until
+    // the first imperative write, so starting on this tab and switching
+    // away would re-evaluate it to false and tear the graph down again.
+    property bool _agentGraphOpened: false
+
+    function _latchAgentGraph(): void {
+        if (root.currentTab === "agentGraph")
+            root._agentGraphOpened = true;
+    }
+
+    onCurrentTabChanged: root._latchAgentGraph()
+    Component.onCompleted: root._latchAgentGraph()
+
     // Agent Graph is a plugin (docs/archive/PLUGIN_SYSTEM.md manifest v3),
     // not core -- its dashboard tab only exists when the "ai" layer is on
     // AND the plugin is installed+enabled AND at least one harness is
@@ -62,8 +77,21 @@ ColumnLayout {
         id: tabFrame
 
         Layout.alignment: Qt.AlignHCenter
-        Layout.preferredWidth: (root.currentTab === "agentGraph" ? agentGraphLoader.implicitWidth : tabLoader.implicitWidth) + Tokens.padding.extraLarge * 2
-        Layout.preferredHeight: (root.currentTab === "agentGraph" ? agentGraphLoader.implicitHeight : tabLoader.implicitHeight) + Tokens.padding.extraLarge * 2
+        // Both loaders report 0 while one unloads and the other builds
+        // async, which is every first switch to the graph now that it
+        // loads on demand. Holding the last real size across that gap is
+        // what stops the frame collapsing to bare padding.
+        readonly property real tabWidth: root.currentTab === "agentGraph" ? agentGraphLoader.implicitWidth : tabLoader.implicitWidth
+        readonly property real tabHeight: root.currentTab === "agentGraph" ? agentGraphLoader.implicitHeight : tabLoader.implicitHeight
+
+        property real heldWidth: 0
+        property real heldHeight: 0
+
+        onTabWidthChanged: if (tabFrame.tabWidth > 0) tabFrame.heldWidth = tabFrame.tabWidth
+        onTabHeightChanged: if (tabFrame.tabHeight > 0) tabFrame.heldHeight = tabFrame.tabHeight
+
+        Layout.preferredWidth: (tabFrame.tabWidth > 0 ? tabFrame.tabWidth : tabFrame.heldWidth) + Tokens.padding.extraLarge * 2
+        Layout.preferredHeight: (tabFrame.tabHeight > 0 ? tabFrame.tabHeight : tabFrame.heldHeight) + Tokens.padding.extraLarge * 2
         radius: Tokens.rounding.extraLarge
         color: Qt.alpha(Colours.tPalette.m3surfaceContainer, 0.85)
         border.width: 1
@@ -140,7 +168,7 @@ ColumnLayout {
             // in core -- `source` is a plain file:// URL resolved from
             // the plugin registry, so the shell compiles and runs
             // identically whether or not this plugin is installed.
-            active: root.agentGraphAvailable && root._agentGraphTab !== undefined
+            active: root.agentGraphAvailable && root._agentGraphTab !== undefined && root._agentGraphOpened
             asynchronous: true
             visible: agentGraphLoader.opacity > 0
             opacity: root.currentTab === "agentGraph" ? 1 : 0
