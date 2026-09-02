@@ -229,6 +229,16 @@ QtObject {
     // re-registers everything _releaseAll() just dropped, leaving claims
     // behind with the timer already stopped and nothing left to clear
     // them.
+    // nvidia-smi's process_name is not always just an executable path:
+    // Electron GPU helpers report the whole command line, so the last
+    // path segment can be a multi-kilobyte argument blob. Taking the
+    // first whitespace-delimited token before basenaming keeps the
+    // claim owner (and the negotiation prompt) readable.
+    function _displayName(path: string): string {
+        const exe = path.split(/\s+/)[0] || path;
+        return exe.split("/").pop() || exe;
+    }
+
     function _syncProcesses(text: string): void {
         if (!root.scanning)
             return;
@@ -239,7 +249,7 @@ QtObject {
             if (root._isOllama(proc.path))
                 continue;
 
-            const name = proc.path.split("/").pop() || proc.path;
+            const name = root._displayName(proc.path);
             const owned = root._adopted[proc.pid] ?? null;
             const owner = owned ? owned.owner : name;
             const id = owned ? root._adoptedId(proc.pid, owner) : `${root.claimPrefix}${proc.pid}`;
