@@ -1,13 +1,15 @@
-::: {align="center"}
-# Aphotic
+<p align="center">
+  <img src="assets/aphotic-banner.svg" alt="Aphotic — Hyprland dotfiles, after dark" width="900">
+</p>
 
-**Hyprland dotfiles built around Quickshell, modular profiles, and
-optional runtime features.**
-
-[![Stars](https://img.shields.io/github/stars/T-Crypt/Aphotic-Hypr?style=flat-square)](https://github.com/T-Crypt/Aphotic-Hypr/stargazers)
-[![Issues](https://img.shields.io/github/issues/T-Crypt/Aphotic-Hypr?style=flat-square)](https://github.com/T-Crypt/Aphotic-Hypr/issues)
-[![License](https://img.shields.io/github/license/T-Crypt/Aphotic-Hypr?style=flat-square)](LICENSE)
-:::
+<p align="center">
+  <img src="https://img.shields.io/github/stars/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=7DCFFF&labelColor=0b0d12">
+  <img src="https://img.shields.io/github/issues/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=E0AF68&labelColor=0b0d12">
+  <img src="https://img.shields.io/github/forks/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=F7768E&labelColor=0b0d12">
+  <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=AD8EE6&labelColor=0b0d12">
+  <img alt="License" src="https://img.shields.io/github/license/T-Crypt/Aphotic-Hypr?style=for-the-badge&color=7DCFFF&labelColor=0b0d12">
+  <img alt="Status: Beta" src="https://img.shields.io/badge/status-beta-E0AF68?style=for-the-badge&labelColor=0b0d12">
+</p>
 
 ## Overview
 
@@ -26,13 +28,89 @@ Inactive features should add little to no runtime overhead.
 
 ## Preview
 
-```{=html}
+One shell, reskinned live from a wallpaper — no rebuild, no relogin. Shown
+over **Tokyo Night**, **Lofi**, and **Gruvbox**, three of the eight themes
+that ship out of the box:
+
 <p align="center">
-```
-`<img src="assets/preview.png" width="900">`{=html}
-```{=html}
+  <img src="./assets/preview.png" width="900">
 </p>
-```
+
+Agentic workflow, live render: every Bash and Read call landing on the graph
+as the agent makes it, with replay scrubbing and zoom.
+
+https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
+
+## Gallery
+
+<details>
+<summary><b>Desktop &amp; bar</b></summary>
+<br>
+
+<table>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-full.png" width="440"><br><sub>Bar: Full style</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-dock.png" width="440"><br><sub>Bar: Dock style</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/workspaces.png" width="440"><br><sub>Workspaces</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/launcher.png" width="440"><br><sub>Launcher</sub></p></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary><b>Command Center</b></summary>
+<br>
+
+<table>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard.png" width="440"><br><sub>Dashboard</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/performance.png" width="440"><br><sub>Performance</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/workspace-profiles.png" width="440"><br><sub>Workspace Profiles</sub></p></td>
+<td width="50%"></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary><b>AI</b></summary>
+<br>
+
+<table>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/ai-chat.png" width="440"><br><sub>AI Chat</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/ai-settings.png" width="440"><br><sub>AI Settings &amp; Hardware Advisor</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/intelligence-assistant.png" width="440"><br><sub>Aphotic Assistant</sub></p></td>
+<td width="50%"></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary><b>Theming &amp; settings</b></summary>
+<br>
+
+<table>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/wallpaper-picker.png" width="440"><br><sub>Wallpaper Picker</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/theme-creator.png" width="440"><br><sub>Theme Creator</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/personalization.png" width="440"><br><sub>Personalization</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/plugins.png" width="440"><br><sub>Plugins</sub></p></td>
+</tr>
+</table>
+
+</details>
+
 ## Features
 
 -   Quickshell desktop shell
@@ -140,9 +218,7 @@ Plugins can be installed, enabled, disabled, and removed independently.
 
 The core desktop does not require optional plugins to function.
 
-Repository:
-
-https://github.com/T-Crypt/aphotic-plugins
+Repository: [T-Crypt/aphotic-plugins](https://github.com/T-Crypt/aphotic-plugins)
 
 ## Themes
 
@@ -192,15 +268,15 @@ See the installation documentation for available options.
 
 ## Stack
 
-  Component          Implementation
-  ------------------ ----------------
-  Compositor         Hyprland
-  Desktop shell      Quickshell
-  Terminal           Kitty
-  File manager       Thunar
-  Wallpaper          awww
-  Shell              ZSH / Starship
-  Audio visualizer   Cava
+| Component | Implementation |
+| --- | --- |
+| Compositor | Hyprland |
+| Desktop shell | Quickshell |
+| Terminal | Kitty |
+| File manager | Thunar |
+| Wallpaper | awww |
+| Shell | ZSH / Starship |
+| Audio visualizer | Cava |
 
 ## Performance
 
