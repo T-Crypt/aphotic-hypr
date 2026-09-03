@@ -14,16 +14,18 @@ StyledRect {
     enum Tile {
         Idle = 0,
         Processes,
-        Slot2,
-        Slot3,
-        Slot4,
-        Dev
+        Dev,
+        Security,
+        Agents
     }
 
-    // Three reserved slots, named for what they are rather than for
-    // content nobody has written: identical "Reserved" labels would make
-    // the one thing this strip exists to demonstrate -- that you can tell
-    // where you are and move between four of them -- impossible to see.
+    // Processes is the base shell's tile and is never gated -- the notch
+    // itself ships with the base layer, so a plain install has exactly one
+    // tile and no switcher at all (see `switchable`). Every other tile is
+    // an opt-in that docks itself here when its own layer is installed,
+    // and is absent -- not present-and-empty -- when it is not. Gaming is
+    // deliberately not among them: it is a transient state around a
+    // running game, not a surface to sit and read.
     readonly property var tiles: {
         const list = [
             {
@@ -32,31 +34,33 @@ StyledRect {
                 label: qsTr("Processes")
             }
         ];
-        // Dev takes the second slot outright when its layer is installed,
-        // and is absent from the strip entirely when it is not -- not
-        // present-and-empty, which is the rule InstallProfile exists to
-        // enforce.
-        list.push(InstallProfile.devEnabled ? {
-            tile: Notch.Dev,
-            icon: "code",
-            label: qsTr("Dev")
-        } : {
-            tile: Notch.Slot2,
-            icon: "terminal",
-            label: qsTr("Slot 2")
-        });
-        list.push({
-            tile: Notch.Slot3,
-            icon: "hub",
-            label: qsTr("Slot 3")
-        });
-        list.push({
-            tile: Notch.Slot4,
-            icon: "extension",
-            label: qsTr("Slot 4")
-        });
+        if (InstallProfile.devEnabled)
+            list.push({
+                tile: Notch.Dev,
+                icon: "code",
+                label: qsTr("Dev")
+            });
+        if (InstallProfile.securityEnabled)
+            list.push({
+                tile: Notch.Security,
+                icon: "shield",
+                label: qsTr("Security")
+            });
+        if (InstallProfile.aiEnabled)
+            list.push({
+                tile: Notch.Agents,
+                icon: "smart_toy",
+                label: qsTr("Agents")
+            });
         return list;
     }
+
+    // A base install has one tile, so there is nothing to switch between:
+    // the name stops being a button and the chip strip is gone entirely
+    // rather than sitting there as a single dead chip.
+    readonly property bool switchable: root.tiles.length > 1
+
+    readonly property var activeTile: root.tiles.find(t => t.tile === root.shownTile) ?? null
 
     onTilesChanged: {
         if (!root.tiles.some(t => t.tile === root.shownTile))
@@ -64,8 +68,6 @@ StyledRect {
         if (root.tile !== Notch.Idle && !root.tiles.some(t => t.tile === root.tile))
             root.tile = Notch.Processes;
     }
-
-    readonly property var activeTile: root.tiles.find(t => t.tile === root.shownTile) ?? null
     readonly property bool processesLive: root.expanded && root.shownTile === Notch.Processes
 
     property int tile: Notch.Idle
@@ -82,6 +84,8 @@ StyledRect {
     readonly property real contentWidth: Config.notch.expandedWidth - Tokens.padding.large * 2
 
     function cycle(): void {
+        if (root.expanded && !root.switchable)
+            return;
         const i = root.tiles.findIndex(t => t.tile === root.tile);
         root.tile = root.tiles[(i + 1) % root.tiles.length].tile;
     }
@@ -284,7 +288,7 @@ StyledRect {
 
                     StateLayer {
                         radius: parent.radius
-                        disabled: !root.expanded
+                        disabled: !root.expanded || !root.switchable
                         onClicked: root.cycle()
                     }
 
@@ -341,7 +345,7 @@ StyledRect {
                         return processComp;
                     if (root.shownTile === Notch.Dev)
                         return devComp;
-                    return placeholderComp;
+                    return stubComp;
                 }
             }
 
@@ -349,9 +353,10 @@ StyledRect {
                 Layout.fillWidth: true
                 Layout.topMargin: Tokens.spacing.extraSmall
                 spacing: Tokens.spacing.extraSmall
+                visible: root.switchable
 
                 Repeater {
-                    model: root.tiles
+                    model: root.switchable ? root.tiles : []
 
                     StyledRect {
                         id: chip
@@ -414,8 +419,8 @@ StyledRect {
         NotchDevTile {}
     }
     Component {
-        id: placeholderComp
-        NotchPlaceholderTile {
+        id: stubComp
+        NotchProfileStub {
             slotLabel: root.activeTile?.label ?? ""
             slotIcon: root.activeTile?.icon ?? "extension"
         }

@@ -3,4 +3,4 @@ Notch 1.0 Notch.qml
 NotchWindow 1.0 NotchWindow.qml
 NotchDevTile 1.0 NotchDevTile.qml
 NotchProcessTile 1.0 NotchProcessTile.qml
-NotchPlaceholderTile 1.0 NotchPlaceholderTile.qml
+NotchProfileStub 1.0 NotchProfileStub.qml

@@ -4,10 +4,10 @@ import qs.config
 import qs.components
 import qs.services
 
-// Deliberately empty second tile. It exists to prove the tile switcher in
-// Notch.qml carries more than one tile (state, header, chip strip and the
-// height animation between differently-sized bodies) -- Dev Status and
-// Claude Status content are explicitly out of scope for this pass.
+// Stands in for an opt-in layer that is installed and docked in the notch
+// but whose surface has not been built yet. It says exactly that rather
+// than inventing a status, because an empty-but-honest tab is the point:
+// the gating and the switcher are real now, the content lands per layer.
 ColumnLayout {
     id: root
 
@@ -30,13 +30,13 @@ ColumnLayout {
 
     StyledText {
         Layout.alignment: Qt.AlignHCenter
-        text: qsTr("%1 reserved").arg(root.slotLabel)
+        text: root.slotLabel
         font: Tokens.font.title.medium
     }
 
     StyledText {
         Layout.fillWidth: true
-        text: qsTr("Nothing is wired here yet — this slot only exists to prove the switcher holds more than one tile.")
+        text: qsTr("This layer is installed and docked here. Its surface hasn't been built yet.")
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.label.medium
         horizontalAlignment: Text.AlignHCenter

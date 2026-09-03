@@ -3,7 +3,7 @@ name = "full"
 description = "Full install: today's complete package set"
 
 [packages]
-prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcontrols2", "qt5-graphicaleffects", "gtk3", "polkit-gnome", "pipewire", "wireplumber", "jq", "curl", "wl-clipboard", "cliphist", "python-requests", "python-pillow", "pacman-contrib", "kvantum", "kvantum-qt5", "lm_sensors", "pciutils", "nvidia-utils", "radeontop", "intel-gpu-tools", "glib2", "dbus", "procps-ng", "util-linux"]
+prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcontrols2", "qt5-graphicaleffects", "gtk3", "polkit-gnome", "pipewire", "wireplumber", "jq", "curl", "wl-clipboard", "cliphist", "python-requests", "python-pillow", "pacman-contrib", "kvantum", "kvantum-qt5", "lm_sensors", "pciutils", "nvidia-utils", "radeontop", "intel-gpu-tools", "glib2", "dbus", "procps-ng", "util-linux", "gawk"]
 # tumbler and the three format helpers after `thunar` are Thunar's
 # thumbnailing stack, not extras: Thunar renders no thumbnails itself, it
 # asks the Tumbler D-Bus service, so without tumbler installed every file
