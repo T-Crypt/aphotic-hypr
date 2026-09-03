@@ -96,7 +96,7 @@ ColumnLayout {
     }
 
     // Everything locally-hosted below is installed by the `ai` layer --
-    // Ollama's host and model store, the GGUF directory, llmfit. With the
+    // Ollama's host and model store, the GGUF directory. With the
     // layer off these are absent, not empty: the pane keeps only Provider,
     // API Keys and Intelligence, which are what a base shell can actually
     // use (Claude's CLI session plus the Gemini and ChatGPT APIs).
@@ -172,11 +172,10 @@ ColumnLayout {
                 }
 
                 // Wrapped in a RowLayout, not a bare StyledRect, so
-                // Layout.preferredWidth/Height below actually apply -- see
-                // Hardware Advisor's Scan button fix (docs/LEDGER.md) for
-                // why a lone StyledRect dropped directly into SettingsRow's
-                // trailing slot (a plain Item, not a Layout) silently
-                // collapses to 0x0 instead.
+                // Layout.preferredWidth/Height below actually apply: a lone
+                // StyledRect dropped directly into SettingsRow's trailing
+                // slot (a plain Item, not a Layout) silently collapses to
+                // 0x0 instead.
                 RowLayout {
                     spacing: Tokens.spacing.small
 
@@ -523,153 +522,6 @@ ColumnLayout {
                 onKeySubmitted: value => AiKeys.openaiApiKey = value
                 onKeyCleared: AiKeys.openaiApiKey = ""
             }
-        }
-    }
-
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Tokens.spacing.extraSmall
-        visible: InstallProfile.aiEnabled
-
-        StyledText {
-            Layout.leftMargin: Tokens.padding.small
-            text: qsTr("Hardware Advisor")
-            color: Colours.palette.m3onSurfaceVariant
-            font: Tokens.font.label.medium
-        }
-
-        StyledText {
-            visible: LlmFit.checked && !LlmFit.available
-            Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            text: qsTr("⚠ llmfit not found. Add it via the 'ai' profile layer, or run: curl -fsSL https://llmfit.axjns.dev/install.sh | sh")
-            color: Colours.palette.m3error
-            font: Tokens.font.label.small
-        }
-
-        SettingsGroup {
-            Layout.fillWidth: true
-            visible: LlmFit.available
-
-            SettingsRow {
-                icon: "insights"
-                label: qsTr("Recommended model for this system")
-                description: LlmFit.scanning ? qsTr("Scanning CPU/GPU…") : qsTr("Runs llmfit against your detected hardware")
-
-                // See the RowLayout-wrap comment on the Start Ollama button
-                // above -- same fix, same reason (a bare StyledRect here
-                // has no real Layout parent, so its Layout.preferredWidth/
-                // Height are silently ignored and it collapses to 0x0).
-                RowLayout {
-                    StyledRect {
-                        Layout.preferredWidth: scanLabel.implicitWidth + Tokens.padding.large * 2
-                        Layout.preferredHeight: 32
-                        radius: Tokens.rounding.full
-                        opacity: LlmFit.scanning ? 0.5 : 1
-                        color: Colours.palette.m3primary
-
-                        StyledText {
-                            id: scanLabel
-                            anchors.centerIn: parent
-                            text: LlmFit.scanning ? qsTr("Scanning…") : qsTr("Scan")
-                            color: Colours.contrastOn(Colours.palette.m3primary)
-                            font: Tokens.font.label.small
-                        }
-
-                        StateLayer {
-                            anchors.fill: parent
-                            radius: parent.radius
-                            showHoverBackground: !LlmFit.scanning
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: !LlmFit.scanning
-                            onClicked: LlmFit.scan()
-                        }
-                    }
-                }
-            }
-        }
-
-        StyledText {
-            visible: LlmFit.available && LlmFit.errorText.length > 0
-            Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            text: `⚠ ${LlmFit.errorText}`
-            color: Colours.palette.m3error
-            font: Tokens.font.label.small
-        }
-
-        StyledText {
-            visible: LlmFit.available && LlmFit.systemInfo !== null
-            Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            text: LlmFit.systemInfo ? qsTr("%1 · %2 cores · %3 GB RAM · %4").arg(LlmFit.systemInfo.cpu_name).arg(LlmFit.systemInfo.cpu_cores).arg(LlmFit.systemInfo.total_ram_gb).arg(LlmFit.systemInfo.has_gpu ? `${LlmFit.systemInfo.gpu_name} (${LlmFit.systemInfo.gpu_vram_gb} GB)` : qsTr("no GPU detected")) : ""
-            color: Colours.palette.m3onSurfaceVariant
-            font: Tokens.font.label.small
-        }
-
-        SettingsGroup {
-            Layout.fillWidth: true
-            visible: LlmFit.available && LlmFit.recommendations.length > 0
-
-            Repeater {
-                model: LlmFit.recommendations
-
-                SettingsRow {
-                    id: recRow
-
-                    required property var modelData
-                    readonly property string tag: LlmFit.guessOllamaTag(recRow.modelData)
-
-                    icon: "smart_toy"
-                    label: `${recRow.modelData.name} (${recRow.modelData.best_quant})`
-                    description: qsTr("%1 fit · ~%2 tok/s · %3 params · score %4/100").arg(recRow.modelData.fit_level).arg(Math.round(recRow.modelData.estimated_tps)).arg(recRow.modelData.parameter_count).arg(Math.round(recRow.modelData.score))
-
-                    // See the RowLayout-wrap comment on the Start Ollama
-                    // button above -- same fix, same reason.
-                    RowLayout {
-                        StyledRect {
-                            Layout.preferredWidth: pullLabel.implicitWidth + Tokens.padding.large * 2
-                            Layout.preferredHeight: 32
-                            radius: Tokens.rounding.full
-                            visible: recRow.tag.length > 0
-                            opacity: AiProviders.pulling ? 0.5 : 1
-                            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
-
-                            StyledText {
-                                id: pullLabel
-                                anchors.centerIn: parent
-                                text: qsTr("Pull \"%1\"").arg(recRow.tag)
-                                color: Colours.palette.m3onSurfaceVariant
-                                font: Tokens.font.label.small
-                            }
-
-                            StateLayer {
-                                anchors.fill: parent
-                                radius: parent.radius
-                                showHoverBackground: !AiProviders.pulling
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: !AiProviders.pulling
-                                onClicked: AiProviders.pullModel(recRow.tag)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        StyledText {
-            visible: LlmFit.available && LlmFit.recommendations.length > 0
-            Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            text: qsTr("Pull tags are a best-effort guess from the model name, not a lookup -- verify against Ollama Models above if a pull doesn't find a match.")
-            color: Colours.palette.m3onSurfaceVariant
-            font: Tokens.font.label.small
         }
     }
 

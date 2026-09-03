@@ -66,6 +66,37 @@ Singleton {
         return root.surfaceRegistrations.filter(s => s.surface === surface && root._gateSatisfied(s));
     }
 
+    // Plugins that register a ProfileEngine profile rather than draw a
+    // surface -- the `profile` capability. Same registry, same gate
+    // vocabulary, same dynamic file:// component load; the only
+    // difference is that the host instantiating these is headless
+    // (shell.qml) rather than a visible surface. This is what lets a
+    // domain profile -- Gaming today, Dev and Security's sub-plugins
+    // next -- be a real plugin instead of core shell code behind an
+    // InstallProfile check.
+    readonly property var profileRegistrations: {
+        const profiles = [];
+        for (const name of Object.keys(root._installed)) {
+            if (!root.isEnabled(name))
+                continue;
+            const profile = root._installed[name]?.profile;
+            if (!profile || !profile.id || !profile.component)
+                continue;
+            const entry = {
+                plugin: name,
+                id: profile.id,
+                label: profile.label || profile.id,
+                snapshot: profile.snapshot ?? [],
+                requiresLayer: profile.requires_layer ?? "",
+                requiresData: profile.requires_data ?? "",
+                componentUrl: `file://${root.pluginsDir}/${name}/${profile.component}`
+            };
+            if (root._gateSatisfied(entry))
+                profiles.push(entry);
+        }
+        return profiles;
+    }
+
     // A pre-`ui.surfaces` registry entry (written by a CLI older than the
     // surface unification) still carries a bare `dashboard_tab` object.
     // Reading it as one ungated dashboard surface keeps an install that

@@ -1,12 +1,30 @@
 pragma Singleton
 import QtQuick
+import qs.services
 
 // Hoisted out of SettingsPanel.qml so the launcher's "?" settings-search
 // mode (Launcher.qml) can search the same category list SettingsPanel's
 // own CategoryRail renders, instead of a second hand-maintained copy that
 // could drift out of sync with the real pane set.
+//
+// Plugin-contributed panes are appended to the same list for the same
+// reason: a plugin's pane is searchable from the launcher and rendered by
+// the rail off one list, not two. `plugin` is set only on those entries,
+// which is how SettingsPanel picks the dynamic loader for them without
+// knowing any plugin's id.
 QtObject {
-    readonly property var list: [
+    id: root
+
+    readonly property var list: root._core.concat(PluginRegistry.surfacesFor("settings").map(s => ({
+        id: s.id,
+        icon: s.icon,
+        label: s.label,
+        description: s.description ?? qsTr("Plugin settings"),
+        plugin: s.plugin,
+        componentUrl: s.componentUrl
+    })))
+
+    readonly property var _core: [
         { id: "appearance", icon: "palette", label: qsTr("Appearance"), description: qsTr("Theme, wallpaper, colors") },
         { id: "themeCreator", icon: "format_paint", label: qsTr("Theme Creator"), description: qsTr("Build a static custom theme") },
         { id: "personalization", icon: "face", label: qsTr("Personalization"), description: qsTr("Accent, cursor, icons") },

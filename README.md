@@ -109,7 +109,7 @@ https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
 <table>
 <tr>
 <td width="50%"><p align="center"><img src="./assets/screenshots/ai-chat.png" width="440"><br><sub>AI Chat</sub></p></td>
-<td width="50%"><p align="center"><img src="./assets/screenshots/ai-settings.png" width="440"><br><sub>AI Settings &amp; Hardware Advisor</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/ai-settings.png" width="440"><br><sub>AI Settings</sub></p></td>
 </tr>
 <tr>
 <td width="50%"><p align="center"><img src="./assets/screenshots/intelligence-assistant.png" width="440"><br><sub>Aphotic Assistant</sub></p></td>

@@ -30,6 +30,16 @@ RowLayout {
     // driftable copy.
     readonly property var categories: SettingsCategories.list
 
+    // Non-null when the selected category is a plugin's own pane. The
+    // panel knows that plugin panes exist; it does not know that any
+    // particular plugin does.
+    readonly property var _pluginCategory: root.categories.find(c => c.id === root.currentCategory && c.componentUrl) ?? null
+
+    onCategoriesChanged: {
+        if (!root.categories.some(c => c.id === root.currentCategory))
+            root.currentCategory = "appearance";
+    }
+
     // Was 980x560 -- fixed since this panel first shipped with 5-6
     // categories; 14 exist now (SettingsCategories.list) and several
     // panes (AI, Network, Personalization) have grown dense enough that
@@ -81,6 +91,21 @@ RowLayout {
 
         property int _prevCategoryIndex: 0
 
+        // Shared by both pane loaders. paneLoader.sourceComponent goes
+        // null for every plugin category, so switching between two
+        // plugin panes never changes it and would otherwise skip the
+        // slide entirely.
+        function beginSlide(): void {
+            const newIndex = root.categories.findIndex(c => c.id === root.currentCategory);
+            const direction = newIndex >= paneSurface._prevCategoryIndex ? 1 : -1;
+            paneSurface._prevCategoryIndex = newIndex;
+
+            paneLoader.opacity = 0;
+            paneLoader.x = direction * 24;
+            paneFlick.contentY = 0;
+            slideInTimer.restart();
+        }
+
         DepthGradient {
             anchors.fill: parent
             radius: paneSurface.radius
@@ -93,15 +118,41 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: Tokens.padding.extraLarge
             contentWidth: width
-            contentHeight: paneLoader.height
+            contentHeight: paneFlick.activePane.height
             boundsBehavior: Flickable.StopAtBounds
             clip: true
+
+            // The active pane, whichever loader built it -- core panes
+            // come from the switch below, a plugin's pane from a
+            // file:// URL out of the registry. Height and the slide
+            // animation read this rather than either loader, so a
+            // plugin pane behaves exactly like a core one.
+            readonly property Item activePane: root._pluginCategory ? pluginPaneLoader : paneLoader
+
+            Loader {
+                id: pluginPaneLoader
+
+                width: paneFlick.width
+                height: Math.max(paneFlick.height, pluginPaneLoader.item ? pluginPaneLoader.item.implicitHeight : 0)
+                active: root._pluginCategory !== null
+                asynchronous: true
+                visible: pluginPaneLoader.active
+                opacity: paneLoader.opacity
+                x: paneLoader.x
+                source: root._pluginCategory?.componentUrl ?? ""
+
+                onSourceChanged: {
+                    if (pluginPaneLoader.source != "")
+                        paneSurface.beginSlide();
+                }
+            }
 
             Loader {
                 id: paneLoader
 
                 width: paneFlick.width
                 height: Math.max(paneFlick.height, paneLoader.item ? paneLoader.item.implicitHeight : 0)
+                visible: root._pluginCategory === null
                 opacity: 1
 
                 Behavior on opacity {
@@ -112,6 +163,8 @@ RowLayout {
                 }
 
                 sourceComponent: {
+                    if (root._pluginCategory)
+                        return null;
                     switch (root.currentCategory) {
                     case "themeCreator":
                         return themeCreatorComp;
@@ -150,16 +203,7 @@ RowLayout {
                     }
                 }
 
-                onSourceComponentChanged: {
-                    const newIndex = root.categories.findIndex(c => c.id === root.currentCategory);
-                    const direction = newIndex >= paneSurface._prevCategoryIndex ? 1 : -1;
-                    paneSurface._prevCategoryIndex = newIndex;
-
-                    opacity = 0;
-                    x = direction * 24;
-                    paneFlick.contentY = 0;
-                    slideInTimer.restart();
-                }
+                onSourceComponentChanged: paneSurface.beginSlide()
 
                 Timer {
                     id: slideInTimer
