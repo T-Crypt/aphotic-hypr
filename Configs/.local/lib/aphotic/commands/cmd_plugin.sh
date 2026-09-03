@@ -23,12 +23,24 @@
 
 _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 
-# Manifest v3 additions (see docs/archive/PLUGIN_SYSTEM.md): [owns] and
-# [ui.<surface-kind>] -- only `dashboard_tab` is shipped so far, the
-# natural extension point for a second UI-surface kind (a bar module, a
-# Settings pane) once a second plugin actually needs one. Both read as
-# empty/null on a v1 or v2 manifest, same "optional field, no error"
-# contract v2's category addition already established.
+# Manifest v3 additions (see docs/archive/PLUGIN_SYSTEM.md and
+# docs/PLUGIN_LAYER_MODEL.md): [owns] and [ui.<surface-kind>]. Two
+# surface kinds ship -- `dashboard_tab` and `notch_tile` -- and both
+# normalize into one `ui.surfaces` array in the registry, because the
+# shell loops over surfaces generically and must never branch on which
+# plugin or which kind it is reading. A third kind (a bar module, a
+# Settings pane) is one more line in _aphotic_plugin_ui_json and zero
+# lines in the shell. All of it reads as empty/null on a v1 or v2
+# manifest, same "optional field, no error" contract v2's category
+# addition already established.
+#
+# `requires_layer`/`requires_data` are the surface's activation gate,
+# declared by the plugin and evaluated by PluginRegistry.qml against a
+# fixed token vocabulary. A gate may name the profile layer that owns
+# the plugin, or a data source the plugin has nothing to read without.
+# It may not name another plugin: siblings under a profile are
+# independent, and a gate that could name one would make them a
+# dependency graph.
 _aphotic_plugin_owns_json() {
     local manifest="$1" keys ext
     keys="$(aphotic_toml_get_array "$manifest" owns config_keys | jq -R . | jq -s .)"
@@ -37,24 +49,43 @@ _aphotic_plugin_owns_json() {
         '{config_keys: $config_keys, external_config: $external_config}'
 }
 
-_aphotic_plugin_ui_json() {
-    local manifest="$1" id icon label component
-    id="$(aphotic_toml_get "$manifest" ui.dashboard_tab id)"
-    icon="$(aphotic_toml_get "$manifest" ui.dashboard_tab icon)"
-    label="$(aphotic_toml_get "$manifest" ui.dashboard_tab label)"
-    component="$(aphotic_toml_get "$manifest" ui.dashboard_tab component)"
+_aphotic_plugin_surface_json() {
+    local manifest="$1" section="$2" surface="$3" id icon label component layer data
+    component="$(aphotic_toml_get "$manifest" "$section" component)"
+    [[ -n "$component" ]] || return 1
 
-    if [[ -z "$component" ]]; then
-        echo 'null'
-        return 0
-    fi
+    id="$(aphotic_toml_get "$manifest" "$section" id)"
+    icon="$(aphotic_toml_get "$manifest" "$section" icon)"
+    label="$(aphotic_toml_get "$manifest" "$section" label)"
+    layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
+    data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
 
     jq -n \
+        --arg surface "$surface" \
         --arg id "${id:-}" \
         --arg icon "${icon:-}" \
         --arg label "${label:-}" \
         --arg component "$component" \
-        '{dashboard_tab: {id: $id, icon: $icon, label: $label, component: $component}}'
+        --arg requires_layer "${layer:-}" \
+        --arg requires_data "${data:-}" \
+        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data}'
+}
+
+_aphotic_plugin_ui_json() {
+    local manifest="$1" entries=() entry
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.dashboard_tab dashboard)"; then
+        entries+=("$entry")
+    fi
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.notch_tile notch)"; then
+        entries+=("$entry")
+    fi
+
+    if [[ ${#entries[@]} -eq 0 ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    printf '%s\n' "${entries[@]}" | jq -s '{surfaces: .}'
 }
 
 _aphotic_plugin_describe() {
@@ -417,9 +448,9 @@ _aphotic_plugin_registry_sync() {
 
 # Reverse of the above -- called from remove(). Deleting the registry
 # entry is what makes a ui-surface plugin's tab disappear from the
-# running shell (PluginRegistry.qml's dashboardTabs recomputes off this
-# same file, watched live via FileView) without the shell needing to
-# know anything else changed.
+# running shell (PluginRegistry.qml's surfaceRegistrations recomputes off
+# this same file, watched live via FileView) without the shell needing
+# to know anything else changed.
 _aphotic_plugin_registry_remove() {
     local name="$1" tmp
     aphotic_require jq || return 1
@@ -479,7 +510,7 @@ _aphotic_plugin_unlink_ui_module() {
 # plugins/) so that program calls back into Aphotic's shared agent_hook
 # pipeline on its own events. That external config has no concept of
 # Aphotic's `disabled` array, so wiring can't just be a one-time
-# install-time action the way `[ui.dashboard_tab]`'s symlink is --
+# install-time action the way `[ui.*]`'s symlink is --
 # `enable`/`disable` have to actively wire/unwire too, or a "disabled"
 # plugin would keep firing for real.
 #

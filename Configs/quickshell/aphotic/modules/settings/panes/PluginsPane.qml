@@ -187,7 +187,7 @@ ColumnLayout {
         required property string label
         property string description: ""
         property var capabilities: []
-        property var dashboardTab: null
+        property var surfaces: []
         property var configKeys: []
         property var externalConfig: []
 
@@ -278,24 +278,39 @@ ColumnLayout {
                     }
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.topMargin: Tokens.spacing.extraSmall
-                    visible: pluginRow.dashboardTab !== null
-                    spacing: Tokens.spacing.extraSmall
+                Repeater {
+                    model: pluginRow.surfaces
 
-                    MaterialIcon {
-                        text: pluginRow.dashboardTab?.icon ?? "dashboard"
-                        color: Colours.palette.m3onSurfaceVariant
-                        fontStyle: Tokens.font.icon.small
-                    }
+                    RowLayout {
+                        id: surfaceRow
 
-                    StyledText {
+                        required property var modelData
+
                         Layout.fillWidth: true
-                        elide: Text.ElideRight
-                        text: qsTr("Adds a Dashboard tab: %1").arg(pluginRow.dashboardTab?.label ?? "")
-                        color: Colours.palette.m3onSurfaceVariant
-                        font: Tokens.font.label.small
+                        Layout.topMargin: Tokens.spacing.extraSmall
+                        spacing: Tokens.spacing.extraSmall
+
+                        MaterialIcon {
+                            text: surfaceRow.modelData.icon || (surfaceRow.modelData.surface === "notch" ? "expand_more" : "dashboard")
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            elide: Text.ElideRight
+                            text: surfaceRow.modelData.surface === "notch" ? qsTr("Adds a notch tile: %1").arg(surfaceRow.modelData.label ?? "") : qsTr("Adds a Dashboard tab: %1").arg(surfaceRow.modelData.label ?? "")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+
+                        StyledText {
+                            visible: (surfaceRow.modelData.requires_layer ?? "") !== ""
+                            elide: Text.ElideRight
+                            text: qsTr("needs the %1 layer").arg(surfaceRow.modelData.requires_layer ?? "")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
                     }
                 }
 
@@ -423,7 +438,7 @@ ColumnLayout {
                     return installedRow.modelData.description;
                 }
                 capabilities: installedRow.modelData.capabilities ?? []
-                dashboardTab: installedRow.modelData.ui?.dashboard_tab ?? null
+                surfaces: installedRow.modelData.ui?.surfaces ?? []
                 configKeys: installedRow.modelData.owns?.config_keys ?? []
                 externalConfig: installedRow.modelData.owns?.external_config ?? []
 
@@ -620,7 +635,7 @@ ColumnLayout {
                             label: `${availableRow.modelData.display_name}  ·  v${availableRow.modelData.version}`
                             description: availableRow.modelData.description
                             capabilities: availableRow.modelData.capabilities ?? []
-                            dashboardTab: availableRow.modelData.ui?.dashboard_tab ?? null
+                            surfaces: availableRow.modelData.ui?.surfaces ?? []
 
                             StyledRect {
                                 implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
