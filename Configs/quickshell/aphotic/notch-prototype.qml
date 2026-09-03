@@ -40,6 +40,16 @@ ShellRoot {
             return `tile=${w.notch.tile}`;
         }
 
+        function tabs(): string {
+            const n = windows.instances[0].notch;
+            return JSON.stringify({
+                layers: InstallProfile.layers,
+                known: InstallProfile.known,
+                tiles: n.tiles.map(t => t.label),
+                switchable: n.switchable
+            });
+        }
+
         function state(): string {
             const w = windows.instances[0];
             return JSON.stringify({
