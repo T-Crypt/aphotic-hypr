@@ -16,15 +16,13 @@ Singleton {
 
     readonly property var _baseProviders: [
         { id: "ollama", label: "Ollama", requiresApiKey: false },
+        // Claude is deliberately here despite being a harness: it is both,
+        // and AgentRoles.qml carries that as an explicit `chat` flag rather
+        // than this list quietly disagreeing with the role classifier.
+        // Codex used to sit alongside it and does not belong -- it is a
+        // harness with no plain conversational mode, so servesChat() filters
+        // it out below (APHOTIC_UNIFIED_VISION.md §4.1).
         { id: "claude", label: "Claude", requiresApiKey: false },
-        // "Codex" is the CLI-subprocess sibling of "Claude" (its own login
-        // session, not an API key -- see codexAvailable below), distinct
-        // from "ChatGPT" below, which stays a real, separate raw-HTTP
-        // provider that genuinely needs an API key. Codex's own OAuth
-        // session isn't a usable bearer token for the public
-        // api.openai.com REST API any more than claude.ai's own session
-        // would be for api.anthropic.com -- conflating the two would have
-        // been architecturally wrong, not just a naming choice.
         { id: "codex", label: "Codex", requiresApiKey: false },
         { id: "gemini", label: "Gemini", requiresApiKey: true },
         { id: "chatgpt", label: "ChatGPT", requiresApiKey: true }
@@ -32,7 +30,36 @@ Singleton {
     // Pinned to the top of the list, and only present at all, once
     // installed -- there's no "not installed yet" pill to click; install.sh
     // is the only install path (NVIDIA-gated, opt-in), see AiConfig.qml.
-    readonly property var providers: AiConfig.assistantEnabled ? [{ id: "assistant", label: "Aphotic Assistant", requiresApiKey: false }].concat(root._baseProviders) : root._baseProviders
+    // Three independent filters, deliberately not merged:
+    //   - servesChat drops harnesses with no conversational mode (Codex).
+    //   - isEnabled drops anything an [agents.*] table turned off, which is
+    //     how the opt-in-only backends stay absent until asked for.
+    //   - the layer check drops every locally-hosted backend, keyed off
+    //     AgentRoles' own `locality` rather than a hardcoded id, so this
+    //     stays right as local providers are added. Claude, Gemini and
+    //     ChatGPT have no locality: they are a CLI session and two raw HTTP
+    //     APIs, none installed by the `ai` layer, so a base shell still
+    //     chats with all three.
+    //
+    // A local backend therefore needs BOTH the layer and its own opt-in --
+    // an [agents.unsloth] flag on a shell with no `ai` layer stays inert,
+    // because the layer is what would have installed anything to talk to.
+    readonly property var _chatProviders: root._baseProviders.filter(p => AgentRoles.servesChat(p.id) && AgentRoles.isEnabled(p.id) && (AgentRoles.localityFor(p.id) !== "local" || InstallProfile.aiEnabled))
+    // Layer-gated as well as install-gated: the Assistant is a local model
+    // served through Ollama, so turning the `ai` layer off has to take it
+    // with everything else locally-hosted, even on a machine where
+    // assistant.sh had already pulled the weights.
+    readonly property var providers: InstallProfile.aiEnabled && AiConfig.assistantEnabled ? [{ id: "assistant", label: "Aphotic Assistant", requiresApiKey: false }].concat(root._chatProviders) : root._chatProviders
+
+    // A provider id saved before it stopped being offered (or one an
+    // [agents.*] override has since turned off) must not leave the chat
+    // surfaces pointing at a pill that no longer exists -- every entry
+    // point resolves its stored selection through this.
+    function chatProviderOr(id: string): string {
+        if (root.providers.some(p => p.id === id))
+            return id;
+        return root.providers[0]?.id ?? "ollama";
+    }
 
     readonly property bool ollamaAvailable: AiConfig.ollamaHostConfigured
     readonly property bool assistantAvailable: AiConfig.assistantEnabled && AiConfig.ollamaHostConfigured

@@ -164,6 +164,18 @@ PYEOF
 # install over a pull failure -- the Assistant just stays unconfigured
 # until the user runs `ollama pull <model>` themselves.
 setup_assistant() {
+  # The `ai` layer is a hard prerequisite, not a nicety: it is what installs
+  # Ollama, and the shell now drops every locally-hosted provider (the
+  # Assistant included) when the layer is off, so an Assistant installed
+  # without it would pull several GB for a pill that never renders.
+  # resolve_assistant already adds the layer for every path that sets
+  # ASSISTANT=true, so reaching here without it means something upstream
+  # changed -- refuse rather than pull the model anyway.
+  if [[ ",$LAYERS," != *",ai,"* ]]; then
+    echo -e "$CER - The Aphotic Assistant needs the 'ai' layer, which isn't enabled; skipping it."
+    return 1
+  fi
+
   echo -e "$CNT - Setting up the Aphotic Assistant..."
   render_assistant_prompt "$PROFILE" "$LAYERS" "$THEME"
 
