@@ -63,6 +63,32 @@ ColumnLayout {
 
     spacing: Tokens.spacing.extraSmall
 
+    // One cell width for all three, measured off the widest string any of
+    // them can ever hold, so a reading crossing 9%->10% cannot shove its
+    // neighbours sideways.
+    TextMetrics {
+        id: metricCell
+
+        font: Tokens.font.label.small
+        text: "GPU 100%"
+    }
+
+    component Metric: StyledText {
+        required property string label
+        required property real perc
+
+        // An equal share each, so the three sit flush to both margins and
+        // evenly apart. preferredWidth alongside fillWidth is what makes
+        // the shares equal rather than proportional to each string, which
+        // is also why a reading crossing 9%->10% cannot shove its
+        // neighbours sideways.
+        Layout.fillWidth: true
+        Layout.preferredWidth: metricCell.width
+        text: `${label} ${Math.round(perc * 100)}%`
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.label.small
+    }
+
     component SortChip: StyledRect {
         id: sortChip
 
@@ -94,16 +120,45 @@ ColumnLayout {
         }
     }
 
+    // Its own row rather than sharing one with the sort chips: three
+    // readings and three chips came to 445px against 388 of content, which
+    // is what was eliding "GPU 42%" down to "GP...". Splitting them costs
+    // one text line of height and leaves both rows with real slack.
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.small
+
+        Metric {
+            label: qsTr("CPU")
+            perc: SystemUsage.cpuPerc
+            horizontalAlignment: Text.AlignLeft
+        }
+
+        Metric {
+            label: qsTr("RAM")
+            perc: SystemUsage.memPerc
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        // Only where there is a live figure: gpuStatsAvailable is false
+        // when no vendor tool is installed, and a hardcoded "GPU 0%" beside
+        // two real meters is worse than no segment at all. A layout skips
+        // an invisible item entirely, so the remaining two re-spread across
+        // the full width rather than leaving a hole. It ticks at
+        // SystemUsage's fast cadence, which Notch.qml opts into for exactly
+        // as long as this tile is up.
+        Metric {
+            visible: SystemUsage.gpuStatsAvailable
+            label: qsTr("GPU")
+            perc: SystemUsage.gpuPerc
+            horizontalAlignment: Text.AlignRight
+        }
+    }
+
     RowLayout {
         Layout.fillWidth: true
         Layout.bottomMargin: Tokens.spacing.extraSmall
         spacing: Tokens.spacing.extraSmall
-
-        StyledText {
-            text: qsTr("CPU %1%  ·  RAM %2%").arg(Math.round(SystemUsage.cpuPerc * 100)).arg(Math.round(SystemUsage.memPerc * 100))
-            color: Colours.palette.m3onSurfaceVariant
-            font: Tokens.font.label.medium
-        }
 
         Item {
             Layout.fillWidth: true

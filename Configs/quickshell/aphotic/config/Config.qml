@@ -164,6 +164,12 @@ QtObject {
     readonly property QtObject dashboard: QtObject {
         readonly property bool enabled: true
         readonly property int resourceUpdateInterval: 2000
+        readonly property int detailUpdateInterval: 30000
+        // What a surface asking for fast GPU sampling gets instead. Only
+        // the GPU poll moves -- CPU temperature genuinely does not need
+        // this, and `sensors -j` costs more per call than nvidia-smi's
+        // utilisation query does (42ms vs 26ms, measured).
+        readonly property int detailFastUpdateInterval: 2000
 
         readonly property QtObject performance: QtObject {
             readonly property bool showBattery: true

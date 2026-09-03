@@ -11,6 +11,9 @@ import qs.services
 ColumnLayout {
     id: root
 
+    required property string slotLabel
+    required property string slotIcon
+
     spacing: Tokens.spacing.small
 
     Item {
@@ -20,14 +23,14 @@ ColumnLayout {
 
     MaterialIcon {
         Layout.alignment: Qt.AlignHCenter
-        text: "extension"
+        text: root.slotIcon
         color: Colours.palette.m3onSurfaceVariant
         fontStyle: Tokens.font.icon.extraLarge
     }
 
     StyledText {
         Layout.alignment: Qt.AlignHCenter
-        text: qsTr("Tile slot reserved")
+        text: qsTr("%1 reserved").arg(root.slotLabel)
         font: Tokens.font.title.medium
     }
 

@@ -60,6 +60,23 @@ Singleton {
         root._watchers = Math.max(0, root._watchers - 1);
     }
 
+    // A second level on top of detailed monitoring, for a surface showing
+    // GPU utilisation as a live meter next to cpuPerc/memPerc -- those
+    // come off the 2s base poll, and a GPU figure a full 30s stale
+    // standing beside them does not read as slow, it reads as broken.
+    // Opt-in so the surfaces that were happy with 30s (the Command
+    // Centre's performance tab, Settings' System pane, the bar's
+    // resources popout) keep paying exactly what they paid before.
+    readonly property bool fastMonitoring: root._fastWatchers > 0
+
+    function beginFastMonitoring(): void {
+        root._fastWatchers = root._fastWatchers + 1;
+    }
+
+    function endFastMonitoring(): void {
+        root._fastWatchers = Math.max(0, root._fastWatchers - 1);
+    }
+
     // Only the selected GPU. Polling every detected controller kept a
     // second card's reading warm for the moment the user cycles the
     // selector, at the cost of a process per card on every tick forever
@@ -88,6 +105,7 @@ Singleton {
     property real _memTotal: 0
     property var _disks: []
     property int _watchers: 0
+    property int _fastWatchers: 0
 
     property var _prevCpu: null
 
@@ -387,14 +405,23 @@ Singleton {
     // gate going true fires a tick immediately rather than leaving the
     // card blank for up to 30s.
     Timer {
-        interval: 30000
+        interval: Config.dashboard.detailUpdateInterval
         running: root.detailedMonitoring
         repeat: true
         triggeredOnStart: true
-        onTriggered: {
-            tempProc.running = true;
-            root._pollGpu();
-        }
+        onTriggered: tempProc.running = true
+    }
+
+    // Split out of the timer above rather than sharing it: the two used to
+    // tick together, so making the GPU poll fast enough to sit beside a 2s
+    // CPU meter would have dragged `sensors -j` along at the same rate for
+    // a reading that moves in single degrees over minutes.
+    Timer {
+        interval: root.fastMonitoring ? Config.dashboard.detailFastUpdateInterval : Config.dashboard.detailUpdateInterval
+        running: root.detailedMonitoring
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root._pollGpu()
     }
 
     Component.onCompleted: {

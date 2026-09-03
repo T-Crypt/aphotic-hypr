@@ -14,9 +14,15 @@ StyledRect {
     enum Tile {
         Idle = 0,
         Processes,
-        Placeholder
+        Slot2,
+        Slot3,
+        Slot4
     }
 
+    // Three reserved slots, named for what they are rather than for
+    // content nobody has written: identical "Reserved" labels would make
+    // the one thing this strip exists to demonstrate -- that you can tell
+    // where you are and move between four of them -- impossible to see.
     readonly property var tiles: [
         {
             tile: Notch.Processes,
@@ -24,11 +30,24 @@ StyledRect {
             label: qsTr("Processes")
         },
         {
-            tile: Notch.Placeholder,
+            tile: Notch.Slot2,
+            icon: "terminal",
+            label: qsTr("Slot 2")
+        },
+        {
+            tile: Notch.Slot3,
+            icon: "hub",
+            label: qsTr("Slot 3")
+        },
+        {
+            tile: Notch.Slot4,
             icon: "extension",
-            label: qsTr("Reserved")
+            label: qsTr("Slot 4")
         }
     ]
+
+    readonly property var activeTile: root.tiles.find(t => t.tile === root.shownTile) ?? null
+    readonly property bool processesLive: root.expanded && root.shownTile === Notch.Processes
 
     property int tile: Notch.Idle
     readonly property bool expanded: root.tile !== Notch.Idle
@@ -92,9 +111,22 @@ StyledRect {
     }
 
     LazyLoader {
-        active: root.expanded && root.shownTile === Notch.Processes
+        active: root.processesLive
 
         ProcessUsageWatch {}
+    }
+
+    // Gated here rather than mounted inside NotchProcessTile: the tile
+    // outlives a collapse (shownTile latches so the body still reports a
+    // height through the shrink), so a watch owned by the tile would keep
+    // polling for as long as Processes was the last tile visited. Both
+    // watches hang off the same gate for that reason.
+    LazyLoader {
+        active: root.processesLive
+
+        SystemUsageWatch {
+            fast: true
+        }
     }
 
     // The body is laid out at a constant contentWidth (see above) while the
@@ -243,7 +275,7 @@ StyledRect {
                         spacing: Tokens.spacing.small
 
                         MaterialIcon {
-                            text: root.tiles.find(t => t.tile === root.shownTile)?.icon ?? "monitoring"
+                            text: root.activeTile?.icon ?? "monitoring"
                             color: Colours.palette.m3primaryOnSurface
                             fontStyle: Tokens.font.icon.small
                             fill: 1
@@ -252,7 +284,7 @@ StyledRect {
                         StyledText {
                             id: title
 
-                            text: root.tiles.find(t => t.tile === root.shownTile)?.label ?? ""
+                            text: root.activeTile?.label ?? ""
                             font: Tokens.font.title.builders.medium.weight(Font.Medium).build()
                         }
                     }
@@ -285,7 +317,7 @@ StyledRect {
                 Layout.fillWidth: true
                 Layout.preferredHeight: tileLoader.item?.implicitHeight ?? 0
 
-                sourceComponent: root.shownTile === Notch.Placeholder ? placeholderComp : processComp
+                sourceComponent: root.shownTile === Notch.Processes ? processComp : placeholderComp
             }
 
             RowLayout {
@@ -302,7 +334,7 @@ StyledRect {
                         required property var modelData
                         readonly property bool active: chip.modelData.tile === root.shownTile
 
-                        implicitWidth: chipLabel.implicitWidth + chipIcon.implicitWidth + Tokens.padding.medium * 2 + Tokens.spacing.extraSmall
+                        implicitWidth: chipLabel.implicitWidth + chipIcon.implicitWidth + Tokens.padding.small * 2 + Tokens.spacing.extraSmall
                         implicitHeight: 26
                         radius: Tokens.rounding.full
                         color: chip.active ? Colours.palette.m3primary : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
@@ -354,6 +386,9 @@ StyledRect {
     }
     Component {
         id: placeholderComp
-        NotchPlaceholderTile {}
+        NotchPlaceholderTile {
+            slotLabel: root.activeTile?.label ?? ""
+            slotIcon: root.activeTile?.icon ?? "extension"
+        }
     }
 }
