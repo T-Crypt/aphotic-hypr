@@ -53,6 +53,10 @@ https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
 <td width="50%"><p align="center"><img src="./assets/screenshots/bar-dock.png" width="440"><br><sub>Bar: Dock style</sub></p></td>
 </tr>
 <tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-taskbar.png" width="440"><br><sub>Bar: Taskbar style — window list, grouped by app</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-minimal.png" width="440"><br><sub>Bar: Minimal style — thin strip, DND indicator only</sub></p></td>
+</tr>
+<tr>
 <td width="50%"><p align="center"><img src="./assets/screenshots/workspaces.png" width="440"><br><sub>Workspaces</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/launcher.png" width="440"><br><sub>Launcher</sub></p></td>
 </tr>
@@ -66,11 +70,32 @@ https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
 
 <table>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard.png" width="440"><br><sub>Dashboard</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard.png" width="440"><br><sub>Dashboard — clock, calendar, media, focus timer, weather</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/performance.png" width="440"><br><sub>Performance</sub></p></td>
 </tr>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/workspace-profiles.png" width="440"><br><sub>Workspace Profiles</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard-wallpaper.png" width="440"><br><sub>Wallpapers tab — the active theme's own set</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard-chat.png" width="440"><br><sub>AI Chat tab — provider and model picker</sub></p></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary><b>Agents &amp; plugins</b></summary>
+<br>
+
+<table>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/agent-graph.png" width="440"><br><sub>Agent Graph — every tool call as the agent makes it</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/no-agent-graph-dashboard-modular.png" width="440"><br><sub>The same Command Center without the plugin — the tab is simply gone</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/agent-bar-modular.png" width="440"><br><sub>Agents popout — running sessions and today's token use</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/agent-bar-modular-codex.png" width="440"><br><sub>Middle-click the bar icon to switch harness</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/plugins.png" width="440"><br><sub>Plugins — browse, install, enable, remove</sub></p></td>
 <td width="50%"></td>
 </tr>
 </table>
@@ -100,12 +125,20 @@ https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
 
 <table>
 <tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/theme.png" width="440"><br><sub>Appearance — theme, wallpaper, slideshow</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/wallpaper-picker.png" width="440"><br><sub>Wallpaper Picker</sub></p></td>
-<td width="50%"><p align="center"><img src="./assets/screenshots/theme-creator.png" width="440"><br><sub>Theme Creator</sub></p></td>
 </tr>
 <tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/theme-creator.png" width="440"><br><sub>Theme Creator</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/personalization.png" width="440"><br><sub>Personalization</sub></p></td>
-<td width="50%"><p align="center"><img src="./assets/screenshots/plugins.png" width="440"><br><sub>Plugins</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-style.png" width="440"><br><sub>Bar — style, visibility, orientation</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/workspace-profiles.png" width="440"><br><sub>Workspace Profiles</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/system.png" width="440"><br><sub>System — doctor, dependency and package checks</sub></p></td>
+<td width="50%"></td>
 </tr>
 </table>
 
