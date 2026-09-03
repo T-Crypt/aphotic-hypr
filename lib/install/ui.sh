@@ -13,6 +13,9 @@ set -euo pipefail
 # argument -- unlike `echo -e` -- never interprets `\e` itself.
 _ui_action_tag() { printf '%b' "${CAC:-[ACTION]}"; }
 
+# Where every "please report this" path in the installer points.
+APHOTIC_ISSUES_URL="${APHOTIC_ISSUES_URL:-https://github.com/T-Crypt/Aphotic-Hypr/issues}"
+
 # Keep every <prompt> here to one short line and echo any explanation
 # above the call instead: `read -e` hands the prompt to readline, which
 # redraws a prompt longer than the terminal width as a truncated "<...end

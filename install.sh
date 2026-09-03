@@ -294,9 +294,15 @@ main() {
     layer_args=$(IFS=,; echo "${layer_paths[*]}")
   fi
 
-  local main_pkgs prep_pkgs
+  local main_pkgs prep_pkgs base_main_pkgs base_prep_pkgs
   main_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --custom-apps "$ROOT_DIR/profiles/custom_apps.lst" --field main) || { echo -e "$CER - Failed to resolve package list (check --profile/--with values)"; exit 1; }
   prep_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --field prep) || { echo -e "$CER - Failed to resolve package list (check --profile/--with values)"; exit 1; }
+  # The same two fields resolved from the base profile alone -- no layers,
+  # no custom_apps.lst. That set is the shell itself, and a failure in it
+  # still aborts; everything the merged lists add on top of it is an opt-in
+  # extra whose failure is reported and skipped (install_package_list).
+  base_main_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --field main) || { echo -e "$CER - Failed to resolve the base package list for $PROFILE"; exit 1; }
+  base_prep_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --field prep) || { echo -e "$CER - Failed to resolve the base package list for $PROFILE"; exit 1; }
 
   if [[ "$DRY_RUN" == "1" ]]; then
     echo -e "$CNT - [dry-run] plan:"
@@ -315,9 +321,9 @@ main() {
     fi
     echo "  would run: sudo pacman -Syu --noconfirm"
     echo "  prep packages:"
-    echo "$prep_pkgs" | sed 's/^/    - /'
+    print_package_plan "$prep_pkgs" "$base_prep_pkgs"
     echo "  main packages:"
-    echo "$main_pkgs" | sed 's/^/    - /'
+    print_package_plan "$main_pkgs" "$base_main_pkgs"
     if [[ "$ISNVIDIA" == "true" ]]; then
       echo "  would install Nvidia driver: matching kernel headers + nvidia-open-dkms"
       echo "  would regenerate initramfs/UKI (mkinitcpio -P)"
@@ -402,7 +408,7 @@ main() {
   echo -e "$CNT - Syncing package databases and upgrading the system..."
   sudo pacman -Syu --noconfirm &>> "$INSTLOG" || { echo -e "$CER - Failed to sync/upgrade the system package database. Re-run 'sudo pacman -Syu' by hand, resolve whatever it reports, then re-run install.sh."; exit 1; }
 
-  install_package_list "$prep_pkgs"
+  install_package_list "$prep_pkgs" "$base_prep_pkgs"
 
   setup_nvidia
   # Nvidia support has been built into the mainline "hyprland" package for a
@@ -410,7 +416,7 @@ main() {
   # patches is gone, so both paths install the same package.
   install_software hyprland
 
-  install_package_list "$main_pkgs"
+  install_package_list "$main_pkgs" "$base_main_pkgs"
 
   if [[ "$ASSISTANT" == "true" ]]; then
     setup_assistant || echo -e "$CWR - Aphotic Assistant setup did not finish; see $INSTLOG. The rest of the install continues."
@@ -457,10 +463,14 @@ main() {
   echo -e "  Assistant:     $ASSISTANT"
   echo -e "  Configs copied: $([[ "$CFG_COPIED" == "1" ]] && echo yes || echo no)"
   echo -e "  Config saved:  $APHOTIC_TOML"
+  if ((${#FAILED_OPTIONAL_PACKAGES[@]} > 0)); then
+    echo -e "  Failed (optional): ${#FAILED_OPTIONAL_PACKAGES[@]} -- listed below"
+  fi
   if [[ ",$LAYERS," == *",exploit-"* ]]; then
     echo -e "  Exploit disclaimer: $([[ -f "$EXPLOIT_ACK_FILE" ]] && echo "acknowledged, see $EXPLOIT_ACK_FILE" || echo "not recorded")"
   fi
   echo -e "$COK - Install complete."
+  report_failed_optional_packages
 
   "$HOME/.local/bin/aphotic" whatsnew &>> "$INSTLOG" || true
 
@@ -472,6 +482,10 @@ main() {
   offer_start_hyprland
 }
 
+# Without this, Ctrl+C mid-install lands on whichever package is running
+# and -- now that an optional failure is skipped rather than fatal -- the
+# run would just walk on to the next package.
+trap 'echo -e "\n$CWR - Interrupted -- stopping the install. Nothing further will be installed."; exit 130' INT
 trap 'exit_code=$?; notice_exploit_failure "$exit_code"; exit "$exit_code"' EXIT
 
 main "$@"
