@@ -164,6 +164,12 @@ QtObject {
     readonly property QtObject dashboard: QtObject {
         readonly property bool enabled: true
         readonly property int resourceUpdateInterval: 2000
+        readonly property int detailUpdateInterval: 30000
+        // What a surface asking for fast GPU sampling gets instead. Only
+        // the GPU poll moves -- CPU temperature genuinely does not need
+        // this, and `sensors -j` costs more per call than nvidia-smi's
+        // utilisation query does (42ms vs 26ms, measured).
+        readonly property int detailFastUpdateInterval: 2000
 
         readonly property QtObject performance: QtObject {
             readonly property bool showBattery: true
@@ -173,6 +179,25 @@ QtObject {
             readonly property bool showStorage: true
             readonly property bool showNetwork: true
         }
+    }
+
+    readonly property QtObject notch: QtObject {
+        readonly property bool enabled: true
+
+        // Collapsed/expanded are the notch's own inner sizes;
+        // expandedWidth and maxHeight also bound the STATIC layer-shell
+        // surface it draws into (see modules/notch/NotchWindow.qml).
+        // Content wanting more than that is clipped by the compositor
+        // rather than growing the window, so a new tile needing room
+        // raises these, not just its own size.
+        readonly property int collapsedWidth: 132
+        readonly property int collapsedHeight: 26
+        readonly property int expandedWidth: 420
+        readonly property int maxHeight: 340
+
+        readonly property int processUpdateInterval: 1500
+        readonly property int gpuUpdateInterval: 3000
+        readonly property int processCount: 6
     }
 
     readonly property QtObject launcher: QtObject {

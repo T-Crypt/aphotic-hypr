@@ -21,6 +21,7 @@ singleton PinnedSnippets 1.0 PinnedSnippets.qml
 singleton PkgSearch 1.0 PkgSearch.qml
 singleton PluginRegistry 1.0 PluginRegistry.qml
 singleton Pomodoro 1.0 Pomodoro.qml
+singleton ProcessUsage 1.0 ProcessUsage.qml
 singleton SessionLockState 1.0 SessionLockState.qml
 singleton Settings 1.0 Settings.qml
 singleton SystemUsage 1.0 SystemUsage.qml

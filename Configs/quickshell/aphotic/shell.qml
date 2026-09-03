@@ -5,6 +5,7 @@ import qs.components
 import qs.config
 import qs.modules.bar
 import qs.modules.launcher
+import qs.modules.notch
 import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.lock
@@ -100,6 +101,12 @@ ShellRoot {
         DockWindow {
             screenState: root.screenStateFor(modelData)
         }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        NotchWindow {}
     }
 
     Variants {

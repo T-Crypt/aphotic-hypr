@@ -9,6 +9,7 @@ DepthLayer 1.0 DepthLayer.qml
 KbCodeField 1.0 KbCodeField.qml
 Logo 1.0 Logo.qml
 MaterialIcon 1.0 MaterialIcon.qml
+ProcessUsageWatch 1.0 ProcessUsageWatch.qml
 ScreenState 1.0 ScreenState.qml
 SettingsGroup 1.0 SettingsGroup.qml
 SettingsPresetRow 1.0 SettingsPresetRow.qml
