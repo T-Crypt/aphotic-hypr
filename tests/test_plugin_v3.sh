@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tests/test_plugin_v3.sh
-# Manifest v3: [owns]/[ui.dashboard_tab] parsing, and the install/remove
+# Manifest v3: [owns]/[ui.*] parsing, and the install/remove
 # registry sync that lets a ui-surface plugin's UI drop out of the shell
 # symmetrically. See docs/archive/PLUGIN_SYSTEM.md "Plugin manifest v3".
 set -euo pipefail
@@ -43,8 +43,17 @@ id = "scratchTab"
 icon = "extension"
 label = "Scratch Tab"
 component = "qml/ScratchTab.qml"
+requires_layer = "ai"
+requires_data = "harness"
+
+[ui.notch_tile]
+id = "scratchTile"
+icon = "monitoring"
+label = "Scratch Tile"
+component = "qml/ScratchTile.qml"
 EOF
 echo "// placeholder" > "$PLUGDIR/qml/ScratchTab.qml"
+echo "// placeholder" > "$PLUGDIR/qml/ScratchTile.qml"
 
 # A second, v1-shaped plugin (no [owns]/[ui] at all) -- must describe
 # cleanly with empty owns/null ui, not error.
@@ -67,8 +76,15 @@ EOF
 described="$(_aphotic_plugin_describe scratch-ui)"
 [[ "$(echo "$described" | jq -r '.owns.config_keys | length')" -eq 2 ]] || fail "expected 2 owned config keys"
 [[ "$(echo "$described" | jq -r '.owns.config_keys[1]')" == "scratchAccent" ]] || fail "expected second config key to be scratchAccent"
-[[ "$(echo "$described" | jq -r '.ui.dashboard_tab.id')" == "scratchTab" ]] || fail "expected dashboard_tab.id to be scratchTab"
-[[ "$(echo "$described" | jq -r '.ui.dashboard_tab.component')" == "qml/ScratchTab.qml" ]] || fail "expected dashboard_tab.component to be qml/ScratchTab.qml"
+[[ "$(echo "$described" | jq -r '.ui.surfaces | length')" == "2" ]] || fail "expected both declared surfaces to be described"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[0].surface')" == "dashboard" ]] || fail "expected the first surface to be the dashboard tab"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[0].id')" == "scratchTab" ]] || fail "expected dashboard surface id to be scratchTab"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[0].component')" == "qml/ScratchTab.qml" ]] || fail "expected dashboard surface component to be qml/ScratchTab.qml"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[0].requires_layer')" == "ai" ]] || fail "expected the declared requires_layer to survive into the description"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[0].requires_data')" == "harness" ]] || fail "expected the declared requires_data to survive into the description"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[1].surface')" == "notch" ]] || fail "expected the second surface to be the notch tile"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[1].id')" == "scratchTile" ]] || fail "expected notch surface id to be scratchTile"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[1].requires_layer')" == "" ]] || fail "expected an undeclared gate to read as empty, not null"
 
 # --- describe: v1-shaped plugin degrades cleanly, not an error ---
 
@@ -84,7 +100,8 @@ _aphotic_plugin_registry_sync scratch-ui
 
 reg="$(jq -c '.installed["scratch-ui"]' "$APHOTIC_PLUGINS_STATE_FILE")"
 [[ "$(echo "$reg" | jq -r '.version')" == "2.0.0" ]] || fail "expected registry entry version 2.0.0"
-[[ "$(echo "$reg" | jq -r '.ui.dashboard_tab.component')" == "qml/ScratchTab.qml" ]] || fail "expected registry entry to carry the dashboard_tab component path"
+[[ "$(echo "$reg" | jq -r '.ui.surfaces[0].component')" == "qml/ScratchTab.qml" ]] || fail "expected registry entry to carry the dashboard surface component path"
+[[ "$(echo "$reg" | jq -r '.ui.surfaces[1].surface')" == "notch" ]] || fail "expected registry entry to carry the notch surface too"
 
 # --- registry symmetry: remove clears the entry, install/enable state untouched ---
 
@@ -105,7 +122,7 @@ git -C "$APHOTIC_PLUGINS_REPO" init -q 2>/dev/null || true
 
 _aphotic_plugin_install scratch-ui2 false >/dev/null
 [[ -d "$(_aphotic_plugin_dir scratch-ui2)" ]] || fail "expected scratch-ui2 to be installed on disk"
-[[ "$(jq -r '.installed["scratch-ui2"].ui.dashboard_tab.id // "missing"' "$APHOTIC_PLUGINS_STATE_FILE")" == "scratchTab" ]] || fail "expected install() to have synced scratch-ui2's registry entry"
+[[ "$(jq -r '.installed["scratch-ui2"].ui.surfaces[0].id // "missing"' "$APHOTIC_PLUGINS_STATE_FILE")" == "scratchTab" ]] || fail "expected install() to have synced scratch-ui2's registry entry"
 
 _aphotic_plugin_remove scratch-ui2 >/dev/null
 [[ -d "$(_aphotic_plugin_dir scratch-ui2)" ]] && fail "expected scratch-ui2's install dir to be gone after remove()"
