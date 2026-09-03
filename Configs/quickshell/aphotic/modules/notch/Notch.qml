@@ -16,35 +16,54 @@ StyledRect {
         Processes,
         Slot2,
         Slot3,
-        Slot4
+        Slot4,
+        Dev
     }
 
     // Three reserved slots, named for what they are rather than for
     // content nobody has written: identical "Reserved" labels would make
     // the one thing this strip exists to demonstrate -- that you can tell
     // where you are and move between four of them -- impossible to see.
-    readonly property var tiles: [
-        {
-            tile: Notch.Processes,
-            icon: "monitoring",
-            label: qsTr("Processes")
-        },
-        {
+    readonly property var tiles: {
+        const list = [
+            {
+                tile: Notch.Processes,
+                icon: "monitoring",
+                label: qsTr("Processes")
+            }
+        ];
+        // Dev takes the second slot outright when its layer is installed,
+        // and is absent from the strip entirely when it is not -- not
+        // present-and-empty, which is the rule InstallProfile exists to
+        // enforce.
+        list.push(InstallProfile.devEnabled ? {
+            tile: Notch.Dev,
+            icon: "code",
+            label: qsTr("Dev")
+        } : {
             tile: Notch.Slot2,
             icon: "terminal",
             label: qsTr("Slot 2")
-        },
-        {
+        });
+        list.push({
             tile: Notch.Slot3,
             icon: "hub",
             label: qsTr("Slot 3")
-        },
-        {
+        });
+        list.push({
             tile: Notch.Slot4,
             icon: "extension",
             label: qsTr("Slot 4")
-        }
-    ]
+        });
+        return list;
+    }
+
+    onTilesChanged: {
+        if (!root.tiles.some(t => t.tile === root.shownTile))
+            root.shownTile = Notch.Processes;
+        if (root.tile !== Notch.Idle && !root.tiles.some(t => t.tile === root.tile))
+            root.tile = Notch.Processes;
+    }
 
     readonly property var activeTile: root.tiles.find(t => t.tile === root.shownTile) ?? null
     readonly property bool processesLive: root.expanded && root.shownTile === Notch.Processes
@@ -317,7 +336,13 @@ StyledRect {
                 Layout.fillWidth: true
                 Layout.preferredHeight: tileLoader.item?.implicitHeight ?? 0
 
-                sourceComponent: root.shownTile === Notch.Processes ? processComp : placeholderComp
+                sourceComponent: {
+                    if (root.shownTile === Notch.Processes)
+                        return processComp;
+                    if (root.shownTile === Notch.Dev)
+                        return devComp;
+                    return placeholderComp;
+                }
             }
 
             RowLayout {
@@ -383,6 +408,10 @@ StyledRect {
     Component {
         id: processComp
         NotchProcessTile {}
+    }
+    Component {
+        id: devComp
+        NotchDevTile {}
     }
     Component {
         id: placeholderComp

@@ -1,4 +1,5 @@
 module qs.services.profile
+singleton DevProfile 1.0 DevProfile.qml
 singleton ProfileEngine 1.0 ProfileEngine.qml
 singleton ProfileEvents 1.0 ProfileEvents.qml
 singleton ResourceEngine 1.0 ResourceEngine.qml

@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.notch
 import qs.services
+import qs.services.profile
 
 // Isolated entry point for the notch prototype -- `qs -p
 // Configs/quickshell/aphotic/notch-prototype.qml` brings up the notch and
@@ -59,6 +60,28 @@ ShellRoot {
                 gpuAvailable: ProcessUsage.gpuAvailable,
                 top: ProcessUsage.processes.slice(0, 6).map(p => `${p.name} cpu=${p.cpu.toFixed(1)}% rss=${Math.round(p.rssKib / 1024)}M vram=${p.gpuMib ?? "-"}`)
             });
+        }
+
+        function dev(): string {
+            return JSON.stringify({
+                enabled: DevProfile.enabled,
+                active: DevProfile.active,
+                name: DevProfile.activeProjectName,
+                path: DevProfile.activeProjectPath,
+                phase: ProfileEngine.phaseOf("dev"),
+                registered: Object.keys(ProfileEngine.profiles),
+                snapshotParts: ProfileEngine.profiles["dev"]?.snapshot ?? null,
+                captured: StateSnapshot.capturedIds,
+                capturedParts: StateSnapshot.snapshots["dev"]?.parts ?? null,
+                capturedKeys: Object.keys(StateSnapshot.snapshots["dev"] ?? ({})),
+                devClaims: ResourceEngine.claimsOf("dev"),
+                tiles: windows.instances[0].notch.tiles.map(t => t.label)
+            });
+        }
+
+        function open(path: string): string {
+            DevProfile.projectOpened(path);
+            return `${DevProfile.activeProjectName} / ${ProfileEngine.phaseOf("dev")}`;
         }
 
         function sort(key: string): string {
