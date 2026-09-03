@@ -36,7 +36,22 @@ PanelWindow {
         Keys.onEscapePressed: root.screenState.dashboard = false
     }
 
+    // Declared before the content so it sits under it: children of
+    // DashboardContent still take their own clicks, and this only catches
+    // what falls through the gaps between them. Without it any click that
+    // misses an interactive control -- card padding, the run strip's
+    // overflow indicator -- reaches the dismiss handler above and closes
+    // the dashboard from inside its own border.
+    MouseArea {
+        anchors.centerIn: parent
+        width: content.width
+        height: content.height
+        acceptedButtons: Qt.AllButtons
+    }
+
     DashboardContent {
+        id: content
+
         anchors.centerIn: parent
         screenState: root.screenState
     }
