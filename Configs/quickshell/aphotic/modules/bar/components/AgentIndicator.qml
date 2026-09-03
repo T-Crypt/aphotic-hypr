@@ -71,7 +71,7 @@ Item {
 
         anchors.centerIn: parent
         animate: true
-        text: root.provider.icon
+        text: root.provider.icon ?? ""
         color: root.colour
         fill: root.badgeCount > 0 ? 1 : 0
     }

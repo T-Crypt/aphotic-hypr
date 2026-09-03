@@ -188,15 +188,23 @@ deploy_user_configs() {
   fi
   echo -e "$CNT - Enabling the SDDM background sync timer..."
   systemctl --user enable --now aphotic-sddm-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-sddm-sync.timer; the SDDM login background will only update via the per-theme-change best-effort call, not this periodic catch-up. Enable manually with 'systemctl --user enable --now aphotic-sddm-sync.timer'."
-  # Harness hooks (Claude Code, Codex, OpenCode) are no longer wired by
-  # install.sh at all -- each is a harness-hook plugin (claude-hooks/
-  # codex-hooks/opencode-hooks in aphotic-plugins) a user opts into
-  # per docs/archive/PLUGIN_SYSTEM.md, same install/enable/disable/remove
-  # verbs as any other plugin, matching Agent Graph's own extraction. Only
-  # point at that here, once, when the ai layer is actually on -- install.sh
-  # itself never touches a harness's own config file anymore.
-  if [[ "$CONFIG_ONLY" != "1" || "$LAYERS_KNOWN" == "1" ]] && layer_selected "ai"; then
-    echo -e "$CNT - AI layer enabled. For live per-session agent tracking in the bar/dashboard, install a harness-hook plugin for whichever coding harness you use: aphotic plugin install claude-hooks (or codex-hooks / opencode-hooks). See 'aphotic plugin list --remote'."
+  # install.sh installs NO plugins, deliberately (docs/PLUGIN_LAYER_MODEL.md):
+  # a layer puts the tooling on the machine and unlocks *discovery* of that
+  # layer's plugins; installing one stays an explicit act. Settings ->
+  # Plugins filters its available list to the layers actually enabled here,
+  # so this points at that rather than naming plugins install.sh would then
+  # have to keep in step with the catalogue. Harness hooks (claude-hooks/
+  # codex-hooks/opencode-hooks) are just one case of it -- install.sh has
+  # not touched a harness's own config file since they became plugins.
+  if [[ "$CONFIG_ONLY" != "1" || "$LAYERS_KNOWN" == "1" ]]; then
+    local _layer _hinted=0
+    for _layer in ai dev gaming; do
+      layer_selected "$_layer" || continue
+      _hinted=1
+    done
+    if [[ "$_hinted" == "1" ]]; then
+      echo -e "$CNT - Your enabled layers have optional plugins available (agent tracking, notch tiles, the Gaming profile, hardware advice). Nothing was installed for you: browse them in Settings -> Plugins, or run 'aphotic plugin list --remote'. 'aphotic doctor' reports any layer whose plugin you have not installed yet."
+    fi
   fi
 
   # Make sure `aphotic` (and anything else under ~/.local/bin) resolves on

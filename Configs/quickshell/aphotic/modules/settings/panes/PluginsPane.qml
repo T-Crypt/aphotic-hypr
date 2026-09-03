@@ -36,11 +36,74 @@ ColumnLayout {
         { id: "security", icon: "security", label: qsTr("Security Tools") },
         { id: "mobile", icon: "smartphone", label: qsTr("Mobile Bridge") },
         { id: "ai", icon: "smart_toy", label: qsTr("AI Dev") },
+        { id: "gaming", icon: "sports_esports", label: qsTr("Gaming") },
         { id: "theming", icon: "palette", label: qsTr("Theming") },
         { id: "productivity", icon: "bolt", label: qsTr("Productivity") }
     ]
 
-    readonly property var filteredAvailable: root.selectedCategory === "all" ? root.available : root.available.filter(p => p.category === root.selectedCategory)
+    // A catalogue entry never states its layer at the top level -- the
+    // requirement lives on whichever surface or profile it declares, which
+    // is the same place PluginRegistry reads it from once the plugin is
+    // installed. Deriving it here rather than adding a top-level field
+    // keeps one source of truth for "what does this need".
+    readonly property var layerLabels: ({
+        "ai": qsTr("AI layer"),
+        "dev": qsTr("Dev layer"),
+        "gaming": qsTr("Gaming layer"),
+        "security": qsTr("Security layer")
+    })
+
+    readonly property var layerOrder: ["ai", "dev", "gaming", "security", ""]
+
+    function requiredLayer(entry: var): string {
+        for (const surface of entry.ui?.surfaces ?? []) {
+            const layer = surface.requires_layer ?? "";
+            if (layer.length > 0)
+                return layer;
+        }
+        return entry.profile?.requires_layer ?? "";
+    }
+
+    function layerLabel(layer: string): string {
+        return root.layerLabels[layer] ?? layer;
+    }
+
+    // Same vocabulary and same fail-closed rule as PluginRegistry's own
+    // gate: an unrecognised token is a plugin built against a newer
+    // contract, and offering it here would be offering an install whose
+    // surface the shell would then refuse to draw.
+    function layerEnabled(layer: string): bool {
+        if (!layer)
+            return true;
+        if (layer === "ai")
+            return InstallProfile.aiEnabled;
+        if (layer === "dev")
+            return InstallProfile.devEnabled;
+        if (layer === "gaming")
+            return InstallProfile.gamingEnabled;
+        if (layer === "security")
+            return InstallProfile.securityEnabled;
+        return false;
+    }
+
+    readonly property var categoryAvailable: root.selectedCategory === "all" ? root.available : root.available.filter(p => p.category === root.selectedCategory)
+    readonly property var unlockedAvailable: root.available.filter(p => root.layerEnabled(root.requiredLayer(p)))
+    readonly property var filteredAvailable: root.categoryAvailable.filter(p => root.layerEnabled(root.requiredLayer(p)))
+
+    readonly property var availableGroups: {
+        const groups = [];
+        for (const layer of root.layerOrder) {
+            const plugins = root.filteredAvailable.filter(p => root.requiredLayer(p) === layer);
+            if (plugins.length === 0)
+                continue;
+            groups.push({
+                layer: layer,
+                label: layer.length > 0 ? root.layerLabel(layer) : qsTr("Works on any install"),
+                plugins: plugins
+            });
+        }
+        return groups;
+    }
 
     // Icon + label for each known `capabilities` tag (manifest v3, see
     // docs/archive/PLUGIN_SYSTEM.md §7.1). An unrecognized tag (a future
@@ -190,6 +253,7 @@ ColumnLayout {
         property var surfaces: []
         property var configKeys: []
         property var externalConfig: []
+        property string inactiveLayer: ""
 
         property bool first: true
         property bool last: true
@@ -331,6 +395,15 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     font: Tokens.font.label.small
                 }
+
+                StyledText {
+                    visible: pluginRow.inactiveLayer.length > 0
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                    text: qsTr("Inactive: the %1 is off on this install.").arg(pluginRow.inactiveLayer)
+                    color: Colours.palette.m3error
+                    font: Tokens.font.label.small
+                }
             }
 
             Item {
@@ -428,6 +501,7 @@ ColumnLayout {
                 id: installedRow
 
                 required property var modelData
+                readonly property string gateLayer: root.requiredLayer(installedRow.modelData)
 
                 icon: "extension"
                 label: installedRow.modelData.display_name
@@ -441,6 +515,7 @@ ColumnLayout {
                 surfaces: installedRow.modelData.ui?.surfaces ?? []
                 configKeys: installedRow.modelData.owns?.config_keys ?? []
                 externalConfig: installedRow.modelData.owns?.external_config ?? []
+                inactiveLayer: root.layerEnabled(installedRow.gateLayer) ? "" : root.layerLabel(installedRow.gateLayer)
 
                 RowLayout {
                     spacing: Tokens.spacing.small
@@ -496,9 +571,22 @@ ColumnLayout {
         font: Tokens.font.body.small
     }
 
+    StyledText {
+        Layout.fillWidth: true
+        visible: root.available.length > 0 && root.unlockedAvailable.length === 0
+        wrapMode: Text.Wrap
+        text: qsTr("Nothing to browse: every plugin in the index belongs to a layer this install doesn't have. Enabling a layer is what reveals its plugins.")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    // Still shown with nothing unlocked when the security index is
+    // untrusted: that index was never fetched, so "no plugins for your
+    // layers" can't be the whole story yet, and the trust prompt inside
+    // this row is the only way to find out.
     RowLayout {
         Layout.fillWidth: true
-        visible: root.available.length > 0
+        visible: root.available.length > 0 && (root.unlockedAvailable.length > 0 || !root.securityIndexTrusted)
         spacing: Tokens.spacing.medium
 
         StyledRect {
@@ -603,8 +691,10 @@ ColumnLayout {
             }
 
             StyledText {
-                visible: root.selectedCategory !== "security" && root.filteredAvailable.length === 0
-                text: qsTr("No plugins in this category.")
+                Layout.fillWidth: true
+                visible: root.selectedCategory !== "security" && root.unlockedAvailable.length > 0 && root.filteredAvailable.length === 0
+                wrapMode: Text.Wrap
+                text: root.categoryAvailable.length > 0 ? qsTr("The plugins in this category need a layer this install doesn't have.") : qsTr("No plugins in this category.")
                 color: Colours.palette.m3onSurfaceVariant
                 font: Tokens.font.body.small
             }
@@ -612,78 +702,102 @@ ColumnLayout {
             Flickable {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: root.filteredAvailable.length > 0
+                visible: root.availableGroups.length > 0
                 contentWidth: width
                 contentHeight: browseList.implicitHeight
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
 
-                SettingsGroup {
+                ColumnLayout {
                     id: browseList
                     width: parent.width
+                    spacing: Tokens.spacing.medium
 
                     Repeater {
-                        model: root.filteredAvailable
+                        model: root.availableGroups
 
-                        PluginRow {
-                            id: availableRow
+                        ColumnLayout {
+                            id: layerGroup
 
                             required property var modelData
-                            readonly property bool isInstalled: root.installedNames().includes(availableRow.modelData.name)
 
-                            icon: "extension"
-                            label: `${availableRow.modelData.display_name}  ·  v${availableRow.modelData.version}`
-                            description: availableRow.modelData.description
-                            capabilities: availableRow.modelData.capabilities ?? []
-                            surfaces: availableRow.modelData.ui?.surfaces ?? []
+                            Layout.fillWidth: true
+                            spacing: Tokens.spacing.small
 
-                            StyledRect {
-                                implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
-                                implicitHeight: 32
-                                radius: Tokens.rounding.full
-                                color: availableRow.isInstalled ? Colours.layer(Colours.tPalette.m3surfaceContainer, 2) : Colours.palette.m3primary
+                            StyledText {
+                                text: layerGroup.modelData.label
+                                color: Colours.palette.m3onSurfaceVariant
+                                font: Tokens.font.label.medium
+                            }
 
-                                StyledText {
-                                    id: installLabel
-                                    anchors.centerIn: parent
-                                    text: availableRow.isInstalled ? qsTr("Installed") : qsTr("Install")
-                                    color: availableRow.isInstalled ? Colours.palette.m3onSurfaceVariant : Colours.contrastOn(Colours.palette.m3primary)
-                                    font: Tokens.font.label.small
-                                }
+                            SettingsGroup {
+                                Layout.fillWidth: true
 
-                                StateLayer {
-                                    anchors.fill: parent
-                                    radius: parent.radius
-                                    disabled: availableRow.isInstalled
-                                }
+                                Repeater {
+                                    model: layerGroup.modelData.plugins
 
-                                MouseArea {
-                                    anchors.fill: parent
-                                    enabled: !availableRow.isInstalled
-                                    cursorShape: availableRow.isInstalled ? Qt.ArrowCursor : Qt.PointingHandCursor
-                                    onClicked: {
-                                        // Install used to run silently through
-                                        // actionProc (no stdout/stderr capture at
-                                        // all) -- on a machine with no local
-                                        // aphotic-plugins checkout yet, the real
-                                        // CLI failure (see cmd_plugin.sh) was
-                                        // discarded with zero UI feedback: the
-                                        // button just sat there. Routing through
-                                        // a real, visible terminal instead of
-                                        // trying to reimplement progress/error
-                                        // display in QML -- same CLI command
-                                        // either way (`aphotic plugin install`,
-                                        // now self-sufficient: clones/pulls the
-                                        // plugins repo itself, see
-                                        // _aphotic_plugin_sync_repo), just with
-                                        // real output the user can actually read,
-                                        // including the git clone/pull step.
-                                        // `--hold` keeps the window open after
-                                        // the command exits instead of it
-                                        // vanishing the instant install finishes
-                                        // (or fails). No windowrule floats
-                                        // kitty, so this tiles normally.
-                                        Quickshell.execDetached(["kitty", "--hold", "-T", `Installing ${availableRow.modelData.display_name}`, "aphotic", "plugin", "install", availableRow.modelData.name]);
+                                    PluginRow {
+                                        id: availableRow
+
+                                        required property var modelData
+                                        readonly property bool isInstalled: root.installedNames().includes(availableRow.modelData.name)
+
+                                        icon: "extension"
+                                        label: `${availableRow.modelData.display_name}  ·  v${availableRow.modelData.version}`
+                                        description: availableRow.modelData.description
+                                        capabilities: availableRow.modelData.capabilities ?? []
+                                        surfaces: availableRow.modelData.ui?.surfaces ?? []
+
+                                        StyledRect {
+                                            implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
+                                            implicitHeight: 32
+                                            radius: Tokens.rounding.full
+                                            color: availableRow.isInstalled ? Colours.layer(Colours.tPalette.m3surfaceContainer, 2) : Colours.palette.m3primary
+
+                                            StyledText {
+                                                id: installLabel
+                                                anchors.centerIn: parent
+                                                text: availableRow.isInstalled ? qsTr("Installed") : qsTr("Install")
+                                                color: availableRow.isInstalled ? Colours.palette.m3onSurfaceVariant : Colours.contrastOn(Colours.palette.m3primary)
+                                                font: Tokens.font.label.small
+                                            }
+
+                                            StateLayer {
+                                                anchors.fill: parent
+                                                radius: parent.radius
+                                                disabled: availableRow.isInstalled
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                enabled: !availableRow.isInstalled
+                                                cursorShape: availableRow.isInstalled ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                                onClicked: {
+                                                    // Install used to run silently through
+                                                    // actionProc (no stdout/stderr capture at
+                                                    // all) -- on a machine with no local
+                                                    // aphotic-plugins checkout yet, the real
+                                                    // CLI failure (see cmd_plugin.sh) was
+                                                    // discarded with zero UI feedback: the
+                                                    // button just sat there. Routing through
+                                                    // a real, visible terminal instead of
+                                                    // trying to reimplement progress/error
+                                                    // display in QML -- same CLI command
+                                                    // either way (`aphotic plugin install`,
+                                                    // now self-sufficient: clones/pulls the
+                                                    // plugins repo itself, see
+                                                    // _aphotic_plugin_sync_repo), just with
+                                                    // real output the user can actually read,
+                                                    // including the git clone/pull step.
+                                                    // `--hold` keeps the window open after
+                                                    // the command exits instead of it
+                                                    // vanishing the instant install finishes
+                                                    // (or fails). No windowrule floats
+                                                    // kitty, so this tiles normally.
+                                                    Quickshell.execDetached(["kitty", "--hold", "-T", `Installing ${availableRow.modelData.display_name}`, "aphotic", "plugin", "install", availableRow.modelData.name]);
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

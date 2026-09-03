@@ -66,6 +66,10 @@ Singleton {
         return root.surfaceRegistrations.filter(s => s.surface === surface && root._gateSatisfied(s));
     }
 
+    function settingsSectionsFor(category: string): var {
+        return root.surfacesFor("settings").filter(s => s.parent === category);
+    }
+
     // Plugins that register a ProfileEngine profile rather than draw a
     // surface -- the `profile` capability. Same registry, same gate
     // vocabulary, same dynamic file:// component load; the only
@@ -117,8 +121,20 @@ Singleton {
             label: s.label || name,
             requiresLayer: s.requires_layer ?? "",
             requiresData: s.requires_data ?? "",
+            parent: s.parent || root._defaultParent(s),
             componentUrl: `file://${root.pluginsDir}/${name}/${s.component}`
         }));
+    }
+
+    // Which Settings category a plugin's pane docks into when its manifest
+    // does not say. The layer that gates it is the best available guess at
+    // where it belongs, and the Plugins pane is the honest fallback for a
+    // pane that answers to nothing -- never a rail entry of its own.
+    function _defaultParent(surface: var): string {
+        if (surface.surface !== "settings")
+            return "";
+        const layer = surface.requires_layer ?? "";
+        return layer.length > 0 ? layer : "plugins";
     }
 
     function _gateSatisfied(surface: var): bool {

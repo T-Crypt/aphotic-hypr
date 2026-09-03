@@ -17,7 +17,7 @@ RowLayout {
     // itself closes, so a pane's own Component.onCompleted/onDestruction
     // would only fire on category switches, not on the window actually
     // closing while still on Appearance/Theme Creator.
-    readonly property bool _showingWallpaperPane: root.currentCategory === "appearance" || root.currentCategory === "themeCreator"
+    readonly property bool _showingWallpaperPane: root.currentCategoryId === "appearance" || root.currentCategoryId === "themeCreator"
 
     Binding {
         target: UiPickerState
@@ -25,18 +25,29 @@ RowLayout {
         value: root.screenState.settings && root._showingWallpaperPane
     }
 
-    // Hoisted to config/SettingsCategories.qml so the launcher's "?"
-    // settings-search mode can search the same list without a second,
-    // driftable copy.
+    // Hoisted to config/SettingsCategories.qml so the rail's search box
+    // and the launcher's "?" settings-search mode can index the same pane
+    // set without a second, driftable copy.
     readonly property var categories: SettingsCategories.list
 
-    // Non-null when the selected category is a plugin's own pane. The
-    // panel knows that plugin panes exist; it does not know that any
-    // particular plugin does.
-    readonly property var _pluginCategory: root.categories.find(c => c.id === root.currentCategory && c.componentUrl) ?? null
+    // currentCategory is an address, not just a category id: a search hit
+    // on a plugin's section arrives as "<category>/<section>", which is
+    // also the id searchIndex hands the launcher, so the same string
+    // survives the ScreenState.settingsCategory handoff untouched.
+    readonly property string currentCategoryId: root.currentCategory.split("/")[0]
+    property string requestedSection: ""
+
+    readonly property var sections: SettingsCategories.sectionsFor(root.currentCategoryId)
+
+    onCurrentCategoryChanged: {
+        const parts = root.currentCategory.split("/");
+        root.requestedSection = parts.length > 1 ? parts[1] : "";
+        if (root.requestedSection !== "")
+            revealTimer.restart();
+    }
 
     onCategoriesChanged: {
-        if (!root.categories.some(c => c.id === root.currentCategory))
+        if (!root.categories.some(c => c.id === root.currentCategoryId))
             root.currentCategory = "appearance";
     }
 
@@ -73,9 +84,10 @@ RowLayout {
         CategoryRail {
             anchors.fill: parent
             anchors.margins: Tokens.padding.extraLarge
-            currentCategory: root.currentCategory
+            currentCategory: root.currentCategoryId
             categories: root.categories
-            onCategorySelected: id => root.currentCategory = id
+            searchIndex: SettingsCategories.searchIndex
+            onCategorySelected: (id, sectionId) => root.currentCategory = sectionId.length > 0 ? `${id}/${sectionId}` : id
         }
     }
 
@@ -91,17 +103,13 @@ RowLayout {
 
         property int _prevCategoryIndex: 0
 
-        // Shared by both pane loaders. paneLoader.sourceComponent goes
-        // null for every plugin category, so switching between two
-        // plugin panes never changes it and would otherwise skip the
-        // slide entirely.
         function beginSlide(): void {
-            const newIndex = root.categories.findIndex(c => c.id === root.currentCategory);
+            const newIndex = root.categories.findIndex(c => c.id === root.currentCategoryId);
             const direction = newIndex >= paneSurface._prevCategoryIndex ? 1 : -1;
             paneSurface._prevCategoryIndex = newIndex;
 
-            paneLoader.opacity = 0;
-            paneLoader.x = direction * 24;
+            paneColumn.opacity = 0;
+            paneColumn.x = direction * 24;
             paneFlick.contentY = 0;
             slideInTimer.restart();
         }
@@ -118,41 +126,26 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: Tokens.padding.extraLarge
             contentWidth: width
-            contentHeight: paneFlick.activePane.height
+            contentHeight: paneColumn.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
             clip: true
 
-            // The active pane, whichever loader built it -- core panes
-            // come from the switch below, a plugin's pane from a
-            // file:// URL out of the registry. Height and the slide
-            // animation read this rather than either loader, so a
-            // plugin pane behaves exactly like a core one.
-            readonly property Item activePane: root._pluginCategory ? pluginPaneLoader : paneLoader
-
-            Loader {
-                id: pluginPaneLoader
-
-                width: paneFlick.width
-                height: Math.max(paneFlick.height, pluginPaneLoader.item ? pluginPaneLoader.item.implicitHeight : 0)
-                active: root._pluginCategory !== null
-                asynchronous: true
-                visible: pluginPaneLoader.active
-                opacity: paneLoader.opacity
-                x: paneLoader.x
-                source: root._pluginCategory?.componentUrl ?? ""
-
-                onSourceChanged: {
-                    if (pluginPaneLoader.source != "")
-                        paneSurface.beginSlide();
+            function revealSection(sectionId: string): void {
+                for (let i = 0; i < sectionRepeater.count; i++) {
+                    const item = sectionRepeater.itemAt(i);
+                    if (item?.modelData?.id !== sectionId)
+                        continue;
+                    const limit = Math.max(0, paneFlick.contentHeight - paneFlick.height);
+                    paneFlick.contentY = Math.min(limit, Math.max(0, item.mapToItem(paneColumn, 0, 0).y));
+                    return;
                 }
             }
 
-            Loader {
-                id: paneLoader
+            ColumnLayout {
+                id: paneColumn
 
                 width: paneFlick.width
-                height: Math.max(paneFlick.height, paneLoader.item ? paneLoader.item.implicitHeight : 0)
-                visible: root._pluginCategory === null
+                spacing: Tokens.spacing.small
                 opacity: 1
 
                 Behavior on opacity {
@@ -162,58 +155,120 @@ RowLayout {
                     Anim { type: Anim.Emphasized }
                 }
 
-                sourceComponent: {
-                    if (root._pluginCategory)
-                        return null;
-                    switch (root.currentCategory) {
-                    case "themeCreator":
-                        return themeCreatorComp;
-                    case "personalization":
-                        return personalizationComp;
-                    case "language":
-                        return languageComp;
-                    case "bar":
-                        return barComp;
-                    case "launcher":
-                        return launcherComp;
-                    case "displays":
-                        return displaysComp;
-                    case "clock":
-                        return clockComp;
-                    case "osd":
-                        return osdComp;
-                    case "ai":
-                        return aiComp;
-                    case "power":
-                        return powerComp;
-                    case "network":
-                        return networkComp;
-                    case "workspaceProfiles":
-                        return workspaceProfilesComp;
-                    case "plugins":
-                        return pluginsComp;
-                    case "system":
-                        return systemComp;
-                    case "advanced":
-                        return advancedComp;
-                    case "about":
-                        return aboutComp;
-                    default:
-                        return appearanceComp;
+                Loader {
+                    id: paneLoader
+
+                    Layout.fillWidth: true
+                    // Stretched to the viewport only while the category
+                    // owns no sections -- several panes (About, Launcher,
+                    // Appearance) distribute that slack with their own
+                    // fillHeight spacers. With sections below it the pane
+                    // has to end where its content ends, or the first
+                    // section header lands a screen further down.
+                    Layout.preferredHeight: {
+                        const natural = paneLoader.item?.implicitHeight ?? 0;
+                        return root.sections.length > 0 ? natural : Math.max(paneFlick.height, natural);
                     }
+
+                    sourceComponent: {
+                        switch (root.currentCategoryId) {
+                        case "themeCreator":
+                            return themeCreatorComp;
+                        case "personalization":
+                            return personalizationComp;
+                        case "language":
+                            return languageComp;
+                        case "bar":
+                            return barComp;
+                        case "launcher":
+                            return launcherComp;
+                        case "displays":
+                            return displaysComp;
+                        case "clock":
+                            return clockComp;
+                        case "osd":
+                            return osdComp;
+                        case "ai":
+                            return aiComp;
+                        case "power":
+                            return powerComp;
+                        case "network":
+                            return networkComp;
+                        case "workspaceProfiles":
+                            return workspaceProfilesComp;
+                        case "plugins":
+                            return pluginsComp;
+                        case "system":
+                            return systemComp;
+                        case "about":
+                            return aboutComp;
+                        default:
+                            return appearanceComp;
+                        }
+                    }
+
+                    onSourceComponentChanged: paneSurface.beginSlide()
                 }
 
-                onSourceComponentChanged: paneSurface.beginSlide()
+                StyledText {
+                    visible: root.sections.length > 0
+                    Layout.topMargin: Tokens.spacing.large
+                    Layout.leftMargin: Tokens.padding.small
+                    text: qsTr("Plugins")
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.medium
+                }
 
-                Timer {
-                    id: slideInTimer
-                    interval: 1
-                    onTriggered: {
-                        paneLoader.opacity = 1;
-                        paneLoader.x = 0;
+                Repeater {
+                    id: sectionRepeater
+
+                    model: root.sections
+
+                    SettingsSection {
+                        id: section
+
+                        required property var modelData
+
+                        readonly property bool matched: root.requestedSection === section.modelData.id
+
+                        Layout.fillWidth: true
+                        icon: section.modelData.icon
+                        label: section.modelData.label
+                        description: section.modelData.description
+                        source: section.modelData.componentUrl
+                        highlighted: section.matched
+
+                        onMatchedChanged: {
+                            if (section.matched)
+                                section.expanded = true;
+                        }
+
+                        Component.onCompleted: {
+                            if (section.matched)
+                                section.expanded = true;
+                        }
                     }
                 }
             }
+        }
+
+        Timer {
+            id: slideInTimer
+
+            interval: 1
+            onTriggered: {
+                paneColumn.opacity = 1;
+                paneColumn.x = 0;
+            }
+        }
+
+        // Runs after the category switch has rebuilt the pane and the
+        // section rows, since the target row has no position until then.
+        Timer {
+            id: revealTimer
+
+            interval: 32
+            onTriggered: paneFlick.revealSection(root.requestedSection)
         }
 
         StyledRect {
@@ -332,10 +387,6 @@ RowLayout {
     Component {
         id: systemComp
         SystemPane {}
-    }
-    Component {
-        id: advancedComp
-        AdvancedPane {}
     }
     Component {
         id: aboutComp

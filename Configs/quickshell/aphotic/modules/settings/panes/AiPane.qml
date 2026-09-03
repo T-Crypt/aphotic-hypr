@@ -525,206 +525,205 @@ ColumnLayout {
         }
     }
 
-    ColumnLayout {
+    SettingsSection {
         Layout.fillWidth: true
-        spacing: Tokens.spacing.extraSmall
         visible: InstallProfile.aiEnabled
+        icon: "folder"
+        label: qsTr("Model Storage")
+        description: qsTr("Where Ollama and GGUF weights live on disk")
 
-        StyledText {
-            Layout.leftMargin: Tokens.padding.small
-            text: qsTr("Model Storage")
-            color: Colours.palette.m3onSurfaceVariant
-            font: Tokens.font.label.medium
-        }
+        content: ColumnLayout {
+            spacing: Tokens.spacing.extraSmall
 
-        SettingsGroup {
-            Layout.fillWidth: true
+            SettingsGroup {
+                Layout.fillWidth: true
 
-            SettingsRow {
-                icon: "folder"
-                label: qsTr("Ollama models")
-                description: ModelStorage.ollamaDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ollamaDir).arg(ModelStorage.ollamaDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ollamaDir)
+                SettingsRow {
+                    icon: "folder"
+                    label: qsTr("Ollama models")
+                    description: ModelStorage.ollamaDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ollamaDir).arg(ModelStorage.ollamaDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ollamaDir)
 
-                RowLayout {
-                    spacing: Tokens.spacing.small
+                    RowLayout {
+                        spacing: Tokens.spacing.small
 
-                    StyledRect {
-                        visible: !ModelStorage.ollamaDirExists
-                        Layout.preferredWidth: createOllamaLabel.implicitWidth + Tokens.padding.large * 2
-                        Layout.preferredHeight: 32
-                        radius: Tokens.rounding.full
-                        color: Colours.palette.m3primary
+                        StyledRect {
+                            visible: !ModelStorage.ollamaDirExists
+                            Layout.preferredWidth: createOllamaLabel.implicitWidth + Tokens.padding.large * 2
+                            Layout.preferredHeight: 32
+                            radius: Tokens.rounding.full
+                            color: Colours.palette.m3primary
 
-                        StyledText {
-                            id: createOllamaLabel
-                            anchors.centerIn: parent
-                            text: qsTr("Create")
-                            color: Colours.contrastOn(Colours.palette.m3primary)
-                            font: Tokens.font.label.small
+                            StyledText {
+                                id: createOllamaLabel
+                                anchors.centerIn: parent
+                                text: qsTr("Create")
+                                color: Colours.contrastOn(Colours.palette.m3primary)
+                                font: Tokens.font.label.small
+                            }
+
+                            StateLayer {
+                                anchors.fill: parent
+                                radius: parent.radius
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: ModelStorage.createOllamaDir()
+                            }
                         }
 
-                        StateLayer {
-                            anchors.fill: parent
-                            radius: parent.radius
-                        }
+                        StyledRect {
+                            Layout.preferredWidth: 28
+                            Layout.preferredHeight: 28
+                            radius: Tokens.rounding.full
+                            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: ModelStorage.createOllamaDir()
-                        }
-                    }
+                            MaterialIcon {
+                                anchors.centerIn: parent
+                                text: "refresh"
+                                color: Colours.palette.m3onSurfaceVariant
+                                fontStyle: Tokens.font.icon.small
+                            }
 
-                    StyledRect {
-                        Layout.preferredWidth: 28
-                        Layout.preferredHeight: 28
-                        radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                            StateLayer {
+                                anchors.fill: parent
+                                radius: parent.radius
+                            }
 
-                        MaterialIcon {
-                            anchors.centerIn: parent
-                            text: "refresh"
-                            color: Colours.palette.m3onSurfaceVariant
-                            fontStyle: Tokens.font.icon.small
-                        }
-
-                        StateLayer {
-                            anchors.fill: parent
-                            radius: parent.radius
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: ModelStorage.refreshOllama()
-                        }
-                    }
-                }
-            }
-
-            SettingsRow {
-                icon: "folder_open"
-                label: qsTr("GGUF directory")
-                description: ModelStorage.ggufDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ggufDir).arg(ModelStorage.ggufDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ggufDir)
-
-                RowLayout {
-                    spacing: Tokens.spacing.small
-
-                    StyledRect {
-                        Layout.preferredWidth: 200
-                        Layout.preferredHeight: 32
-                        radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
-
-                        TextInput {
-                            id: ggufDirInput
-
-                            anchors.fill: parent
-                            anchors.leftMargin: Tokens.padding.medium
-                            anchors.rightMargin: Tokens.padding.medium
-                            verticalAlignment: TextInput.AlignVCenter
-                            clip: true
-                            font: Tokens.font.label.small
-                            color: Colours.palette.m3onSurface
-                            text: Settings.ggufModelsDir
-
-                            Component.onCompleted: ggufDirInput.cursorPosition = 0
-
-                            Keys.onReturnPressed: {
-                                const value = ggufDirInput.text.trim();
-                                if (value.length > 0)
-                                    Settings.ggufModelsDir = value;
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: ModelStorage.refreshOllama()
                             }
                         }
                     }
+                }
 
-                    StyledRect {
-                        visible: !ModelStorage.ggufDirExists
-                        Layout.preferredWidth: createGgufLabel.implicitWidth + Tokens.padding.large * 2
-                        Layout.preferredHeight: 32
-                        radius: Tokens.rounding.full
-                        color: Colours.palette.m3primary
+                SettingsRow {
+                    icon: "folder_open"
+                    label: qsTr("GGUF directory")
+                    description: ModelStorage.ggufDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ggufDir).arg(ModelStorage.ggufDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ggufDir)
 
-                        StyledText {
-                            id: createGgufLabel
-                            anchors.centerIn: parent
-                            text: qsTr("Create")
-                            color: Colours.contrastOn(Colours.palette.m3primary)
-                            font: Tokens.font.label.small
+                    RowLayout {
+                        spacing: Tokens.spacing.small
+
+                        StyledRect {
+                            Layout.preferredWidth: 200
+                            Layout.preferredHeight: 32
+                            radius: Tokens.rounding.full
+                            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                            TextInput {
+                                id: ggufDirInput
+
+                                anchors.fill: parent
+                                anchors.leftMargin: Tokens.padding.medium
+                                anchors.rightMargin: Tokens.padding.medium
+                                verticalAlignment: TextInput.AlignVCenter
+                                clip: true
+                                font: Tokens.font.label.small
+                                color: Colours.palette.m3onSurface
+                                text: Settings.ggufModelsDir
+
+                                Component.onCompleted: ggufDirInput.cursorPosition = 0
+
+                                Keys.onReturnPressed: {
+                                    const value = ggufDirInput.text.trim();
+                                    if (value.length > 0)
+                                        Settings.ggufModelsDir = value;
+                                }
+                            }
                         }
 
-                        StateLayer {
-                            anchors.fill: parent
-                            radius: parent.radius
+                        StyledRect {
+                            visible: !ModelStorage.ggufDirExists
+                            Layout.preferredWidth: createGgufLabel.implicitWidth + Tokens.padding.large * 2
+                            Layout.preferredHeight: 32
+                            radius: Tokens.rounding.full
+                            color: Colours.palette.m3primary
+
+                            StyledText {
+                                id: createGgufLabel
+                                anchors.centerIn: parent
+                                text: qsTr("Create")
+                                color: Colours.contrastOn(Colours.palette.m3primary)
+                                font: Tokens.font.label.small
+                            }
+
+                            StateLayer {
+                                anchors.fill: parent
+                                radius: parent.radius
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: ModelStorage.createGgufDir()
+                            }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: ModelStorage.createGgufDir()
-                        }
-                    }
+                        StyledRect {
+                            visible: ModelStorage.ggufDirExists
+                            Layout.preferredWidth: 28
+                            Layout.preferredHeight: 28
+                            radius: Tokens.rounding.full
+                            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
 
-                    StyledRect {
-                        visible: ModelStorage.ggufDirExists
-                        Layout.preferredWidth: 28
-                        Layout.preferredHeight: 28
-                        radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                            MaterialIcon {
+                                anchors.centerIn: parent
+                                text: "refresh"
+                                color: Colours.palette.m3onSurfaceVariant
+                                fontStyle: Tokens.font.icon.small
+                            }
 
-                        MaterialIcon {
-                            anchors.centerIn: parent
-                            text: "refresh"
-                            color: Colours.palette.m3onSurfaceVariant
-                            fontStyle: Tokens.font.icon.small
-                        }
+                            StateLayer {
+                                anchors.fill: parent
+                                radius: parent.radius
+                            }
 
-                        StateLayer {
-                            anchors.fill: parent
-                            radius: parent.radius
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: ModelStorage.refreshGguf()
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: ModelStorage.refreshGguf()
+                            }
                         }
                     }
                 }
             }
-        }
 
-        StyledText {
-            visible: ModelStorage.ggufDirExists && ModelStorage.ggufFiles.length === 0
-            Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            text: qsTr("No .gguf files in this directory yet.")
-            color: Colours.palette.m3onSurfaceVariant
-            font: Tokens.font.label.small
-        }
+            StyledText {
+                visible: ModelStorage.ggufDirExists && ModelStorage.ggufFiles.length === 0
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: qsTr("No .gguf files in this directory yet.")
+                color: Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.label.small
+            }
 
-        SettingsGroup {
-            Layout.fillWidth: true
-            visible: ModelStorage.ggufDirExists && ModelStorage.ggufFiles.length > 0
+            SettingsGroup {
+                Layout.fillWidth: true
+                visible: ModelStorage.ggufDirExists && ModelStorage.ggufFiles.length > 0
 
-            Repeater {
-                model: ModelStorage.ggufFiles
+                Repeater {
+                    model: ModelStorage.ggufFiles
 
-                SettingsRow {
-                    id: ggufRow
+                    SettingsRow {
+                        id: ggufRow
 
-                    required property var modelData
+                        required property var modelData
 
-                    icon: "description"
-                    label: ggufRow.modelData.name
-                    description: ggufRow.modelData.sizeText
+                        icon: "description"
+                        label: ggufRow.modelData.name
+                        description: ggufRow.modelData.sizeText
 
-                    MaterialIcon {
-                        text: "delete"
-                        color: Colours.palette.m3error
-                        fontStyle: Tokens.font.icon.small
+                        MaterialIcon {
+                            text: "delete"
+                            color: Colours.palette.m3error
+                            fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
-                            anchors.fill: parent
-                            anchors.margins: -Tokens.padding.small
-                            radius: Tokens.rounding.full
-                            onClicked: ModelStorage.deleteGgufFile(ggufRow.modelData.name)
+                            StateLayer {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                radius: Tokens.rounding.full
+                                onClicked: ModelStorage.deleteGgufFile(ggufRow.modelData.name)
+                            }
                         }
                     }
                 }

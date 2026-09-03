@@ -35,6 +35,13 @@ _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 # manifest, same "optional field, no error" contract v2's category
 # addition already established.
 #
+# A settings_pane also takes `parent`: the id of the Settings category
+# its section docks into. It is never its own rail entry -- the rail is a
+# fixed length by design, so fifty plugins are fifty collapsed sections
+# spread across the categories that own them, not fifty pages to scroll
+# past. Omitted, it falls back to the category matching `requires_layer`,
+# then to the Plugins pane.
+#
 # `requires_layer`/`requires_data` are the surface's activation gate,
 # declared by the plugin and evaluated by PluginRegistry.qml against a
 # fixed token vocabulary. A gate may name the profile layer that owns
@@ -51,7 +58,7 @@ _aphotic_plugin_owns_json() {
 }
 
 _aphotic_plugin_surface_json() {
-    local manifest="$1" section="$2" surface="$3" id icon label component layer data
+    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent
     component="$(aphotic_toml_get "$manifest" "$section" component)"
     [[ -n "$component" ]] || return 1
 
@@ -60,6 +67,7 @@ _aphotic_plugin_surface_json() {
     label="$(aphotic_toml_get "$manifest" "$section" label)"
     layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
     data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
+    parent="$(aphotic_toml_get "$manifest" "$section" parent)"
 
     jq -n \
         --arg surface "$surface" \
@@ -69,7 +77,8 @@ _aphotic_plugin_surface_json() {
         --arg component "$component" \
         --arg requires_layer "${layer:-}" \
         --arg requires_data "${data:-}" \
-        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data}'
+        --arg parent "${parent:-}" \
+        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent}'
 }
 
 _aphotic_plugin_ui_json() {

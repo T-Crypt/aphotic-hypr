@@ -58,6 +58,7 @@ icon = "tune"
 label = "Scratch Pane"
 component = "qml/ScratchPane.qml"
 requires_layer = "dev"
+parent = "language"
 EOF
 echo "// placeholder" > "$PLUGDIR/qml/ScratchTab.qml"
 echo "// placeholder" > "$PLUGDIR/qml/ScratchTile.qml"
@@ -96,6 +97,10 @@ described="$(_aphotic_plugin_describe scratch-ui)"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[2].surface')" == "settings" ]] || fail "expected the third surface to be the settings pane"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[2].id')" == "scratchPane" ]] || fail "expected settings surface id to be scratchPane"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[2].requires_layer')" == "dev" ]] || fail "expected the settings pane's own layer gate to survive"
+# A settings pane docks into a category as a section; it never becomes a
+# rail entry of its own, which is what keeps the rail a fixed length.
+[[ "$(echo "$described" | jq -r '.ui.surfaces[2].parent')" == "language" ]] || fail "expected the settings pane's declared parent category to survive"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[0].parent')" == "" ]] || fail "expected a non-settings surface to carry an empty parent, not null"
 
 # --- profile capability: a plugin that registers a ProfileEngine profile ---
 # rather than drawing a surface. Claims are deliberately not declared in
