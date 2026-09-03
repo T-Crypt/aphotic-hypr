@@ -63,7 +63,13 @@ StyledRect {
     // PanelWindow's geometry.
     width: root.expanded ? Config.notch.expandedWidth : Config.notch.collapsedWidth
     height: root.expanded ? Math.min(body.implicitHeight + Tokens.padding.medium * 2, Config.notch.maxHeight) : Config.notch.collapsedHeight
-    radius: root.expanded ? Tokens.rounding.large : Tokens.rounding.full
+    // NOT Tokens.rounding.full for the collapsed pill: that is 999999, and
+    // animating it down to a real radius keeps the value above width/2
+    // (where every value renders identically) until the last few frames,
+    // then drops through the whole visible range at once -- a snap at the
+    // end of an otherwise smooth grow. Half the collapsed height is the
+    // same pill, expressed as a number the Behavior can actually traverse.
+    radius: root.expanded ? Tokens.rounding.large : Config.notch.collapsedHeight / 2
     color: Colours.palette.m3surfaceContainerHigh
 
     Behavior on width {
@@ -91,11 +97,49 @@ StyledRect {
         ProcessUsageWatch {}
     }
 
+    // The body is laid out at a constant contentWidth (see above) while the
+    // surface around it animates from the collapsed pill's 132px -- so for
+    // the first part of every open it is a 388px-wide layout being drawn
+    // into a box a third that size. Fading it in on its own short curve
+    // meant it arrived at full opacity while still mostly clipped, which
+    // is the "glitchy on the open" it read as. Holding the reveal until
+    // the geometry has covered most of the distance means content only
+    // appears once there is room for it. 150ms is measured, not guessed:
+    // Anim.Emphasized front-loads hard enough that a nominally 500ms run
+    // is already at ~400 of its 420px by then. Collapse takes
+    // the other path: revealed goes false immediately, so the body is gone
+    // before the box starts shrinking under it.
+    property bool revealed: false
+
+    Timer {
+        id: revealTimer
+        interval: 150
+        onTriggered: root.revealed = true
+    }
+
+    onExpandedChanged: {
+        if (root.expanded) {
+            revealTimer.restart();
+        } else {
+            revealTimer.stop();
+            root.revealed = false;
+        }
+    }
+
+    // Faded rather than flipped straight to invisible: the click that
+    // opens the notch starts a ripple that runs 600ms, longer than the
+    // 500ms expand, so hiding this the instant `expanded` flips cut the
+    // ripple off mid-sweep and read as a flash under the growing box.
     StateLayer {
         radius: root.radius
         disabled: root.expanded
-        visible: !root.expanded
+        visible: opacity > 0
+        opacity: root.expanded ? 0 : 1
         onClicked: root.cycle()
+
+        Behavior on opacity {
+            Anim { type: Anim.FastEffects }
+        }
     }
 
     component MicroBar: StyledRect {
@@ -162,12 +206,16 @@ StyledRect {
         ColumnLayout {
             id: body
 
-            x: Tokens.padding.large
-            y: Tokens.padding.medium
+            // Centred, not pinned at the padding origin: while the surface
+            // is still growing the clip has to cut something off, and
+            // taking it evenly off both edges reads as the box opening
+            // around the content rather than the content sliding in from
+            // one side.
+            anchors.centerIn: parent
             width: root.contentWidth
             spacing: Tokens.spacing.small
             visible: opacity > 0
-            opacity: root.expanded ? 1 : 0
+            opacity: root.revealed ? 1 : 0
 
             Behavior on opacity {
                 Anim { type: Anim.DefaultEffects }
