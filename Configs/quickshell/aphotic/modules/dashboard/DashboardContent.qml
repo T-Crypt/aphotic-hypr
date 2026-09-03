@@ -12,47 +12,50 @@ ColumnLayout {
     required property ScreenState screenState
     property string currentTab: "dashboard"
 
-    // Latched rather than tracking `currentTab` so switching away keeps the
-    // built graph and its laid-out node positions. Plain state, not a
+    // Latched rather than tracking `currentTab` so switching away keeps a
+    // plugin tab's built content and its laid-out state. Plain state, not a
     // binding seeded from `currentTab`: a seeded binding stays live until
-    // the first imperative write, so starting on this tab and switching
-    // away would re-evaluate it to false and tear the graph down again.
-    property bool _agentGraphOpened: false
+    // the first imperative write, so starting on such a tab and switching
+    // away would re-evaluate it and tear the content down again.
+    property var _openedTabIds: []
 
-    function _latchAgentGraph(): void {
-        if (root.currentTab === "agentGraph")
-            root._agentGraphOpened = true;
+    // PluginRegistry already gates on installed+enabled. Agent Graph is the
+    // one plugin with an extra activation rule of its own -- the "ai" layer
+    // on and at least one harness actually configured
+    // (APHOTIC_UNIFIED_VISION.md §2.4). That is this plugin's rule, not a
+    // plugin-system concept, so it lives here rather than in the manifest.
+    function _extraGate(plugin: string): bool {
+        if (plugin === "agent-graph")
+            return InstallProfile.aiEnabled && AgentRoles.hasConfiguredHarness;
+        return true;
     }
 
-    onCurrentTabChanged: root._latchAgentGraph()
-    Component.onCompleted: root._latchAgentGraph()
+    function _latchTab(): void {
+        if (root._openedTabIds.includes(root.currentTab))
+            return;
+        if (!root.pluginTabs.some(t => t.id === root.currentTab))
+            return;
+        root._openedTabIds = root._openedTabIds.concat([root.currentTab]);
+    }
 
-    // Agent Graph is a plugin (docs/archive/PLUGIN_SYSTEM.md manifest v3),
-    // not core -- its dashboard tab only exists when the "ai" layer is on
-    // AND the plugin is installed+enabled AND at least one harness is
-    // actually configured (APHOTIC_UNIFIED_VISION.md §2.4). The first two
-    // are the generic plugin-system gate (PluginRegistry); the harness
-    // check is this one plugin's own extra activation rule, not something
-    // every ui-surface plugin needs, so it stays a call-site condition
-    // rather than a manifest field.
-    readonly property bool agentGraphAvailable: InstallProfile.aiEnabled && PluginRegistry.isEnabled("agent-graph") && AgentRoles.hasConfiguredHarness
-    readonly property var _agentGraphTab: PluginRegistry.dashboardTabs.find(t => t.plugin === "agent-graph")
+    onCurrentTabChanged: root._latchTab()
+    Component.onCompleted: root._latchTab()
+
+    readonly property var pluginTabs: PluginRegistry.dashboardTabs.filter(t => root._extraGate(t.plugin))
 
     // AI Chat is core, not layered: Claude is a CLI session and Gemini and
     // ChatGPT are raw HTTP APIs, none of which the `ai` layer installs, so
     // a base shell still chats with all three. The layer only supplies the
     // locally-hosted backends, and AiProviders drops those pills on its own
-    // -- so this tab stays, with a shorter provider list. Agent Graph below
-    // is genuinely layered and still gated.
+    // -- so this tab stays, with a shorter provider list. The plugin tabs
+    // appended below are the genuinely layered ones, and stay gated.
     readonly property var tabs: [
         { id: "dashboard", icon: "dashboard", label: qsTr("Dashboard") },
         { id: "performance", icon: "monitoring", label: qsTr("Performance") },
         { id: "workspaces", icon: "grid_view", label: qsTr("Workspaces") },
         { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") },
         { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") }
-    ].concat(root.agentGraphAvailable && root._agentGraphTab ? [
-        { id: root._agentGraphTab.id, icon: root._agentGraphTab.icon, label: root._agentGraphTab.label }
-    ] : [])
+    ].concat(root.pluginTabs.map(t => ({ id: t.id, icon: t.icon, label: t.label })))
 
     onTabsChanged: {
         if (!root.tabs.some(t => t.id === root.currentTab))
@@ -80,12 +83,20 @@ ColumnLayout {
         id: tabFrame
 
         Layout.alignment: Qt.AlignHCenter
-        // Both loaders report 0 while one unloads and the other builds
-        // async, which is every first switch to the graph now that it
-        // loads on demand. Holding the last real size across that gap is
-        // what stops the frame collapsing to bare padding.
-        readonly property real tabWidth: root.currentTab === "agentGraph" ? agentGraphLoader.implicitWidth : tabLoader.implicitWidth
-        readonly property real tabHeight: root.currentTab === "agentGraph" ? agentGraphLoader.implicitHeight : tabLoader.implicitHeight
+        // Both the outgoing and incoming loader report 0 while one unloads
+        // and the other builds async, which is every first switch to a
+        // plugin tab now that they load on demand. Holding the last real
+        // size across that gap is what stops the frame collapsing to bare
+        // padding.
+        readonly property Item activeLoader: {
+            const i = root.pluginTabs.findIndex(t => t.id === root.currentTab);
+            if (i < 0 || i >= pluginTabRepeater.count)
+                return tabLoader;
+            return pluginTabRepeater.itemAt(i) ?? tabLoader;
+        }
+
+        readonly property real tabWidth: tabFrame.activeLoader.implicitWidth
+        readonly property real tabHeight: tabFrame.activeLoader.implicitHeight
 
         property real heldWidth: 0
         property real heldHeight: 0
@@ -135,6 +146,9 @@ ColumnLayout {
             }
 
             sourceComponent: {
+                if (root.pluginTabs.some(t => t.id === root.currentTab))
+                    return null;
+
                 switch (root.currentTab) {
                 case "performance":
                     return performanceComp;
@@ -144,8 +158,6 @@ ColumnLayout {
                     return wallpapersComp;
                 case "aiChat":
                     return aiChatComp;
-                case "agentGraph":
-                    return null;
                 default:
                     return dashboardComp;
                 }
@@ -163,22 +175,30 @@ ColumnLayout {
             }
         }
 
-        Loader {
-            id: agentGraphLoader
+        Repeater {
+            id: pluginTabRepeater
 
-            anchors.centerIn: parent
-            // No static `import` of the plugin's own QML module anywhere
+            model: root.pluginTabs
+
+            // No static `import` of any plugin's own QML module anywhere
             // in core -- `source` is a plain file:// URL resolved from
             // the plugin registry, so the shell compiles and runs
-            // identically whether or not this plugin is installed.
-            active: root.agentGraphAvailable && root._agentGraphTab !== undefined && root._agentGraphOpened
-            asynchronous: true
-            visible: agentGraphLoader.opacity > 0
-            opacity: root.currentTab === "agentGraph" ? 1 : 0
-            source: root.agentGraphAvailable && root._agentGraphTab ? root._agentGraphTab.componentUrl : ""
+            // identically whether or not a given plugin is installed.
+            Loader {
+                id: pluginTabLoader
 
-            Behavior on opacity {
-                Anim { type: Anim.DefaultEffects }
+                required property var modelData
+
+                anchors.centerIn: parent
+                active: root._openedTabIds.includes(pluginTabLoader.modelData.id)
+                asynchronous: true
+                visible: pluginTabLoader.opacity > 0
+                opacity: root.currentTab === pluginTabLoader.modelData.id ? 1 : 0
+                source: pluginTabLoader.modelData.componentUrl
+
+                Behavior on opacity {
+                    Anim { type: Anim.DefaultEffects }
+                }
             }
         }
     }
