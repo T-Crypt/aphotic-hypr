@@ -95,9 +95,15 @@ ColumnLayout {
         }
     }
 
+    // Everything locally-hosted below is installed by the `ai` layer --
+    // Ollama's host and model store, the GGUF directory, llmfit. With the
+    // layer off these are absent, not empty: the pane keeps only Provider,
+    // API Keys and Intelligence, which are what a base shell can actually
+    // use (Claude's CLI session plus the Gemini and ChatGPT APIs).
     ColumnLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.extraSmall
+        visible: InstallProfile.aiEnabled
 
         StyledText {
             Layout.leftMargin: Tokens.padding.small
@@ -313,7 +319,7 @@ ColumnLayout {
 
         Layout.fillWidth: true
         spacing: Tokens.spacing.extraSmall
-        visible: AiConfig.activeProvider === "ollama" && AiConfig.ollamaHostConfigured
+        visible: InstallProfile.aiEnabled && AiConfig.activeProvider === "ollama" && AiConfig.ollamaHostConfigured
 
         function formatVram(bytes: real): string {
             return qsTr("%1 GB").arg((bytes / 1073741824).toFixed(1));
@@ -523,6 +529,7 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.extraSmall
+        visible: InstallProfile.aiEnabled
 
         StyledText {
             Layout.leftMargin: Tokens.padding.small
@@ -669,6 +676,7 @@ ColumnLayout {
     ColumnLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.extraSmall
+        visible: InstallProfile.aiEnabled
 
         StyledText {
             Layout.leftMargin: Tokens.padding.small

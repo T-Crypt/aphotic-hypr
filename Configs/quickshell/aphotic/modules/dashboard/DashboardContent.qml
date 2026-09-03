@@ -38,16 +38,19 @@ ColumnLayout {
     readonly property bool agentGraphAvailable: InstallProfile.aiEnabled && PluginRegistry.isEnabled("agent-graph") && AgentRoles.hasConfiguredHarness
     readonly property var _agentGraphTab: PluginRegistry.dashboardTabs.find(t => t.plugin === "agent-graph")
 
-    // The AI tabs are absent, not empty, when the installer's `ai` layer is
-    // off -- see services/InstallProfile.qml.
+    // AI Chat is core, not layered: Claude is a CLI session and Gemini and
+    // ChatGPT are raw HTTP APIs, none of which the `ai` layer installs, so
+    // a base shell still chats with all three. The layer only supplies the
+    // locally-hosted backends, and AiProviders drops those pills on its own
+    // -- so this tab stays, with a shorter provider list. Agent Graph below
+    // is genuinely layered and still gated.
     readonly property var tabs: [
         { id: "dashboard", icon: "dashboard", label: qsTr("Dashboard") },
         { id: "performance", icon: "monitoring", label: qsTr("Performance") },
         { id: "workspaces", icon: "grid_view", label: qsTr("Workspaces") },
-        { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") }
-    ].concat(InstallProfile.aiEnabled ? [
+        { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") },
         { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") }
-    ] : []).concat(root.agentGraphAvailable && root._agentGraphTab ? [
+    ].concat(root.agentGraphAvailable && root._agentGraphTab ? [
         { id: root._agentGraphTab.id, icon: root._agentGraphTab.icon, label: root._agentGraphTab.label }
     ] : [])
 

@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services.ai
 
 // Non-secret AI Chat settings, persisted to
 // ~/.config/aphotic/ai-config.json (same FileView load/save pattern as
@@ -46,7 +47,16 @@ Singleton {
         }, null, 2));
     }
 
-    onActiveProviderChanged: root._save()
+    // Corrected here rather than at each of the eight read sites: a config
+    // file naming a provider that is no longer offered -- Codex, or Ollama
+    // on a shell with the AI layer off -- would otherwise leave every chat
+    // surface pointing at a pill that does not exist, and send down a
+    // branch for a backend that isn't there. Re-entrant by design: the
+    // corrected value resolves to itself, so this settles in one pass.
+    onActiveProviderChanged: {
+        root.activeProvider = AiProviders.chatProviderOr(root.activeProvider);
+        root._save();
+    }
     onOllamaHostChanged: root._save()
     onOllamaModelChanged: root._save()
     onAssistantEnabledChanged: root._save()

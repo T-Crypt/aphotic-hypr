@@ -19,7 +19,11 @@ ColumnLayout {
     spacing: Tokens.spacing.small
 
     readonly property var activeSession: IntelligenceSessions.activeSession
-    readonly property string effectiveProvider: root.activeSession?.provider ?? (Settings.intelligenceDefaultProvider || AiConfig.activeProvider)
+    // Resolved through chatProviderOr because a saved session records the
+    // provider it was created with -- an old Ollama session on a shell with
+    // the AI layer off, or any Codex session, would otherwise leave the
+    // header pointing at a pill that is no longer in the list.
+    readonly property string effectiveProvider: AiProviders.chatProviderOr(root.activeSession?.provider ?? (Settings.intelligenceDefaultProvider || AiConfig.activeProvider))
     readonly property string effectiveModel: root.activeSession?.model ?? (Settings.intelligenceDefaultModel || AiConfig.ollamaModel)
 
     function _selectProvider(providerId: string): void {
