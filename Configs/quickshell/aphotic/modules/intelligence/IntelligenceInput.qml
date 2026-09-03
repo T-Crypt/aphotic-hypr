@@ -13,7 +13,8 @@ ColumnLayout {
     spacing: Tokens.spacing.extraSmall
 
     readonly property var activeSession: IntelligenceSessions.activeSession
-    readonly property string effectiveProvider: root.activeSession?.provider ?? (Settings.intelligenceDefaultProvider || AiConfig.activeProvider)
+    // Same resolution as IntelligenceHeader -- see its comment.
+    readonly property string effectiveProvider: AiProviders.chatProviderOr(root.activeSession?.provider ?? (Settings.intelligenceDefaultProvider || AiConfig.activeProvider))
     readonly property bool ollamaHostMissing: root.effectiveProvider === "ollama" && !AiConfig.ollamaHostConfigured
     readonly property bool providerAvailable: AiProviders.isAvailable(root.effectiveProvider)
 

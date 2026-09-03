@@ -28,15 +28,30 @@ import qs.services.ai
 Singleton {
     id: root
 
+    // `chat` is a separate axis from `role`, not a synonym for it: a
+    // harness can also be a first-class conversational model, and Claude is
+    // exactly that -- you can chat with Claude or you can drive Claude Code,
+    // and both are Anthropic-supported uses of the same CLI session. So the
+    // two roles are not mutually exclusive, and collapsing them into one
+    // field would misrepresent Claude either way round.
+    //
+    // Codex, OpenCode and Gemini CLI are harnesses only. They run sessions
+    // and execute tool calls; there is no plain "talk to it" mode behind
+    // them, so they must not be offered as chat providers (§4.1). Providers
+    // serve inference by definition, so `chat` defaults true for them.
     readonly property var _defaults: [
-        { id: "claude", label: "Claude Code", role: "harness", locality: null },
-        { id: "codex", label: "Codex", role: "harness", locality: null },
-        { id: "opencode", label: "OpenCode", role: "harness", locality: null },
-        { id: "geminicli", label: "Gemini CLI", role: "harness", locality: null },
-        { id: "ollama", label: "Ollama", role: "provider", locality: "local" },
-        { id: "unsloth", label: "unsloth", role: "provider", locality: "local" },
-        { id: "lms", label: "LM Studio", role: "provider", locality: "local" },
-        { id: "huggingface-cli", label: "Hugging Face CLI", role: "provider", locality: "local" }
+        { id: "claude", label: "Claude Code", role: "harness", chat: true, locality: null },
+        { id: "codex", label: "Codex", role: "harness", chat: false, locality: null },
+        { id: "opencode", label: "OpenCode", role: "harness", chat: false, locality: null },
+        { id: "geminicli", label: "Gemini CLI", role: "harness", chat: false, locality: null },
+        { id: "ollama", label: "Ollama", role: "provider", chat: true, locality: "local" },
+        // Off unless aphotic.toml opts in with `[agents.unsloth] enabled =
+        // true`. It runs GGUF weights directly rather than through Ollama's
+        // model store, so it is a genuinely separate local backend -- but
+        // one nobody gets a pill for by default.
+        { id: "unsloth", label: "Unsloth", role: "provider", chat: true, enabled: false, locality: "local" },
+        { id: "lms", label: "LM Studio", role: "provider", chat: true, locality: "local" },
+        { id: "huggingface-cli", label: "Hugging Face CLI", role: "provider", chat: true, locality: "local" }
     ]
 
     property var _overrides: ({})
@@ -47,8 +62,9 @@ Singleton {
             id: d.id,
             label: d.label,
             role: o.role ?? d.role,
+            chat: o.chat ?? d.chat,
             locality: d.locality,
-            enabled: o.enabled ?? true
+            enabled: o.enabled ?? d.enabled ?? true
         };
     })
 
@@ -57,6 +73,16 @@ Singleton {
 
     function roleFor(id: string): string {
         return (root.entries.find(e => e.id === id) ?? {}).role ?? "";
+    }
+
+    // Whether this id may be offered as a selectable chat provider. Ids this
+    // classifier has never heard of pass -- Gemini and ChatGPT are raw HTTP
+    // APIs with no CLI behind them (distinct from the `geminicli` harness
+    // above), and the Aphotic Assistant is a local model, so none of them
+    // are agent-tracking concerns at all and none belong in _defaults.
+    function servesChat(id: string): bool {
+        const e = root.entries.find(e => e.id === id);
+        return e ? e.chat === true : true;
     }
 
     function localityFor(id: string): string {
@@ -91,11 +117,14 @@ Singleton {
                 const body = m[2];
                 const enabledMatch = body.match(/enabled\s*=\s*(true|false)/);
                 const roleMatch = body.match(/role\s*=\s*"([^"]*)"/);
+                const chatMatch = body.match(/chat\s*=\s*(true|false)/);
                 const entry = {};
                 if (enabledMatch)
                     entry.enabled = enabledMatch[1] === "true";
                 if (roleMatch)
                     entry.role = roleMatch[1];
+                if (chatMatch)
+                    entry.chat = chatMatch[1] === "true";
                 next[id] = entry;
             }
             root._overrides = next;
