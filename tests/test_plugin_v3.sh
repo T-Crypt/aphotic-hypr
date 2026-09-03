@@ -51,9 +51,18 @@ id = "scratchTile"
 icon = "monitoring"
 label = "Scratch Tile"
 component = "qml/ScratchTile.qml"
+
+[ui.settings_pane]
+id = "scratchPane"
+icon = "tune"
+label = "Scratch Pane"
+component = "qml/ScratchPane.qml"
+requires_layer = "dev"
+parent = "language"
 EOF
 echo "// placeholder" > "$PLUGDIR/qml/ScratchTab.qml"
 echo "// placeholder" > "$PLUGDIR/qml/ScratchTile.qml"
+echo "// placeholder" > "$PLUGDIR/qml/ScratchPane.qml"
 
 # A second, v1-shaped plugin (no [owns]/[ui] at all) -- must describe
 # cleanly with empty owns/null ui, not error.
@@ -76,7 +85,7 @@ EOF
 described="$(_aphotic_plugin_describe scratch-ui)"
 [[ "$(echo "$described" | jq -r '.owns.config_keys | length')" -eq 2 ]] || fail "expected 2 owned config keys"
 [[ "$(echo "$described" | jq -r '.owns.config_keys[1]')" == "scratchAccent" ]] || fail "expected second config key to be scratchAccent"
-[[ "$(echo "$described" | jq -r '.ui.surfaces | length')" == "2" ]] || fail "expected both declared surfaces to be described"
+[[ "$(echo "$described" | jq -r '.ui.surfaces | length')" == "3" ]] || fail "expected all three declared surfaces to be described"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[0].surface')" == "dashboard" ]] || fail "expected the first surface to be the dashboard tab"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[0].id')" == "scratchTab" ]] || fail "expected dashboard surface id to be scratchTab"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[0].component')" == "qml/ScratchTab.qml" ]] || fail "expected dashboard surface component to be qml/ScratchTab.qml"
@@ -85,12 +94,56 @@ described="$(_aphotic_plugin_describe scratch-ui)"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[1].surface')" == "notch" ]] || fail "expected the second surface to be the notch tile"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[1].id')" == "scratchTile" ]] || fail "expected notch surface id to be scratchTile"
 [[ "$(echo "$described" | jq -r '.ui.surfaces[1].requires_layer')" == "" ]] || fail "expected an undeclared gate to read as empty, not null"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[2].surface')" == "settings" ]] || fail "expected the third surface to be the settings pane"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[2].id')" == "scratchPane" ]] || fail "expected settings surface id to be scratchPane"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[2].requires_layer')" == "dev" ]] || fail "expected the settings pane's own layer gate to survive"
+# A settings pane docks into a category as a section; it never becomes a
+# rail entry of its own, which is what keeps the rail a fixed length.
+[[ "$(echo "$described" | jq -r '.ui.surfaces[2].parent')" == "language" ]] || fail "expected the settings pane's declared parent category to survive"
+[[ "$(echo "$described" | jq -r '.ui.surfaces[0].parent')" == "" ]] || fail "expected a non-settings surface to carry an empty parent, not null"
+
+# --- profile capability: a plugin that registers a ProfileEngine profile ---
+# rather than drawing a surface. Claims are deliberately not declared in
+# the manifest -- ProfileEngine.register() takes them from the component.
+
+PROFDIR="$APHOTIC_PLUGINS_DIR/scratch-profile"
+mkdir -p "$PROFDIR/qml"
+cat > "$PROFDIR/plugin.toml" <<'EOF'
+[plugin]
+name = "scratch-profile"
+display_name = "Scratch Profile"
+description = "test profile plugin"
+version = "1.0.0"
+category = "gaming"
+capabilities = ["profile"]
+
+[profile]
+id = "scratchProfile"
+label = "Scratch Profile"
+component = "qml/ScratchProfile.qml"
+snapshot = ["dnd", "theme"]
+requires_layer = "gaming"
+EOF
+echo "// placeholder" > "$PROFDIR/qml/ScratchProfile.qml"
+
+described_profile="$(_aphotic_plugin_describe scratch-profile)"
+[[ "$(echo "$described_profile" | jq -r '.profile.id')" == "scratchProfile" ]] || fail "expected the profile id to be described"
+[[ "$(echo "$described_profile" | jq -r '.profile.component')" == "qml/ScratchProfile.qml" ]] || fail "expected the profile component path to be described"
+[[ "$(echo "$described_profile" | jq -r '.profile.requires_layer')" == "gaming" ]] || fail "expected the profile's layer gate to be described"
+[[ "$(echo "$described_profile" | jq -r '.profile.snapshot | join(",")')" == "dnd,theme" ]] || fail "expected the profile's snapshot list to be described"
+[[ "$(echo "$described_profile" | jq -r '.ui')" == "null" ]] || fail "expected a profile-only plugin to declare no ui surfaces"
+
+
+# A ui-only plugin must record profile: null, not a half-built object --
+# PluginRegistry keys profileRegistrations off exactly that.
+[[ "$(echo "$described" | jq -r '.profile')" == "null" ]] || fail "expected a ui-only plugin's profile to be null"
 
 # --- describe: v1-shaped plugin degrades cleanly, not an error ---
 
 described_v1="$(_aphotic_plugin_describe v1only)"
 [[ "$(echo "$described_v1" | jq -r '.owns.config_keys | length')" -eq 0 ]] || fail "expected v1only's owned config keys to be empty"
 [[ "$(echo "$described_v1" | jq -r '.ui')" == "null" ]] || fail "expected v1only's ui to be null, not an error"
+[[ "$(echo "$described_v1" | jq -r '.profile')" == "null" ]] || fail "expected v1only's profile to be null, not an error"
 
 # --- registry sync: install-time bookkeeping the QML side reads ---
 
@@ -102,6 +155,9 @@ reg="$(jq -c '.installed["scratch-ui"]' "$APHOTIC_PLUGINS_STATE_FILE")"
 [[ "$(echo "$reg" | jq -r '.version')" == "2.0.0" ]] || fail "expected registry entry version 2.0.0"
 [[ "$(echo "$reg" | jq -r '.ui.surfaces[0].component')" == "qml/ScratchTab.qml" ]] || fail "expected registry entry to carry the dashboard surface component path"
 [[ "$(echo "$reg" | jq -r '.ui.surfaces[1].surface')" == "notch" ]] || fail "expected registry entry to carry the notch surface too"
+
+_aphotic_plugin_registry_sync scratch-profile
+[[ "$(jq -r '.installed["scratch-profile"].profile.id' "$APHOTIC_PLUGINS_STATE_FILE")" == "scratchProfile" ]] || fail "expected the registry entry to carry the profile block"
 
 # --- registry symmetry: remove clears the entry, install/enable state untouched ---
 

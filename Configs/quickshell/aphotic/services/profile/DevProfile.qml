@@ -12,10 +12,12 @@ import qs.services.profile
 // onApply/onExit/onRestore/gracefulStop, because there is nothing
 // honest for them to do yet.
 //
-// A singleton, unlike GamingProfile.qml: that one is a plain QtObject
-// instantiated in shell.qml because it needs an injected gpuVram
-// property. Dev needs no injected dependency, so it matches the rest of
-// this directory instead and is importable straight from
+// A singleton, and still core: Dev's detection is the `dev` layer's own
+// baseline, and the launcher calls projectOpened() on it directly. The
+// Gaming profile went the other way (PLG-03) -- it is a `profile`-
+// capability plugin now, mounted from the registry by shell.qml, because
+// it needs GpuVramSource injected and has a real install/remove story.
+// Dev needs no injected dependency, so it stays importable straight from
 // qs.services.profile.
 //
 // DETECT is the launcher's existing project-open action and nothing
