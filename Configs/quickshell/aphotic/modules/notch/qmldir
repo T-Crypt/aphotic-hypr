@@ -1,0 +1,5 @@
+module qs.modules.notch
+Notch 1.0 Notch.qml
+NotchWindow 1.0 NotchWindow.qml
+NotchProcessTile 1.0 NotchProcessTile.qml
+NotchPlaceholderTile 1.0 NotchPlaceholderTile.qml

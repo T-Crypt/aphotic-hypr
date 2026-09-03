@@ -175,6 +175,24 @@ QtObject {
         }
     }
 
+    readonly property QtObject notch: QtObject {
+        readonly property bool enabled: true
+
+        // Collapsed/expanded are the notch's own inner sizes;
+        // expandedWidth and maxHeight also bound the STATIC layer-shell
+        // surface it draws into (see modules/notch/NotchWindow.qml).
+        // Content wanting more than that is clipped by the compositor
+        // rather than growing the window, so a new tile needing room
+        // raises these, not just its own size.
+        readonly property int collapsedWidth: 132
+        readonly property int collapsedHeight: 26
+        readonly property int expandedWidth: 420
+        readonly property int maxHeight: 340
+
+        readonly property int processUpdateInterval: 1500
+        readonly property int processCount: 6
+    }
+
     readonly property QtObject launcher: QtObject {
         readonly property string emojiListPath: `${Quickshell.env("HOME")}/.config/quickshell/aphotic/data/emoji.txt`
         readonly property string wallpaperDir: `${Quickshell.env("HOME")}/.config/awww`
