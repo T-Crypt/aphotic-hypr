@@ -190,6 +190,7 @@ QtObject {
         readonly property int maxHeight: 340
 
         readonly property int processUpdateInterval: 1500
+        readonly property int gpuUpdateInterval: 3000
         readonly property int processCount: 6
     }
 

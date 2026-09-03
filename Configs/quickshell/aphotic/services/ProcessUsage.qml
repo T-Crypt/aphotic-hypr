@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.services
 
 // Per-process CPU/RSS sampling. SystemUsage covers the aggregate meters
 // (and is the only thing that should) -- this is strictly the per-PID
@@ -22,11 +23,46 @@ Singleton {
     // core, the same scale top(1) reports, so a busy multithreaded
     // process legitimately exceeds 100.
     readonly property var processes: {
+        // GPU is a join, not just a different sort key: only processes
+        // holding VRAM belong in that list at all, and a list mostly made
+        // of zeroes would say nothing. No object spread -- Quickshell's JS
+        // engine rejects it outright (see SystemUsage.qml).
+        if (root.sortBy === "gpu") {
+            const byPid = root._gpuByPid;
+            const held = [];
+            for (let i = 0; i < root._samples.length; i++) {
+                const sample = root._samples[i];
+                const mib = byPid[sample.pid];
+                if (mib === undefined)
+                    continue;
+                held.push({
+                    pid: sample.pid,
+                    name: sample.name,
+                    cpu: sample.cpu,
+                    rssKib: sample.rssKib,
+                    gpuMib: mib
+                });
+            }
+            return held.sort((a, b) => b.gpuMib - a.gpuMib).slice(0, root.count);
+        }
+
         const key = root.sortBy === "mem" ? "rssKib" : "cpu";
         return root._samples.slice().sort((a, b) => b[key] - a[key]).slice(0, root.count);
     }
 
+    // "cpu" | "mem" | "gpu"
     property string sortBy: "cpu"
+
+    // Per-process VRAM has exactly one source that works here: nvidia-smi.
+    // The NVIDIA driver publishes no DRM fdinfo (verified on this box --
+    // only the i915 iGPU's clients carry drm-* keys), and AMD's
+    // drm-resident-vram path is the one GpuVramSource.qml already declines
+    // to trust without real hardware to verify against. So rather than
+    // hide the tab on unsupported hardware and reflow the tile, this is
+    // surfaced as a capability the tile explains -- the same call
+    // SystemUsage makes for GPU stats generally.
+    readonly property bool gpuSupported: (SystemUsage.selectedGpu?.vendor ?? "") === "nvidia"
+    readonly property bool gpuAvailable: root.gpuSupported && root._gpuSeen
     readonly property int count: Config.notch.processCount
     readonly property bool sampling: root._watchers > 0
     // False for exactly one tick after sampling starts: a CPU percentage
@@ -42,10 +78,13 @@ Singleton {
         if (root._watchers === 0) {
             root._prev = null;
             root._samples = [];
+            root._gpuByPid = ({});
         }
     }
 
     property var _samples: []
+    property var _gpuByPid: ({})
+    property bool _gpuSeen: false
     property var _prev: null
     property real _prevAt: 0
     property int _watchers: 0
@@ -125,9 +164,47 @@ Singleton {
         }
     }
 
+    function _ingestGpu(xml: string): void {
+        const byPid = {};
+        for (const block of xml.match(/<process_info>[\s\S]*?<\/process_info>/g) ?? []) {
+            const field = tag => {
+                const m = block.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
+                return m ? m[1].trim() : "";
+            };
+            const pid = field("pid");
+            // used_memory carries its unit ("214 MiB"); parseInt stops at
+            // the space and an "N/A" entry becomes NaN and is dropped.
+            const mib = parseInt(field("used_memory"), 10);
+            if (!pid || isNaN(mib) || mib <= 0)
+                continue;
+            byPid[pid] = mib;
+        }
+        root._gpuByPid = byPid;
+        if (Object.keys(byPid).length > 0)
+            root._gpuSeen = true;
+    }
+
+    Process {
+        id: gpuProc
+        // Same invocation GpuVramSource.qml settled on, and for the same
+        // reason: the --query-compute-apps CSV only ever reports C-type
+        // processes, so everything holding VRAM for rendering -- which on
+        // a desktop is nearly all of it -- is invisible to it. The XML is
+        // the only structured source covering every type.
+        command: ["sh", "-c", "command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -q -x"]
+        stdout: StdioCollector {
+            onStreamFinished: root._ingestGpu(text)
+        }
+    }
+
     function _sweep(): void {
         if (!sampleProc.running)
             sampleProc.running = true;
+    }
+
+    function _sweepGpu(): void {
+        if (!gpuProc.running)
+            gpuProc.running = true;
     }
 
     Timer {
@@ -143,6 +220,18 @@ Singleton {
     // the tile is opened. One short follow-up sweep puts real numbers on
     // screen immediately; its narrower window is coarser than a steady
     // tick but is replaced by one a moment later.
+    // Its own, slower cadence, and only while the GPU column is the one
+    // being shown: one nvidia-smi -q -x costs ~120ms of subprocess here,
+    // far too much to hang off the 1.5s /proc tick, and VRAM allocations
+    // do not move at anything like that rate anyway.
+    Timer {
+        interval: Config.notch.gpuUpdateInterval
+        running: root.sampling && root.sortBy === "gpu" && root.gpuSupported
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root._sweepGpu()
+    }
+
     Timer {
         id: primeTimer
         interval: 350

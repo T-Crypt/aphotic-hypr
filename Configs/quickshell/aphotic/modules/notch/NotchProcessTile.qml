@@ -10,6 +10,8 @@ ColumnLayout {
     id: root
 
     readonly property bool byMem: ProcessUsage.sortBy === "mem"
+    readonly property bool byGpu: ProcessUsage.sortBy === "gpu"
+    readonly property color metricColour: root.byGpu ? Colours.palette.m3secondary : root.byMem ? Colours.palette.m3tertiary : Colours.palette.m3primary
 
     // Padded to a constant length so the tile's implicitHeight -- and
     // therefore the notch's animated height -- does not twitch as
@@ -25,14 +27,33 @@ ColumnLayout {
         const first = ProcessUsage.processes[0];
         if (!first)
             return 0;
-        return root.byMem ? first.rssKib : first.cpu;
+        return root.metricOf(first);
+    }
+
+    // Says which of the three empty states this is: unsupported hardware,
+    // a sweep that has not landed yet, or a supported GPU with nothing
+    // currently holding VRAM.
+    readonly property string emptyNote: {
+        if (ProcessUsage.processes.length > 0)
+            return "";
+        if (root.byGpu && !ProcessUsage.gpuSupported)
+            return qsTr("Per-process VRAM needs an NVIDIA GPU");
+        if (root.byGpu && !ProcessUsage.gpuAvailable)
+            return qsTr("reading VRAM…");
+        if (!ProcessUsage.primed)
+            return qsTr("sampling…");
+        return root.byGpu ? qsTr("nothing holding VRAM") : "";
     }
 
     function metricOf(entry: var): real {
+        if (root.byGpu)
+            return entry.gpuMib;
         return root.byMem ? entry.rssKib : entry.cpu;
     }
 
     function labelFor(entry: var): string {
+        if (root.byGpu)
+            return entry.gpuMib >= 1024 ? `${(entry.gpuMib / 1024).toFixed(1)} GiB` : `${entry.gpuMib} MiB`;
         if (root.byMem) {
             const fmt = SystemUsage.formatKib(entry.rssKib);
             return `${fmt.value.toFixed(fmt.unit === "GiB" ? 1 : 0)} ${fmt.unit}`;
@@ -97,6 +118,11 @@ ColumnLayout {
             key: "mem"
             label: qsTr("Memory")
         }
+
+        SortChip {
+            key: "gpu"
+            label: qsTr("GPU")
+        }
     }
 
     Repeater {
@@ -119,7 +145,7 @@ ColumnLayout {
                 anchors.bottom: parent.bottom
                 width: row.modelData && root.peak > 0 ? parent.width * Math.min(1, root.metricOf(row.modelData) / root.peak) : 0
                 radius: parent.radius
-                color: Qt.alpha(root.byMem ? Colours.palette.m3tertiary : Colours.palette.m3primary, 0.28)
+                color: Qt.alpha(root.metricColour, 0.28)
 
                 Behavior on width {
                     Anim { type: Anim.DefaultEffects }
@@ -161,8 +187,11 @@ ColumnLayout {
 
             StyledText {
                 anchors.centerIn: parent
-                visible: row.index === 0 && !row.modelData && !ProcessUsage.primed
-                text: qsTr("sampling…")
+                width: parent.width - Tokens.padding.small * 2
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                visible: row.index === 0 && !row.modelData && root.emptyNote.length > 0
+                text: root.emptyNote
                 color: Colours.palette.m3onSurfaceVariant
                 font: Tokens.font.label.small
             }

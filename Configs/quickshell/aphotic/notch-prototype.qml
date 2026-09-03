@@ -52,7 +52,9 @@ ShellRoot {
                 sampling: ProcessUsage.sampling,
                 primed: ProcessUsage.primed,
                 sortBy: ProcessUsage.sortBy,
-                top: ProcessUsage.processes.slice(0, 3).map(p => `${p.name} ${p.cpu.toFixed(1)}% ${Math.round(p.rssKib / 1024)}M`)
+                gpuSupported: ProcessUsage.gpuSupported,
+                gpuAvailable: ProcessUsage.gpuAvailable,
+                top: ProcessUsage.processes.slice(0, 6).map(p => `${p.name} cpu=${p.cpu.toFixed(1)}% rss=${Math.round(p.rssKib / 1024)}M vram=${p.gpuMib ?? "-"}`)
             });
         }
 
