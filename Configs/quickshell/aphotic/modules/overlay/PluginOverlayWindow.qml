@@ -20,10 +20,15 @@ import qs.services
 // declared width/height and never resizes, so a plugin cannot renegotiate
 // a layer surface no matter what it animates inside its own item.
 //
-// Region-masked to the loaded item rather than the whole surface, so the
-// unpainted remainder stays click-through -- an always-present overlay
-// that swallowed clicks meant for the desktop underneath would be worse
+// Region-masked so the surface does not swallow clicks meant for the
+// desktop underneath -- an always-present overlay that did would be worse
 // than no overlay. Same reasoning NotchWindow and BarWindow document.
+//
+// A plugin that paints less than its whole budget should expose a
+// `maskItem` naming the part that takes input, because the loaded item
+// fills the window and masking to it makes the entire declared box a dead
+// zone. A pet 86px wide in a 240px surface would otherwise cost the
+// desktop the other 154.
 PanelWindow {
     id: root
 
@@ -51,7 +56,7 @@ PanelWindow {
     implicitHeight: root.surface.height
 
     mask: Region {
-        item: content.item ?? null
+        item: content.item?.maskItem ?? content.item ?? null
     }
 
     Loader {
