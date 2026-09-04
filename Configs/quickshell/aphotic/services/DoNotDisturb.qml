@@ -15,6 +15,7 @@ Singleton {
     readonly property bool enabled: Settings.dndEnabled
     property bool _pomodoroForced: false
     property bool _gamingForced: false
+    property bool _securityForced: false
 
     // The Gaming profile's APPLY/RESTORE pair, following the same rule the
     // Pomodoro handler below documents: its own forced-tracking flag, never
@@ -29,6 +30,21 @@ Singleton {
         } else if (root._gamingForced) {
             Settings.dndEnabled = false;
             root._gamingForced = false;
+        }
+    }
+
+    // The Security profile's APPLY/RESTORE pair. Its own flag again, for
+    // the same reason: an engagement ending must not clear DND that
+    // Gaming, Pomodoro or the user is still holding.
+    function setSecurityActive(active: bool): void {
+        if (active) {
+            if (!Settings.dndEnabled) {
+                Settings.dndEnabled = true;
+                root._securityForced = true;
+            }
+        } else if (root._securityForced) {
+            Settings.dndEnabled = false;
+            root._securityForced = false;
         }
     }
 
