@@ -1,0 +1,2 @@
+module qs.modules.overlay
+PluginOverlayWindow 1.0 PluginOverlayWindow.qml
