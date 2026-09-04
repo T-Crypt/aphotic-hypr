@@ -1,78 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="320" viewBox="0 0 900 320" fill="none">
+<svg width="900" height="320" viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="900" y2="320" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#05070a"/>
-      <stop offset="1" stop-color="#0a1218"/>
-    </linearGradient>
-    <linearGradient id="shaftGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#a5f3fc"/>
-      <stop offset="55%" stop-color="#22d3ee"/>
-      <stop offset="100%" stop-color="#0e7490" stop-opacity="0"/>
-    </linearGradient>
-    <radialGradient id="voidGrad" cx="50%" cy="38%" r="75%">
-      <stop offset="0%" stop-color="#131a22"/>
-      <stop offset="100%" stop-color="#080b0f"/>
+    <radialGradient id="bgGlow" cx="30%" cy="15%" r="75%">
+      <stop offset="0%" stop-color="#2a3a6b" stop-opacity="0.55"/>
+      <stop offset="35%" stop-color="#241f4a" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0a0a16" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.22"/>
-      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    <radialGradient id="pinkGlow" cx="78%" cy="10%" r="55%">
+      <stop offset="0%" stop-color="#ff62a5" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#ff62a5" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#a5f3fc"/>
-      <stop offset="1" stop-color="#22d3ee"/>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4f8ff7"/>
+      <stop offset="55%" stop-color="#a06be0"/>
+      <stop offset="100%" stop-color="#ff62a5"/>
     </linearGradient>
-    <filter id="sparkGlow" x="-150%" y="-150%" width="400%" height="400%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+    <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f8ff7"/>
+      <stop offset="100%" stop-color="#ff62a5"/>
+    </linearGradient>
+    <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a5c8fc"/>
+      <stop offset="100%" stop-color="#ff8fc0"/>
+    </linearGradient>
   </defs>
 
-  <rect width="900" height="320" fill="url(#bgGrad)"/>
-  <circle cx="450" cy="110" r="220" fill="url(#glow)"/>
+  <rect width="900" height="320" fill="#0a0a16"/>
+  <rect width="900" height="320" fill="url(#bgGlow)"/>
+  <rect width="900" height="320" fill="url(#pinkGlow)"/>
 
-  <!-- depth specks, replacing starfield -->
-  <g fill="#5eead4" opacity="0.55">
-    <circle cx="60" cy="40" r="1.4"/>
-    <circle cx="120" cy="90" r="1"/>
-    <circle cx="760" cy="45" r="1.2"/>
-    <circle cx="820" cy="100" r="1"/>
-    <circle cx="840" cy="180" r="1"/>
+  <circle cx="60" cy="38" r="1.6" fill="#4f8ff7" opacity="0.7"/>
+  <circle cx="760" cy="45" r="1.4" fill="#ff62a5" opacity="0.6"/>
+  <circle cx="820" cy="100" r="1.8" fill="#fc793c" opacity="0.55"/>
+  <circle cx="838" cy="180" r="1.4" fill="#4f8ff7" opacity="0.5"/>
+
+  <!-- Hexagon logo -->
+  <g transform="translate(78,66) scale(0.155)">
+    <polygon points="256,54 432,155 432,357 256,458 80,357 80,155"
+             fill="#0a0d12" stroke="url(#hexGrad)" stroke-width="16"/>
+    <path d="M 214,132 L 298,132 L 256,320 Z" fill="url(#shaft)"/>
+    <circle cx="308" cy="360" r="16" fill="#5eead4"/>
   </g>
 
-  <!-- icon mark: hex boundary + tapering light shaft + bioluminescent spark -->
-  <g transform="translate(58,52) scale(0.235)">
-    <polygon points="256,68 418.8,162 418.8,350 256,444 93.2,350 93.2,162"
-             fill="url(#voidGrad)" stroke="#2a3644" stroke-width="6"/>
-    <path d="M 226,140
-             C 226,168 236,190 244,214
-             C 250,232 253,250 254,270
-             C 254.6,282 255,292 255,300
-             L 257,300
-             C 257,292 257.4,282 258,270
-             C 259,250 262,232 268,214
-             C 276,190 286,168 286,140 Z"
-          fill="url(#shaftGrad)"/>
-    <circle cx="300" cy="352" r="7.5" fill="#5eead4" filter="url(#sparkGlow)"/>
-  </g>
+  <!-- Wordmark -->
+  <text x="248" y="128" font-family="Verdana, Geneva, sans-serif" font-weight="bold"
+        font-size="52" letter-spacing="4" fill="url(#brandGrad)">APHOTIC</text>
 
-  <text x="248" y="138" font-family="'JetBrains Mono','Fira Code','Courier New',Consolas,monospace" font-weight="700" letter-spacing="2" font-size="60" fill="url(#titleGrad)">APHOTIC</text>
-  <text x="251" y="170" font-family="'Courier New',Consolas,monospace" font-size="14" letter-spacing="2" fill="#5b7280">HYPRLAND | QUICKSHELL, BEYOND THE LIGHT</text>
+  <!-- Subtitle -->
+  <text x="250" y="168" font-family="Consolas, 'Courier New', monospace"
+        font-size="13.5" letter-spacing="2.5" fill="#8b8fa3">HYPRLAND | QUICKSHELL, MODULAR</text>
 
-  <!-- terminal window: the IPC grammar as a lived-in prompt -->
-  <g transform="translate(60,210)">
-    <rect x="0" y="0" width="780" height="86" rx="10" fill="#0c0f14" stroke="#1c2530" stroke-width="1"/>
-    <circle cx="20" cy="18" r="4.5" fill="#263041"/>
-    <circle cx="36" cy="18" r="4.5" fill="#263041"/>
-    <circle cx="52" cy="18" r="4.5" fill="#263041"/>
-    <line x1="0" y1="30" x2="780" y2="30" stroke="#161c24" stroke-width="1"/>
+  <!-- Terminal box -->
+  <rect x="65" y="215" width="775" height="86" rx="12" fill="#111021" stroke="#2a2a45" stroke-width="1.2"/>
+  <circle cx="90" cy="234" r="4.5" fill="#3f3f57"/>
+  <circle cx="106" cy="234" r="4.5" fill="#3f3f57"/>
+  <circle cx="122" cy="234" r="4.5" fill="#3f3f57"/>
 
-    <text x="20" y="52" font-family="'Courier New',Consolas,monospace" font-size="14" fill="#22d3ee">❯</text>
-    <text x="38" y="52" font-family="'Courier New',Consolas,monospace" font-size="14" fill="#a5f3fc">aphotic shell</text>
-    <text x="150" y="52" font-family="'Courier New',Consolas,monospace" font-size="14" fill="#5b7280">reload</text>
+  <text x="88" y="264" font-family="Consolas, 'Courier New', monospace" font-size="16">
+    <tspan fill="#ff8a5c">&gt;</tspan>
+    <tspan fill="#f2f4fb" font-weight="bold" dx="8">aphotic shell</tspan>
+    <tspan fill="#8b8fa3" dx="6">reload</tspan>
+  </text>
 
-    <text x="20" y="74" font-family="'Courier New',Consolas,monospace" font-size="12" fill="#3d4a58">quickshell daemon · ipc socket attached · bar / notifs / launcher</text>
-  </g>
+  <text x="88" y="288" font-family="Consolas, 'Courier New', monospace" font-size="12.5" fill="#6b6f85">
+    quickshell daemon · ipc socket attached · bar / notifs / launcher
+  </text>
 </svg>

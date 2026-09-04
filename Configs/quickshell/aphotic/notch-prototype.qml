@@ -26,19 +26,26 @@ ShellRoot {
         function cycle(): string {
             const w = windows.instances[0];
             w.notch.cycle();
-            return `tile=${w.notch.tile}`;
+            return `tile=${w.notch.tileId}`;
         }
 
         function collapse(): string {
             const w = windows.instances[0];
             w.notch.collapse();
-            return `tile=${w.notch.tile}`;
+            return `tile=${w.notch.tileId}`;
         }
 
-        function pick(t: int): string {
+        function pick(t: string): string {
             const w = windows.instances[0];
-            w.notch.tile = t;
-            return `tile=${w.notch.tile}`;
+            w.notch.tileId = t;
+            return `tile=${w.notch.tileId}`;
+        }
+
+        function dock(edge: string): string {
+            Settings.barHorizontal = edge === "top" || edge === "bottom";
+            Settings.barPositionBottom = edge === "bottom";
+            Settings.barPositionRight = edge === "right";
+            return `horizontal=${Settings.barHorizontal} bottom=${Settings.barPositionBottom} right=${Settings.barPositionRight}`;
         }
 
         function tabs(): string {
@@ -54,8 +61,12 @@ ShellRoot {
         function state(): string {
             const w = windows.instances[0];
             return JSON.stringify({
-                tile: w.notch.tile,
-                shownTile: w.notch.shownTile,
+                tile: w.notch.tileId,
+                shownTile: w.notch.shownTileId,
+                dockHorizontal: w.notch.dockHorizontal,
+                growsPositive: w.notch.growsPositive,
+                openProgress: w.notch.openProgress.toFixed(3),
+                panelHeight: Math.round(w.notch.panelHeight),
                 notchW: Math.round(w.notch.width),
                 notchH: Math.round(w.notch.height),
                 winW: w.width,

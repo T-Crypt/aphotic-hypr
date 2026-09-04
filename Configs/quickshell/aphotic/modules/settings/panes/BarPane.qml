@@ -22,9 +22,14 @@ ColumnLayout {
         font: Tokens.font.label.medium
     }
 
-    RowLayout {
+    // A grid rather than one row: at five styles a single row squeezes
+    // every card below the width its scaled-down preview needs to read as
+    // anything.
+    GridLayout {
         Layout.fillWidth: true
-        spacing: Tokens.spacing.small
+        columns: 3
+        rowSpacing: Tokens.spacing.small
+        columnSpacing: Tokens.spacing.small
 
         BarStylePreviewCard {
             Layout.fillWidth: true
@@ -45,6 +50,11 @@ ColumnLayout {
             Layout.fillWidth: true
             styleName: "minimal"
             label: qsTr("Minimal")
+        }
+        BarStylePreviewCard {
+            Layout.fillWidth: true
+            styleName: "capsule"
+            label: qsTr("Capsule")
         }
     }
 
@@ -381,6 +391,50 @@ ColumnLayout {
                 label: qsTr("Show Do Not Disturb indicator")
                 checked: Settings.minimalShowDnd
                 onToggled: state => Settings.minimalShowDnd = state
+            }
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        visible: Settings.barStyle === "capsule"
+        spacing: Tokens.spacing.small
+
+        StyledText {
+            text: qsTr("Capsule")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsToggleRow {
+                icon: "music_note"
+                label: qsTr("Show media in the capsule")
+                checked: Settings.capsuleMedia
+                onToggled: state => Settings.capsuleMedia = state
+            }
+
+            SettingsToggleRow {
+                icon: "pan_zoom"
+                label: qsTr("Expand on hover")
+                checked: Settings.capsuleExpandOnHover
+                onToggled: state => Settings.capsuleExpandOnHover = state
+            }
+
+            SettingsToggleRow {
+                icon: "shapes"
+                label: qsTr("Animated album artwork shape")
+                checked: Settings.capsuleShapedArt
+                onToggled: state => Settings.capsuleShapedArt = state
+            }
+
+            SettingsToggleRow {
+                icon: "animation"
+                label: qsTr("Animate transitions")
+                checked: Settings.capsuleAnimations
+                onToggled: state => Settings.capsuleAnimations = state
             }
         }
     }

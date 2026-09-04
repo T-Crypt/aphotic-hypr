@@ -38,7 +38,7 @@ reset_logs() {
 }
 
 # 1. Each valid style calls through to `qs ... setStyle <name>` and reports ok.
-for style in full dock taskbar minimal; do
+for style in full dock taskbar minimal capsule; do
     reset_logs
     rc=0
     aphotic_cmd_bar style "$style" || rc=$?

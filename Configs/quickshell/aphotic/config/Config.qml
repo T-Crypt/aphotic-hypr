@@ -101,6 +101,38 @@ QtObject {
             ]
         }
 
+        // Capsule style. expanded*/stacked* also bound the STATIC
+        // layer-shell surface the capsule draws into (see
+        // modules/bar/CapsuleWindow.qml) -- content wanting more than
+        // this is clipped by the compositor rather than growing the
+        // window, so a richer expanded surface raises these, not just its
+        // own size. expanded* is the top/bottom-docked shape, stacked*
+        // the left/right-docked one.
+        readonly property QtObject capsule: QtObject {
+            // The pill's own length floor. Its real length follows its
+            // content, but never drops below this, so a sparse bar is still
+            // a bar rather than a nub.
+            readonly property int minLength: 420
+            // The media popout, drawn as its own surface below (or above,
+            // or beside) the pill so the pill itself stays a working bar
+            // the whole time it is open. popout* is the top/bottom-docked
+            // shape, stackedPopout* the left/right-docked one.
+            readonly property int popoutWidth: 440
+            readonly property int popoutHeight: 136
+            readonly property int stackedPopoutWidth: 268
+            readonly property int stackedPopoutHeight: 330
+            // Visual gap between pill and popout. The two items stay FLUSH
+            // (the gap is transparent padding inside the popout's own
+            // bounds) so the pointer never crosses a dead zone travelling
+            // between them -- the same trap modules/bar/popouts/Wrapper.qml
+            // documents at length.
+            readonly property int gap: 8
+            readonly property int edgeMargin: 8
+            // Sliver left on screen by auto-hide, so there is something to
+            // aim at and something to see.
+            readonly property int peek: 6
+        }
+
         readonly property QtObject entries: QtObject {
             readonly property var values: [
                 { id: "logo", enabled: true },
@@ -184,16 +216,32 @@ QtObject {
     readonly property QtObject notch: QtObject {
         readonly property bool enabled: true
 
-        // Collapsed/expanded are the notch's own inner sizes;
+        // Every size here is expressed against the bar's docked edge, not
+        // against the screen: `collapsedWidth` runs ALONG that edge and
+        // `collapsedHeight` is the strip's thickness, so a side-docked bar
+        // gets a 26x132 strip from the same two numbers a top-docked one
+        // gets 132x26 from. expandedWidth and maxHeight are the open
+        // panel's screen-space width and height in every orientation --
+        // the panel is the same rectangle wherever it opens from, only the
+        // pinned edge changes.
+        //
         // expandedWidth and maxHeight also bound the STATIC layer-shell
-        // surface it draws into (see modules/notch/NotchWindow.qml).
+        // surface the notch draws into (see modules/notch/NotchWindow.qml).
         // Content wanting more than that is clipped by the compositor
         // rather than growing the window, so a new tile needing room
         // raises these, not just its own size.
         readonly property int collapsedWidth: 132
         readonly property int collapsedHeight: 26
         readonly property int expandedWidth: 420
-        readonly property int maxHeight: 340
+        readonly property int maxHeight: 400
+
+        // Slack around the panel inside that static surface: drop-shadow
+        // bleed plus the open spring's overshoot, which reaches about 8%
+        // of the travel past the target before it settles. Undersized, the
+        // compositor clips the bounce and the shadow instead of the shell.
+        readonly property int surfaceMargin: 40
+        // How far the strip sits off the edge it docks against.
+        readonly property int edgeGap: 4
 
         readonly property int processUpdateInterval: 1500
         readonly property int gpuUpdateInterval: 3000

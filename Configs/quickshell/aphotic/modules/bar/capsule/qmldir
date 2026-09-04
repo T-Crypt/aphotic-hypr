@@ -1,0 +1,8 @@
+module qs.modules.bar.capsule
+BlobShape 1.0 BlobShape.qml
+CapsuleArtwork 1.0 CapsuleArtwork.qml
+CapsuleClock 1.0 CapsuleClock.qml
+CapsuleMediaChip 1.0 CapsuleMediaChip.qml
+CapsuleMediaSurface 1.0 CapsuleMediaSurface.qml
+CapsuleTransport 1.0 CapsuleTransport.qml
+CapsuleWorkspaces 1.0 CapsuleWorkspaces.qml

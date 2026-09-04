@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.2
+
+A fifth bar style, the capsule, and a rebuilt notch that follows your bar to whichever edge it is docked on.
+
 ## 2.0.1
 
 install.sh now detects AMD GPUs, installs their Mesa and RADV Vulkan drivers, and picks the Ollama GPU runner that matches your card (ollama-rocm on AMD, ollama-cuda on NVIDIA) so local models stop running on the CPU.

@@ -56,7 +56,7 @@ Singleton {
     // later position override sticks.
     property var barStyleDefaultsApplied: []
 
-    readonly property string barStyle: ["dock", "taskbar", "minimal"].includes(barSkin) ? barSkin : "full"
+    readonly property string barStyle: ["dock", "taskbar", "minimal", "capsule"].includes(barSkin) ? barSkin : "full"
 
     property bool dockAutoHide: false
     // Array of desktop-entry ids (DesktopEntry.id, e.g. "firefox") pinned
@@ -69,13 +69,22 @@ Singleton {
     property bool taskbarGrouping: true
     property bool minimalShowDnd: true
 
+    // Capsule style. capsuleAnimations is the master switch for every
+    // transition the style owns -- with it off the capsule still changes
+    // state, it just steps rather than eases, and the animated artwork
+    // mask (the one shader in the style) is skipped entirely.
+    property bool capsuleMedia: true
+    property bool capsuleShapedArt: true
+    property bool capsuleExpandOnHover: true
+    property bool capsuleAnimations: true
+
     // name: "full" | "dock" | "taskbar" | "minimal" -- the single entry
     // point for changing bar style, shared by the Settings tab, the CLI
     // (`aphotic bar style`), and the IPC handler below, so all three
     // paths apply the exact same first-selection-position-default and
     // lastFullSkin bookkeeping instead of three divergent copies.
     function setBarStyle(name: string): void {
-        const valid = ["full", "dock", "taskbar", "minimal"];
+        const valid = ["full", "dock", "taskbar", "minimal", "capsule"];
         if (!valid.includes(name))
             return;
 
@@ -95,6 +104,9 @@ Singleton {
             } else if (name === "taskbar") {
                 root.barHorizontal = true;
                 root.barPositionBottom = true;
+            } else if (name === "capsule") {
+                root.barHorizontal = true;
+                root.barPositionBottom = false;
             }
         }
 
@@ -102,7 +114,7 @@ Singleton {
     }
 
     function cycleBarStyle(): void {
-        const order = ["full", "dock", "taskbar", "minimal"];
+        const order = ["full", "dock", "taskbar", "minimal", "capsule"];
         const idx = order.indexOf(root.barStyle);
         root.setBarStyle(order[(idx + 1) % order.length]);
     }
@@ -300,6 +312,10 @@ Singleton {
             dockMagnification: root.dockMagnification,
             taskbarGrouping: root.taskbarGrouping,
             minimalShowDnd: root.minimalShowDnd,
+            capsuleMedia: root.capsuleMedia,
+            capsuleShapedArt: root.capsuleShapedArt,
+            capsuleExpandOnHover: root.capsuleExpandOnHover,
+            capsuleAnimations: root.capsuleAnimations,
             agentSelectedProvider: root.agentSelectedProvider,
             agentGraphEnabled: root.agentGraphEnabled,
             agentGraphQuality: root.agentGraphQuality,
@@ -546,6 +562,10 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onDockMagnificationChanged: root._saveState()
     onTaskbarGroupingChanged: root._saveState()
     onMinimalShowDndChanged: root._saveState()
+    onCapsuleMediaChanged: root._saveState()
+    onCapsuleShapedArtChanged: root._saveState()
+    onCapsuleExpandOnHoverChanged: root._saveState()
+    onCapsuleAnimationsChanged: root._saveState()
     onGgufModelsDirChanged: root._saveState()
     onAssistantWelcomeShownChanged: root._saveState()
     onDndEnabledChanged: root._saveState()
@@ -698,6 +718,14 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.taskbarGrouping = data.taskbarGrouping;
                 if (typeof data.minimalShowDnd === "boolean")
                     root.minimalShowDnd = data.minimalShowDnd;
+                if (typeof data.capsuleMedia === "boolean")
+                    root.capsuleMedia = data.capsuleMedia;
+                if (typeof data.capsuleShapedArt === "boolean")
+                    root.capsuleShapedArt = data.capsuleShapedArt;
+                if (typeof data.capsuleExpandOnHover === "boolean")
+                    root.capsuleExpandOnHover = data.capsuleExpandOnHover;
+                if (typeof data.capsuleAnimations === "boolean")
+                    root.capsuleAnimations = data.capsuleAnimations;
                 if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "opencode"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.agentGraphEnabled === "boolean")
