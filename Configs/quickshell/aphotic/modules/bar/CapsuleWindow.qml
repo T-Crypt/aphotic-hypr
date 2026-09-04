@@ -22,7 +22,10 @@ PanelWindow {
     // sized once to the largest state the capsule can reach and only the
     // inner surface moves -- the same budgeting NotchWindow.qml does.
     readonly property int reservedThickness: collapsedThickness + edgeMargin
-    readonly property int maxThickness: Math.max(collapsedThickness, Settings.barHorizontal ? Config.bar.capsule.expandedHeight : Config.bar.capsule.stackedWidth)
+    // Room for the pill PLUS the media popout that opens away from the
+    // docked edge, so the compositor never has to renegotiate the surface
+    // when it opens.
+    readonly property int maxThickness: collapsedThickness + Config.bar.capsule.gap + (Settings.barHorizontal ? Config.bar.capsule.popoutHeight : Config.bar.capsule.stackedPopoutWidth)
 
     readonly property bool dockedTop: Settings.barHorizontal && !Settings.barPositionBottom
     readonly property bool dockedLeft: !Settings.barHorizontal && !Settings.barPositionRight

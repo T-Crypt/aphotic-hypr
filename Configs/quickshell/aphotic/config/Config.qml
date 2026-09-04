@@ -109,11 +109,28 @@ QtObject {
         // own size. expanded* is the top/bottom-docked shape, stacked*
         // the left/right-docked one.
         readonly property QtObject capsule: QtObject {
-            readonly property int expandedWidth: 430
-            readonly property int expandedHeight: 136
-            readonly property int stackedWidth: 240
-            readonly property int stackedHeight: 348
+            // The pill's own length floor. Its real length follows its
+            // content, but never drops below this, so a sparse bar is still
+            // a bar rather than a nub.
+            readonly property int minLength: 420
+            // The media popout, drawn as its own surface below (or above,
+            // or beside) the pill so the pill itself stays a working bar
+            // the whole time it is open. popout* is the top/bottom-docked
+            // shape, stackedPopout* the left/right-docked one.
+            readonly property int popoutWidth: 440
+            readonly property int popoutHeight: 136
+            readonly property int stackedPopoutWidth: 268
+            readonly property int stackedPopoutHeight: 330
+            // Visual gap between pill and popout. The two items stay FLUSH
+            // (the gap is transparent padding inside the popout's own
+            // bounds) so the pointer never crosses a dead zone travelling
+            // between them -- the same trap modules/bar/popouts/Wrapper.qml
+            // documents at length.
+            readonly property int gap: 8
             readonly property int edgeMargin: 8
+            // Sliver left on screen by auto-hide, so there is something to
+            // aim at and something to see.
+            readonly property int peek: 6
         }
 
         readonly property QtObject entries: QtObject {

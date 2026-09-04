@@ -9,30 +9,17 @@ import qs.services
 Item {
     id: root
 
-    property bool shown: false
     property bool active: false
     signal toggled
 
     readonly property var player: Players.active
     readonly property int thickness: Math.round(Settings.barInnerWidth * 0.72)
 
-    // Steps straight to its full size rather than animating: the capsule
-    // around it owns the one width animation for the whole reveal, and a
-    // second easing curve here would fight it.
-    implicitWidth: root.shown ? content.implicitWidth + Tokens.padding.small * 2 : 0
+    // Holds its space for as long as there is a player. It used to collapse
+    // to zero width when unhovered, which resized the centre-anchored pill
+    // around it and slid every other control sideways under the pointer.
+    implicitWidth: content.implicitWidth + Tokens.padding.small * 2
     implicitHeight: root.thickness
-
-    opacity: root.shown ? 1 : 0
-    visible: opacity > 0
-    // Width drops to zero the instant `shown` goes false while the fade
-    // is still running, so the centred content would spill out of the row
-    // for the length of the fade.
-    clip: true
-
-    Behavior on opacity {
-        enabled: Settings.capsuleAnimations
-        Anim { type: Anim.DefaultEffects }
-    }
 
     StyledRect {
         anchors.fill: parent
