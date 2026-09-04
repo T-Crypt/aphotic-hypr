@@ -17,6 +17,7 @@ DETECTED_APHOTIC_LAYERS=""
 DETECTED_DOTFILE_MANAGER=""
 DETECTED_NVIDIA_PRESENT="false"
 DETECTED_NVIDIA_DRIVER=""
+DETECTED_AMD_PRESENT="false"
 DETECTED_AUR_HELPER=""
 DETECTED_BLACKARCH_REPO=0
 DETECTED_MULTILIB_REPO=0
@@ -84,6 +85,15 @@ except Exception:
     else
       echo -e "  $CNT NVIDIA GPU detected, no driver installed yet"
     fi
+  fi
+
+  # Not an else-branch: a laptop can have both, and each vendor gets its
+  # own userspace. AMD needs no driver-already-installed question the way
+  # NVIDIA does, because amdgpu is in the mainline kernel -- there is no
+  # out-of-tree driver here to keep or replace.
+  if [[ "$(detect_amd)" == "true" ]]; then
+    DETECTED_AMD_PRESENT="true"
+    echo -e "  $COK AMD GPU detected (amdgpu is in-kernel; Mesa/RADV userspace will be installed)"
   fi
 
   DETECTED_AUR_HELPER="$(detect_aur_helper)"
