@@ -4,7 +4,6 @@ import QtQuick.Effects
 import qs.config
 import qs.components
 import qs.services
-import qs.services.ai
 
 ColumnLayout {
     id: root
@@ -19,17 +18,6 @@ ColumnLayout {
     // away would re-evaluate it and tear the content down again.
     property var _openedTabIds: []
 
-    // PluginRegistry already gates on installed+enabled. Agent Graph is the
-    // one plugin with an extra activation rule of its own -- the "ai" layer
-    // on and at least one harness actually configured
-    // (APHOTIC_UNIFIED_VISION.md §2.4). That is this plugin's rule, not a
-    // plugin-system concept, so it lives here rather than in the manifest.
-    function _extraGate(plugin: string): bool {
-        if (plugin === "agent-graph")
-            return InstallProfile.aiEnabled && AgentRoles.hasConfiguredHarness;
-        return true;
-    }
-
     function _latchTab(): void {
         if (root._openedTabIds.includes(root.currentTab))
             return;
@@ -41,7 +29,11 @@ ColumnLayout {
     onCurrentTabChanged: root._latchTab()
     Component.onCompleted: root._latchTab()
 
-    readonly property var pluginTabs: PluginRegistry.dashboardTabs.filter(t => root._extraGate(t.plugin))
+    // Installed, enabled, and its own declared gate satisfied -- all three
+    // decided by PluginRegistry off the plugin's manifest. This file knows
+    // that dashboard tabs exist; it does not know that any particular
+    // plugin does. See docs/PLUGIN_LAYER_MODEL.md.
+    readonly property var pluginTabs: PluginRegistry.surfacesFor("dashboard")
 
     // AI Chat is core, not layered: Claude is a CLI session and Gemini and
     // ChatGPT are raw HTTP APIs, none of which the `ai` layer installs, so

@@ -411,7 +411,12 @@ Item {
                     case "project":
                         return root.query.length === 0 ? projectProc.entries : projectProc.entries.filter(e => e.name.toLowerCase().includes(root.query));
                     case "settings": {
-                        const all = SettingsCategories.list;
+                        // searchIndex, not list: a plugin's settings pane is a
+                        // section inside another category's pane rather than a
+                        // category of its own, and its entry id
+                        // ("<category>/<section>") is the address
+                        // SettingsPanel.qml resolves on the way in.
+                        const all = SettingsCategories.searchIndex;
                         return root.query.length === 0 ? all : all.filter(c => c.label.toLowerCase().includes(root.query) || c.description.toLowerCase().includes(root.query));
                     }
                     case "keybinds": {

@@ -1,3 +1,4 @@
+import QtQml
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -295,12 +296,43 @@ ShellRoot {
         id: gpuVramSource
     }
 
-    // The Gaming profile claims its game's VRAM through GpuVramSource's
-    // adoption seam rather than registering a claim of its own, so the
-    // generic scanner and this profile can never both describe the same
-    // PID.
-    GamingProfile {
+    // Core seams a plugin-registered profile may ask for by declaring a
+    // property of the same name. A profile component cannot reach
+    // GpuVramSource on its own -- it is a mounted object, not a
+    // singleton, deliberately (see that file's header) -- so the host
+    // hands it over. Named seams, never plugin ids: this map says what
+    // core offers, not who receives it.
+    readonly property var _profileSeams: ({
         gpuVram: gpuVramSource
+    })
+
+    // Every enabled plugin that registers a ProfileEngine profile, loaded
+    // exactly the way a UI surface is: a file:// URL out of the registry,
+    // no static import, gone the moment the plugin is disabled or its
+    // layer is off. Headless -- a profile draws nothing; it registers,
+    // detects and claims. This is the seam Gaming, Dev and Security's
+    // sub-plugins all mount through.
+    Instantiator {
+        model: PluginRegistry.profileRegistrations
+
+        delegate: Loader {
+            id: profileLoader
+
+            required property var modelData
+
+            source: profileLoader.modelData.componentUrl
+
+            onLoaded: {
+                if (!profileLoader.item)
+                    return;
+                for (const seam of Object.keys(root._profileSeams)) {
+                    try {
+                        profileLoader.item[seam] = root._profileSeams[seam];
+                    } catch (e) {
+                    }
+                }
+            }
+        }
     }
 
     // The profile substrate's inspection/drive surface (Phase 0 --

@@ -84,11 +84,12 @@ for b in $(grep -ohE '(exec\(\[|command:\s*\[)"[^"]+"' "$SUB"/*.qml "$UI"/*.qml 
   case "$b" in
     sh) ;;
     hyprctl) ;;
-    # glib2 / dbus, both declared in both base profiles -- the Gaming
-    # profile's gamemode D-Bus subscription (Quickshell exposes no DBus
-    # client). dbus-monitor takes a bare match rule so that subscribing
-    # never auto-activates gamemoded; gdbus is the one-shot ListGames
-    # catch-up call, itself guarded on the daemon already running.
+    # glib2 / dbus, both declared in both base profiles. No file under
+    # services/profile/ spawns these today -- the gamemode D-Bus
+    # subscription that did moved out to the `gaming` profile plugin
+    # (PLG-03), which declares them in its own manifest. The cases stay
+    # so a substrate file growing a D-Bus spawn again passes rather than
+    # failing on a binary that is in fact already declared.
     gdbus) ;;
     dbus-monitor) ;;
     *) fail "substrate spawns '$b', which this test does not know to be a declared base dependency" ;;

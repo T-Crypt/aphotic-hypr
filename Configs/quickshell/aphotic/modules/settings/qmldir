@@ -1,6 +1,5 @@
 module qs.modules.settings
 AboutPane 1.0 panes/AboutPane.qml
-AdvancedPane 1.0 panes/AdvancedPane.qml
 AiPane 1.0 panes/AiPane.qml
 AppearancePane 1.0 panes/AppearancePane.qml
 BarPane 1.0 panes/BarPane.qml

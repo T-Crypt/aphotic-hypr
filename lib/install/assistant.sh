@@ -50,10 +50,12 @@ resolve_assistant() {
 }
 
 # Prints an Ollama tag on stdout and returns 0, or returns 1 with nothing
-# printed (caller falls back to ASSISTANT_FALLBACK_MODEL). Mirrors
-# services/LlmFit.qml's guessOllamaTag() -- keep the two in sync if this
-# changes, since there's no shared implementation between bash and QML to
-# point at instead.
+# printed (caller falls back to ASSISTANT_FALLBACK_MODEL). Mirrors the
+# llm-fit plugin's qml/LlmFitService.qml guessOllamaTag() (extracted from
+# the shell's own services/LlmFit.qml, PLG-02) -- keep the two in sync if
+# this changes, since there's no shared implementation between bash and
+# QML to point at instead. This function itself calls `llmfit` directly
+# and is independent of whether that plugin is installed.
 #
 # Real bug found and fixed here (2026-08-29): this used to GUESS an Ollama
 # tag from any recommended model's raw name/param-count via regex, with no

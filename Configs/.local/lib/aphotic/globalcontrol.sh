@@ -258,6 +258,108 @@ aphotic_plugin_is_enabled() {
     ! jq -e --arg n "$name" '.disabled // [] | index($n) != null' "$APHOTIC_PLUGINS_STATE_FILE" >/dev/null 2>&1
 }
 
+# ---- plugin CLI extension (C-15) ------------------------------------------
+# A plugin can contribute a command, either top-level (`aphotic foo`) or as
+# a subcommand of an existing one (`aphotic ai fit`):
+#
+#   capabilities = ["cli"]
+#   [cli]
+#   command = "ai"
+#   subcommand = "fit"
+#   script = "cli/ai_fit.sh"
+#   summary = "one line, shown in that command's --help"
+#
+# Resolution is by declaration, never by name: core asks which plugin
+# provides `ai fit`, not whether some particular plugin is installed. That
+# is the whole point -- removing the plugin removes the subcommand, and no
+# core file names either. Omit `subcommand` for a top-level command.
+#
+# Prints "<plugin>\t<script path>" for the first enabled plugin whose [cli]
+# block matches, and fails if none does.
+aphotic_plugin_cli_resolve() {
+    local command="$1" subcommand="${2:-}"
+    local name dir manifest caps script
+
+    while IFS= read -r name; do
+        [[ -n "$name" ]] || continue
+        aphotic_plugin_is_enabled "$name" || continue
+
+        dir="${APHOTIC_PLUGINS_DIR}/${name}"
+        manifest="${dir}/plugin.toml"
+        caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
+        grep -qx "cli" <<<"$caps" || continue
+
+        [[ "$(aphotic_toml_get "$manifest" cli command)" == "$command" ]] || continue
+        [[ "$(aphotic_toml_get "$manifest" cli subcommand)" == "$subcommand" ]] || continue
+
+        script="$(aphotic_toml_get "$manifest" cli script)"
+        [[ -n "$script" && -r "${dir}/${script}" ]] || continue
+
+        printf '%s\t%s\n' "$name" "${dir}/${script}"
+        return 0
+    done < <(aphotic_plugin_names)
+    return 1
+}
+
+# Run a resolved plugin command. Sourced in a subshell rather than
+# executed, so it gets the same helpers a core cmd_*.sh is sourced with
+# (aphotic_err, aphotic_require, the XDG paths) while the subshell keeps it
+# from leaking state back into the dispatcher.
+#
+# Callers resolve first and dispatch second rather than treating a failure
+# here as "no such command" -- otherwise a plugin command that legitimately
+# exits non-zero is indistinguishable from one that does not exist.
+aphotic_plugin_cli_run() {
+    local script="$1"; shift
+    ( source "$script" "$@" )
+}
+
+# "<name>\t<summary>\t<plugin>" per plugin-provided top-level command, so
+# `aphotic --help` lists them beside the built-ins instead of leaving them
+# discoverable only by already knowing the name.
+aphotic_plugin_cli_top_level() {
+    local name dir manifest caps cmd
+
+    while IFS= read -r name; do
+        [[ -n "$name" ]] || continue
+        aphotic_plugin_is_enabled "$name" || continue
+
+        dir="${APHOTIC_PLUGINS_DIR}/${name}"
+        manifest="${dir}/plugin.toml"
+        caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
+        grep -qx "cli" <<<"$caps" || continue
+        [[ -z "$(aphotic_toml_get "$manifest" cli subcommand)" ]] || continue
+
+        cmd="$(aphotic_toml_get "$manifest" cli command)"
+        [[ -n "$cmd" ]] || continue
+        printf '%s\t%s\t%s\n' "$cmd" "$(aphotic_toml_get "$manifest" cli summary)" "$name"
+    done < <(aphotic_plugin_names)
+}
+
+# One "  <name>  <summary>" line per plugin-provided subcommand of
+# `command`, for a core command to append to its own --help. Prints
+# nothing when no plugin extends it.
+aphotic_plugin_cli_help() {
+    local command="$1"
+    local name dir manifest caps sub summary
+
+    while IFS= read -r name; do
+        [[ -n "$name" ]] || continue
+        aphotic_plugin_is_enabled "$name" || continue
+
+        dir="${APHOTIC_PLUGINS_DIR}/${name}"
+        manifest="${dir}/plugin.toml"
+        caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
+        grep -qx "cli" <<<"$caps" || continue
+        [[ "$(aphotic_toml_get "$manifest" cli command)" == "$command" ]] || continue
+
+        sub="$(aphotic_toml_get "$manifest" cli subcommand)"
+        [[ -n "$sub" ]] || continue
+        summary="$(aphotic_toml_get "$manifest" cli summary)"
+        printf '  %-26s %s (from %s)\n' "$sub" "$summary" "$name"
+    done < <(aphotic_plugin_names)
+}
+
 aphotic_plugin_set_enabled() {
     local name="$1" enabled="$2" tmp
     aphotic_require jq || return 1

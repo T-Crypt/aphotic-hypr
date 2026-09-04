@@ -9,10 +9,10 @@ import qs.services.ai
 // Presence + usage for the bar's agent indicator/panel, one entry per
 // tracked harness (a CLI that runs a session and executes tool calls --
 // see AgentRoles.qml for the harness/provider distinction). Three
-// independent data sources feed `stats`: a live tail of the same
-// `agent-events.jsonl` stream AgentGraphService reads (real-time
-// `sessionCount`/`liveSessions` for any harness whose hook has fired at
-// least once -- see `_hasLiveEvents`), a much-slower pgrep reconcile
+// independent data sources feed `stats`: AgentEvents, the shared
+// `agent-events.jsonl` feed (real-time `sessionCount`/`liveSessions`
+// for any harness whose hook has fired at least once -- see
+// `_hasLiveEvents`), a much-slower pgrep reconcile
 // that only fills in `sessionCount` for a harness the tail has never
 // heard from (no hook configured -- see docs/AGENT_TRACKING.md section
 // 1's "no setup required" guarantee), and an inotify-backed FileView
@@ -62,6 +62,12 @@ Singleton {
             processName: root._uiMeta[h.id].processName,
             launchCmd: root._uiMeta[h.id].launchCmd
         }))
+
+    // The ai layer says the machine has the AI pillar installed; a
+    // non-empty `providers` says the user opted a harness's hook plugin
+    // in. Both, or this service has nothing anyone will look at -- so
+    // neither the reconcile timer nor the shared event feed runs.
+    readonly property bool active: InstallProfile.aiEnabled && root.providers.length > 0
 
     property var stats: providers.map(() => ({
         sessionCount: 0,
@@ -116,21 +122,11 @@ Singleton {
         root.stats = next;
     }
 
-    // One line of `agent-events.jsonl` (same schema AgentGraphService
-    // tails -- see its header) in, `stats[harness].{sessionCount,
-    // liveSessions}` out. Replaces both the old `ls`+`cat` directory
-    // poll (AGF-08) and, for any harness that reaches here at least
-    // once, the pgrep poll below (AGF-07).
-    function _ingestSessionEvent(line: string): void {
-        let record;
-        try {
-            record = JSON.parse(line);
-        } catch (e) {
-            return;
-        }
-        if (!record || !record.sessionId || !record.event)
-            return;
-
+    // One record off AgentEvents' shared feed in,
+    // `stats[harness].{sessionCount, liveSessions}` out. Replaces both
+    // the old `ls`+`cat` directory poll (AGF-08) and, for any harness
+    // that reaches here at least once, the pgrep poll below (AGF-07).
+    function _ingestSessionRecord(record: var): void {
         const harness = record.harness || "claude";
         if (!root._hasLiveEvents[harness])
             root._hasLiveEvents = Object.assign({}, root._hasLiveEvents, { [harness]: true });
@@ -190,7 +186,7 @@ Singleton {
     // need 5s freshness, so this fires 12x slower than it used to.
     Timer {
         interval: 60000
-        running: InstallProfile.aiEnabled
+        running: root.active
         repeat: true
         triggeredOnStart: true
         onTriggered: {
@@ -231,52 +227,20 @@ Singleton {
         }
     }
 
-    // Live per-session activity, replacing what used to be a 5s
-    // `ls`-then-`cat` of Configs/.local/lib/aphotic/agent_hook.py's
-    // per-session snapshot directory (AGF-08) -- that re-listed the
-    // whole directory on a timer for content that changes on every tool
-    // call, real work for zero effect since nothing ever reacted faster
-    // than the poll anyway. This tails `agent-events.jsonl` instead --
-    // the exact same rotating event log AgentGraphService already holds
-    // a `tail -F` on (see that file's header for the schema and the
-    // idempotency/rotation reasoning) -- so presence updates the instant
-    // a hook fires rather than up to 5s later, and there is one thing
-    // being watched on disk instead of two. `_ingestSessionEvent` builds
-    // `_liveByHarness` incrementally and keys everything off the
-    // record's own `harness` field (defaults to "claude" when absent,
-    // same as AgentGraphService), so Claude, Codex and OpenCode sessions
-    // all route to their own provider's tab with no per-harness branch
-    // here.
-    //
-    // Two tails, not one. The claim above that this leaves "one thing
-    // being watched on disk instead of two" was true only until the
-    // agent-graph plugin kept its own `tail -F` on the same file --
-    // observed live as sibling PIDs, `tail -n 400` (this one) and
-    // `tail -n 150` (the plugin's, scoped by agentGraphHistoryLines).
-    // Collapsing them needs a core-owned event bus the plugin subscribes
-    // to, which is a real cross-repo API and is scoped as its own item
-    // rather than half-built here.
-    //
-    // Scoped by the same user-facing setting the plugin uses, so one knob
-    // means one replay depth for this file, with a floor: this tail feeds
-    // presence reconstruction, not a graph, and a user who sets the graph
-    // to show no history still expects the bar to know which sessions are
-    // live. Read once at spawn (same as the plugin's) -- a changed value
-    // takes effect on the next shell start, which is enough for a
-    // backlog-depth knob.
-    readonly property int _historyLines: {
-        const configured = Settings.agentGraphHistoryLines;
-        const wanted = (typeof configured === "number" && isFinite(configured)) ? configured : 400;
-        return Math.max(200, wanted);
-    }
+    // Live per-session activity comes off AgentEvents, the single
+    // shared reader of `agent-events.jsonl` (services/ai/AgentEvents.qml)
+    // -- this file used to run a `tail -F` of its own beside the
+    // agent-graph plugin's, two processes on one file. The hold follows
+    // the bar's own tab list: no harness tab, nothing to keep fresh, no
+    // tail.
+    Connections {
+        target: AgentEvents
 
-    Process {
-        id: sessionEventTail
-        running: InstallProfile.aiEnabled
-        command: ["sh", "-c", `mkdir -p '${Quickshell.env("HOME")}/.local/state/aphotic' && : >> '${Quickshell.env("HOME")}/.local/state/aphotic/agent-events.jsonl' && exec tail -n ${root._historyLines} -F '${Quickshell.env("HOME")}/.local/state/aphotic/agent-events.jsonl'`]
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: data => root._ingestSessionEvent(data)
+        function onRecord(event): void {
+            root._ingestSessionRecord(event);
         }
     }
+
+    onActiveChanged: AgentEvents.hold("bar-agents", root.active)
+    Component.onCompleted: AgentEvents.hold("bar-agents", root.active)
 }

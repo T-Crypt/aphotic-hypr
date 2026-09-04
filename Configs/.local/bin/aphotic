@@ -41,9 +41,11 @@ fi
 
 _aphotic_list_commands() {
     [[ -d "$COMMANDS_DIR" ]] || return 0
-    find "$COMMANDS_DIR" -maxdepth 1 -type f -name 'cmd_*.sh' -exec basename {} \; \
-        | sed -e 's/^cmd_//' -e 's/\.sh$//' \
-        | sort
+    {
+        find "$COMMANDS_DIR" -maxdepth 1 -type f -name 'cmd_*.sh' -exec basename {} \; \
+            | sed -e 's/^cmd_//' -e 's/\.sh$//'
+        aphotic_plugin_cli_top_level | cut -f1
+    } | sort -u
 }
 
 # Built entirely from each command file's `@cmd`/`@cmd.desc`/`@cmd.group`
@@ -88,6 +90,16 @@ _aphotic_usage() {
         printf '%s%s%s\n%s\n\n' "$_B" "$g" "$_R" "${group_lines[$g]}"
     done
 
+    # Plugin-provided top-level commands, grouped apart from the built-ins
+    # so it stays obvious which ones vanish with an uninstall.
+    local pcmd psummary pplugin plines=""
+    while IFS=$'\t' read -r pcmd psummary pplugin; do
+        [[ -n "$pcmd" ]] || continue
+        ncmds=$((ncmds + 1))
+        plines+="${plines:+$'\n'}$(printf '    %s%-12s%s %s %s(%s)%s' "$_C" "$pcmd" "$_R" "$psummary" "$_D" "$pplugin" "$_R")"
+    done < <(aphotic_plugin_cli_top_level)
+    [[ -n "$plines" ]] && printf '%sPLUGINS%s\n%s\n\n' "$_B" "$_R" "$plines"
+
     printf 'Run %saphotic <command> --help%s for details on a specific command.\n' "$_C" "$_R"
     printf '%s%s command(s) discovered in %s%s\n\n' "$_D" "$ncmds" "$COMMANDS_DIR" "$_R"
 }
@@ -106,9 +118,19 @@ _aphotic_dispatch() {
             exit 1
         fi
     else
-        aphotic_err "unknown command '${cmd}'"
-        echo "Run 'aphotic --help' to see available commands." >&2
-        exit 127
+        # A plugin may own this command (capabilities = ["cli"], a [cli]
+        # block with no `subcommand`). Core files never name a plugin, so
+        # this asks which plugin declares the command rather than checking
+        # for any particular one. Core wins a collision by being tried
+        # first, so a plugin cannot shadow a built-in.
+        local hit
+        if hit="$(aphotic_plugin_cli_resolve "$cmd" "")"; then
+            aphotic_plugin_cli_run "${hit#*$'\t'}" "$@"
+        else
+            aphotic_err "unknown command '${cmd}'"
+            echo "Run 'aphotic --help' to see available commands." >&2
+            exit 127
+        fi
     fi
 }
 
