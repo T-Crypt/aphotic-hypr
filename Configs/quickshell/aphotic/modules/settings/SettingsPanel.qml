@@ -126,7 +126,7 @@ RowLayout {
             anchors.fill: parent
             anchors.margins: Tokens.padding.extraLarge
             contentWidth: width
-            contentHeight: paneColumn.implicitHeight
+            contentHeight: paneColumn.height
             boundsBehavior: Flickable.StopAtBounds
             clip: true
 
@@ -145,6 +145,13 @@ RowLayout {
                 id: paneColumn
 
                 width: paneFlick.width
+                // Takes the viewport's slack itself and lets paneLoader
+                // absorb it, so a self-centring pane keeps working when
+                // its category gains a plugin section. Reads its own
+                // implicitHeight, which is derived from children's
+                // implicit sizes and not from this height, so there is no
+                // cycle here.
+                height: Math.max(implicitHeight, paneFlick.height)
                 spacing: Tokens.spacing.small
                 opacity: 1
 
@@ -159,16 +166,16 @@ RowLayout {
                     id: paneLoader
 
                     Layout.fillWidth: true
-                    // Stretched to the viewport only while the category
-                    // owns no sections -- several panes (About, Launcher,
-                    // Appearance) distribute that slack with their own
-                    // fillHeight spacers. With sections below it the pane
-                    // has to end where its content ends, or the first
-                    // section header lands a screen further down.
-                    Layout.preferredHeight: {
-                        const natural = paneLoader.item?.implicitHeight ?? 0;
-                        return root.sections.length > 0 ? natural : Math.max(paneFlick.height, natural);
-                    }
+                    // The only fillHeight child, so it takes whatever the
+                    // sections below leave -- About, Launcher and
+                    // Appearance distribute that slack with their own
+                    // fillHeight spacers. Stretching the pane to the whole
+                    // viewport instead would push the first section header
+                    // a screen down; giving it only its natural height
+                    // collapsed those panes' centring the moment a plugin
+                    // docked a section into their category.
+                    Layout.fillHeight: true
+                    Layout.preferredHeight: paneLoader.item?.implicitHeight ?? 0
 
                     sourceComponent: {
                         switch (root.currentCategoryId) {
