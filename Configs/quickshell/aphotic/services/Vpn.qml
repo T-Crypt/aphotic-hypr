@@ -9,23 +9,25 @@ import Quickshell.Io
 // separate from Nmcli.qml's `vpnActive`, which reflects NetworkManager's
 // own VPN connection list, a different mechanism this doesn't touch.
 //
-// Status is read directly here (pgrep, same distinctive --daemon tag
-// cmd_vpn.sh uses, no sudo needed) rather than parsing `aphotic vpn
-// status`'s human-oriented colored output -- connect()/disconnect() are
-// the only two actions that actually need root, so those are the only
-// two that shell out to the CLI (keeps privileged process management in
-// bash, QML just reflects live state, per ROADMAP_FEATURES.md PART C).
+// Status is a marker file openvpn's own --up/--down hooks write
+// (lib/aphotic/vpn-hook.sh), watched here, so this singleton costs
+// nothing while idle. It used to be a 5s `pgrep` on a Timer, which ran
+// for the whole session whether or not a tunnel existed -- the same
+// zero-idle-cost rule the Gaming profile's dbus-monitor DETECT follows.
+// A missing marker is the disconnected state, not an error, which is why
+// onLoadFailed is a normal branch here.
+//
+// connect()/disconnect() are the only two actions that need root, so
+// they stay the only two that shell out to the CLI (privileged process
+// management in bash, QML reflecting live state, per ROADMAP_FEATURES.md
+// PART C).
 Singleton {
     id: root
 
-    readonly property string daemonTag: "aphotic-vpn"
+    readonly property string markerPath: `${Quickshell.env("HOME")}/.local/state/aphotic/vpn-connected`
 
     property bool connected: false
     property bool busy: false
-
-    function refresh(): void {
-        statusProc.exec(["pgrep", "-f", root.daemonTag]);
-    }
 
     function connectVpn(configPath: string): void {
         root.busy = true;
@@ -40,34 +42,21 @@ Singleton {
         disconnectProc.exec(["aphotic", "vpn", "disconnect"]);
     }
 
-    Process {
-        id: statusProc
-        stdout: StdioCollector {
-            onStreamFinished: root.connected = text.trim().length > 0
-        }
+    FileView {
+        path: root.markerPath
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: root.connected = true
+        onLoadFailed: root.connected = false
     }
 
     Process {
         id: connectProc
-        onExited: {
-            root.busy = false;
-            root.refresh();
-        }
+        onExited: root.busy = false
     }
 
     Process {
         id: disconnectProc
-        onExited: {
-            root.busy = false;
-            root.refresh();
-        }
-    }
-
-    Timer {
-        interval: 5000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root.refresh()
+        onExited: root.busy = false
     }
 }
