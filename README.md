@@ -369,10 +369,17 @@ Run the installer:
 > through a VM before they ship, so a guest run follows a path that
 > already works.
 >
-> The installer warns when it detects a VM. Continuing past it is the
-> point of the exercise. Rendering in a guest depends on what your
-> hypervisor exposes, so judge the install path and ignore the frame
-> rate.
+> [Proxmox Test VM](https://github.com/T-Crypt/Aphotic-Hypr/wiki/Proxmox-Test-VM)
+> has the `qm create` line and the settings off the dev VM.
+
+> [!WARNING]
+> Set the guest's display adapter to **VirtIO-GPU**. Proxmox defaults to
+> `std`, and VirtIO-GPU is what gives the guest the `/dev/dri/renderD128`
+> render node Hyprland draws through.
+>
+> The installer warns when it detects a VM. You can continue past it. A
+> guest still shows you nothing about GPU layers or frame rate, so judge
+> the install path and leave performance to real hardware.
 
 The installer supports profiles and optional features without requiring
 every component to be installed.
