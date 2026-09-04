@@ -156,6 +156,13 @@ Singleton {
             requiresLayer: s.requires_layer ?? "",
             requiresData: s.requires_data ?? "",
             parent: s.parent || root._defaultParent(s),
+            // Overlay only. The host budgets its surface from these once
+            // and never resizes it, so a manifest that omits them gets a
+            // usable square rather than a zero-sized window that silently
+            // draws nothing.
+            anchor: s.anchor || "bottom",
+            width: s.width > 0 ? s.width : 240,
+            height: s.height > 0 ? s.height : 240,
             componentUrl: `file://${root.pluginsDir}/${name}/${s.component}`
         }));
     }
