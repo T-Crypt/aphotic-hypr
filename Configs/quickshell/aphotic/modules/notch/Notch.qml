@@ -161,23 +161,14 @@ StyledRect {
         shadowVerticalOffset: 2
     }
 
+    // Gated here rather than mounted inside NotchProcessTile: the tile
+    // outlives a collapse (shownTileId latches so the body still reports a
+    // height through the shrink), so a watch owned by the tile would keep
+    // sampling for as long as Processes was the last tile visited.
     LazyLoader {
         active: root.processesLive
 
         ProcessUsageWatch {}
-    }
-
-    // Gated here rather than mounted inside NotchProcessTile: the tile
-    // outlives a collapse (shownTileId latches so the body still reports a
-    // height through the shrink), so a watch owned by the tile would keep
-    // polling for as long as Processes was the last tile visited. Both
-    // watches hang off the same gate for that reason.
-    LazyLoader {
-        active: root.processesLive
-
-        SystemUsageWatch {
-            fast: true
-        }
     }
 
     // Faded rather than flipped straight to invisible: the click that
