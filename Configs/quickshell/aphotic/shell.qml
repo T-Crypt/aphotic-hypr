@@ -344,6 +344,15 @@ ShellRoot {
         }
     }
 
+    // Security registers from a singleton, not from the Instantiator
+    // above -- it needs no injected seam, so it has nothing to mount. But
+    // Quickshell builds a singleton on first use, and a headless
+    // registrant is named by no UI, so without this call SecurityProfile
+    // would never load and its VPN watch would never arm. Dev is reached
+    // through the launcher and Gaming through the plugin registry; this
+    // is the only registrant with no other caller.
+    Component.onCompleted: SecurityProfile.arm()
+
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than
     // inside the singletons so declaring the IPC target doesn't
