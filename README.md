@@ -29,8 +29,8 @@ Inactive features should add little to no runtime overhead.
 ## Preview
 
 One shell, reskinned live from a wallpaper — no rebuild, no relogin. Shown
-over **Tokyo Night**, **Lofi**, and **Gruvbox**, three of the eight themes
-that ship out of the box:
+over **Tokyo Night** and **Lofi**, two of the eight themes that ship out of
+the box:
 
 <p align="center">
   <img src="./assets/preview.png" width="900">
@@ -57,8 +57,29 @@ https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
 <td width="50%"><p align="center"><img src="./assets/screenshots/bar-minimal.png" width="440"><br><sub>Bar: Minimal style — thin strip, DND indicator only</sub></p></td>
 </tr>
 <tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-capsule.png" width="440"><br><sub>Bar: Capsule style, a floating pill with the collapsed notch above it</sub></p></td>
+<td width="50%"></td>
+</tr>
+<tr>
 <td width="50%"><p align="center"><img src="./assets/screenshots/workspaces.png" width="440"><br><sub>Workspaces</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/launcher.png" width="440"><br><sub>Launcher</sub></p></td>
+</tr>
+</table>
+
+</details>
+
+<details>
+<summary><b>Notch</b></summary>
+<br>
+
+<table>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/notch-processes.png" width="440"><br><sub>Processes tile, live CPU, RAM and GPU gauges over the busiest processes</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/notch-agents.png" width="440"><br><sub>Agents tile, contributed by the agent-notch-tile plugin</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/notch-dev-projects.png" width="440"><br><sub>Dev tile, the active project and its lifecycle phase</sub></p></td>
+<td width="50%"></td>
 </tr>
 </table>
 
@@ -149,6 +170,7 @@ https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
 -   Quickshell desktop shell
 -   Live theme and wallpaper switching
 -   Five bar styles
+-   Notch with plugin tiles, docked to whichever edge the bar is on
 -   Launcher and application search
 -   Notifications and OSD
 -   Lock and session controls
@@ -172,6 +194,7 @@ Aphotic separates the base desktop from optional profiles and plugins.
 Aphotic
 ├── Quickshell
 │   ├── Bar
+│   ├── Notch
 │   ├── Launcher
 │   ├── Notifications
 │   ├── OSD
