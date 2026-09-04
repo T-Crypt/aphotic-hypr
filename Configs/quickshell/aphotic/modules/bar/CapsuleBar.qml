@@ -110,6 +110,12 @@ Item {
 
         radius: Tokens.rounding.extraLarge
         color: Colours.tPalette.m3surfaceContainer
+        // Hard guarantee, not decoration: this window masks input to the
+        // bar's own bounds, so anything a child renders outside them is
+        // both visually loose and completely dead to the pointer. Clipping
+        // turns that class of bug into a visible truncation instead of
+        // content sliding off the screen.
+        clip: true
 
         transform: Translate {
             readonly property real hidden: root.rowThickness - Config.bar.capsule.peek
