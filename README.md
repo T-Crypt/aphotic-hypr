@@ -362,6 +362,27 @@ Run the installer:
 > ./install.sh --profile full --with gaming,dev --dry-run
 > ```
 
+> [!TIP]
+> Running Proxmox VE? Build an Arch guest and install there before you
+> touch the machine you work on. You get to watch a full run, try a
+> profile, break it, and roll back to a snapshot. `install.sh` changes go
+> through a VM before they ship, so a guest run follows a path that
+> already works.
+>
+> [Proxmox Test VM](https://github.com/T-Crypt/Aphotic-Hypr/wiki/Proxmox-Test-VM)
+> has the `qm create` line and the settings off the dev VM.
+
+> [!WARNING]
+> Two settings decide whether the guest is usable. Set the display adapter
+> to **VirtIO-GPU**, which supplies the `/dev/dri/renderD128` render node
+> Hyprland draws through; Proxmox defaults to `std`. Then reach the guest
+> over **SPICE** with `virt-viewer`, since the browser console swallows the
+> SUPER key that most of Aphotic hangs off.
+>
+> The installer warns when it detects a VM. You can continue past it. A
+> guest still shows you nothing about GPU layers or frame rate, so judge
+> the install path and leave performance to real hardware.
+
 The installer supports profiles and optional features without requiring
 every component to be installed.
 
