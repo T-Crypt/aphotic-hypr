@@ -367,14 +367,19 @@ ShellRoot {
         }
     }
 
-    // Security registers from a singleton, not from the Instantiator
-    // above -- it needs no injected seam, so it has nothing to mount. But
-    // Quickshell builds a singleton on first use, and a headless
-    // registrant is named by no UI, so without this call SecurityProfile
-    // would never load and its VPN watch would never arm. Dev is reached
-    // through the launcher and Gaming through the plugin registry; this
-    // is the only registrant with no other caller.
-    Component.onCompleted: SecurityProfile.arm()
+    // Quickshell constructs a singleton on first use, so a singleton
+    // nothing else names never runs at all: no Component.onCompleted, no
+    // timers, no Connections, and no error anywhere. These three are
+    // complete features that only react to state, so no UI names any of
+    // them. SecurityProfile is the ProfileEngine registrant Dev reaches
+    // through the launcher and Gaming through the plugin registry;
+    // WallpaperCycle owns the auto-cycle Timer the Appearance pane
+    // already ships a toggle and an interval picker for; DevDrift watches
+    // DevProfile for a stale lockfile. Listing them here is what makes
+    // them exist. Anything added to services/ that runs on its own rather
+    // than answering a reader belongs in this list, and
+    // tests/test_singleton_reachability.py fails the build if it does not.
+    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift]
 
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than
