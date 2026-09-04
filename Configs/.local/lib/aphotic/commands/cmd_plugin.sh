@@ -23,6 +23,107 @@
 
 _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 
+# ---------------------------------------------------------------------
+# What this shell build actually has a host for.
+#
+# The plugin catalogue is a separate repo on its own release cadence, so
+# it can offer a plugin whose only surface this shell cannot mount. That
+# install currently succeeds all the way through -- it copies the tree,
+# links the QML module, writes a registry entry -- and then renders
+# nothing, with no error anywhere to explain why. The gate belongs on
+# this side: a plugin cannot know which Aphotic it is being installed
+# into, and the shell already knows exactly which kinds it reads.
+#
+# Grow both lists in the same commit that adds the host. Anything absent
+# is reported as unhosted, which is the safe direction to fail -- a
+# surface silently dropped is the failure this exists to catch.
+# ---------------------------------------------------------------------
+APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard"
+APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook"
+
+# Exact word match against a space-separated list. Not `grep -w`: grep
+# counts `-` as a word boundary, so `-w profile` matches "profile-hook"
+# and a plugin declaring the unhosted `profile` capability would read as
+# hosted.
+_aphotic_plugin_in_list() {
+    local needle="$1" item
+    for item in $2; do
+        [[ "$item" == "$needle" ]] && return 0
+    done
+    return 1
+}
+
+# The `[ui.<kind>]` sections a manifest declares, named as the registry
+# and index.json name them. Section headers are scanned directly rather
+# than asked for through _aphotic_plugin_ui_json, because the whole point
+# is to see kinds this build does not parse -- that function reads only
+# ui.dashboard_tab, so asking it would report every notch tile and
+# settings pane as simply absent.
+_aphotic_plugin_manifest_surfaces() {
+    local manifest="$1"
+    [[ -f "$manifest" ]] || return 0
+    sed -n 's/^[[:space:]]*\[ui\.\([a-z_]*\)\][[:space:]]*$/\1/p' "$manifest" \
+        | sed -e 's/^dashboard_tab$/dashboard/' \
+              -e 's/^notch_tile$/notch/' \
+              -e 's/^settings_pane$/settings/' \
+        | sort -u
+}
+
+# Verdict on a plugin's declared capabilities and surfaces, given as two
+# newline-separated lists. Prints `ok`, or `partial:<parts>` /
+# `inert:<parts>` with a human list of what has no host.
+#
+# partial and inert are a real distinction, not a severity gradient.
+# agent-graph declares a dashboard tab this build renders *and* a
+# settings pane it does not, so refusing it would remove a working
+# plugin; llm-fit declares only a settings pane and would install to
+# nothing at all. The question is therefore "does any of it work", not
+# "is all of it supported".
+#
+# `ui-surface` never counts as working on its own -- it is the tag that
+# says surfaces exist, and the surfaces themselves decide.
+_aphotic_plugin_host_verdict() {
+    local caps="$1" surfaces="$2"
+    local item working=0 unhosted=""
+
+    while IFS= read -r item; do
+        [[ -n "$item" ]] || continue
+        if ! _aphotic_plugin_in_list "$item" "$APHOTIC_PLUGIN_HOSTED_CAPABILITIES"; then
+            unhosted+="${unhosted:+, }${item} capability"
+            continue
+        fi
+        [[ "$item" == "ui-surface" ]] || working=$((working + 1))
+    done <<<"$caps"
+
+    while IFS= read -r item; do
+        [[ -n "$item" ]] || continue
+        if _aphotic_plugin_in_list "$item" "$APHOTIC_PLUGIN_HOSTED_SURFACES"; then
+            working=$((working + 1))
+        else
+            unhosted+="${unhosted:+, }${item} surface"
+        fi
+    done <<<"$surfaces"
+
+    if [[ -z "$unhosted" ]]; then
+        echo "ok"
+    elif [[ "$working" -gt 0 ]]; then
+        echo "partial:${unhosted}"
+    else
+        echo "inert:${unhosted}"
+    fi
+}
+
+# Same verdict for a catalogue entry rather than an on-disk manifest.
+# index.json already carries the normalized ui.surfaces[].surface names,
+# including kinds this build never parses out of a manifest, so the
+# remote listing can answer this without fetching anything.
+_aphotic_plugin_entry_verdict() {
+    local entry="$1"
+    _aphotic_plugin_host_verdict \
+        "$(jq -r '(.capabilities // [])[]' <<<"$entry")" \
+        "$(jq -r '((.ui.surfaces // [])[].surface) // empty' <<<"$entry" | sort -u)"
+}
+
 # Manifest v3 additions (see docs/archive/PLUGIN_SYSTEM.md): [owns] and
 # [ui.<surface-kind>] -- only `dashboard_tab` is shipped so far, the
 # natural extension point for a second UI-surface kind (a bar module, a
@@ -135,6 +236,24 @@ _aphotic_plugin_list_remote_json() {
     else
         echo "$main_data"
     fi
+}
+
+# Fold each catalogue entry's host verdict into the entry itself, as
+# `host_support: {verdict, unhosted}`. Additive on purpose: Settings ->
+# Plugins reads this same `list --remote --json` and ignores fields it
+# does not know, so an older pane keeps working against a newer CLI.
+_aphotic_plugin_annotate_remote_json() {
+    local data="$1" entry verdict annotated=()
+
+    while IFS= read -r entry; do
+        [[ -n "$entry" ]] || continue
+        verdict="$(_aphotic_plugin_entry_verdict "$entry")"
+        annotated+=("$(jq --arg v "${verdict%%:*}" --arg u "${verdict#*:}" \
+            '. + {host_support: {verdict: $v, unhosted: (if $v == "ok" then "" else $u end)}}' \
+            <<<"$entry")")
+    done < <(jq -c '(.plugins // [])[]' <<<"$data")
+
+    printf '%s\n' "${annotated[@]:-}" | jq -s 'map(select(. != null))'
 }
 
 # Fire every enabled theme-hook plugin's on_theme_change script, piping
@@ -574,6 +693,24 @@ _aphotic_plugin_install() {
         return 1
     fi
 
+    # Read off the manifest rather than the catalogue: --link installs a
+    # local working tree that is not in index.json at all, and the
+    # manifest is the source of truth for what the plugin declares.
+    local verdict
+    verdict="$(_aphotic_plugin_host_verdict \
+        "$(aphotic_toml_get_array "${src}/plugin.toml" plugin capabilities)" \
+        "$(_aphotic_plugin_manifest_surfaces "${src}/plugin.toml")")"
+    case "$verdict" in
+        inert:*)
+            aphotic_err "'${name}' needs a newer Aphotic: no host here for its ${verdict#inert:}"
+            aphotic_log "everything it ships would be inert on ${APHOTIC_VERSION}, so this is a refusal rather than a warning -- 'aphotic update' first"
+            return 1
+            ;;
+        partial:*)
+            aphotic_warn "'${name}' installs, but this Aphotic has no host for its ${verdict#partial:} -- that part stays dark until you update"
+            ;;
+    esac
+
     if [[ "$link" == "true" ]]; then
         ln -s "$src" "$dest"
         echo "Linked ${name} -> ${src}"
@@ -745,8 +882,20 @@ aphotic_cmd_plugin() {
                 if [[ -n "$category" ]]; then
                     data="$(echo "$data" | jq --arg c "$category" '{plugins: ((.plugins // []) | map(select(.category == $c)))}')"
                 fi
-                [[ "$as_json" == "true" ]] && { echo "$data" | jq '.plugins // []'; return 0; }
-                echo "$data" | jq -r '(.plugins // [])[] | "\(.name)\t\(.display_name)\t\(.version)\t\(.description)"' | column -t -s $'\t'
+                data="$(_aphotic_plugin_annotate_remote_json "$data")"
+                [[ "$as_json" == "true" ]] && { echo "$data"; return 0; }
+                echo "$data" | jq -r '.[] | "\(.name)\t\(.display_name)\t\(.version)\t\(if .host_support.verdict == "inert" then "NOT SUPPORTED" elif .host_support.verdict == "partial" then "partly supported" else "" end)\t\(.description)"' | column -t -s $'\t'
+
+                # Named rather than only marked in the table: "NOT
+                # SUPPORTED" with no reason reads as a broken plugin
+                # rather than an Aphotic that is behind its catalogue.
+                local unhosted
+                unhosted="$(echo "$data" | jq -r '.[] | select(.host_support.verdict != "ok") | "  \(.name): \(.host_support.unhosted)"')"
+                if [[ -n "$unhosted" ]]; then
+                    aphotic_warn "this Aphotic (${APHOTIC_VERSION}) has no host for parts of:"
+                    echo "$unhosted" >&2
+                    aphotic_log "'NOT SUPPORTED' plugins would install and do nothing, so 'aphotic plugin install' refuses them; update Aphotic to pick them up"
+                fi
             else
                 data="$(_aphotic_plugin_list_installed_json)"
                 [[ "$as_json" == "true" ]] && { echo "$data"; return 0; }
