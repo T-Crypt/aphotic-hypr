@@ -296,6 +296,31 @@ Included themes currently include:
 -   HackTheBox
 -   Windows 11
 
+<details>
+<summary><b>All eight, same desktop</b></summary>
+<br>
+
+<table>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/gruvbox.png" width="440"><br><sub>Gruvbox</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/nordic.png" width="440"><br><sub>Nordic</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/rosepine.png" width="440"><br><sub>Rosé Pine</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/tokyo.png" width="440"><br><sub>Tokyo Night</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/latte.png" width="440"><br><sub>Catppuccin Latte</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/lofi.png" width="440"><br><sub>Lofi</sub></p></td>
+</tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/hackthebox.png" width="440"><br><sub>HackTheBox</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/windows11.png" width="440"><br><sub>Windows 11</sub></p></td>
+</tr>
+</table>
+
+</details>
+
 Theme commands:
 
 ``` bash
