@@ -52,6 +52,13 @@ Singleton {
         root._save();
     }
 
+    function clearAll(): void {
+        if (root.entries.length === 0)
+            return;
+        root.entries = [];
+        root._save();
+    }
+
     function _record(n: var): void {
         const entry = {
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
