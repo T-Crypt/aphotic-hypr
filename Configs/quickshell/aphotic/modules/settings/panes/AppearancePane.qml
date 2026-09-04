@@ -17,12 +17,81 @@ Item {
     implicitHeight: loader.implicitHeight
 
     property bool showWallpaperPicker: false
+    property bool showCommunityThemes: false
+
+    // Lives on the pane rather than inside a page so the landing badge
+    // and the Community Themes page read one fetch between them, and
+    // navigating back and forth doesn't re-run the CLI each time.
+    //
+    // Names of downloaded themes that came from the community index
+    // rather than shipping with Aphotic. Comes from `aphotic theme list
+    // --json`'s `core` field (cmd_theme.sh) rather than a second copy of
+    // APHOTIC_CORE_THEMES kept here, so the two never drift.
+    property var communityNames: []
+    // "Available to download", kept separate from the locally-scanned
+    // Themes.themes grid so an available entry is never
+    // indistinguishable from an already-downloaded theme.
+    property var communityAvailable: []
+    readonly property var communityFiltered: root.communityAvailable.filter(t => !Themes.themes.some(th => th.name === t.name))
+
+    function refreshCommunity(): void {
+        installedCoreProc.running = true;
+        communityRemoteProc.running = true;
+    }
+
+    function downloadTheme(name: string): void {
+        downloadProc.command = ["aphotic", "theme", "download", name];
+        downloadProc.running = true;
+    }
+
+    Process {
+        id: installedCoreProc
+        command: ["aphotic", "theme", "list", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.communityNames = JSON.parse(text).filter(t => !t.core).map(t => t.name);
+                } catch (e) {
+                    root.communityNames = [];
+                }
+            }
+        }
+    }
+
+    Process {
+        id: communityRemoteProc
+        command: ["aphotic", "theme", "list", "--remote", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.communityAvailable = JSON.parse(text);
+                } catch (e) {
+                    root.communityAvailable = [];
+                }
+            }
+        }
+    }
+
+    // No enable/disable, no category filter, no security-trust gate here
+    // -- those are plugin-specific concepts (see PluginsPane.qml) that
+    // don't apply to a directory of wallpapers. Downloading runs as a
+    // tracked Process (not a detached terminal like `aphotic plugin
+    // install`) since a `cp -r` never needs an interactive AUR prompt.
+    Process {
+        id: downloadProc
+        onExited: {
+            Themes.rescan();
+            root.refreshCommunity();
+        }
+    }
+
+    Component.onCompleted: root.refreshCommunity()
 
     Loader {
         id: loader
 
         anchors.fill: parent
-        sourceComponent: root.showWallpaperPicker ? wallpaperPickerComp : landingComp
+        sourceComponent: root.showWallpaperPicker ? wallpaperPickerComp : root.showCommunityThemes ? communityThemesComp : landingComp
     }
 
     Component {
@@ -34,73 +103,22 @@ Item {
     }
 
     Component {
+        id: communityThemesComp
+
+        CommunityThemes {
+            available: root.communityFiltered
+            onBack: root.showCommunityThemes = false
+            onDownload: name => root.downloadTheme(name)
+        }
+    }
+
+    Component {
         id: landingComp
 
         ColumnLayout {
             id: landing
 
             spacing: Tokens.spacing.largeIncreased
-
-            // Names of downloaded themes that came from the community
-            // index rather than shipping with Aphotic -- badges the grid
-            // below. Comes from `aphotic theme list --json`'s `core` field
-            // (cmd_theme.sh) rather than a second copy of
-            // APHOTIC_CORE_THEMES kept here, so the two never drift.
-            property var communityNames: []
-            // "Available to download" list, kept separate from the
-            // locally-scanned Themes.themes grid so an available entry is
-            // never indistinguishable from an already-downloaded theme.
-            property var communityAvailable: []
-            readonly property var communityFiltered: landing.communityAvailable.filter(t => !Themes.themes.some(th => th.name === t.name))
-
-            function refreshCommunity(): void {
-                installedCoreProc.running = true;
-                communityRemoteProc.running = true;
-            }
-
-            Process {
-                id: installedCoreProc
-                command: ["aphotic", "theme", "list", "--json"]
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        try {
-                            landing.communityNames = JSON.parse(text).filter(t => !t.core).map(t => t.name);
-                        } catch (e) {
-                            landing.communityNames = [];
-                        }
-                    }
-                }
-            }
-
-            Process {
-                id: communityRemoteProc
-                command: ["aphotic", "theme", "list", "--remote", "--json"]
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        try {
-                            landing.communityAvailable = JSON.parse(text);
-                        } catch (e) {
-                            landing.communityAvailable = [];
-                        }
-                    }
-                }
-            }
-
-            // No enable/disable, no category filter, no security-trust
-            // gate here -- those are plugin-specific concepts (see
-            // PluginsPane.qml) that don't apply to a directory of
-            // wallpapers. Downloading runs as a tracked Process (not a
-            // detached terminal like `aphotic plugin install`) since a
-            // `cp -r` never needs an interactive AUR prompt.
-            Process {
-                id: downloadProc
-                onExited: {
-                    Themes.rescan();
-                    landing.refreshCommunity();
-                }
-            }
-
-            Component.onCompleted: landing.refreshCommunity()
 
             StyledText {
                 text: qsTr("Appearance")
@@ -130,7 +148,7 @@ Item {
 
                         required property var modelData
                         readonly property bool active: themeCard.modelData.name === Themes.activeTheme
-                        readonly property bool community: landing.communityNames.includes(themeCard.modelData.name)
+                        readonly property bool community: root.communityNames.includes(themeCard.modelData.name)
 
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -192,105 +210,36 @@ Item {
                 }
             }
 
-            StyledText {
+            Item {
+                id: communityRow
+
+                Layout.fillWidth: true
                 Layout.topMargin: Tokens.spacing.small
-                text: qsTr("Community Themes")
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.label.medium
-            }
+                Layout.preferredHeight: communityRowContent.implicitHeight
 
-            StyledText {
-                visible: landing.communityFiltered.length === 0
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: qsTr("Couldn't reach the aphotic-themes index (offline, or the repo isn't public yet).")
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.body.small
-            }
+                SettingsRow {
+                    id: communityRowContent
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    icon: "public"
+                    label: qsTr("Community themes")
+                    description: root.communityFiltered.length > 0 ? qsTr("%n available to download", "", root.communityFiltered.length) : qsTr("Nothing new to download right now")
 
-            Flow {
-                Layout.fillWidth: true
-                visible: landing.communityFiltered.length > 0
-                spacing: Tokens.spacing.medium
-
-                Repeater {
-                    model: landing.communityFiltered
-
-                    StyledRect {
-                        id: communityCard
-
-                        required property var modelData
-
-                        width: 220
-                        implicitHeight: communityCol.implicitHeight + Tokens.padding.large * 2
-                        radius: Tokens.rounding.medium
-                        color: Colours.tPalette.m3surfaceContainer
-
-                        ColumnLayout {
-                            id: communityCol
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: parent.top
-                            anchors.margins: Tokens.padding.large
-                            spacing: Tokens.spacing.extraSmall
-
-                            StyledText {
-                                Layout.fillWidth: true
-                                elide: Text.ElideRight
-                                text: communityCard.modelData.display_name
-                                font: Tokens.font.body.medium
-                            }
-
-                            StyledText {
-                                visible: (communityCard.modelData.description ?? "").length > 0
-                                Layout.fillWidth: true
-                                wrapMode: Text.Wrap
-                                maximumLineCount: 2
-                                elide: Text.ElideRight
-                                text: communityCard.modelData.description ?? ""
-                                color: Colours.palette.m3onSurfaceVariant
-                                font: Tokens.font.label.small
-                            }
-
-                            StyledText {
-                                Layout.topMargin: Tokens.spacing.extraSmall
-                                text: qsTr("%1 wallpapers · %2").arg(communityCard.modelData.wallpaper_count ?? 0).arg(ModelStorage.formatBytes(communityCard.modelData.approx_size_bytes ?? 0))
-                                color: Colours.palette.m3onSurfaceVariant
-                                font: Tokens.font.label.small
-                            }
-
-                            StyledRect {
-                                Layout.topMargin: Tokens.spacing.small
-                                Layout.alignment: Qt.AlignLeft
-                                implicitWidth: downloadLabel.implicitWidth + Tokens.padding.large * 2
-                                implicitHeight: 28
-                                radius: Tokens.rounding.full
-                                color: Colours.palette.m3primary
-
-                                StyledText {
-                                    id: downloadLabel
-                                    anchors.centerIn: parent
-                                    text: qsTr("Download")
-                                    color: Colours.contrastOn(Colours.palette.m3primary)
-                                    font: Tokens.font.label.small
-                                }
-
-                                StateLayer {
-                                    anchors.fill: parent
-                                    radius: parent.radius
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        downloadProc.command = ["aphotic", "theme", "download", communityCard.modelData.name];
-                                        downloadProc.running = true;
-                                    }
-                                }
-                            }
-                        }
+                    MaterialIcon {
+                        text: "chevron_right"
+                        color: Colours.palette.m3onSurfaceVariant
+                        fontStyle: Tokens.font.icon.small
                     }
+                }
+
+                StateLayer {
+                    anchors.fill: parent
+                    radius: Tokens.rounding.extraLarge
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.showCommunityThemes = true
                 }
             }
 
