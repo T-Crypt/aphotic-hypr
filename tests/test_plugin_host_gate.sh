@@ -37,23 +37,35 @@ _aphotic_plugin_in_list "profile" "profile-hook agent-event-hook" \
 v="$(_aphotic_plugin_host_verdict "harness-hook" "")"
 [[ "$v" == "ok" ]] || fail "hook-only plugin should be ok, got '$v'"
 
-# ui-surface alone never counts as working -- the surfaces decide.
-v="$(_aphotic_plugin_host_verdict "ui-surface" "notch")"
-[[ "$v" == inert:* ]] || fail "notch-only plugin should be inert, got '$v'"
-[[ "$v" == *"notch surface"* ]] || fail "verdict should name the notch surface, got '$v'"
+# Every surface kind and capability this build hosts, asserted positively.
+# The gate's whole failure mode is a host that exists while its token was
+# never added to the list, so each one is checked rather than inferred.
+for s in dashboard notch settings; do
+    v="$(_aphotic_plugin_host_verdict "ui-surface" "$s")"
+    [[ "$v" == "ok" ]] || fail "'$s' is hosted by this build but the gate says '$v'"
+done
+for c in profile cli theme-hook project-hook workspace-hook harness-hook; do
+    v="$(_aphotic_plugin_host_verdict "$c" "")"
+    [[ "$v" == "ok" ]] || fail "'$c' is hosted by this build but the gate says '$v'"
+done
 
-v="$(_aphotic_plugin_host_verdict "ui-surface" "settings")"
-[[ "$v" == inert:* ]] || fail "settings-pane-only plugin should be inert, got '$v'"
+# ui-surface alone never counts as working -- the surfaces decide. `bar`
+# stands in for the next surface kind to be added: unknown tokens are the
+# permanent case this gate exists for, so the test uses one rather than a
+# kind that stops being unhosted the moment its host lands.
+v="$(_aphotic_plugin_host_verdict "ui-surface" "bar")"
+[[ "$v" == inert:* ]] || fail "bar-only plugin should be inert, got '$v'"
+[[ "$v" == *"bar surface"* ]] || fail "verdict should name the bar surface, got '$v'"
 
 # The case a blanket hide would get wrong: a dashboard tab that works
-# alongside a settings pane that does not.
-v="$(_aphotic_plugin_host_verdict "ui-surface" "dashboard
-settings")"
-[[ "$v" == partial:* ]] || fail "dashboard+settings plugin should be partial, got '$v'"
+# alongside a surface kind that does not exist here.
+v="$(_aphotic_plugin_host_verdict "ui-surface" "bar
+dashboard")"
+[[ "$v" == partial:* ]] || fail "dashboard+bar plugin should be partial, got '$v'"
 [[ "$v" != *"dashboard"* ]] || fail "partial verdict should not name the hosted dashboard surface, got '$v'"
 
-v="$(_aphotic_plugin_host_verdict "profile" "")"
-[[ "$v" == inert:* ]] || fail "profile-capability plugin should be inert, got '$v'"
+v="$(_aphotic_plugin_host_verdict "agent-event-hook" "")"
+[[ "$v" == inert:* ]] || fail "agent-event-hook plugin should be inert, got '$v'"
 
 # openrgb's real shape: one hosted hook, two that no branch fires yet.
 v="$(_aphotic_plugin_host_verdict "theme-hook
@@ -100,12 +112,11 @@ display_name = "Inert"
 version = "1.0.0"
 capabilities = ["ui-surface"]
 
-[ui.settings_pane]
+[ui.bar]
 id = "inert"
-component = "qml/Pane.qml"
-parent = "ai"
+component = "qml/Bar.qml"
 EOF
-echo "// placeholder" > "$APHOTIC_PLUGINS_REPO/inert-plug/qml/Pane.qml"
+echo "// placeholder" > "$APHOTIC_PLUGINS_REPO/inert-plug/qml/Bar.qml"
 
 # _aphotic_plugin_sync_repo would try to git-pull a directory that is not
 # a checkout; the gate under test runs after it, so stub it out.
@@ -131,13 +142,12 @@ capabilities = ["ui-surface"]
 id = "partial"
 component = "qml/Tab.qml"
 
-[ui.settings_pane]
+[ui.bar]
 id = "partial"
-component = "qml/Pane.qml"
-parent = "ai"
+component = "qml/Bar.qml"
 EOF
 echo "// placeholder" > "$APHOTIC_PLUGINS_REPO/partial-plug/qml/Tab.qml"
-echo "// placeholder" > "$APHOTIC_PLUGINS_REPO/partial-plug/qml/Pane.qml"
+echo "// placeholder" > "$APHOTIC_PLUGINS_REPO/partial-plug/qml/Bar.qml"
 
 _aphotic_plugin_install "partial-plug" "false" >/dev/null 2>&1 \
     || fail "expected a partially-hosted plugin to still install"
@@ -146,13 +156,21 @@ _aphotic_plugin_install "partial-plug" "false" >/dev/null 2>&1 \
 
 # --- catalogue annotation --------------------------------------------
 
+# The shapes the published catalogue actually ships. Every one of the
+# first three was inert against the pre-merge gate, which is what this
+# build adding notch/settings/profile/cli hosts is for; the last two are
+# the cases that must still be caught.
 annotated="$(_aphotic_plugin_annotate_remote_json '{"plugins":[
-  {"name":"agent-graph","capabilities":["ui-surface"],
+  {"name":"tab-and-pane","capabilities":["ui-surface"],
    "ui":{"surfaces":[{"surface":"dashboard"},{"surface":"settings"}]}},
-  {"name":"llm-fit","capabilities":["ui-surface"],
+  {"name":"pane-only","capabilities":["ui-surface"],
    "ui":{"surfaces":[{"surface":"settings"}]}},
-  {"name":"gaming","capabilities":["profile"],"ui":{"surfaces":[]}},
-  {"name":"claude-hooks","capabilities":["harness-hook"],"ui":{"surfaces":[]}}
+  {"name":"profile-only","capabilities":["profile"],"ui":{"surfaces":[]}},
+  {"name":"unfired-hooks","capabilities":["theme-hook","agent-event-hook"],
+   "ui":{"surfaces":[]}},
+  {"name":"future-kind","capabilities":["ui-surface"],
+   "ui":{"surfaces":[{"surface":"bar"}]}},
+  {"name":"hook-only","capabilities":["harness-hook"],"ui":{"surfaces":[]}}
 ]}')"
 
 check_verdict() {
@@ -160,9 +178,11 @@ check_verdict() {
     got="$(jq -r --arg n "$n" '.[] | select(.name == $n) | .host_support.verdict' <<<"$annotated")"
     [[ "$got" == "$want" ]] || fail "catalogue verdict for ${n}: expected ${want}, got '${got}'"
 }
-check_verdict agent-graph  partial
-check_verdict llm-fit      inert
-check_verdict gaming       inert
-check_verdict claude-hooks ok
+check_verdict tab-and-pane  ok
+check_verdict pane-only     ok
+check_verdict profile-only  ok
+check_verdict unfired-hooks partial
+check_verdict future-kind   inert
+check_verdict hook-only     ok
 
 echo "PASS: plugin host gate (verdict rule, manifest surface scan, install refusal, catalogue annotation)"

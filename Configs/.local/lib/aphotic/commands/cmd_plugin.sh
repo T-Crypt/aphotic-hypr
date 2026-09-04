@@ -73,12 +73,12 @@ _aphotic_plugin_manifest_surfaces() {
 # newline-separated lists. Prints `ok`, or `partial:<parts>` /
 # `inert:<parts>` with a human list of what has no host.
 #
-# partial and inert are a real distinction, not a severity gradient.
-# agent-graph declares a dashboard tab this build renders *and* a
-# settings pane it does not, so refusing it would remove a working
-# plugin; llm-fit declares only a settings pane and would install to
-# nothing at all. The question is therefore "does any of it work", not
-# "is all of it supported".
+# partial and inert are a real distinction, not a severity gradient. A
+# plugin declaring a surface this build renders *and* one it does not
+# still works, so refusing it would remove something functional; a
+# plugin whose every declared part is unhosted installs to nothing at
+# all. The question is therefore "does any of it work", not "is all of
+# it supported".
 #
 # `ui-surface` never counts as working on its own -- it is the tag that
 # says surfaces exist, and the surfaces themselves decide.
