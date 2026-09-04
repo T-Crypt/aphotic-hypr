@@ -20,6 +20,8 @@ source "$ROOT_DIR/lib/install/exploit_disclaimer.sh"
 source "$ROOT_DIR/lib/install/conflicts.sh"
 source "$ROOT_DIR/lib/install/assistant.sh"
 source "$ROOT_DIR/lib/install/nvidia.sh"
+source "$ROOT_DIR/lib/install/amd.sh"
+source "$ROOT_DIR/lib/install/gpu_compute.sh"
 source "$ROOT_DIR/lib/install/packages.sh"
 source "$ROOT_DIR/lib/install/detect.sh"
 source "$ROOT_DIR/lib/install/system_prep.sh"
@@ -272,6 +274,7 @@ main() {
   fi
 
   ISNVIDIA="$DETECTED_NVIDIA_PRESENT"
+  ISAMD="$DETECTED_AMD_PRESENT"
 
   # Step 4 has to run before resolve_assistant (which would otherwise ask
   # its own question) and before the summary, since it feeds both.
@@ -309,6 +312,12 @@ main() {
     echo "  profile: $PROFILE"
     echo "  layers: $LAYERS"
     echo "  nvidia: $ISNVIDIA"
+    echo "  amd: $ISAMD"
+    if [[ ",$LAYERS," == *",ai,"* ]]; then
+      local dry_accel
+      dry_accel=$(resolve_ollama_accel_package)
+      echo "  ollama acceleration: ${dry_accel:-none (no NVIDIA/AMD GPU -- CPU inference)}"
+    fi
     echo "  assistant: $ASSISTANT"
     if [[ "$ASSISTANT" == "true" ]]; then
       local dry_model
@@ -327,6 +336,12 @@ main() {
     if [[ "$ISNVIDIA" == "true" ]]; then
       echo "  would install Nvidia driver: matching kernel headers + nvidia-open-dkms"
       echo "  would regenerate initramfs/UKI (mkinitcpio -P)"
+    fi
+    if [[ "$ISAMD" == "true" ]]; then
+      echo "  would install AMD graphics userspace: mesa, vulkan-radeon, vulkan-icd-loader"
+      if [[ "$(any_layer_requires_multilib "$LAYERS")" == "true" ]]; then
+        echo "  would install 32-bit AMD Vulkan: lib32-mesa, lib32-vulkan-radeon"
+      fi
     fi
     echo "  would install hyprland"
     if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
@@ -411,12 +426,18 @@ main() {
   install_package_list "$prep_pkgs" "$base_prep_pkgs"
 
   setup_nvidia
+  setup_amd
   # Nvidia support has been built into the mainline "hyprland" package for a
   # while now; the "hyprland-nvidia" AUR package that used to carry the
   # patches is gone, so both paths install the same package.
   install_software hyprland
 
   install_package_list "$main_pkgs" "$base_main_pkgs"
+
+  # After the main list, since the accelerated runner depends on the
+  # `ollama` the ai layer installs, and before setup_assistant, which
+  # pulls a model and wants the GPU runner already in place.
+  setup_gpu_compute
 
   if [[ "$ASSISTANT" == "true" ]]; then
     setup_assistant || echo -e "$CWR - Aphotic Assistant setup did not finish; see $INSTLOG. The rest of the install continues."
@@ -452,7 +473,7 @@ main() {
   activate_starship
   activate_zsh
 
-  write_aphotic_toml "$APHOTIC_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)"
+  write_aphotic_toml "$APHOTIC_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)" "$ISAMD"
 
   echo -e "\n\e[1;32m── Install summary ──\e[0m"
   echo -e "  Profile:       $PROFILE"
@@ -460,6 +481,7 @@ main() {
   echo -e "  Theme:         $THEME"
   echo -e "  AUR helper:    $AUR_HELPER"
   echo -e "  Nvidia:        $ISNVIDIA"
+  echo -e "  AMD:           $ISAMD"
   echo -e "  Assistant:     $ASSISTANT"
   echo -e "  Configs copied: $([[ "$CFG_COPIED" == "1" ]] && echo yes || echo no)"
   echo -e "  Config saved:  $APHOTIC_TOML"

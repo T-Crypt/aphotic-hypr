@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.1
+
+install.sh now detects AMD GPUs, installs their Mesa and RADV Vulkan drivers, and picks the Ollama GPU runner that matches your card (ollama-rocm on AMD, ollama-cuda on NVIDIA) so local models stop running on the CPU.
+
 ## 2.0.0
 
 A modular plugin architecture — AI agent hooks (Claude Code/Codex/OpenCode) and Agent Graph are now opt-in plugins, not automatic: run `aphotic plugin install claude-hooks` (or codex-hooks/opencode-hooks/agent-graph) to keep them. See the README's Install section for details.

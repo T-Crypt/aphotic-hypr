@@ -239,6 +239,10 @@ Optional AI integrations including:
 Local Ollama models can participate in the Resource Engine through GPU
 VRAM claims.
 
+The `ai` layer installs the GPU runner that matches your card:
+`ollama-cuda` on NVIDIA, `ollama-rocm` on AMD. Local models then run on
+the GPU. With neither card, Ollama falls back to the CPU.
+
 ### Security
 
 Optional security-research tooling organized into dedicated layers.
