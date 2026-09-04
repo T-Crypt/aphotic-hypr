@@ -17,23 +17,48 @@ Item {
     readonly property int slotPitch: cellWidth + cellSpacing
     readonly property real centerScale: 1.35
     readonly property int visibleSlots: 5
+    readonly property real centerOffset: (slotPitch * visibleSlots - cellWidth) / 2
 
     readonly property real flickDeceleration: 1000
     readonly property real maxFlickVelocity: 4800
     readonly property real singleStepVelocity: Math.sqrt(2 * flickDeceleration * slotPitch)
 
     property string _originalWallpaper: ""
+    property int _previewIndex: -1
 
     implicitWidth: slotPitch * visibleSlots + Tokens.padding.large * 2
     implicitHeight: cellHeight * centerScale + caption.implicitHeight + Tokens.spacing.large + Tokens.padding.large * 2
 
     focus: true
 
+    // Themes.setTheme() writes ~/.local/state/aphotic/theme.json and queues
+    // wallust + awww, which rewrites Colours.qml and so hot-reloads the whole
+    // Quickshell scene graph. Firing that per scrolled-past index is what made
+    // the strip stutter, so the live preview waits for the strip to come to
+    // rest and _commit() flushes whatever is still pending.
+    function _applyPreview(): void {
+        previewDelay.stop();
+        const index = root._previewIndex;
+        root._previewIndex = -1;
+        if (index < 0)
+            return;
+        const file = Themes.wallpapersInActiveTheme[index];
+        if (file && file !== Themes.activeWallpaper)
+            Themes.setWallpaperInActiveTheme(file);
+    }
+
+    function _cancelPreview(): void {
+        previewDelay.stop();
+        root._previewIndex = -1;
+    }
+
     function _commit(): void {
+        root._applyPreview();
         root.screenState.wallpaperPicker = false;
     }
 
     function _revertAndClose(): void {
+        root._cancelPreview();
         Themes.setWallpaperInActiveTheme(root._originalWallpaper);
         root.screenState.wallpaperPicker = false;
     }
@@ -42,16 +67,23 @@ Item {
         return Math.max(-root.maxFlickVelocity, Math.min(root.maxFlickVelocity, v));
     }
 
+    function _indexAtCenter(): int {
+        if (strip.count === 0)
+            return -1;
+        const slot = Math.round((strip.contentX + root.centerOffset) / root.slotPitch);
+        return Math.max(0, Math.min(slot, strip.count - 1));
+    }
+
     function _targetContentX(index: int): real {
-        const centerOffset = strip.width / 2 - root.cellWidth / 2;
-        const ideal = index * root.slotPitch - centerOffset;
-        const maxX = Math.max(0, strip.contentWidth - strip.width);
-        return Math.max(0, Math.min(ideal, maxX));
+        const clamped = Math.max(0, Math.min(index, strip.count - 1));
+        return clamped * root.slotPitch - root.centerOffset;
     }
 
     function _settle(): void {
         settleAnim.to = root._targetContentX(strip.currentIndex);
         settleAnim.restart();
+        root._previewIndex = strip.currentIndex;
+        previewDelay.restart();
     }
 
     function _flickToIndex(targetIndex: int): void {
@@ -79,11 +111,12 @@ Item {
         function onWallpaperPickerChanged() {
             if (!root.screenState.wallpaperPicker)
                 return;
+            root._cancelPreview();
             root._originalWallpaper = Themes.activeWallpaper;
             const idx = Themes.wallpapersInActiveTheme.indexOf(Themes.activeWallpaper);
             if (idx !== -1) {
                 strip.currentIndex = idx;
-                strip.positionViewAtIndex(idx, ListView.Center);
+                strip.contentX = root._targetContentX(idx);
             }
             root.forceActiveFocus();
         }
@@ -140,6 +173,8 @@ Item {
                 height: root.cellHeight * root.centerScale
                 orientation: ListView.Horizontal
                 spacing: root.cellSpacing
+                leftMargin: root.centerOffset
+                rightMargin: root.centerOffset
                 clip: true
                 cacheBuffer: root.slotPitch * 2
 
@@ -156,54 +191,28 @@ Item {
                     // picker window is hidden (only PanelWindow.visible
                     // toggles). Switching themes from Settings elsewhere
                     // reassigns Themes.wallpapersInActiveTheme, which resets
-                    // this (currently invisible) ListView's model -- Qt
-                    // resets contentX to 0 as part of that, re-entering this
-                    // handler and (via currentIndex below) calling back into
-                    // Themes.setWallpaperInActiveTheme while
-                    // QQuickItemView::setModel is still mid-update, which
-                    // segfaults deep in QQmlDelegateModel. None of this
-                    // logic is meaningful while the picker isn't open, so
-                    // skip it entirely rather than let it run reentrantly.
-                    if (!root.screenState.wallpaperPicker)
+                    // this (currently invisible) ListView's model -- Qt resets
+                    // contentX to 0 as part of that, re-entering this handler
+                    // while QQuickItemView::setModel is still mid-update.
+                    // None of this logic is meaningful while the picker isn't
+                    // open, so skip it rather than let it run reentrantly.
+                    // The margins below also nudge contentX during creation,
+                    // before the required screenState is assigned.
+                    if (!root.screenState?.wallpaperPicker)
                         return;
-                    // Geometric center-detection (indexAt at the viewport's
-                    // middle) can never resolve to one of the last/first
-                    // couple of items once contentX is pinned at either
-                    // scroll extreme -- there isn't enough content past
-                    // them left to carry the viewport's exact center point
-                    // over their position, unlike every item in the
-                    // middle of the strip. With 5 visible slots that
-                    // stranded currentIndex up to 2 items short of the
-                    // real last index, and neither arrow key nor a flick
-                    // could ever move further: _flickToIndex always
-                    // recomputes its target against this same currentIndex,
-                    // so once stuck it stayed stuck no matter how many more
-                    // times Right was pressed. Snapping explicitly at each
-                    // saturated bound sidesteps center-detection there
-                    // instead of trying to make it reach geometrically
-                    // unreachable positions.
-                    const maxX = Math.max(0, strip.contentWidth - strip.width);
-                    let idx;
-                    if (strip.contentX >= maxX - 0.5)
-                        idx = strip.count - 1;
-                    else if (strip.contentX <= 0.5)
-                        idx = 0;
-                    else
-                        idx = strip.indexAt(strip.contentX + strip.width / 2, strip.height / 2);
+                    const idx = root._indexAtCenter();
                     if (idx !== -1 && idx !== strip.currentIndex)
                         strip.currentIndex = idx;
                 }
 
-                onCurrentIndexChanged: {
-                    // Same reentrancy hazard as onContentXChanged above --
-                    // skip while the picker is closed.
-                    if (!root.screenState.wallpaperPicker)
-                        return;
-                    if (currentIndex >= 0 && currentIndex < model.length)
-                        Themes.setWallpaperInActiveTheme(model[currentIndex]);
-                }
-
                 onMovementEnded: root._settle()
+
+                Timer {
+                    id: previewDelay
+
+                    interval: Tokens.anim.durations.expressiveSlowEffects
+                    onTriggered: root._applyPreview()
+                }
 
                 SpringAnimation {
                     id: settleAnim
@@ -286,7 +295,7 @@ Item {
 
                 StyledText {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: Themes.activeWallpaper
+                    text: Themes.wallpapersInActiveTheme[strip.currentIndex] ?? Themes.activeWallpaper
                     font: Tokens.font.body.medium
                     color: Colours.palette.m3onSurfaceVariant
                     animate: true
