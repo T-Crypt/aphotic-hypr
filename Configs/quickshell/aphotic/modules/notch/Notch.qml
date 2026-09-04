@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
 import qs.config
@@ -10,6 +9,12 @@ import qs.services
 
 StyledRect {
     id: root
+
+    // Which edge the bar is docked to, and which way this has to open to
+    // get away from it. Supplied by NotchWindow, which anchors the layer
+    // surface to the same edge.
+    property bool dockHorizontal: true
+    property bool growsPositive: true
 
     // Processes is the base shell's tile and is the only one this file
     // knows the name of: the notch ships with the base layer, so a plain
@@ -33,8 +38,8 @@ StyledRect {
     ].concat(root.pluginTiles)
 
     // A base install has one tile, so there is nothing to switch between:
-    // the name stops being a button and the chip strip is gone entirely
-    // rather than sitting there as a single dead chip.
+    // the name stops being a button and the switcher strip is gone
+    // entirely rather than sitting there as a single dead segment.
     readonly property bool switchable: root.tiles.length > 1
 
     readonly property var activeTile: root.tiles.find(t => t.id === root.shownTileId) ?? null
@@ -48,28 +53,19 @@ StyledRect {
     readonly property bool processesLive: root.expanded && root.shownTileId === "processes"
 
     // A plugin tile may expose `property bool attention` to say it has
-    // something the user needs to act on. Read duck-typed, off whichever
-    // tiles happen to be loaded -- the collapsed pill can show that a
-    // tile is asking for attention without this file knowing what any of
-    // them are about.
-    function attentionOf(id: string): bool {
-        const count = pluginTileRepeater.count;
-        for (let i = 0; i < count; i++) {
-            const loader = pluginTileRepeater.itemAt(i);
-            if (loader?.modelData?.id === id)
-                return loader?.item?.attention === true;
-        }
-        return false;
-    }
-
-    readonly property bool attention: root.pluginTiles.some(t => root.attentionOf(t.id))
+    // something the user needs to act on. NotchBody reads that duck-typed
+    // off whichever tiles happen to be loaded, so the collapsed strip can
+    // show that a tile is asking for attention without this file knowing
+    // what any of them are about.
+    readonly property var attentionIds: body.attentionIds
+    readonly property bool attention: root.attentionIds.length > 0
 
     property string tileId: ""
     readonly property bool expanded: root.tileId !== ""
 
     // Which tile the expanded body is BUILT for, kept latched past a
     // collapse so the body still reports a real implicitHeight while the
-    // height animation plays -- reading it off `tileId` instead would
+    // close animation plays -- reading it off `tileId` instead would
     // collapse the target to zero on the first frame and cut the
     // animation short. Same reasoning as popouts/Wrapper.qml's
     // showContent.
@@ -93,30 +89,68 @@ StyledRect {
             root.shownTileId = root.tileId;
     }
 
-    // Only the inner surface moves. Every dimension here is either a
-    // constant or driven by content that is itself laid out at a constant
-    // width (see contentWidth), so nothing feeds back into the enclosing
-    // PanelWindow's geometry.
-    width: root.expanded ? Config.notch.expandedWidth : Config.notch.collapsedWidth
-    height: root.expanded ? Math.min(body.implicitHeight + Tokens.padding.medium * 2, Config.notch.maxHeight) : Config.notch.collapsedHeight
-    // NOT Tokens.rounding.full for the collapsed pill: that is 999999, and
-    // animating it down to a real radius keeps the value above width/2
-    // (where every value renders identically) until the last few frames,
-    // then drops through the whole visible range at once -- a snap at the
-    // end of an otherwise smooth grow. Half the collapsed height is the
-    // same pill, expressed as a number the Behavior can actually traverse.
-    radius: root.expanded ? Tokens.rounding.large : Config.notch.collapsedHeight / 2
-    color: Colours.palette.m3surfaceContainerHigh
+    // ---- Geometry -------------------------------------------------------
+    //
+    // Everything is expressed against the docked edge: `along` runs beside
+    // it, `grow` away from it. The open panel is the same rectangle in all
+    // four orientations, so only which of the two axes carries which
+    // progress changes.
+    readonly property real collapsedAlong: Config.notch.collapsedWidth
+    readonly property real collapsedThick: Config.notch.collapsedHeight
+    readonly property real collapsedW: root.dockHorizontal ? root.collapsedAlong : root.collapsedThick
+    readonly property real collapsedH: root.dockHorizontal ? root.collapsedThick : root.collapsedAlong
 
-    Behavior on width {
-        Anim { type: Anim.Emphasized }
+    // Springs to the shown tile's size, so switching tiles settles into
+    // the new height instead of stepping to it. Bound to the body, which
+    // lays out at a constant contentWidth -- nothing here feeds back into
+    // the enclosing PanelWindow's geometry.
+    property real panelHeight: Math.min(body.implicitHeight + Tokens.padding.large * 2, Config.notch.maxHeight)
+
+    Behavior on panelHeight {
+        SpringAnimation {
+            spring: 4
+            damping: 0.7
+            mass: 0.9
+            epsilon: 0.25
+        }
     }
-    Behavior on height {
-        Anim { type: Anim.Emphasized }
+
+    // One spring drives the whole open: the surface's growth, the reveal
+    // of the body behind the clip, and the body's settle offset. There is
+    // no dwell timer and no reveal delay on this path -- content arrives
+    // when the geometry has made room for it, which is a fact about the
+    // spring rather than a countdown running beside it.
+    property real openProgress: root.expanded ? 1 : 0
+
+    Behavior on openProgress {
+        SpringAnimation {
+            spring: 4
+            damping: 0.62
+            mass: 0.9
+            // Unit-range property, so the pixel-scale epsilon the capsule
+            // uses would stop this a quarter of the way from its target.
+            epsilon: 0.005
+        }
     }
-    Behavior on radius {
-        Anim { type: Anim.Emphasized }
-    }
+
+    // The growth axis keeps the spring's overshoot -- that bounce out from
+    // the edge is the motion. The along axis is clamped: a sideways bounce
+    // is noise, and it is the axis with the tightest room inside the
+    // static surface.
+    readonly property real growT: Math.max(0, root.openProgress)
+    readonly property real alongT: Math.min(1, root.growT)
+    readonly property real reveal: Math.max(0, Math.min(1, (root.alongT - 0.35) / 0.45))
+
+    width: root.collapsedW + (Config.notch.expandedWidth - root.collapsedW) * (root.dockHorizontal ? root.alongT : root.growT)
+    height: root.collapsedH + (root.panelHeight - root.collapsedH) * (root.dockHorizontal ? root.growT : root.alongT)
+
+    // Interpolated rather than animated: NOT Tokens.rounding.full for the
+    // collapsed strip, because that is 999999, and animating it down to a
+    // real radius keeps the value above width/2 (where every value renders
+    // identically) until the last few frames, then drops through the whole
+    // visible range at once.
+    radius: root.collapsedThick / 2 + (Tokens.rounding.extraLarge - root.collapsedThick / 2) * root.alongT
+    color: Colours.tPalette.m3surfaceContainer
 
     layer.enabled: true
     layer.effect: MultiEffect {
@@ -146,39 +180,10 @@ StyledRect {
         }
     }
 
-    // The body is laid out at a constant contentWidth (see above) while the
-    // surface around it animates from the collapsed pill's 132px -- so for
-    // the first part of every open it is a 388px-wide layout being drawn
-    // into a box a third that size. Fading it in on its own short curve
-    // meant it arrived at full opacity while still mostly clipped, which
-    // is the "glitchy on the open" it read as. Holding the reveal until
-    // the geometry has covered most of the distance means content only
-    // appears once there is room for it. 150ms is measured, not guessed:
-    // Anim.Emphasized front-loads hard enough that a nominally 500ms run
-    // is already at ~400 of its 420px by then. Collapse takes
-    // the other path: revealed goes false immediately, so the body is gone
-    // before the box starts shrinking under it.
-    property bool revealed: false
-
-    Timer {
-        id: revealTimer
-        interval: 150
-        onTriggered: root.revealed = true
-    }
-
-    onExpandedChanged: {
-        if (root.expanded) {
-            revealTimer.restart();
-        } else {
-            revealTimer.stop();
-            root.revealed = false;
-        }
-    }
-
     // Faded rather than flipped straight to invisible: the click that
     // opens the notch starts a ripple that runs 600ms, longer than the
-    // 500ms expand, so hiding this the instant `expanded` flips cut the
-    // ripple off mid-sweep and read as a flash under the growing box.
+    // open, so hiding this the instant `expanded` flips cut the ripple off
+    // mid-sweep and read as a flash under the growing surface.
     StateLayer {
         radius: root.radius
         disabled: root.expanded
@@ -191,290 +196,81 @@ StyledRect {
         }
     }
 
-    component MicroBar: StyledRect {
-        id: microBar
-
-        property real perc: 0
-        property color barColour: Colours.palette.m3primary
-
-        implicitWidth: 34
-        implicitHeight: 4
-        radius: Tokens.rounding.full
-        color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
-
-        StyledRect {
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: parent.width * Math.max(0, Math.min(1, microBar.perc))
-            radius: Tokens.rounding.full
-            color: microBar.barColour
-        }
-    }
-
     Item {
         anchors.fill: parent
+        // Hard guarantee, not decoration: the window masks input to this
+        // item's bounds, so anything a child renders outside them is both
+        // visually loose and dead to the pointer. Clipping turns that
+        // class of bug into a visible truncation instead of content
+        // sliding off-screen, and it is what wipes the body out from the
+        // docked edge as the surface grows.
         clip: true
 
-        // Idle deliberately carries no clock: the bar already owns one in
-        // every style that shows the time (Bar/TaskbarBar/DockBar's Clock,
-        // MinimalBar's inline string), and a second one two centimetres
-        // away is just a duplicate. What is left is the smallest useful
-        // affordance -- live CPU and memory, off SystemUsage's
-        // always-running base poll, so idle costs nothing extra.
-        RowLayout {
-            id: idle
+        DepthGradient {
+            anchors.fill: parent
+            radius: root.radius
+            baseColour: root.color
+            strength: 0.05
+        }
 
-            anchors.centerIn: parent
-            spacing: Tokens.spacing.small
-            visible: opacity > 0
-            opacity: root.expanded ? 0 : 1
+        // The collapsed strip's own footprint, pinned at the docked edge
+        // so the idle content stays put while the surface grows past it.
+        Item {
+            width: root.dockHorizontal ? parent.width : root.collapsedThick
+            height: root.dockHorizontal ? root.collapsedThick : parent.height
+            x: root.dockHorizontal ? 0 : (root.growsPositive ? 0 : parent.width - width)
+            y: root.dockHorizontal ? (root.growsPositive ? 0 : parent.height - height) : 0
 
-            Behavior on opacity {
-                Anim { type: Anim.FastEffects }
-            }
-
-            MaterialIcon {
-                text: "monitoring"
-                color: Colours.palette.m3primaryOnSurface
-                fontStyle: Tokens.font.icon.small
-                fill: 1
-            }
-
-            MicroBar {
-                perc: SystemUsage.cpuPerc
-                barColour: Colours.palette.m3primary
-            }
-
-            MicroBar {
-                perc: SystemUsage.memPerc
-                barColour: Colours.palette.m3tertiary
-            }
-
-            StyledRect {
-                implicitWidth: 6
-                implicitHeight: 6
-                radius: Tokens.rounding.full
-                color: Colours.palette.m3primary
-                visible: root.attention
-
-                SequentialAnimation on opacity {
-                    running: root.attention
-                    loops: Animation.Infinite
-
-                    NumberAnimation {
-                        to: 0.35
-                        duration: 700
-                        easing.type: Easing.InOutQuad
-                    }
-                    NumberAnimation {
-                        to: 1
-                        duration: 700
-                        easing.type: Easing.InOutQuad
-                    }
-                }
+            NotchIdleStrip {
+                anchors.centerIn: parent
+                stacked: !root.dockHorizontal
+                attention: root.attention
+                visible: opacity > 0
+                opacity: 1 - Math.min(1, root.alongT / 0.3)
             }
         }
 
-        ColumnLayout {
+        NotchBody {
             id: body
 
-            // Centred, not pinned at the padding origin: while the surface
-            // is still growing the clip has to cut something off, and
-            // taking it evenly off both edges reads as the box opening
-            // around the content rather than the content sliding in from
-            // one side.
-            anchors.centerIn: parent
             width: root.contentWidth
-            spacing: Tokens.spacing.small
+            height: implicitHeight
+
+            // Along the docked edge the body is centred, so the surface
+            // reads as opening around it. Away from the edge it is pinned,
+            // so the clip wipes it out from under the bar rather than
+            // sliding it in from off-screen; the remaining travel is a
+            // short settle, not an entrance.
+            readonly property real enter: (1 - root.reveal) * Tokens.spacing.medium
+            readonly property real pad: Tokens.padding.large
+
+            x: root.dockHorizontal ? (parent.width - width) / 2 : (root.growsPositive ? pad + enter : parent.width - width - pad - enter)
+            y: root.dockHorizontal ? (root.growsPositive ? pad + enter : parent.height - height - pad - enter) : (parent.height - height) / 2
+
+            tiles: root.tiles
+            pluginTiles: root.pluginTiles
+            switchable: root.switchable
+            expanded: root.expanded
+            shownTileId: root.shownTileId
+            activeTile: root.activeTile
+
             visible: opacity > 0
-            opacity: root.revealed ? 1 : 0
+            opacity: root.reveal
 
-            Behavior on opacity {
-                Anim { type: Anim.DefaultEffects }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.small
-
-                StyledRect {
-                    Layout.fillWidth: true
-                    implicitHeight: title.implicitHeight + Tokens.padding.extraSmall * 2
-                    radius: Tokens.rounding.small
-                    color: "transparent"
-
-                    StateLayer {
-                        radius: parent.radius
-                        disabled: !root.expanded || !root.switchable
-                        onClicked: root.cycle()
-                    }
-
-                    RowLayout {
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Tokens.spacing.small
-
-                        MaterialIcon {
-                            text: root.activeTile?.icon ?? "monitoring"
-                            color: Colours.palette.m3primaryOnSurface
-                            fontStyle: Tokens.font.icon.small
-                            fill: 1
-                        }
-
-                        StyledText {
-                            id: title
-
-                            text: root.activeTile?.label ?? ""
-                            font: Tokens.font.title.builders.medium.weight(Font.Medium).build()
-                        }
-                    }
-                }
-
-                StyledRect {
-                    implicitWidth: 24
-                    implicitHeight: 24
-                    radius: Tokens.rounding.full
-                    color: "transparent"
-
-                    StateLayer {
-                        radius: parent.radius
-                        disabled: !root.expanded
-                        onClicked: root.collapse()
-                    }
-
-                    MaterialIcon {
-                        anchors.centerIn: parent
-                        text: "keyboard_arrow_up"
-                        color: Colours.palette.m3onSurfaceVariant
-                        fontStyle: Tokens.font.icon.small
-                    }
-                }
-            }
-
-            Item {
-                id: tileHost
-
-                Layout.fillWidth: true
-                Layout.preferredHeight: tileHost.shownItem?.implicitHeight ?? 0
-
-                readonly property Item shownItem: {
-                    if (root.shownTileId === "processes")
-                        return baseTileLoader;
-                    const count = pluginTileRepeater.count;
-                    const i = root.pluginTiles.findIndex(t => t.id === root.shownTileId);
-                    if (i < 0 || i >= count)
-                        return null;
-                    return pluginTileRepeater.itemAt(i);
-                }
-
-                Loader {
-                    id: baseTileLoader
-
-                    width: tileHost.width
-                    active: root.shownTileId === "processes"
-                    visible: baseTileLoader.active
-
-                    sourceComponent: processComp
-                }
-
-                // Every gated-in plugin tile is built, not just the shown
-                // one: a tile raising `attention` has to be able to say so
-                // while the notch is collapsed and its own body is not on
-                // screen, which is the whole point of a notch badge. No
-                // static import of any plugin's QML -- `source` is a plain
-                // file:// URL out of the registry, so the shell compiles
-                // and runs identically whether or not a tile is installed.
-                Repeater {
-                    id: pluginTileRepeater
-
-                    model: root.pluginTiles
-
-                    Loader {
-                        id: pluginTileLoader
-
-                        required property var modelData
-
-                        width: tileHost.width
-                        asynchronous: true
-                        visible: root.shownTileId === pluginTileLoader.modelData.id
-                        source: pluginTileLoader.modelData.componentUrl
-                    }
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.topMargin: Tokens.spacing.extraSmall
-                spacing: Tokens.spacing.extraSmall
-                visible: root.switchable
-
-                Repeater {
-                    model: root.switchable ? root.tiles : []
-
-                    StyledRect {
-                        id: chip
-
-                        required property var modelData
-                        readonly property bool active: chip.modelData.id === root.shownTileId
-                        readonly property bool attention: root.attentionOf(chip.modelData.id)
-
-                        implicitWidth: chipLabel.implicitWidth + chipIcon.implicitWidth + Tokens.padding.small * 2 + Tokens.spacing.extraSmall + (chip.attention ? 5 + Tokens.spacing.extraSmall : 0)
-                        implicitHeight: 26
-                        radius: Tokens.rounding.full
-                        color: chip.active ? Colours.palette.m3primary : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
-
-                        Behavior on color {
-                            CAnim {}
-                        }
-
-                        StateLayer {
-                            radius: parent.radius
-                            disabled: !root.expanded
-                            onClicked: root.tileId = chip.modelData.id
-                        }
-
-                        RowLayout {
-                            anchors.centerIn: parent
-                            spacing: Tokens.spacing.extraSmall
-
-                            MaterialIcon {
-                                id: chipIcon
-
-                                text: chip.modelData.icon
-                                color: chip.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
-                                fontStyle: Tokens.font.icon.small
-                                fill: chip.active ? 1 : 0
-                            }
-
-                            StyledText {
-                                id: chipLabel
-
-                                text: chip.modelData.label
-                                color: chip.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
-                                font: Tokens.font.label.builders.small.weight(Font.Medium).build()
-                            }
-
-                            StyledRect {
-                                implicitWidth: 5
-                                implicitHeight: 5
-                                radius: Tokens.rounding.full
-                                color: chip.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3primary
-                                visible: chip.attention
-                            }
-                        }
-                    }
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-            }
+            onCycled: root.cycle()
+            onDismissed: root.collapse()
+            onPicked: id => root.tileId = id
         }
-    }
 
-    Component {
-        id: processComp
-        NotchProcessTile {}
+        // Last child, so it draws over the depth gradient rather than
+        // under it: a hairline is all that separates an opaque surface
+        // from an opaque backdrop of nearly the same tone.
+        StyledRect {
+            anchors.fill: parent
+            radius: root.radius
+            color: "transparent"
+            border.width: 1
+            border.color: Colours.palette.m3outlineVariant
+        }
     }
 }

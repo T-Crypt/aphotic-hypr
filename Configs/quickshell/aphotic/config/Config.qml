@@ -216,16 +216,32 @@ QtObject {
     readonly property QtObject notch: QtObject {
         readonly property bool enabled: true
 
-        // Collapsed/expanded are the notch's own inner sizes;
+        // Every size here is expressed against the bar's docked edge, not
+        // against the screen: `collapsedWidth` runs ALONG that edge and
+        // `collapsedHeight` is the strip's thickness, so a side-docked bar
+        // gets a 26x132 strip from the same two numbers a top-docked one
+        // gets 132x26 from. expandedWidth and maxHeight are the open
+        // panel's screen-space width and height in every orientation --
+        // the panel is the same rectangle wherever it opens from, only the
+        // pinned edge changes.
+        //
         // expandedWidth and maxHeight also bound the STATIC layer-shell
-        // surface it draws into (see modules/notch/NotchWindow.qml).
+        // surface the notch draws into (see modules/notch/NotchWindow.qml).
         // Content wanting more than that is clipped by the compositor
         // rather than growing the window, so a new tile needing room
         // raises these, not just its own size.
         readonly property int collapsedWidth: 132
         readonly property int collapsedHeight: 26
         readonly property int expandedWidth: 420
-        readonly property int maxHeight: 340
+        readonly property int maxHeight: 400
+
+        // Slack around the panel inside that static surface: drop-shadow
+        // bleed plus the open spring's overshoot, which reaches about 8%
+        // of the travel past the target before it settles. Undersized, the
+        // compositor clips the bounce and the shadow instead of the shell.
+        readonly property int surfaceMargin: 40
+        // How far the strip sits off the edge it docks against.
+        readonly property int edgeGap: 4
 
         readonly property int processUpdateInterval: 1500
         readonly property int gpuUpdateInterval: 3000
