@@ -101,6 +101,21 @@ QtObject {
             ]
         }
 
+        // Capsule style. expanded*/stacked* also bound the STATIC
+        // layer-shell surface the capsule draws into (see
+        // modules/bar/CapsuleWindow.qml) -- content wanting more than
+        // this is clipped by the compositor rather than growing the
+        // window, so a richer expanded surface raises these, not just its
+        // own size. expanded* is the top/bottom-docked shape, stacked*
+        // the left/right-docked one.
+        readonly property QtObject capsule: QtObject {
+            readonly property int expandedWidth: 430
+            readonly property int expandedHeight: 136
+            readonly property int stackedWidth: 240
+            readonly property int stackedHeight: 348
+            readonly property int edgeMargin: 8
+        }
+
         readonly property QtObject entries: QtObject {
             readonly property var values: [
                 { id: "logo", enabled: true },

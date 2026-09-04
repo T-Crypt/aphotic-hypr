@@ -21,6 +21,9 @@ Item {
     // needs to actually reflect that instead of rendering it at the same
     // virtual thickness as the other two.
     readonly property real previewThickness: root.styleName === "minimal" ? 28 : 48
+    // Content-sized floating styles, drawn at their own implicit size and
+    // centred, rather than stretched edge to edge like the full-width ones.
+    readonly property bool floats: root.styleName === "dock" || root.styleName === "capsule"
 
     implicitWidth: 190
     implicitHeight: 120
@@ -87,19 +90,21 @@ Item {
 
                     scale: previewScale
                     transformOrigin: Item.TopLeft
-                    x: root.styleName === "dock" ? (previewFrame.width - width * previewScale) / 2 : 0
+                    x: root.floats ? (previewFrame.width - width * previewScale) / 2 : 0
                     y: (previewFrame.height - height * previewScale) / 2
-                    width: root.styleName === "dock" ? loader.item?.implicitWidth ?? 0 : previewFrame.width / previewScale
-                    height: root.styleName === "dock" ? (loader.item?.implicitHeight ?? 0) : root.previewThickness
+                    width: root.floats ? loader.item?.implicitWidth ?? 0 : previewFrame.width / previewScale
+                    height: root.floats ? (loader.item?.implicitHeight ?? 0) : root.previewThickness
 
                     Loader {
                         id: loader
-                        anchors.fill: root.styleName === "dock" ? undefined : parent
+                        anchors.fill: root.floats ? undefined : parent
 
                         sourceComponent: {
                             switch (root.styleName) {
                             case "dock":
                                 return dockComp;
+                            case "capsule":
+                                return capsuleComp;
                             case "taskbar":
                                 return taskbarComp;
                             case "minimal":
@@ -162,6 +167,14 @@ Item {
     Component {
         id: dockComp
         DockBar {
+            screen: Quickshell.screens[0] ?? null
+            screenState: previewScreenState
+        }
+    }
+
+    Component {
+        id: capsuleComp
+        CapsuleBar {
             screen: Quickshell.screens[0] ?? null
             screenState: previewScreenState
         }

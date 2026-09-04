@@ -11,3 +11,5 @@ DockBar 1.0 DockBar.qml
 DockWindow 1.0 DockWindow.qml
 MinimalTray 1.0 MinimalTray.qml
 MinimalIndicators 1.0 MinimalIndicators.qml
+CapsuleBar 1.0 CapsuleBar.qml
+CapsuleWindow 1.0 CapsuleWindow.qml
