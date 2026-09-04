@@ -12,7 +12,6 @@ singleton Hypr 1.0 Hypr.qml
 singleton HyprKeybinds 1.0 HyprKeybinds.qml
 singleton InstallProfile 1.0 InstallProfile.qml
 singleton LauncherUsage 1.0 LauncherUsage.qml
-singleton LlmFit 1.0 LlmFit.qml
 singleton ModelStorage 1.0 ModelStorage.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml

@@ -11,92 +11,86 @@ import qs.services
 StyledRect {
     id: root
 
-    enum Tile {
-        Idle = 0,
-        Processes,
-        Dev,
-        Security,
-        Agents
-    }
+    // Processes is the base shell's tile and is the only one this file
+    // knows the name of: the notch ships with the base layer, so a plain
+    // install has exactly one tile and no switcher at all (see
+    // `switchable`). Every other tile is a plugin's notch surface,
+    // supplied by PluginRegistry and gated by that plugin's own manifest
+    // -- its profile layer enabled AND the plugin installed and enabled.
+    // Neither condition met means the tile is absent, not present and
+    // empty. Adding, removing or rotating a tile is a plugin install,
+    // with no edit here. See docs/PLUGIN_LAYER_MODEL.md.
+    readonly property var pluginTiles: PluginRegistry.surfacesFor("notch")
 
-    // Processes is the base shell's tile and is never gated -- the notch
-    // itself ships with the base layer, so a plain install has exactly one
-    // tile and no switcher at all (see `switchable`). Every other tile is
-    // an opt-in that docks itself here when its own layer is installed,
-    // and is absent -- not present-and-empty -- when it is not. Gaming is
-    // deliberately not among them: it is a transient state around a
-    // running game, not a surface to sit and read.
-    readonly property var tiles: {
-        const list = [
-            {
-                tile: Notch.Processes,
-                icon: "monitoring",
-                label: qsTr("Processes")
-            }
-        ];
-        if (InstallProfile.devEnabled)
-            list.push({
-                tile: Notch.Dev,
-                icon: "code",
-                label: qsTr("Dev")
-            });
-        if (InstallProfile.securityEnabled)
-            list.push({
-                tile: Notch.Security,
-                icon: "shield",
-                label: qsTr("Security")
-            });
-        if (InstallProfile.aiEnabled)
-            list.push({
-                tile: Notch.Agents,
-                icon: "smart_toy",
-                label: qsTr("Agents")
-            });
-        return list;
-    }
+    readonly property var tiles: [
+        {
+            plugin: "",
+            id: "processes",
+            icon: "monitoring",
+            label: qsTr("Processes"),
+            componentUrl: ""
+        }
+    ].concat(root.pluginTiles)
 
     // A base install has one tile, so there is nothing to switch between:
     // the name stops being a button and the chip strip is gone entirely
     // rather than sitting there as a single dead chip.
     readonly property bool switchable: root.tiles.length > 1
 
-    readonly property var activeTile: root.tiles.find(t => t.tile === root.shownTile) ?? null
+    readonly property var activeTile: root.tiles.find(t => t.id === root.shownTileId) ?? null
 
     onTilesChanged: {
-        if (!root.tiles.some(t => t.tile === root.shownTile))
-            root.shownTile = Notch.Processes;
-        if (root.tile !== Notch.Idle && !root.tiles.some(t => t.tile === root.tile))
-            root.tile = Notch.Processes;
+        if (!root.tiles.some(t => t.id === root.shownTileId))
+            root.shownTileId = "processes";
+        if (root.tileId !== "" && !root.tiles.some(t => t.id === root.tileId))
+            root.tileId = "processes";
     }
-    readonly property bool processesLive: root.expanded && root.shownTile === Notch.Processes
+    readonly property bool processesLive: root.expanded && root.shownTileId === "processes"
 
-    property int tile: Notch.Idle
-    readonly property bool expanded: root.tile !== Notch.Idle
+    // A plugin tile may expose `property bool attention` to say it has
+    // something the user needs to act on. Read duck-typed, off whichever
+    // tiles happen to be loaded -- the collapsed pill can show that a
+    // tile is asking for attention without this file knowing what any of
+    // them are about.
+    function attentionOf(id: string): bool {
+        const count = pluginTileRepeater.count;
+        for (let i = 0; i < count; i++) {
+            const loader = pluginTileRepeater.itemAt(i);
+            if (loader?.modelData?.id === id)
+                return loader?.item?.attention === true;
+        }
+        return false;
+    }
+
+    readonly property bool attention: root.pluginTiles.some(t => root.attentionOf(t.id))
+
+    property string tileId: ""
+    readonly property bool expanded: root.tileId !== ""
 
     // Which tile the expanded body is BUILT for, kept latched past a
     // collapse so the body still reports a real implicitHeight while the
-    // height animation plays -- reading it off `tile` instead would
+    // height animation plays -- reading it off `tileId` instead would
     // collapse the target to zero on the first frame and cut the
     // animation short. Same reasoning as popouts/Wrapper.qml's
     // showContent.
-    property int shownTile: Notch.Processes
+    property string shownTileId: "processes"
 
     readonly property real contentWidth: Config.notch.expandedWidth - Tokens.padding.large * 2
 
     function cycle(): void {
         if (root.expanded && !root.switchable)
             return;
-        const i = root.tiles.findIndex(t => t.tile === root.tile);
-        root.tile = root.tiles[(i + 1) % root.tiles.length].tile;
+        const i = root.tiles.findIndex(t => t.id === root.tileId);
+        root.tileId = root.tiles[(i + 1) % root.tiles.length].id;
     }
 
     function collapse(): void {
-        root.tile = Notch.Idle;
+        root.tileId = "";
     }
 
-    onTileChanged: {
-        if (root.tile !== Notch.Idle)
-            root.shownTile = root.tile;
+    onTileIdChanged: {
+        if (root.tileId !== "")
+            root.shownTileId = root.tileId;
     }
 
     // Only the inner surface moves. Every dimension here is either a
@@ -140,7 +134,7 @@ StyledRect {
     }
 
     // Gated here rather than mounted inside NotchProcessTile: the tile
-    // outlives a collapse (shownTile latches so the body still reports a
+    // outlives a collapse (shownTileId latches so the body still reports a
     // height through the shrink), so a watch owned by the tile would keep
     // polling for as long as Processes was the last tile visited. Both
     // watches hang off the same gate for that reason.
@@ -256,6 +250,30 @@ StyledRect {
                 perc: SystemUsage.memPerc
                 barColour: Colours.palette.m3tertiary
             }
+
+            StyledRect {
+                implicitWidth: 6
+                implicitHeight: 6
+                radius: Tokens.rounding.full
+                color: Colours.palette.m3primary
+                visible: root.attention
+
+                SequentialAnimation on opacity {
+                    running: root.attention
+                    loops: Animation.Infinite
+
+                    NumberAnimation {
+                        to: 0.35
+                        duration: 700
+                        easing.type: Easing.InOutQuad
+                    }
+                    NumberAnimation {
+                        to: 1
+                        duration: 700
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+            }
         }
 
         ColumnLayout {
@@ -334,13 +352,55 @@ StyledRect {
                 }
             }
 
-            Loader {
-                id: tileLoader
+            Item {
+                id: tileHost
 
                 Layout.fillWidth: true
-                Layout.preferredHeight: tileLoader.item?.implicitHeight ?? 0
+                Layout.preferredHeight: tileHost.shownItem?.implicitHeight ?? 0
 
-                sourceComponent: root.shownTile === Notch.Processes ? processComp : stubComp
+                readonly property Item shownItem: {
+                    if (root.shownTileId === "processes")
+                        return baseTileLoader;
+                    const count = pluginTileRepeater.count;
+                    const i = root.pluginTiles.findIndex(t => t.id === root.shownTileId);
+                    if (i < 0 || i >= count)
+                        return null;
+                    return pluginTileRepeater.itemAt(i);
+                }
+
+                Loader {
+                    id: baseTileLoader
+
+                    width: tileHost.width
+                    active: root.shownTileId === "processes"
+                    visible: baseTileLoader.active
+
+                    sourceComponent: processComp
+                }
+
+                // Every gated-in plugin tile is built, not just the shown
+                // one: a tile raising `attention` has to be able to say so
+                // while the notch is collapsed and its own body is not on
+                // screen, which is the whole point of a notch badge. No
+                // static import of any plugin's QML -- `source` is a plain
+                // file:// URL out of the registry, so the shell compiles
+                // and runs identically whether or not a tile is installed.
+                Repeater {
+                    id: pluginTileRepeater
+
+                    model: root.pluginTiles
+
+                    Loader {
+                        id: pluginTileLoader
+
+                        required property var modelData
+
+                        width: tileHost.width
+                        asynchronous: true
+                        visible: root.shownTileId === pluginTileLoader.modelData.id
+                        source: pluginTileLoader.modelData.componentUrl
+                    }
+                }
             }
 
             RowLayout {
@@ -356,9 +416,10 @@ StyledRect {
                         id: chip
 
                         required property var modelData
-                        readonly property bool active: chip.modelData.tile === root.shownTile
+                        readonly property bool active: chip.modelData.id === root.shownTileId
+                        readonly property bool attention: root.attentionOf(chip.modelData.id)
 
-                        implicitWidth: chipLabel.implicitWidth + chipIcon.implicitWidth + Tokens.padding.small * 2 + Tokens.spacing.extraSmall
+                        implicitWidth: chipLabel.implicitWidth + chipIcon.implicitWidth + Tokens.padding.small * 2 + Tokens.spacing.extraSmall + (chip.attention ? 5 + Tokens.spacing.extraSmall : 0)
                         implicitHeight: 26
                         radius: Tokens.rounding.full
                         color: chip.active ? Colours.palette.m3primary : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
@@ -370,7 +431,7 @@ StyledRect {
                         StateLayer {
                             radius: parent.radius
                             disabled: !root.expanded
-                            onClicked: root.tile = chip.modelData.tile
+                            onClicked: root.tileId = chip.modelData.id
                         }
 
                         RowLayout {
@@ -393,6 +454,14 @@ StyledRect {
                                 color: chip.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
                                 font: Tokens.font.label.builders.small.weight(Font.Medium).build()
                             }
+
+                            StyledRect {
+                                implicitWidth: 5
+                                implicitHeight: 5
+                                radius: Tokens.rounding.full
+                                color: chip.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3primary
+                                visible: chip.attention
+                            }
                         }
                     }
                 }
@@ -407,12 +476,5 @@ StyledRect {
     Component {
         id: processComp
         NotchProcessTile {}
-    }
-    Component {
-        id: stubComp
-        NotchProfileStub {
-            slotLabel: root.activeTile?.label ?? ""
-            slotIcon: root.activeTile?.icon ?? "extension"
-        }
     }
 }

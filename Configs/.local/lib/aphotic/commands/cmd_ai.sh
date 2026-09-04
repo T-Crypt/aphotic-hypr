@@ -5,7 +5,6 @@
 # @cmd.group: AI
 # @cmd.opt: status         | Show reachability of Claude Code / Ollama, loaded models
 # @cmd.opt: profile <provider>[:<model>] | Switch the AI panel's active provider (ollama/claude/codex/gemini/chatgpt), optionally the ollama model
-# @cmd.opt: fit [n]        | Hardware-aware model recommendations via llmfit (default top 3)
 
 aphotic_cmd_ai() {
     local sub="${1:-}"; shift || true
@@ -79,51 +78,9 @@ aphotic_cmd_ai() {
             fi
             aphotic_ok "AI panel profile set to '${provider}'$([ -n "$model" ] && [ "$provider" == "ollama" ] && echo " (model: ${model})")"
             ;;
-        fit)
-            aphotic_require jq || return 1
-            if ! command -v llmfit >/dev/null 2>&1; then
-                aphotic_err "llmfit not found on PATH"
-                aphotic_log "install it via the 'ai' profile layer (./install.sh --with ai), or manually: curl -fsSL https://llmfit.axjns.dev/install.sh | sh"
-                return 1
-            fi
-
-            local limit="${1:-3}" out err rc=0
-            out="$(mktemp)"; err="$(mktemp)"
-            llmfit recommend --json --limit "$limit" >"$out" 2>"$err" || rc=$?
-
-            if [[ -s "$err" ]]; then
-                aphotic_warn "llmfit reported:"
-                sed 's/^/  /' "$err" >&2
-            fi
-
-            if [[ "$rc" -ne 0 ]] || ! jq empty "$out" >/dev/null 2>&1; then
-                aphotic_err "llmfit failed to detect hardware or produce valid JSON (exit ${rc})"
-                rm -f "$out" "$err"
-                return 1
-            fi
-
-            echo "Hardware detected:"
-            jq -r '.system |
-                "  CPU:  \(.cpu_name) (\(.cpu_cores) cores)",
-                "  RAM:  \(.available_ram_gb) / \(.total_ram_gb) GB available",
-                (if .has_gpu then "  GPU:  \(.gpu_name) (\(.gpu_vram_gb) GB, \(.backend))" else "  GPU:  none detected" end)
-            ' "$out"
-            echo
-            echo "Top recommendations:"
-            if [[ "$(jq '.models | length' "$out")" -eq 0 ]]; then
-                echo "  (no models meet the minimum fit threshold on this hardware)"
-            else
-                jq -r '.models | to_entries[] |
-                    "  \(.key + 1). \(.value.name) (\(.value.provider)) -- \(.value.fit_level) fit, \(.value.best_quant), ~\(.value.estimated_tps) tok/s",
-                    "     \(.value.parameter_count) params, \(.value.context_length) ctx, score \(.value.score)/100"
-                ' "$out"
-            fi
-
-            rm -f "$out" "$err"
-            ;;
         ""|-h|--help)
             cat <<HELP
-Usage: aphotic ai <status|profile|fit> [args]
+Usage: aphotic ai <status|profile|...> [args]
 
   status                     Show Claude Code / Ollama reachability and loaded models
   profile <provider>[:<model>]
@@ -131,10 +88,26 @@ Usage: aphotic ai <status|profile|fit> [args]
                              (ollama, claude, codex, gemini, chatgpt) --
                              optionally set the model too (ollama only,
                              e.g. 'ollama:llama3.1:8b')
-  fit [n]                    Hardware-aware model recommendations via llmfit (default top 3)
 HELP
+            # Whatever plugins have added to `ai`. Printed from their own
+            # manifests, so this help stays correct as they come and go
+            # without naming any of them.
+            aphotic_plugin_cli_help ai
             ;;
         *)
+            # A plugin may provide this subcommand (capabilities = ["cli"],
+            # [cli] command = "ai"). Resolved by declaration, so no plugin
+            # id appears in this file and a subcommand disappears with the
+            # plugin that owns it.
+            #
+            # Resolved before running rather than treating a failure as
+            # "no such subcommand": a plugin command that legitimately
+            # exits non-zero must not be reported as missing.
+            local hit
+            if hit="$(aphotic_plugin_cli_resolve ai "$sub")"; then
+                aphotic_plugin_cli_run "${hit#*$'\t'}" "$@"
+                return $?
+            fi
             aphotic_err "unknown ai subcommand: ${sub}"
             return 1
             ;;
