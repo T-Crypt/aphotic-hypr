@@ -132,6 +132,64 @@ Item {
                 }
 
                 Item {
+                    id: clearAll
+
+                    property bool armed: false
+
+                    visible: NotificationHistory.entries.length > 0
+                    implicitWidth: clearIcon.implicitHeight + Tokens.padding.extraSmall * 2
+                    implicitHeight: clearIcon.implicitHeight + Tokens.padding.extraSmall * 2
+
+                    // The card is 400px, which is why this is an icon and
+                    // not the labelled pill "Mark all read" gets. An
+                    // unlabelled control that drops the whole history
+                    // wants a second press to mean it, so the first one
+                    // arms and the icon says so.
+                    Timer {
+                        id: clearAllDisarm
+
+                        interval: 3000
+                        onTriggered: clearAll.armed = false
+                    }
+
+                    Connections {
+                        target: root
+
+                        function onOpenChanged(): void {
+                            if (!root.open) {
+                                clearAll.armed = false;
+                                clearAllDisarm.stop();
+                            }
+                        }
+                    }
+
+                    StateLayer {
+                        anchors.fill: parent
+                        radius: Tokens.rounding.full
+                        onClicked: {
+                            if (clearAll.armed) {
+                                NotificationHistory.clearAll();
+                                clearAll.armed = false;
+                                clearAllDisarm.stop();
+                            } else {
+                                clearAll.armed = true;
+                                clearAllDisarm.restart();
+                            }
+                        }
+                    }
+
+                    MaterialIcon {
+                        id: clearIcon
+
+                        anchors.centerIn: parent
+                        text: clearAll.armed ? "delete_forever" : "delete_sweep"
+                        color: clearAll.armed ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                        fill: clearAll.armed ? 1 : 0
+                        fontStyle: Tokens.font.icon.small
+                    }
+                }
+
+                Item {
                     implicitWidth: dndIcon.implicitHeight + Tokens.padding.extraSmall * 2
                     implicitHeight: dndIcon.implicitHeight + Tokens.padding.extraSmall * 2
 
