@@ -7,10 +7,12 @@ CLAUDE.md
 aphotic.toml
 install.log
 
-# Clamped live palettes (themes/THEME_SPEC.md's "Clamped palettes") --
-# regenerated on every theme apply from the current wallpaper, and landing
-# inside the repo only because ~/.config/wallust symlinks here.
-Configs/wallust/colorschemes/*-live.json
+# ~/.config/wallust symlinks here, so everything that writes a colorscheme
+# at runtime lands in the working tree: the palette clamp's *-live.json
+# (themes/THEME_SPEC.md's "Clamped palettes"), a downloaded theme's own
+# scheme, and the Theme Creator's. Only the per-theme anchors are ours.
+Configs/wallust/colorschemes/*.json
+!Configs/wallust/colorschemes/*-anchor.json
 __pycache__/
 .DS_Store
 Thumbs.db

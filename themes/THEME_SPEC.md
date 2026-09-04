@@ -200,8 +200,8 @@ theme's wallpaper image (`wallust run`). Some themes have a real brand
 palette that shouldn't drift with whatever art ships as the default
 wallpaper. None of the 8 shipped themes currently use this (HackTheBox
 briefly did, but its dynamically-derived look was preferred and it was
-reverted back to image-derivation) — the mechanism is still real and
-tested, just unused for now. For a theme that wants it, set
+reverted back to image-derivation). The community `dracula` theme does,
+and is the worked example. For a theme that wants it, set
 `[engine].colorscheme` to a name under
 `Configs/wallust/colorschemes/<name>.json` (pywal format: a `special`
 object with `background`/`foreground`/`cursor`, and a `colors` object
@@ -239,7 +239,8 @@ rolls out theme by theme.
 `anchor` names a pywal-format file under
 `Configs/wallust/colorschemes/<name>.json` — the same directory and format
 `[engine].colorscheme` reads, holding the palette this theme's colours are
-measured against. `scripts/generate-theme-anchors.sh` bootstraps one per
+measured against. A downloadable theme ships its own; see "Shipping a
+palette with a downloadable theme" below. `scripts/generate-theme-anchors.sh` bootstraps one per
 theme by deriving the palette of that theme's `[wallpaper].default` image
 (in an isolated wallust config/cache dir, so it never disturbs the live
 session), writing `<theme>-anchor.json`. Generating an anchor doesn't opt
@@ -342,6 +343,35 @@ currently-hardcoded `light: false`, which drives a couple of
 Quickshell-side visual tweaks (icon weight, desktop clock inversion)
 independently and would need its own theme.toml-driven wiring to
 actually flip for Latte.
+
+### Shipping a palette with a downloadable theme
+
+`[engine].colorscheme` and `[palette].anchor` both name a file under
+`~/.config/wallust/colorschemes/`, because `wallust cs <name>` resolves a
+scheme by name inside wallust's own config dir and takes no path. The 8
+shipped themes get theirs from this repo, which `install.sh` symlinks
+that directory at. A theme downloaded from
+[`aphotic-themes`](https://github.com/T-Crypt/aphotic-themes) has no way
+to write there, so it ships the file instead:
+
+```
+<theme>/
+├── theme.toml
+├── colorschemes/
+│   └── <name>.json      # pywal format, same as the -anchor.json files here
+└── wallpaper.png
+```
+
+`aphotic theme download` copies everything under `colorschemes/` into
+`~/.config/wallust/colorschemes/` after the theme itself, `update`
+refreshes them, and `remove` takes back the ones whose installed copy
+still matches what the theme ships. A file edited since install, or one
+that belongs to a shipped theme, is left where it is.
+
+Because that directory is a symlink into the checkout, anything landing
+there shows up in `git status`. `.gitignore` covers it: everything under
+`Configs/wallust/colorschemes/` is ignored except the tracked
+`*-anchor.json` files.
 
 ## Minimal valid theme
 
