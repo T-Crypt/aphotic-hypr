@@ -1,4 +1,8 @@
 module qs.modules.notch
 Notch 1.0 Notch.qml
 NotchWindow 1.0 NotchWindow.qml
+NotchBody 1.0 NotchBody.qml
+NotchIdleStrip 1.0 NotchIdleStrip.qml
+NotchSwitcher 1.0 NotchSwitcher.qml
+NotchGauge 1.0 NotchGauge.qml
 NotchProcessTile 1.0 NotchProcessTile.qml

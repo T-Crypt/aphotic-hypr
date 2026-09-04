@@ -105,6 +105,15 @@ ShellRoot {
     }
 
     Variants {
+        id: capsuleWindows
+        model: Quickshell.screens
+
+        CapsuleWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
+    Variants {
         model: Quickshell.screens
 
         NotchWindow {}

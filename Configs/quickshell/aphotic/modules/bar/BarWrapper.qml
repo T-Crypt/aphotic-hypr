@@ -17,10 +17,11 @@ Item {
     required property bool fullscreen
 
     readonly property bool disabled: Strings.testRegexList(Config.bar.excludedScreens, screen.name)
-    // Dock lives entirely in its own floating DockWindow (see
-    // DockWindow.qml) -- this edge-docked strip has nothing to render
-    // and must reserve no space while that style is active.
-    readonly property bool hiddenMode: Settings.barVisibility === "hidden" || Settings.barStyle === "dock"
+    // Dock and Capsule both live entirely in their own floating windows
+    // (DockWindow.qml / CapsuleWindow.qml) -- this edge-docked strip has
+    // nothing to render and must reserve no space while either style is
+    // active.
+    readonly property bool hiddenMode: Settings.barVisibility === "hidden" || Settings.barStyle === "dock" || Settings.barStyle === "capsule"
     // BarWindow.qml's input mask needs a wider hover target than root's
     // own (collapsed, in autohide mode) bounds -- content is already
     // always sized to the full contentWidth/height regardless of

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # aphotic bar — quick-swap the bar style without opening Settings.
 # @cmd: bar
-# @cmd.desc: Switch or cycle the bar style (full/dock/taskbar/minimal)
+# @cmd.desc: Switch or cycle the bar style (full/dock/taskbar/minimal/capsule)
 # @cmd.group: CONFIG
-# @cmd.opt: style <full|dock|taskbar|minimal>  | Set the bar style
+# @cmd.opt: style <full|dock|taskbar|minimal|capsule>  | Set the bar style
 # @cmd.opt: cycle                              | Cycle to the next style
 #
 # Thin wrapper around the running shell's own "bar" IPC target
@@ -14,10 +14,10 @@
 
 _aphotic_bar_style() {
     local name="${1:-}"
-    local valid=("full" "dock" "taskbar" "minimal")
+    local valid=("full" "dock" "taskbar" "minimal" "capsule")
 
     if [[ -z "$name" ]]; then
-        aphotic_err "usage: aphotic bar style <full|dock|taskbar|minimal>"
+        aphotic_err "usage: aphotic bar style <full|dock|taskbar|minimal|capsule>"
         return 1
     fi
 
@@ -60,8 +60,8 @@ aphotic_cmd_bar() {
             cat <<EOF
 Usage: aphotic bar <style|cycle> [args]
 
-  style <full|dock|taskbar|minimal>   Set the bar style
-  cycle                               Cycle to the next style
+  style <full|dock|taskbar|minimal|capsule>   Set the bar style
+  cycle                                       Cycle to the next style
 EOF
             ;;
         *)

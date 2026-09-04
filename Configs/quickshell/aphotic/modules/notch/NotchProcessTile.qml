@@ -63,32 +63,6 @@ ColumnLayout {
 
     spacing: Tokens.spacing.extraSmall
 
-    // One cell width for all three, measured off the widest string any of
-    // them can ever hold, so a reading crossing 9%->10% cannot shove its
-    // neighbours sideways.
-    TextMetrics {
-        id: metricCell
-
-        font: Tokens.font.label.small
-        text: "GPU 100%"
-    }
-
-    component Metric: StyledText {
-        required property string label
-        required property real perc
-
-        // An equal share each, so the three sit flush to both margins and
-        // evenly apart. preferredWidth alongside fillWidth is what makes
-        // the shares equal rather than proportional to each string, which
-        // is also why a reading crossing 9%->10% cannot shove its
-        // neighbours sideways.
-        Layout.fillWidth: true
-        Layout.preferredWidth: metricCell.width
-        text: `${label} ${Math.round(perc * 100)}%`
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.label.small
-    }
-
     component SortChip: StyledRect {
         id: sortChip
 
@@ -120,38 +94,55 @@ ColumnLayout {
         }
     }
 
-    // Its own row rather than sharing one with the sort chips: three
-    // readings and three chips came to 445px against 388 of content, which
-    // is what was eliding "GPU 42%" down to "GP...". Splitting them costs
-    // one text line of height and leaves both rows with real slack.
-    RowLayout {
+    // Raised off the panel rather than drawn flat on it: the gauges are
+    // the tile's summary and the rows below are its detail, and one step
+    // of elevation is what says so.
+    StyledRect {
         Layout.fillWidth: true
-        spacing: Tokens.spacing.small
+        implicitHeight: gauges.implicitHeight + Tokens.padding.small * 2
+        radius: Tokens.rounding.large
+        color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
 
-        Metric {
-            label: qsTr("CPU")
-            perc: SystemUsage.cpuPerc
-            horizontalAlignment: Text.AlignLeft
-        }
+        RowLayout {
+            id: gauges
 
-        Metric {
-            label: qsTr("RAM")
-            perc: SystemUsage.memPerc
-            horizontalAlignment: Text.AlignHCenter
-        }
+            anchors.centerIn: parent
+            width: parent.width
+            spacing: Tokens.spacing.extraLarge
 
-        // Only where there is a live figure: gpuStatsAvailable is false
-        // when no vendor tool is installed, and a hardcoded "GPU 0%" beside
-        // two real meters is worse than no segment at all. A layout skips
-        // an invisible item entirely, so the remaining two re-spread across
-        // the full width rather than leaving a hole. It ticks at
-        // SystemUsage's fast cadence, which Notch.qml opts into for exactly
-        // as long as this tile is up.
-        Metric {
-            visible: SystemUsage.gpuStatsAvailable
-            label: qsTr("GPU")
-            perc: SystemUsage.gpuPerc
-            horizontalAlignment: Text.AlignRight
+            Item {
+                Layout.fillWidth: true
+            }
+
+            NotchGauge {
+                value: SystemUsage.cpuPerc
+                label: qsTr("CPU")
+                accent: Colours.palette.m3primary
+            }
+
+            NotchGauge {
+                value: SystemUsage.memPerc
+                label: qsTr("RAM")
+                accent: Colours.palette.m3tertiary
+            }
+
+            // Only where there is a live figure: gpuStatsAvailable is false
+            // when no vendor tool is installed, and a hardcoded 0 beside
+            // two real gauges is worse than no gauge at all. A layout skips
+            // an invisible item entirely, so the remaining two re-centre
+            // rather than leaving a hole. It ticks at SystemUsage's fast
+            // cadence, which Notch.qml opts into for exactly as long as
+            // this tile is up.
+            NotchGauge {
+                visible: SystemUsage.gpuStatsAvailable
+                value: SystemUsage.gpuPerc
+                label: qsTr("GPU")
+                accent: Colours.palette.m3secondary
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
         }
     }
 
