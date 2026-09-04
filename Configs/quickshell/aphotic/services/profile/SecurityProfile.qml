@@ -28,14 +28,6 @@ Singleton {
     readonly property string profileId: "security"
     readonly property bool enabled: InstallProfile.securityEnabled
 
-    // Quickshell constructs a singleton on first use, and a headless
-    // registrant is named by no UI -- with no caller this file would sit
-    // unloaded, register nothing, and never arm the watch below.
-    // shell.qml makes that first use explicit.
-    function arm(): void {
-        root._register();
-    }
-
     // The seam NEGOTIATE attaches to once an engagement has a footprint
     // worth arbitrating. Unwired on purpose: BloodHound/Neo4j's resident
     // memory and an active scan's cost are both real numbers nobody has
