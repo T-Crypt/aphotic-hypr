@@ -36,10 +36,10 @@ the box:
   <img src="./assets/preview.png" width="900">
 </p>
 
-Agentic workflow, live render: every Bash and Read call landing on the graph
-as the agent makes it, with replay scrubbing and zoom.
+The shell end to end, plus the plugin system adding and removing surfaces
+on a running desktop.
 
-https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
+https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
 
 ## Gallery
 
