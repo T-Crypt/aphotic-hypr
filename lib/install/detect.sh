@@ -42,7 +42,7 @@ detect_environment() {
   vm_chassis=$(hostnamectl | grep Chassis || true)
   if [[ "$vm_chassis" == *"vm"* ]]; then
     DETECTED_VM=1
-    echo -e "  $CWR running in a VM ($vm_chassis) -- not fully supported, there's a high chance this fails."
+    echo -e "  $CWR running in a VM ($vm_chassis) -- fine for testing the install, which is exercised in a VM before it ships. It is not a supported daily driver: GPU layers do not apply, and Hyprland needs a render node, so give the guest a VirtIO-GPU display. See https://github.com/T-Crypt/Aphotic-Hypr/wiki/Proxmox-Test-VM"
   fi
 
   if [[ -f "$APHOTIC_TOML" ]]; then
