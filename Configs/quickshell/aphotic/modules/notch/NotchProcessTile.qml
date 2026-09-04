@@ -94,58 +94,6 @@ ColumnLayout {
         }
     }
 
-    // Raised off the panel rather than drawn flat on it: the gauges are
-    // the tile's summary and the rows below are its detail, and one step
-    // of elevation is what says so.
-    StyledRect {
-        Layout.fillWidth: true
-        implicitHeight: gauges.implicitHeight + Tokens.padding.small * 2
-        radius: Tokens.rounding.large
-        color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
-
-        RowLayout {
-            id: gauges
-
-            anchors.centerIn: parent
-            width: parent.width
-            spacing: Tokens.spacing.extraLarge
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            NotchGauge {
-                value: SystemUsage.cpuPerc
-                label: qsTr("CPU")
-                accent: Colours.palette.m3primary
-            }
-
-            NotchGauge {
-                value: SystemUsage.memPerc
-                label: qsTr("RAM")
-                accent: Colours.palette.m3tertiary
-            }
-
-            // Only where there is a live figure: gpuStatsAvailable is false
-            // when no vendor tool is installed, and a hardcoded 0 beside
-            // two real gauges is worse than no gauge at all. A layout skips
-            // an invisible item entirely, so the remaining two re-centre
-            // rather than leaving a hole. It ticks at SystemUsage's fast
-            // cadence, which Notch.qml opts into for exactly as long as
-            // this tile is up.
-            NotchGauge {
-                visible: SystemUsage.gpuStatsAvailable
-                value: SystemUsage.gpuPerc
-                label: qsTr("GPU")
-                accent: Colours.palette.m3secondary
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-        }
-    }
-
     RowLayout {
         Layout.fillWidth: true
         Layout.bottomMargin: Tokens.spacing.extraSmall
