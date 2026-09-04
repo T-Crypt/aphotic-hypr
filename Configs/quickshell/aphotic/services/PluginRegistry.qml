@@ -101,6 +101,40 @@ Singleton {
         return profiles;
     }
 
+    // Plugins that contribute a pill to the AI chat provider list -- the
+    // `chat-provider` capability. Core keeps owning every transport: a
+    // registration names a backend the shell already speaks and supplies
+    // only what makes that backend answer as something specific, so a
+    // plugin can add a provider without shipping one.
+    //
+    // `statePath` is where the plugin writes {model, systemPrompt}. It is
+    // resolved here rather than in AiProviders because this is already the
+    // one place that turns a manifest's relative paths into absolute ones,
+    // and a second resolver would be a second answer to where a plugin's
+    // files live.
+    readonly property var chatProviderRegistrations: {
+        const providers = [];
+        for (const name of Object.keys(root._installed)) {
+            if (!root.isEnabled(name))
+                continue;
+            const provider = root._installed[name]?.chat_provider;
+            if (!provider || !provider.id || !provider.backend)
+                continue;
+            const entry = {
+                plugin: name,
+                id: provider.id,
+                label: provider.label || provider.id,
+                backend: provider.backend,
+                requiresLayer: provider.requires_layer ?? "",
+                requiresData: provider.requires_data ?? "",
+                statePath: `${Quickshell.env("HOME")}/.config/aphotic/plugins/${name}/${provider.state || "provider.json"}`
+            };
+            if (root._gateSatisfied(entry))
+                providers.push(entry);
+        }
+        return providers;
+    }
+
     // A pre-`ui.surfaces` registry entry (written by a CLI older than the
     // surface unification) still carries a bare `dashboard_tab` object.
     // Reading it as one ungated dashboard surface keeps an install that
