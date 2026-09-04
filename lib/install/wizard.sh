@@ -323,7 +323,7 @@ resolve_config() {
 }
 
 write_aphotic_toml() {
-  local path="$1" profile="$2" layers="$3" theme="$4" nvidia="$5" aur_helper="$6" installed_at="$7"
+  local path="$1" profile="$2" layers="$3" theme="$4" nvidia="$5" aur_helper="$6" installed_at="$7" amd="${8:-false}"
 
   local layers_toml="[]"
   if [[ -n "$layers" ]]; then
@@ -341,6 +341,7 @@ name = "$theme"
 
 [system]
 nvidia = $nvidia
+amd = $amd
 aur_helper = "$aur_helper"
 EOF
 }
