@@ -132,6 +132,33 @@ _aphotic_plugin_profile_json() {
         '{id: $id, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, snapshot: $snapshot}'
 }
 
+# The `cli` capability (manifest v3.2). A plugin declaring one contributes
+# a command -- top-level (`aphotic foo`) or a subcommand of an existing one
+# (`aphotic ai fit`) -- which the dispatcher and the extended core command
+# resolve by declaration. Recorded here so `aphotic plugin list --json` can
+# report it and drift detection can see it change; the CLI path itself
+# reads the manifest directly through aphotic_plugin_cli_resolve, since a
+# command must work whether or not a registry sync has run.
+_aphotic_plugin_cli_json() {
+    local manifest="$1" command subcommand script summary
+    command="$(aphotic_toml_get "$manifest" cli command)"
+    script="$(aphotic_toml_get "$manifest" cli script)"
+    if [[ -z "$command" ]] || [[ -z "$script" ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    subcommand="$(aphotic_toml_get "$manifest" cli subcommand)"
+    summary="$(aphotic_toml_get "$manifest" cli summary)"
+
+    jq -n \
+        --arg command "$command" \
+        --arg subcommand "${subcommand:-}" \
+        --arg script "$script" \
+        --arg summary "${summary:-}" \
+        '{command: $command, subcommand: $subcommand, script: $script, summary: $summary}'
+}
+
 _aphotic_plugin_describe() {
     local name="$1" dir manifest display desc version category caps enabled missing bin
     dir="$(_aphotic_plugin_dir "$name")"
@@ -165,7 +192,8 @@ _aphotic_plugin_describe() {
         --argjson owns "$(_aphotic_plugin_owns_json "$manifest")" \
         --argjson ui "$(_aphotic_plugin_ui_json "$manifest")" \
         --argjson profile "$(_aphotic_plugin_profile_json "$manifest")" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile}')"
+        --argjson cli "$(_aphotic_plugin_cli_json "$manifest")" \
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli}')"
 
     # The registry entry the shell actually reads is written by
     # _aphotic_plugin_registry_sync out of these same four manifest
@@ -178,7 +206,7 @@ _aphotic_plugin_describe() {
     # second time is deliberate: a second description of that shape is the
     # class of bug the flag exists to catch.
     local stored expected drifted="false"
-    expected="$(jq -cS '{version, capabilities, owns, ui, profile}' <<<"$entry")"
+    expected="$(jq -cS '{version, capabilities, owns, ui, profile, cli}' <<<"$entry")"
     # Missing keys are filled with the same null a fresh sync would write
     # BEFORE comparing. Without this, every entry on disk reports drift the
     # moment the registry schema grows a field -- one did (`profile`,
@@ -186,7 +214,7 @@ _aphotic_plugin_describe() {
     # upgrade is noise that trains people to ignore the signal. A plugin
     # that genuinely gained a profile block still differs from null, so the
     # real case is unaffected.
-    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else {profile: null} + . end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else {profile: null, cli: null} + . end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
     [[ "$expected" != "$stored" ]] && drifted="true"
 
     jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"
@@ -476,7 +504,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps owns ui profile tmp
+    local name="$1" dir manifest version caps owns ui profile cli tmp
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
     manifest="${dir}/plugin.toml"
@@ -487,6 +515,7 @@ _aphotic_plugin_registry_sync() {
     owns="$(_aphotic_plugin_owns_json "$manifest")"
     ui="$(_aphotic_plugin_ui_json "$manifest")"
     profile="$(_aphotic_plugin_profile_json "$manifest")"
+    cli="$(_aphotic_plugin_cli_json "$manifest")"
 
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
     tmp="$(mktemp)"
@@ -496,7 +525,8 @@ _aphotic_plugin_registry_sync() {
        --argjson owns "$owns" \
        --argjson ui "$ui" \
        --argjson profile "$profile" \
-       '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile}})' \
+       --argjson cli "$cli" \
+       '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli}})' \
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
 }
 
