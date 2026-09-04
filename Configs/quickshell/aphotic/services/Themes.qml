@@ -36,6 +36,13 @@ Singleton {
         return themes.find(t => t.name === themeName) ?? null;
     }
 
+    // The filesystem is the registry, so anything that adds or removes a
+    // directory under awwwDir (`aphotic theme download`/`remove`, or the
+    // Theme Creator) has to say so -- there's nothing watching it.
+    function rescan(): void {
+        scanProc.running = true;
+    }
+
     // Deliberately minimal: themes/THEME_SPEC.md's theme.toml is flat
     // ([section] headers, key = "value"/bool/number pairs, no arrays-of-
     // tables or multi-line strings), so a purpose-built line parser here

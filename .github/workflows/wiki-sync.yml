@@ -1,0 +1,94 @@
+name: Wiki grounding sync
+
+on:
+  schedule:
+    - cron: "0 15 * * 1" # Monday 15:00 UTC, after the health digest
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  wiki-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone wiki
+        run: git clone --depth 1 "https://github.com/${{ github.repository }}.wiki.git" wiki
+
+      - name: Find mechanical drift
+        run: |
+          set -euo pipefail
+          findings=""
+
+          repo_ver=$(grep -oP '^## \K[0-9]+\.[0-9]+\.[0-9]+' RELEASE_NOTES.md | head -1)
+          wiki_ver=$(grep -oP '^## v\K[0-9]+\.[0-9]+\.[0-9]+' wiki/Release-Notes.md | head -1)
+          if [ "$repo_ver" != "$wiki_ver" ]; then
+            missing=$(awk -v stop="## $wiki_ver" '/^## / && index($0, stop) {exit} {print}' RELEASE_NOTES.md)
+            findings="${findings}### Release-Notes.md is behind\n\nRELEASE_NOTES.md's newest entry is \`$repo_ver\`, wiki's Release-Notes.md tops out at \`$wiki_ver\`. Missing entries, verbatim from RELEASE_NOTES.md:\n\n\`\`\`markdown\n${missing}\n\`\`\`\n\n"
+          fi
+
+          version=$(cat VERSION)
+          if ! grep -q "$version" wiki/Project-Status.md; then
+            findings="${findings}### Project-Status.md version mismatch\n\nVERSION file says \`$version\`, wiki/Project-Status.md doesn't mention it.\n\n"
+          fi
+
+          missing_cmds=""
+          for f in Configs/.local/lib/aphotic/commands/cmd_*.sh; do
+            name=$(basename "$f" .sh | sed 's/^cmd_//')
+            if ! grep -qi "aphotic $name\b" wiki/CLI-Reference.md; then
+              missing_cmds="${missing_cmds}- \`aphotic $name\`\n"
+            fi
+          done
+          if [ -n "$missing_cmds" ]; then
+            findings="${findings}### CLI-Reference.md may be missing commands\n\nThese exist as \`cmd_*.sh\` files but no \`aphotic <name>\` mention was found in CLI-Reference.md (false positives possible for grouped sub-verb commands):\n\n${missing_cmds}\n\n"
+          fi
+
+          if [ -z "$findings" ]; then
+            findings="No mechanical drift found this run."
+          fi
+          printf '%b' "$findings" > findings.md
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Write readable report
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          copilot -p "Read findings.md in the working directory. It lists mechanically-verified drift between this repo's docs and its GitHub wiki, already computed by a script -- every fact and code block in it is sourced, not guessed. Rewrite it as a clean markdown report to report.md: keep every fact, quoted snippet, and file path exactly as given, just improve the prose and headings. Do not add any claim, file, or fix that isn't already in findings.md." \
+            --allow-tool=write \
+            --no-ask-user
+
+      - name: Post to tracking issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.existsSync('report.md') ? fs.readFileSync('report.md', 'utf8') : fs.readFileSync('findings.md', 'utf8');
+            const { owner, repo } = context.repo;
+            const title = 'Wiki Drift Report';
+
+            const results = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:issue in:title "${title}"`,
+            });
+            let issueNumber = results.data.items.find(i => i.title === title)?.number;
+
+            if (!issueNumber) {
+              const created = await github.rest.issues.create({
+                owner, repo, title,
+                body: 'Rolling wiki-vs-repo drift report. Findings are mechanically verified, not guessed -- apply fixes to the wiki by hand. Each run adds a comment below.',
+              });
+              issueNumber = created.data.number;
+            }
+
+            await github.rest.issues.createComment({
+              owner, repo, issue_number: issueNumber,
+              body: `## ${new Date().toISOString().slice(0, 10)}\n\n${report}`,
+            });

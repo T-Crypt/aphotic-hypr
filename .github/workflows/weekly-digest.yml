@@ -1,0 +1,90 @@
+name: Weekly repo-health digest
+
+on:
+  schedule:
+    - cron: "0 14 * * 1" # Monday 14:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Gather backlog data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          THIRTY_DAYS_AGO=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
+          FOURTEEN_DAYS_AGO=$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ)
+
+          gh issue list -R "$REPO" --state open --json number,title,labels,updatedAt --limit 200 > open_issues.json
+          gh pr list -R "$REPO" --state open --json number,title,updatedAt,statusCheckRollup --limit 200 > open_prs.json
+
+          jq --arg cutoff "$THIRTY_DAYS_AGO" '[.[] | select(.updatedAt < $cutoff)]' open_issues.json > stale_issues.json
+          jq --arg cutoff "$FOURTEEN_DAYS_AGO" '[.[] | select(.updatedAt < $cutoff)]' open_prs.json > stale_prs.json
+          jq '[.[] | select([.statusCheckRollup[]?.conclusion] | any(. == "FAILURE"))]' open_prs.json > failing_prs.json
+
+          jq -n \
+            --slurpfile open_issues open_issues.json \
+            --slurpfile stale_issues stale_issues.json \
+            --slurpfile open_prs open_prs.json \
+            --slurpfile stale_prs stale_prs.json \
+            --slurpfile failing_prs failing_prs.json \
+            '{
+              open_issue_count: ($open_issues[0] | length),
+              stale_issues: $stale_issues[0],
+              open_pr_count: ($open_prs[0] | length),
+              stale_prs: $stale_prs[0],
+              failing_prs: $failing_prs[0],
+              labels_breakdown: ($open_issues[0] | map(.labels[].name) | group_by(.) | map({(.[0]): length}) | add // {})
+            }' > data.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Write digest
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          copilot -p "Read data.json in the working directory. It holds real, already-computed backlog numbers for this GitHub repo (open issue/PR counts, stale issues/PRs with no activity in 30/14 days, PRs with failing checks, label breakdown). Write a short markdown digest to digest.md summarizing exactly what's in data.json -- do not invent any numbers, issue titles, or facts not present in the file. Use headings and bullet lists. Link issues/PRs as #<number>. Keep it under 300 words." \
+            --allow-tool=write \
+            --no-ask-user
+
+      - name: Post to tracking issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const digest = fs.existsSync('digest.md') ? fs.readFileSync('digest.md', 'utf8') : 'Digest generation failed -- see workflow run.';
+            const { owner, repo } = context.repo;
+            const title = 'Weekly Health Report';
+
+            const results = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:issue in:title "${title}"`,
+            });
+            let issueNumber = results.data.items.find(i => i.title === title)?.number;
+
+            if (!issueNumber) {
+              const created = await github.rest.issues.create({
+                owner, repo, title,
+                body: 'Rolling weekly repo-health digest. Each run adds a comment below.',
+              });
+              issueNumber = created.data.number;
+            }
+
+            await github.rest.issues.createComment({
+              owner, repo, issue_number: issueNumber,
+              body: `## ${new Date().toISOString().slice(0, 10)}\n\n${digest}`,
+            });

@@ -95,13 +95,7 @@ Item {
             Process {
                 id: downloadProc
                 onExited: {
-                    // Themes.qml's own scan (scanProc) has no public
-                    // rescan() to call here -- a freshly downloaded theme
-                    // won't show in the grid above until the shell
-                    // restarts. Re-running the two Processes above at
-                    // least moves the entry out of "available to
-                    // download" and picks up its `core: false` badge once
-                    // Themes.themes does notice it.
+                    Themes.rescan();
                     landing.refreshCommunity();
                 }
             }
