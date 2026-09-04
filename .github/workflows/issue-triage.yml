@@ -1,0 +1,96 @@
+name: Issue triage
+
+on:
+  issues:
+    types: [opened, reopened]
+
+concurrency:
+  group: issue-triage-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      # Untrusted issue content goes through a JS file write, never through
+      # shell string interpolation -- issue bodies are attacker-controlled
+      # on a public repo and `${{ }}` inside a `run:` block is a classic
+      # script-injection hole.
+      - name: Dump issue content
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const issue = context.payload.issue;
+            fs.writeFileSync('issue.txt', `${issue.title}\n\n${issue.body || ''}`);
+
+      - name: Classify issue
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+        run: |
+          copilot -p "Read issue.txt in the working directory -- it's a GitHub issue's title and body. Also read README.md's Overview section and CONTRIBUTING.md's scope-boundary notes to understand this project's scope: Aphotic-Hypr is an Arch/AUR-only Hyprland desktop shell (Quickshell), no multi-distro support. Classify the issue and write ONLY a JSON object to result.json with keys: scope (\"aphotic\" if it's about this project, or \"off-topic\" if it's a generic Linux/Hyprland/Arch question unrelated to Aphotic itself), category (\"bug\", \"question\", \"enhancement\", or \"unclear\"), and summary (at most 2 plain sentences, empty string if scope is off-topic). Do not write or modify any other file, do not use git or gh." \
+            --allow-tool=write \
+            --no-ask-user
+
+      - name: Apply labels and summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let result;
+            try {
+              result = JSON.parse(fs.readFileSync('result.json', 'utf8'));
+            } catch (e) {
+              core.warning(`Could not parse triage result: ${e}`);
+              return;
+            }
+
+            const issue_number = context.payload.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            async function ensureLabel(name, color, description) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name });
+              } catch (e) {
+                await github.rest.issues.createLabel({ owner, repo, name, color, description });
+              }
+            }
+
+            if (result.scope === 'off-topic') {
+              await ensureLabel('off-topic', 'cfd3d7', 'Not about Aphotic-Hypr itself');
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['off-topic'] });
+              return;
+            }
+
+            if (result.category === 'unclear') {
+              await ensureLabel('needs-triage', 'fbca04', 'Scope or category unclear, needs a human look');
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['needs-triage'] });
+              return;
+            }
+
+            if (result.category === 'bug') {
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['bug'] });
+            } else if (result.category === 'enhancement') {
+              await github.rest.issues.addLabels({ owner, repo, issue_number, labels: ['enhancement'] });
+            }
+
+            if (result.summary) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number,
+                body: `**Triage summary:** ${result.summary}\n\n<sub>Automated triage, not a maintainer response.</sub>`,
+              });
+            }
