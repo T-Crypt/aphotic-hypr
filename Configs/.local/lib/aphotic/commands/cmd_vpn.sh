@@ -31,6 +31,11 @@ APHOTIC_VPN_LOG_FILE="${APHOTIC_STATE_HOME}/vpn.log"
 # track a pidfile (root-written, would need care to keep readable) or grant
 # sudo a blanket `kill` scoped to nothing more specific than "any PID".
 APHOTIC_VPN_DAEMON_TAG="aphotic-vpn"
+# Written by vpn-hook.sh on tunnel up, removed on tunnel down. This is
+# what services/Vpn.qml watches, so the shell learns the state from
+# openvpn's own hooks instead of polling for the process.
+APHOTIC_VPN_MARKER_FILE="${APHOTIC_STATE_HOME}/vpn-connected"
+APHOTIC_VPN_HOOK="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/vpn-hook.sh"
 
 _aphotic_vpn_config_path() {
     [[ -f "$APHOTIC_VPN_SETTINGS_FILE" ]] || return 0
@@ -83,7 +88,19 @@ _aphotic_vpn_connect() {
         return 1
     fi
 
-    sudo openvpn --config "$config_path" --daemon "$APHOTIC_VPN_DAEMON_TAG" --log "$APHOTIC_VPN_LOG_FILE" &&
+    if [[ ! -x "$APHOTIC_VPN_HOOK" ]]; then
+        aphotic_warn "vpn hook missing or not executable at ${APHOTIC_VPN_HOOK}; the shell will not see the connection"
+    fi
+
+    # --script-security 2 is required before openvpn will run a user
+    # script at all; without it --up/--down are accepted and then never
+    # fire. --setenv carries the marker path into root's script
+    # environment, which is the only way the hook can know where the
+    # user's state dir is.
+    sudo openvpn --config "$config_path" --daemon "$APHOTIC_VPN_DAEMON_TAG" --log "$APHOTIC_VPN_LOG_FILE" \
+        --script-security 2 \
+        --setenv APHOTIC_VPN_MARKER "$APHOTIC_VPN_MARKER_FILE" \
+        --up "$APHOTIC_VPN_HOOK" --down "$APHOTIC_VPN_HOOK" &&
         aphotic_ok "connecting via $(basename "$config_path") (see ${APHOTIC_VPN_LOG_FILE})"
 }
 
