@@ -190,6 +190,8 @@ ColumnLayout {
         property var dashboardTab: null
         property var configKeys: []
         property var externalConfig: []
+        property string hostVerdict: "ok"
+        property string unhosted: ""
 
         property bool first: true
         property bool last: true
@@ -315,6 +317,28 @@ ColumnLayout {
                     text: qsTr("Wires: %1").arg(pluginRow.externalConfig.join(", "))
                     color: Colours.palette.m3onSurfaceVariant
                     font: Tokens.font.label.small
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Tokens.spacing.extraSmall
+                    visible: pluginRow.hostVerdict !== "ok"
+                    spacing: Tokens.spacing.extraSmall
+
+                    MaterialIcon {
+                        text: pluginRow.hostVerdict === "inert" ? "error" : "warning"
+                        color: pluginRow.hostVerdict === "inert" ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                        fontStyle: Tokens.font.icon.small
+                        fill: 1
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        text: pluginRow.hostVerdict === "inert" ? qsTr("Needs a newer Aphotic — no host here for its %1").arg(pluginRow.unhosted) : qsTr("Installs, but this Aphotic has no host for its %1").arg(pluginRow.unhosted)
+                        color: pluginRow.hostVerdict === "inert" ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.small
+                    }
                 }
             }
 
@@ -615,37 +639,48 @@ ColumnLayout {
 
                             required property var modelData
                             readonly property bool isInstalled: root.installedNames().includes(availableRow.modelData.name)
+                            readonly property bool isUnhosted: availableRow.hostVerdict === "inert"
 
                             icon: "extension"
                             label: `${availableRow.modelData.display_name}  ·  v${availableRow.modelData.version}`
                             description: availableRow.modelData.description
                             capabilities: availableRow.modelData.capabilities ?? []
                             dashboardTab: availableRow.modelData.ui?.dashboard_tab ?? null
+                            // Absent reads as "ok": an older CLI's --json
+                            // carries no host_support at all, and defaulting
+                            // the other way would mark every plugin
+                            // unavailable rather than none.
+                            hostVerdict: availableRow.modelData.host_support?.verdict ?? "ok"
+                            unhosted: availableRow.modelData.host_support?.unhosted ?? ""
 
                             StyledRect {
+                                id: installButton
+
+                                readonly property bool actionable: !availableRow.isInstalled && !availableRow.isUnhosted
+
                                 implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
                                 implicitHeight: 32
                                 radius: Tokens.rounding.full
-                                color: availableRow.isInstalled ? Colours.layer(Colours.tPalette.m3surfaceContainer, 2) : Colours.palette.m3primary
+                                color: installButton.actionable ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
 
                                 StyledText {
                                     id: installLabel
                                     anchors.centerIn: parent
-                                    text: availableRow.isInstalled ? qsTr("Installed") : qsTr("Install")
-                                    color: availableRow.isInstalled ? Colours.palette.m3onSurfaceVariant : Colours.contrastOn(Colours.palette.m3primary)
+                                    text: availableRow.isInstalled ? qsTr("Installed") : availableRow.isUnhosted ? qsTr("Unavailable") : qsTr("Install")
+                                    color: installButton.actionable ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
                                     font: Tokens.font.label.small
                                 }
 
                                 StateLayer {
                                     anchors.fill: parent
                                     radius: parent.radius
-                                    disabled: availableRow.isInstalled
+                                    disabled: !installButton.actionable
                                 }
 
                                 MouseArea {
                                     anchors.fill: parent
-                                    enabled: !availableRow.isInstalled
-                                    cursorShape: availableRow.isInstalled ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                    enabled: installButton.actionable
+                                    cursorShape: installButton.actionable ? Qt.PointingHandCursor : Qt.ArrowCursor
                                     onClicked: {
                                         // Install used to run silently through
                                         // actionProc (no stdout/stderr capture at
