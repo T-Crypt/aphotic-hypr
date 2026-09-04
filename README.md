@@ -148,7 +148,7 @@ https://github.com/user-attachments/assets/a9a2ff29-4c57-4e1f-b4e9-e3a93e995c2a
 
 -   Quickshell desktop shell
 -   Live theme and wallpaper switching
--   Four bar styles
+-   Five bar styles
 -   Launcher and application search
 -   Notifications and OSD
 -   Lock and session controls
@@ -430,7 +430,7 @@ All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/ke
 | <kbd>Super</kbd> + <kbd>Backspace</kbd> | Session / power menu |
 | <kbd>Super</kbd> + <kbd>M</kbd> | `wlogout` (fallback power menu) |
 | <kbd>Super</kbd> + <kbd>B</kbd> | Restart Quickshell |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> | Cycle bar style (Full → Dock → Taskbar → Minimal) |
+| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> | Cycle bar style (Full → Dock → Taskbar → Minimal → Capsule) |
 
 </details>
 
