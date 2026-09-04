@@ -373,9 +373,11 @@ Run the installer:
 > has the `qm create` line and the settings off the dev VM.
 
 > [!WARNING]
-> Set the guest's display adapter to **VirtIO-GPU**. Proxmox defaults to
-> `std`, and VirtIO-GPU is what gives the guest the `/dev/dri/renderD128`
-> render node Hyprland draws through.
+> Two settings decide whether the guest is usable. Set the display adapter
+> to **VirtIO-GPU**, which supplies the `/dev/dri/renderD128` render node
+> Hyprland draws through; Proxmox defaults to `std`. Then reach the guest
+> over **SPICE** with `virt-viewer`, since the browser console swallows the
+> SUPER key that most of Aphotic hangs off.
 >
 > The installer warns when it detects a VM. You can continue past it. A
 > guest still shows you nothing about GPU layers or frame rate, so judge
