@@ -362,6 +362,18 @@ Run the installer:
 > ./install.sh --profile full --with gaming,dev --dry-run
 > ```
 
+> [!TIP]
+> Running Proxmox VE? Build an Arch guest and install there before you
+> touch the machine you work on. You get to watch a full run, try a
+> profile, break it, and roll back to a snapshot. `install.sh` changes go
+> through a VM before they ship, so a guest run follows a path that
+> already works.
+>
+> The installer warns when it detects a VM. Continuing past it is the
+> point of the exercise. Rendering in a guest depends on what your
+> hypervisor exposes, so judge the install path and ignore the frame
+> rate.
+
 The installer supports profiles and optional features without requiring
 every component to be installed.
 
