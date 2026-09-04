@@ -49,7 +49,63 @@ Singleton {
     // served through Ollama, so turning the `ai` layer off has to take it
     // with everything else locally-hosted, even on a machine where
     // assistant.sh had already pulled the weights.
-    readonly property var providers: InstallProfile.aiEnabled && AiConfig.assistantEnabled ? [{ id: "assistant", label: "Aphotic Assistant", requiresApiKey: false }].concat(root._chatProviders) : root._chatProviders
+    readonly property var _coreProviders: InstallProfile.aiEnabled && AiConfig.assistantEnabled ? [{ id: "assistant", label: "Aphotic Assistant", requiresApiKey: false }].concat(root._chatProviders) : root._chatProviders
+
+    // Plugin-contributed pills (the `chat-provider` capability), ahead of
+    // the core list because a provider someone installed on purpose is the
+    // one they mean. PluginRegistry has already applied each one's gate,
+    // so anything reaching here is installed, enabled and unlocked; a
+    // backend this shell does not speak is dropped, same fail-closed rule
+    // as an unrecognised gate token.
+    readonly property var _pluginProviders: PluginRegistry.chatProviderRegistrations
+        .filter(p => root._backendSpeaks(p.backend))
+        .map(p => ({ id: p.id, label: p.label, requiresApiKey: false, backend: p.backend, plugin: p.plugin }))
+
+    // The one list every chat surface reads. Plugin providers are part of
+    // it rather than a second list beside it -- two lists would mean every
+    // consumer choosing which one it meant, and choosing wrong somewhere.
+    readonly property var providers: root._pluginProviders.concat(root._coreProviders)
+
+    function _backendSpeaks(backend: string): bool {
+        return backend === "ollama";
+    }
+
+    function pluginProviderFor(id: string): var {
+        return root._pluginProviders.find(p => p.id === id) ?? null;
+    }
+
+    // {model, systemPrompt} per plugin provider id, read from the state
+    // file each plugin writes. Kept as one object reassigned wholesale --
+    // mutating it in place would leave every binding on it stale.
+    property var pluginProviderState: ({})
+
+    function _setPluginProviderState(id: string, raw: string): void {
+        const next = Object.assign({}, root.pluginProviderState);
+        if (raw.length === 0) {
+            delete next[id];
+        } else {
+            try {
+                const data = JSON.parse(raw);
+                next[id] = { model: data.model ?? "", systemPrompt: data.systemPrompt ?? "" };
+            } catch (e) {
+                delete next[id];
+            }
+        }
+        root.pluginProviderState = next;
+    }
+
+    Instantiator {
+        model: PluginRegistry.chatProviderRegistrations
+
+        delegate: FileView {
+            required property var modelData
+
+            path: modelData.statePath
+            watchChanges: true
+            onLoaded: root._setPluginProviderState(modelData.id, text())
+            onLoadFailed: error => root._setPluginProviderState(modelData.id, "")
+        }
+    }
 
     // A provider id saved before it stopped being offered (or one an
     // [agents.*] override has since turned off) must not leave the chat
@@ -424,6 +480,15 @@ Singleton {
     }
 
     function isAvailable(providerId: string): bool {
+        const plugin = root.pluginProviderFor(providerId);
+        if (plugin) {
+            // A pulled model is what makes the provider answerable, so an
+            // installed plugin that has not finished its own setup reads as
+            // unavailable rather than as a pill that errors on first send.
+            if ((root.pluginProviderState[providerId]?.model ?? "").length === 0)
+                return false;
+            return plugin.backend === "ollama" ? root.ollamaAvailable : false;
+        }
         switch (providerId) {
         case "ollama": return root.ollamaAvailable;
         case "assistant": return root.assistantAvailable;
@@ -447,6 +512,38 @@ Singleton {
         }
     }
 
+    // Why a provider is unavailable, in the user's words. One answer, because
+    // there were two call sites guessing separately and the fallback both fell
+    // back to -- "set an API key" -- is wrong for every provider that does not
+    // use one. That already misfired: an Assistant whose Ollama host was unset
+    // was told to set an API key, naming an empty env var, because the guess
+    // keyed off "not claude" rather than off what the provider actually needs.
+    function unavailableReason(providerId: string): string {
+        const label = root.providers.find(p => p.id === providerId)?.label ?? providerId;
+
+        const plugin = root.pluginProviderFor(providerId);
+        if (plugin) {
+            if ((root.pluginProviderState[providerId]?.model ?? "").length === 0)
+                return qsTr("%1 hasn't finished setting up — no model is configured for it yet.").arg(label);
+            return qsTr("No Ollama host configured. Set it in the model pill, or set OLLAMA_BASE_URL, to enable.");
+        }
+
+        switch (providerId) {
+        case "claude":
+            return !root.claudeCliPresent ? qsTr("The claude CLI isn't installed.") : qsTr("Not logged in to Claude. Run `claude login` in a terminal, then refresh.");
+        case "codex":
+            return !root.codexCliPresent ? qsTr("The codex CLI isn't installed.") : qsTr("Not logged in to Codex. Run `codex login` in a terminal, then refresh.");
+        case "ollama":
+        case "assistant":
+            return qsTr("No Ollama host configured. Set it in the model pill, or set OLLAMA_BASE_URL, to enable.");
+        }
+
+        const envVar = root.requiredEnvVar(providerId);
+        if (envVar.length === 0)
+            return qsTr("%1 isn't available on this machine.").arg(label);
+        return qsTr("No API key configured for %1. Set %2 to enable.").arg(label).arg(envVar);
+    }
+
     property bool busy: false
     property string activeRequestId: ""
 
@@ -464,25 +561,12 @@ Singleton {
         if (root.busy)
             return;
 
-        if ((provider === "ollama" || provider === "assistant") && !AiConfig.ollamaHostConfigured) {
+        if ((provider === "ollama" || provider === "assistant" || root.pluginProviderFor(provider)?.backend === "ollama") && !AiConfig.ollamaHostConfigured) {
             root.errorReceived(requestId, qsTr("No Ollama host configured. Set it in the model pill, or set OLLAMA_BASE_URL, to enable."));
             return;
         }
         if (!root.isAvailable(provider)) {
-            const label = root.providers.find(p => p.id === provider)?.label ?? provider;
-            if (provider === "claude") {
-                // Claude doesn't need a key at all (see claudeAvailable's
-                // comment above) -- the generic "set an env var" message
-                // below would be actively wrong here, since setting
-                // ANTHROPIC_API_KEY does nothing for this provider.
-                root.errorReceived(requestId, !root.claudeCliPresent ? qsTr("The claude CLI isn't installed.") : qsTr("Not logged in to Claude. Run `claude login` in a terminal, then refresh."));
-            } else if (provider === "codex") {
-                // Same reasoning as claude above -- see codexAvailable's
-                // comment for why this is unverified.
-                root.errorReceived(requestId, !root.codexCliPresent ? qsTr("The codex CLI isn't installed.") : qsTr("Not logged in to Codex. Run `codex login` in a terminal, then refresh."));
-            } else {
-                root.errorReceived(requestId, qsTr("No API key configured for %1. Set %2 to enable.").arg(label).arg(root.requiredEnvVar(provider)));
-            }
+            root.errorReceived(requestId, root.unavailableReason(provider));
             return;
         }
 
@@ -526,9 +610,16 @@ Singleton {
             // setup_assistant renders it, so a manually-set
             // assistantEnabled with no rendered file just behaves like
             // plain Ollama with no system message.
+            // Three shapes share this one Ollama call: plain Ollama, the
+            // core Assistant, and any plugin provider on the ollama
+            // backend. All a persona amounts to is a pinned model plus a
+            // fixed system prompt, which is why a plugin can contribute one
+            // without shipping a transport.
+            const pluginState = root.pluginProviderState[provider];
             const isAssistant = provider === "assistant";
-            const resolvedModel = isAssistant ? AiConfig.assistantModel : (model || AiConfig.ollamaModel);
-            const messages = isAssistant && root.assistantSystemPrompt.length > 0 ? [{ role: "system", content: root.assistantSystemPrompt }, { role: "user", content: text }] : [{ role: "user", content: text }];
+            const resolvedModel = pluginState ? pluginState.model : (isAssistant ? AiConfig.assistantModel : (model || AiConfig.ollamaModel));
+            const systemPrompt = pluginState ? pluginState.systemPrompt : (isAssistant ? root.assistantSystemPrompt : "");
+            const messages = systemPrompt.length > 0 ? [{ role: "system", content: systemPrompt }, { role: "user", content: text }] : [{ role: "user", content: text }];
             ollamaProc.command = ["curl", "-s", "-m", "30",
                 `${AiConfig.ollamaHost}/v1/chat/completions`,
                 "-H", "content-type: application/json",
