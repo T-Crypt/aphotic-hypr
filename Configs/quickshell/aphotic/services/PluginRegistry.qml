@@ -7,18 +7,25 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
+import qs.services.ai
 
 // Read-only view of ~/.local/state/aphotic/plugins.json's "installed"
 // map (manifest v3 -- see docs/archive/PLUGIN_SYSTEM.md). The CLI
 // (`aphotic plugin install|enable|disable|remove`, cmd_plugin.sh) is the
 // only writer; this mirrors InstallProfile.qml's FileView load/watch
 // pattern -- bash writes, QML watches, no round-trip. A plugin declaring
-// a `ui-surface` capability shows up in dashboardTabs the instant it's
-// installed+enabled, and drops out of it (reactively, same tick) the
+// a `ui-surface` capability shows up in surfaceRegistrations the instant
+// it's installed+enabled, and drops out of it (reactively, same tick) the
 // instant it's removed or disabled, which is what lets a UI-surface
-// plugin's tab disappear cleanly per §2.2's "no dead UI entries"
-// requirement without the shell needing a static, compile-time import
-// of that plugin's QML at all.
+// plugin's tab or tile disappear cleanly per §2.2's "no dead UI entries"
+// requirement without the shell needing a static, compile-time import of
+// that plugin's QML at all.
+//
+// ONE registry for every surface kind, not one per host. Dashboard tabs
+// and notch tiles are the same record with a different `surface` value,
+// so DashboardContent.qml and Notch.qml each filter the same list and
+// neither knows any plugin's id. See docs/PLUGIN_LAYER_MODEL.md.
 Singleton {
     id: root
 
@@ -37,28 +44,128 @@ Singleton {
         return root.isInstalled(name) && !root._disabled.includes(name);
     }
 
-    // Every enabled plugin's [ui.dashboard_tab] declaration (plugin.toml,
-    // manifest v3), resolved to an absolute file:// component URL --
-    // exactly the shape a dynamic `Loader { source: ... }` needs, so the
-    // loading call site never has to statically `import` a plugin's own
-    // QML module.
-    readonly property var dashboardTabs: {
-        const tabs = [];
+    // Every enabled plugin's [ui.*] declarations, resolved to absolute
+    // file:// component URLs -- exactly the shape a dynamic
+    // `Loader { source: ... }` needs, so the loading call site never has
+    // to statically `import` a plugin's own QML. Installed+enabled only;
+    // the per-surface activation gate is applied by surfacesFor(), not
+    // here, so a caller can still see what a disabled-by-gate surface
+    // would have been.
+    readonly property var surfaceRegistrations: {
+        const surfaces = [];
         for (const name of Object.keys(root._installed)) {
             if (!root.isEnabled(name))
                 continue;
-            const tab = root._installed[name]?.ui?.dashboard_tab;
-            if (!tab || !tab.component)
-                continue;
-            tabs.push({
-                plugin: name,
-                id: tab.id ?? name,
-                icon: tab.icon ?? "extension",
-                label: tab.label ?? name,
-                componentUrl: `file://${root.pluginsDir}/${name}/${tab.component}`
-            });
+            for (const surface of root._surfacesOf(name))
+                surfaces.push(surface);
         }
-        return tabs;
+        return surfaces;
+    }
+
+    function surfacesFor(surface: string): var {
+        return root.surfaceRegistrations.filter(s => s.surface === surface && root._gateSatisfied(s));
+    }
+
+    function settingsSectionsFor(category: string): var {
+        return root.surfacesFor("settings").filter(s => s.parent === category);
+    }
+
+    // Plugins that register a ProfileEngine profile rather than draw a
+    // surface -- the `profile` capability. Same registry, same gate
+    // vocabulary, same dynamic file:// component load; the only
+    // difference is that the host instantiating these is headless
+    // (shell.qml) rather than a visible surface. This is what lets a
+    // domain profile -- Gaming today, Dev and Security's sub-plugins
+    // next -- be a real plugin instead of core shell code behind an
+    // InstallProfile check.
+    readonly property var profileRegistrations: {
+        const profiles = [];
+        for (const name of Object.keys(root._installed)) {
+            if (!root.isEnabled(name))
+                continue;
+            const profile = root._installed[name]?.profile;
+            if (!profile || !profile.id || !profile.component)
+                continue;
+            const entry = {
+                plugin: name,
+                id: profile.id,
+                label: profile.label || profile.id,
+                snapshot: profile.snapshot ?? [],
+                requiresLayer: profile.requires_layer ?? "",
+                requiresData: profile.requires_data ?? "",
+                componentUrl: `file://${root.pluginsDir}/${name}/${profile.component}`
+            };
+            if (root._gateSatisfied(entry))
+                profiles.push(entry);
+        }
+        return profiles;
+    }
+
+    // A pre-`ui.surfaces` registry entry (written by a CLI older than the
+    // surface unification) still carries a bare `dashboard_tab` object.
+    // Reading it as one ungated dashboard surface keeps an install that
+    // has not re-synced yet showing the tab it already had, rather than
+    // silently losing it until the user runs an install they have no
+    // reason to know they need. `aphotic plugin list` reports the entry
+    // as drifted, which is the existing, visible path to re-syncing it.
+    function _surfacesOf(name: string): var {
+        const ui = root._installed[name]?.ui;
+        if (!ui)
+            return [];
+        const declared = ui.surfaces ?? (ui.dashboard_tab ? [Object.assign({ surface: "dashboard" }, ui.dashboard_tab)] : []);
+        return declared.filter(s => s && s.surface && s.component).map(s => ({
+            plugin: name,
+            surface: s.surface,
+            id: s.id || name,
+            icon: s.icon || "extension",
+            label: s.label || name,
+            requiresLayer: s.requires_layer ?? "",
+            requiresData: s.requires_data ?? "",
+            parent: s.parent || root._defaultParent(s),
+            componentUrl: `file://${root.pluginsDir}/${name}/${s.component}`
+        }));
+    }
+
+    // Which Settings category a plugin's pane docks into when its manifest
+    // does not say. The layer that gates it is the best available guess at
+    // where it belongs, and the Plugins pane is the honest fallback for a
+    // pane that answers to nothing -- never a rail entry of its own.
+    function _defaultParent(surface: var): string {
+        if (surface.surface !== "settings")
+            return "";
+        const layer = surface.requires_layer ?? "";
+        return layer.length > 0 ? layer : "plugins";
+    }
+
+    function _gateSatisfied(surface: var): bool {
+        return root._layerEnabled(surface.requiresLayer) && root._dataAvailable(surface.requiresData);
+    }
+
+    // An unrecognised token fails closed. A manifest naming a layer or a
+    // data source this shell has never heard of is a plugin built against
+    // a newer contract, and showing its surface anyway would mean showing
+    // it with its gate silently dropped -- the one outcome the gate
+    // exists to prevent.
+    function _layerEnabled(layer: string): bool {
+        if (!layer)
+            return true;
+        if (layer === "ai")
+            return InstallProfile.aiEnabled;
+        if (layer === "dev")
+            return InstallProfile.devEnabled;
+        if (layer === "gaming")
+            return InstallProfile.gamingEnabled;
+        if (layer === "security")
+            return InstallProfile.securityEnabled;
+        return false;
+    }
+
+    function _dataAvailable(source: string): bool {
+        if (!source)
+            return true;
+        if (source === "harness")
+            return AgentRoles.hasConfiguredHarness;
+        return false;
     }
 
     FileView {

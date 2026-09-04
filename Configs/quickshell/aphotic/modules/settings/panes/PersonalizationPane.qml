@@ -13,8 +13,6 @@ ColumnLayout {
 
     readonly property var accentPresets: ["", "#4A5A52", "#669B04", "#3B82F6", "#EF4444", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"]
     readonly property var depthEffectsPresets: [{ value: "off", label: qsTr("Off") }, { value: "subtle", label: qsTr("Subtle") }, { value: "full", label: qsTr("Full") }]
-    readonly property var agentGraphPresets: [{ value: "auto", label: qsTr("Auto") }, { value: "lite", label: qsTr("Lite") }, { value: "standard", label: qsTr("Standard") }, { value: "full", label: qsTr("Full") }]
-    readonly property var agentGraphHistoryPresets: [{ value: 0, label: qsTr("Live only") }, { value: 150, label: qsTr("150") }, { value: 400, label: qsTr("400") }, { value: 1000, label: qsTr("1000") }]
 
     property var cursorThemes: []
     property var iconThemes: []
@@ -144,85 +142,6 @@ ColumnLayout {
             presets: root.depthEffectsPresets
             value: Settings.depthEffects
             onSelected: value => Settings.depthEffects = value
-        }
-    }
-
-    // This whole section only means something with the Agent Graph
-    // plugin installed+enabled -- otherwise it's exactly the dead,
-    // orphaned settings control §2.2 of APHOTIC_UNIFIED_VISION.md warns
-    // against (docs/archive/PLUGIN_SYSTEM.md manifest v3).
-    StyledText {
-        Layout.topMargin: Tokens.spacing.small
-        visible: PluginRegistry.isEnabled("agent-graph")
-        text: qsTr("Agent graph")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.label.medium
-    }
-
-    StyledText {
-        Layout.fillWidth: true
-        visible: PluginRegistry.isEnabled("agent-graph")
-        wrapMode: Text.Wrap
-        text: qsTr("The graph tab always stays available. Live keeps it tracking new tool calls and animating in real time; paused freezes it on whatever it last showed -- still browsable, just not doing continuous work in the background.")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.body.small
-    }
-
-    SettingsGroup {
-        Layout.fillWidth: true
-
-        SettingsToggleRow {
-            label: qsTr("Live")
-            description: qsTr("Off pauses layout updates and flow animation -- past sessions stay visible, nothing is lost")
-            checked: Settings.agentGraphEnabled
-            onToggled: state => Settings.agentGraphEnabled = state
-        }
-    }
-
-    StyledText {
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
-        text: qsTr("How much of the agent graph is simulated, not how it looks — every tier draws the same thing. Auto reads your GPU and eases off while Ollama has models loaded, so the graph never competes with a local model for VRAM.")
-        color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.body.small
-    }
-
-    SettingsGroup {
-        Layout.fillWidth: true
-        visible: PluginRegistry.isEnabled("agent-graph")
-
-        SettingsPresetRow {
-            icon: "hub"
-            label: qsTr("Detail")
-            presets: root.agentGraphPresets
-            value: Settings.agentGraphQuality
-            onSelected: value => Settings.agentGraphQuality = value
-        }
-
-        SettingsRow {
-            icon: "palette"
-            label: qsTr("Graph accent")
-
-            ColorPickerField {
-                value: Settings.agentGraphAccent
-                onValueChanged: Settings.agentGraphAccent = value
-            }
-        }
-
-        SettingsToggleRow {
-            label: qsTr("Group by parent agent")
-            description: qsTr("Color-codes a subagent's own tool calls separately from its session — computed once when the graph updates, off by default")
-            checked: Settings.agentGraphGroupByParent
-            onToggled: state => Settings.agentGraphGroupByParent = state
-        }
-
-        SettingsPresetRow {
-            icon: "history"
-            label: qsTr("Catch-up history")
-            description: qsTr("How many past events the graph replays when it starts following the log. Live only opens with an empty graph and grows from new activity.")
-            presets: root.agentGraphHistoryPresets
-            value: Settings.agentGraphHistoryLines
-            onSelected: value => Settings.agentGraphHistoryLines = value
         }
     }
 

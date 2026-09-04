@@ -13,6 +13,50 @@ _aphotic_doctor_check() {
     fi
 }
 
+# A layer installs the tooling; a plugin is what makes the shell react to
+# it. Nothing forces the two to agree, so a machine can have the `gaming`
+# layer with no gaming plugin installed and silently get none of the
+# behaviour it paid for -- which is exactly the state an upgrade past
+# PLG-03 leaves behind. Driven off the plugin catalogue's own
+# `requires_layer` declarations rather than a hardcoded layer->plugin map:
+# core must never name a plugin (docs/PLUGIN_LAYER_MODEL.md).
+_aphotic_doctor_layer_plugins() {
+    local repo="${APHOTIC_PLUGINS_REPO:-$HOME/aphotic-plugins}" manifest name layer layers found=0
+
+    [[ -d "$repo" ]] || {
+        echo "  [skip] plugin catalogue not cloned ($repo)"
+        return 0
+    }
+
+    layers="$(aphotic_toml_get_array "${APHOTIC_DOTS_DIR}/aphotic.toml" install layers | tr '\n' ' ')"
+    [[ -n "${layers// /}" ]] || {
+        echo "  [skip] no layers recorded in aphotic.toml"
+        return 0
+    }
+
+    for manifest in "$repo"/*/plugin.toml; do
+        [[ -f "$manifest" ]] || continue
+        name="$(basename "$(dirname "$manifest")")"
+        layer="$(aphotic_toml_get "$manifest" profile requires_layer)"
+        [[ -n "$layer" ]] || layer="$(aphotic_toml_get "$manifest" ui.notch_tile requires_layer)"
+        [[ -n "$layer" ]] || layer="$(aphotic_toml_get "$manifest" ui.dashboard_tab requires_layer)"
+        [[ -n "$layer" ]] || layer="$(aphotic_toml_get "$manifest" ui.settings_pane requires_layer)"
+        [[ -n "$layer" ]] || continue
+        [[ " $layers " == *" $layer "* ]] || continue
+
+        found=1
+        if [[ ! -d "${APHOTIC_PLUGINS_DIR}/${name}" ]]; then
+            printf '  [MISS] %s (%s layer on, not installed: aphotic plugin install %s)\n' "$name" "$layer" "$name"
+        elif aphotic_plugin_is_enabled "$name"; then
+            printf '  [ok]   %s (%s layer)\n' "$name" "$layer"
+        else
+            printf '  [off]  %s (%s layer on, installed but disabled)\n' "$name" "$layer"
+        fi
+    done
+
+    [[ "$found" == "1" ]] || echo "  [ok]   no layer-gated plugins in the catalogue"
+}
+
 aphotic_cmd_doctor() {
     echo "Aphotic doctor — aphotic ${APHOTIC_VERSION}"
     echo
@@ -30,6 +74,10 @@ aphotic_cmd_doctor() {
             printf '  [MISS] %s\n' "$p"
         fi
     done
+
+    echo
+    echo "Layer plugins:"
+    _aphotic_doctor_layer_plugins
 
     echo
     if pgrep -f "qs -c aphotic" >/dev/null 2>&1; then

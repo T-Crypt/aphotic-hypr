@@ -38,8 +38,8 @@ _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 # is reported as unhosted, which is the safe direction to fail -- a
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard"
-APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook"
+APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings"
+APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
 # counts `-` as a word boundary, so `-w profile` matches "profile-hook"
@@ -56,9 +56,9 @@ _aphotic_plugin_in_list() {
 # The `[ui.<kind>]` sections a manifest declares, named as the registry
 # and index.json name them. Section headers are scanned directly rather
 # than asked for through _aphotic_plugin_ui_json, because the whole point
-# is to see kinds this build does not parse -- that function reads only
-# ui.dashboard_tab, so asking it would report every notch tile and
-# settings pane as simply absent.
+# is to see kinds this build does not parse -- that function silently
+# drops a section it has no case for, so asking it would report a
+# future surface kind as simply absent rather than as unhosted.
 _aphotic_plugin_manifest_surfaces() {
     local manifest="$1"
     [[ -f "$manifest" ]] || return 0
@@ -73,12 +73,12 @@ _aphotic_plugin_manifest_surfaces() {
 # newline-separated lists. Prints `ok`, or `partial:<parts>` /
 # `inert:<parts>` with a human list of what has no host.
 #
-# partial and inert are a real distinction, not a severity gradient.
-# agent-graph declares a dashboard tab this build renders *and* a
-# settings pane it does not, so refusing it would remove a working
-# plugin; llm-fit declares only a settings pane and would install to
-# nothing at all. The question is therefore "does any of it work", not
-# "is all of it supported".
+# partial and inert are a real distinction, not a severity gradient. A
+# plugin declaring a surface this build renders *and* one it does not
+# still works, so refusing it would remove something functional; a
+# plugin whose every declared part is unhosted installs to nothing at
+# all. The question is therefore "does any of it work", not "is all of
+# it supported".
 #
 # `ui-surface` never counts as working on its own -- it is the tag that
 # says surfaces exist, and the surfaces themselves decide.
@@ -130,6 +130,33 @@ _aphotic_plugin_entry_verdict() {
 # Settings pane) once a second plugin actually needs one. Both read as
 # empty/null on a v1 or v2 manifest, same "optional field, no error"
 # contract v2's category addition already established.
+
+# Manifest v3 additions (see docs/archive/PLUGIN_SYSTEM.md and
+# docs/PLUGIN_LAYER_MODEL.md): [owns] and [ui.<surface-kind>]. Three
+# surface kinds ship -- `dashboard_tab`, `notch_tile` and
+# `settings_pane` -- and all of them
+# normalize into one `ui.surfaces` array in the registry, because the
+# shell loops over surfaces generically and must never branch on which
+# plugin or which kind it is reading. A third kind (a bar module, a
+# Settings pane) is one more line in _aphotic_plugin_ui_json and zero
+# lines in the shell. All of it reads as empty/null on a v1 or v2
+# manifest, same "optional field, no error" contract v2's category
+# addition already established.
+#
+# A settings_pane also takes `parent`: the id of the Settings category
+# its section docks into. It is never its own rail entry -- the rail is a
+# fixed length by design, so fifty plugins are fifty collapsed sections
+# spread across the categories that own them, not fifty pages to scroll
+# past. Omitted, it falls back to the category matching `requires_layer`,
+# then to the Plugins pane.
+#
+# `requires_layer`/`requires_data` are the surface's activation gate,
+# declared by the plugin and evaluated by PluginRegistry.qml against a
+# fixed token vocabulary. A gate may name the profile layer that owns
+# the plugin, or a data source the plugin has nothing to read without.
+# It may not name another plugin: siblings under a profile are
+# independent, and a gate that could name one would make them a
+# dependency graph.
 _aphotic_plugin_owns_json() {
     local manifest="$1" keys ext
     keys="$(aphotic_toml_get_array "$manifest" owns config_keys | jq -R . | jq -s .)"
@@ -138,24 +165,106 @@ _aphotic_plugin_owns_json() {
         '{config_keys: $config_keys, external_config: $external_config}'
 }
 
-_aphotic_plugin_ui_json() {
-    local manifest="$1" id icon label component
-    id="$(aphotic_toml_get "$manifest" ui.dashboard_tab id)"
-    icon="$(aphotic_toml_get "$manifest" ui.dashboard_tab icon)"
-    label="$(aphotic_toml_get "$manifest" ui.dashboard_tab label)"
-    component="$(aphotic_toml_get "$manifest" ui.dashboard_tab component)"
+_aphotic_plugin_surface_json() {
+    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent
+    component="$(aphotic_toml_get "$manifest" "$section" component)"
+    [[ -n "$component" ]] || return 1
 
-    if [[ -z "$component" ]]; then
-        echo 'null'
-        return 0
-    fi
+    id="$(aphotic_toml_get "$manifest" "$section" id)"
+    icon="$(aphotic_toml_get "$manifest" "$section" icon)"
+    label="$(aphotic_toml_get "$manifest" "$section" label)"
+    layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
+    data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
+    parent="$(aphotic_toml_get "$manifest" "$section" parent)"
 
     jq -n \
+        --arg surface "$surface" \
         --arg id "${id:-}" \
         --arg icon "${icon:-}" \
         --arg label "${label:-}" \
         --arg component "$component" \
-        '{dashboard_tab: {id: $id, icon: $icon, label: $label, component: $component}}'
+        --arg requires_layer "${layer:-}" \
+        --arg requires_data "${data:-}" \
+        --arg parent "${parent:-}" \
+        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent}'
+}
+
+_aphotic_plugin_ui_json() {
+    local manifest="$1" entries=() entry
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.dashboard_tab dashboard)"; then
+        entries+=("$entry")
+    fi
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.notch_tile notch)"; then
+        entries+=("$entry")
+    fi
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.settings_pane settings)"; then
+        entries+=("$entry")
+    fi
+
+    if [[ ${#entries[@]} -eq 0 ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    printf '%s\n' "${entries[@]}" | jq -s '{surfaces: .}'
+}
+
+# The `profile` capability (manifest v3.1). A plugin declaring one ships
+# a headless QML component the shell instantiates, exactly the way it
+# loads a UI surface -- the component registers itself with ProfileEngine
+# and, if it claims anything, with ResourceEngine. Claims are deliberately
+# NOT declared here: ProfileEngine.register() already takes them from the
+# component, and a second declaration in the manifest would be a second
+# source of truth for the same fact, drifting the moment one is edited.
+_aphotic_plugin_profile_json() {
+    local manifest="$1" id label component layer data snapshot
+    component="$(aphotic_toml_get "$manifest" profile component)"
+    id="$(aphotic_toml_get "$manifest" profile id)"
+    if [[ -z "$component" ]] || [[ -z "$id" ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    label="$(aphotic_toml_get "$manifest" profile label)"
+    layer="$(aphotic_toml_get "$manifest" profile requires_layer)"
+    data="$(aphotic_toml_get "$manifest" profile requires_data)"
+    snapshot="$(aphotic_toml_get_array "$manifest" profile snapshot | jq -R . | jq -s .)"
+
+    jq -n \
+        --arg id "$id" \
+        --arg label "${label:-$id}" \
+        --arg component "$component" \
+        --arg requires_layer "${layer:-}" \
+        --arg requires_data "${data:-}" \
+        --argjson snapshot "${snapshot:-[]}" \
+        '{id: $id, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, snapshot: $snapshot}'
+}
+
+# The `cli` capability (manifest v3.2). A plugin declaring one contributes
+# a command -- top-level (`aphotic foo`) or a subcommand of an existing one
+# (`aphotic ai fit`) -- which the dispatcher and the extended core command
+# resolve by declaration. Recorded here so `aphotic plugin list --json` can
+# report it and drift detection can see it change; the CLI path itself
+# reads the manifest directly through aphotic_plugin_cli_resolve, since a
+# command must work whether or not a registry sync has run.
+_aphotic_plugin_cli_json() {
+    local manifest="$1" command subcommand script summary
+    command="$(aphotic_toml_get "$manifest" cli command)"
+    script="$(aphotic_toml_get "$manifest" cli script)"
+    if [[ -z "$command" ]] || [[ -z "$script" ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    subcommand="$(aphotic_toml_get "$manifest" cli subcommand)"
+    summary="$(aphotic_toml_get "$manifest" cli summary)"
+
+    jq -n \
+        --arg command "$command" \
+        --arg subcommand "${subcommand:-}" \
+        --arg script "$script" \
+        --arg summary "${summary:-}" \
+        '{command: $command, subcommand: $subcommand, script: $script, summary: $summary}'
 }
 
 _aphotic_plugin_describe() {
@@ -190,7 +299,9 @@ _aphotic_plugin_describe() {
         --argjson missing_binaries "$missing" \
         --argjson owns "$(_aphotic_plugin_owns_json "$manifest")" \
         --argjson ui "$(_aphotic_plugin_ui_json "$manifest")" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui}')"
+        --argjson profile "$(_aphotic_plugin_profile_json "$manifest")" \
+        --argjson cli "$(_aphotic_plugin_cli_json "$manifest")" \
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli}')"
 
     # The registry entry the shell actually reads is written by
     # _aphotic_plugin_registry_sync out of these same four manifest
@@ -203,8 +314,15 @@ _aphotic_plugin_describe() {
     # second time is deliberate: a second description of that shape is the
     # class of bug the flag exists to catch.
     local stored expected drifted="false"
-    expected="$(jq -cS '{version, capabilities, owns, ui}' <<<"$entry")"
-    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    expected="$(jq -cS '{version, capabilities, owns, ui, profile, cli}' <<<"$entry")"
+    # Missing keys are filled with the same null a fresh sync would write
+    # BEFORE comparing. Without this, every entry on disk reports drift the
+    # moment the registry schema grows a field -- one did (`profile`,
+    # manifest v3.1) -- and "everything you have installed has drifted" on
+    # upgrade is noise that trains people to ignore the signal. A plugin
+    # that genuinely gained a profile block still differs from null, so the
+    # real case is unaffected.
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else {profile: null, cli: null} + . end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
     [[ "$expected" != "$stored" ]] && drifted="true"
 
     jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"
@@ -512,7 +630,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps owns ui tmp
+    local name="$1" dir manifest version caps owns ui profile cli tmp
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
     manifest="${dir}/plugin.toml"
@@ -522,6 +640,8 @@ _aphotic_plugin_registry_sync() {
     caps="$(aphotic_toml_get_array "$manifest" plugin capabilities | jq -R . | jq -s .)"
     owns="$(_aphotic_plugin_owns_json "$manifest")"
     ui="$(_aphotic_plugin_ui_json "$manifest")"
+    profile="$(_aphotic_plugin_profile_json "$manifest")"
+    cli="$(_aphotic_plugin_cli_json "$manifest")"
 
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
     tmp="$(mktemp)"
@@ -530,15 +650,17 @@ _aphotic_plugin_registry_sync() {
        --argjson capabilities "${caps:-[]}" \
        --argjson owns "$owns" \
        --argjson ui "$ui" \
-       '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui}})' \
+       --argjson profile "$profile" \
+       --argjson cli "$cli" \
+       '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli}})' \
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
 }
 
 # Reverse of the above -- called from remove(). Deleting the registry
 # entry is what makes a ui-surface plugin's tab disappear from the
-# running shell (PluginRegistry.qml's dashboardTabs recomputes off this
-# same file, watched live via FileView) without the shell needing to
-# know anything else changed.
+# running shell (PluginRegistry.qml's surfaceRegistrations recomputes off
+# this same file, watched live via FileView) without the shell needing
+# to know anything else changed.
 _aphotic_plugin_registry_remove() {
     local name="$1" tmp
     aphotic_require jq || return 1
@@ -598,7 +720,7 @@ _aphotic_plugin_unlink_ui_module() {
 # plugins/) so that program calls back into Aphotic's shared agent_hook
 # pipeline on its own events. That external config has no concept of
 # Aphotic's `disabled` array, so wiring can't just be a one-time
-# install-time action the way `[ui.dashboard_tab]`'s symlink is --
+# install-time action the way `[ui.*]`'s symlink is --
 # `enable`/`disable` have to actively wire/unwire too, or a "disabled"
 # plugin would keep firing for real.
 #
@@ -935,6 +1057,19 @@ aphotic_cmd_plugin() {
         remove)
             _aphotic_plugin_remove "${1:-}"
             ;;
+        resync)
+            # The bulk remedy drift reporting has always implied. `update`
+            # rewrites one entry by reinstalling the plugin's files; this
+            # rewrites every entry from the manifests already on disk,
+            # touching no files -- which is what a registry-schema change
+            # actually needs.
+            local synced=0 pname
+            while IFS= read -r pname; do
+                [[ -z "$pname" ]] && continue
+                _aphotic_plugin_registry_sync "$pname" && synced=$((synced + 1))
+            done < <(aphotic_plugin_names)
+            aphotic_ok "resynced ${synced} registry entries"
+            ;;
         relink-ui-modules)
             # Plumbing subcommand — called from install.sh's
             # deploy_user_configs after it re-copies Configs/quickshell/
@@ -997,6 +1132,8 @@ Usage: aphotic plugin <list|install|update|enable|disable|remove|...> [args]
   enable <name>               Re-enable an installed plugin
   disable <name>               Disable without uninstalling
   remove <name>                Uninstall
+  resync                        Rewrite every installed plugin's registry entry
+                                from its manifest (no files touched)
   relink-ui-modules             Re-link every enabled ui-surface plugin's
                               QML module into the shell's config tree --
                               run this if a plugin's Dashboard tab goes

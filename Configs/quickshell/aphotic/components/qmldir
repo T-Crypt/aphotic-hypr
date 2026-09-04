@@ -14,6 +14,7 @@ ScreenState 1.0 ScreenState.qml
 SettingsGroup 1.0 SettingsGroup.qml
 SettingsPresetRow 1.0 SettingsPresetRow.qml
 SettingsRow 1.0 SettingsRow.qml
+SettingsSection 1.0 SettingsSection.qml
 SettingsToggleRow 1.0 SettingsToggleRow.qml
 StateLayer 1.0 StateLayer.qml
 StyledClippingRect 1.0 StyledClippingRect.qml

@@ -5,6 +5,7 @@ import Quickshell
 import qs.config
 import qs.components
 import qs.services
+import qs.services.profile
 
 Item {
     id: root
@@ -23,6 +24,7 @@ Item {
         // run-project-hooks / _aphotic_plugin_run_hook_by_capability.
         // Plugins never replace the launch above, they just get told.
         Quickshell.execDetached(["aphotic", "plugin", "run-project-hooks", root.modelData.path]);
+        DevProfile.projectOpened(root.modelData.path);
     }
 
     StateLayer {

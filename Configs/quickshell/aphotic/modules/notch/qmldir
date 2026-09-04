@@ -2,4 +2,3 @@ module qs.modules.notch
 Notch 1.0 Notch.qml
 NotchWindow 1.0 NotchWindow.qml
 NotchProcessTile 1.0 NotchProcessTile.qml
-NotchProfileStub 1.0 NotchProfileStub.qml

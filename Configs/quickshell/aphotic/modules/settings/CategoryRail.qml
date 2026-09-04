@@ -13,6 +13,13 @@ ColumnLayout {
     required property string currentCategory
     required property var categories // [{ id, icon, label, description }]
 
+    // Optional -- what the search box matches against when it has one, so
+    // a plugin's pane stays reachable by name even though it renders as a
+    // section inside another category's pane rather than as a rail entry
+    // (see config/SettingsCategories.qml). Absent for reuse sites that
+    // pass a plain category list with no search.
+    property var searchIndex: [] // [{ id, icon, label, description, categoryId, sectionId }]
+
     // PluginsPane.qml reuses this component for its own much-shorter
     // category filter (7 fixed categories, no reason to search) rather
     // than duplicating the pill-list styling -- but the search box's
@@ -24,11 +31,25 @@ ColumnLayout {
     // defaults true and only PluginsPane opts out.
     property bool showSearch: true
 
-    signal categorySelected(id: string)
+    signal categorySelected(id: string, sectionId: string)
 
+    readonly property var _categoryEntries: root.categories.map(c => ({
+        id: c.id,
+        icon: c.icon,
+        label: c.label,
+        description: c.description ?? "",
+        categoryId: c.id,
+        sectionId: ""
+    }))
+
+    // Sections only ever appear as results, never at rest -- a rail that
+    // listed them unprompted would be the long rail this design removes.
     readonly property var filteredCategories: {
         const q = searchInput.text.trim().toLowerCase();
-        return q.length === 0 ? root.categories : root.categories.filter(c => c.label.toLowerCase().includes(q) || (c.description ?? "").toLowerCase().includes(q));
+        if (q.length === 0)
+            return root._categoryEntries;
+        const pool = root.searchIndex.length > 0 ? root.searchIndex : root._categoryEntries;
+        return pool.filter(e => e.label.toLowerCase().includes(q) || (e.description ?? "").toLowerCase().includes(q));
     }
 
     spacing: Tokens.spacing.medium
@@ -106,7 +127,8 @@ ColumnLayout {
                         required property var modelData
                         required property int index
 
-                        readonly property bool active: categoryButton.modelData.id === root.currentCategory
+                        readonly property bool isSection: (categoryButton.modelData.sectionId ?? "").length > 0
+                        readonly property bool active: !categoryButton.isSection && categoryButton.modelData.categoryId === root.currentCategory
                         readonly property bool isFirst: categoryButton.index === 0
                         readonly property bool isLast: categoryButton.index === root.filteredCategories.length - 1
 
@@ -122,7 +144,7 @@ ColumnLayout {
                         // at each corner. Insetting means the reveal is even
                         // on every side, an intentional "floating pill" look
                         // instead of an accidental corner-only artifact.
-                        Layout.leftMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
+                        Layout.leftMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.isSection ? Tokens.spacing.large : 0)
                         Layout.rightMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
                         Layout.topMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
                         Layout.bottomMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
@@ -231,7 +253,7 @@ ColumnLayout {
                             bottomRightRadius: categoryButton.bottomRightRadius
                             showHoverBackground: !categoryButton.active
 
-                            onClicked: root.categorySelected(categoryButton.modelData.id)
+                            onClicked: root.categorySelected(categoryButton.modelData.categoryId, categoryButton.modelData.sectionId ?? "")
                         }
                     }
                 }
