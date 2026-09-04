@@ -115,6 +115,44 @@ _aphotic_theme_write_state() {
     jq -n --arg t "$theme" --arg w "$wallpaper" '{theme: $t, wallpaper: $w}' > "$tmp" && mv "$tmp" "$APHOTIC_THEME_STATE_FILE"
 }
 
+# `wallust cs <name>` resolves a scheme by name inside wallust's own
+# config dir, so a theme's [engine].colorscheme / [palette].anchor file
+# has to physically land here -- there's no path form to point elsewhere.
+_aphotic_theme_schemes_dir() {
+    printf '%s/wallust/colorschemes' "${XDG_CONFIG_HOME:-$HOME/.config}"
+}
+
+# A downloaded theme may ship <theme>/colorschemes/*.json for the palette
+# it pins. Core themes get theirs from the dots repo, which the community
+# ones have no way to write into, so the download installs them instead.
+_aphotic_theme_install_colorschemes() {
+    local dir="$1" schemes_dir scheme
+    schemes_dir="$(_aphotic_theme_schemes_dir)"
+    [[ -d "${dir}/colorschemes" ]] || return 0
+    mkdir -p "$schemes_dir"
+    for scheme in "${dir}/colorschemes"/*.json; do
+        [[ -f "$scheme" ]] || continue
+        cp "$scheme" "${schemes_dir}/$(basename "$scheme")"
+    done
+}
+
+# Only the ones this theme actually put there. Compared by content
+# rather than by name: ~/.config/wallust is a symlink into the dots
+# checkout, so a shipped scheme and a core one live at the same path and
+# no path test can tell them apart. An installed file that still matches
+# what this theme ships came from this theme; anything edited since, or
+# owned by something else, is left alone.
+_aphotic_theme_remove_colorschemes() {
+    local dir="$1" schemes_dir scheme
+    schemes_dir="$(_aphotic_theme_schemes_dir)"
+    [[ -d "${dir}/colorschemes" ]] || return 0
+    for scheme in "${dir}/colorschemes"/*.json; do
+        [[ -f "$scheme" ]] || continue
+        cmp -s "$scheme" "${schemes_dir}/$(basename "$scheme")" || continue
+        rm -f "${schemes_dir}/$(basename "$scheme")"
+    done
+}
+
 # Clone APHOTIC_THEMES_REPO on first use, `git pull --ff-only` on later
 # ones -- mirrors _aphotic_plugin_sync_repo (cmd_plugin.sh) exactly. A
 # pull failure is non-fatal, falls through to whatever's on disk already.
@@ -149,6 +187,7 @@ _aphotic_theme_download() {
 
     echo "Downloading ${name}..."
     cp -r "$src" "$dest"
+    _aphotic_theme_install_colorschemes "$dest"
 
     aphotic_ok "downloaded ${name}"
     echo "THEME DOWNLOADED: ${name}"
@@ -190,6 +229,7 @@ _aphotic_theme_update_one() {
         return 1
     fi
     rm -rf "$previous"
+    _aphotic_theme_install_colorschemes "$dest"
 
     aphotic_ok "updated ${name}"
     echo "THEME UPDATED: ${name}"
@@ -228,6 +268,7 @@ _aphotic_theme_remove() {
     [[ -e "$dest" ]] || { aphotic_err "not downloaded: ${name}"; return 1; }
 
     local was_active; was_active="$(_aphotic_theme_read_state | head -n1)"
+    _aphotic_theme_remove_colorschemes "$dest"
     rm -rf "$dest"
     aphotic_ok "removed ${name}"
 
@@ -265,7 +306,7 @@ _aphotic_theme_clamp_palette() {
         return 0
     }
 
-    local schemes_dir="${XDG_CONFIG_HOME:-$HOME/.config}/wallust/colorschemes"
+    local schemes_dir; schemes_dir="$(_aphotic_theme_schemes_dir)"
     local anchor_file="${schemes_dir}/${anchor}.json"
     if [[ ! -f "$anchor_file" ]]; then
         aphotic_warn "theme '${theme_name}' pins [palette].anchor = '${anchor}' but ${anchor_file} is missing -- applying unclamped palette"
