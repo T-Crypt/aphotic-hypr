@@ -7,6 +7,7 @@ import qs.config
 import qs.modules.bar
 import qs.modules.launcher
 import qs.modules.notch
+import qs.modules.overlay
 import qs.modules.notifications
 import qs.modules.osd
 import qs.modules.lock
@@ -303,6 +304,28 @@ ShellRoot {
     // the resource this declares.
     GpuVramSource {
         id: gpuVramSource
+    }
+
+    // Every enabled plugin that registers an `overlay` surface, one window
+    // per screen. Nested rather than flattened because the two models are
+    // independent: surfaces come and go as plugins are enabled, screens as
+    // monitors are plugged, and neither should rebuild the other's windows.
+    Instantiator {
+        model: PluginRegistry.surfacesFor("overlay")
+
+        delegate: Item {
+            id: overlayHost
+
+            required property var modelData
+
+            Variants {
+                model: Quickshell.screens
+
+                PluginOverlayWindow {
+                    surface: overlayHost.modelData
+                }
+            }
+        }
     }
 
     // Core seams a plugin-registered profile may ask for by declaring a

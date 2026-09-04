@@ -38,7 +38,7 @@ _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 # is reported as unhosted, which is the safe direction to fail -- a
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings"
+APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings overlay"
 APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
@@ -166,7 +166,7 @@ _aphotic_plugin_owns_json() {
 }
 
 _aphotic_plugin_surface_json() {
-    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent
+    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent anchor width height
     component="$(aphotic_toml_get "$manifest" "$section" component)"
     [[ -n "$component" ]] || return 1
 
@@ -176,6 +176,12 @@ _aphotic_plugin_surface_json() {
     layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
     data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
     parent="$(aphotic_toml_get "$manifest" "$section" parent)"
+    # Overlay only -- the surface budget the host sizes its window from
+    # once. Empty for the other three kinds, which draw inside a window
+    # core already owns and ignore these.
+    anchor="$(aphotic_toml_get "$manifest" "$section" anchor)"
+    width="$(aphotic_toml_get "$manifest" "$section" width)"
+    height="$(aphotic_toml_get "$manifest" "$section" height)"
 
     jq -n \
         --arg surface "$surface" \
@@ -186,7 +192,10 @@ _aphotic_plugin_surface_json() {
         --arg requires_layer "${layer:-}" \
         --arg requires_data "${data:-}" \
         --arg parent "${parent:-}" \
-        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent}'
+        --argjson anchor "$(jq -n --arg a "${anchor:-}" '$a')" \
+        --argjson width "${width:-0}" \
+        --argjson height "${height:-0}" \
+        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height}'
 }
 
 _aphotic_plugin_ui_json() {
@@ -198,6 +207,9 @@ _aphotic_plugin_ui_json() {
         entries+=("$entry")
     fi
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.settings_pane settings)"; then
+        entries+=("$entry")
+    fi
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.overlay overlay)"; then
         entries+=("$entry")
     fi
 
