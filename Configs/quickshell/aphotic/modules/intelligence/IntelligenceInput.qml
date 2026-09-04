@@ -38,23 +38,10 @@ ColumnLayout {
     }
 
     StyledText {
-        visible: !root.ollamaHostMissing && !root.providerAvailable && root.effectiveProvider === "claude"
+        visible: !root.ollamaHostMissing && !root.providerAvailable
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        // Claude doesn't need an API key (see AiProviders.claudeAvailable's
-        // comment) -- a real login-session check instead, so this warning
-        // needs its own accurate text rather than the generic "set an env
-        // var" one below, which would be actively wrong for this provider.
-        text: !AiProviders.claudeCliPresent ? qsTr("⚠ The claude CLI isn't installed.") : qsTr("⚠ Not logged in to Claude. Run `claude login` in a terminal, then refresh.")
-        color: Colours.palette.m3error
-        font: Tokens.font.label.small
-    }
-
-    StyledText {
-        visible: !root.ollamaHostMissing && !root.providerAvailable && root.effectiveProvider !== "claude"
-        Layout.fillWidth: true
-        wrapMode: Text.Wrap
-        text: qsTr("⚠ No API key configured for %1. Set %2 to enable.").arg(AiProviders.providers.find(p => p.id === root.effectiveProvider)?.label ?? root.effectiveProvider).arg(AiProviders.requiredEnvVar(root.effectiveProvider))
+        text: `⚠ ${AiProviders.unavailableReason(root.effectiveProvider)}`
         color: Colours.palette.m3error
         font: Tokens.font.label.small
     }

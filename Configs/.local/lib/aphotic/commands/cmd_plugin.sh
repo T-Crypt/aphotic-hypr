@@ -39,7 +39,7 @@ _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
 APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings"
-APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli"
+APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
 # counts `-` as a word boundary, so `-w profile` matches "profile-hook"
@@ -267,6 +267,45 @@ _aphotic_plugin_cli_json() {
         '{command: $command, subcommand: $subcommand, script: $script, summary: $summary}'
 }
 
+# The `chat-provider` capability (manifest v3.3). A plugin declaring one
+# contributes a pill to the AI chat provider list. Core keeps owning the
+# transport -- a provider names a `backend` core already speaks, it does
+# not ship one -- so what a plugin adds is identity plus the two things
+# that make a backend answer as something specific: which model, and
+# which system prompt.
+#
+# Both of those are per-machine, resolved when the plugin installs (a
+# model pull picks a tag for this GPU; a rendered prompt names this
+# install's profile, layers and theme), so neither can be a static file in
+# the plugin tree. `state` names a JSON file under
+# ~/.config/aphotic/plugins/<plugin>/ that the plugin writes and the shell
+# watches: {"model": "...", "systemPrompt": "..."}. One file, so a
+# re-pull or a re-render is a single atomic write the shell picks up live
+# rather than a snapshot that goes stale.
+_aphotic_plugin_chat_provider_json() {
+    local manifest="$1" id label backend state layer data
+    id="$(aphotic_toml_get "$manifest" chat_provider id)"
+    backend="$(aphotic_toml_get "$manifest" chat_provider backend)"
+    if [[ -z "$id" ]] || [[ -z "$backend" ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    label="$(aphotic_toml_get "$manifest" chat_provider label)"
+    state="$(aphotic_toml_get "$manifest" chat_provider state)"
+    layer="$(aphotic_toml_get "$manifest" chat_provider requires_layer)"
+    data="$(aphotic_toml_get "$manifest" chat_provider requires_data)"
+
+    jq -n \
+        --arg id "$id" \
+        --arg label "${label:-$id}" \
+        --arg backend "$backend" \
+        --arg state "${state:-provider.json}" \
+        --arg requires_layer "${layer:-}" \
+        --arg requires_data "${data:-}" \
+        '{id: $id, label: $label, backend: $backend, state: $state, requires_layer: $requires_layer, requires_data: $requires_data}'
+}
+
 _aphotic_plugin_describe() {
     local name="$1" dir manifest display desc version category caps enabled missing bin
     dir="$(_aphotic_plugin_dir "$name")"
@@ -301,7 +340,8 @@ _aphotic_plugin_describe() {
         --argjson ui "$(_aphotic_plugin_ui_json "$manifest")" \
         --argjson profile "$(_aphotic_plugin_profile_json "$manifest")" \
         --argjson cli "$(_aphotic_plugin_cli_json "$manifest")" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli}')"
+        --argjson chat_provider "$(_aphotic_plugin_chat_provider_json "$manifest")" \
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider}')"
 
     # The registry entry the shell actually reads is written by
     # _aphotic_plugin_registry_sync out of these same four manifest
@@ -314,7 +354,7 @@ _aphotic_plugin_describe() {
     # second time is deliberate: a second description of that shape is the
     # class of bug the flag exists to catch.
     local stored expected drifted="false"
-    expected="$(jq -cS '{version, capabilities, owns, ui, profile, cli}' <<<"$entry")"
+    expected="$(jq -cS '{version, capabilities, owns, ui, profile, cli, chat_provider}' <<<"$entry")"
     # Missing keys are filled with the same null a fresh sync would write
     # BEFORE comparing. Without this, every entry on disk reports drift the
     # moment the registry schema grows a field -- one did (`profile`,
@@ -322,7 +362,7 @@ _aphotic_plugin_describe() {
     # upgrade is noise that trains people to ignore the signal. A plugin
     # that genuinely gained a profile block still differs from null, so the
     # real case is unaffected.
-    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else {profile: null, cli: null} + . end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else {profile: null, cli: null, chat_provider: null} + . end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
     [[ "$expected" != "$stored" ]] && drifted="true"
 
     jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"
@@ -630,7 +670,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps owns ui profile cli tmp
+    local name="$1" dir manifest version caps owns ui profile cli chat_provider tmp
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
     manifest="${dir}/plugin.toml"
@@ -642,6 +682,7 @@ _aphotic_plugin_registry_sync() {
     ui="$(_aphotic_plugin_ui_json "$manifest")"
     profile="$(_aphotic_plugin_profile_json "$manifest")"
     cli="$(_aphotic_plugin_cli_json "$manifest")"
+    chat_provider="$(_aphotic_plugin_chat_provider_json "$manifest")"
 
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
     tmp="$(mktemp)"
@@ -652,7 +693,8 @@ _aphotic_plugin_registry_sync() {
        --argjson ui "$ui" \
        --argjson profile "$profile" \
        --argjson cli "$cli" \
-       '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli}})' \
+       --argjson chat_provider "$chat_provider" \
+       '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider}})' \
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
 }
 
