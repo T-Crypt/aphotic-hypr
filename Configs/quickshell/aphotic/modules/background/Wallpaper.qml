@@ -24,10 +24,8 @@ Item {
 
     Component.onCompleted: {
         if (source)
-            Qt.callLater(() => {
-                one.update();
-                completed = true;
-            });
+            Qt.callLater(() => one.update());
+        completed = true;
     }
 
     Loader {

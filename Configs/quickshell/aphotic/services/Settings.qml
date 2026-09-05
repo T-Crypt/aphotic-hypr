@@ -28,11 +28,19 @@ Singleton {
     property bool barPositionRight: false
     property bool barCompact: false
     // true = full-width bar docked to top/bottom, entries flow left-to-right.
-    // false (default) = full-height bar docked to left/right, entries flow
-    // top-to-bottom. Was named `barVertical` with this exact meaning
-    // inverted (true meant horizontal) until the rename -- see settings.json
-    // load below for the migration of existing users' persisted state.
-    property bool barHorizontal: false
+    // false (default for the "full" style) = full-height bar docked to
+    // left/right, entries flow top-to-bottom. Was named `barVertical` with
+    // this exact meaning inverted (true meant horizontal) until the rename
+    // -- see settings.json load below for the migration of existing users'
+    // persisted state. Defaults to true here because barSkin's own default
+    // is "minimal", and setBarStyle()'s one-time first-selection default
+    // (below) only fires on an actual switch *to* minimal -- a fresh
+    // install that starts on minimal already needs the matching top/
+    // horizontal layout from the very first render, not the vertical/left
+    // layout minimal was never designed to support (Settings' own Bar Style
+    // picker already warns left/right placement may not render correctly
+    // for it).
+    property bool barHorizontal: true
     property bool barPositionBottom: false
     // Expanded from a purely cosmetic "outer strip background" choice
     // into the master bar-style switch. "pill"/"square" still just mean
@@ -45,7 +53,7 @@ Singleton {
     // Anyone with a pre-existing `barSkin: "minimal"` in settings.json
     // gets the new structural style on next load, not the old outline
     // look -- a deliberate one-time behavior change, not a bug.
-    property string barSkin: "pill"
+    property string barSkin: "minimal"
     // Whichever of "pill"/"square" was last active, so cycling/switching
     // back to the "full" style (from dock/taskbar/minimal) restores the
     // user's own preference instead of hardcoding one.
@@ -54,7 +62,12 @@ Singleton {
     // default applied (dock -> bottom, minimal -> top) -- applied once
     // ever per style, not every time it's re-selected, so a user's own
     // later position override sticks.
-    property var barStyleDefaultsApplied: []
+    // "minimal" pre-included: barSkin already defaults to it with the
+    // matching position defaults above applied directly, so it must not
+    // look like an unresolved first selection -- setBarStyle() would
+    // otherwise force-reset position the next time "minimal" is chosen,
+    // clobbering a user's own deliberate position change in the meantime.
+    property var barStyleDefaultsApplied: ["minimal"]
 
     readonly property string barStyle: ["dock", "taskbar", "minimal", "capsule"].includes(barSkin) ? barSkin : "full"
 
@@ -402,6 +415,18 @@ Singleton {
         }
         if (root.idleSuspendEnabled)
             lines.push("listener {", `    timeout = ${root.idleSuspendTimeout}`, "    on-timeout = systemctl suspend", "}");
+
+        // Omarchy's own idle screensaver (a real feature: "OMARCHY" text
+        // rendered with random terminal effects via ttfx, see
+        // omarchy-launch-screensaver) used to fire from Omarchy's own
+        // hypridle.conf, which this function's own output replaces --
+        // silently dropping it, not something this installer should do.
+        // `command -v` gate makes this a no-op anywhere the binary doesn't
+        // exist, so the same generated file is correct on every distro;
+        // 150s matches Omarchy's own shell.json default screensaver timeout,
+        // independent of Aphotic's own (security-relevant, user-adjustable)
+        // lock timeout above.
+        lines.push("listener {", "    timeout = 150", "    on-timeout = command -v omarchy-launch-screensaver >/dev/null 2>&1 && omarchy-launch-screensaver", "}");
 
         const confPath = `${Quickshell.env("HOME")}/.config/hypr/hypridle.conf`;
         const script = root.idleLockEnabled || root.idleSuspendEnabled ? `mkdir -p "$(dirname '${confPath}')" && cat > '${confPath}' <<'APHOTIC_HYPRIDLE_EOF'\n${lines.join("\n")}\nAPHOTIC_HYPRIDLE_EOF\nsystemctl --user enable hypridle.service >/dev/null 2>&1; systemctl --user restart hypridle.service` : "systemctl --user disable --now hypridle.service >/dev/null 2>&1";

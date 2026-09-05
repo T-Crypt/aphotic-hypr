@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.3
+
+Aphotic now supports Omarchy, verified on a fresh Omarchy ISO install; EndeavourOS with Desktop Environment: None works too, the same as a minimal install.
+
 ## 2.0.2
 
 A fifth bar style, the capsule, and a rebuilt notch that follows your bar to whichever edge it is docked on.
