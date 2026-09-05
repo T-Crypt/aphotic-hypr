@@ -26,6 +26,12 @@ ColumnLayout {
     property bool refreshing: false
     property bool securityIndexTrusted: false
     property string selectedCategory: "all"
+    property bool hasFetchedAvailable: false
+    // Raw JSON text from the last successful parse, so the 2s poll below
+    // (see Timer) can skip reassigning `installed`/`available` when
+    // nothing actually changed.
+    property string _lastInstalledRaw: ""
+    property string _lastAvailableRaw: ""
 
     // Matches CLAUDE.md's category taxonomy. "all" is a local-only
     // pseudo-category (no plugin.toml ever sets category: "all") that
@@ -134,10 +140,16 @@ ColumnLayout {
         command: ["aphotic", "plugin", "list", "--json"]
         stdout: StdioCollector {
             onStreamFinished: {
-                try {
-                    root.installed = JSON.parse(text);
-                } catch (e) {
-                    root.installed = [];
+                // Skip the reassignment entirely when the text is
+                // byte-identical to last time -- see availableProc below,
+                // same reasoning, same fix for the same class of glitch.
+                if (text !== root._lastInstalledRaw) {
+                    root._lastInstalledRaw = text;
+                    try {
+                        root.installed = JSON.parse(text);
+                    } catch (e) {
+                        root.installed = [];
+                    }
                 }
                 root.refreshing = false;
             }
@@ -149,11 +161,33 @@ ColumnLayout {
         command: ["aphotic", "plugin", "list", "--remote", "--json"]
         stdout: StdioCollector {
             onStreamFinished: {
+                // The 2s poll below re-runs this on every tick regardless
+                // of whether the remote index actually changed, and used
+                // to reassign `root.available` to a brand-new array
+                // object every single time even when its contents were
+                // identical. That flowed through availableGroups into the
+                // Repeater below as a fresh model reference, so the
+                // Repeater destroyed and recreated every delegate instead
+                // of diffing them -- a transient dip in browseList's
+                // implicitHeight (bound straight to the Flickable's
+                // contentHeight) that StopAtBounds clamps contentY back
+                // toward on every tick. Reported as "scrolling glitches
+                // and snaps back to the top shortly after you start."
+                // Comparing the raw text first means an unchanged index
+                // (the common case) never touches `root.available` at
+                // all, so the Repeater's delegates -- and the user's
+                // scroll position -- are left alone.
+                if (text === root._lastAvailableRaw) {
+                    root.hasFetchedAvailable = true;
+                    return;
+                }
+                root._lastAvailableRaw = text;
                 try {
                     root.available = JSON.parse(text);
                 } catch (e) {
                     root.available = [];
                 }
+                root.hasFetchedAvailable = true;
             }
         }
     }
@@ -593,8 +627,21 @@ ColumnLayout {
     }
 
     StyledText {
-        visible: root.available.length === 0
+        // Gated on hasFetchedAvailable, not just an empty list -- on tab
+        // open, `available` reads empty for however long the remote
+        // fetch takes (a real network round-trip), and this used to
+        // flash "couldn't reach the index" during that entirely normal
+        // wait before flipping to real content, reading as part of the
+        // reported opening-stall glitchiness.
+        visible: root.hasFetchedAvailable && root.available.length === 0
         text: qsTr("Couldn't reach the aphotic-plugins index (offline, or the repo isn't public yet).")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    StyledText {
+        visible: !root.hasFetchedAvailable
+        text: qsTr("Loading available plugins…")
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.body.small
     }
@@ -728,6 +775,8 @@ ColumnLayout {
             }
 
             Flickable {
+                id: browseFlick
+
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 visible: root.availableGroups.length > 0
@@ -735,6 +784,9 @@ ColumnLayout {
                 contentHeight: browseList.implicitHeight
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
+                // Trims the drag/scroll travel so the thumb below stays a
+                // true position indicator instead of racing ahead of it.
+                rightMargin: 16
 
                 ColumnLayout {
                     id: browseList
@@ -841,6 +893,56 @@ ColumnLayout {
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // Real draggable scrollbar, not a wheel-only Flickable -- see
+            // docs/ideas.md UX-04. 12px press band / 28px thumb floor,
+            // the project's stated standard (SettingsPanel.qml's own
+            // scrollThumb predates it at 8px/24px; not copied here).
+            StyledRect {
+                id: browseScrollThumb
+
+                visible: browseFlick.contentHeight > browseFlick.height
+                x: browseFlick.x + browseFlick.width - width
+                y: browseFlick.y + browseFlick.visibleArea.yPosition * browseFlick.height
+                width: 12
+                height: Math.max(28, browseFlick.visibleArea.heightRatio * browseFlick.height)
+                radius: Tokens.rounding.full
+                color: Colours.palette.m3onSurfaceVariant
+                opacity: browseDragArea.pressed ? 0.7 : browseDragArea.containsMouse ? 0.55 : 0.35
+
+                Behavior on opacity {
+                    Anim { type: Anim.StandardSmall }
+                }
+
+                MouseArea {
+                    id: browseDragArea
+
+                    anchors.fill: parent
+                    anchors.margins: -4
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    preventStealing: true
+
+                    property real pressY: 0
+                    property real pressContentY: 0
+
+                    onPressed: mouse => {
+                        pressY = mapToItem(browseFlick, mouse.x, mouse.y).y;
+                        pressContentY = browseFlick.contentY;
+                    }
+                    onPositionChanged: mouse => {
+                        if (!pressed)
+                            return;
+                        const trackHeight = browseFlick.height - browseScrollThumb.height;
+                        if (trackHeight <= 0)
+                            return;
+                        const scrollable = browseFlick.contentHeight - browseFlick.height;
+                        const deltaY = mapToItem(browseFlick, mouse.x, mouse.y).y - pressY;
+                        const deltaContent = deltaY / trackHeight * scrollable;
+                        browseFlick.contentY = Math.max(0, Math.min(scrollable, pressContentY + deltaContent));
                     }
                 }
             }
