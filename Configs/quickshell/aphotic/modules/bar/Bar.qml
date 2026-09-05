@@ -225,7 +225,7 @@ Item {
     // region (plus a small margin so the boundary itself isn't a hair
     // trigger). A borderline sub-match miss while still inside the locked
     // entry keeps the popout showing as-is instead of closing it.
-    readonly property real regionHysteresisMargin: 4
+    readonly property real regionHysteresisMargin: 8
     property EntryWrapper _lockedEntry: null
 
     function withinLockedRegion(pos: real): bool {
@@ -242,8 +242,28 @@ Item {
         // the comment above. Only once the pointer truly leaves the
         // locked entry's bounds do we fall through to a fresh
         // nearest-match against the whole bar.
-        const ch = (popouts.hasCurrent && withinLockedRegion(pos)) ? _lockedEntry : childAlong(pos);
-        _lockedEntry = ch;
+        let ch = (popouts.hasCurrent && withinLockedRegion(pos)) ? _lockedEntry : childAlong(pos);
+
+        // A fresh match landing on a non-interactive filler entry ("gap"/
+        // "spacer") never tears down an already-open popout. These exist
+        // only for spacing between clusters (e.g. the fixed-width gap
+        // right before settings/power, see the "gap" DelegateChoice
+        // below) and can never legitimately be "the thing being
+        // hovered" -- BarHit.nearestAlong does a real contains-test
+        // first, so the instant the pointer drifts off a narrow icon
+        // like "settings" and lands in that adjacent gap, it used to
+        // resolve here with no id branch below matching, falling straight
+        // to the unconditional `hasCurrent = false` a few lines down.
+        // Reported live as "the settings popout is painfully difficult to
+        // hover, moving the cursor almost anywhere makes it disappear" --
+        // reaching a popout that renders off to the side of a small icon
+        // almost always means crossing that filler on the way. Staying
+        // locked on the previous real entry instead treats the filler as
+        // a no-op rather than a genuine "the pointer left."
+        if ((ch?.entryId === "gap" || ch?.entryId === "spacer") && popouts.hasCurrent && _lockedEntry)
+            ch = _lockedEntry;
+        else
+            _lockedEntry = ch;
 
         if (ch?.entryId !== "tray")
             closeTray();
