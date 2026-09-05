@@ -6,7 +6,6 @@ import Quickshell
 import qs.config
 import qs.components
 import qs.services
-import qs.utils
 
 GridLayout {
     id: root
@@ -125,12 +124,13 @@ GridLayout {
                     }
                 }
 
-                MaterialIcon {
+                AppIcon {
                     required property var modelData
 
                     grade: 0
-                    text: Icons.getAppCategoryIcon(modelData.lastIpcObject.class, "terminal")
-                    color: Colours.palette.m3onSurfaceVariant
+                    appClass: modelData.lastIpcObject?.class ?? ""
+                    fallbackGlyph: "terminal"
+                    colour: Colours.palette.m3onSurfaceVariant
                 }
             }
         }

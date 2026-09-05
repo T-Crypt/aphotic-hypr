@@ -4,15 +4,43 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import Quickshell.Widgets
 import qs.config
 import qs.components
 import qs.services
+import qs.utils
 
 ColumnLayout {
     id: root
 
     readonly property var accentPresets: ["", "#4A5A52", "#669B04", "#3B82F6", "#EF4444", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"]
     readonly property var depthEffectsPresets: [{ value: "off", label: qsTr("Off") }, { value: "subtle", label: qsTr("Subtle") }, { value: "full", label: qsTr("Full") }]
+
+    readonly property var iconKindPresets: [{ value: "auto", label: qsTr("Auto") }, { value: "image", label: qsTr("Image") }, { value: "glyph", label: qsTr("Glyph") }]
+    // Running apps whose icon bottoms out on resolveAppIcon's final
+    // generic tier -- offered as one-click prompts so the WM_CLASS string
+    // never has to be guessed by hand.
+    readonly property var unresolvedApps: WindowList.classes().filter(c => {
+        const res = Icons.resolveAppIcon("", c.appClass, "");
+        return res.kind === "glyph" && res.value === "apps";
+    })
+
+    property string newIconPattern: ""
+    property string newIconKind: "auto"
+
+    function addIconOverride(): void {
+        const pattern = root.newIconPattern.trim();
+        const value = iconValueInput.text.trim();
+        if (pattern.length === 0 || value.length === 0)
+            return;
+        const entry = { name: pattern, icon: value };
+        if (root.newIconKind !== "auto")
+            entry.kind = root.newIconKind;
+        Settings.customAppIcons = [...Settings.customAppIcons, entry];
+        root.newIconPattern = "";
+        iconValueInput.text = "";
+        root.newIconKind = "auto";
+    }
 
     property var cursorThemes: []
     property var iconThemes: []
@@ -264,6 +292,247 @@ ColumnLayout {
         text: qsTr("Qt apps (qt5ct/qt6ct) follow this too, but only pick it up on next launch, not live.")
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.body.small
+    }
+
+    StyledText {
+        Layout.topMargin: Tokens.spacing.small
+        text: qsTr("App icons")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.label.medium
+    }
+
+    StyledText {
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        text: qsTr("Point an app at a different icon when the desktop entry gets it wrong or gives none at all. The match is an app class or desktop-entry name; the icon is an absolute path, an icon-theme name, or a Material Symbols glyph.")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    StyledText {
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        visible: root.unresolvedApps.length > 0
+        text: qsTr("These running apps have no icon of their own:")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+        visible: root.unresolvedApps.length > 0
+
+        Repeater {
+            model: root.unresolvedApps
+
+            SettingsRow {
+                id: unresolvedRow
+
+                required property var modelData
+
+                icon: "help"
+                label: unresolvedRow.modelData.appClass
+                description: unresolvedRow.modelData.title
+
+                StyledRect {
+                    implicitWidth: unresolvedLabel.implicitWidth + Tokens.padding.medium * 2
+                    implicitHeight: 32
+                    radius: Tokens.rounding.full
+                    color: "transparent"
+                    border.width: 1
+                    border.color: Colours.palette.m3outlineVariant
+
+                    StyledText {
+                        id: unresolvedLabel
+
+                        anchors.centerIn: parent
+                        text: qsTr("Add an override")
+                        font: Tokens.font.body.small
+                    }
+
+                    StateLayer {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        onClicked: root.newIconPattern = unresolvedRow.modelData.appClass
+                    }
+                }
+            }
+        }
+    }
+
+    StyledText {
+        Layout.leftMargin: Tokens.padding.small
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        visible: Settings.customAppIcons.length === 0
+        text: qsTr("No overrides yet.")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.body.small
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+        visible: Settings.customAppIcons.length > 0
+
+        Repeater {
+            model: Settings.customAppIcons
+
+            SettingsRow {
+                id: overrideRow
+
+                required property var modelData
+                required property int index
+
+                readonly property var preview: Icons.resolveOverride(overrideRow.modelData)
+
+                icon: "swap_horiz"
+                label: overrideRow.modelData.regex ?? overrideRow.modelData.name ?? ""
+                description: overrideRow.modelData.icon
+
+                RowLayout {
+                    spacing: Tokens.spacing.medium
+
+                    Item {
+                        implicitWidth: 28
+                        implicitHeight: 28
+
+                        IconImage {
+                            anchors.centerIn: parent
+                            visible: overrideRow.preview.kind === "image"
+                            source: overrideRow.preview.kind === "image" ? overrideRow.preview.value : ""
+                            implicitSize: 28
+                        }
+
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            visible: overrideRow.preview.kind === "glyph"
+                            text: overrideRow.preview.kind === "glyph" ? overrideRow.preview.value : ""
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.medium
+                        }
+                    }
+
+                    MaterialIcon {
+                        text: "delete"
+                        color: Colours.palette.m3onSurfaceVariant
+                        fontStyle: Tokens.font.icon.small
+
+                        StateLayer {
+                            anchors.fill: parent
+                            anchors.margins: -Tokens.padding.small
+                            radius: Tokens.rounding.full
+                            onClicked: Settings.customAppIcons = Settings.customAppIcons.filter((_, i) => i !== overrideRow.index)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+
+        SettingsRow {
+            icon: "pattern"
+            label: qsTr("App match")
+            description: qsTr("An app class or desktop-entry name")
+
+            StyledRect {
+                implicitWidth: 220
+                implicitHeight: 32
+                radius: Tokens.rounding.small
+                color: Colours.palette.m3surfaceContainerHigh
+
+                TextInput {
+                    id: patternInput
+
+                    anchors.fill: parent
+                    anchors.margins: Tokens.padding.small
+                    font: Tokens.font.label.small
+                    color: Colours.palette.m3onSurface
+                    clip: true
+                    text: root.newIconPattern
+
+                    onTextChanged: root.newIconPattern = text
+
+                    StyledText {
+                        visible: patternInput.text.length === 0
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        text: qsTr("org.gnome.Nautilus")
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.small
+                    }
+                }
+            }
+        }
+
+        SettingsRow {
+            icon: "image"
+            label: qsTr("Icon")
+            description: qsTr("Path, theme name, or glyph name")
+
+            StyledRect {
+                implicitWidth: 220
+                implicitHeight: 32
+                radius: Tokens.rounding.small
+                color: Colours.palette.m3surfaceContainerHigh
+
+                TextInput {
+                    id: iconValueInput
+
+                    anchors.fill: parent
+                    anchors.margins: Tokens.padding.small
+                    font: Tokens.font.label.small
+                    color: Colours.palette.m3onSurface
+                    clip: true
+
+                    StyledText {
+                        visible: iconValueInput.text.length === 0
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        text: qsTr("firefox")
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.small
+                    }
+                }
+            }
+        }
+
+        SettingsPresetRow {
+            icon: "category"
+            label: qsTr("Treat icon as")
+            description: qsTr("Auto picks an image when the value resolves to one")
+            presets: root.iconKindPresets
+            value: root.newIconKind
+            onSelected: value => root.newIconKind = value
+        }
+    }
+
+    StyledRect {
+        readonly property bool canAdd: root.newIconPattern.trim().length > 0 && iconValueInput.text.trim().length > 0
+
+        Layout.alignment: Qt.AlignRight
+        implicitWidth: addIconLabel.implicitWidth + Tokens.padding.large * 2
+        implicitHeight: 40
+        radius: Tokens.rounding.medium
+        color: canAdd ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+
+        StyledText {
+            id: addIconLabel
+
+            anchors.centerIn: parent
+            text: qsTr("Add override")
+            color: parent.canAdd ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.body.medium
+        }
+
+        StateLayer {
+            anchors.fill: parent
+            radius: parent.radius
+            disabled: !parent.canAdd
+            onClicked: root.addIconOverride()
+        }
     }
 
     StyledText {

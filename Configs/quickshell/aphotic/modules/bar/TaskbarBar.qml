@@ -207,10 +207,12 @@ Item {
         radius: Tokens.rounding.full
         color: item.focused ? Colours.palette.m3secondaryContainer : Colours.palette.m3surfaceContainerHigh
 
-        IconImage {
+        AppIcon {
             anchors.centerIn: parent
-            source: item.group.windows[0]?.icon ?? ""
-            implicitSize: parent.width * 0.6
+            appClass: item.group.appClass
+            size: parent.width * 0.6
+            fontStyle: Tokens.font.icon.large
+            colour: Colours.palette.m3onSurface
         }
 
         StyledRect {

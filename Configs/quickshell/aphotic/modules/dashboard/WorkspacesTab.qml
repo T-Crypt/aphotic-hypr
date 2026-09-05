@@ -6,7 +6,6 @@ import Quickshell
 import qs.config
 import qs.components
 import qs.services
-import qs.utils
 
 StyledRect {
     id: root
@@ -74,11 +73,12 @@ StyledRect {
                         Repeater {
                             model: wsCard.windows.slice(0, 9)
 
-                            MaterialIcon {
+                            AppIcon {
                                 required property var modelData
 
-                                text: Icons.getAppCategoryIcon(modelData.lastIpcObject.class, "desktop_windows")
-                                color: Colours.palette.m3onSurfaceVariant
+                                appClass: modelData.lastIpcObject?.class ?? ""
+                                fallbackGlyph: "desktop_windows"
+                                colour: Colours.palette.m3onSurfaceVariant
                                 fontStyle: Tokens.font.icon.small
                             }
                         }

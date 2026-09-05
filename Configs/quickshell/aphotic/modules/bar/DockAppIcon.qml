@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell.Widgets
 import qs.config
 import qs.components
 import qs.services
@@ -49,10 +48,13 @@ Item {
         }
     }
 
-    IconImage {
+    AppIcon {
         anchors.centerIn: parent
-        source: root.item.icon
-        implicitSize: parent.width * 0.6
+        name: root.item.iconName
+        appClass: root.item.iconKeys
+        size: parent.width * 0.6
+        fontStyle: Tokens.font.icon.large
+        colour: Colours.palette.m3onSurface
     }
 
     Rectangle {

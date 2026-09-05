@@ -4,7 +4,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import qs.services
-import qs.utils
 
 Singleton {
     id: root
@@ -13,7 +12,6 @@ Singleton {
                 address: t.address,
                 title: t.title || t.lastIpcObject?.class || "",
                 appClass: t.lastIpcObject?.class ?? "",
-                icon: Icons.getAppIcon(t.lastIpcObject?.class, "application-x-executable"),
                 workspaceId: t.workspace?.id ?? 0,
                 workspaceName: t.workspace?.name ?? "",
                 focused: t.address === Hypr.activeToplevel?.address,
@@ -40,6 +38,17 @@ Singleton {
 
     function windowsForClass(appClass: string): var {
         return root.windows.filter(w => w.appClass === appClass);
+    }
+
+    // One entry per app class, first-seen order, without the per-window
+    // grouping payload -- Settings scans this to find classes whose icon
+    // does not resolve.
+    function classes(): var {
+        const seen = [];
+        for (const w of root.windows)
+            if (w.appClass && !seen.some(e => e.appClass === w.appClass))
+                seen.push({ appClass: w.appClass, title: w.title });
+        return seen;
     }
 
     function focus(address: string): void {

@@ -1,6 +1,7 @@
 module qs.components
 AphoticMark 1.0 AphoticMark.qml
 Anim 1.0 Anim.qml
+AppIcon 1.0 AppIcon.qml
 CAnim 1.0 CAnim.qml
 ColorPickerField 1.0 ColorPickerField.qml
 ColorWheel 1.0 ColorWheel.qml
