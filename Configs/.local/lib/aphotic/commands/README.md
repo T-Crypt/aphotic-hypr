@@ -70,6 +70,21 @@ Without it, run `aphotic sddm sync` manually (or `sudo -v` once per
 session before switching themes) whenever you want the login background
 refreshed.
 
+## `aphotic greeter sync` and passwordless sudo
+
+Same story as sddm sync above, for the greetd greeter's own palette/
+wallpaper snapshot (`/etc/aphotic/greeter/`). `setup_greetd_greeter()`
+(install.sh's `--with-greetd-preview` opt-in) chowns that directory to the
+installing user, so this is normally sudo-free already; the sudoers
+drop-in below only matters if something else left it root-owned:
+
+```
+your_user ALL=(root) NOPASSWD: /usr/bin/cp * /etc/aphotic/greeter/
+```
+
+Without it, run `aphotic greeter sync` manually (or `sudo -v` first)
+whenever you want the greeter's snapshot refreshed.
+
 ## `papirus-folders` and passwordless sudo
 
 Same story as sddm sync above, for a different reason: `cmd_theme.sh`

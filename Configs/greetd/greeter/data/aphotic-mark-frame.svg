@@ -1,0 +1,7 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Themable frame layer: hex boundary only, no fill/background so it
+       recolors cleanly via a QML Colouriser tint (see AphoticMark.qml).
+       Geometry matches assets/aphotic-favicon.svg's hex. -->
+  <polygon points="256,54 432,155 432,357 256,458 80,357 80,155"
+           fill="none" stroke="#000000" stroke-width="20"/>
+</svg>
