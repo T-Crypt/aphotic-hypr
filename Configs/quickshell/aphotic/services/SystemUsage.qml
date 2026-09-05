@@ -397,19 +397,28 @@ Singleton {
         onTriggered: {
             statProc.running = true;
             memProc.running = true;
-            diskProc.running = true;
         }
     }
 
     // triggeredOnStart is what makes opening a surface feel instant: the
     // gate going true fires a tick immediately rather than leaving the
     // card blank for up to 30s.
+    //
+    // diskProc lives here, not on the 2s timer above -- disk usage has no
+    // always-visible consumer (only the Performance tab/System pane/
+    // resources popout show it, same as tempProc/GPU stats), where
+    // cpuPerc/memPerc feed the bar directly and have to stay on the fast
+    // tick. `df` was running every 2s forever for a reading nothing was
+    // displaying most of the time. See docs/archive/BACKLOG.md's E2-09.
     Timer {
         interval: Config.dashboard.detailUpdateInterval
         running: root.detailedMonitoring
         repeat: true
         triggeredOnStart: true
-        onTriggered: tempProc.running = true
+        onTriggered: {
+            tempProc.running = true;
+            diskProc.running = true;
+        }
     }
 
     // Split out of the timer above rather than sharing it: the two used to
