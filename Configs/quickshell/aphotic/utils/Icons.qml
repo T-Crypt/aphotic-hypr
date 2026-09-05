@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 import qs.config
+import qs.services
 
 Singleton {
     id: root
@@ -99,11 +100,81 @@ Singleton {
         return false;
     }
 
-    function getAppIcon(name: string, fallback: string): string {
-        const icon = DesktopEntries.heuristicLookup(name)?.icon;
-        if (fallback !== "undefined")
-            return Quickshell.iconPath(icon, fallback);
-        return Quickshell.iconPath(icon);
+    // Quickshell.iconPath()'s two-arg (icon, fallback) overload only
+    // resolves ICON-THEME NAMES via QIcon::fromTheme() -- confirmed by
+    // reading quickshell-mirror/quickshell's own
+    // src/core/iconimageprovider.cpp: the two-arg call never sets the
+    // separate `path=` parameter its own file-path fallback branch
+    // (`icon = QPixmap(path)`) depends on. Both the freedesktop
+    // notification spec's app_icon and the desktop-entry spec's Icon= key
+    // allow EITHER a themed icon name OR a file:// URI/absolute path --
+    // when an app uses the latter (common for Electron apps, some game
+    // launchers), the theme lookup fails silently and falls through to the
+    // fallback glyph. Detecting the path/URI case and sourcing it directly
+    // (Image accepts a plain absolute path or file:// URI natively), then
+    // probing the theme with the (name, check) boolean overload instead,
+    // fixes exactly that class of app. This is the only place in the app
+    // icon path allowed to call Quickshell.iconPath().
+    function _resolveImage(v: string): string {
+        if (!v)
+            return "";
+        if (v.startsWith("/") || v.startsWith("file://"))
+            return v;
+        return Quickshell.iconPath(v, true);
+    }
+
+    function resolveOverride(cfg: var): var {
+        if (cfg.kind === "glyph")
+            return ({ kind: "glyph", value: cfg.icon });
+        const img = root._resolveImage(cfg.icon);
+        if (img)
+            return ({ kind: "image", value: img });
+        return ({ kind: "glyph", value: cfg.icon });
+    }
+
+    function _candidateKeys(appClass: var): var {
+        const raw = Array.isArray(appClass) ? appClass : [appClass];
+        const keys = [];
+        for (const k of raw) {
+            if (!k)
+                continue;
+            keys.push(k);
+            const entry = DesktopEntries.heuristicLookup(k);
+            if (entry?.id)
+                keys.push(entry.id);
+            if (entry?.name)
+                keys.push(entry.name);
+        }
+        return keys.filter((k, i) => keys.indexOf(k) === i);
+    }
+
+    function resolveAppIcon(name: string, appClass: var, fallbackGlyph: string): var {
+        const keys = root._candidateKeys(appClass);
+
+        for (const cfg of Settings.customAppIcons)
+            for (const key of keys)
+                if (root.matchIconConfig(key, cfg))
+                    return root.resolveOverride(cfg);
+
+        const hints = [name];
+        for (const key of keys) {
+            const entryIcon = DesktopEntries.heuristicLookup(key)?.icon;
+            if (entryIcon)
+                hints.push(entryIcon);
+        }
+        for (const hint of hints) {
+            const img = root._resolveImage(hint);
+            if (img)
+                return ({ kind: "image", value: img });
+        }
+
+        for (const key of keys) {
+            const glyph = root.getAppCategoryIcon(key, "");
+            if (glyph)
+                return ({ kind: "glyph", value: glyph });
+        }
+
+        return ({ kind: "glyph", value: fallbackGlyph || "apps" });
     }
 
     function getAppCategoryIcon(name: string, fallback: string): string {

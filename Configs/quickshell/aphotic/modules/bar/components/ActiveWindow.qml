@@ -5,7 +5,6 @@ import qs.config
 import qs.components
 import qs.components.effects
 import qs.services
-import qs.utils
 
 Item {
     id: root
@@ -98,7 +97,7 @@ Item {
         }
     }
 
-    MaterialIcon {
+    AppIcon {
         id: icon
 
         anchors.horizontalCenter: parent.horizontalCenter
@@ -107,8 +106,9 @@ Item {
         anchors.leftMargin: Settings.barHorizontal ? Tokens.padding.small : 0
 
         animate: true
-        text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")
-        color: root.colour
+        appClass: Hypr.activeToplevel?.lastIpcObject?.class ?? ""
+        fallbackGlyph: "desktop_windows"
+        colour: root.colour
 
         states: State {
             name: "horizontal"

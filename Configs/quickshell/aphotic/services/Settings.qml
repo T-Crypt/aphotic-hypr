@@ -75,6 +75,12 @@ Singleton {
     // Array of desktop-entry ids (DesktopEntry.id, e.g. "firefox") pinned
     // to the Dock style regardless of whether they're currently running.
     property var dockPinnedApps: []
+    // Per-app icon overrides: [{ name | regex, flags, icon, kind }] --
+    // same matcher shape as GlobalConfig's windowIcons (Icons.matchIconConfig
+    // reads both), plus `kind` ("glyph" | "image", omitted means auto) so a
+    // value like "terminal", which exists in both Material Symbols and the
+    // icon theme, can be pinned to the one that was meant.
+    property var customAppIcons: []
     // macOS-style icon-proximity magnification on Dock's app row. Only
     // engages in horizontal placement (Settings.barHorizontal) -- side
     // placement has no real vertical-dock layout to magnify along.
@@ -322,6 +328,7 @@ Singleton {
             barStyleDefaultsApplied: root.barStyleDefaultsApplied,
             dockAutoHide: root.dockAutoHide,
             dockPinnedApps: root.dockPinnedApps,
+            customAppIcons: root.customAppIcons,
             dockMagnification: root.dockMagnification,
             taskbarGrouping: root.taskbarGrouping,
             minimalShowDnd: root.minimalShowDnd,
@@ -584,6 +591,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onBarStyleDefaultsAppliedChanged: root._saveState()
     onDockAutoHideChanged: root._saveState()
     onDockPinnedAppsChanged: root._saveState()
+    onCustomAppIconsChanged: root._saveState()
     onDockMagnificationChanged: root._saveState()
     onTaskbarGroupingChanged: root._saveState()
     onMinimalShowDndChanged: root._saveState()
@@ -737,6 +745,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.dockAutoHide = data.dockAutoHide;
                 if (Array.isArray(data.dockPinnedApps))
                     root.dockPinnedApps = data.dockPinnedApps;
+                if (Array.isArray(data.customAppIcons))
+                    root.customAppIcons = data.customAppIcons;
                 if (typeof data.dockMagnification === "boolean")
                     root.dockMagnification = data.dockMagnification;
                 if (typeof data.taskbarGrouping === "boolean")
