@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell.Io
 
 // Reads a fixed, root-owned, world-readable snapshot synced by
 // `aphotic greeter sync` (commands/cmd_greeter.sh) -- the greeter user has
@@ -8,10 +9,17 @@ import QtQuick
 Item {
     id: root
 
+    readonly property string _path: "/etc/aphotic/greeter/wallpaper.png"
+    property int _generation: 0
+
     Image {
         id: img
         anchors.fill: parent
-        source: "file:///etc/aphotic/greeter/wallpaper.png"
+        // Same cache-busting trick as the live shell's Wallpapers.qml --
+        // `aphotic greeter sync` overwrites this same path in place, and a
+        // literal unchanged source string gives Qt Quick no reason to
+        // re-read it from disk once already loaded.
+        source: root._generation > 0 ? `file://${root._path}?g=${root._generation}` : ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
@@ -22,5 +30,24 @@ Item {
         anchors.fill: parent
         z: -1
         color: Colours.background
+    }
+
+    FileView {
+        id: watcher
+        path: root._path
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: root._generation += 1
+    }
+
+    // watchChanges/onFileChanged alone was observed unreliable for this
+    // exact "external process rewrites the same path" case on the live
+    // shell's own Colours.qml (see that tree's Colours.qml header comment)
+    // -- polling sidesteps the same quirk here too.
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: watcher.reload()
     }
 }

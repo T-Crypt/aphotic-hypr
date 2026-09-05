@@ -63,4 +63,15 @@ Singleton {
         onFileChanged: reload()
         onLoaded: root._apply(text())
     }
+
+    // watchChanges/onFileChanged alone was observed unreliable for this
+    // exact "external process rewrites the same path" case on the live
+    // shell's own Colours.qml (see that file's header comment) -- polling
+    // sidesteps the same quirk here rather than assuming it's fixed.
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: snapshot.reload()
+    }
 }

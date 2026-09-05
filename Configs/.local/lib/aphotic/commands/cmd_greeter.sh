@@ -19,23 +19,6 @@
 
 APHOTIC_GREETER_SNAPSHOT_DIR="${APHOTIC_GREETER_SNAPSHOT_DIR:-/etc/aphotic/greeter}"
 
-_aphotic_greeter_current_wallpaper() {
-    aphotic_require awww || return 1
-    awww query -j 2>/dev/null | python3 -c '
-import json, sys
-try:
-    data = json.load(sys.stdin)
-except Exception:
-    sys.exit(0)
-for outputs in data.values():
-    for output in outputs:
-        image = output.get("displaying", {}).get("image")
-        if image:
-            print(image)
-            sys.exit(0)
-'
-}
-
 # Maps the same ~/.local/state/aphotic/palette.json this machine's live
 # Colours.qml reads onto the greeter's own flat schema (background/surface/
 # textColor/mutedTextColor/primary/primaryTextColor/error) -- jq resolves
@@ -81,7 +64,13 @@ _aphotic_greeter_sync() {
 
     local wrote_any=0
 
-    local palette; palette="$(_aphotic_greeter_palette_json)"
+    # `|| true` on both lookups below is load-bearing, not decorative: under
+    # the CLI's `set -e`, a bare `x="$(f)"` with no `|| true`/`if` propagates
+    # a non-zero `f` straight into an unhandled script exit -- verified live,
+    # this aborted the whole `aphotic` process silently on a fresh install
+    # with no palette.json yet, before the warning below ever got a chance
+    # to run.
+    local palette; palette="$(_aphotic_greeter_palette_json)" || true
     if [[ -n "$palette" && "$palette" != "{}" ]]; then
         local tmp; tmp="$(mktemp)"
         printf '%s\n' "$palette" > "$tmp"
@@ -94,7 +83,11 @@ _aphotic_greeter_sync() {
         rm -f "$tmp"
     fi
 
-    local image_path; image_path="$(_aphotic_greeter_current_wallpaper)"
+    # Reuses cmd_sddm.sh's own `awww query -j` lookup rather than a second
+    # copy of the same inline python -- one wallpaper-JSON-parsing path for
+    # both sync commands to drift out of instead of two.
+    source "${COMMANDS_DIR}/cmd_sddm.sh"
+    local image_path; image_path="$(_aphotic_sddm_current_wallpaper)" || true
     if [[ -n "$image_path" && -f "$image_path" ]]; then
         if _aphotic_greeter_write "${APHOTIC_GREETER_SNAPSHOT_DIR}/wallpaper.png" "$image_path"; then
             aphotic_ok "greeter wallpaper synced"
