@@ -16,8 +16,12 @@ Item {
     readonly property int slotPitch: cellWidth + cellSpacing
     readonly property real centerScale: 1.35
     readonly property int visibleSlots: 5
-    readonly property int stripWidth: Math.min(slotPitch * visibleSlots, Math.max(cellWidth, Math.round(root.width * 0.86)))
-    readonly property real centerOffset: (stripWidth - cellWidth) / 2
+    // Wide enough for every slot it draws, even when that overruns the
+    // screen. The strip does not clip, so the outermost cards were already
+    // painted out there; capping the width only stopped them receiving
+    // clicks, and a click on one fell through to the dismiss handler behind.
+    readonly property int stripWidth: slotPitch * visibleSlots
+    readonly property real centerOffset: (stripWidth - slotPitch) / 2
 
     readonly property int heroHeight: Math.round(cellHeight * centerScale)
     readonly property int stripHeight: heroHeight + Math.round(cellHeight * 0.5)
@@ -122,16 +126,24 @@ Item {
         return Math.max(-root.maxFlickVelocity, Math.min(root.maxFlickVelocity, v));
     }
 
+    // Both conversions go through originX. A ListView shifts its content
+    // origin once the model is long enough, and a delegate then sits at
+    // originX + index * slotPitch. Reading it as index * slotPitch put every
+    // index-to-position conversion out by however many slots originX had
+    // grown to, so a click resolved to a delegate tens of slots away from the
+    // one under the pointer. The short unrepeated model never moved originX
+    // off zero, which is why this only appeared once the strip started
+    // wrapping.
     function _indexAtCenter(): int {
         if (strip.count === 0)
             return -1;
-        const slot = Math.round((strip.contentX + root.centerOffset) / root.slotPitch);
+        const slot = Math.round((strip.contentX - strip.originX + root.centerOffset) / root.slotPitch);
         return Math.max(0, Math.min(slot, strip.count - 1));
     }
 
     function _targetContentX(index: int): real {
         const clamped = Math.max(0, Math.min(index, strip.count - 1));
-        return clamped * root.slotPitch - root.centerOffset;
+        return strip.originX + clamped * root.slotPitch - root.centerOffset;
     }
 
     // Anchor into the middle copy rather than wherever the view happens to
@@ -276,7 +288,7 @@ Item {
             width: root.stripWidth
             height: root.stripHeight
             orientation: ListView.Horizontal
-            spacing: root.cellSpacing
+            spacing: 0
             leftMargin: root.centerOffset
             rightMargin: root.centerOffset
             cacheBuffer: root.slotPitch * 2
@@ -356,48 +368,71 @@ Item {
                 onWheel: event => root._wheelImpulse(event.angleDelta.y < 0 ? 1 : -1)
             }
 
+            // The delegate is exactly one slot wide and carries no transform
+            // of its own, so the hit areas tile the strip with no gaps and no
+            // overlap however far the artwork inside is scaled up. Clicking
+            // anywhere in a slot's column picks that wallpaper. Scaling the
+            // delegate itself made the enlarged centre card cover its
+            // neighbours, and the outermost cards fell outside every hit area
+            // and dismissed the picker instead of selecting anything.
             delegate: Item {
                 id: delegate
 
                 required property int index
 
+                property bool hovered: false
+
                 readonly property real itemCenterX: x + width / 2
                 readonly property real viewCenterX: strip.contentX + strip.width / 2
                 readonly property real distance: (itemCenterX - viewCenterX) / root.slotPitch
 
-                width: root.cellWidth
+                width: root.slotPitch
                 height: strip.height
-                scale: Math.max(0.42, root.centerScale - Math.abs(distance) * 0.34)
-                opacity: Math.max(0, 1 - Math.abs(distance) * 0.38)
 
-                transform: Rotation {
-                    origin.x: delegate.width / 2
-                    origin.y: delegate.height / 2
-                    axis {
-                        x: 0
-                        y: 1
-                        z: 0
+                Item {
+                    id: art
+
+                    anchors.fill: parent
+
+                    scale: Math.max(0.42, root.centerScale - Math.abs(delegate.distance) * 0.34)
+                    opacity: Math.max(0, 1 - Math.abs(delegate.distance) * 0.38)
+
+                    transform: Rotation {
+                        origin.x: art.width / 2
+                        origin.y: art.height / 2
+                        axis {
+                            x: 0
+                            y: 1
+                            z: 0
+                        }
+                        angle: Math.max(-32, Math.min(32, delegate.distance * -26))
                     }
-                    angle: Math.max(-32, Math.min(32, delegate.distance * -26))
+
+                    WallpaperCard {
+                        anchors.centerIn: parent
+
+                        width: root.cellWidth
+                        height: root.cellHeight
+
+                        source: root._pathFor(delegate.index)
+                        decodeWidth: root.cellWidth
+                        decodeHeight: root.cellHeight
+                        matteWidth: root.matteWidth
+                        matteHeight: root.matteHeight
+                        distance: delegate.distance
+                        hovered: delegate.hovered
+                        active: delegate.index === strip.currentIndex
+                        locked: delegate.index === root.settledIndex
+                    }
                 }
 
-                WallpaperCard {
-                    anchors.centerIn: parent
-
-                    width: root.cellWidth
-                    height: root.cellHeight
-
-                    source: root._pathFor(delegate.index)
-                    decodeWidth: root.cellWidth
-                    decodeHeight: root.cellHeight
-                    matteWidth: root.matteWidth
-                    matteHeight: root.matteHeight
-                    distance: delegate.distance
-                    active: delegate.index === strip.currentIndex
-                    locked: delegate.index === root.settledIndex
-
-                    onActivated: root._commit()
-                    onRequested: root._goToIndex(delegate.index)
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onEntered: delegate.hovered = true
+                    onExited: delegate.hovered = false
+                    onClicked: delegate.index === strip.currentIndex ? root._commit() : root._goToIndex(delegate.index)
                 }
             }
         }
