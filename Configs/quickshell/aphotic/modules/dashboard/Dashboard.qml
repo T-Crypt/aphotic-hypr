@@ -840,6 +840,8 @@ Item {
         radius: Tokens.rounding.large
         clip: true
 
+        NetworkUsageWatch {}
+
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: Tokens.padding.large
