@@ -340,8 +340,11 @@ aphotic wallpaper --random
 ## Installation
 
 > [!IMPORTANT]
-> Aphotic assumes an Arch/AUR base. It hasn't been tested on other distros
-> and no distro branching is planned — see the [FAQ](#faq).
+> Aphotic assumes an Arch/AUR base. Tested and supported on plain Arch
+> and on [Omarchy](https://omarchy.org/). EndeavourOS installed with
+> Desktop Environment: None also works. It's the same Arch/AUR base as a
+> minimal install, with nothing extra to account for. See the
+> [FAQ](#faq) for distro-specific notes.
 
 Clone the repository:
 
@@ -417,6 +420,31 @@ Aphotic detects your saved `aphotic.toml` and re-resolves your profile/layers ag
 ```
 
 Pass `--purge-packages` if you also want it to remove everything your profile installed (behind its own separate confirmation).
+
+## FAQ
+
+**Does Aphotic work on distros other than plain Arch?**
+
+Yes, on anything with an Arch/AUR base. Two distros beyond plain Arch are
+called out specifically:
+
+- **[Omarchy](https://omarchy.org/)**: a Hyprland-based Arch distro with
+  its own competing shell, update tooling, and idle screensaver.
+  `install.sh` detects it and handles the parts that need it. It works
+  around Omarchy's own pacman-update guard, replaces Omarchy's shell the
+  same way Aphotic already replaces waybar/rofi/dunst on any install, and
+  keeps Omarchy's own idle screensaver working through Aphotic's
+  `hypridle` config instead of dropping it. Verified end to end on a
+  fresh Omarchy ISO install, full out-of-box setup, no shortcuts.
+- **EndeavourOS**, installed with **Desktop Environment: None**: just an
+  Arch/AUR base with no competing DE, the same shape as running
+  Aphotic's own `minimal` profile. `./install.sh`, reboot, remove the
+  install media, and Aphotic is your desktop.
+
+Aphotic's own installer already replaces whatever bar/notification/lock
+stack it finds, so most Arch-based systems need nothing distro-specific
+at all. No further distro branching is planned beyond handling a
+specific known conflict, like Omarchy's shell, when one actually exists.
 
 ## Stack
 

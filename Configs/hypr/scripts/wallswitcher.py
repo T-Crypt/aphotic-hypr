@@ -381,7 +381,7 @@ def apply_wallpaper(theme, wallpaper):
     # In-process copy -- cheaper than spawning `cp` for what's just a
     # few-MB file, and nothing after this depends on it landing first.
     try:
-        shutil.copyfile(image_path, os.path.join(awww_dir, "wallpaper.rofi"))
+        shutil.copyfile(image_path, os.path.join(awww_dir, "current-wallpaper"))
     except OSError:
         pass
 

@@ -21,6 +21,17 @@ DETECTED_AMD_PRESENT="false"
 DETECTED_AUR_HELPER=""
 DETECTED_BLACKARCH_REPO=0
 DETECTED_MULTILIB_REPO=0
+DETECTED_OMARCHY=0
+
+# Omarchy ships a pacman hook (00-omarchy-update-guard.hook) that aborts any
+# direct `pacman -Syu` -- it only fires on an actual pending transaction, so
+# it's invisible on an already-updated system, but blocks stage 5's sync
+# unconditionally on a fresh install. OMARCHY_ALLOW_DIRECT_PACMAN=1 is the
+# hook's own documented escape hatch, not a bypass we invented.
+detect_omarchy() {
+  [[ -r /etc/os-release ]] || return 1
+  grep -q '^ID=omarchy$' /etc/os-release
+}
 
 # A handful of cheap, well-known markers -- not exhaustive dotfile-manager
 # detection, just enough to warn a user who's already managing ~/.config
@@ -105,6 +116,11 @@ except Exception:
 
   blackarch_repo_present && { DETECTED_BLACKARCH_REPO=1; echo -e "  $COK BlackArch repo already enabled"; }
   multilib_repo_present && { DETECTED_MULTILIB_REPO=1; echo -e "  $COK multilib repo already enabled"; }
+
+  if detect_omarchy; then
+    DETECTED_OMARCHY=1
+    echo -e "  $COK Omarchy detected -- routing around its pacman-guard hook for the sync/upgrade step below. Run 'omarchy update' yourself afterward too: it handles Omarchy's own migrations, keyring, and snapshots, which this installer doesn't."
+  fi
 
   # The one decision asked during detection itself rather than just
   # surfaced: it doesn't depend on anything resolved later (AUR_HELPER

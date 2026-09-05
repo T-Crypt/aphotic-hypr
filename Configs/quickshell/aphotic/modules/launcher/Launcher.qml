@@ -222,8 +222,8 @@ Item {
             spacing: 0
 
             // Wallpaper preview strip -- a real live crop of the current
-            // desktop wallpaper, the same source Rofi's inputbar reads
-            // (~/.config/awww/wallpaper.rofi via the Wallpapers service).
+            // desktop wallpaper (~/.config/awww/current-wallpaper via the
+            // Wallpapers service).
             Item {
                 id: previewStrip
 

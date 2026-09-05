@@ -421,7 +421,14 @@ main() {
   # (No DRY_RUN branch here -- the dry-run plan above already exits before
   # Stage 5 is ever reached, see the upfront "[dry-run] plan" block.)
   echo -e "$CNT - Syncing package databases and upgrading the system..."
-  sudo pacman -Syu --noconfirm &>> "$INSTLOG" || { echo -e "$CER - Failed to sync/upgrade the system package database. Re-run 'sudo pacman -Syu' by hand, resolve whatever it reports, then re-run install.sh."; exit 1; }
+  # Omarchy's pacman-guard hook blocks a bare -Syu on any pending transaction
+  # (see detect_omarchy in lib/install/detect.sh); OMARCHY_ALLOW_DIRECT_PACMAN=1
+  # is the hook's own documented way to opt out for a single invocation.
+  if [[ "$DETECTED_OMARCHY" == "1" ]]; then
+    sudo env OMARCHY_ALLOW_DIRECT_PACMAN=1 pacman -Syu --noconfirm &>> "$INSTLOG" || { echo -e "$CER - Failed to sync/upgrade the system package database. Re-run 'sudo env OMARCHY_ALLOW_DIRECT_PACMAN=1 pacman -Syu' by hand, resolve whatever it reports, then re-run install.sh."; exit 1; }
+  else
+    sudo pacman -Syu --noconfirm &>> "$INSTLOG" || { echo -e "$CER - Failed to sync/upgrade the system package database. Re-run 'sudo pacman -Syu' by hand, resolve whatever it reports, then re-run install.sh."; exit 1; }
+  fi
 
   install_package_list "$prep_pkgs" "$base_prep_pkgs"
 
@@ -467,6 +474,16 @@ main() {
     deploy_user_configs
     setup_login_manager_theme
     install_vscode_extensions
+
+    # Hyprland's exec-once only fires at its own startup, never on a config
+    # reload -- if a graphical session is already up (e.g. Omarchy's sddm
+    # autologin straight into Hyprland, or install.sh just run from a
+    # terminal inside an existing session), aphotic-shell.service's exec-once
+    # start already silently missed its one chance. Start it explicitly now.
+    if systemctl --user is-active --quiet graphical-session.target; then
+      echo -e "$CNT - A graphical session is already running -- starting the shell now rather than waiting on Hyprland's exec-once, which won't fire again for this session."
+      restart_shell_if_enabled
+    fi
   fi
 
   print_stage 7 "Shell setup"

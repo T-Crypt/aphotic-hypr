@@ -413,7 +413,7 @@ _aphotic_theme_apply() {
         aphotic_warn "wallust not found, skipping palette regeneration"
     fi
 
-    cp "$image_path" "${APHOTIC_AWWW_DIR}/wallpaper.rofi" 2>/dev/null || true
+    cp "$image_path" "${APHOTIC_AWWW_DIR}/current-wallpaper" 2>/dev/null || true
 
     # Plugin theme-hooks (see docs/PLUGIN_SYSTEM.md) -- fire-and-forget,
     # the shared implementation (cmd_plugin.sh) already backgrounds each
