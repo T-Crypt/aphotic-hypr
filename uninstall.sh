@@ -95,6 +95,15 @@ json.dump(data, open(path, "w"), indent=2)' "$ASSISTANT_CONFIG"
   fi
 fi
 
+if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml || -f /etc/greetd/aphotic/hyprland-greeter.conf ]]; then
+  read -rep $'Remove the greetd greeter preview scaffold (/etc/xdg/quickshell/aphotic-greeter, /etc/greetd/aphotic, /etc/aphotic/greeter)? This never touches sddm or /etc/greetd/config.toml either way. (y,n) ' GREETER_CONFIRM
+  if [[ "$GREETER_CONFIRM" == "y" || "$GREETER_CONFIRM" == "Y" ]]; then
+    sudo rm -rf /etc/xdg/quickshell/aphotic-greeter /etc/greetd/aphotic /etc/aphotic/greeter
+    systemctl --user disable --now aphotic-greeter-sync.timer &>/dev/null || true
+    echo "Removed the greetd greeter preview scaffold. If you ever ran 'aphotic displaymanager switch greetd', run 'aphotic displaymanager switch sddm --confirm-tested' first to restore sddm before removing this."
+  fi
+fi
+
 if [[ "$PURGE_PACKAGES" == "1" ]]; then
   AUR_HELPER=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["system"]["aur_helper"])' "$APHOTIC_TOML")
   read -rep $"This will run $AUR_HELPER -R against every package this profile installed (including custom_apps.lst entries). Continue? (y,n) " PURGE_CONFIRM

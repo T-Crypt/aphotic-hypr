@@ -415,6 +415,7 @@ def apply_wallpaper(theme, wallpaper):
     run_detached(["pywalfox", "update"])
     run_detached(["aphotic", "reload"])
     run_detached(["aphotic", "sddm", "sync"])
+    run_detached(["aphotic", "greeter", "sync"])
 
 
 def main():
