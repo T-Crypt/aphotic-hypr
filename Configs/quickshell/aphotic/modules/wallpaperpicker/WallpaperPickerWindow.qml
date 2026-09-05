@@ -28,13 +28,23 @@ PanelWindow {
     implicitWidth: screen.width
     implicitHeight: screen.height
 
+    WallpaperBackdrop {
+        anchors.fill: parent
+        active: root.screenState.wallpaperPicker
+        source: filmstrip.backdropSource
+        bandHeight: filmstrip.bandHeight
+        fadeExtent: filmstrip.bandFade
+    }
+
     MouseArea {
         anchors.fill: parent
         onClicked: root.screenState.wallpaperPicker = false
     }
 
     WallpaperFilmstrip {
-        anchors.centerIn: parent
+        id: filmstrip
+
+        anchors.fill: parent
         screenState: root.screenState
     }
 }
