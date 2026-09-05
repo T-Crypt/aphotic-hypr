@@ -7,22 +7,13 @@ import Quickshell.Widgets
 import qs.config
 import qs.components
 import qs.services
+import qs.utils
 
 StyledRect {
     id: root
 
     required property var modelData
 
-    readonly property bool hasAppIcon: root.modelData.appIcon.length > 0
-    // Quickshell.iconPath()'s two-arg (icon, fallback) overload only
-    // resolves icon-THEME NAMES -- a raw path/file:// URI (both valid
-    // per the freedesktop notification spec's app_icon field) silently
-    // falls through to the fallback glyph instead. See Notification.qml's
-    // matching comment for the full source-level reasoning. History
-    // doesn't persist the separate `image` field NotifData/Notification.qml
-    // read (NotificationHistory.qml only stores appIcon), so this fix is
-    // narrower here than the live popup's.
-    readonly property bool appIconIsPath: root.modelData.appIcon.startsWith("/") || root.modelData.appIcon.startsWith("file://")
 
     function relativeTime(ms: real): string {
         const diff = Date.now() - ms;
@@ -61,16 +52,17 @@ StyledRect {
             color: Colours.palette.m3primary
         }
 
-        Loader {
-            active: root.hasAppIcon
+        AppIcon {
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: Tokens.sizes.notifs.image
             Layout.preferredHeight: Tokens.sizes.notifs.image
 
-            sourceComponent: IconImage {
-                source: root.appIconIsPath ? root.modelData.appIcon : Quickshell.iconPath(root.modelData.appIcon, "image-missing")
-                implicitSize: Tokens.sizes.notifs.image
-            }
+            name: root.modelData.appIcon
+            appClass: root.modelData.appName ?? ""
+            fallbackGlyph: Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
+            size: Tokens.sizes.notifs.image
+            fontStyle: Tokens.font.icon.medium
+            colour: Colours.palette.m3primary
         }
 
         ColumnLayout {

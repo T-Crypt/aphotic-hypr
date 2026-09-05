@@ -7,7 +7,6 @@ import Quickshell.Hyprland
 import qs.config
 import qs.components
 import qs.services
-import qs.utils
 
 Item {
     id: root
@@ -38,12 +37,13 @@ Item {
         anchors.rightMargin: Tokens.padding.medium
         spacing: Tokens.spacing.medium
 
-        IconImage {
+        AppIcon {
             id: icon
 
             asynchronous: true
-            source: Icons.getAppIcon(root.modelData.lastIpcObject?.class, "application-x-executable")
-            implicitSize: parent.height * 0.7
+            appClass: root.modelData.lastIpcObject?.class ?? ""
+            size: parent.height * 0.7
+            fontStyle: Tokens.font.icon.large
             anchors.verticalCenter: parent.verticalCenter
         }
 

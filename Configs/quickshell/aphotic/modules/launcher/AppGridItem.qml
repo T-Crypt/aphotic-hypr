@@ -34,11 +34,13 @@ Item {
         width: parent.width - Tokens.spacing.small * 2
         spacing: Tokens.spacing.small
 
-        IconImage {
+        AppIcon {
             anchors.horizontalCenter: parent.horizontalCenter
             asynchronous: true
-            source: Quickshell.iconPath(root.modelData.icon, "image-missing")
-            implicitSize: 48
+            name: root.modelData.icon
+            appClass: [root.modelData.id, root.modelData.name]
+            size: 48
+            fontStyle: Tokens.font.icon.extraLarge
         }
 
         StyledText {

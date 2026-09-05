@@ -37,7 +37,8 @@ Item {
             items.push({
                 key: id,
                 name: entry.name,
-                icon: Quickshell.iconPath(entry.icon, "application-x-executable"),
+                iconName: entry.icon,
+                iconKeys: [id, entry.name],
                 running: matches.length > 0,
                 windows: matches.flatMap(g => g.windows),
                 entry
@@ -53,7 +54,8 @@ Item {
             items.push({
                 key: g.appClass,
                 name: entry?.name ?? g.appClass,
-                icon: g.windows[0]?.icon ?? Quickshell.iconPath(g.appClass, "application-x-executable"),
+                iconName: entry?.icon ?? "",
+                iconKeys: g.appClass,
                 running: true,
                 windows: g.windows,
                 entry: entry ?? null
