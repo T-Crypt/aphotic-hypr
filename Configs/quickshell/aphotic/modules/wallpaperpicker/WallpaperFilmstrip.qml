@@ -34,6 +34,15 @@ Item {
 
     readonly property string backdropSource: root._pathFor(strip.currentIndex)
 
+    // The strip runs endlessly in both directions by giving the ListView the
+    // wallpaper list repeated an odd number of times and living in the middle
+    // copy. A "slot" is an index into that repeated space; the wallpaper it
+    // shows is slot modulo the real list length.
+    readonly property int wallpaperCount: Themes.wallpapersInActiveTheme.length
+    readonly property int reps: 21
+    readonly property int slotCount: wallpaperCount > 0 ? wallpaperCount * reps : 0
+    readonly property int anchorBase: wallpaperCount * Math.floor(reps / 2)
+
     property string _originalWallpaper: ""
     property int _previewIndex: -1
     property int settledIndex: -1
@@ -43,9 +52,34 @@ Item {
 
     focus: true
 
-    function _pathFor(index: int): string {
-        const file = Themes.wallpapersInActiveTheme[index];
+    function _logical(slot: int): int {
+        const n = root.wallpaperCount;
+        return n > 0 ? ((slot % n) + n) % n : -1;
+    }
+
+    function _fileFor(slot: int): string {
+        return Themes.wallpapersInActiveTheme[root._logical(slot)] ?? "";
+    }
+
+    function _pathFor(slot: int): string {
+        const file = root._fileFor(slot);
         return file ? `file://${Themes.awwwDir}/${Themes.activeTheme}/${file}` : "";
+    }
+
+    // Sliding back to the middle copy once the strip is at rest keeps either
+    // end out of reach. The content is periodic, so moving contentX by a whole
+    // number of copies lands on the same picture and shows nothing.
+    function _reanchor(): void {
+        if (root.wallpaperCount <= 0 || glideAnim.running)
+            return;
+        const want = root.anchorBase + root._logical(strip.currentIndex);
+        const shift = want - strip.currentIndex;
+        if (shift === 0)
+            return;
+        strip.contentX += shift * root.slotPitch;
+        strip.currentIndex = want;
+        if (root.settledIndex >= 0)
+            root.settledIndex += shift;
     }
 
     // Themes.setTheme() writes ~/.local/state/aphotic/theme.json and queues
@@ -100,6 +134,22 @@ Item {
         return clamped * root.slotPitch - root.centerOffset;
     }
 
+    // Anchor into the middle copy rather than wherever the view happens to
+    // sit. Slot 0 is the very edge of the repeated model, where stepping left
+    // hits the clamp instead of wrapping, and that is exactly where an open
+    // lands if the theme scan has not produced a list yet -- so this runs
+    // again when one arrives.
+    function _anchorToActive(): void {
+        if (!root.screenState?.wallpaperPicker || root.wallpaperCount <= 0)
+            return;
+        const idx = Themes.wallpapersInActiveTheme.indexOf(Themes.activeWallpaper);
+        const slot = root.anchorBase + (idx !== -1 ? idx : root._logical(strip.currentIndex));
+        strip.currentIndex = slot;
+        strip.contentX = root._targetContentX(slot);
+    }
+
+    onWallpaperCountChanged: Qt.callLater(root._anchorToActive)
+
     // centerOffset is derived from the window's width, which is still
     // unresolved when the picker is first shown, so the contentX set on open
     // is computed against the wrong offset and leaves the strip parked
@@ -115,9 +165,10 @@ Item {
     onSlotPitchChanged: Qt.callLater(root._recenter)
 
     function _settle(): void {
+        root._reanchor();
         settleAnim.to = root._targetContentX(strip.currentIndex);
         settleAnim.restart();
-        root._previewIndex = strip.currentIndex;
+        root._previewIndex = root._logical(strip.currentIndex);
         previewDelay.restart();
         root.settledIndex = strip.currentIndex;
     }
@@ -177,12 +228,8 @@ Item {
             root._cancelPreview();
             root._abortGlide();
             root._originalWallpaper = Themes.activeWallpaper;
-            const idx = Themes.wallpapersInActiveTheme.indexOf(Themes.activeWallpaper);
-            if (idx !== -1) {
-                strip.currentIndex = idx;
-                strip.contentX = root._targetContentX(idx);
-                Qt.callLater(root._recenter);
-            }
+            root._anchorToActive();
+            Qt.callLater(root._recenter);
             root.settledIndex = -1;
             root.settledIndex = strip.currentIndex;
             root.forceActiveFocus();
@@ -240,7 +287,7 @@ Item {
             maximumFlickVelocity: root.maxFlickVelocity
             boundsBehavior: Flickable.DragOverBounds
 
-            model: Themes.wallpapersInActiveTheme
+            model: root.slotCount
 
             onContentXChanged: {
                 // This filmstrip's item tree stays alive even while the
@@ -298,9 +345,10 @@ Item {
                     if (landed < 0)
                         return;
                     strip.currentIndex = landed;
-                    root._previewIndex = landed;
+                    root._reanchor();
+                    root._previewIndex = root._logical(strip.currentIndex);
                     previewDelay.restart();
-                    root.settledIndex = landed;
+                    root.settledIndex = strip.currentIndex;
                 }
             }
 
@@ -311,7 +359,6 @@ Item {
             delegate: Item {
                 id: delegate
 
-                required property string modelData
                 required property int index
 
                 readonly property real itemCenterX: x + width / 2
@@ -340,7 +387,7 @@ Item {
                     width: root.cellWidth
                     height: root.cellHeight
 
-                    source: `file://${Themes.awwwDir}/${Themes.activeTheme}/${delegate.modelData}`
+                    source: root._pathFor(delegate.index)
                     decodeWidth: root.cellWidth
                     decodeHeight: root.cellHeight
                     matteWidth: root.matteWidth
@@ -363,7 +410,7 @@ Item {
 
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Themes.wallpapersInActiveTheme[strip.currentIndex] ?? Themes.activeWallpaper
+                text: root._fileFor(strip.currentIndex) || Themes.activeWallpaper
                 font: Tokens.font.title.large
                 color: Colours.palette.m3onSurface
                 animate: true
@@ -372,25 +419,27 @@ Item {
             Row {
                 id: rail
 
-                readonly property int capacity: 25
-                readonly property int shown: Math.min(strip.count, capacity)
-                readonly property int start: Math.max(0, Math.min(strip.currentIndex - Math.floor(capacity / 2), strip.count - shown))
-                readonly property bool windowed: strip.count > capacity
+                // Five dots that rotate with the strip rather than one per
+                // wallpaper: the middle dot is always where you are, and the
+                // rest read as how far a click will travel. A per-wallpaper
+                // rail cannot show position in an endless list, and stopped
+                // being readable past a couple of dozen wallpapers anyway.
+                readonly property int span: Math.min(5, root.wallpaperCount)
+                readonly property int half: Math.floor(rail.span / 2)
 
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: Tokens.spacing.extraSmall
 
                 Repeater {
-                    model: rail.shown
+                    model: rail.span
 
                     Item {
                         id: dot
 
                         required property int index
 
-                        readonly property int wallpaperIndex: rail.start + dot.index
-                        readonly property bool current: dot.wallpaperIndex === strip.currentIndex
-                        readonly property real edgeFade: rail.windowed ? Math.min(1, (Math.min(dot.index, rail.shown - 1 - dot.index) + 1) / 3) : 1
+                        readonly property int offset: dot.index - rail.half
+                        readonly property bool current: dot.offset === 0
 
                         implicitWidth: Tokens.spacing.large
                         implicitHeight: Tokens.spacing.large
@@ -402,7 +451,7 @@ Item {
                             implicitHeight: implicitWidth
                             radius: implicitWidth / 2
                             color: dot.current ? Colours.palette.m3primary : Colours.palette.m3onSurface
-                            opacity: dot.current ? 0.55 + 0.45 * DepthFx.pulse : 0.4 * dot.edgeFade
+                            opacity: dot.current ? 0.55 + 0.45 * DepthFx.pulse : 0.4 - 0.09 * Math.abs(dot.offset)
 
                             Behavior on implicitWidth {
                                 Anim {
@@ -418,7 +467,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root._goToIndex(dot.wallpaperIndex)
+                            onClicked: root._step(dot.offset)
                         }
                     }
                 }
