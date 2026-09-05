@@ -19,14 +19,9 @@ Item {
     readonly property int stripWidth: Math.min(slotPitch * visibleSlots, Math.max(cellWidth, Math.round(root.width * 0.86)))
     readonly property real centerOffset: (stripWidth - cellWidth) / 2
 
-    // The strip clips horizontally, so its height has to clear the tallest a
-    // card ever gets -- centre scale times the hover and settle-punch bumps --
-    // plus the glow's bleed, or the clip edge slices the top of the card the
-    // moment it grows.
-    readonly property int stripHeight: Math.round(cellHeight * centerScale * 1.18) + Math.round(cellHeight * 0.28)
+    readonly property int heroHeight: Math.round(cellHeight * centerScale)
+    readonly property int stripHeight: heroHeight + Math.round(cellHeight * 0.5)
 
-    readonly property int textureWidth: Math.round(cellWidth * centerScale)
-    readonly property int textureHeight: Math.round(cellHeight * centerScale)
     readonly property int matteWidth: 64
     readonly property int matteHeight: 36
 
@@ -202,7 +197,6 @@ Item {
             spacing: root.cellSpacing
             leftMargin: root.centerOffset
             rightMargin: root.centerOffset
-            clip: true
             cacheBuffer: root.slotPitch * 2
 
             snapMode: ListView.NoSnap
@@ -266,8 +260,7 @@ Item {
                 readonly property real distance: (itemCenterX - viewCenterX) / root.slotPitch
 
                 width: root.cellWidth
-                height: root.cellHeight
-                y: (strip.height - height) / 2
+                height: strip.height
                 scale: Math.max(0.42, root.centerScale - Math.abs(distance) * 0.34)
                 opacity: Math.max(0, 1 - Math.abs(distance) * 0.38)
 
@@ -283,15 +276,16 @@ Item {
                 }
 
                 WallpaperCard {
-                    anchors.fill: parent
+                    anchors.centerIn: parent
+
+                    width: root.cellWidth
+                    height: root.cellHeight
 
                     source: `file://${Themes.awwwDir}/${Themes.activeTheme}/${delegate.modelData}`
                     decodeWidth: root.cellWidth
                     decodeHeight: root.cellHeight
                     matteWidth: root.matteWidth
                     matteHeight: root.matteHeight
-                    textureWidth: root.textureWidth
-                    textureHeight: root.textureHeight
                     distance: delegate.distance
                     active: delegate.index === strip.currentIndex
                     locked: delegate.index === root.settledIndex

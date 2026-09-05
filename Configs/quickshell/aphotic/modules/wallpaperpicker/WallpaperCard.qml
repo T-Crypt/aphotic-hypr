@@ -15,8 +15,6 @@ Item {
     required property int decodeHeight
     required property int matteWidth
     required property int matteHeight
-    required property int textureWidth
-    required property int textureHeight
 
     property real distance: 0
     property bool active: false
