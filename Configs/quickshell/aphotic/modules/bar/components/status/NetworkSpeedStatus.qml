@@ -14,4 +14,6 @@ MaterialIcon {
     text: "swap_vert"
     color: root.colour
     fill: root.active ? 1 : 0
+
+    NetworkUsageWatch {}
 }
