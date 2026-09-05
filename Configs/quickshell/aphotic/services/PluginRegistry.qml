@@ -159,10 +159,16 @@ Singleton {
             // Overlay only. The host budgets its surface from these once
             // and never resizes it, so a manifest that omits them gets a
             // usable square rather than a zero-sized window that silently
-            // draws nothing.
+            // draws nothing. A fullscreen-overlay ignores all three: it is
+            // the output, so there is no budget to declare.
             anchor: s.anchor || "bottom",
             width: s.width > 0 ? s.width : 240,
             height: s.height > 0 ? s.height : 240,
+            // Fullscreen-overlay only. What puts the surface on screen,
+            // resolved by FullscreenOverlays.presented() -- which fails
+            // closed on a token this build does not know, so the default
+            // has to be a token it does.
+            trigger: s.trigger || "idle",
             componentUrl: `file://${root.pluginsDir}/${name}/${s.component}`
         }));
     }

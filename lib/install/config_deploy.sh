@@ -2,6 +2,46 @@
 # lib/install/config_deploy.sh
 set -euo pipefail
 
+# Compiles the shell's fragment shaders to the .qsb form Qt6's
+# ShaderEffect actually loads. Built here rather than committed, because a
+# .qsb is versioned against the Qt that produced it -- a prebuilt one from
+# a different Qt renders nothing at all, with no error, which is the
+# failure mode this project has been bitten by before.
+#
+# Never fatal. The shell's SignalText falls back to unshaded text when the
+# .qsb is missing, so a machine without qt6-shadertools loses an effect,
+# not a surface.
+build_shell_shaders() {
+  local shader_dir="$HOME/.config/quickshell/aphotic/shaders"
+  local qsb_bin="" candidate frag built=0
+
+  [[ -d "$shader_dir" ]] || return 0
+
+  for candidate in qsb /usr/lib/qt6/bin/qsb /usr/lib/qt/bin/qsb; do
+    if command -v "$candidate" &>/dev/null; then
+      qsb_bin="$candidate"
+      break
+    fi
+  done
+
+  if [[ -z "$qsb_bin" ]]; then
+    echo -e "$CWR - qsb not found (qt6-shadertools); shell shaders will fall back to plain rendering."
+    return 0
+  fi
+
+  for frag in "$shader_dir"/*.frag; do
+    [[ -f "$frag" ]] || continue
+    if "$qsb_bin" --glsl "100es,120,150" --hlsl 50 --msl 12 -o "${frag}.qsb" "$frag" &>> "$INSTLOG"; then
+      built=$((built + 1))
+    else
+      echo -e "$CWR - Could not compile $(basename "$frag"); that effect will fall back to plain rendering."
+    fi
+  done
+
+  [[ "$built" -gt 0 ]] && echo -e "$CNT - Compiled $built shell shader(s)."
+  return 0
+}
+
 # Everything a config refresh needs: the Configs/ copy, the symlinks that
 # must track repo edits, the user systemd units, the Claude Code hook
 # wiring, and PATH. Deliberately stops short of anything needing sudo
@@ -159,6 +199,8 @@ deploy_user_configs() {
   # quickshell/aphotic -- see docs/archive/PLUGIN_SYSTEM.md manifest v3.
   # Re-link them now; a no-op if no such plugin is installed.
   "$HOME/.local/bin/aphotic" plugin relink-ui-modules &>> "$INSTLOG" || true
+
+  build_shell_shaders
 
   echo -e "$CNT - Enabling the Aphotic shell restart-supervision unit..."
   mkdir -p "$HOME/.config/systemd/user"

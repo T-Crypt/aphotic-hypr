@@ -18,6 +18,7 @@ SettingsPresetRow 1.0 SettingsPresetRow.qml
 SettingsRow 1.0 SettingsRow.qml
 SettingsSection 1.0 SettingsSection.qml
 SettingsToggleRow 1.0 SettingsToggleRow.qml
+SignalText 1.0 SignalText.qml
 StateLayer 1.0 StateLayer.qml
 StyledClippingRect 1.0 StyledClippingRect.qml
 StyledRect 1.0 StyledRect.qml

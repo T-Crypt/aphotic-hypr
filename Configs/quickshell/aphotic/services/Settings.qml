@@ -275,6 +275,22 @@ Singleton {
     property bool idleSuspendEnabled: false
     property int idleSuspendTimeout: 1800
 
+    // The screensaver timeout is deliberately its own number rather than
+    // a fraction of the lock timeout. They answer different questions --
+    // one is "show me something", the other is "keep other people out" --
+    // and a user who wants the desktop to go pretty after five minutes
+    // should not have to shorten the timeout that protects the session to
+    // get it. Dismissing the screensaver is real input, so it resets the
+    // lock countdown the same way any other keystroke does.
+    //
+    // What actually appears is whatever plugin registers a
+    // `fullscreen-overlay` surface with an `idle` trigger. With none
+    // installed the timeout fires into an IPC call that mounts nothing,
+    // which is the correct amount of screensaver for a shell that has no
+    // screensaver.
+    property bool screensaverEnabled: true
+    property int screensaverTimeout: 300
+
     // Root directories the launcher's "@" project-switcher mode scans for
     // git repos (each immediate/one-level-deep child dir containing a
     // .git). Empty means "not configured yet" -- Launcher.qml falls back
@@ -375,6 +391,8 @@ Singleton {
             idleScreenOffTimeout: root.idleScreenOffTimeout,
             idleSuspendEnabled: root.idleSuspendEnabled,
             idleSuspendTimeout: root.idleSuspendTimeout,
+            screensaverEnabled: root.screensaverEnabled,
+            screensaverTimeout: root.screensaverTimeout,
             projectRoots: root.projectRoots,
             launcherStyle: root.launcherStyle,
             workspaceProfiles: root.workspaceProfiles,
@@ -423,20 +441,30 @@ Singleton {
         if (root.idleSuspendEnabled)
             lines.push("listener {", `    timeout = ${root.idleSuspendTimeout}`, "    on-timeout = systemctl suspend", "}");
 
-        // Omarchy's own idle screensaver (a real feature: "OMARCHY" text
-        // rendered with random terminal effects via ttfx, see
-        // omarchy-launch-screensaver) used to fire from Omarchy's own
-        // hypridle.conf, which this function's own output replaces --
-        // silently dropping it, not something this installer should do.
-        // `command -v` gate makes this a no-op anywhere the binary doesn't
-        // exist, so the same generated file is correct on every distro;
-        // 150s matches Omarchy's own shell.json default screensaver timeout,
-        // independent of Aphotic's own (security-relevant, user-adjustable)
-        // lock timeout above.
-        lines.push("listener {", "    timeout = 150", "    on-timeout = command -v omarchy-launch-screensaver >/dev/null 2>&1 && omarchy-launch-screensaver", "}");
+        // The screensaver listener, ahead of the lock listener above. Only
+        // emitted when it would actually fire first -- a screensaver
+        // scheduled at or after the lock is a surface nobody ever sees,
+        // and writing it anyway would just be a timer that never wins.
+        // on-resume covers the case where the dismissing input never
+        // reached the surface (another output woke, an inhibitor
+        // released, the shell restarted under it).
+        const screensaverCmd = "qs -c aphotic ipc call idle";
+        if (root.screensaverEnabled && (!root.idleLockEnabled || root.screensaverTimeout < root.idleLockTimeout))
+            lines.push("listener {", `    timeout = ${root.screensaverTimeout}`, `    on-timeout = ${screensaverCmd} engage`, `    on-resume = ${screensaverCmd} dismiss`, "}");
+
+        // A screensaver launcher some upstream distributions ship used to
+        // fire from their own hypridle.conf, which this function's output
+        // replaces -- silently dropping it is not something this installer
+        // should do. The `command -v` gate makes it a no-op anywhere the
+        // binary does not exist, so the same generated file is correct
+        // everywhere. Suppressed once Aphotic's own screensaver is on,
+        // because two screensavers racing the same timeout is worse than
+        // either of them.
+        if (!root.screensaverEnabled)
+            lines.push("listener {", "    timeout = 150", "    on-timeout = command -v omarchy-launch-screensaver >/dev/null 2>&1 && omarchy-launch-screensaver", "}");
 
         const confPath = `${Quickshell.env("HOME")}/.config/hypr/hypridle.conf`;
-        const script = root.idleLockEnabled || root.idleSuspendEnabled ? `mkdir -p "$(dirname '${confPath}')" && cat > '${confPath}' <<'APHOTIC_HYPRIDLE_EOF'\n${lines.join("\n")}\nAPHOTIC_HYPRIDLE_EOF\nsystemctl --user enable hypridle.service >/dev/null 2>&1; systemctl --user restart hypridle.service` : "systemctl --user disable --now hypridle.service >/dev/null 2>&1";
+        const script = root.idleLockEnabled || root.idleSuspendEnabled || root.screensaverEnabled ? `mkdir -p "$(dirname '${confPath}')" && cat > '${confPath}' <<'APHOTIC_HYPRIDLE_EOF'\n${lines.join("\n")}\nAPHOTIC_HYPRIDLE_EOF\nsystemctl --user enable hypridle.service >/dev/null 2>&1; systemctl --user restart hypridle.service` : "systemctl --user disable --now hypridle.service >/dev/null 2>&1";
         idleApplyProc.command = ["sh", "-c", script];
         idleApplyProc.running = true;
     }
@@ -660,6 +688,14 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
         root._saveState();
         root._applyIdleConfig();
     }
+    onScreensaverEnabledChanged: {
+        root._saveState();
+        root._applyIdleConfig();
+    }
+    onScreensaverTimeoutChanged: {
+        root._saveState();
+        root._applyIdleConfig();
+    }
     onProjectRootsChanged: root._saveState()
     onLauncherStyleChanged: root._saveState()
     onWorkspaceProfilesChanged: root._saveState()
@@ -839,6 +875,10 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.idleSuspendEnabled = data.idleSuspendEnabled;
                 if (typeof data.idleSuspendTimeout === "number")
                     root.idleSuspendTimeout = data.idleSuspendTimeout;
+                if (typeof data.screensaverEnabled === "boolean")
+                    root.screensaverEnabled = data.screensaverEnabled;
+                if (typeof data.screensaverTimeout === "number")
+                    root.screensaverTimeout = data.screensaverTimeout;
                 if (Array.isArray(data.projectRoots))
                     root.projectRoots = data.projectRoots;
                 if (typeof data.launcherStyle === "string")

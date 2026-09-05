@@ -19,4 +19,8 @@ Thumbs.db
 *.swp
 *.bak
 
+# Compiled shaders. Built from the .frag sources at install time against
+# whatever Qt the machine has, never committed.
+*.qsb
+
 recordings/

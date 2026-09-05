@@ -1,2 +1,3 @@
 module qs.modules.overlay
 PluginOverlayWindow 1.0 PluginOverlayWindow.qml
+PluginFullscreenWindow 1.0 PluginFullscreenWindow.qml
