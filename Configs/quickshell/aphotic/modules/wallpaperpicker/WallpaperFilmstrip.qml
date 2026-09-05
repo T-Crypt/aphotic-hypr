@@ -74,9 +74,13 @@ Item {
         root.screenState.wallpaperPicker = false;
     }
 
+    // Escaping without having moved used to re-apply the wallpaper that was
+    // already active, spending a full wallust + awww + sddm-sync run to
+    // arrive back where it started.
     function _revertAndClose(): void {
         root._cancelPreview();
-        Themes.setWallpaperInActiveTheme(root._originalWallpaper);
+        if (root._originalWallpaper && root._originalWallpaper !== Themes.activeWallpaper)
+            Themes.setWallpaperInActiveTheme(root._originalWallpaper);
         root.screenState.wallpaperPicker = false;
     }
 

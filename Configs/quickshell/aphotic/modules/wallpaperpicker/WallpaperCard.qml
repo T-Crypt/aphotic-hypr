@@ -92,7 +92,7 @@ Item {
         layer.enabled: true
         layer.smooth: true
         layer.effect: Mask {
-            maskSource: silhouette
+            maskSource: silhouetteSource
             maskThresholdMin: 0
             maskSpreadAtMin: 0
             blurEnabled: root.dofAmount > 0.04
@@ -133,13 +133,27 @@ Item {
         id: silhouette
 
         anchors.fill: parent
-        visible: false
-        layer.enabled: true
         fillColour: "white"
         strokeColour: "transparent"
         strokeWidth: 0
         chamfer: root.chamfer
         corner: root.corner
+    }
+
+    // The mask source is an explicit live ShaderEffectSource rather than
+    // `visible: false` + `layer.enabled` on the shape itself. An invisible
+    // item leaves the scene graph while the picker window is hidden, and
+    // nothing dirties it when the window comes back, so the mask sampled an
+    // empty texture and multiplied the whole card away -- an empty bevel with
+    // no artwork, until any movement happened to dirty the layer again.
+    ShaderEffectSource {
+        id: silhouetteSource
+
+        anchors.fill: parent
+        sourceItem: silhouette
+        hideSource: true
+        live: true
+        visible: false
     }
 
     BevelPath {
