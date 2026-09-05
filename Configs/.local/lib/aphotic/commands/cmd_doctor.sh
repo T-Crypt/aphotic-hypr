@@ -80,6 +80,20 @@ aphotic_cmd_doctor() {
     _aphotic_doctor_layer_plugins
 
     echo
+    echo "Display manager:"
+    local sddm_enabled greetd_enabled
+    sddm_enabled="$(systemctl is-enabled sddm.service 2>/dev/null || echo disabled)"
+    greetd_enabled="$(systemctl is-enabled greetd.service 2>/dev/null || echo not-installed)"
+    printf '  sddm:   %s\n' "$sddm_enabled"
+    printf '  greetd: %s\n' "$greetd_enabled"
+    if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml ]]; then
+        printf '  [ok]   greetd greeter scaffold deployed (aphotic displaymanager status for detail)\n'
+    fi
+    if [[ "$sddm_enabled" == "enabled" && "$greetd_enabled" == "enabled" ]]; then
+        printf '  [warn] both sddm and greetd are enabled -- only one owns display-manager.service; run '\''aphotic displaymanager status'\'' to see which actually wins\n'
+    fi
+
+    echo
     if pgrep -f "qs -c aphotic" >/dev/null 2>&1; then
         echo "Daemon: running"
     else

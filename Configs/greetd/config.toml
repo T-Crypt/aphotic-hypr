@@ -1,0 +1,13 @@
+# Reference greetd config for the Aphotic greeter -- NOT deployed
+# automatically by install.sh. `aphotic displaymanager switch greetd`
+# (commands/cmd_displaymanager.sh) is the only thing that ever writes to
+# the real /etc/greetd/config.toml, and it backs up whatever was there
+# first. Kept here, tracked, so the switch command has one real file to
+# copy from rather than a heredoc buried in a shell script.
+
+[terminal]
+vt = "next"
+
+[default_session]
+command = "Hyprland --config /etc/greetd/aphotic/hyprland-greeter.conf"
+user = "greeter"

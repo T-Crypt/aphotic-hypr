@@ -1,0 +1,9 @@
+[Unit]
+Description=Sync the Aphotic greetd greeter's palette/wallpaper snapshot
+
+[Service]
+Type=oneshot
+# Absolute path, not `/usr/bin/env aphotic` -- see aphotic-agent-usage
+# .service's own comment for why (systemd --user's PATH doesn't include
+# ~/.local/bin, so `env` can never resolve the plain name).
+ExecStart=%h/.local/bin/aphotic greeter sync

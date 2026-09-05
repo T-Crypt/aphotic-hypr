@@ -50,6 +50,7 @@ PROFILE=""
 LAYERS=""
 THEME=""
 ASSISTANT=""
+GREETD_PREVIEW=0
 ACCEPT_EXPLOIT_DISCLAIMER=0
 NVIDIA_DRIVER_ACTION=""
 OPT_IN=0
@@ -132,6 +133,14 @@ Usage: ./install.sh [options]
   --with-assistant               Install the Aphotic Assistant (local chatbot,
                                 needs an NVIDIA GPU; implies the ai layer)
   --no-assistant                 Skip the Aphotic Assistant, don't ask
+  --with-greetd-preview          Deploy the greetd/Quickshell greeter scaffold
+                                (package, compositor config, greeter QML) as
+                                an inert preview -- does NOT enable greetd or
+                                touch sddm. Nothing about the active login
+                                screen changes until you separately run
+                                'aphotic displaymanager switch greetd' after
+                                validating it (see that command's own
+                                --confirm-tested gate).
   --nvidia-driver <keep|reinstall>
                                 Only relevant if an NVIDIA driver is already
                                 installed: 'keep' leaves it alone (don't
@@ -179,6 +188,7 @@ while [[ $# -gt 0 ]]; do
     --theme) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; THEME="$2"; shift 2 ;;
     --with-assistant) ASSISTANT="true"; shift ;;
     --no-assistant) ASSISTANT="false"; shift ;;
+    --with-greetd-preview) GREETD_PREVIEW=1; shift ;;
     --accept-exploit-disclaimer) ACCEPT_EXPLOIT_DISCLAIMER=1; shift ;;
     --nvidia-driver) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1 (keep|reinstall)"; exit 1; }; NVIDIA_DRIVER_ACTION="$2"; shift 2 ;;
     --config-only) CONFIG_ONLY=1; shift ;;
@@ -319,6 +329,7 @@ main() {
       echo "  ollama acceleration: ${dry_accel:-none (no NVIDIA/AMD GPU -- CPU inference)}"
     fi
     echo "  assistant: $ASSISTANT"
+    echo "  greetd preview: $([[ "$GREETD_PREVIEW" == "1" ]] && echo "yes (scaffold only, not enabled)" || echo no)"
     if [[ "$ASSISTANT" == "true" ]]; then
       local dry_model
       dry_model=$(resolve_assistant_model_via_llmfit || true)
@@ -473,6 +484,9 @@ main() {
     CFG_COPIED=1
     deploy_user_configs
     setup_login_manager_theme
+    if [[ "$GREETD_PREVIEW" == "1" ]]; then
+      setup_greetd_greeter || echo -e "$CWR - greetd preview scaffold did not finish; see $INSTLOG. sddm is untouched either way."
+    fi
     install_vscode_extensions
 
     # Hyprland's exec-once only fires at its own startup, never on a config
@@ -500,6 +514,7 @@ main() {
   echo -e "  Nvidia:        $ISNVIDIA"
   echo -e "  AMD:           $ISAMD"
   echo -e "  Assistant:     $ASSISTANT"
+  echo -e "  Greetd preview: $([[ "$GREETD_PREVIEW" == "1" ]] && echo "deployed (run 'aphotic displaymanager status')" || echo no)"
   echo -e "  Configs copied: $([[ "$CFG_COPIED" == "1" ]] && echo yes || echo no)"
   echo -e "  Config saved:  $APHOTIC_TOML"
   if ((${#FAILED_OPTIONAL_PACKAGES[@]} > 0)); then

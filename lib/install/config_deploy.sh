@@ -188,6 +188,19 @@ deploy_user_configs() {
   fi
   echo -e "$CNT - Enabling the SDDM background sync timer..."
   systemctl --user enable --now aphotic-sddm-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-sddm-sync.timer; the SDDM login background will only update via the per-theme-change best-effort call, not this periodic catch-up. Enable manually with 'systemctl --user enable --now aphotic-sddm-sync.timer'."
+
+  # Only relevant once the greetd preview scaffold has actually been
+  # deployed (install.sh's --with-greetd-preview, setup_greetd_greeter) --
+  # otherwise this would just run a no-op warning every 5 minutes forever.
+  # Checks GREETD_PREVIEW too, not just the directory, because this runs
+  # *before* setup_greetd_greeter() on a fresh --with-greetd-preview
+  # install -- the directory itself doesn't exist yet on that first pass.
+  if [[ -d /etc/aphotic/greeter || "${GREETD_PREVIEW:-0}" == "1" ]]; then
+    echo -e "$CNT - Enabling the greetd greeter sync timer..."
+    systemctl --user enable --now aphotic-greeter-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-greeter-sync.timer; enable manually with 'systemctl --user enable --now aphotic-greeter-sync.timer'."
+  else
+    systemctl --user disable --now aphotic-greeter-sync.timer &>> "$INSTLOG" || true
+  fi
   # install.sh installs NO plugins, deliberately (docs/PLUGIN_LAYER_MODEL.md):
   # a layer puts the tooling on the machine and unlocks *discovery* of that
   # layer's plugins; installing one stays an explicit act. Settings ->
@@ -247,6 +260,33 @@ setup_login_manager_theme() {
   local wldir=/usr/share/wayland-sessions
   [[ -d "$wldir" ]] || sudo mkdir -p "$wldir"
   sudo cp "$ROOT_DIR/src/hyprland.desktop" /usr/share/wayland-sessions/
+}
+
+# Deploys the greetd/Quickshell greeter scaffold: package, compositor
+# config, greeter QML, and the world-readable palette/wallpaper snapshot
+# directory -- but deliberately does NOT write /etc/greetd/config.toml and
+# does NOT enable/start greetd.service, so sddm stays the active display
+# manager exactly as it was. Flipping which one is actually active is
+# `aphotic displaymanager switch greetd`'s job alone (see
+# commands/cmd_displaymanager.sh) -- this function only makes that switch
+# possible to validate, per docs/archive/BACKLOG.md's DM-02 entry.
+setup_greetd_greeter() {
+  echo -e "$CNT - Deploying the greetd greeter preview (inert -- sddm stays active)..."
+
+  sudo mkdir -p /etc/xdg/quickshell/aphotic-greeter
+  sudo cp -R "$ROOT_DIR/Configs/greetd/greeter/"* /etc/xdg/quickshell/aphotic-greeter/
+  sudo chown -R root:root /etc/xdg/quickshell/aphotic-greeter
+
+  sudo mkdir -p /etc/greetd/aphotic
+  sudo cp "$ROOT_DIR/Configs/greetd/hyprland-greeter.conf" /etc/greetd/aphotic/hyprland-greeter.conf
+
+  # Chowned to the installing user, same reasoning as the sddm theme dir
+  # above -- so 'aphotic greeter sync' (cmd_greeter.sh) can write here
+  # without sudo on every ordinary theme/wallpaper change, matching the
+  # sudo-free-first pattern cmd_sddm.sh already established.
+  sudo mkdir -p /etc/aphotic/greeter
+  sudo chown -R "$USER:$USER" /etc/aphotic/greeter
+  sudo chmod 755 /etc/aphotic/greeter
 }
 
 install_vscode_extensions() {

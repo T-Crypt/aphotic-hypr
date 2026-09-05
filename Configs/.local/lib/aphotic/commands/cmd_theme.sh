@@ -480,6 +480,8 @@ _aphotic_theme_apply() {
     # Best-effort — see cmd_sddm.sh; silently no-ops without passwordless
     # sudo rather than blocking a theme switch on a password prompt.
     source "${COMMANDS_DIR}/cmd_sddm.sh" && _aphotic_sddm_sync
+    # Same story for the greetd greeter's own snapshot — see cmd_greeter.sh.
+    source "${COMMANDS_DIR}/cmd_greeter.sh" && _aphotic_greeter_sync
 
     # Quickshell hot-reloads Themes.qml's state via FileView watchChanges
     # on theme.json — no explicit reload needed for the shell to pick
