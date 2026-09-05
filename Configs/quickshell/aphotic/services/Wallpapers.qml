@@ -143,6 +143,8 @@ Singleton {
 
         // Best-effort — see cmd_sddm.sh; no-ops without passwordless sudo.
         Quickshell.execDetached(["aphotic", "sddm", "sync"]);
+        // Same story for the greetd greeter's own snapshot — see cmd_greeter.sh.
+        Quickshell.execDetached(["aphotic", "greeter", "sync"]);
     }
 
     Process {

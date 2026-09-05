@@ -95,6 +95,31 @@ json.dump(data, open(path, "w"), indent=2)' "$ASSISTANT_CONFIG"
   fi
 fi
 
+if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml || -f /etc/greetd/aphotic/hyprland-greeter.conf ]]; then
+  # Refuse outright, before ever asking, if greetd is the active display
+  # manager -- deleting /etc/greetd/aphotic/hyprland-greeter.conf out from
+  # under a live greetd.service leaves its config.toml pointing at a
+  # compositor config that no longer exists, and the next boot/VT switch
+  # gets no login screen at all with no TTY-accessible warning printed in
+  # advance. Checked here, not just documented after the fact.
+  GREETD_ACTIVE=0
+  if systemctl is-enabled greetd.service &>/dev/null || systemctl is-active greetd.service &>/dev/null; then
+    GREETD_ACTIVE=1
+  fi
+
+  if [[ "$GREETD_ACTIVE" == "1" ]]; then
+    echo "greetd is currently enabled/active as the display manager -- not touching the greeter scaffold."
+    echo "Run 'aphotic displaymanager switch sddm --confirm-tested' first to restore sddm, then re-run uninstall.sh to remove the scaffold."
+  else
+    read -rep $'Remove the greetd greeter preview scaffold (/etc/xdg/quickshell/aphotic-greeter, /etc/greetd/aphotic, /etc/aphotic/greeter)? sddm is unaffected either way. (y,n) ' GREETER_CONFIRM
+    if [[ "$GREETER_CONFIRM" == "y" || "$GREETER_CONFIRM" == "Y" ]]; then
+      sudo rm -rf /etc/xdg/quickshell/aphotic-greeter /etc/greetd/aphotic /etc/aphotic/greeter
+      systemctl --user disable --now aphotic-greeter-sync.timer &>/dev/null || true
+      echo "Removed the greetd greeter preview scaffold."
+    fi
+  fi
+fi
+
 if [[ "$PURGE_PACKAGES" == "1" ]]; then
   AUR_HELPER=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["system"]["aur_helper"])' "$APHOTIC_TOML")
   read -rep $"This will run $AUR_HELPER -R against every package this profile installed (including custom_apps.lst entries). Continue? (y,n) " PURGE_CONFIRM
