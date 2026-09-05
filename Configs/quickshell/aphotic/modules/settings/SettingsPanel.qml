@@ -389,7 +389,9 @@ RowLayout {
     }
     Component {
         id: pluginsComp
-        PluginsPane {}
+        PluginsPane {
+            screenState: root.screenState
+        }
     }
     Component {
         id: systemComp
