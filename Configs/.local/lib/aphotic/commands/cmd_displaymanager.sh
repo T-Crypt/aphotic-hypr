@@ -22,8 +22,20 @@ APHOTIC_GREETER_HYPR_CONF="/etc/greetd/aphotic/hyprland-greeter.conf"
 
 _aphotic_dm_unit_state() {
     local unit="$1" enabled active
-    enabled="$(systemctl is-enabled "$unit" 2>/dev/null || echo "unknown")"
-    active="$(systemctl is-active "$unit" 2>/dev/null || echo "unknown")"
+    # `systemctl is-enabled`/`is-active` print real, valid text ("disabled",
+    # "masked", "inactive") on a NON-ZERO exit code -- that's documented
+    # behavior for a legitimately negative state, not just for a missing
+    # unit. `cmd || echo "unknown"` ran the echo on every negative state
+    # too, and since $(...) captures both commands' stdout when the first
+    # one fails, the result was the real value with "unknown" appended
+    # right after it on its own line (seen live: "enabled: disabled
+    # unknown"). Checking for empty output is what actually means
+    # "nothing came back", and `|| true` on both keeps set -e from
+    # treating the expected non-zero exit as a hard abort.
+    enabled="$(systemctl is-enabled "$unit" 2>/dev/null)" || true
+    [[ -z "$enabled" ]] && enabled="unknown"
+    active="$(systemctl is-active "$unit" 2>/dev/null)" || true
+    [[ -z "$active" ]] && active="unknown"
     printf '%s (enabled: %s, active: %s)\n' "$unit" "$enabled" "$active"
 }
 
