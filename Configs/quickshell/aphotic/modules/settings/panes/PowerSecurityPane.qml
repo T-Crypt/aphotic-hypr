@@ -103,6 +103,52 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
+            icon: "screenshot_monitor"
+            label: qsTr("Screensaver when idle")
+            description: Settings.idleLockEnabled && Settings.screensaverTimeout >= Settings.idleLockTimeout ? qsTr("Never shows: the screen locks first") : root.formatMinutes(Settings.screensaverTimeout)
+            checked: Settings.screensaverEnabled
+            onToggled: state => Settings.screensaverEnabled = state
+        }
+
+        SettingsRow {
+            icon: "timer"
+            label: qsTr("Screensaver after")
+            description: root.formatMinutes(Settings.screensaverTimeout)
+            enabled: Settings.screensaverEnabled
+            opacity: enabled ? 1 : 0.4
+
+            RowLayout {
+                spacing: Tokens.spacing.small
+
+                MaterialIcon {
+                    text: "remove"
+                    color: Colours.palette.m3onSurfaceVariant
+                    fontStyle: Tokens.font.icon.small
+
+                    StateLayer {
+                        anchors.fill: parent
+                        anchors.margins: -Tokens.padding.small
+                        radius: Tokens.rounding.full
+                        onClicked: Settings.screensaverTimeout = Math.max(30, Settings.screensaverTimeout - 30)
+                    }
+                }
+
+                MaterialIcon {
+                    text: "add"
+                    color: Colours.palette.m3onSurfaceVariant
+                    fontStyle: Tokens.font.icon.small
+
+                    StateLayer {
+                        anchors.fill: parent
+                        anchors.margins: -Tokens.padding.small
+                        radius: Tokens.rounding.full
+                        onClicked: Settings.screensaverTimeout = Math.min(3600, Settings.screensaverTimeout + 30)
+                    }
+                }
+            }
+        }
+
+        SettingsToggleRow {
             icon: "lock_clock"
             label: qsTr("Lock when idle")
             description: root.formatMinutes(Settings.idleLockTimeout)
