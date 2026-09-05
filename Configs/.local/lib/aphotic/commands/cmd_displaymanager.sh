@@ -48,7 +48,17 @@ _aphotic_dm_status() {
     if [[ -f "$APHOTIC_GREETER_QML" ]]; then
         printf '  [ok]   %s\n' "$APHOTIC_GREETER_QML"
     else
-        printf '  [MISS] %s (run install.sh with --with-greetd-preview, or --config-only after enabling it)\n' "$APHOTIC_GREETER_QML"
+        # --config-only can't deploy this itself: setup_greetd_greeter()
+        # needs sudo, and --config-only's whole point (config_sync(),
+        # install.sh) is a passwordless resync -- it exits before ever
+        # reaching Stage 6, where --with-greetd-preview is checked. Found
+        # live testing this on the dev VM: `install.sh --config-only
+        # --with-greetd-preview` silently deployed nothing, which is what
+        # this message used to (wrongly) imply would work. Once deployed
+        # by a real install.sh run, a later --config-only DOES keep the
+        # sync timer enabled (deploy_user_configs() checks for this
+        # directory) -- it just can't do the first deploy.
+        printf '  [MISS] %s (run install.sh with --with-greetd-preview -- a full run, not --config-only)\n' "$APHOTIC_GREETER_QML"
     fi
     if [[ -f "$APHOTIC_GREETER_HYPR_CONF" ]]; then
         printf '  [ok]   %s\n' "$APHOTIC_GREETER_HYPR_CONF"
