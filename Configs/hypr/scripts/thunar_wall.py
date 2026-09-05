@@ -13,9 +13,9 @@ awww_dir = os.path.expanduser(os.environ.get("APHOTIC_AWWW_DIR", "~/.config/awww
 subprocess.run(["awww", "img", "--transition-type", "wipe", "--transition-duration", "3", image_path])
 # Generate the wallust colorscheme; templates write straight to their targets (see wallust.toml)
 subprocess.run(["wallust", "run", image_path])
-# generate wallpaper.rofi -- the shared "current wallpaper" marker, see
+# generate current-wallpaper -- the shared "current wallpaper" marker, see
 # services/Wallpapers.qml
-subprocess.run(["cp", image_path, os.path.join(awww_dir, "wallpaper.rofi")])
+subprocess.run(["cp", image_path, os.path.join(awww_dir, "current-wallpaper")])
 # firefox
 subprocess.run(["pywalfox", "update"])
 # Reload the shell to apply colorscheme

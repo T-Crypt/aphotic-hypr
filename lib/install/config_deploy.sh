@@ -292,6 +292,47 @@ kill_orphan_qs_processes() {
   return 0
 }
 
+# Omarchy ships its own Quickshell-based desktop shell (bar/background/
+# notifications), launched and *supervised* by
+# /usr/share/omarchy/bin/omarchy-launch-shell -- that script retries its own
+# quickshell child up to 5 times within 60s on any non-zero exit, so killing
+# just the quickshell process (an earlier version of this function did that)
+# only triggers an immediate respawn. Killing the supervisor's own bash PID
+# is what actually stops it: it traps TERM/INT/HUP and cleanly stops its
+# child from there instead of treating the death as a crash to recover from.
+#
+# No config toggle exists to disable Omarchy's shell permanently (its
+# shell.json controls widget layout, not whether the shell runs at all), and
+# /usr/share/omarchy/ is explicitly package-owned and must never be edited --
+# so this is a point-in-time fix, not a lasting one: `omarchy update`, theme
+# changes, or `omarchy restart shell` can all relaunch it again later via
+# omarchy-restart-shell, independent of Aphotic entirely. SUPER+B (Aphotic's
+# own shell-restart keybind) reliably re-asserts Aphotic's shell on top when
+# that happens -- see docs/omarchy.md.
+kill_omarchy_shell_if_running() {
+  local pid
+  while IFS= read -r pid; do
+    [[ -z "$pid" ]] && continue
+    echo -e "$CNT - Stopping Omarchy's own desktop shell (Aphotic replaces it)..." | tee -a "$INSTLOG"
+    kill -TERM "$pid" 2>/dev/null || true
+  done < <(pgrep -f 'omarchy-launch-shell$' 2>/dev/null)
+}
+
+# Shared by config_sync() (--config-only re-runs) and a fresh install that
+# lands inside an already-running graphical session (e.g. Omarchy's sddm
+# autologin straight into Hyprland): Hyprland's exec-once never re-fires
+# for a session that's already up, so if aphotic-shell.service's exec-once
+# start never happened, nothing else will trigger it without this.
+restart_shell_if_enabled() {
+  [[ "${DETECTED_OMARCHY:-0}" == "1" ]] && kill_omarchy_shell_if_running
+  if systemctl --user is-enabled aphotic-shell.service &>/dev/null; then
+    kill_orphan_qs_processes
+    systemctl --user restart aphotic-shell.service &>> "$INSTLOG" && echo -e "$COK - Restarted aphotic-shell.service." || echo -e "$CWR - Could not restart aphotic-shell.service; restart Quickshell manually (SUPER+B)."
+  else
+    echo -e "$CNT - aphotic-shell.service isn't enabled; restart Quickshell manually (SUPER+B) to pick up the new config."
+  fi
+}
+
 config_sync() {
   TOTAL_STAGES=3
   print_stage 1 "Backup"
@@ -310,12 +351,7 @@ config_sync() {
   deploy_user_configs
 
   print_stage 3 "Restarting the shell"
-  if systemctl --user is-enabled aphotic-shell.service &>/dev/null; then
-    kill_orphan_qs_processes
-    systemctl --user restart aphotic-shell.service &>> "$INSTLOG" && echo -e "$COK - Restarted aphotic-shell.service." || echo -e "$CWR - Could not restart aphotic-shell.service; restart Quickshell manually (SUPER+B)."
-  else
-    echo -e "$CNT - aphotic-shell.service isn't enabled; restart Quickshell manually (SUPER+B) to pick up the new config."
-  fi
+  restart_shell_if_enabled
 
   echo -e "\n\e[1;32m── Config sync summary ──\e[0m"
   echo -e "  Layers:        ${LAYERS:-none}"
