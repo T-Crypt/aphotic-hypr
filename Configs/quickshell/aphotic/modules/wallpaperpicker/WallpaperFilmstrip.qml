@@ -37,6 +37,9 @@ Item {
     property string _originalWallpaper: ""
     property int _previewIndex: -1
     property int settledIndex: -1
+    property int _pendingIndex: -1
+
+    readonly property int _focusIndex: root._pendingIndex >= 0 ? root._pendingIndex : strip.currentIndex
 
     focus: true
 
@@ -115,23 +118,50 @@ Item {
         root.settledIndex = strip.currentIndex;
     }
 
-    function _flickToIndex(targetIndex: int): void {
-        const clamped = Math.max(0, Math.min(targetIndex, strip.count - 1));
-        const deltaItems = clamped - strip.currentIndex;
-        if (deltaItems === 0)
+    // A keyed step used to be a flick() sized to coast exactly one slot,
+    // which fought both the settle spring still writing contentX and the
+    // next keypress reading a currentIndex that was mid-flight. _pendingIndex
+    // holds the target across an in-flight glide so presses accumulate
+    // instead of each restarting from wherever the strip happens to be.
+    function _goToIndex(targetIndex: int): void {
+        if (strip.count === 0)
             return;
-        const direction = Math.sign(deltaItems);
-        const distance = Math.abs(deltaItems) * root.slotPitch;
-        strip.flick(root._clampVelocity(-direction * Math.sqrt(2 * root.flickDeceleration * distance)), 0);
+        const clamped = Math.max(0, Math.min(targetIndex, strip.count - 1));
+        if (clamped === root._focusIndex)
+            return;
+
+        root._cancelPreview();
+        root.settledIndex = -1;
+        root._pendingIndex = clamped;
+
+        settleAnim.stop();
+        glideAnim.stop();
+        strip.cancelFlick();
+
+        const steps = Math.max(1, Math.abs(clamped - root._indexAtCenter()));
+        glideAnim.duration = Math.min(Tokens.anim.durations.expressiveDefaultSpatial, Tokens.anim.durations.small + 40 * steps);
+        glideAnim.from = strip.contentX;
+        glideAnim.to = root._targetContentX(clamped);
+        glideAnim.start();
+    }
+
+    function _step(delta: int): void {
+        root._goToIndex(root._focusIndex + delta);
+    }
+
+    function _abortGlide(): void {
+        glideAnim.stop();
+        root._pendingIndex = -1;
     }
 
     function _wheelImpulse(direction: int): void {
+        root._abortGlide();
         const combined = -strip.horizontalVelocity + direction * root.singleStepVelocity;
         strip.flick(root._clampVelocity(-combined), 0);
     }
 
-    Keys.onLeftPressed: root._flickToIndex(strip.currentIndex - 1)
-    Keys.onRightPressed: root._flickToIndex(strip.currentIndex + 1)
+    Keys.onLeftPressed: root._step(-1)
+    Keys.onRightPressed: root._step(1)
     Keys.onReturnPressed: root._commit()
     Keys.onEscapePressed: root._revertAndClose()
 
@@ -141,6 +171,7 @@ Item {
             if (!root.screenState.wallpaperPicker)
                 return;
             root._cancelPreview();
+            root._abortGlide();
             root._originalWallpaper = Themes.activeWallpaper;
             const idx = Themes.wallpapersInActiveTheme.indexOf(Themes.activeWallpaper);
             if (idx !== -1) {
@@ -227,7 +258,12 @@ Item {
             }
 
             onMovementStarted: root.settledIndex = -1
-            onMovementEnded: root._settle()
+            onMovementEnded: {
+                if (glideAnim.running)
+                    return;
+                root._settle();
+            }
+            onDragStarted: root._abortGlide()
 
             Timer {
                 id: previewDelay
@@ -243,6 +279,25 @@ Item {
                 property: "contentX"
                 spring: 2.2
                 damping: 0.42
+            }
+
+            NumberAnimation {
+                id: glideAnim
+
+                target: strip
+                property: "contentX"
+                easing: Tokens.anim.emphasizedDecel
+
+                onFinished: {
+                    const landed = root._pendingIndex;
+                    root._pendingIndex = -1;
+                    if (landed < 0)
+                        return;
+                    strip.currentIndex = landed;
+                    root._previewIndex = landed;
+                    previewDelay.restart();
+                    root.settledIndex = landed;
+                }
             }
 
             WheelHandler {
@@ -291,7 +346,7 @@ Item {
                     locked: delegate.index === root.settledIndex
 
                     onActivated: root._commit()
-                    onRequested: root._flickToIndex(delegate.index)
+                    onRequested: root._goToIndex(delegate.index)
                 }
             }
         }
@@ -359,7 +414,7 @@ Item {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root._flickToIndex(dot.wallpaperIndex)
+                            onClicked: root._goToIndex(dot.wallpaperIndex)
                         }
                     }
                 }
