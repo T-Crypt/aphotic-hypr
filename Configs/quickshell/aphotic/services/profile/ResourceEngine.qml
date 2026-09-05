@@ -1,3 +1,6 @@
+// Aphotic Resource Engine
+// Copyright (C) 2023-2026 Trevin Tindall. Licensed GPL-3.0-or-later.
+
 pragma Singleton
 pragma ComponentBehavior: Bound
 
