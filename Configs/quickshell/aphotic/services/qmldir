@@ -6,6 +6,7 @@ singleton Colours 1.0 Colours.qml
 singleton DepthFx 1.0 DepthFx.qml
 singleton DoNotDisturb 1.0 DoNotDisturb.qml
 singleton EmojiList 1.0 EmojiList.qml
+singleton FullscreenOverlays 1.0 FullscreenOverlays.qml
 singleton HostInfo 1.0 HostInfo.qml
 GpuVramSource 1.0 GpuVramSource.qml
 singleton Hypr 1.0 Hypr.qml
