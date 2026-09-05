@@ -37,6 +37,25 @@ Singleton {
     property real _initialTxBytes: 0
     property bool _initialized: false
 
+    // Ungated before this: the bar's networkSpeed status icon is
+    // filtered out of the entries model entirely when disabled
+    // (StatusIcons.qml), so NetworkSpeedStatus.qml is never even
+    // instantiated in that case, yet this timer polled /proc/net/dev
+    // every tick anyway with nothing to show it to. Same registration-
+    // counted shape as SystemUsage.detailedMonitoring -- see
+    // NetworkUsageWatch.qml, mounted by NetworkSpeedStatus.qml,
+    // NetworkSpeedPopout.qml and Dashboard.qml's NetworkCard.
+    property int _watchers: 0
+    readonly property bool wanted: root._watchers > 0
+
+    function subscribe(): void {
+        root._watchers = root._watchers + 1;
+    }
+
+    function unsubscribe(): void {
+        root._watchers = Math.max(0, root._watchers - 1);
+    }
+
     function formatBytes(bytes: real): var {
         // Handle negative or invalid values
         if (bytes < 0 || isNaN(bytes) || !isFinite(bytes)) {
@@ -153,7 +172,7 @@ Singleton {
 
     Timer {
         interval: GlobalConfig.dashboard.resourceUpdateInterval
-        running: true
+        running: root.wanted
         repeat: true
         triggeredOnStart: true
 

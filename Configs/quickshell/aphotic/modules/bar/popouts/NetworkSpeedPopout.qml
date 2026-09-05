@@ -9,6 +9,8 @@ ColumnLayout {
 
     spacing: Tokens.spacing.medium
 
+    NetworkUsageWatch {}
+
     component SpeedRow: RowLayout {
         required property string icon
         required property string label
