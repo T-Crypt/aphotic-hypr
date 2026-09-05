@@ -328,6 +328,52 @@ ShellRoot {
         }
     }
 
+    // Every enabled plugin that registers a `fullscreen-overlay` surface
+    // (manifest v3.5), one window per screen -- but only while the surface
+    // is actually being presented. The inner model collapses to nothing
+    // when it is not, so the windows are destroyed rather than hidden and
+    // an idle desktop carries no fullscreen surface at all.
+    Instantiator {
+        model: PluginRegistry.surfacesFor("fullscreen-overlay")
+
+        delegate: Item {
+            id: fullscreenHost
+
+            required property var modelData
+
+            readonly property bool presented: FullscreenOverlays.presented(fullscreenHost.modelData)
+
+            Variants {
+                model: fullscreenHost.presented ? Quickshell.screens : []
+
+                PluginFullscreenWindow {
+                    surface: fullscreenHost.modelData
+                }
+            }
+        }
+    }
+
+    // What hypridle fires at, alongside the lock_cmd it already fires
+    // (see Settings.qml's _applyIdleConfig). Nothing polls: the timeout
+    // arrives as one IPC call and the surfaces mount on the flag it sets.
+    // `dismiss` exists for a caller that wants the surface gone without
+    // synthesising input -- the surfaces themselves dismiss on real input.
+    IpcHandler {
+        target: "idle"
+
+        function engage(): void {
+            FullscreenOverlays.idle = true;
+        }
+
+        function dismiss(): void {
+            FullscreenOverlays.dismissAll();
+        }
+
+        function active(): bool {
+            return FullscreenOverlays.idle;
+        }
+    }
+
     // Core seams a plugin-registered profile may ask for by declaring a
     // property of the same name. A profile component cannot reach
     // GpuVramSource on its own -- it is a mounted object, not a
