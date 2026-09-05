@@ -19,6 +19,8 @@ import qs.modules.settings
 ColumnLayout {
     id: root
 
+    required property ScreenState screenState
+
     readonly property string repoUrl: "https://github.com/T-Crypt/aphotic-plugins"
 
     property var installed: []
@@ -391,7 +393,7 @@ ColumnLayout {
                         spacing: Tokens.spacing.extraSmall
 
                         MaterialIcon {
-                            text: surfaceRow.modelData.icon || (surfaceRow.modelData.surface === "notch" ? "expand_more" : "dashboard")
+                            text: surfaceRow.modelData.icon || PluginSurfaces.iconFor(surfaceRow.modelData.surface)
                             color: Colours.palette.m3onSurfaceVariant
                             fontStyle: Tokens.font.icon.small
                         }
@@ -399,7 +401,7 @@ ColumnLayout {
                         StyledText {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
-                            text: surfaceRow.modelData.surface === "notch" ? qsTr("Adds a notch tile: %1").arg(surfaceRow.modelData.label ?? "") : qsTr("Adds a Dashboard tab: %1").arg(surfaceRow.modelData.label ?? "")
+                            text: PluginSurfaces.describe(surfaceRow.modelData.surface, surfaceRow.modelData.label ?? "")
                             color: Colours.palette.m3onSurfaceVariant
                             font: Tokens.font.label.small
                         }
@@ -581,6 +583,27 @@ ColumnLayout {
 
                 RowLayout {
                     spacing: Tokens.spacing.small
+
+                    Repeater {
+                        model: installedRow.modelData.enabled ? PluginSurfaces.jumpsFor(installedRow.modelData.name) : []
+
+                        MaterialIcon {
+                            id: surfaceJump
+
+                            required property var modelData
+
+                            text: surfaceJump.modelData.icon
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+
+                            StateLayer {
+                                anchors.fill: parent
+                                anchors.margins: -Tokens.padding.small
+                                radius: Tokens.rounding.full
+                                onClicked: PluginSurfaces.navigate(root.screenState, surfaceJump.modelData)
+                            }
+                        }
+                    }
 
                     MaterialIcon {
                         text: installedRow.modelData.enabled ? "toggle_on" : "toggle_off"
