@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: Aphotic-Hypr contributors
 """aphotic agent hook worker -- see agent_hook.sh for why this is one
 process and why nothing in here is allowed to raise."""
-import json, os, sys, time
+import json, os, re, sys, time
 
 STATE = os.environ.get("APHOTIC_STATE_HOME", os.path.expanduser("~/.local/state/aphotic"))
 SESSIONS = os.path.join(STATE, "agent-sessions")
@@ -14,6 +14,7 @@ KEEP_LINES = 1000
 STALE_SECONDS = 12 * 60 * 60
 MAX_RUNS = 25
 MAX_RUN_BYTES = 2 * 1024 * 1024
+MODEL_TAIL_BYTES = 64 * 1024
 
 EVENT_NAMES = {
     "SessionStart": "session_start",
@@ -101,6 +102,39 @@ def trim():
     atomic_write(EVENTS, "".join(lines))
 
 
+def model_from_transcript(path):
+    """Last model named in the harness transcript, or "" if there is none.
+
+    SessionStart states `model` only when the session started fresh. A
+    session that began with /clear reports no model on any event, so the
+    only local record of what is answering is the transcript the payload
+    points at. Reads the tail rather than the file: transcripts reach
+    hundreds of KB and this runs inside a hook on every tool call.
+    """
+    if not path:
+        return ""
+    try:
+        size = os.path.getsize(path)
+        with open(path, "rb") as fh:
+            if size > MODEL_TAIL_BYTES:
+                fh.seek(size - MODEL_TAIL_BYTES)
+            chunk = fh.read().decode("utf-8", "replace")
+    except OSError:
+        return ""
+    seen = re.findall(r'"model"\s*:\s*"([^"]+)"', chunk)
+    return seen[-1] if seen else ""
+
+
+def cached_session(path):
+    """The last session file written for this session, or {}."""
+    try:
+        with open(path) as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def main():
     try:
         payload = json.load(sys.stdin)
@@ -134,6 +168,27 @@ def main():
             record[field] = value
 
     harness = payload.get("harness") or "claude"
+
+    # The default has to reach the record, not just the session file below.
+    # Claude Code sends no `harness` of its own (the adapters for other
+    # harnesses do), so without this every Claude event is untagged and a
+    # reader cannot tell "this is Claude" from "nobody said".
+    record["harness"] = harness
+
+    session_file = os.path.join(SESSIONS, "%s.json" % session_id)
+    known = cached_session(session_file)
+
+    # Model identity has to outlive the one event that states it: a graph
+    # labels a session node by its model for the session's whole life, and
+    # only SessionStart-from-startup ever carries it. Resolve it once, then
+    # re-state it in the log only when it is new or has changed, so a
+    # long session does not repeat it on every tool call.
+    model = (record.get("model") or known.get("model")
+             or model_from_transcript(payload.get("transcript_path")))
+    if model and model != known.get("model"):
+        record["model"] = model
+    elif "model" in record:
+        del record["model"]
 
     # The Agent tool's own PostToolUse response is the only place Claude Code
     # states which agent id a Task/Agent call spawned. Capturing it here is what
@@ -180,7 +235,6 @@ def main():
     except OSError:
         pass
 
-    session_file = os.path.join(SESSIONS, "%s.json" % session_id)
     try:
         if event == "session_end":
             os.remove(session_file)
@@ -190,6 +244,7 @@ def main():
                 "tool": record.get("tool", ""),
                 "updatedAt": stamp,
                 "harness": harness,
+                "model": model,
             }, separators=(",", ":")) + "\n")
     except OSError:
         pass

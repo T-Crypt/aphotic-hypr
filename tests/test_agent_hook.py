@@ -604,3 +604,163 @@ class TestIntegration:
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])
+
+
+class TestHarnessAndModelIdentity:
+    """Every event says which harness produced it and, once known, which
+    model answered. Both used to be missing: the `claude` default never
+    reached the record, and a session started by /clear reported no model
+    on any event, so a graph could only label it by its session id."""
+
+    def _drive(self, tmp_path, payload, monkeypatch):
+        """Run main() against an isolated state dir and return its events."""
+        state = tmp_path / "state"
+        sessions = state / "agent-sessions"
+        runs = state / "agent-runs"
+        events = state / "agent-events.jsonl"
+        sessions.mkdir(parents=True, exist_ok=True)
+        runs.mkdir(parents=True, exist_ok=True)
+
+        monkeypatch.setattr(agent_hook, "STATE", str(state))
+        monkeypatch.setattr(agent_hook, "SESSIONS", str(sessions))
+        monkeypatch.setattr(agent_hook, "RUNS", str(runs))
+        monkeypatch.setattr(agent_hook, "EVENTS", str(events))
+
+        import io
+        monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
+        try:
+            agent_hook.main()
+        except SystemExit:
+            pass
+
+        if not events.exists():
+            return [], sessions
+        lines = [l for l in events.read_text().splitlines() if l]
+        return [json.loads(l) for l in lines], sessions
+
+    def test_claude_events_are_tagged_with_the_default_harness(self, tmp_path, monkeypatch):
+        """Claude Code sends no `harness`, so the default has to be written."""
+        records, _ = self._drive(tmp_path, {
+            "session_id": "s1",
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+        }, monkeypatch)
+        assert records[-1]["harness"] == "claude"
+
+    def test_an_adapter_supplied_harness_is_preserved(self, tmp_path, monkeypatch):
+        """A non-Claude adapter states its own harness and keeps it."""
+        records, _ = self._drive(tmp_path, {
+            "session_id": "s1",
+            "hook_event_name": "PreToolUse",
+            "harness": "codex",
+            "tool_name": "Bash",
+        }, monkeypatch)
+        assert records[-1]["harness"] == "codex"
+
+    def test_model_from_payload_is_recorded_and_cached(self, tmp_path, monkeypatch):
+        records, sessions = self._drive(tmp_path, {
+            "session_id": "s1",
+            "hook_event_name": "SessionStart",
+            "source": "startup",
+            "model": "claude-opus-5",
+        }, monkeypatch)
+        assert records[-1]["model"] == "claude-opus-5"
+        cached = json.loads((sessions / "s1.json").read_text())
+        assert cached["model"] == "claude-opus-5"
+
+    def test_model_is_recovered_from_the_transcript_when_absent(self, tmp_path, monkeypatch):
+        """The /clear case: SessionStart names no model, the transcript does."""
+        transcript = tmp_path / "t.jsonl"
+        transcript.write_text(
+            '{"type":"assistant","message":{"model":"claude-sonnet-5"}}\n'
+            '{"type":"assistant","message":{"model":"claude-opus-5"}}\n'
+        )
+        records, _ = self._drive(tmp_path, {
+            "session_id": "s1",
+            "hook_event_name": "SessionStart",
+            "source": "clear",
+            "transcript_path": str(transcript),
+        }, monkeypatch)
+        assert records[-1]["model"] == "claude-opus-5"
+
+    def test_a_known_model_is_not_restated_on_every_event(self, tmp_path, monkeypatch):
+        """Re-stating it per tool call would bloat a size-capped log."""
+        state = tmp_path / "state"
+        sessions = state / "agent-sessions"
+        sessions.mkdir(parents=True, exist_ok=True)
+        (sessions / "s1.json").write_text(json.dumps({
+            "event": "PreToolUse", "tool": "Bash",
+            "updatedAt": "2026-01-01T00:00:00Z",
+            "harness": "claude", "model": "claude-opus-5",
+        }))
+        records, _ = self._drive(tmp_path, {
+            "session_id": "s1",
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+        }, monkeypatch)
+        assert "model" not in records[-1]
+
+    def test_a_model_switch_mid_session_is_restated(self, tmp_path, monkeypatch):
+        state = tmp_path / "state"
+        sessions = state / "agent-sessions"
+        sessions.mkdir(parents=True, exist_ok=True)
+        (sessions / "s1.json").write_text(json.dumps({
+            "event": "PreToolUse", "tool": "Bash",
+            "updatedAt": "2026-01-01T00:00:00Z",
+            "harness": "claude", "model": "claude-opus-5",
+        }))
+        records, _ = self._drive(tmp_path, {
+            "session_id": "s1",
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "model": "claude-sonnet-5",
+        }, monkeypatch)
+        assert records[-1]["model"] == "claude-sonnet-5"
+
+
+class TestModelFromTranscript:
+
+    def test_returns_the_last_model_named(self, tmp_path):
+        t = tmp_path / "t.jsonl"
+        t.write_text('{"model":"a"}\n{"model":"b"}\n{"model":"c"}\n')
+        assert agent_hook.model_from_transcript(str(t)) == "c"
+
+    def test_missing_or_empty_path_is_not_an_error(self, tmp_path):
+        assert agent_hook.model_from_transcript("") == ""
+        assert agent_hook.model_from_transcript(str(tmp_path / "nope.jsonl")) == ""
+
+    def test_transcript_without_a_model_yields_empty(self, tmp_path):
+        t = tmp_path / "t.jsonl"
+        t.write_text('{"type":"user","content":"hi"}\n')
+        assert agent_hook.model_from_transcript(str(t)) == ""
+
+    def test_only_the_tail_of_a_large_transcript_is_read(self, tmp_path):
+        """A model named only far from the end is out of the read window --
+        the bound is deliberate, since this runs on every tool call."""
+        t = tmp_path / "t.jsonl"
+        t.write_text('{"model":"stale"}\n' + ("x" * (agent_hook.MODEL_TAIL_BYTES + 4096)) + "\n")
+        assert agent_hook.model_from_transcript(str(t)) == ""
+
+    def test_a_model_within_the_tail_window_is_found(self, tmp_path):
+        t = tmp_path / "t.jsonl"
+        t.write_text(("x" * (agent_hook.MODEL_TAIL_BYTES + 4096)) + '\n{"model":"fresh"}\n')
+        assert agent_hook.model_from_transcript(str(t)) == "fresh"
+
+
+class TestCachedSession:
+
+    def test_reads_back_a_written_session_file(self, tmp_path):
+        p = tmp_path / "s.json"
+        p.write_text(json.dumps({"harness": "codex", "model": "gpt-5.6-sol"}))
+        assert agent_hook.cached_session(str(p))["model"] == "gpt-5.6-sol"
+
+    def test_missing_or_corrupt_file_yields_empty(self, tmp_path):
+        assert agent_hook.cached_session(str(tmp_path / "nope.json")) == {}
+        bad = tmp_path / "bad.json"
+        bad.write_text("{not json")
+        assert agent_hook.cached_session(str(bad)) == {}
+
+    def test_non_object_json_yields_empty(self, tmp_path):
+        p = tmp_path / "arr.json"
+        p.write_text("[1,2,3]")
+        assert agent_hook.cached_session(str(p)) == {}
