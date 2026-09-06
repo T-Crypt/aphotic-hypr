@@ -13,6 +13,12 @@ hl.bind(mainMod .. " + space", hl.dsp.exec_cmd("qs -c aphotic ipc call launcher 
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'), { description = "Screenshot: select area" })
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("qs -c aphotic ipc call wallpaperpicker toggle"), { description = "Wallpaper picker (current theme)" })
 hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("qs -c aphotic ipc call launcher openWallpapers"), { description = "Browse wallpapers (all themes)" })
+-- SUPER + SHIFT + W is the Workspace plane, and it is deliberately not
+-- bound here. That surface only exists while a plugin registers a
+-- `ui.workspace`, so the shell binds and unbinds the combo at runtime as
+-- plugins come and go (services/WorkspaceKeybind.qml). Leave it free, or
+-- your own bind will be replaced the next time a workspace plugin is
+-- enabled.
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("aphotic theme prev"), { description = "Previous theme" })
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("aphotic theme next"), { description = "Next theme" })
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("systemctl --user restart aphotic-shell.service"), { description = "Restart Aphotic shell" })
