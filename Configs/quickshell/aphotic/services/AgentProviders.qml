@@ -127,6 +127,25 @@ Singleton {
         };
     }
 
+    // Quota windows for one provider: `{ fiveHour, sevenDay, spendLimit,
+    // context }`, each `{ usedPercent, resetsAt }`, and any of them
+    // absent when the harness did not report it. Empty until a session
+    // runs -- the numbers only exist while one is live to state them.
+    property var _quotaById: ({})
+    property int _quotaCapturedAt: 0
+
+    readonly property int quotaCapturedAt: root._quotaCapturedAt
+
+    // Past this, the record describes a window that has probably rolled
+    // over since. Claude Code rewrites its status line continuously
+    // during a session and not at all between them, so age is the only
+    // signal that the numbers went stale.
+    readonly property int quotaMaxAgeSeconds: 1200
+
+    function quotaOf(providerId: string): var {
+        return root._quotaById[providerId]?.windows ?? ({});
+    }
+
     function _findIndex(providerId: string): int {
         return root.providers.findIndex(p => p.id === providerId);
     }
@@ -213,6 +232,32 @@ Singleton {
                 codexPgrep.exec(["pgrep", "-x", "-c", "codex"]);
             if (root._findIndex("opencode") !== -1)
                 opencodePgrep.exec(["pgrep", "-x", "-c", "opencode"]);
+        }
+    }
+
+    // Quota windows, written by the harness's own statusLine command
+    // (agent_statusline.py) rather than by the 15-minute usage timer.
+    // Different file because it is a different cadence and a different
+    // truth: the usage record counts tokens off transcripts, this one
+    // carries the share of an allowance the harness itself reports, and
+    // only while a session is live to report it.
+    FileView {
+        id: quotaFile
+        path: `${Quickshell.env("HOME")}/.local/state/aphotic/agent-quota.json`
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                const data = JSON.parse(text());
+                if (data.schemaVersion !== 1)
+                    return;
+                root._quotaById = data.providers ?? ({});
+                root._quotaCapturedAt = data.capturedAt ?? 0;
+            } catch (e) {
+                // Same rule as the usage record: a torn or missing file
+                // leaves the last-known windows alone rather than
+                // blanking bars the user was reading a second ago.
+            }
         }
     }
 
