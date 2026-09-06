@@ -144,6 +144,76 @@ StyledRect {
 
                 onLinkActivated: link => Qt.openUrlExternally(link)
             }
+
+            // The buttons a sender offered. Every freedesktop notification
+            // may carry these and the server has advertised support for
+            // them since it was written, but nothing drew them until now,
+            // so an application offering "Reply" or "Open" got a popup
+            // with no way to take it up. The shell's own notifications
+            // (Notifs.notify) use the same list, which is how the release
+            // banner offers a way into About.
+            //
+            // An action carries an optional `icon`, which only the
+            // shell's own set. A freedesktop action has no icon field, so
+            // that side draws text alone rather than a blank square.
+            Item {
+                width: 1
+                height: Tokens.spacing.extraSmall
+                visible: actionRow.visible
+            }
+
+            Row {
+                id: actionRow
+
+                spacing: Tokens.spacing.small
+                visible: root.modelData.actions.length > 0
+
+                Repeater {
+                    model: root.modelData.actions
+
+                    StyledRect {
+                        id: actionBtn
+
+                        required property var modelData
+
+                        implicitWidth: actionContent.implicitWidth + Tokens.padding.medium * 2
+                        implicitHeight: 26
+                        radius: Tokens.rounding.full
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            onClicked: {
+                                actionBtn.modelData.invoke();
+                                root.modelData.close();
+                            }
+                        }
+
+                        Row {
+                            id: actionContent
+
+                            anchors.centerIn: parent
+                            spacing: Tokens.spacing.extraSmall
+
+                            MaterialIcon {
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: text.length > 0
+                                text: actionBtn.modelData.icon ?? ""
+                                color: Colours.palette.m3primary
+                                fontStyle: Tokens.font.icon.small
+                            }
+
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: actionBtn.modelData.text
+                                color: Colours.palette.m3onSurface
+                                font: Tokens.font.label.small
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

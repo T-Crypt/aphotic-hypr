@@ -26,8 +26,6 @@ EOF
         esac
     done
 
-    aphotic_require hyprctl || return 1
-
     local last_seen_file="${APHOTIC_STATE_HOME}/last-seen-version"
     mkdir -p "$APHOTIC_STATE_HOME"
 
@@ -50,13 +48,33 @@ EOF
     fi
     [[ -z "$blurb" ]] && blurb="See the README for what changed."
 
-    # Only mark this version "seen" once the banner actually reached a
-    # running Hyprland -- a fresh install calls this before Hyprland has
-    # ever started, where hyprctl has nothing to talk to and this fails.
-    # Leaving last-seen-version untouched there means the next real
-    # trigger (Hyprland's own startup.lua, right after) retries instead
-    # of silently skipping the one banner the user would actually see.
-    if hyprctl notify -1 15000 "$_APHOTIC_WHATSNEW_COLOR" "Aphotic v${APHOTIC_VERSION} — ${blurb}" >/dev/null 2>&1; then
+    # Two ways to deliver this, best first. The shell's own notification
+    # carries an action, so the banner is a way into About rather than a
+    # line of text about a page you then have to go and find. hyprctl
+    # notify carries no action and no icon of our choosing, so it is the
+    # fallback: a fresh install runs this before the shell exists, and a
+    # session where the shell died should still say what changed.
+    local delivered=0
+
+    if command -v qs >/dev/null 2>&1; then
+        if qs -c aphotic ipc call aphotic whatsnew "$APHOTIC_VERSION" "$blurb" >/dev/null 2>&1; then
+            delivered=1
+        fi
+    fi
+
+    if [[ "$delivered" -eq 0 ]] && command -v hyprctl >/dev/null 2>&1; then
+        if hyprctl notify -1 15000 "$_APHOTIC_WHATSNEW_COLOR" "Aphotic v${APHOTIC_VERSION} — ${blurb}" >/dev/null 2>&1; then
+            delivered=1
+        fi
+    fi
+
+    # Only mark this version "seen" once the banner actually reached
+    # something. A fresh install calls this before Hyprland has ever
+    # started, where neither route has anywhere to land. Leaving
+    # last-seen-version untouched there means the next real trigger
+    # (Hyprland's own startup.lua, right after) retries instead of
+    # silently skipping the one banner the user would actually see.
+    if [[ "$delivered" -eq 1 ]]; then
         echo "$APHOTIC_VERSION" > "$last_seen_file"
     fi
 }

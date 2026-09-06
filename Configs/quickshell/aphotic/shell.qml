@@ -294,6 +294,28 @@ ShellRoot {
                 screenState: root.focusedScreenState()
             });
         }
+
+        // What `aphotic whatsnew` calls when this shell is up. The banner
+        // it falls back to, `hyprctl notify`, is a line of text with
+        // nowhere to go: Hyprland's own notifications carry no action and
+        // no icon of our choosing, so a release note delivered that way
+        // tells someone something changed and then strands them. This one
+        // carries a way into About, where the version, the release link
+        // and the sync button already are.
+        function whatsnew(version: string, blurb: string): void {
+            Notifs.notify(qsTr("Aphotic %1").arg(version), blurb, [
+                {
+                    identifier: "about",
+                    text: qsTr("What's new"),
+                    // The glyph the Plugins pane uses for "this takes you
+                    // to its settings", because this is the same promise.
+                    icon: "settings",
+                    invoke: () => Actions.invoke("settings.about", {
+                        screenState: root.focusedScreenState()
+                    })
+                }
+            ]);
+        }
     }
 
     // Mounted only while the Resource Engine actually has a conflict to
