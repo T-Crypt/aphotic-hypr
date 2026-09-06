@@ -1,6 +1,7 @@
-# Claude Code working docs - not part of the shipped rice
+# Agent working docs - not part of the shipped rice
 docs/
 CLAUDE.md
+AGENTS.md
 .superpowers/
 .claude/
 
