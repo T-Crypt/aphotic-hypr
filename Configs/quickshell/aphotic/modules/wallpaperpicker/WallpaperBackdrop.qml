@@ -19,12 +19,25 @@ Item {
     readonly property string bandSource: root.active ? root.source : ""
     readonly property real fadeStop: root.bandHeight > 0 ? root.fadeExtent / root.bandHeight : 0
 
-    onBandSourceChanged: {
-        if (bleed.current === one)
-            two.path = root.bandSource;
-        else
-            one.path = root.bandSource;
+    // The band cross-fades by loading into whichever of the two images is
+    // not on screen and swapping to it once it is ready. Scrolling back to a
+    // wallpaper the spare still holds assigns it the path it already has,
+    // which raises no status change to swap on, so that case swaps directly.
+    // Without it the band kept showing the previous wallpaper whenever the
+    // strip moved back and forth between two.
+    function _show(path: string): void {
+        if (path.length === 0 || bleed.current.path === path)
+            return;
+        const spare = bleed.current === one ? two : one;
+        if (spare.path === path) {
+            if (spare.status === Image.Ready)
+                bleed.current = spare;
+            return;
+        }
+        spare.path = path;
     }
+
+    onBandSourceChanged: root._show(root.bandSource)
 
     Item {
         id: band
@@ -45,7 +58,7 @@ Item {
         Item {
             id: bleed
 
-            property Image current: one
+            property Img current: one
 
             width: root.width
             height: root.height
@@ -132,7 +145,7 @@ Item {
         opacity: bleed.current === img ? 1 : 0
 
         onStatusChanged: {
-            if (img.status === Image.Ready)
+            if (img.status === Image.Ready && img.path === root.bandSource)
                 bleed.current = img;
         }
 
