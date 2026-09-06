@@ -103,6 +103,75 @@ Singleton {
     // AI-chat-surface audit item in APHOTIC_UNIFIED_VISION.md §4.1.
     readonly property bool hasConfiguredHarness: AiProviders.claudeAvailable || AiProviders.codexAvailable
 
+    // Display casing for harness codename models. A codename cannot be
+    // derived from its id -- "sol" is styled SOL and "luna" is styled Luna
+    // -- so the ones we have seen are listed and anything new falls back to
+    // title case rather than being rendered wrong with confidence.
+    readonly property var _codenames: ({
+        "sol": "SOL",
+        "luna": "Luna",
+        "terra": "Terra",
+        "astra": "Astra"
+    })
+
+    // Suffixes that size a model rather than name it. These read as
+    // "GPT-5.4 mini", never "Mini 5.4", so they must not be mistaken for a
+    // codename.
+    readonly property var _tiers: ["mini", "nano", "pro", "codex", "turbo", "preview"]
+
+    function labelFor(id: string): string {
+        return (root.entries.find(e => e.id === id) ?? {}).label ?? id;
+    }
+
+    // A model id turned into what a person calls the thing. Pure string
+    // work on purpose: the shell has no network and cannot ask a provider
+    // for a display name, so this has to hold up on ids released long
+    // after it was written. `provider` is the backend actually serving the
+    // weights, "" when nothing is known about it.
+    function modelDisplayName(raw: string, provider: string): string {
+        const id = (raw ?? "").trim();
+        if (!id)
+            return "";
+
+        // Locally served weights are named by the weights, not by a vendor
+        // family: the provider is the useful half of "who is answering",
+        // since the same GGUF can be served by any of them.
+        if (provider && root.localityFor(provider) === "local") {
+            let base = id.split(":")[0];
+            const slash = base.lastIndexOf("/");
+            if (slash !== -1)
+                base = base.slice(slash + 1);
+            return base ? `${provider}/${base}` : provider;
+        }
+
+        // Trailing context-window variant, e.g. "[1m]". It is a property of
+        // the session, not of the model, and it shows in the raw id on hover.
+        const bare = id.replace(/\[[^\]]*\]\s*$/, "");
+
+        const claude = bare.match(/^claude-([a-z]+)-(.+)$/i);
+        if (claude) {
+            const family = claude[1];
+            // A dated snapshot suffix is release bookkeeping, not a version.
+            const version = claude[2].replace(/-\d{6,8}$/, "").split("-").join(".");
+            return `${family.charAt(0).toUpperCase()}${family.slice(1)} ${version}`;
+        }
+
+        const gpt = bare.match(/^gpt-([0-9]+(?:\.[0-9]+)*)(?:-(.+))?$/i);
+        if (gpt) {
+            const version = gpt[1];
+            const suffix = (gpt[2] ?? "").toLowerCase();
+            if (!suffix)
+                return `GPT-${version}`;
+            if (root._tiers.includes(suffix))
+                return `GPT-${version} ${suffix}`;
+            const named = root._codenames[suffix]
+                ?? `${suffix.charAt(0).toUpperCase()}${suffix.slice(1)}`;
+            return `${named} ${version}`;
+        }
+
+        return bare;
+    }
+
     FileView {
         path: `${Quickshell.env("HOME")}/Aphotic-Hypr/aphotic.toml`
         watchChanges: true
