@@ -49,6 +49,7 @@ Singleton {
 
     readonly property string activeHarness: root.activeSession?.harness ?? ""
     readonly property string phase: root.activeSession?.status ?? "idle"
+    readonly property var activeSubagents: root.activeSession?.subagents ?? []
 
     readonly property bool tailing: eventTail.running
 
@@ -108,6 +109,7 @@ Singleton {
                 model: event.model ?? "",
                 cwd: event.cwd ?? "",
                 tool: "",
+                subagents: [],
                 startedAt: event.t ?? 0,
                 updatedAt: event.t ?? 0,
                 endedAt: 0
@@ -127,13 +129,14 @@ Singleton {
         if (event.event === "session_end") {
             session.status = "ended";
             session.endedAt = event.t ?? 0;
+            session.subagents = [];
         } else {
             session.endedAt = 0;
             if (event.event === "notification")
                 session.status = "waiting";
             else if (event.event === "pre_compact")
                 session.status = "compacting";
-            else if (event.event === "pre_tool_use" || event.event === "post_tool_use" || event.event === "post_tool_use_failure" || event.event === "user_prompt_submit" || event.event === "post_compact")
+            else if (event.event === "pre_tool_use" || event.event === "post_tool_use" || event.event === "post_tool_use_failure" || event.event === "user_prompt_submit" || event.event === "post_compact" || event.event === "subagent_stop")
                 session.status = "running";
             else
                 session.status = "idle";
@@ -141,6 +144,32 @@ Singleton {
 
         if (event.tool)
             session.tool = event.tool;
+
+        // Subagents as identity and count only, never parentage: an
+        // event carrying `agentId` was written from inside a subagent,
+        // and `subagent_stop` is the one event that closes one out. The
+        // spawn link (`spawnedAgentId` on the parent's own tool result)
+        // is deliberately ignored here -- who spawned whom is a graph,
+        // and the graph lives in the Agent Graph plugin.
+        if (event.agentId) {
+            const agents = (session.subagents ?? []).slice();
+            const at = agents.findIndex(a => a.id === event.agentId);
+            if (event.event === "subagent_stop") {
+                if (at !== -1)
+                    agents.splice(at, 1);
+            } else if (at === -1) {
+                agents.push({
+                    id: event.agentId,
+                    type: event.agentType ?? ""
+                });
+            } else if (event.agentType && !agents[at].type) {
+                agents[at] = {
+                    id: event.agentId,
+                    type: event.agentType
+                };
+            }
+            session.subagents = agents;
+        }
 
         sessions[index] = session;
         return sessions;

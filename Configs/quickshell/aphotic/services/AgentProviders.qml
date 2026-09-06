@@ -110,6 +110,23 @@ Singleton {
         Quickshell.execDetached(["kitty", "-e", ...provider.launchCmd]);
     }
 
+    // The same record `stats` is built from, kept ungated. `stats` only
+    // ever covers a harness whose hook plugin the user enabled, but the
+    // token counts are read out of transcripts on disk and are just as
+    // true for a harness that never fired a hook -- so a surface that
+    // wants "how much has this provider used today" asks here instead of
+    // indexing `stats` and getting a zero for the wrong reason.
+    property var _usageById: ({})
+
+    function usageOf(providerId: string): var {
+        const usage = root._usageById[providerId];
+        return {
+            availability: usage?.availability ?? "unavailable",
+            todayTokens: usage?.todayTokens ?? 0,
+            tokensByModel: usage?.tokensByModel ?? []
+        };
+    }
+
     function _findIndex(providerId: string): int {
         return root.providers.findIndex(p => p.id === providerId);
     }
@@ -209,6 +226,7 @@ Singleton {
                 const data = JSON.parse(text());
                 if (data.schemaVersion !== 1)
                     return;
+                root._usageById = data.providers ?? ({});
                 for (const p of root.providers) {
                     const usage = data.providers?.[p.id];
                     if (!usage)
