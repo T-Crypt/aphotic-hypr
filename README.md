@@ -295,6 +295,20 @@ Plugins can be installed, enabled, disabled, and removed independently.
 
 The core desktop does not require optional plugins to function.
 
+A plugin can also claim the **Workspace plane**, a near-full-screen
+surface for a tool that needs room to work. The plane belongs to the
+shell and the content belongs to the plugin, so several plugins can
+register one and the plane lists them down its left edge.
+
+With no such plugin enabled there is no plane, no window, and no
+keybind: <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> is bound
+when the first one arrives and released when the last one goes, so the
+combo stays yours on an install that has none.
+
+```sh
+qs -c aphotic ipc call workspace toggle
+```
+
 Repository: [T-Crypt/aphotic-plugins](https://github.com/T-Crypt/aphotic-plugins)
 
 ## Desktop Pets
@@ -544,7 +558,9 @@ treating system resources as static configuration.
 
 ## Keybindings
 
-All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua) — grouped exactly as below. Every `qs -c aphotic ipc call ...` target the shell exposes has a keybind; anything below not bound to a key is intentionally IPC-only (scriptable, but not meant to be memorized).
+Keybinds live in one place, [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua), grouped exactly as below. Every `qs -c aphotic ipc call ...` target the shell exposes has a keybind; anything below not bound to a key is intentionally IPC-only (scriptable, but not meant to be memorized).
+
+One exception: the Workspace plane is bound by the shell at runtime, because it only exists while a plugin provides one. See [Plugin System](#plugin-system).
 
 <details>
 <summary><strong>Launcher</strong></summary>
@@ -586,6 +602,7 @@ All keybinds live in one place — [`Configs/hypr/keybinds.lua`](Configs/hypr/ke
 | <kbd>Super</kbd> + <kbd>M</kbd> | `wlogout` (fallback power menu) |
 | <kbd>Super</kbd> + <kbd>B</kbd> | Restart Quickshell |
 | <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> | Cycle bar style (Full → Dock → Taskbar → Minimal → Capsule) |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Workspace plane. Bound only while a plugin registers one, so on an install with none the combo stays free |
 
 </details>
 
