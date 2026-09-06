@@ -131,7 +131,9 @@ Singleton {
             session.endedAt = 0;
             if (event.event === "notification")
                 session.status = "waiting";
-            else if (event.event === "pre_tool_use" || event.event === "post_tool_use" || event.event === "post_tool_use_failure")
+            else if (event.event === "pre_compact")
+                session.status = "compacting";
+            else if (event.event === "pre_tool_use" || event.event === "post_tool_use" || event.event === "post_tool_use_failure" || event.event === "user_prompt_submit" || event.event === "post_compact")
                 session.status = "running";
             else
                 session.status = "idle";
