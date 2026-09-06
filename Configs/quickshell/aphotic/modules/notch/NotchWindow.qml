@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.components
 import qs.config
 import qs.services
 
@@ -11,6 +12,12 @@ PanelWindow {
 
     required property var modelData
     screen: modelData
+
+    // The palette tile's actions open surfaces owned by other windows on
+    // this same screen, so the notch carries the shared per-screen state
+    // rather than an action reaching for whichever screen enumerates
+    // first. See services/Actions.qml.
+    required property ScreenState screenState
 
     readonly property Notch notch: notch
 
@@ -69,6 +76,7 @@ PanelWindow {
 
         dockHorizontal: root.dockHorizontal
         growsPositive: root.growsPositive
+        screenState: root.screenState
 
         // Plain x/y rather than anchors: BarWrapper.qml and DockWindow.qml
         // both document why an orientation-dependent `cond ? parent.X :
