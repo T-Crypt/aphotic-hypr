@@ -142,6 +142,41 @@ Singleton {
         return providers;
     }
 
+    // Plugins that declare `[action]` -- the `action` capability, ACT-01's
+    // substrate. An action is a named thing a user can ask for, not a
+    // surface: it draws nothing, and every surface that offers actions
+    // reads the one list rather than each plugin registering per surface.
+    //
+    // The registry id is namespaced with the plugin's own name, so two
+    // plugins declaring `switch` are two distinct actions and the palette
+    // can address either by id. Core actions carry their own namespaces
+    // (`theme.`, `settings.`), so a plugin cannot shadow one either. No
+    // core file names a plugin: the prefix is the install key, read at
+    // runtime.
+    readonly property var actionRegistrations: {
+        const actions = [];
+        for (const name of Object.keys(root._installed)) {
+            if (!root.isEnabled(name))
+                continue;
+            for (const action of (root._installed[name]?.actions ?? [])) {
+                if (!action || !action.id || !action.component)
+                    continue;
+                const entry = {
+                    plugin: name,
+                    id: `${name}.${action.id}`,
+                    label: action.label || action.id,
+                    icon: action.icon || "bolt",
+                    requiresLayer: action.requires_layer ?? "",
+                    requiresData: action.requires_data ?? "",
+                    componentUrl: `file://${root.pluginsDir}/${name}/${action.component}`
+                };
+                if (root._gateSatisfied(entry))
+                    actions.push(entry);
+            }
+        }
+        return actions;
+    }
+
     // A pre-`ui.surfaces` registry entry (written by a CLI older than the
     // surface unification) still carries a bare `dashboard_tab` object.
     // Reading it as one ungated dashboard surface keeps an install that

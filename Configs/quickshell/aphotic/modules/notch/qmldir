@@ -5,3 +5,4 @@ NotchBody 1.0 NotchBody.qml
 NotchIdleStrip 1.0 NotchIdleStrip.qml
 NotchSwitcher 1.0 NotchSwitcher.qml
 NotchProcessTile 1.0 NotchProcessTile.qml
+NotchPaletteTile 1.0 NotchPaletteTile.qml

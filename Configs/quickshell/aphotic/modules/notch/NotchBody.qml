@@ -11,6 +11,7 @@ ColumnLayout {
 
     required property var tiles
     required property var pluginTiles
+    required property var screenState
     required property bool switchable
     required property bool expanded
     required property string shownTileId
@@ -131,7 +132,9 @@ ColumnLayout {
 
         readonly property Item shownItem: {
             if (root.shownTileId === "processes")
-                return baseTileLoader;
+                return processTileLoader;
+            if (root.shownTileId === "palette")
+                return paletteTileLoader;
             const count = pluginRepeater.count;
             const i = root.pluginTiles.findIndex(t => t.id === root.shownTileId);
             if (i < 0 || i >= count)
@@ -140,14 +143,25 @@ ColumnLayout {
         }
 
         Loader {
-            id: baseTileLoader
+            id: processTileLoader
 
             width: tileHost.width
             y: (1 - tileHost.enterT) * Tokens.spacing.medium
             active: root.shownTileId === "processes"
-            visible: baseTileLoader.active
+            visible: processTileLoader.active
 
             sourceComponent: processComp
+        }
+
+        Loader {
+            id: paletteTileLoader
+
+            width: tileHost.width
+            y: (1 - tileHost.enterT) * Tokens.spacing.medium
+            active: root.shownTileId === "palette"
+            visible: paletteTileLoader.active
+
+            sourceComponent: paletteComp
         }
 
         // Every gated-in plugin tile is built, not just the shown one: a
@@ -192,5 +206,18 @@ ColumnLayout {
     Component {
         id: processComp
         NotchProcessTile {}
+    }
+
+    Component {
+        id: paletteComp
+
+        NotchPaletteTile {
+            screenState: root.screenState
+
+            // An action is a thing that happens somewhere else. Staying
+            // open over the surface it just opened would leave the notch
+            // covering the answer.
+            onInvoked: root.dismissed()
+        }
     }
 }

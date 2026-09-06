@@ -66,6 +66,21 @@ ShellRoot {
         return variants.instances[0] ?? null;
     }
 
+    // The ScreenState of the monitor being looked at -- same match on the
+    // Wayland output name focusedInstance() documents at length, against
+    // the shared per-screen states rather than one window's instances.
+    function focusedScreenState(): ScreenState {
+        const name = Hypr.focusedMonitor?.name;
+        if (name) {
+            for (let i = 0; i < screenStates.instances.length; i++) {
+                const s = screenStates.instances[i];
+                if (s.modelData?.name === name)
+                    return s;
+            }
+        }
+        return screenStates.instances[0] ?? null;
+    }
+
     // One shared ScreenState per screen — every window below is given the
     // SAME instance for its screen, so a toggle from one module (e.g. the
     // bar's power button setting screenState.session) is actually observed
@@ -117,7 +132,9 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        NotchWindow {}
+        NotchWindow {
+            screenState: root.screenStateFor(modelData)
+        }
     }
 
     Variants {
@@ -263,6 +280,19 @@ ShellRoot {
                 fn();
             else
                 console.warn(`aphotic toggle: unknown name '${name}'`);
+        }
+
+        // ACT-01's other entry point: `qs -c aphotic ipc call aphotic
+        // action <id>` runs the same action the palette runs, so a
+        // keybind or a script reaches every action -- core and plugin --
+        // without anything being registered a second time. The focused
+        // screen's state goes with it, for the same reason every toggle
+        // above resolves one: an action that opens a surface should open
+        // it on the monitor being looked at.
+        function action(id: string): void {
+            Actions.invoke(id, {
+                screenState: root.focusedScreenState()
+            });
         }
     }
 

@@ -248,6 +248,25 @@ QtObject {
         readonly property int processCount: 6
     }
 
+    // The command palette's shipped slots -- the same ordered
+    // [{ id, enabled }] shape the bar's own widget list uses, over
+    // action ids from services/Actions.qml. Deliberately a short default:
+    // the catalog is large and grows with every plugin, and a palette
+    // that opened with forty rows would be a menu, not a palette.
+    // Settings.paletteEntries takes over the moment the user edits it.
+    readonly property QtObject palette: QtObject {
+        readonly property QtObject entries: QtObject {
+            readonly property var values: [
+                { id: "settings.open", enabled: true },
+                { id: "keybinds.cheatsheet", enabled: true },
+                { id: "theme.cycle", enabled: true },
+                { id: "settings.appearance", enabled: true },
+                { id: "settings.bar", enabled: true },
+                { id: "settings.plugins", enabled: true }
+            ]
+        }
+    }
+
     readonly property QtObject launcher: QtObject {
         readonly property string emojiListPath: `${Quickshell.env("HOME")}/.config/quickshell/aphotic/data/emoji.txt`
         readonly property string wallpaperDir: `${Quickshell.env("HOME")}/.config/awww`

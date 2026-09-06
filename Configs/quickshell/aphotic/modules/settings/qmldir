@@ -5,6 +5,7 @@ AppearancePane 1.0 panes/AppearancePane.qml
 BarPane 1.0 panes/BarPane.qml
 BarStylePreviewCard 1.0 panes/BarStylePreviewCard.qml
 BarWidgetsSection 1.0 panes/BarWidgetsSection.qml
+PaletteSection 1.0 panes/PaletteSection.qml
 CategoryRail 1.0 CategoryRail.qml
 ClockPane 1.0 panes/ClockPane.qml
 CommunityThemes 1.0 panes/CommunityThemes.qml

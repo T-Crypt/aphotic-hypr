@@ -83,6 +83,14 @@ Singleton {
     // each "groupDivider".
     property var barStatusIcons: Config.bar.statusIcons.values
 
+    // The command palette's ordered slots: [{ id, enabled }] over action
+    // ids (services/Actions.qml), same shape and same persistence as
+    // barEntries. A slot naming an action that does not resolve right now
+    // is KEPT rather than pruned -- it is usually a plugin the user
+    // disabled for the afternoon, and silently rewriting their list on
+    // the way past would lose the slot for good.
+    property var paletteEntries: Config.palette.entries.values
+
     property bool dockAutoHide: false
     // Array of desktop-entry ids (DesktopEntry.id, e.g. "firefox") pinned
     // to the Dock style regardless of whether they're currently running.
@@ -410,6 +418,7 @@ Singleton {
             workspaceProfiles: root.workspaceProfiles,
             barEntries: root.barEntries,
             barStatusIcons: root.barStatusIcons,
+            paletteEntries: root.paletteEntries,
             vpnConfigPath: root.vpnConfigPath,
             vpnAutoConnect: root.vpnAutoConnect,
             intelligenceEnabled: root.intelligenceEnabled,
@@ -715,6 +724,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onWorkspaceProfilesChanged: root._saveState()
     onBarEntriesChanged: root._saveState()
     onBarStatusIconsChanged: root._saveState()
+    onPaletteEntriesChanged: root._saveState()
     onVpnConfigPathChanged: root._saveState()
     onVpnAutoConnectChanged: root._saveState()
     onIntelligenceEnabledChanged: root._saveState()
@@ -905,6 +915,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.barEntries = data.barEntries;
                 if (Array.isArray(data.barStatusIcons))
                     root.barStatusIcons = data.barStatusIcons;
+                if (Array.isArray(data.paletteEntries))
+                    root.paletteEntries = data.paletteEntries;
                 if (typeof data.vpnConfigPath === "string")
                     root.vpnConfigPath = data.vpnConfigPath;
                 if (typeof data.vpnAutoConnect === "boolean")
