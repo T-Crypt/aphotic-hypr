@@ -6,7 +6,7 @@ import qs.components
 import qs.components.effects
 import qs.services
 
-StyledRect {
+Item {
     id: root
 
     required property int activeWsId
@@ -49,40 +49,56 @@ StyledRect {
         cWs = currentWsIdx;
     }
 
-    clip: true
     x: Settings.barHorizontal ? offset + mask.x : 0
     y: Settings.barHorizontal ? 0 : offset + mask.y
     implicitWidth: Settings.barHorizontal ? size : (Settings.barInnerWidth - Tokens.padding.small)
     implicitHeight: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small) : size
-    radius: Tokens.rounding.full
-    color: Colours.palette.m3primary
 
+    // The pill has to clip: `colouriser` below renders the WHOLE workspace
+    // row and slides it under this window so only the active cell's glyph
+    // shows through. Item.clip is a rectangular scissor that ignores
+    // `radius`, though, so this used to be one StyledRect with clip:true
+    // holding both the glow and the glyph -- which sliced the glow's soft
+    // falloff off at the pill's square bounding box and read as a hard
+    // edge against every other soft-rounded thing on the bar.
+    //
+    // So the glow sits outside the clip now, and the clip itself is a
+    // rounded one. This is also the z-order BioluminescentGlow documents:
+    // glow first, target painting over it to hide the solid core.
     BioluminescentGlow {
-        target: root
+        target: pill
     }
 
-    Colouriser {
-        id: colouriser
+    StyledClippingRect {
+        id: pill
 
-        source: root.mask
-        sourceColor: Colours.palette.m3onSurface
-        colorizationColor: Colours.palette.m3onPrimary
+        anchors.fill: parent
+        radius: Tokens.rounding.full
+        color: Colours.palette.m3primary
 
-        x: Settings.barHorizontal ? -parent.offset : 0
-        y: Settings.barHorizontal ? 0 : -parent.offset
-        implicitWidth: root.mask.implicitWidth
-        implicitHeight: root.mask.implicitHeight
+        Colouriser {
+            id: colouriser
 
-        anchors.horizontalCenter: parent.horizontalCenter
+            source: root.mask
+            sourceColor: Colours.palette.m3onSurface
+            colorizationColor: Colours.palette.m3onPrimary
 
-        states: State {
-            name: "vertical"
-            when: Settings.barHorizontal
+            x: Settings.barHorizontal ? -root.offset : 0
+            y: Settings.barHorizontal ? 0 : -root.offset
+            implicitWidth: root.mask.implicitWidth
+            implicitHeight: root.mask.implicitHeight
 
-            AnchorChanges {
-                target: colouriser
-                anchors.horizontalCenter: undefined
-                anchors.verticalCenter: parent.verticalCenter
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            states: State {
+                name: "vertical"
+                when: Settings.barHorizontal
+
+                AnchorChanges {
+                    target: colouriser
+                    anchors.horizontalCenter: undefined
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
         }
     }
