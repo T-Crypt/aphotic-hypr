@@ -210,6 +210,15 @@ ColumnLayout {
         screenState: root.screenState
     }
 
+    // The notch's palette lives in the Bar pane because the notch docks to
+    // the bar's own edge and is configured with it -- not because it is a
+    // bar widget. It is here under every bar style, unlike the widget list
+    // above, since the notch is its own surface and does not care which
+    // style the bar is wearing.
+    PaletteSection {
+        Layout.fillWidth: true
+    }
+
     ColumnLayout {
         Layout.fillWidth: true
         visible: Settings.barStyle === "dock"
