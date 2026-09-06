@@ -107,7 +107,14 @@ Item {
         root._previewIndex = -1;
     }
 
+    // The wallpaper being chosen is whatever the strip is heading for, which
+    // is not what _previewIndex holds while the strip is still moving:
+    // _goToIndex clears it on purpose, and a coasting flick never sets it at
+    // all. Reading it directly meant Enter or a click during any movement
+    // closed the picker having applied nothing, leaving the desktop on the
+    // wallpaper before last.
     function _commit(): void {
+        root._previewIndex = root._logical(root._focusIndex);
         root._applyPreview();
         root.screenState.wallpaperPicker = false;
     }
@@ -440,7 +447,7 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onEntered: delegate.hovered = true
                     onExited: delegate.hovered = false
-                    onClicked: delegate.index === strip.currentIndex ? root._commit() : root._goToIndex(delegate.index)
+                    onClicked: delegate.index === root._focusIndex ? root._commit() : root._goToIndex(delegate.index)
                 }
             }
         }
