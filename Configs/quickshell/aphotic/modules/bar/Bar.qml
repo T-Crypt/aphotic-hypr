@@ -21,6 +21,37 @@ Item {
     readonly property int vPadding: Tokens.padding.large
     readonly property real spacing: Tokens.spacing.extraSmall
 
+    // Every id this build has a delegate for below. Kept beside the
+    // DelegateChooser so the two stay in step, and used to drop an id the
+    // build does not know -- a typo or a stale entry in a hand-edited
+    // list would otherwise resolve to the plugin fallback with no url,
+    // rendering a zero-width entry that still consumes a spacing slot and
+    // can still take the first/last vPadding. An unknown id is absent,
+    // not empty.
+    readonly property var builtinIds: ["spacer", "gap", "logo", "workspaces", "activeWindow", "media", "tray", "clock", "statusIcons", "settings", "agent", "power"]
+
+    // The bar's model, shaped like PluginRegistry.surfaceRegistrations so
+    // a "bar" surface kind concats straight onto it rather than needing a
+    // registry of its own -- the same arrangement Notch.qml uses for its
+    // tiles. A built-in record carries an empty componentUrl and resolves
+    // through the DelegateChooser by id; a plugin record carries a real
+    // one and falls through to the last DelegateChoice, so no plugin id
+    // ever appears in this file.
+    //
+    // The map() has to stay in this named property rather than moving
+    // inline into the ScriptModel binding below. ScriptModel diffs by
+    // object identity, so an inline map would mint fresh objects on every
+    // re-evaluation and rebuild every delegate -- resetting
+    // EntryWrapper.settled and replaying the grow-from-zero animations.
+    // Held here it re-evaluates only when the entry list or the plugin
+    // list actually changes.
+    readonly property var pluginEntries: PluginRegistry.surfacesFor("bar")
+    readonly property var entryRecords: Settings.barEntries.filter(e => e.enabled && root.builtinIds.includes(e.id)).map(e => ({
+                plugin: "",
+                id: e.id,
+                componentUrl: ""
+            })).concat(root.pluginEntries)
+
     // The active layout's Repeater, whichever orientation is live -- both
     // closeTray() and the along-axis helpers below hit-test/iterate through
     // this rather than root's own direct children, since the entries now
@@ -469,7 +500,7 @@ Item {
         id: repeater
 
         model: ScriptModel {
-            values: root.Config.bar.entries.values.filter(e => e.enabled)
+            values: root.entryRecords
         }
 
         DelegateChooser {
@@ -614,6 +645,20 @@ Item {
                     Power {
                         objectName: "taskbarPowerButton"
                         screenState: root.screenState
+                    }
+                }
+            }
+            // No roleValue: the fallback every record with an id this
+            // build has no built-in delegate for lands on. That is a
+            // plugin-supplied bar widget, loaded from the file:// url the
+            // registry resolved.
+            DelegateChoice {
+                delegate: EntryWrapper {
+                    id: pluginEntry
+
+                    Loader {
+                        active: pluginEntry.modelData.componentUrl.length > 0
+                        source: pluginEntry.modelData.componentUrl
                     }
                 }
             }

@@ -71,6 +71,18 @@ Singleton {
 
     readonly property string barStyle: ["dock", "taskbar", "minimal", "capsule"].includes(barSkin) ? barSkin : "full"
 
+    // Which built-in bar widgets render, and in what order: an ordered
+    // [{ id, enabled }] array, same shape as Config.qml's own defaults.
+    // Lives here rather than staying a compile-time Config value so it can
+    // be hand-edited in settings.json without touching QML. Once written,
+    // the persisted list wins over Config's default -- the same tradeoff
+    // workspaceProfiles already makes.
+    property var barEntries: Config.bar.entries.values
+    // The status-icon cluster's own ordered list, one level down: it is a
+    // single "statusIcons" bar entry whose contents split into pills at
+    // each "groupDivider".
+    property var barStatusIcons: Config.bar.statusIcons.values
+
     property bool dockAutoHide: false
     // Array of desktop-entry ids (DesktopEntry.id, e.g. "firefox") pinned
     // to the Dock style regardless of whether they're currently running.
@@ -396,6 +408,8 @@ Singleton {
             projectRoots: root.projectRoots,
             launcherStyle: root.launcherStyle,
             workspaceProfiles: root.workspaceProfiles,
+            barEntries: root.barEntries,
+            barStatusIcons: root.barStatusIcons,
             vpnConfigPath: root.vpnConfigPath,
             vpnAutoConnect: root.vpnAutoConnect,
             intelligenceEnabled: root.intelligenceEnabled,
@@ -699,6 +713,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onProjectRootsChanged: root._saveState()
     onLauncherStyleChanged: root._saveState()
     onWorkspaceProfilesChanged: root._saveState()
+    onBarEntriesChanged: root._saveState()
+    onBarStatusIconsChanged: root._saveState()
     onVpnConfigPathChanged: root._saveState()
     onVpnAutoConnectChanged: root._saveState()
     onIntelligenceEnabledChanged: root._saveState()
@@ -885,6 +901,10 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.launcherStyle = data.launcherStyle;
                 if (Array.isArray(data.workspaceProfiles))
                     root.workspaceProfiles = data.workspaceProfiles;
+                if (Array.isArray(data.barEntries))
+                    root.barEntries = data.barEntries;
+                if (Array.isArray(data.barStatusIcons))
+                    root.barStatusIcons = data.barStatusIcons;
                 if (typeof data.vpnConfigPath === "string")
                     root.vpnConfigPath = data.vpnConfigPath;
                 if (typeof data.vpnAutoConnect === "boolean")
