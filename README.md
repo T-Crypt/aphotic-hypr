@@ -13,14 +13,28 @@
 
 ## Contents
 
-| | | |
-|---|---|---|
-| [Overview](#overview) | [Preview](#preview) | [Gallery](#gallery) |
-| [Features](#features) | [Architecture](#architecture) | [Profiles](#profiles) |
-| [Plugin System](#plugin-system) | [Desktop Pets](#desktop-pets) | [Themes](#themes) |
-| [Installation](#installation) | [FAQ](#faq) | [Stack](#stack) |
-| [Performance](#performance) | [Keybindings](#keybindings) | [Documentation](#documentation) |
-| [Project Status](#project-status) | [Star History](#star-history) | [License](#license) |
+<p align="center">
+  <a href="#overview">Overview</a> ·
+  <a href="#preview">Preview</a> ·
+  <a href="#gallery">Gallery</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#stack">Stack</a>
+  <br>
+  <a href="#installation">Installation</a> ·
+  <a href="#profiles">Profiles</a> ·
+  <a href="#keybindings">Keybindings</a> ·
+  <a href="#performance">Performance</a> ·
+  <a href="#faq">FAQ</a> ·
+  <a href="#documentation">Documentation</a>
+  <br>
+  <a href="#plugin-system">Plugin System</a> ·
+  <a href="#themes">Themes</a> ·
+  <a href="#desktop-pets">Desktop Pets</a> ·
+  <a href="#project-status">Project Status</a> ·
+  <a href="#star-history">Star History</a> ·
+  <a href="#license">License</a>
+</p>
 
 **New here?** [Installation](#installation) is the short version, and
 [FAQ](#faq) answers what it does to a machine you already use.
