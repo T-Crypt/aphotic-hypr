@@ -353,7 +353,9 @@ RowLayout {
     }
     Component {
         id: barComp
-        BarPane {}
+        BarPane {
+            screenState: root.screenState
+        }
     }
     Component {
         id: launcherComp
