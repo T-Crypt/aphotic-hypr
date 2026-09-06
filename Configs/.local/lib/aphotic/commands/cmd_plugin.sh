@@ -210,6 +210,24 @@ _aphotic_plugin_ui_json() {
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.notch_tile notch)"; then
         entries+=("$entry")
     fi
+    # Three slots, not a loop over however many a manifest declares: the
+    # shared TOML reader (`aphotic_toml_get`, globalcontrol.sh) is
+    # deliberately flat, single-section-match, no arrays-of-tables --
+    # shared with theme.toml, not worth risking for this. Every other
+    # surface kind only ever needs one entry per plugin; `pet_action` is
+    # the first that doesn't (the pet's own MVP list is terminal + VS
+    # Code, PETS.md §7.1), so it gets bounded room to grow instead of a
+    # real parser change. Raise the cap (and PLUGIN_SYSTEM.md's note on
+    # it) the day a plugin actually needs a fourth.
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.pet_action pet_action)"; then
+        entries+=("$entry")
+    fi
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.pet_action_2 pet_action)"; then
+        entries+=("$entry")
+    fi
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.pet_action_3 pet_action)"; then
+        entries+=("$entry")
+    fi
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.settings_pane settings)"; then
         entries+=("$entry")
     fi
