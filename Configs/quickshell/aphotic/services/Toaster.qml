@@ -12,7 +12,11 @@ import Quickshell
 // synthesize a NotifData bypassing the server contract.
 QtObject {
     function toast(title: string, body: string, icon: string): void {
-        const args = ["notify-send", "-a", "aphotic"];
+        toastFrom("aphotic", title, body, icon);
+    }
+
+    function toastFrom(appName: string, title: string, body: string, icon: string): void {
+        const args = ["notify-send", "-a", appName];
         if (icon)
             args.push("-i", icon);
         args.push(title, body);
