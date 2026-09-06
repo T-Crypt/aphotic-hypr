@@ -298,6 +298,9 @@ Each pet is drawn once and then repainted to match your colours, so it
 changes with the theme and with a wallpaper you generate colours from.
 Pick one in **Settings > Appearance > Desktop Pet**.
 
+<details>
+<summary><b>The three pets</b></summary>
+
 <p align="center">
   <img src="./assets/screenshots/pet-lumen.png" width="820"><br>
   <sub>Lumen, a sealed lamp with a lit core. Its shell stays dark and its light takes your colour, so it shifts the most between themes.</sub>
@@ -312,6 +315,8 @@ Pick one in **Settings > Appearance > Desktop Pet**.
   <img src="./assets/screenshots/pet-kozumi.png" width="820"><br>
   <sub>Kozumi, at a laptop she carries with her. The trim on her coat and the red through her hair take your colour; her face does not.</sub>
 </p>
+
+</details>
 
 More pets, and the tools to build your own, live in
 [T-Crypt/aphotic-pets](https://github.com/T-Crypt/aphotic-pets).
