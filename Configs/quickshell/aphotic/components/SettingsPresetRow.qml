@@ -6,7 +6,10 @@ import qs.services
 SettingsRow {
     id: root
 
-    required property var presets // [{ value, label }]
+    // `enabled` is optional and defaults true. A preset that sets it
+    // false is drawn dimmed and does not take a click: the row still says
+    // the choice exists without pretending it is ready.
+    required property var presets // [{ value, label, enabled }]
     required property var value
 
     signal selected(value: var)
@@ -22,10 +25,12 @@ SettingsRow {
 
                 required property var modelData
                 readonly property bool active: presetPill.modelData.value === root.value
+                readonly property bool selectable: presetPill.modelData.enabled !== false
 
                 Layout.preferredHeight: 28
                 Layout.preferredWidth: presetLabel.implicitWidth + Tokens.padding.medium * 2
                 radius: Tokens.rounding.full
+                opacity: presetPill.selectable ? 1 : 0.45
                 color: presetPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
 
                 Behavior on color {
@@ -43,10 +48,13 @@ SettingsRow {
                 StateLayer {
                     anchors.fill: parent
                     radius: parent.radius
+                    visible: presetPill.selectable
                 }
 
                 MouseArea {
                     anchors.fill: parent
+                    enabled: presetPill.selectable
+                    cursorShape: presetPill.selectable ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: root.selected(presetPill.modelData.value)
                 }
             }
