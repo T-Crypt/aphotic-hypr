@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-3.0-only
-# SPDX-FileCopyrightText: Aphotic-Hypr contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2023-2026 Trevin Tindall (T-Crypt) and Aphotic-Hypr contributors
 """aphotic agent statusline worker -- see agent_statusline.sh for why
 this is one process and why nothing in here is allowed to raise.
 
