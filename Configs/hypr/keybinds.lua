@@ -16,6 +16,12 @@ hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("qs -c aphotic ipc call launch
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("aphotic theme prev"), { description = "Previous theme" })
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("aphotic theme next"), { description = "Next theme" })
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("systemctl --user restart aphotic-shell.service"), { description = "Restart Aphotic shell" })
+-- The manual way into the recovery surface. aphotic-shell.service fires
+-- the same thing on its own once systemd gives up restarting the shell,
+-- but a Hyprland bind is the one input path that still works when there
+-- is no shell at all -- which is exactly when this is wanted. Sits next
+-- to SUPER+B on purpose: B restarts, SHIFT+B recovers.
+hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("aphotic recovery present"), { description = "Aphotic recovery (shell will not start)" })
 hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("firefox"), { description = "Open Firefox" })
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("code"), { description = "Open VS Code" })
 
