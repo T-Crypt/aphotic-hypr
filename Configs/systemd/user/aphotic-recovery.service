@@ -1,0 +1,18 @@
+[Unit]
+Description=Aphotic shell recovery
+# Started by aphotic-shell.service's OnFailure=, which systemd only
+# reaches once that unit has burned through StartLimitBurst restarts --
+# so this is "the shell will not stay up", never "the shell crashed
+# once". Nothing enables or wants this unit; it is triggered or idle.
+
+[Service]
+Type=oneshot
+Environment=PATH=%h/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin
+# `recovery present` renders the aphotic-recovery quickshell config and
+# falls back to a terminal menu if that will not start either -- a second
+# quickshell config is no help when quickshell itself is what broke.
+ExecStart=%h/.local/bin/aphotic recovery present
+# It hands off to a detached surface and exits; leaving the unit
+# "active" would make a second failure look like a recovery already in
+# progress.
+RemainAfterExit=no
