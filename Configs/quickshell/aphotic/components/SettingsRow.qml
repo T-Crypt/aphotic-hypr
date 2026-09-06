@@ -27,6 +27,14 @@ StyledRect {
 
     default property alias trailing: trailingSlot.data
 
+    // A row that IS the control -- one option in a list being picked from,
+    // rather than a label with a switch on the end. Off by default,
+    // because most rows carry their own trailing control and a click
+    // anywhere else on them should do nothing.
+    property bool activatable: false
+
+    signal activated
+
     Layout.fillWidth: true
     Layout.preferredHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
     implicitHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
@@ -48,6 +56,19 @@ StyledRect {
     }
     Behavior on bottomRightRadius {
         Anim { type: Anim.DefaultEffects }
+    }
+
+    // Under the content, so a trailing control's own StateLayer still
+    // takes its clicks first rather than the row swallowing them.
+    StateLayer {
+        anchors.fill: parent
+        visible: root.activatable
+        disabled: !root.activatable
+        topLeftRadius: root.topLeftRadius
+        topRightRadius: root.topRightRadius
+        bottomLeftRadius: root.bottomLeftRadius
+        bottomRightRadius: root.bottomRightRadius
+        onClicked: root.activated()
     }
 
     RowLayout {

@@ -16,17 +16,22 @@ StyledRect {
     property bool dockHorizontal: true
     property bool growsPositive: true
 
-    // Processes is the base shell's tile and is the only one this file
-    // knows the name of: the notch ships with the base layer, so a plain
-    // install has exactly one tile and no switcher at all (see
-    // `switchable`). Every other tile is a plugin's notch surface,
-    // supplied by PluginRegistry and gated by that plugin's own manifest
-    // -- its profile layer enabled AND the plugin installed and enabled.
+    required property ScreenState screenState
+
+    // Processes and the palette are the base shell's own tiles and the
+    // only two this file knows the names of. Every other tile is a
+    // plugin's notch surface, supplied by PluginRegistry and gated by
+    // that plugin's own manifest -- its profile layer enabled AND the
+    // plugin installed and enabled.
     // Neither condition met means the tile is absent, not present and
     // empty. Adding, removing or rotating a tile is a plugin install,
     // with no edit here. See docs/PLUGIN_LAYER_MODEL.md.
     readonly property var pluginTiles: PluginRegistry.surfacesFor("notch")
 
+    // The base shell's own tiles. Both are core: the notch ships with the
+    // base layer and every install has them, which is what makes the
+    // palette a settings question (which actions are in it) rather than an
+    // install one (whether it exists at all).
     readonly property var tiles: [
         {
             plugin: "",
@@ -34,12 +39,20 @@ StyledRect {
             icon: "monitoring",
             label: qsTr("Processes"),
             componentUrl: ""
+        },
+        {
+            plugin: "",
+            id: "palette",
+            icon: "bolt",
+            label: qsTr("Commands"),
+            componentUrl: ""
         }
     ].concat(root.pluginTiles)
 
-    // A base install has one tile, so there is nothing to switch between:
-    // the name stops being a button and the switcher strip is gone
-    // entirely rather than sitting there as a single dead segment.
+    // Kept as a condition rather than assumed: core ships two tiles
+    // today, but a build with the palette or Processes taken out has one
+    // and nothing to switch between, and the switcher strip should be
+    // gone entirely rather than sitting there as a single dead segment.
     readonly property bool switchable: root.tiles.length > 1
 
     readonly property var activeTile: root.tiles.find(t => t.id === root.shownTileId) ?? null
@@ -240,6 +253,7 @@ StyledRect {
 
             tiles: root.tiles
             pluginTiles: root.pluginTiles
+            screenState: root.screenState
             switchable: root.switchable
             expanded: root.expanded
             shownTileId: root.shownTileId
