@@ -11,6 +11,23 @@
   <img alt="Status: Beta" src="https://img.shields.io/badge/status-beta-E0AF68?style=for-the-badge&labelColor=0b0d12">
 </p>
 
+## Contents
+
+| | | |
+|---|---|---|
+| [Overview](#overview) | [Preview](#preview) | [Gallery](#gallery) |
+| [Features](#features) | [Architecture](#architecture) | [Profiles](#profiles) |
+| [Plugin System](#plugin-system) | [Desktop Pets](#desktop-pets) | [Themes](#themes) |
+| [Installation](#installation) | [FAQ](#faq) | [Stack](#stack) |
+| [Performance](#performance) | [Keybindings](#keybindings) | [Documentation](#documentation) |
+| [Project Status](#project-status) | [Star History](#star-history) | [License](#license) |
+
+**New here?** [Installation](#installation) is the short version, and
+[FAQ](#faq) answers what it does to a machine you already use.
+**Looking around?** [Gallery](#gallery) is every surface in screenshots.
+**Building on it?** [Architecture](#architecture) and
+[Plugin System](#plugin-system).
+
 ## Overview
 
 Aphotic is a modular Hyprland environment using a single Quickshell
@@ -279,6 +296,47 @@ Plugins can be installed, enabled, disabled, and removed independently.
 The core desktop does not require optional plugins to function.
 
 Repository: [T-Crypt/aphotic-plugins](https://github.com/T-Crypt/aphotic-plugins)
+
+## Desktop Pets
+
+The `pet` plugin puts a small character on the desktop. It is off until
+you ask for it:
+
+```sh
+aphotic plugin install pet
+```
+
+Three pets come with it. Drag one anywhere and it stays where you put it,
+wanders a short way around that spot, looks toward your cursor, and opens
+a menu of things to run when you click it. It sits under every window, so
+it never covers what you are doing.
+
+Each pet is drawn once and then repainted to match your colours, so it
+changes with the theme and with a wallpaper you generate colours from.
+Pick one in **Settings > Appearance > Desktop Pet**.
+
+<details>
+<summary><b>The three pets</b></summary>
+
+<p align="center">
+  <img src="./assets/screenshots/pet-lumen.png" width="820"><br>
+  <sub>Lumen, a sealed lamp with a lit core. Its shell stays dark and its light takes your colour, so it shifts the most between themes.</sub>
+</p>
+
+<p align="center">
+  <img src="./assets/screenshots/pet-cipher.png" width="820"><br>
+  <sub>Cipher, working at a panel that floats beside him. The seams in his jacket and the lines on the panel carry your colour.</sub>
+</p>
+
+<p align="center">
+  <img src="./assets/screenshots/pet-kozumi.png" width="820"><br>
+  <sub>Kozumi, at a laptop she carries with her. The trim on her coat and the red through her hair take your colour; her face does not.</sub>
+</p>
+
+</details>
+
+More pets, and the tools to build your own, live in
+[T-Crypt/aphotic-pets](https://github.com/T-Crypt/aphotic-pets).
 
 ## Themes
 
