@@ -715,6 +715,9 @@ _aphotic_plugin_registry_sync() {
        --argjson chat_provider "$chat_provider" \
        '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider}})' \
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+    # Every install and update funnels through here, so this is the one
+    # place that has to record "a plugin's code changed" for recovery.
+    aphotic_record_change "plugin-registered" "${name} ${version:-0.0.0}"
 }
 
 # Reverse of the above -- called from remove(). Deleting the registry
@@ -729,6 +732,7 @@ _aphotic_plugin_registry_remove() {
     tmp="$(mktemp)"
     jq --arg n "$name" 'if .installed then .installed |= del(.[$n]) else . end' \
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+    aphotic_record_change "plugin-removed" "$name"
 }
 
 # A `ui-surface` plugin's own QML files (AgentGraphTab.qml, etc.) need

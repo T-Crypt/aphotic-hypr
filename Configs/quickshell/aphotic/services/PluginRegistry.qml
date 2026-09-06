@@ -40,8 +40,15 @@ Singleton {
         return Object.prototype.hasOwnProperty.call(root._installed, name);
     }
 
+    // Safe mode answers false for every plugin, which is the one gate
+    // that has to hold for all of them at once: every registration list
+    // below asks this question, so holding plugins back is one condition
+    // rather than a check per surface kind. isInstalled() deliberately
+    // stays true -- the Plugins pane still lists what is installed and
+    // what the user themselves turned off, it just is not loading any of
+    // it. See services/SafeMode.qml.
     function isEnabled(name: string): bool {
-        return root.isInstalled(name) && !root._disabled.includes(name);
+        return !SafeMode.active && root.isInstalled(name) && !root._disabled.includes(name);
     }
 
     // Every enabled plugin's [ui.*] declarations, resolved to absolute

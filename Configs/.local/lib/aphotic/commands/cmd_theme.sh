@@ -350,6 +350,10 @@ _aphotic_theme_apply() {
         return 1
     fi
 
+    # Applying a theme regenerates Colours.qml from a template, which is
+    # shell code -- so it belongs in the trail `aphotic recovery` reads.
+    aphotic_record_change "theme-applied" "$theme_name"
+
     if [[ -z "$wallpaper_file" ]]; then
         wallpaper_file="$(_aphotic_toml_get "${dir}/theme.toml" wallpaper default)"
     fi

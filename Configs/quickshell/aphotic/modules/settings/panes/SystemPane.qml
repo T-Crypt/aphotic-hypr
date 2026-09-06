@@ -116,6 +116,47 @@ ColumnLayout {
         }
     }
 
+    // Only on screen while safe mode is on. Without it the mode is
+    // invisible from inside the shell -- every plugin surface is simply
+    // absent, which reads as breakage rather than as a state someone
+    // chose. This is the way out that does not require remembering a
+    // command.
+    SettingsGroup {
+        Layout.fillWidth: true
+        visible: SafeMode.active
+
+        SettingsRow {
+            icon: "shield"
+            label: qsTr("Safe mode is on")
+            description: SafeMode.reason ? qsTr("Plugins are held back: %1").arg(SafeMode.reason) : qsTr("Plugins are held back. Nothing has been uninstalled.")
+
+            StyledRect {
+                Layout.preferredHeight: 32
+                Layout.preferredWidth: leaveSafeModeLabel.implicitWidth + Tokens.padding.large * 2
+                radius: Tokens.rounding.full
+                color: Colours.palette.m3secondaryContainer
+
+                StyledText {
+                    id: leaveSafeModeLabel
+                    anchors.centerIn: parent
+                    text: qsTr("Leave safe mode")
+                    color: Colours.palette.m3onSecondaryContainer
+                    font: Tokens.font.label.medium
+                }
+
+                StateLayer {
+                    anchors.fill: parent
+                    radius: parent.radius
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: SafeMode.leave()
+                }
+            }
+        }
+    }
+
     StyledText {
         text: qsTr("Overview")
         color: Colours.palette.m3onSurfaceVariant

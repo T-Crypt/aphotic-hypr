@@ -421,11 +421,13 @@ ShellRoot {
     // through the launcher and Gaming through the plugin registry;
     // WallpaperCycle owns the auto-cycle Timer the Appearance pane
     // already ships a toggle and an interval picker for; DevDrift watches
-    // DevProfile for a stale lockfile. Listing them here is what makes
-    // them exist. Anything added to services/ that runs on its own rather
-    // than answering a reader belongs in this list, and
-    // tests/test_singleton_reachability.py fails the build if it does not.
-    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift]
+    // DevProfile for a stale lockfile; SafeMode raises the toast that is
+    // the only reason a user in safe mode knows why their plugins are
+    // gone. Listing them here is what makes them exist. Anything added to
+    // services/ that runs on its own rather than answering a reader
+    // belongs in this list, and tests/test_singleton_reachability.py
+    // fails the build if it does not.
+    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode]
 
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than

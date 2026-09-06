@@ -13,6 +13,13 @@ APHOTIC_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/aphotic"
 APHOTIC_CONFIG_FILE="${APHOTIC_CONFIG_HOME}/shell.json"
 APHOTIC_BACKUP_DIR="${APHOTIC_STATE_HOME}/backups"
 
+# Recovery + safe mode (docs/playbooks/safe-mode-recovery.md). The shell
+# reads safe-mode.json directly (services/SafeMode.qml watches it); the
+# other two are written here and read by `aphotic recovery`.
+APHOTIC_SAFE_MODE_FILE="${APHOTIC_STATE_HOME}/safe-mode.json"
+APHOTIC_RECOVERY_STATE_FILE="${APHOTIC_STATE_HOME}/recovery.json"
+APHOTIC_CHANGE_LOG="${APHOTIC_STATE_HOME}/changes.log"
+
 # Where the Aphotic-Hypr dots repo lives. Overridable via env for dev/CI.
 APHOTIC_DOTS_DIR="${APHOTIC_DOTS_DIR:-$HOME/Aphotic-Hypr}"
 
@@ -70,6 +77,7 @@ mkdir -p "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$APHOTIC_DATA_HOME" \
 
 export APHOTIC_VERSION APHOTIC_CONFIG_HOME APHOTIC_STATE_HOME APHOTIC_DATA_HOME \
        APHOTIC_RUNTIME_DIR APHOTIC_CONFIG_FILE APHOTIC_BACKUP_DIR APHOTIC_DOTS_DIR \
+       APHOTIC_SAFE_MODE_FILE APHOTIC_RECOVERY_STATE_FILE APHOTIC_CHANGE_LOG \
        QUICKSHELL_CONFIG_DIR APHOTIC_PLUGINS_DIR APHOTIC_PLUGINS_STATE_FILE \
        APHOTIC_PLUGINS_REPO APHOTIC_PLUGINS_GIT_URL APHOTIC_PLUGINS_INDEX_URL APHOTIC_PLUGINS_SECURITY_INDEX_URL \
        APHOTIC_THEMES_REPO APHOTIC_THEMES_GIT_URL APHOTIC_THEMES_INDEX_URL
@@ -238,6 +246,47 @@ aphotic_shell_start() {
     disown
 }
 
+# ---- safe mode + change journal -------------------------------------------
+# Safe mode is one flag in one small file. PluginRegistry.qml holds every
+# plugin back while it is set, so the shell comes up as core-only -- which
+# is the state a machine needs to reach when a plugin is what stops it
+# starting. Written here, watched live by services/SafeMode.qml, so
+# turning it on does not require the shell to be running and turning it
+# off does not require a restart.
+aphotic_safe_mode_active() {
+    [[ -f "$APHOTIC_SAFE_MODE_FILE" ]] || return 1
+    jq -e '.active // false' "$APHOTIC_SAFE_MODE_FILE" >/dev/null 2>&1
+}
+
+aphotic_safe_mode_set() {
+    local active="$1" reason="${2:-}" tmp
+    aphotic_require jq || return 1
+    tmp="$(mktemp)"
+    jq -n --argjson active "$active" --arg reason "$reason" --arg since "$(date -Iseconds)" \
+        '{active: $active, reason: $reason, since: $since}' > "$tmp" \
+        && mv "$tmp" "$APHOTIC_SAFE_MODE_FILE"
+}
+
+aphotic_safe_mode_reason() {
+    [[ -f "$APHOTIC_SAFE_MODE_FILE" ]] || return 0
+    jq -r '.reason // ""' "$APHOTIC_SAFE_MODE_FILE" 2>/dev/null
+}
+
+# What changed, and when. `aphotic recovery` reads this to name a likely
+# culprit when the crash output does not name one itself -- a shell that
+# stopped starting right after a plugin went in is the common case, and
+# nothing else on the machine records that ordering.
+aphotic_record_change() {
+    local kind="$1" detail="${2:-}" tmp
+    printf '%s\t%s\t%s\n' "$(date -Iseconds)" "$kind" "$detail" >> "$APHOTIC_CHANGE_LOG" 2>/dev/null || return 0
+    # Bounded: this is a breadcrumb trail, not an audit log.
+    if [[ "$(wc -l < "$APHOTIC_CHANGE_LOG" 2>/dev/null || echo 0)" -gt 400 ]]; then
+        tmp="$(mktemp)"
+        tail -n 200 "$APHOTIC_CHANGE_LOG" > "$tmp" && mv "$tmp" "$APHOTIC_CHANGE_LOG"
+    fi
+    return 0
+}
+
 # ---- plugin helpers -------------------------------------------------------
 # List installed plugin directory names (each has a plugin.toml).
 aphotic_plugin_names() {
@@ -371,6 +420,7 @@ aphotic_plugin_set_enabled() {
         jq --arg n "$name" '.disabled = ((.disabled // []) + [$n] | unique)' "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp"
     fi
     mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+    aphotic_record_change "plugin-$([[ "$enabled" == "true" ]] && echo enabled || echo disabled)" "$name"
 }
 
 # Whether the user has explicitly opted into seeing/installing

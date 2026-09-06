@@ -5,7 +5,7 @@
 # @cmd.group: LIFECYCLE
 # @cmd.opt: create [--label <name>] | Snapshot current dotfiles state
 # @cmd.opt: list                     | List available snapshots
-# @cmd.opt: revert <id>              | Restore a specific snapshot
+# @cmd.opt: revert [--yes] <id>      | Restore a specific snapshot
 # @cmd.opt: clean [--keep N]         | Prune old snapshots (default keep 10)
 #
 # Distinct from `aphotic restore`: backup/revert deals in explicit,
@@ -66,9 +66,15 @@ _aphotic_backup_list() {
 }
 
 _aphotic_backup_revert() {
-    local id="${1:-}"
+    local id="" assume_yes=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -y|--yes) assume_yes=1; shift ;;
+            *) id="$1"; shift ;;
+        esac
+    done
     if [[ -z "$id" ]]; then
-        aphotic_err "usage: aphotic backup revert <id>"
+        aphotic_err "usage: aphotic backup revert [--yes] <id>"
         return 1
     fi
     local src="${APHOTIC_BACKUP_DIR}/${id}"
@@ -77,10 +83,16 @@ _aphotic_backup_revert() {
         return 1
     fi
 
-    aphotic_confirm "This overwrites your current config with backup '${id}'. Continue?" || {
-        aphotic_log "aborted"
-        return 1
-    }
+    # --yes exists for `aphotic recovery`, which runs this from a
+    # graphical button press with no terminal to prompt on. The
+    # pre-revert snapshot below still happens either way, so the revert
+    # stays reversible whichever path asked for it.
+    if [[ "$assume_yes" -eq 0 ]]; then
+        aphotic_confirm "This overwrites your current config with backup '${id}'. Continue?" || {
+            aphotic_log "aborted"
+            return 1
+        }
+    fi
 
     # Safety net: snapshot current state before reverting, so a revert
     # is itself always reversible.
@@ -139,7 +151,7 @@ Usage: aphotic backup <create|list|revert|clean> [args]
 
   create [--label <name>]   Snapshot current dotfiles state
   list                      List available snapshots
-  revert <id>               Restore a snapshot (auto-snapshots current state first)
+  revert [--yes] <id>       Restore a snapshot (auto-snapshots current state first)
   clean [--keep N]          Prune old snapshots, default keep 10
 EOF
             ;;
