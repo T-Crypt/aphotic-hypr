@@ -17,18 +17,24 @@ MAX_RUN_BYTES = 2 * 1024 * 1024
 
 EVENT_NAMES = {
     "SessionStart": "session_start",
+    "UserPromptSubmit": "user_prompt_submit",
     "PreToolUse": "pre_tool_use",
     "PostToolUse": "post_tool_use",
     "PostToolUseFailure": "post_tool_use_failure",
     "Notification": "notification",
+    "PreCompact": "pre_compact",
+    "PostCompact": "post_compact",
     "Stop": "stop",
     "SubagentStop": "subagent_stop",
     "SessionEnd": "session_end",
 }
 STATUS = {
+    "user_prompt_submit": "running",
     "pre_tool_use": "running",
     "post_tool_use": "completed",
     "post_tool_use_failure": "errored",
+    "pre_compact": "compacting",
+    "post_compact": "running",
 }
 
 
