@@ -35,6 +35,20 @@ def test_full_profile_ships_thunars_thumbnailer():
         assert pkg in result["main"], f"{pkg} missing -- Thunar previews will be broken"
 
 
+def test_both_profiles_ship_qt_image_decoders():
+    """Qt reads PNG, JPEG, GIF and SVG on its own and nothing else. A
+    format it cannot decode fails with "Unsupported image format" and no
+    other trace, so the surface asking for it silently draws its fallback
+    -- which is what a WebP desktop pet sprite sheet did before this
+    package was here. In both profiles for the same reason a shelled-out
+    binary is: a decoder present on full and absent on minimal makes the
+    same file work on one install and quietly do nothing on the other."""
+    for profile in ["full", "minimal"]:
+        result = merge_packages(str(ROOT / f"profiles/base/{profile}.toml"), [])
+        assert "qt6-imageformats" in result["main"], \
+            f"{profile} cannot decode WebP without qt6-imageformats"
+
+
 def test_minimal_profile_has_no_file_manager_or_thumbnailer():
     """minimal ships no thunar, so it has no reason to carry the
     thumbnailing stack either -- unlike a binary the Quickshell shell

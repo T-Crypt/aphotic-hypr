@@ -4,4 +4,11 @@ description = "Bare Hyprland + Quickshell bar, no extras"
 
 [packages]
 prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcontrols2", "qt5-graphicaleffects", "gtk3", "polkit-gnome", "pipewire", "wireplumber", "jq", "curl", "wl-clipboard", "cliphist", "python-requests", "python-pillow", "pacman-contrib", "kvantum", "kvantum-qt5", "lm_sensors", "pciutils", "nvidia-utils", "radeontop", "intel-gpu-tools", "glib2", "dbus", "libnotify", "procps-ng", "util-linux", "gawk"]
-main = ["quickshell", "qt6-shadertools", "kitty", "awww", "xdg-desktop-portal-hyprland", "wallust-git", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava"]
+# qt6-imageformats is what lets the shell decode WebP, TIFF, TGA and
+# JPEG 2000; Qt reads only PNG, JPEG, GIF and SVG without it. Desktop pet
+# sprite sheets are WebP wherever they come from, and an image Qt cannot
+# decode fails with "Unsupported image format" and nothing else, so the
+# surface using it just silently draws its fallback. In both profiles for
+# the same reason a shelled-out binary is: a feature that works on full
+# and quietly does nothing on minimal is worse than one that is absent.
+main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "kitty", "awww", "xdg-desktop-portal-hyprland", "wallust-git", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava"]
