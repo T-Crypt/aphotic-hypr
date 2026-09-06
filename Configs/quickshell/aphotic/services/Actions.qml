@@ -65,7 +65,14 @@ Singleton {
             label: qsTr("Next theme"),
             plugin: ""
         }
-    ].concat(root._settingsActions)
+    ].concat(root._workspaceActions, root._settingsActions)
+
+    readonly property var _workspaceActions: PluginRegistry.surfacesFor("workspace").length > 0 ? [{
+        id: "workspace.open",
+        icon: "space_dashboard",
+        label: qsTr("Open Workspace"),
+        plugin: ""
+    }] : []
 
     readonly property var pluginActions: PluginRegistry.actionRegistrations.map(a => ({
         id: a.id,
@@ -147,6 +154,10 @@ Singleton {
                 return;
             const i = themes.findIndex(t => t.name === Themes.activeTheme);
             Themes.setTheme(themes[(i + 1) % themes.length].name, "");
+        },
+        "workspace.open": context => {
+            if (context.screenState)
+                context.screenState.workspace = true;
         }
     })
 

@@ -9,6 +9,7 @@ PersistentProperties {
     property bool session
     property bool launcher
     property bool dashboard
+    property bool workspace
     property bool settings
     property bool agentPanel
     property bool intelligence
