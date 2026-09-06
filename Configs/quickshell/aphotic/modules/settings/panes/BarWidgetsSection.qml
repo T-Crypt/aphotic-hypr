@@ -25,7 +25,7 @@ ColumnLayout {
     // `pluginEntries` already concats onto its own model. Nothing here
     // reads it yet.
     readonly property var catalog: ({
-            logo: { icon: "linux", label: qsTr("OS logo"), jump: "" },
+            logo: { icon: "", label: qsTr("Aphotic logo"), jump: "" },
             workspaces: { icon: "workspaces", label: qsTr("Workspaces"), jump: "" },
             activeWindow: { icon: "window", label: qsTr("Active window"), jump: "" },
             media: { icon: "music_note", label: qsTr("Media"), jump: "" },
@@ -68,6 +68,15 @@ ColumnLayout {
 
     spacing: Tokens.spacing.small
 
+    Component {
+        id: markComp
+
+        AphoticMark {
+            implicitWidth: 22
+            implicitHeight: 22
+        }
+    }
+
     StyledText {
         text: qsTr("Widgets")
         color: Colours.palette.m3onSurfaceVariant
@@ -97,6 +106,9 @@ ColumnLayout {
                 readonly property var info: root.describe(widgetRow.modelData.id)
 
                 icon: widgetRow.info.icon
+                // The logo entry draws the same mark the bar draws
+                // (see modules/bar/components/OsIcon.qml), not a glyph.
+                iconItem: widgetRow.modelData.id === "logo" ? markComp : null
                 label: widgetRow.info.label
                 description: widgetRow.modelData.enabled ? "" : qsTr("Hidden")
                 opacity: widgetRow.modelData.enabled ? 1 : 0.6

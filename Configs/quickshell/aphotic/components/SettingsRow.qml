@@ -12,6 +12,11 @@ StyledRect {
     required property string label
     property string description: ""
 
+    // A row whose subject has a real mark of its own rather than a
+    // Material glyph fills this instead of `icon`, and gets the same
+    // rounded plate around it.
+    property Component iconItem: null
+
     // Connected-list positioning: a standalone row defaults to fully rounded
     // on every corner (first=last=true). Rows placed inside a
     // SettingsGroup get these stamped automatically so consecutive rows
@@ -60,11 +65,19 @@ StyledRect {
             radius: Tokens.rounding.medium
             color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
 
-            MaterialIcon {
+            Loader {
                 anchors.centerIn: parent
-                text: root.icon
-                color: Colours.palette.m3onSurfaceVariant
-                fontStyle: Tokens.font.icon.medium
+                sourceComponent: root.iconItem ?? glyphComp
+            }
+
+            Component {
+                id: glyphComp
+
+                MaterialIcon {
+                    text: root.icon
+                    color: Colours.palette.m3onSurfaceVariant
+                    fontStyle: Tokens.font.icon.medium
+                }
             }
         }
 
