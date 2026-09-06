@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.4
+
+The desktop pet plugin ships three drawn pets, Lumen, Cipher and Kozumi, each repainted to your theme colours.
+
 ## 2.0.3
 
 Aphotic now supports Omarchy, verified on a fresh Omarchy ISO install; EndeavourOS with Desktop Environment: None works too, the same as a minimal install.

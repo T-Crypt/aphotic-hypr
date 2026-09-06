@@ -280,6 +280,42 @@ The core desktop does not require optional plugins to function.
 
 Repository: [T-Crypt/aphotic-plugins](https://github.com/T-Crypt/aphotic-plugins)
 
+## Desktop Pets
+
+The `pet` plugin puts a small character on the desktop. It is off until
+you ask for it:
+
+```sh
+aphotic plugin install pet
+```
+
+Three pets come with it. Drag one anywhere and it stays where you put it,
+wanders a short way around that spot, looks toward your cursor, and opens
+a menu of things to run when you click it. It sits under every window, so
+it never covers what you are doing.
+
+Each pet is drawn once and then repainted to match your colours, so it
+changes with the theme and with a wallpaper you generate colours from.
+Pick one in **Settings > Appearance > Desktop Pet**.
+
+<p align="center">
+  <img src="./assets/screenshots/pet-lumen.png" width="820"><br>
+  <sub>Lumen, a sealed lamp with a lit core. Its shell stays dark and its light takes your colour, so it shifts the most between themes.</sub>
+</p>
+
+<p align="center">
+  <img src="./assets/screenshots/pet-cipher.png" width="820"><br>
+  <sub>Cipher, working at a panel that floats beside him. The seams in his jacket and the lines on the panel carry your colour.</sub>
+</p>
+
+<p align="center">
+  <img src="./assets/screenshots/pet-kozumi.png" width="820"><br>
+  <sub>Kozumi, at a laptop she carries with her. The trim on her coat and the red through her hair take your colour; her face does not.</sub>
+</p>
+
+More pets, and the tools to build your own, live in
+[T-Crypt/aphotic-pets](https://github.com/T-Crypt/aphotic-pets).
+
 ## Themes
 
 Aphotic ships with multiple themes and supports live wallpaper-driven
