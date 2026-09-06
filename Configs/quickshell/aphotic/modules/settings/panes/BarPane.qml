@@ -9,6 +9,8 @@ import qs.modules.settings
 ColumnLayout {
     id: root
 
+    required property ScreenState screenState
+
     spacing: Tokens.spacing.largeIncreased
 
     StyledText {
@@ -197,6 +199,15 @@ ColumnLayout {
             value: Settings.barSkin
             onSelected: value => Settings.barSkin = value
         }
+    }
+
+    // The entry list only drives the "full" style -- dock, taskbar,
+    // minimal and capsule each lay themselves out (see BarShell.qml), so
+    // the list would sit there doing nothing under any of them.
+    BarWidgetsSection {
+        Layout.fillWidth: true
+        visible: Settings.barStyle === "full"
+        screenState: root.screenState
     }
 
     ColumnLayout {
