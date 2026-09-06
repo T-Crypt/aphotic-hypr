@@ -29,6 +29,17 @@ import qs.services
 // fills the window and masking to it makes the entire declared box a dead
 // zone. A pet 86px wide in a 240px surface would otherwise cost the
 // desktop the other 154.
+//
+// `anchor = "free"` is the one budget that is not a box on an edge: the
+// surface takes the whole usable output and the plugin places itself
+// anywhere in it. That is for a surface the user drags around, where any
+// fixed box would be the thing being dragged and moving a layer surface
+// per pointer event is what rule 1 exists to prevent. The window stays
+// static; the content moves inside it. The mask still decides what takes
+// input, so a free overlay costs the desktop no more clicks than a boxed
+// one, and it is worth declaring only when the placement is genuinely the
+// user's -- an always-present transparent surface the size of the screen
+// is not free to composite.
 PanelWindow {
     id: root
 
@@ -47,10 +58,16 @@ PanelWindow {
     WlrLayershell.exclusiveZone: 0
     color: "transparent"
 
-    anchors.top: root.surface.anchor === "top"
-    anchors.bottom: root.surface.anchor === "bottom" || root.surface.anchor === ""
-    anchors.left: root.surface.anchor === "left"
-    anchors.right: root.surface.anchor === "right"
+    // Anchored on all four sides, a layer surface fills the output and
+    // the declared width/height stop meaning anything, which is exactly
+    // what a free surface wants. Exclusive zones are still respected, so
+    // "the whole output" is the part of it the bar has not claimed.
+    readonly property bool free: root.surface.anchor === "free"
+
+    anchors.top: root.free || root.surface.anchor === "top"
+    anchors.bottom: root.free || root.surface.anchor === "bottom" || root.surface.anchor === ""
+    anchors.left: root.free || root.surface.anchor === "left"
+    anchors.right: root.free || root.surface.anchor === "right"
 
     implicitWidth: root.surface.width
     implicitHeight: root.surface.height

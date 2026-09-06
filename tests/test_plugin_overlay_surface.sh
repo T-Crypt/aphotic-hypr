@@ -86,6 +86,22 @@ g="$(_aphotic_plugin_ui_json "$TESTHOME/gated.toml" | jq -c '.surfaces[0]')"
 [[ "$(jq -r '.width' <<<"$g")" == "0" ]]  || fail "absent width should read as 0, got $g"
 [[ "$(jq -r '.height' <<<"$g")" == "0" ]] || fail "absent height should read as 0, got $g"
 
+# --- "free" is an anchor like any other to the CLI ---------------------
+# The host reads it as "take the whole output and let the plugin place
+# itself", but nothing here interprets anchors: a token this parser
+# rewrote or rejected would be a second opinion on a value only the host
+# resolves.
+cat > "$TESTHOME/free.toml" <<'TOML'
+[plugin]
+name = "x"
+[ui.overlay]
+id = "y"
+component = "qml/Y.qml"
+anchor = "free"
+TOML
+f="$(_aphotic_plugin_ui_json "$TESTHOME/free.toml" | jq -c '.surfaces[0]')"
+[[ "$(jq -r '.anchor' <<<"$f")" == "free" ]] || fail "free anchor not passed through: $f"
+
 # --- a component-less declaration contributes no surface ---------------
 printf '[plugin]\nname = "x"\n\n[ui.overlay]\nid = "y"\n' > "$TESTHOME/partial.toml"
 [[ "$(_aphotic_plugin_ui_json "$TESTHOME/partial.toml")" == "null" ]] \
