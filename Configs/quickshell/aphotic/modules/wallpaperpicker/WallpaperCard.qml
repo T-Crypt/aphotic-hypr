@@ -26,14 +26,12 @@ Item {
     readonly property int chamfer: Math.max(10, Math.round(root.height * 0.14))
     readonly property int corner: Math.max(4, Math.round(root.height * 0.04))
 
+    property bool hovered: false
+
     property real _punch: 0
-    property bool _hovered: false
     property real _lift: root.active ? -root.height * 0.07 : 0
 
-    signal activated
-    signal requested
-
-    scale: (root._hovered && !root.active ? 1.05 : 1) * (1 + 0.06 * root._punch)
+    scale: (root.hovered && !root.active ? 1.05 : 1) * (1 + 0.06 * root._punch)
 
     onLockedChanged: {
         if (root.locked)
@@ -164,15 +162,6 @@ Item {
         opacity: 0.25 + 0.35 * root.closeness
         chamfer: root.chamfer
         corner: root.corner
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onEntered: root._hovered = true
-        onExited: root._hovered = false
-        onClicked: root.active ? root.activated() : root.requested()
     }
 
     component BevelPath: Shape {
