@@ -18,6 +18,22 @@ ColumnLayout {
     property string updateState: "idle"
     property string latestVersion: ""
 
+    // Filled by `aphotic sync --check --json`, which runs alongside the
+    // release check rather than after it: the two answer different
+    // questions and neither blocks the other. A release being current
+    // does not mean the packages it wants are installed, which is exactly
+    // the half-updated state this pane exists to surface.
+    property var missingPackages: []
+    property var outdatedPlugins: []
+
+    // Read back from ~/.local/state/aphotic/last-sync.json. A sync
+    // restarts the shell, so this pane cannot watch one finish -- it
+    // reads the result the next time it is opened.
+    property var lastSync: null
+
+    readonly property string releaseUrl: root.latestVersion.length > 0 ? `${root.releasesUrl}/tag/${root.latestVersion}` : root.releasesUrl
+    readonly property bool syncWorthwhile: root.updateState === "available" || root.outdatedPlugins.length > 0
+
     spacing: Tokens.spacing.medium
 
     // Symmetric top/bottom fillHeight spacers -- previously only the top
@@ -130,22 +146,33 @@ ColumnLayout {
                 }
             }
 
-            // Compares the installed VERSION against GitHub's latest
-            // tagged Release, the same "curl a JSON endpoint via Process"
-            // pattern Weather.qml already uses -- no new HTTP mechanism.
-            // "Update now" shells out to the existing `aphotic update`
-            // CLI command (git pull --ff-only + cmd_restore.sh --populate
-            // + cmd_reload.sh --full, see
-            // Configs/.local/lib/aphotic/commands/cmd_update.sh) rather
-            // than reimplementing any of that here -- this button is a
-            // front end for an already-shipped command, not new update
-            // logic. Detached (execDetached), not a plain Process,
-            // because cmd_reload.sh's `systemctl --user restart
-            // aphotic-shell.service` tears down the very process that
-            // would otherwise be waiting on this Process's exit code.
+            // Two questions, asked together and answered separately. The
+            // release check compares the installed VERSION against
+            // GitHub's latest tagged Release, the same "curl a JSON
+            // endpoint via Process" pattern Weather.qml uses. The sync
+            // check runs `aphotic sync --check --json`, which says which
+            // packages the installed profile asks for and pacman does not
+            // have, and which plugins the local plugins repo has a newer
+            // version of.
+            //
+            // Both matter because they fail apart: a release can be
+            // current while the packages it added are missing, which is a
+            // half-updated desktop where the config landed and the feature
+            // needing the new package silently does nothing. That is the
+            // state this pane exists to name.
+            //
+            // The button runs `aphotic sync` -- config sync plus a plugin
+            // refresh, no package installs, because those need sudo and a
+            // resolved profile and belong to install.sh. Detached
+            // (execDetached), not a plain Process, because the config sync
+            // restarts aphotic-shell.service and tears down the very
+            // process that would be waiting on the exit code. Which is
+            // also why the result is read back off a file below rather
+            // than a pipe.
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: Tokens.spacing.small
+                Layout.maximumWidth: 460
                 spacing: Tokens.spacing.small
 
                 RowLayout {
@@ -179,12 +206,13 @@ ColumnLayout {
                             onClicked: {
                                 root.updateState = "checking";
                                 updateCheckProc.running = true;
+                                syncCheckProc.running = true;
                             }
                         }
                     }
 
                     StyledRect {
-                        visible: root.updateState === "available"
+                        visible: root.syncWorthwhile
                         Layout.preferredHeight: 28
                         Layout.preferredWidth: updateLabel.implicitWidth + Tokens.padding.medium * 2
                         radius: Tokens.rounding.full
@@ -193,7 +221,7 @@ ColumnLayout {
                         StyledText {
                             id: updateLabel
                             anchors.centerIn: parent
-                            text: qsTr("Update now")
+                            text: qsTr("Sync update")
                             color: Colours.contrastOn(Colours.palette.m3primary)
                             font: Tokens.font.label.small
                         }
@@ -205,23 +233,151 @@ ColumnLayout {
 
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: Quickshell.execDetached(["aphotic", "update"])
+                            onClicked: Quickshell.execDetached(["aphotic", "sync"])
                         }
                     }
                 }
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
                     visible: root.updateState !== "idle" && root.updateState !== "checking"
+                    textFormat: Text.RichText
                     text: {
                         if (root.updateState === "current")
                             return qsTr("Up to date (%1)").arg(root.version);
                         if (root.updateState === "available")
-                            return qsTr("Update available: %1 (installed: %2)").arg(root.latestVersion).arg(root.version);
+                            return qsTr("Update available: %1 (installed: %2). <a href=\"%3\">What changed</a>").arg(root.latestVersion).arg(root.version).arg(root.releaseUrl);
                         return qsTr("Couldn't check for updates -- see your network connection, or check manually: %1").arg(root.releasesUrl);
                     }
                     color: Colours.palette.m3onSurfaceVariant
                     font: Tokens.font.label.small
+                    onLinkActivated: link => Qt.openUrlExternally(link)
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    visible: root.outdatedPlugins.length > 0
+                    text: qsTr("Plugin updates: %1").arg(root.outdatedPlugins.map(p => `${p.name} ${p.from} → ${p.to}`).join(", "))
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.small
+                }
+
+                // Only ever a warning. Nothing here installs a package.
+                StyledRect {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Tokens.spacing.extraSmall
+                    visible: root.missingPackages.length > 0
+                    implicitHeight: missingCol.implicitHeight + Tokens.padding.medium * 2
+                    radius: Tokens.rounding.medium
+                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                    ColumnLayout {
+                        id: missingCol
+
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.margins: Tokens.padding.medium
+                        spacing: Tokens.spacing.extraSmall
+
+                        RowLayout {
+                            spacing: Tokens.spacing.small
+
+                            MaterialIcon {
+                                text: "inventory_2"
+                                color: Colours.palette.m3error
+                                fontStyle: Tokens.font.icon.small
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: qsTr("%1 package(s) this profile asks for are not installed").arg(root.missingPackages.length)
+                                color: Colours.palette.m3onSurface
+                                font: Tokens.font.label.medium
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            text: root.missingPackages.join(", ")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            text: qsTr("A sync deploys the config but installs nothing. Run ./install.sh from the Aphotic repo to add these.")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+                    }
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WordWrap
+                    visible: root.syncWorthwhile
+                    text: qsTr("Syncing re-deploys the config and refreshes plugins. It restarts the shell, so the bar and every panel disappear for a moment.")
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.small
+                }
+
+                // What the last sync did, read back after the restart it
+                // caused. Absent until one has run.
+                StyledRect {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Tokens.spacing.extraSmall
+                    visible: root.lastSync !== null
+                    implicitHeight: lastCol.implicitHeight + Tokens.padding.medium * 2
+                    radius: Tokens.rounding.medium
+                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                    ColumnLayout {
+                        id: lastCol
+
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.margins: Tokens.padding.medium
+                        spacing: Tokens.spacing.extraSmall
+
+                        RowLayout {
+                            spacing: Tokens.spacing.small
+
+                            MaterialIcon {
+                                text: root.lastSync?.result === "ok" ? "check_circle" : "error"
+                                color: root.lastSync?.result === "ok" ? Colours.palette.m3primary : Colours.palette.m3error
+                                fontStyle: Tokens.font.icon.small
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                wrapMode: Text.WordWrap
+                                text: root.lastSync?.result === "ok" ? qsTr("Last sync finished") : qsTr("Last sync did not finish")
+                                color: Colours.palette.m3onSurface
+                                font: Tokens.font.label.medium
+                            }
+                        }
+
+                        StyledText {
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            text: qsTr("Full output: ~/.local/state/aphotic/last-sync.log")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+                    }
                 }
             }
         }
@@ -267,5 +423,47 @@ ColumnLayout {
         }
     }
 
-    Component.onCompleted: versionProc.running = true
+    // Read-only: `--check` pulls nothing, deploys nothing and restarts
+    // nothing, so this is safe to run on a plain button press and safe to
+    // run again while the release check is still in flight.
+    Process {
+        id: syncCheckProc
+
+        command: ["aphotic", "sync", "--check", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const data = JSON.parse(text);
+                    root.missingPackages = data.missingPackages ?? [];
+                    root.outdatedPlugins = data.outdatedPlugins ?? [];
+                } catch (e) {
+                    root.missingPackages = [];
+                    root.outdatedPlugins = [];
+                }
+            }
+        }
+    }
+
+    // Absent until a sync has run, which is the normal state on a fresh
+    // install -- so a failed read clears the card rather than showing an
+    // error for a file nobody was owed.
+    FileView {
+        path: `${Quickshell.env("HOME")}/.local/state/aphotic/last-sync.json`
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                root.lastSync = JSON.parse(text());
+            } catch (e) {
+                root.lastSync = null;
+            }
+        }
+        onLoadFailed: root.lastSync = null
+    }
+
+    Component.onCompleted: {
+        versionProc.running = true;
+        syncCheckProc.running = true;
+    }
 }
