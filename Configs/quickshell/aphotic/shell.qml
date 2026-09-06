@@ -13,6 +13,7 @@ import qs.modules.osd
 import qs.modules.lock
 import qs.modules.session
 import qs.modules.dashboard
+import qs.modules.workspace
 import qs.modules.settings
 import qs.modules.background
 import qs.modules.areapicker
@@ -147,6 +148,15 @@ ShellRoot {
     }
 
     Variants {
+        id: workspaceWindows
+        model: PluginRegistry.surfacesFor("workspace").length > 0 ? Quickshell.screens : []
+
+        WorkspaceWindow {
+            screenState: root.screenStateFor(modelData)
+        }
+    }
+
+    Variants {
         id: settingsWindows
         model: Quickshell.screens
 
@@ -224,6 +234,11 @@ ShellRoot {
             const win = root.focusedInstance(dashboardWindows);
             if (win)
                 win.screenState.dashboard = !win.screenState.dashboard;
+        },
+        workspace: () => {
+            const win = root.focusedInstance(workspaceWindows);
+            if (win)
+                win.screenState.workspace = !win.screenState.workspace;
         },
         agent: () => {
             const win = root.focusedInstance(barWindows);
@@ -620,6 +635,14 @@ ShellRoot {
 
         function toggle(): void {
             root._toggleTargets.dashboard();
+        }
+    }
+
+    IpcHandler {
+        target: "workspace"
+
+        function toggle(): void {
+            root._toggleTargets.workspace();
         }
     }
 

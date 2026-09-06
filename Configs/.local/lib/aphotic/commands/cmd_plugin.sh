@@ -38,7 +38,7 @@ _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 # is reported as unhosted, which is the safe direction to fail -- a
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings overlay fullscreen-overlay pet_action"
+APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay pet_action"
 APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
@@ -229,6 +229,9 @@ _aphotic_plugin_ui_json() {
         entries+=("$entry")
     fi
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.settings_pane settings)"; then
+        entries+=("$entry")
+    fi
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.workspace workspace)"; then
         entries+=("$entry")
     fi
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.overlay overlay)"; then

@@ -1,0 +1,3 @@
+module qs.modules.workspace
+WorkspaceContent 1.0 WorkspaceContent.qml
+WorkspaceWindow 1.0 WorkspaceWindow.qml
