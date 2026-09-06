@@ -1,3 +1,13 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2023-2026 Trevin Tindall (T-Crypt) and Aphotic-Hypr contributors
+//
+// Aphotic theme engine, shell side
+// Copyright (C) 2023-2026 Trevin Tindall. Licensed GPL-3.0-or-later.
+//
+// Reads what the colour backend produced and exposes it as the palette
+// every surface binds to, including the clamp that keeps a wallpaper
+// derived palette inside its theme's anchor.
+
 pragma Singleton
 import QtQuick
 import Quickshell

@@ -22,3 +22,20 @@ The Resource Engine (Configs/quickshell/aphotic/services/profile/) is an
 original design and implementation. Its architecture is described in the
 project documentation. That description is published as prior art: it
 exists so the design stays available to everyone, including its authors.
+
+The theme engine (Configs/hypr/scripts/wallswitcher.py, Configs/wallust/,
+Configs/matugen/ and Configs/quickshell/aphotic/services/Colours.qml) is
+an original design and implementation. It drives a colour backend from a
+per-theme pin, clamps the derived palette to that theme's anchor so a
+wallpaper cannot pull a theme off its own identity, and hands the result
+to plugins through a palette template. Published as prior art on the same
+terms as the Resource Engine above.
+
+The desktop pet runtime lives in the plugin repository and carries its
+own notice there.
+
+---
+
+"Aphotic" and the Aphotic mark are reserved. The GPL covers the code, not
+the name. You may modify and redistribute this software under the GPL,
+but not under this name or mark without written permission.

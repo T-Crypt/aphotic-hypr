@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2023-2026 Trevin Tindall (T-Crypt) and Aphotic-Hypr contributors
+#
+# Aphotic theme engine
+# Copyright (C) 2023-2026 Trevin Tindall. Licensed GPL-3.0-or-later.
+#
+# Drives a theme change end to end: picks the wallpaper, runs the colour
+# backend (wallust or matugen) against it, and applies the result to every
+# surface that takes a palette. A theme pins its own backend, colorscheme
+# and clamp window in theme.toml, so a live palette derived from an image
+# stays inside the range that still reads as that theme.
 
 import json
 import os
