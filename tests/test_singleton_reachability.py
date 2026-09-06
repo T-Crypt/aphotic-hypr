@@ -24,7 +24,18 @@ QML_ROOT = Path(__file__).resolve().parent.parent / "Configs" / "quickshell" / "
 # aphotic-plugins repo, say) belongs here with the reason. Empty on
 # purpose: nothing qualifies today, and an entry is a claim someone has
 # to justify.
-ALLOWED_UNREFERENCED: dict[str, str] = {}
+ALLOWED_UNREFERENCED: dict[str, str] = {
+    "AgentWindowFocus": (
+        "Consumed only by the pet plugin's Pet.qml (aphotic-plugins), "
+        "not by any file in this repo -- core exposes the service, the "
+        "plugin calls it, same direction AgentEvents already serves "
+        "plugins in. It has no timers/Connections/Component.onCompleted "
+        "of its own to fail to run either way: focusByCwd() only does "
+        "anything when a caller invokes it, so being unreferenced here "
+        "does not risk the silent-no-op failure this test exists to "
+        "catch."
+    ),
+}
 
 
 def _code(path: Path) -> str:
