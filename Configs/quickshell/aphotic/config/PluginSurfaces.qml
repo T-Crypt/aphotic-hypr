@@ -8,6 +8,7 @@ QtObject {
     readonly property var kinds: [
         { id: "dashboard", icon: "dashboard", description: qsTr("Adds a Dashboard tab: %1") },
         { id: "notch", icon: "expand_more", description: qsTr("Adds a notch tile: %1") },
+        { id: "bar", icon: "view_week", description: qsTr("Adds a bar widget: %1") },
         { id: "settings", icon: "tune", description: qsTr("Adds a Settings section: %1") },
         { id: "overlay", icon: "layers", description: qsTr("Adds an overlay: %1") },
         { id: "fullscreen-overlay", icon: "fullscreen", description: qsTr("Adds a fullscreen overlay: %1") }

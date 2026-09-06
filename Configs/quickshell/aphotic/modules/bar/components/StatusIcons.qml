@@ -58,7 +58,7 @@ Item {
     // instead of rendering as a visible line -- the pills' own gap does
     // that job.
     readonly property var groups: {
-        const values = root.Config.bar.statusIcons.values.filter(e => e.enabled);
+        const values = Settings.barStatusIcons.filter(e => e.enabled);
         const out = [];
         let current = [];
         for (const v of values) {
