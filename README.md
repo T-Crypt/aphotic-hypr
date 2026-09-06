@@ -11,6 +11,23 @@
   <img alt="Status: Beta" src="https://img.shields.io/badge/status-beta-E0AF68?style=for-the-badge&labelColor=0b0d12">
 </p>
 
+## Contents
+
+| | | |
+|---|---|---|
+| [Overview](#overview) | [Preview](#preview) | [Gallery](#gallery) |
+| [Features](#features) | [Architecture](#architecture) | [Profiles](#profiles) |
+| [Plugin System](#plugin-system) | [Desktop Pets](#desktop-pets) | [Themes](#themes) |
+| [Installation](#installation) | [FAQ](#faq) | [Stack](#stack) |
+| [Performance](#performance) | [Keybindings](#keybindings) | [Documentation](#documentation) |
+| [Project Status](#project-status) | [Star History](#star-history) | [License](#license) |
+
+**New here?** [Installation](#installation) is the short version, and
+[FAQ](#faq) answers what it does to a machine you already use.
+**Looking around?** [Gallery](#gallery) is every surface in screenshots.
+**Building on it?** [Architecture](#architecture) and
+[Plugin System](#plugin-system).
+
 ## Overview
 
 Aphotic is a modular Hyprland environment using a single Quickshell
