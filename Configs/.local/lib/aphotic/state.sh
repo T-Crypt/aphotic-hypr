@@ -38,21 +38,28 @@ _aphotic_state_plugins_declared() {
     grep -qE '^\[plugins\][[:space:]]*$' "$toml"
 }
 
-# name<TAB>state, one per line: state is "ok" (desired and actual agree),
-# "missing" (desired, not installed/enabled) or "extra" (installed and
-# enabled, not desired). Callers needing just one side can grep the tab
-# field rather than re-diffing.
+# name<TAB>state, one per line:
+#   ok       desired, installed, enabled -- nothing to do
+#   disabled desired, installed, but disabled -- `aphotic plugin enable`
+#   missing  desired, not installed at all -- `aphotic plugin install`
+#   extra    installed and enabled, not desired -- `aphotic plugin disable`
+# disabled and missing need different actions (install refuses on an
+# already-installed plugin), so callers converging state -- reconcile --
+# must not collapse them into one "absent" bucket.
 _aphotic_state_plugin_drift() {
     _aphotic_state_plugins_declared || return 0
 
-    local desired actual name
+    local desired installed actual name
     desired="$(_aphotic_state_desired_plugins)"
+    installed="$(aphotic_plugin_names)"
     actual="$(_aphotic_state_actual_plugins)"
 
     while IFS= read -r name; do
         [[ -z "$name" ]] && continue
         if grep -qxF "$name" <<<"$actual"; then
             printf '%s\tok\n' "$name"
+        elif grep -qxF "$name" <<<"$installed"; then
+            printf '%s\tdisabled\n' "$name"
         else
             printf '%s\tmissing\n' "$name"
         fi

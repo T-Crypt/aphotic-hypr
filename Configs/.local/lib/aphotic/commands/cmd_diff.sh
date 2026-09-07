@@ -49,7 +49,7 @@ HELP
     local missing_count=0
     [[ -n "$missing_packages" ]] && missing_count="$(wc -l <<<"$missing_packages")"
 
-    local plugins_declared="false" plugin_missing=() plugin_extra=() plugin_ok=0
+    local plugins_declared="false" plugin_missing=() plugin_extra=() plugin_disabled=() plugin_ok=0
     if _aphotic_state_plugins_declared; then
         plugins_declared="true"
         local name state
@@ -58,6 +58,7 @@ HELP
             case "$state" in
                 missing) plugin_missing+=("$name") ;;
                 extra) plugin_extra+=("$name") ;;
+                disabled) plugin_disabled+=("$name") ;;
                 ok) plugin_ok=$((plugin_ok + 1)) ;;
             esac
         done < <(_aphotic_state_plugin_drift)
@@ -73,16 +74,17 @@ HELP
 
     local changes=0
     [[ "$missing_count" -gt 0 ]] && changes=$((changes + missing_count))
-    changes=$((changes + ${#plugin_missing[@]} + ${#plugin_extra[@]}))
+    changes=$((changes + ${#plugin_missing[@]} + ${#plugin_extra[@]} + ${#plugin_disabled[@]}))
     [[ "$daemon_state" != "running" ]] && changes=$((changes + 1))
     [[ "$dm_state" == "conflict" ]] && changes=$((changes + 1))
     [[ "$drift_status" == "behind" ]] && changes=$((changes + 1))
 
     if [[ "$as_json" -eq 1 ]]; then
-        local missing_json="[]" plugin_missing_json="[]" plugin_extra_json="[]"
+        local missing_json="[]" plugin_missing_json="[]" plugin_extra_json="[]" plugin_disabled_json="[]"
         [[ -n "$missing_packages" ]] && missing_json="$(printf '%s\n' "$missing_packages" | jq -R . | jq -sc .)"
         [[ "${#plugin_missing[@]}" -gt 0 ]] && plugin_missing_json="$(printf '%s\n' "${plugin_missing[@]}" | jq -R . | jq -sc .)"
         [[ "${#plugin_extra[@]}" -gt 0 ]] && plugin_extra_json="$(printf '%s\n' "${plugin_extra[@]}" | jq -R . | jq -sc .)"
+        [[ "${#plugin_disabled[@]}" -gt 0 ]] && plugin_disabled_json="$(printf '%s\n' "${plugin_disabled[@]}" | jq -R . | jq -sc .)"
 
         jq -nc \
             --argjson missingPackages "$missing_json" \
@@ -90,6 +92,7 @@ HELP
             --argjson pluginsOk "$plugin_ok" \
             --argjson pluginsMissing "$plugin_missing_json" \
             --argjson pluginsExtra "$plugin_extra_json" \
+            --argjson pluginsDisabled "$plugin_disabled_json" \
             --arg daemon "$daemon_state" \
             --arg displayManager "$dm_state" \
             --arg displayManagerDetail "${dm_detail:-}" \
@@ -97,7 +100,7 @@ HELP
             --argjson versionCommitsBehind "${drift_behind:-0}" \
             --argjson changesRequired "$changes" \
             '{missingPackages: $missingPackages,
-              plugins: {declared: $pluginsDeclared, ok: $pluginsOk, missing: $pluginsMissing, extra: $pluginsExtra},
+              plugins: {declared: $pluginsDeclared, ok: $pluginsOk, missing: $pluginsMissing, extra: $pluginsExtra, disabled: $pluginsDisabled},
               services: {daemon: $daemon, displayManager: $displayManager, displayManagerDetail: $displayManagerDetail},
               version: {status: $versionStatus, commitsBehind: $versionCommitsBehind},
               changesRequired: $changesRequired}'
@@ -115,12 +118,15 @@ HELP
 
     if [[ "$plugins_declared" == "false" ]]; then
         _aphotic_diff_line skip plugins "not declared in aphotic.toml, drift not tracked"
-    elif [[ "${#plugin_missing[@]}" -eq 0 && "${#plugin_extra[@]}" -eq 0 ]]; then
+    elif [[ "${#plugin_missing[@]}" -eq 0 && "${#plugin_extra[@]}" -eq 0 && "${#plugin_disabled[@]}" -eq 0 ]]; then
         _aphotic_diff_line ok plugins "in sync (${plugin_ok})"
     else
         local p
         for p in "${plugin_missing[@]}"; do
             _aphotic_diff_line miss plugins "${p} missing"
+        done
+        for p in "${plugin_disabled[@]}"; do
+            _aphotic_diff_line warn plugins "${p} installed but disabled"
         done
         for p in "${plugin_extra[@]}"; do
             _aphotic_diff_line warn plugins "${p} not desired (enabled, not declared)"
