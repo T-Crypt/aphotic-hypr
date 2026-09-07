@@ -59,41 +59,35 @@ _aphotic_doctor_layer_plugins() {
 
 # APHOTIC_VERSION already comes straight off APHOTIC_DOTS_DIR/VERSION, so
 # it never itself drifts from the checkout -- what it can't say is whether
-# that checkout is behind origin/main. Compared against the cached
-# remote-tracking ref only; no network call here, since doctor is meant to
-# be fast and safe to run anytime. Same trap CONTRIBUTING.md warns about:
-# local main can sit behind origin/main with nothing surfacing it.
+# that checkout is behind origin/main. Formats _aphotic_state_version_drift
+# (lib/aphotic/state.sh), shared with `aphotic status`/`aphotic diff` so
+# all three agree on what "behind" means.
 _aphotic_doctor_version_drift() {
-    local dots="$APHOTIC_DOTS_DIR" branch head behind
+    source "${LIB_DIR}/state.sh"
 
-    # -d "$dots/.git" would miss a git worktree checkout -- .git there is
-    # a file (a "gitdir:" pointer back at the real repo), not a
-    # directory. rev-parse is the check that's actually true for both.
-    git -C "$dots" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-        echo "  [skip] ${dots} is not a git checkout"
+    local status branch head behind
+    IFS=$'\t' read -r status branch head behind < <(_aphotic_state_version_drift)
+
+    if [[ "$status" == "notgit" ]]; then
+        echo "  [skip] ${APHOTIC_DOTS_DIR} is not a git checkout"
         return 0
-    }
-
-    branch="$(git -C "$dots" rev-parse --abbrev-ref HEAD 2>/dev/null)"
-    head="$(git -C "$dots" rev-parse --short HEAD 2>/dev/null)"
-    printf '  checked out: %s @ %s (v%s)\n' "${branch:-?}" "${head:-?}" "$APHOTIC_VERSION"
-
-    [[ "$branch" == "main" ]] || {
-        echo "  [skip] not on main -- drift check only compares main against origin/main"
-        return 0
-    }
-
-    git -C "$dots" rev-parse --verify -q origin/main >/dev/null 2>&1 || {
-        echo "  [skip] no origin/main ref cached -- run 'git fetch' to enable this check"
-        return 0
-    }
-
-    behind="$(git -C "$dots" rev-list --count HEAD..origin/main 2>/dev/null)"
-    if [[ -n "$behind" && "$behind" -gt 0 ]]; then
-        printf '  [warn] %s commit(s) behind origin/main (cached as of last fetch) -- aphotic sync to catch up\n' "$behind"
-    else
-        echo "  [ok]   up to date with origin/main (as of last fetch)"
     fi
+
+    printf '  checked out: %s @ %s (v%s)\n' "$branch" "$head" "$APHOTIC_VERSION"
+    case "$status" in
+        not-main)
+            echo "  [skip] not on main -- drift check only compares main against origin/main"
+            ;;
+        no-origin-ref)
+            echo "  [skip] no origin/main ref cached -- run 'git fetch' to enable this check"
+            ;;
+        behind)
+            printf '  [warn] %s commit(s) behind origin/main (cached as of last fetch) -- aphotic sync to catch up\n' "$behind"
+            ;;
+        ok)
+            echo "  [ok]   up to date with origin/main (as of last fetch)"
+            ;;
+    esac
 }
 
 aphotic_cmd_doctor() {
@@ -118,22 +112,35 @@ aphotic_cmd_doctor() {
     echo "Layer plugins:"
     _aphotic_doctor_layer_plugins
 
+    source "${LIB_DIR}/state.sh"
+    local services daemon_state dm_state dm_detail
+    services="$(_aphotic_state_service_drift)"
+    IFS=$'\t' read -r _ daemon_state _ <<<"$(grep '^daemon' <<<"$services")"
+    IFS=$'\t' read -r _ dm_state dm_detail <<<"$(grep '^displaymanager' <<<"$services")"
+
     echo
     echo "Display manager:"
+    # A unit systemd has never heard of still writes "not-found" to
+    # stdout before exiting non-zero -- `|| echo disabled` inside the
+    # same command substitution let both land in the variable at once
+    # ("not-found\ndisabled" on one line). The fallback only applies when
+    # nothing came back at all.
     local sddm_enabled greetd_enabled
-    sddm_enabled="$(systemctl is-enabled sddm.service 2>/dev/null || echo disabled)"
-    greetd_enabled="$(systemctl is-enabled greetd.service 2>/dev/null || echo not-installed)"
+    sddm_enabled="$(systemctl is-enabled sddm.service 2>/dev/null)" || true
+    [[ -n "$sddm_enabled" ]] || sddm_enabled="disabled"
+    greetd_enabled="$(systemctl is-enabled greetd.service 2>/dev/null)" || true
+    [[ -n "$greetd_enabled" ]] || greetd_enabled="not-installed"
     printf '  sddm:   %s\n' "$sddm_enabled"
     printf '  greetd: %s\n' "$greetd_enabled"
     if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml ]]; then
         printf '  [ok]   greetd greeter scaffold deployed (aphotic displaymanager status for detail)\n'
     fi
-    if [[ "$sddm_enabled" == "enabled" && "$greetd_enabled" == "enabled" ]]; then
-        printf '  [warn] both sddm and greetd are enabled -- only one owns display-manager.service; run '\''aphotic displaymanager status'\'' to see which actually wins\n'
+    if [[ "$dm_state" == "conflict" ]]; then
+        printf '  [warn] %s; run '\''aphotic displaymanager status'\'' to see which actually wins\n' "$dm_detail"
     fi
 
     echo
-    if pgrep -f "qs -c aphotic" >/dev/null 2>&1; then
+    if [[ "$daemon_state" == "running" ]]; then
         echo "Daemon: running"
     else
         echo "Daemon: not running (aphotic shell -d)"
