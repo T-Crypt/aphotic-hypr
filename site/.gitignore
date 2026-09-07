@@ -2,3 +2,5 @@ _site/
 _docs/
 .jekyll-cache/
 .sass-cache/
+SITE-DESIGN.md
+SITE-IMPLEMENTATION-PLAN.md
