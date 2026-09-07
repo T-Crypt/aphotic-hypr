@@ -11,7 +11,8 @@ set -euo pipefail
 fail() { echo "FAIL: $1"; exit 1; }
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$ROOT/Configs/.local/lib/aphotic/commands/cmd_doctor.sh"
+LIB_DIR="$ROOT/Configs/.local/lib/aphotic"
+source "$LIB_DIR/commands/cmd_doctor.sh"
 
 WORKDIR=$(mktemp -d)
 trap 'rm -rf "$WORKDIR"' EXIT
