@@ -16,6 +16,9 @@ subprocess.run(["wallust", "run", image_path])
 # generate current-wallpaper -- the shared "current wallpaper" marker, see
 # services/Wallpapers.qml
 subprocess.run(["cp", image_path, os.path.join(awww_dir, "current-wallpaper")])
+# Deploy the GTK4/libadwaita stylesheet wallust just staged, with the live
+# UI font stamped in -- see cmd_theme.sh's _aphotic_theme_refresh_gtk
+subprocess.run(["aphotic", "theme", "refresh-gtk"])
 # firefox
 subprocess.run(["pywalfox", "update"])
 # Reload the shell to apply colorscheme
