@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/aphotic-banner.svg" alt="Aphotic — Hyprland dotfiles, after dark" width="900">
+  <img src="assets/aphotic-banner.svg" alt="Aphotic: Hyprland dotfiles, after dark" width="900">
 </p>
 
 <p align="center">
@@ -36,11 +36,11 @@
   <a href="#license">License</a>
 </p>
 
-**New here?** [Installation](#installation) is the short version, and
-[FAQ](#faq) answers what it does to a machine you already use.
+**New here?** [Installation](#installation) is the short version.
 **Looking around?** [Gallery](#gallery) is every surface in screenshots.
-**Building on it?** [Architecture](#architecture) and
-[Plugin System](#plugin-system).
+**Want the full docs?** Every command, flag, and design decision lives on
+the [documentation site](https://t-crypt.github.io/aphotic-hypr); this
+README stays short.
 
 ## Overview
 
@@ -59,7 +59,7 @@ Inactive features should add little to no runtime overhead.
 
 ## Preview
 
-One shell, reskinned live from a wallpaper — no rebuild, no relogin. Shown
+One shell, reskinned live from a wallpaper. No rebuild, no relogin. Shown
 over **Tokyo Night** and **Lofi**, two of the eight themes that ship out of
 the box:
 
@@ -84,8 +84,8 @@ https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
 <td width="50%"><p align="center"><img src="./assets/screenshots/bar-dock.png" width="440"><br><sub>Bar: Dock style</sub></p></td>
 </tr>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/bar-taskbar.png" width="440"><br><sub>Bar: Taskbar style — window list, grouped by app</sub></p></td>
-<td width="50%"><p align="center"><img src="./assets/screenshots/bar-minimal.png" width="440"><br><sub>Bar: Minimal style — thin strip, DND indicator only</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-taskbar.png" width="440"><br><sub>Bar: Taskbar style, window list grouped by app</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-minimal.png" width="440"><br><sub>Bar: Minimal style, thin strip with DND indicator only</sub></p></td>
 </tr>
 <tr>
 <td width="50%"><p align="center"><img src="./assets/screenshots/bar-capsule.png" width="440"><br><sub>Bar: Capsule style, a floating pill with the collapsed notch above it</sub></p></td>
@@ -122,12 +122,12 @@ https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
 
 <table>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard.png" width="440"><br><sub>Dashboard — clock, calendar, media, focus timer, weather</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard.png" width="440"><br><sub>Dashboard: clock, calendar, media, focus timer, weather</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/performance.png" width="440"><br><sub>Performance</sub></p></td>
 </tr>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard-wallpaper.png" width="440"><br><sub>Wallpapers tab — the active theme's own set</sub></p></td>
-<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard-chat.png" width="440"><br><sub>AI Chat tab — provider and model picker</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard-wallpaper.png" width="440"><br><sub>Wallpapers tab: the active theme's own set</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/dashboard-chat.png" width="440"><br><sub>AI Chat tab: provider and model picker</sub></p></td>
 </tr>
 </table>
 
@@ -139,15 +139,15 @@ https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
 
 <table>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/agent-graph.png" width="440"><br><sub>Agent Graph — every tool call as the agent makes it</sub></p></td>
-<td width="50%"><p align="center"><img src="./assets/screenshots/no-agent-graph-dashboard-modular.png" width="440"><br><sub>The same Command Center without the plugin — the tab is simply gone</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/agent-graph.png" width="440"><br><sub>Agent Graph: every tool call as the agent makes it</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/no-agent-graph-dashboard-modular.png" width="440"><br><sub>The same Command Center without the plugin: the tab is gone</sub></p></td>
 </tr>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/agent-bar-modular.png" width="440"><br><sub>Agents popout — running sessions and today's token use</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/agent-bar-modular.png" width="440"><br><sub>Agents popout: running sessions and today's token use</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/agent-bar-modular-codex.png" width="440"><br><sub>Middle-click the bar icon to switch harness</sub></p></td>
 </tr>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/plugins.png" width="440"><br><sub>Plugins — browse, install, enable, remove</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/plugins.png" width="440"><br><sub>Plugins: browse, install, enable, remove</sub></p></td>
 <td width="50%"></td>
 </tr>
 </table>
@@ -177,7 +177,7 @@ https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
 
 <table>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/theme.png" width="440"><br><sub>Appearance — theme, wallpaper, slideshow</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/theme.png" width="440"><br><sub>Appearance: theme, wallpaper, slideshow</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/wallpaper-picker.png" width="440"><br><sub>Wallpaper Picker</sub></p></td>
 </tr>
 <tr>
@@ -185,11 +185,11 @@ https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
 <td width="50%"><p align="center"><img src="./assets/screenshots/personalization.png" width="440"><br><sub>Personalization</sub></p></td>
 </tr>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/bar-style.png" width="440"><br><sub>Bar — style, visibility, orientation</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/bar-style.png" width="440"><br><sub>Bar: style, visibility, orientation</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/workspace-profiles.png" width="440"><br><sub>Workspace Profiles</sub></p></td>
 </tr>
 <tr>
-<td width="50%"><p align="center"><img src="./assets/screenshots/system.png" width="440"><br><sub>System — doctor, dependency and package checks</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/system.png" width="440"><br><sub>System: doctor, dependency and package checks</sub></p></td>
 <td width="50%"></td>
 </tr>
 </table>
@@ -243,85 +243,31 @@ Aphotic
     └── Optional extensions
 ```
 
-Profiles can interact through the Resource Engine.
-
-``` text
-Workload
-   ↓
-Resource Claim
-   ↓
-Contention
-   ↓
-Negotiation
-   ↓
-Apply
-   ↓
-Monitor
-   ↓
-Restore
-```
-
-The engine is designed to remain dormant when there is nothing to
-manage. Resource polling and process accounting are activated only where
-required.
+Profiles can interact through the Resource Engine. A workload claims a
+resource, another profile's claim can contend with it, and Aphotic
+negotiates rather than deciding for you. It stays dormant until something
+claims a resource. Full mechanism, boundaries, and current state:
+[Resource Engine](https://t-crypt.github.io/aphotic-hypr/docs/resource-engine/).
 
 ## Profiles
 
-### Developer
-
-Development tools, workspace behavior, terminal integration, and
-project-oriented workflows.
-
-### Gaming
-
-GameMode-based gaming sessions with GPU process accounting and resource
-negotiation.
-
-Aphotic can detect GPU contention between a running game and other
-workloads such as local AI models.
-
-### AI
-
-Optional AI integrations including:
-
--   Claude
--   Ollama
--   Gemini
--   ChatGPT
--   Aphotic Assistant
-
-Local Ollama models can participate in the Resource Engine through GPU
-VRAM claims.
-
-The `ai` layer installs the GPU runner that matches your card:
-`ollama-cuda` on NVIDIA, `ollama-rocm` on AMD. Local models then run on
-the GPU. With neither card, Ollama falls back to the CPU.
-
-### Security
-
-Optional security-research tooling organized into dedicated layers.
+Four optional layers merge onto a `minimal` or `full` base profile:
+**Developer** (terminal integration, project workflows), **Gaming**
+(GameMode, GPU contention detection against local AI models),
+**AI** (Claude/Ollama/Gemini/ChatGPT, plus the Aphotic Assistant), and
+**Security** (offensive-research tooling in dedicated sublayers). Full
+breakdown, package lists, and how they merge: [Profiles &
+Layers](https://t-crypt.github.io/aphotic-hypr/docs/profiles-and-layers/).
 
 ## Plugin System
 
-Optional functionality lives outside the base shell.
-
-Plugins can be installed, enabled, disabled, and removed independently.
-
-The core desktop does not require optional plugins to function.
-
-A plugin can also claim the **Workspace plane**, a near-full-screen
-surface for a tool that needs room to work. The plane belongs to the
-shell and the content belongs to the plugin, so several plugins can
-register one and the plane lists them down its left edge.
-
-With no such plugin enabled there is no plane, no window, and no
-keybind: <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> is bound
-when the first one arrives and released when the last one goes, so the
-combo stays yours on an install that has none.
-
-```sh
-qs -c aphotic ipc call workspace toggle
-```
+Everything outside the base shell, AI capabilities included, is an
+independently installable, removable plugin; the core desktop needs none
+of them to function. A plugin can also claim the **Workspace plane**
+(<kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>), a near-full-screen
+surface bound only while an installed plugin registers one. Manifest
+format, every capability, and the current plugin roster: [Plugin
+System](https://t-crypt.github.io/aphotic-hypr/docs/plugin-system/).
 
 Repository: [T-Crypt/aphotic-plugins](https://github.com/T-Crypt/aphotic-plugins)
 
@@ -418,39 +364,11 @@ aphotic theme refresh-gtk
 aphotic wallpaper --random
 ```
 
-### GTK4 and libadwaita apps
-
-GTK3 apps follow `gtk-theme-name`, so `adw-gtk3` plus the generated
-`gtk-3.0/gtk.css` already covers them. GTK4 is a different problem.
-libadwaita compiles its palette in and ignores the theme name, which is
-why Files, Text Editor, Calculator and the rest of the stock GNOME set
-sit at Adwaita's grey next to a themed desktop.
-
-The one thing libadwaita does read is `~/.config/gtk-4.0/gtk.css`, so
-that is what Aphotic writes on every palette change, whichever way you
-made it: the CLI, the wallpaper picker, `Super` + `W`, thunar's Set as
-Theme. It carries the full set of libadwaita named colors off your
-active palette, plus the handful of rules that fix what the named
-colors alone cannot. Chief among them the shade
-colors libadwaita paints along every headerbar, sidebar and card edge,
-which are opaque near-blacks picked for Adwaita's own grey and read as
-a dirty band over anything else.
-
-Two things follow from how libadwaita loads that file:
-
--   It reads it once, at process start. A running app keeps the old
-    colors until it restarts. Aphotic restarts the GTK4 apps that stay
-    resident with no window on screen, and leaves alone any with a
-    window open, which pick the colors up next launch.
--   A color engine has no idea what font you use, so the stylesheet
-    ships a placeholder and the deploy step stamps in whatever
-    `gsettings` reports as your interface font. Run
-    `aphotic theme refresh-gtk` after changing that font.
-
-Both color engines render the stylesheet, so this works whichever one a
-theme pins. To theme another resident GTK4 app, add a row to
-`APHOTIC_GTK4_DAEMONS` in
-[`cmd_theme.sh`](Configs/.local/lib/aphotic/commands/cmd_theme.sh).
+GTK4/libadwaita apps (Files, Text Editor, Calculator) get themed too.
+libadwaita compiles its palette in and ignores the theme name, so this
+needs its own mechanism, separate from the GTK3 path. How that works,
+plus the full color-generation pipeline and `theme.toml` schema: see
+[Theming](https://t-crypt.github.io/aphotic-hypr/docs/theming/).
 
 > [!TIP]
 > Thunar has a right-click **Set as Theme** action for building a theme
@@ -488,84 +406,32 @@ Run the installer:
 
 > [!TIP]
 > Running Proxmox VE? Build an Arch guest and install there before you
-> touch the machine you work on. You get to watch a full run, try a
-> profile, break it, and roll back to a snapshot. `install.sh` changes go
-> through a VM before they ship, so a guest run follows a path that
-> already works.
->
-> [Proxmox Test VM](https://github.com/T-Crypt/Aphotic-Hypr/wiki/Proxmox-Test-VM)
-> has the `qm create` line and the settings off the dev VM.
-
-> [!WARNING]
-> Two settings decide whether the guest is usable. Set the display adapter
-> to **VirtIO-GPU**, which supplies the `/dev/dri/renderD128` render node
-> Hyprland draws through; Proxmox defaults to `std`. Then reach the guest
-> over **SPICE** with `virt-viewer`, since the browser console swallows the
-> SUPER key that most of Aphotic hangs off.
->
-> The installer warns when it detects a VM. You can continue past it. A
-> guest still shows you nothing about GPU layers or frame rate, so judge
-> the install path and leave performance to real hardware.
-
-The installer supports profiles and optional features without requiring
-every component to be installed.
-
-See the installation documentation for available options.
+> touch the machine you work on. `install.sh` changes go through a VM
+> before they ship. The guest needs **VirtIO-GPU** and a **SPICE**
+> viewer, since the browser console swallows the SUPER key. Full setup:
+> [Proxmox Test VM](https://t-crypt.github.io/aphotic-hypr/docs/proxmox-test-vm/).
 
 > [!NOTE]
-> `--dry-run` is checked before anything else runs — no `sudo` prompt, no
+> `--dry-run` is checked before anything else runs. No `sudo` prompt, no
 > package installs, no filesystem writes happen ahead of it. Re-running
 > `install.sh` later detects your last saved config in `aphotic.toml` and
 > offers to reuse it without repeating the wizard.
 
-Custom apps live in `profiles/custom_apps.lst` (still readable at the repo root as a symlink, for anyone on an older clone) and are folded into the resolved package list automatically — no separate prompt needed.
+Custom apps live in `profiles/custom_apps.lst` (still readable at the repo root as a symlink, for anyone on an older clone) and are folded into the resolved package list automatically, with no separate prompt needed.
 
-### Updating
-
-``` bash
-cd Aphotic-Hypr
-git pull
-./install.sh
-```
-
-Aphotic detects your saved `aphotic.toml` and re-resolves your profile/layers against any changes upstream, snapshotting your current configs first exactly as a fresh install would.
-
-### Uninstalling
-
-> [!CAUTION]
-> Something went sideways? `./uninstall.sh` restores your most recent
-> backup — no manual archaeology through `~/.config-backup/`.
-
-``` bash
-./uninstall.sh
-```
-
-Pass `--purge-packages` if you also want it to remove everything your profile installed (behind its own separate confirmation).
+Updating is `git pull && ./install.sh` (or `aphotic update` once
+installed); `./uninstall.sh` restores your most recent backup, add
+`--purge-packages` to also remove installed packages. Every flag, the
+two separate backup mechanisms, and the 1.x-to-2.0 upgrade note: see the
+[Installation guide](https://t-crypt.github.io/aphotic-hypr/docs/installation/).
 
 ## FAQ
 
-**Does Aphotic work on distros other than plain Arch?**
-
-Yes, on anything with an Arch/AUR base. Two distros beyond plain Arch are
-called out specifically:
-
-- **[Omarchy](https://omarchy.org/)**: a Hyprland-based Arch distro with
-  its own competing shell, update tooling, and idle screensaver.
-  `install.sh` detects it and handles the parts that need it. It works
-  around Omarchy's own pacman-update guard, replaces Omarchy's shell the
-  same way Aphotic already replaces waybar/rofi/dunst on any install, and
-  keeps Omarchy's own idle screensaver working through Aphotic's
-  `hypridle` config instead of dropping it. Verified end to end on a
-  fresh Omarchy ISO install, full out-of-box setup, no shortcuts.
-- **EndeavourOS**, installed with **Desktop Environment: None**: just an
-  Arch/AUR base with no competing DE, the same shape as running
-  Aphotic's own `minimal` profile. `./install.sh`, reboot, remove the
-  install media, and Aphotic is your desktop.
-
-Aphotic's own installer already replaces whatever bar/notification/lock
-stack it finds, so most Arch-based systems need nothing distro-specific
-at all. No further distro branching is planned beyond handling a
-specific known conflict, like Omarchy's shell, when one actually exists.
+Arch/AUR-based only, but that covers more than plain Arch. Omarchy and
+EndeavourOS (Desktop Environment: None) are both tested and supported
+directly. Full compatibility notes, plus every other question that comes
+up (updating, uninstalling, theming, contributing): [FAQ](https://t-crypt.github.io/aphotic-hypr/docs/faq/) and
+[Compatibility](https://t-crypt.github.io/aphotic-hypr/docs/compatibility/).
 
 ## Stack
 
@@ -607,150 +473,36 @@ treating system resources as static configuration.
 
 ## Keybindings
 
-Keybinds live in one place, [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua), grouped exactly as below. Every `qs -c aphotic ipc call ...` target the shell exposes has a keybind; anything below not bound to a key is intentionally IPC-only (scriptable, but not meant to be memorized).
-
-One exception: the Workspace plane is bound by the shell at runtime, because it only exists while a plugin provides one. See [Plugin System](#plugin-system).
-
-<details>
-<summary><strong>Launcher</strong></summary>
+Keybinds live in one place, [`Configs/hypr/keybinds.lua`](Configs/hypr/keybinds.lua). The ones you'll reach for first:
 
 | Keys | Action |
 | :-- | :-- |
-| <kbd>Super</kbd> + <kbd>A</kbd> or <kbd>Super</kbd> + <kbd>Space</kbd> | Open the launcher (apps, clipboard, emoji, windows, wallpaper) |
-
-</details>
-
-<details>
-<summary><strong>Apps &amp; tools</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>T</kbd> | Launch Kitty |
-| <kbd>Super</kbd> + <kbd>E</kbd> | Launch Thunar |
-| <kbd>Super</kbd> + <kbd>C</kbd> | Launch VS Code |
-| <kbd>Super</kbd> + <kbd>F</kbd> | Launch Firefox |
-| <kbd>Super</kbd> + <kbd>S</kbd> | Screenshot — simple region select via `grim`/`slurp`/`swappy` |
-| <kbd>Super</kbd> + <kbd>W</kbd> | Change wallpaper (random pick) |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>W</kbd> | Open the launcher's wallpaper picker directly |
-| <kbd>Super</kbd> + <kbd>,</kbd> / <kbd>Super</kbd> + <kbd>.</kbd> | Cycle to the previous/next theme |
-
-</details>
-
-<details>
-<summary><strong>Quickshell surfaces</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>D</kbd> | Command Center (tabbed dashboard overlay) |
+| <kbd>Super</kbd> + <kbd>A</kbd> / <kbd>Space</kbd> | Launcher (apps, clipboard, emoji, windows, wallpaper) |
+| <kbd>Super</kbd> + <kbd>D</kbd> | Command Center |
 | <kbd>Super</kbd> + <kbd>I</kbd> | Settings Control Center |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd> | Intelligence quick-chat popout |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>N</kbd> | Clear all notifications |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> | Toggle Do Not Disturb |
 | <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
 | <kbd>Super</kbd> + <kbd>Backspace</kbd> | Session / power menu |
-| <kbd>Super</kbd> + <kbd>M</kbd> | `wlogout` (fallback power menu) |
-| <kbd>Super</kbd> + <kbd>B</kbd> | Restart Quickshell |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> | Cycle bar style (Full → Dock → Taskbar → Minimal → Capsule) |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Workspace plane. Bound only while a plugin registers one, so on an install with none the combo stays free |
+| <kbd>Super</kbd> + <kbd>,</kbd> / <kbd>.</kbd> | Cycle theme |
+| <kbd>Alt</kbd> + <kbd>Tab</kbd> | Window switcher |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | Screenshot picker |
 
-</details>
-
-<details>
-<summary><strong>Screen capture</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> | Open the picker |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>S</kbd> | Open the picker in freeze-mode |
-| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd> | Open the picker, copy to clipboard only |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd> | Freeze-mode + clipboard-only combined |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> | Eyedropper — click a pixel to copy its hex color |
-
-</details>
-
-<details>
-<summary><strong>Media, audio &amp; brightness</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>XF86AudioPlay</kbd> / <kbd>XF86AudioPause</kbd> | Play/pause the active MPRIS player |
-| <kbd>XF86AudioNext</kbd> / <kbd>XF86AudioPrev</kbd> | Next/previous track |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>O</kbd> | Cycle audio output device |
-| <kbd>XF86AudioRaiseVolume</kbd> / <kbd>XF86AudioLowerVolume</kbd> | Volume up/down |
-| <kbd>XF86AudioMute</kbd> | Toggle mute |
-| <kbd>XF86AudioMicMute</kbd> | Toggle mic mute |
-| <kbd>XF86MonBrightnessUp</kbd> / <kbd>XF86MonBrightnessDown</kbd> | Brightness up/down |
-
-</details>
-
-<details>
-<summary><strong>Windows &amp; layout</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>Q</kbd> | Close the focused window |
-| <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>Q</kbd> | Force-kill the focused window |
-| <kbd>Super</kbd> + <kbd>V</kbd> | Toggle floating |
-| <kbd>Super</kbd> + <kbd>P</kbd> | Toggle pseudo-tiling |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>F</kbd> | Toggle pin (keep window on every workspace) |
-| <kbd>Super</kbd> + <kbd>J</kbd> | Toggle split direction |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle fullscreen |
-| <kbd>Super</kbd> + <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>/<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> | Move focus between windows |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>/<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> | Move (swap) the focused window in a direction |
-| <kbd>Alt</kbd> + <kbd>Tab</kbd> | Open the window switcher, step forward |
-| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Open the window switcher, step back |
-| <kbd>Super</kbd> + <kbd>G</kbd> | Toggle group |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>H</kbd> / <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>L</kbd> | Cycle group tabs backward/forward |
-| <kbd>Super</kbd> + <kbd>LMB</kbd> drag | Move window |
-| <kbd>Super</kbd> + <kbd>RMB</kbd> drag | Resize window |
-
-While the switcher is up, Hyprland is in its own submap and these keys apply:
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> | Step through windows, most recently used first |
-| <kbd>A</kbd>–<kbd>;</kbd> | Jump to workspace 1–10, home row, one key each |
-| <kbd>1</kbd>–<kbd>9</kbd> | Pick a numbered window on the selected workspace |
-| <kbd>&larr;</kbd> / <kbd>&rarr;</kbd> | Move between workspaces |
-| <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> | Move between windows on the selected workspace |
-| Release <kbd>Alt</kbd>, or <kbd>Enter</kbd> / <kbd>Space</kbd> | Switch to the selection |
-| <kbd>Esc</kbd>, or click away | Close it, focus stays put |
-
-Every window is read once when the switcher opens and focus moves once,
-when you let go. Stepping through the list does not focus anything on the
-way, so the order you are walking cannot reorder itself under you, and
-backing out with <kbd>Esc</kbd> leaves the desktop exactly as it was. Each
-workspace draws as a miniature of the monitor it lives on, at that
-monitor's real aspect ratio, with every window where it actually sits.
-
-</details>
-
-<details>
-<summary><strong>Workspaces</strong></summary>
-
-| Keys | Action |
-| :-- | :-- |
-| <kbd>Super</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Switch to workspace |
-| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>0</kbd>–<kbd>9</kbd> | Move window to workspace |
-| <kbd>Super</kbd> + Scroll | Cycle workspaces |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>&darr;</kbd> | Jump to the nearest empty workspace |
-| <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Tab</kbd> / <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Cycle forward/backward through open special (scratchpad) workspaces |
-
-> [!NOTE]
-> Special workspaces aren't created by an Aphotic keybind yet — cycling
-> only does something once one exists (e.g. via
-> `hyprctl dispatch movetoworkspace special:name`). A dedicated
-> create/toggle bind is a small future addition.
-
-</details>
+Every other bind (apps, windows, workspaces, media, screen capture, the
+window-switcher submap) is on the [Keybindings
+page](https://t-crypt.github.io/aphotic-hypr/docs/keybindings/), one row
+per key, grouped the same way.
 
 ## Documentation
 
--   [Installation](https://github.com/T-Crypt/Aphotic-Hypr/wiki)
--   [CLI
-    Reference](https://github.com/T-Crypt/Aphotic-Hypr/wiki/CLI-Reference)
--   [Bar
-    Styles](https://github.com/T-Crypt/Aphotic-Hypr/wiki/Bar-Styles)
+Every command, design decision, and gotcha that doesn't fit here lives on
+the doc site:
+**[t-crypt.github.io/aphotic-hypr](https://t-crypt.github.io/aphotic-hypr)**
+
+Jump straight to: [Getting
+Started](https://t-crypt.github.io/aphotic-hypr/docs/getting-started/) ·
+[CLI Reference](https://t-crypt.github.io/aphotic-hypr/docs/cli-reference/)
+· [Bar Styles](https://t-crypt.github.io/aphotic-hypr/docs/bar-styles/) ·
+[Architecture](https://t-crypt.github.io/aphotic-hypr/docs/architecture/)
+· [Troubleshooting](https://t-crypt.github.io/aphotic-hypr/docs/troubleshooting/)
 
 ## Project Status
 
