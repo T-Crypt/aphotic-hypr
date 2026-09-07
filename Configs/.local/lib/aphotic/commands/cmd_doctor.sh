@@ -57,6 +57,45 @@ _aphotic_doctor_layer_plugins() {
     [[ "$found" == "1" ]] || echo "  [ok]   no layer-gated plugins in the catalogue"
 }
 
+# APHOTIC_VERSION already comes straight off APHOTIC_DOTS_DIR/VERSION, so
+# it never itself drifts from the checkout -- what it can't say is whether
+# that checkout is behind origin/main. Compared against the cached
+# remote-tracking ref only; no network call here, since doctor is meant to
+# be fast and safe to run anytime. Same trap CONTRIBUTING.md warns about:
+# local main can sit behind origin/main with nothing surfacing it.
+_aphotic_doctor_version_drift() {
+    local dots="$APHOTIC_DOTS_DIR" branch head behind
+
+    # -d "$dots/.git" would miss a git worktree checkout -- .git there is
+    # a file (a "gitdir:" pointer back at the real repo), not a
+    # directory. rev-parse is the check that's actually true for both.
+    git -C "$dots" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+        echo "  [skip] ${dots} is not a git checkout"
+        return 0
+    }
+
+    branch="$(git -C "$dots" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    head="$(git -C "$dots" rev-parse --short HEAD 2>/dev/null)"
+    printf '  checked out: %s @ %s (v%s)\n' "${branch:-?}" "${head:-?}" "$APHOTIC_VERSION"
+
+    [[ "$branch" == "main" ]] || {
+        echo "  [skip] not on main -- drift check only compares main against origin/main"
+        return 0
+    }
+
+    git -C "$dots" rev-parse --verify -q origin/main >/dev/null 2>&1 || {
+        echo "  [skip] no origin/main ref cached -- run 'git fetch' to enable this check"
+        return 0
+    }
+
+    behind="$(git -C "$dots" rev-list --count HEAD..origin/main 2>/dev/null)"
+    if [[ -n "$behind" && "$behind" -gt 0 ]]; then
+        printf '  [warn] %s commit(s) behind origin/main (cached as of last fetch) -- aphotic sync to catch up\n' "$behind"
+    else
+        echo "  [ok]   up to date with origin/main (as of last fetch)"
+    fi
+}
+
 aphotic_cmd_doctor() {
     echo "Aphotic doctor — aphotic ${APHOTIC_VERSION}"
     echo
@@ -100,7 +139,7 @@ aphotic_cmd_doctor() {
         echo "Daemon: not running (aphotic shell -d)"
     fi
 
-    # TODO: compare APHOTIC_VERSION against APHOTIC_DOTS_DIR git HEAD /
-    # a version marker file, the way HyDE's `hyde-shell version` does,
-    # to surface "your dots are N commits behind" drift.
+    echo
+    echo "Version:"
+    _aphotic_doctor_version_drift
 }
