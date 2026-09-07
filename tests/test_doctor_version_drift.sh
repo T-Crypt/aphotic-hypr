@@ -66,4 +66,16 @@ git -C "$OTHERBRANCH" checkout -q -b feature/whatever
 out="$(APHOTIC_DOTS_DIR="$OTHERBRANCH" APHOTIC_VERSION="9.9.9" _aphotic_doctor_version_drift)"
 [[ "$out" == *"not on main"* ]] || fail "expected a non-main branch to be reported, got: $out"
 
+# --- a git worktree checkout, not a plain clone: .git is a file (a
+#     "gitdir:" pointer), not a directory, and must still count as a
+#     real checkout ---
+SOURCE="$WORKDIR/source"
+mkrepo "$SOURCE"
+WORKTREE="$WORKDIR/as-worktree"
+git -C "$SOURCE" worktree add -q -b feature/via-worktree "$WORKTREE" >/dev/null 2>&1
+[[ -f "$WORKTREE/.git" ]] || fail "test setup: expected .git to be a file under a worktree checkout"
+out="$(APHOTIC_DOTS_DIR="$WORKTREE" APHOTIC_VERSION="9.9.9" _aphotic_doctor_version_drift)"
+[[ "$out" == *"is not a git checkout"* ]] && fail "expected a worktree checkout to be recognized as git, got: $out"
+[[ "$out" == *"checked out: feature/via-worktree"* ]] || fail "expected the worktree's own branch to be reported, got: $out"
+
 echo "ok: test_doctor_version_drift"

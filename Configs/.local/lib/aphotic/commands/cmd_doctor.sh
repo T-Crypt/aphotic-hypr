@@ -66,7 +66,10 @@ _aphotic_doctor_layer_plugins() {
 _aphotic_doctor_version_drift() {
     local dots="$APHOTIC_DOTS_DIR" branch head behind
 
-    [[ -d "${dots}/.git" ]] || {
+    # -d "$dots/.git" would miss a git worktree checkout -- .git there is
+    # a file (a "gitdir:" pointer back at the real repo), not a
+    # directory. rev-parse is the check that's actually true for both.
+    git -C "$dots" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
         echo "  [skip] ${dots} is not a git checkout"
         return 0
     }
