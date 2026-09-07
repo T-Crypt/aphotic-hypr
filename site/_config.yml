@@ -10,8 +10,6 @@ collections:
     output: true
     permalink: /docs/:name/
 exclude:
-  - SITE-DESIGN.md
-  - SITE-IMPLEMENTATION-PLAN.md
   - tests
   - scripts
   - _wiki
