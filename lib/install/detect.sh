@@ -46,6 +46,50 @@ detect_dotfile_manager() {
   fi
 }
 
+# Backfills a missing aphotic.toml on a --config-only run whose original
+# install predates write_aphotic_toml (install.sh's call to it at the end
+# of a full run) or whose aphotic.toml was otherwise lost. Without this,
+# InstallProfile.qml's `known` never becomes true and the System settings
+# pane is stuck on "unknown" forever, since config-only never installs or
+# writes anything by design (config_sync's own "aphotic.toml: left as-is"
+# summary line). Inferred, not remembered: base profile comes from
+# whether any full-only package is present, layers from which layer's own
+# packages are actually installed. Best-effort -- a package the user
+# removed by hand won't be un-inferred, and one installed independently
+# of Aphotic could be mistaken for a layer -- but a one-time best guess
+# beats a permanent "unknown".
+infer_profile_from_packages() {
+  "$PYTHON_BIN" - "$ROOT_DIR" <<'PYEOF'
+import sys, tomllib, subprocess, pathlib
+
+root = pathlib.Path(sys.argv[1])
+installed = set(subprocess.run(["pacman", "-Qq"], capture_output=True, text=True).stdout.split())
+
+def pkgs(path):
+    try:
+        return set(tomllib.load(open(path, "rb")).get("packages", {}).get("main", []))
+    except Exception:
+        return set()
+
+full = pkgs(root / "profiles/base/full.toml")
+minimal = pkgs(root / "profiles/base/minimal.toml")
+full_only = full - minimal
+profile = "full" if installed & full_only else "minimal"
+
+layers = []
+for f in sorted((root / "profiles/layers").glob("*.toml")):
+    name = f.stem
+    if name == "exploit":
+        continue  # bundle alias for exploit-recon/-web/-network, never installed under its own name
+    p = pkgs(f)
+    if p and installed & p:
+        layers.append(name)
+
+print(profile)
+print(",".join(layers))
+PYEOF
+}
+
 detect_environment() {
   echo -e "$CNT - Checking what's already on this machine..."
 
