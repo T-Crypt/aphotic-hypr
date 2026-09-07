@@ -25,3 +25,10 @@ Thumbs.db
 *.qsb
 
 recordings/
+
+# Local agent-tooling state: retrieval/graph indexes over this checkout,
+# not shipped output and not portable between machines. graphify-out/
+# holds a knowledge-graph snapshot (graphify skill); .zvec-grep/ holds
+# zvec-grep's semantic index over docs/ + architectural prose.
+graphify-out/
+.zvec-grep/
