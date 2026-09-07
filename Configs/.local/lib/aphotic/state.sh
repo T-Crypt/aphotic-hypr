@@ -114,6 +114,7 @@ _aphotic_state_version_drift() {
 # Structured service facts, one tab-separated record per line:
 # <check>\t<state>\t<detail>
 #   daemon: running | stopped
+#   shellunit: enabled | disabled | missing (detail on disabled/missing)
 #   displaymanager: ok | conflict (detail: which two)
 # Not a new desired-state format -- just what `aphotic doctor` already
 # knew how to check, exposed so `aphotic status`/`aphotic diff` can ask
@@ -123,6 +124,20 @@ _aphotic_state_service_drift() {
         printf 'daemon\trunning\t\n'
     else
         printf 'daemon\tstopped\t\n'
+    fi
+
+    # `daemon` above only asks "is a qs process running right now" --
+    # true for a manually-launched or fallback-relaunched shell just the
+    # same as a systemd-supervised one, so it can't tell the two apart.
+    # A qs process that isn't aphotic-shell.service won't auto-restart on
+    # crash and won't come back on next login without a manual `aphotic
+    # reload`/relaunch, which is exactly the gap this closes.
+    if ! systemctl --user list-unit-files aphotic-shell.service &>/dev/null; then
+        printf 'shellunit\tmissing\tnot deployed -- the shell won'"'"'t auto-start or auto-restart on crash; run install.sh --config-only to deploy it\n'
+    elif ! systemctl --user is-enabled aphotic-shell.service &>/dev/null; then
+        printf 'shellunit\tdisabled\tdeployed but not enabled -- run: systemctl --user enable --now aphotic-shell.service\n'
+    else
+        printf 'shellunit\tenabled\t\n'
     fi
 
     local sddm_enabled greetd_enabled

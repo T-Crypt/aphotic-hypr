@@ -113,10 +113,11 @@ aphotic_cmd_doctor() {
     _aphotic_doctor_layer_plugins
 
     source "${LIB_DIR}/state.sh"
-    local services daemon_state dm_state dm_detail
+    local services daemon_state dm_state dm_detail shellunit_state shellunit_detail
     services="$(_aphotic_state_service_drift)"
     IFS=$'\t' read -r _ daemon_state _ <<<"$(grep '^daemon' <<<"$services")"
     IFS=$'\t' read -r _ dm_state dm_detail <<<"$(grep '^displaymanager' <<<"$services")"
+    IFS=$'\t' read -r _ shellunit_state shellunit_detail <<<"$(grep '^shellunit' <<<"$services")"
 
     echo
     echo "Display manager:"
@@ -144,6 +145,9 @@ aphotic_cmd_doctor() {
         echo "Daemon: running"
     else
         echo "Daemon: not running (aphotic shell -d)"
+    fi
+    if [[ "$shellunit_state" != "enabled" ]]; then
+        printf '  [warn] aphotic-shell.service: %s -- %s\n' "$shellunit_state" "$shellunit_detail"
     fi
 
     echo

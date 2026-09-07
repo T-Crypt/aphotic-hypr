@@ -416,6 +416,18 @@ restart_shell_if_enabled() {
 }
 
 config_sync() {
+  if [[ ! -f "$APHOTIC_TOML" ]]; then
+    echo -e "$CWR - No aphotic.toml found -- inferring the installed profile from packages so the System pane isn't stuck on \"unknown\"."
+    local _inferred _inferred_profile _inferred_layers
+    _inferred="$(infer_profile_from_packages)"
+    _inferred_profile="$(sed -n '1p' <<< "$_inferred")"
+    _inferred_layers="$(sed -n '2p' <<< "$_inferred")"
+    write_aphotic_toml "$APHOTIC_TOML" "$_inferred_profile" "$_inferred_layers" "${THEME:-tokyonight}" "${ISNVIDIA:-false}" "${AUR_HELPER:-}" "$(date -Iseconds)" "${ISAMD:-false}"
+    [[ -z "$PROFILE" ]] && PROFILE="$_inferred_profile"
+    [[ -z "$LAYERS" ]] && LAYERS="$_inferred_layers"
+    echo -e "$COK - Wrote $APHOTIC_TOML (profile=$_inferred_profile, layers=${_inferred_layers:-none}, inferred from installed packages)"
+  fi
+
   TOTAL_STAGES=3
   print_stage 1 "Backup"
   if [[ "$NO_BACKUP" != "1" ]]; then
@@ -439,7 +451,7 @@ config_sync() {
   echo -e "  Layers:        ${LAYERS:-none}"
   echo -e "  Configs:       copied from $ROOT_DIR/Configs"
   echo -e "  Packages:      untouched"
-  echo -e "  aphotic.toml:  left as-is"
+  echo -e "  aphotic.toml:  $([[ -n "${_inferred_profile:-}" ]] && echo "backfilled (inferred profile=$_inferred_profile)" || echo "left as-is")"
   echo -e "$COK - Config sync complete."
 
   "$HOME/.local/bin/aphotic" whatsnew &>> "$INSTLOG" || true

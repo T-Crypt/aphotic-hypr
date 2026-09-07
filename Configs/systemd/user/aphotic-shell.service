@@ -4,6 +4,16 @@ After=graphical-session.target
 PartOf=graphical-session.target
 StartLimitIntervalSec=60
 StartLimitBurst=5
+# Fires only once systemd gives up, i.e. StartLimitBurst above is
+# exceeded and the unit enters `failed` -- a single crash that restarts
+# cleanly never reaches it. That is the whole trigger for the recovery
+# surface: no polling, no watchdog, no second supervisor.
+#
+# This belongs in [Unit], not [Service] -- systemd silently ignores an
+# OnFailure= under [Service] ("Unknown key 'OnFailure' in section
+# [Service], ignoring"), so the recovery surface never fired on any
+# install until this moved.
+OnFailure=aphotic-recovery.service
 
 [Service]
 Type=simple
@@ -25,12 +35,6 @@ RestartSec=2
 # survive a machine that is rebooting to try again. Leading `-` because a
 # recorder that fails must not itself put the unit into a failed state.
 ExecStopPost=-/bin/sh -c 'exec %h/.local/bin/aphotic recovery record "$SERVICE_RESULT" "$EXIT_STATUS"'
-
-# Fires only once systemd gives up, i.e. StartLimitBurst above is
-# exceeded and the unit enters `failed` -- a single crash that restarts
-# cleanly never reaches it. That is the whole trigger for the recovery
-# surface: no polling, no watchdog, no second supervisor.
-OnFailure=aphotic-recovery.service
 
 [Install]
 WantedBy=graphical-session.target
