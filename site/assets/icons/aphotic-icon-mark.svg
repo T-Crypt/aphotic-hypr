@@ -1,0 +1,38 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="55%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#0e7490" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="void" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#131a22"/>
+      <stop offset="100%" stop-color="#080b0f"/>
+    </radialGradient>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Hex boundary: terminal / system edge -->
+  <polygon points="256,68 418.8,162 418.8,350 256,444 93.2,350 93.2,162"
+           fill="url(#void)" stroke="#2a3644" stroke-width="6"/>
+
+  <!-- Light shaft attenuating downward, concave taper, fades to nothing -->
+  <path d="M 226,140
+           C 226,168 236,190 244,214
+           C 250,232 253,250 254,270
+           C 254.6,282 255,292 255,300
+           L 257,300
+           C 257,292 257.4,282 258,270
+           C 259,250 262,232 268,214
+           C 276,190 286,168 286,140 Z"
+        fill="url(#shaft)"/>
+
+  <!-- Bioluminescent spark: separate, persistent, offset from the beam -->
+  <circle cx="300" cy="352" r="7.5" fill="#5eead4" filter="url(#glow)"/>
+</svg>
