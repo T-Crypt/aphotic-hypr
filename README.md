@@ -427,9 +427,11 @@ why Files, Text Editor, Calculator and the rest of the stock GNOME set
 sit at Adwaita's grey next to a themed desktop.
 
 The one thing libadwaita does read is `~/.config/gtk-4.0/gtk.css`, so
-that is what `aphotic theme set` writes: the full set of libadwaita
-named colors off your active palette, plus the handful of rules that
-fix what the named colors alone cannot. Chief among them the shade
+that is what Aphotic writes on every palette change, whichever way you
+made it: the CLI, the wallpaper picker, `Super` + `W`, thunar's Set as
+Theme. It carries the full set of libadwaita named colors off your
+active palette, plus the handful of rules that fix what the named
+colors alone cannot. Chief among them the shade
 colors libadwaita paints along every headerbar, sidebar and card edge,
 which are opaque near-blacks picked for Adwaita's own grey and read as
 a dirty band over anything else.
@@ -437,9 +439,9 @@ a dirty band over anything else.
 Two things follow from how libadwaita loads that file:
 
 -   It reads it once, at process start. A running app keeps the old
-    colors until it restarts. `aphotic theme set` restarts the GTK4
-    apps that stay resident with no window on screen, and leaves alone
-    any with a window open, which pick the colors up next launch.
+    colors until it restarts. Aphotic restarts the GTK4 apps that stay
+    resident with no window on screen, and leaves alone any with a
+    window open, which pick the colors up next launch.
 -   A color engine has no idea what font you use, so the stylesheet
     ships a placeholder and the deploy step stamps in whatever
     `gsettings` reports as your interface font. Run
