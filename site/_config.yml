@@ -1,0 +1,17 @@
+title: Aphotic
+description: A modular, resource-aware Linux desktop platform.
+url: https://t-crypt.github.io
+baseurl: "/aphotic-hypr"
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+collections:
+  docs:
+    output: true
+    permalink: /docs/:name/
+exclude:
+  - SITE-DESIGN.md
+  - SITE-IMPLEMENTATION-PLAN.md
+  - tests
+  - scripts
+  - _wiki

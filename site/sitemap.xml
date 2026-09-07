@@ -1,0 +1,4 @@
+---
+layout: null
+---
+<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{% assign pages = site.pages | concat: site.docs %}{% for item in pages %}{% unless item.name == 'sitemap.xml' %}<url><loc>{{ item.url | absolute_url }}</loc></url>{% endunless %}{% endfor %}</urlset>

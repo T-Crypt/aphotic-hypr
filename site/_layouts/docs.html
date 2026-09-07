@@ -1,0 +1,7 @@
+---
+layout: default
+---
+<div class="docs-shell">
+  <aside class="docs-rail" aria-label="Documentation sections">{% include document-nav.html %}</aside>
+  <article class="prose"><p class="eyebrow">Documentation / {{ page.title }}</p>{{ content }}{% if page.wiki_source %}<p class="source-link"><a href="{{ page.wiki_source }}">View public Wiki source ↗</a></p>{% endif %}</article>
+</div>

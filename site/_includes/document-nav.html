@@ -1,0 +1,1 @@
+<p class="eyebrow">Index</p><a href="{{ '/documentation/' | relative_url }}">Overview</a>{% assign pages = site.docs | sort: 'title' %}{% for doc in pages %}<a href="{{ doc.url | relative_url }}">{{ doc.title }}</a>{% endfor %}

@@ -1,0 +1,18 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a5f3fc"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Thicker stroke + solid fill for small-size legibility -->
+  <polygon points="256,54 432,155 432,357 256,458 80,357 80,155"
+           fill="#0a0d12" stroke="#3a4a5c" stroke-width="16"/>
+
+  <!-- Simplified solid taper (no concave curve, holds up at small sizes) -->
+  <path d="M 214,132 L 298,132 L 256,320 Z" fill="url(#shaft)"/>
+
+  <!-- Spark, enlarged for small-size visibility -->
+  <circle cx="308" cy="360" r="16" fill="#5eead4"/>
+</svg>
