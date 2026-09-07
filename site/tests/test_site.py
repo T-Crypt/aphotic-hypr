@@ -20,6 +20,12 @@ class SiteContractTests(unittest.TestCase):
         for name in ("index.md", "documentation.md", "plugins.md", "gallery.md", "roadmap.md"):
             self.assertTrue((ROOT / name).exists(), name)
 
+    def test_internal_design_files_are_not_public_site_sources(self):
+        private_names = ("SITE-DESIGN.md", "SITE-IMPLEMENTATION-PLAN.md")
+        for name in private_names:
+            self.assertFalse((ROOT / name).exists(), name)
+            self.assertIn(name, (ROOT / ".gitignore").read_text())
+
     def test_home_links_use_docs_collection_routes(self):
         home = (ROOT / "index.md").read_text()
         self.assertNotIn("/documentation/getting-started/", home)
@@ -46,6 +52,7 @@ class SiteContractTests(unittest.TestCase):
         workflow = (ROOT.parent / ".github" / "workflows" / "deploy-pages.yml").read_text()
         for needle in ('github.repository }}.wiki.git', 'prepare_wiki.py', 'jekyll-build-pages', 'deploy-pages'):
             self.assertIn(needle, workflow)
+        self.assertIn("if: github.event_name != 'pull_request'", workflow)
 
 
 if __name__ == "__main__":
