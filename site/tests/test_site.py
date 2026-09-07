@@ -20,6 +20,18 @@ class SiteContractTests(unittest.TestCase):
         for name in ("index.md", "documentation.md", "plugins.md", "gallery.md", "roadmap.md"):
             self.assertTrue((ROOT / name).exists(), name)
 
+    def test_home_links_use_docs_collection_routes(self):
+        home = (ROOT / "index.md").read_text()
+        self.assertNotIn("/documentation/getting-started/", home)
+        self.assertIn("/docs/getting-started/", home)
+
+    def test_copy_control_copies_code_only(self):
+        script = (ROOT / "assets" / "js" / "site.js").read_text()
+        self.assertIn("querySelector('code')", script)
+
+    def test_robots_is_processed_by_jekyll(self):
+        self.assertTrue((ROOT / "robots.txt").read_text().startswith("---"))
+
     def test_accessibility_and_theme_hooks_exist(self):
         layout = (ROOT / "_layouts" / "default.html").read_text()
         css = (ROOT / "assets" / "css" / "site.css").read_text()
