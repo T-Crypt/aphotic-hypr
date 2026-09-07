@@ -46,7 +46,7 @@ StyledRect {
             return cls.length > 0 && (cls.includes(identity.toLowerCase()) || identity.toLowerCase().includes(cls));
         });
         if (win) {
-            Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ address = "${win.address}" })` : `focuswindow address:${win.address}`);
+            WindowList.focus(win.address);
             return;
         }
 

@@ -237,9 +237,14 @@ Item {
         StateLayer {
             anchors.fill: parent
             radius: parent.radius
-            onClicked: {
-                if (item.group.windows.length === 1) {
-                    WindowList.focus(item.group.windows[0].address);
+            // StateLayer is a MouseArea and takes LeftButton only by
+            // default. Left-click walks the group's windows one at a
+            // time; the list of them all moved to right-click, since a
+            // popout on every click is in the way of the common case.
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onClicked: event => {
+                if (event.button === Qt.LeftButton || item.group.windows.length === 1) {
+                    WindowList.cycleWindows(item.group.windows);
                     return;
                 }
                 const popouts = item.taskbarRoot.popouts;
