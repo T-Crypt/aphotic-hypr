@@ -32,3 +32,7 @@ recordings/
 # zvec-grep's semantic index over docs/ + architectural prose.
 graphify-out/
 .zvec-grep/
+
+# epiq's per-checkout event/log tracking. epiq's own state lives in its
+# own worktree/branch elsewhere, not this repo's history.
+.epiq/
