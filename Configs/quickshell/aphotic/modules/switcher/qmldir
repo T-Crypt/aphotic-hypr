@@ -1,0 +1,4 @@
+module qs.modules.switcher
+SwitcherWindow 1.0 SwitcherWindow.qml
+WorkspaceCard 1.0 WorkspaceCard.qml
+WindowTile 1.0 WindowTile.qml

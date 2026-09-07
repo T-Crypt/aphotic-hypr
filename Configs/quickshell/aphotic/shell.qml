@@ -15,6 +15,7 @@ import qs.modules.session
 import qs.modules.dashboard
 import qs.modules.workspace
 import qs.modules.settings
+import qs.modules.switcher
 import qs.modules.background
 import qs.modules.areapicker
 import qs.modules.colorpicker
@@ -163,6 +164,15 @@ ShellRoot {
         SettingsWindow {
             screenState: root.screenStateFor(modelData)
         }
+    }
+
+    // The ALT+Tab surface. No ScreenState flag and no toggle entry:
+    // Switcher owns whether it is up, and only ever on the monitor that
+    // was focused when it opened (see SwitcherWindow's `visible`).
+    Variants {
+        model: Quickshell.screens
+
+        SwitcherWindow {}
     }
 
     Variants {
@@ -490,11 +500,12 @@ ShellRoot {
     // already ships a toggle and an interval picker for; DevDrift watches
     // DevProfile for a stale lockfile; SafeMode raises the toast that is
     // the only reason a user in safe mode knows why their plugins are
-    // gone. Listing them here is what makes them exist. Anything added to
+    // gone; Switcher holds the IpcHandler every ALT+Tab keybind
+    // calls, and no window names it until it is already open. Listing them here is what makes them exist. Anything added to
     // services/ that runs on its own rather than answering a reader
     // belongs in this list, and tests/test_singleton_reachability.py
     // fails the build if it does not.
-    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind]
+    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, Switcher]
 
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than

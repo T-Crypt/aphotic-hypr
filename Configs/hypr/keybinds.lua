@@ -84,9 +84,107 @@ hl.bind(mainMod .. " + CTRL + F", hl.dsp.window.pin(), { description = "Pin wind
 hl.bind(mainMod .. " + CTRL + H", hl.dsp.group.prev(), { description = "Previous window in group" })
 hl.bind(mainMod .. " + CTRL + L", hl.dsp.group.next(), { description = "Next window in group" })
 
--- Alt-tab window switcher
-hl.bind("ALT + Tab",         hl.dsp.window.cycle_next(), { description = "Cycle to next window" })
-hl.bind("ALT + SHIFT + Tab", hl.dsp.window.cycle_next({ next = false }), { description = "Cycle to previous window" })
+-- Alt-tab window switcher (Quickshell overlay, modules/switcher)
+--
+-- Hyprland's own `window.cycle_next` focuses on every press, so it
+-- rewrites the focus history it is walking: press ALT+Tab twice and you
+-- are back where you started. This binds a submap instead. ALT+Tab opens
+-- the overlay, which snapshots every window once, and every key below
+-- moves a selection inside that snapshot without touching the
+-- compositor. Focus moves once, on commit.
+--
+-- The submap is what makes releasing ALT mean something. Hyprland
+-- reports the release; nothing has to guess at it from key state.
+local switcher_cmd = "qs -c aphotic ipc call switcher"
+local switcher_release_watch = nil
+
+local function switcher_stop_watch()
+    if switcher_release_watch then
+        switcher_release_watch:set_enabled(false)
+        switcher_release_watch = nil
+    end
+end
+
+local function switcher_finish(action)
+    switcher_stop_watch()
+    hl.exec_cmd(switcher_cmd .. " " .. action)
+    hl.dispatch(hl.dsp.submap("reset"))
+end
+
+-- The release bind below is the fast path and handles every normal
+-- chord. This covers the one case it cannot see: ALT let go so quickly
+-- that it was already up before the submap existed, which leaves no
+-- release event for anything in the submap to catch. Four ticks of grace
+-- first, or the poll reads the key state from before the submap was
+-- entered and commits on the opening press.
+local function switcher_watch_release()
+    switcher_stop_watch()
+    local ticks = 0
+    switcher_release_watch = hl.timer(function()
+        if hl.get_current_submap() ~= "aphotic-switcher" then
+            switcher_stop_watch()
+            return
+        end
+        ticks = ticks + 1
+        if ticks < 4 then return end
+        if not hl.is_key_down("Alt_L") and not hl.is_key_down("Alt_R") then
+            switcher_finish("commit")
+        end
+    end, { timeout = 25, type = "repeat" })
+end
+
+hl.define_submap("aphotic-switcher", function()
+    -- Bound both bare and with ALT held, because the whole surface is
+    -- normally driven with a thumb still on ALT.
+    local function act(key, action)
+        local cmd = hl.dsp.exec_cmd(switcher_cmd .. " " .. action)
+        hl.bind(key, cmd)
+        hl.bind("ALT + " .. key, cmd)
+    end
+
+    act("Tab", "next")
+    act("SHIFT + Tab", "prev")
+
+    -- Left/right walk workspaces, up/down walk that workspace's windows.
+    for _, dir in ipairs({ "left", "right", "up", "down" }) do
+        act(dir, "move " .. dir)
+    end
+
+    -- Home row, one key per workspace: a s d f g h j k l ;
+    local ws_keys = { "a", "s", "d", "f", "g", "h", "j", "k", "l", "semicolon" }
+    local ws_names = { "a", "s", "d", "f", "g", "h", "j", "k", "l", ";" }
+    for i, key in ipairs(ws_keys) do
+        act(key, "workspace " .. ws_names[i])
+    end
+
+    -- The 1-9 badges on each window in the selected workspace.
+    for i = 1, 9 do
+        act(tostring(i), "window " .. i)
+    end
+
+    -- Releasing ALT commits. This is the path that runs almost always;
+    -- switcher_watch_release above only exists for the chord that ends
+    -- before the submap starts.
+    hl.bind("Alt_L", function() switcher_finish("commit") end, { release = true })
+    hl.bind("Alt_R", function() switcher_finish("commit") end, { release = true })
+
+    for _, key in ipairs({ "Return", "KP_Enter", "space" }) do
+        hl.bind(key, function() switcher_finish("commit") end)
+        hl.bind("ALT + " .. key, function() switcher_finish("commit") end)
+    end
+
+    hl.bind("Escape", function() switcher_finish("cancel") end)
+    hl.bind("ALT + Escape", function() switcher_finish("cancel") end)
+end)
+
+local function switcher_open(action)
+    hl.exec_cmd(switcher_cmd .. " " .. action)
+    hl.dispatch(hl.dsp.submap("aphotic-switcher"))
+    switcher_watch_release()
+end
+
+hl.bind("ALT + Tab",         function() switcher_open("next") end, { description = "Cycle to next window" })
+hl.bind("ALT + SHIFT + Tab", function() switcher_open("prev") end, { description = "Cycle to previous window" })
 
 -- Media keys (mpris — Quickshell's own player service, works with any
 -- MPRIS-capable player, not just one hardcoded to a specific app)
