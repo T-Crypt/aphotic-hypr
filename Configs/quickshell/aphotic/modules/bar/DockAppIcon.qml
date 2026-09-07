@@ -42,7 +42,7 @@ Item {
         stateOpacity: root.showHover && containsMouse ? 0.08 : 0
         onClicked: {
             if (root.item.windows.length > 0)
-                WindowList.focus(root.item.windows[0].address);
+                WindowList.cycleWindows(root.item.windows);
             else
                 root.item.entry?.execute();
         }

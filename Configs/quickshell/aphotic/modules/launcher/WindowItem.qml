@@ -18,8 +18,7 @@ Item {
     implicitHeight: Tokens.sizes.launcher.itemHeight
 
     function execute(): void {
-        const address = root.modelData.address;
-        Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ address = "${address}" })` : `focuswindow address:${address}`);
+        WindowList.focus(root.modelData.address);
     }
 
     StateLayer {
