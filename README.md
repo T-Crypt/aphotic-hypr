@@ -697,12 +697,31 @@ One exception: the Workspace plane is bound by the shell at runtime, because it 
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd> | Toggle fullscreen |
 | <kbd>Super</kbd> + <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>/<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> | Move focus between windows |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>&larr;</kbd>/<kbd>&rarr;</kbd>/<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> | Move (swap) the focused window in a direction |
-| <kbd>Alt</kbd> + <kbd>Tab</kbd> | Cycle to the next window |
-| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Cycle to the previous window |
+| <kbd>Alt</kbd> + <kbd>Tab</kbd> | Open the window switcher, step forward |
+| <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Tab</kbd> | Open the window switcher, step back |
 | <kbd>Super</kbd> + <kbd>G</kbd> | Toggle group |
 | <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>H</kbd> / <kbd>Super</kbd> + <kbd>Ctrl</kbd> + <kbd>L</kbd> | Cycle group tabs backward/forward |
 | <kbd>Super</kbd> + <kbd>LMB</kbd> drag | Move window |
 | <kbd>Super</kbd> + <kbd>RMB</kbd> drag | Resize window |
+
+While the switcher is up, Hyprland is in its own submap and these keys apply:
+
+| Keys | Action |
+| :-- | :-- |
+| <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> | Step through windows, most recently used first |
+| <kbd>A</kbd>–<kbd>;</kbd> | Jump to workspace 1–10, home row, one key each |
+| <kbd>1</kbd>–<kbd>9</kbd> | Pick a numbered window on the selected workspace |
+| <kbd>&larr;</kbd> / <kbd>&rarr;</kbd> | Move between workspaces |
+| <kbd>&uarr;</kbd> / <kbd>&darr;</kbd> | Move between windows on the selected workspace |
+| Release <kbd>Alt</kbd>, or <kbd>Enter</kbd> / <kbd>Space</kbd> | Switch to the selection |
+| <kbd>Esc</kbd>, or click away | Close it, focus stays put |
+
+Every window is read once when the switcher opens and focus moves once,
+when you let go. Stepping through the list does not focus anything on the
+way, so the order you are walking cannot reorder itself under you, and
+backing out with <kbd>Esc</kbd> leaves the desktop exactly as it was. Each
+workspace draws as a miniature of the monitor it lives on, at that
+monitor's real aspect ratio, with every window where it actually sits.
 
 </details>
 
