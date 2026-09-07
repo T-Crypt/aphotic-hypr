@@ -7,6 +7,7 @@
 # @cmd.opt: install <name> [--link]                        | Install a plugin from APHOTIC_PLUGINS_REPO
 # @cmd.opt: enable|disable <name>                          | Toggle a plugin without uninstalling it
 # @cmd.opt: remove <name>                                  | Uninstall a plugin
+# @cmd.opt: validate <dir>                                  | Check a plugin folder's manifest and files before installing it
 # @cmd.opt: trust-security-index                            | Opt into the separate security-category plugin index
 # @cmd.opt: untrust-security-index                          | Revoke that opt-in (hides security-category plugins again)
 #
@@ -1122,6 +1123,181 @@ _aphotic_plugin_remove() {
     aphotic_ok "removed ${name}"
 }
 
+# Static checks against a plugin folder, run without installing it or
+# touching the shell. `install` only ever checked host/capability
+# compatibility (_aphotic_plugin_host_verdict) at the point it was
+# already copying files -- there was nothing an author could run first
+# to catch a bad manifest before unsandboxed QML loads into a
+# long-running shell process. This is that check.
+#
+# Structural only: whether the manifest makes internal sense, not
+# whether this particular build can host what it declares (that's
+# still _aphotic_plugin_host_verdict, surfaced here as a warning since
+# it's still worth knowing before installing).
+_aphotic_plugin_validate() {
+    local dir="$1" manifest name fails=0 warns=0
+    [[ -n "$dir" ]] || { aphotic_err "usage: aphotic plugin validate <dir>"; return 1; }
+    dir="${dir%/}"
+    [[ -d "$dir" ]] || { aphotic_err "not a directory: ${dir}"; return 1; }
+
+    name="$(basename "$dir")"
+    manifest="${dir}/plugin.toml"
+    if [[ ! -f "$manifest" ]]; then
+        aphotic_err "${name}: no plugin.toml in ${dir}"
+        return 1
+    fi
+
+    # The directory name becomes the install path and, via
+    # _aphotic_plugin_ui_module_name's kebab-to-camel rewrite, the QML
+    # module segment a ui-surface plugin loads under. Anything outside
+    # this either fails that rewrite or produces an install path with
+    # characters nothing downstream expects.
+    if [[ ! "$name" =~ ^[a-z][a-z0-9-]*$ ]]; then
+        aphotic_err "${name}: directory name must be lowercase, start with a letter, and use only [a-z0-9-]"
+        fails=$((fails + 1))
+    fi
+
+    # A plugin ships everything it needs. A symlink is either a broken
+    # editor artifact or a way to make install copy a file from outside
+    # the plugin's own tree.
+    local link
+    while IFS= read -r link; do
+        aphotic_err "${name}: symlink in plugin tree: ${link#"$dir"/}"
+        fails=$((fails + 1))
+    done < <(find "$dir" -type l 2>/dev/null)
+
+    local display desc version category caps
+    display="$(aphotic_toml_get "$manifest" plugin display_name)"
+    desc="$(aphotic_toml_get "$manifest" plugin description)"
+    version="$(aphotic_toml_get "$manifest" plugin version)"
+    category="$(aphotic_toml_get "$manifest" plugin category)"
+    caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
+
+    [[ -n "$display" ]] || { aphotic_err "${name}: [plugin].display_name missing"; fails=$((fails + 1)); }
+    [[ -n "$desc" ]] || { aphotic_err "${name}: [plugin].description missing"; fails=$((fails + 1)); }
+    [[ -n "$version" ]] || { aphotic_err "${name}: [plugin].version missing"; fails=$((fails + 1)); }
+
+    if [[ -z "$category" ]]; then
+        aphotic_warn "${name}: [plugin].category missing -- won't be reachable by 'plugin list --category'"
+        warns=$((warns + 1))
+    fi
+    # Documented, not enforced elsewhere -- 'aphotic plugin list --help'
+    # names this same set. A category outside it still installs, so this
+    # stays a warning, same reasoning as the capability check below.
+    if [[ -n "$category" ]]; then
+        _aphotic_plugin_in_list "$category" "dev security mobile ai theming productivity" || {
+            aphotic_warn "${name}: [plugin].category '${category}' isn't one of the documented categories (dev/security/mobile/ai/theming/productivity)"
+            warns=$((warns + 1))
+        }
+    fi
+    if [[ -z "$caps" ]]; then
+        aphotic_warn "${name}: [plugin].capabilities is empty -- declares nothing this shell can host"
+        warns=$((warns + 1))
+    fi
+
+    # An unrecognized capability isn't a hard failure on its own -- a
+    # manifest built against a newer contract has to fail open here,
+    # same as APHOTIC_PLUGIN_HOSTED_CAPABILITIES's own comment on why --
+    # but it's usually a typo, so it's worth flagging.
+    local known_caps="theme-hook ui-surface project-hook workspace-hook harness-hook profile cli chat-provider action"
+    local cap
+    while IFS= read -r cap; do
+        [[ -n "$cap" ]] || continue
+        _aphotic_plugin_in_list "$cap" "$known_caps" || {
+            aphotic_warn "${name}: capability '${cap}' isn't one this build recognizes (typo, or a newer manifest version)"
+            warns=$((warns + 1))
+        }
+    done <<<"$caps"
+
+    # ui-surface and [ui.*] have to agree from both directions: the
+    # capability with no section installs to nothing, and a section
+    # with no capability declared is the same bug seen from the other
+    # side (see host_verdict's own comment: ui-surface never counts as
+    # working by itself).
+    local surfaces has_ui_cap="false"
+    surfaces="$(_aphotic_plugin_manifest_surfaces "$manifest")"
+    _aphotic_plugin_in_list "ui-surface" "$caps" && has_ui_cap="true"
+    if [[ -n "$surfaces" && "$has_ui_cap" == "false" ]]; then
+        aphotic_err "${name}: [ui.*] section(s) present (${surfaces//$'\n'/, }) but capabilities doesn't include 'ui-surface'"
+        fails=$((fails + 1))
+    elif [[ -z "$surfaces" && "$has_ui_cap" == "true" ]]; then
+        aphotic_err "${name}: capabilities includes 'ui-surface' but no [ui.*] section declares one"
+        fails=$((fails + 1))
+    fi
+
+    # Every file a manifest section points at: must resolve inside the
+    # plugin's own directory (no leading '/', no '..' segment -- these
+    # get concatenated straight into a symlink target or a Loader
+    # source, never re-checked at load time) and must actually exist.
+    # hooks/harness scripts aren't required to be +x yet -- install
+    # chmods hooks/ after copying, and this runs before that ever
+    # happens.
+    local -a path_checks=(
+        "ui.dashboard_tab:component" "ui.notch_tile:component"
+        "ui.settings_pane:component" "ui.workspace:component"
+        "ui.overlay:component" "ui.fullscreen-overlay:component"
+        "ui.pet_action:component" "ui.pet_action_2:component" "ui.pet_action_3:component"
+        "profile:component"
+        "action:component" "action_2:component" "action_3:component" "action_4:component" "action_5:component"
+        "cli:script"
+        "hooks:on_theme_change" "hooks:on_project_open" "hooks:on_workspace_launch"
+        "harness:wire" "harness:unwire"
+    )
+    local check section key value
+    for check in "${path_checks[@]}"; do
+        section="${check%%:*}"
+        key="${check##*:}"
+        value="$(aphotic_toml_get "$manifest" "$section" "$key")"
+        [[ -n "$value" ]] || continue
+
+        if [[ "$value" == /* || "$value" == *..* ]]; then
+            aphotic_err "${name}: [${section}].${key} = '${value}' is not a safe relative path"
+            fails=$((fails + 1))
+            continue
+        fi
+        if [[ ! -f "${dir}/${value}" ]]; then
+            aphotic_err "${name}: [${section}].${key} points at '${value}', which doesn't exist"
+            fails=$((fails + 1))
+        fi
+    done
+
+    # Informational: aphotic_require's own pattern is warn-and-no-op,
+    # never a hard install-time block, so this stays a warning even
+    # though it means the plugin does nothing useful on this machine.
+    local bin
+    while IFS= read -r bin; do
+        [[ -z "$bin" ]] && continue
+        command -v "$bin" >/dev/null 2>&1 || {
+            aphotic_warn "${name}: requires.binaries lists '${bin}', not found on this machine"
+            warns=$((warns + 1))
+        }
+    done < <(aphotic_toml_get_array "$manifest" requires binaries)
+
+    # Whether this particular build can host what's declared. Same
+    # check install runs; surfaced here so it's visible before install
+    # ever touches the shell, not after.
+    local verdict
+    verdict="$(_aphotic_plugin_host_verdict "$caps" "$surfaces")"
+    case "$verdict" in
+        ok) ;;
+        partial:*)
+            aphotic_warn "${name}: partially hosted on this build -- ${verdict#partial:} unhosted"
+            warns=$((warns + 1))
+            ;;
+        inert:*)
+            aphotic_warn "${name}: nothing this build hosts -- ${verdict#inert:} unhosted (needs a newer Aphotic)"
+            warns=$((warns + 1))
+            ;;
+    esac
+
+    if [[ "$fails" -gt 0 ]]; then
+        aphotic_err "${name}: ${fails} error(s), ${warns} warning(s)"
+        return 1
+    fi
+    aphotic_ok "${name}: valid (${warns} warning(s))"
+    return 0
+}
+
 aphotic_cmd_plugin() {
     local sub="${1:-}"; shift || true
 
@@ -1198,6 +1374,9 @@ aphotic_cmd_plugin() {
         remove)
             _aphotic_plugin_remove "${1:-}"
             ;;
+        validate)
+            _aphotic_plugin_validate "${1:-}"
+            ;;
         resync)
             # The bulk remedy drift reporting has always implied. `update`
             # rewrites one entry by reinstalling the plugin's files; this
@@ -1273,6 +1452,12 @@ Usage: aphotic plugin <list|install|update|enable|disable|remove|...> [args]
   enable <name>               Re-enable an installed plugin
   disable <name>               Disable without uninstalling
   remove <name>                Uninstall
+  validate <dir>                Check a plugin folder's manifest and files
+                              before it's ever installed -- required fields,
+                              capability/surface agreement, every component
+                              or hook path a safe relative path that exists,
+                              no symlinks. Run this against a working tree
+                              before 'install --link' ever loads it.
   resync                        Rewrite every installed plugin's registry entry
                                 from its manifest (no files touched)
   relink-ui-modules             Re-link every enabled ui-surface plugin's
