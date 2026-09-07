@@ -13,10 +13,26 @@
 # concept). `restore` deploys Aphotic's own upstream defaults with
 # populate/overwrite semantics (HyDE's P/O flags).
 
+# "name|path": each snapshot stores a target at ${dest}/<name>, not
+# ${dest}/$(basename path) -- QUICKSHELL_CONFIG_DIR
+# (~/.config/quickshell/aphotic) and APHOTIC_CONFIG_HOME
+# (~/.config/aphotic) both basename to "aphotic", and a plain-path array
+# let the two silently collide in every snapshot ever taken: whichever
+# target this array listed later landed in the shared slot and quietly
+# overwrote whatever the earlier one had just copied there, so the
+# earlier target was never actually recoverable. Found while wiring
+# aphotic reconcile's rollback through this, which is exactly the kind
+# of silent failure the whole point of a reconciliation layer is to
+# rule out.
 _aphotic_backup_targets=(
-    "$HOME/.config/hypr"
-    "$QUICKSHELL_CONFIG_DIR"
-    "$APHOTIC_CONFIG_HOME"
+    "hypr|$HOME/.config/hypr"
+    "quickshell|$QUICKSHELL_CONFIG_DIR"
+    "aphotic|$APHOTIC_CONFIG_HOME"
+    # aphotic reconcile --apply's only mutation target: the enabled/
+    # disabled flags in the plugin registry. Without this here, a
+    # pre-reconcile snapshot wouldn't actually cover the one thing
+    # reconcile changes, and `aphotic rollback` couldn't undo it.
+    "plugins-state|$APHOTIC_PLUGINS_STATE_FILE"
 )
 
 _aphotic_backup_create() {
@@ -33,9 +49,12 @@ _aphotic_backup_create() {
     dest="${APHOTIC_BACKUP_DIR}/${id}"
     mkdir -p "$dest"
 
-    for target in "${_aphotic_backup_targets[@]}"; do
+    local entry name target
+    for entry in "${_aphotic_backup_targets[@]}"; do
+        name="${entry%%|*}"
+        target="${entry#*|}"
         if [[ -e "$target" ]]; then
-            cp -a "$target" "${dest}/$(basename "$target")"
+            cp -a "$target" "${dest}/${name}"
         else
             missing=$((missing + 1))
         fi
@@ -98,10 +117,17 @@ _aphotic_backup_revert() {
     # is itself always reversible.
     _aphotic_backup_create --label "pre-revert" >/dev/null
 
-    for target in "${_aphotic_backup_targets[@]}"; do
-        local rel="${src}/$(basename "$target")"
+    local entry name target rel
+    for entry in "${_aphotic_backup_targets[@]}"; do
+        name="${entry%%|*}"
+        target="${entry#*|}"
+        rel="${src}/${name}"
         if [[ -e "$rel" ]]; then
             rm -rf "$target"
+            # The target's parent may not exist yet -- a fresh machine,
+            # or a target that never got created before this snapshot
+            # was taken. cp -a does not create it.
+            mkdir -p "$(dirname "$target")"
             cp -a "$rel" "$target"
         fi
     done
