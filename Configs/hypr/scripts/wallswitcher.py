@@ -404,6 +404,12 @@ def apply_wallpaper(theme, wallpaper):
     # wallust finished" comment actually needed.
     run_detached(["aphotic", "plugin", "run-theme-hooks"])
 
+    # Deploy the GTK4/libadwaita stylesheet the engine above just staged.
+    # Same reason the hooks line sits here: the engine call is blocking,
+    # so its templates are on disk by now. See cmd_theme.sh's
+    # _aphotic_theme_refresh_gtk.
+    run_detached(["aphotic", "theme", "refresh-gtk"])
+
     # Handle papirus-folders with no sudo prompt if possible
     if papirus_color:
         run_detached(["sudo", "-n", "papirus-folders", "-C", papirus_color, "--theme", "Papirus-Dark", "-u"])

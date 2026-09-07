@@ -44,9 +44,11 @@ output_path = "~/.config/hypr/colors.lua"
 input_path = "~/.config/matugen/templates/gtk.css"
 output_path = "~/.config/gtk-3.0/gtk.css"
 
+# GTK4 gets its own template and its own staging path, for the reasons
+# Configs/wallust/wallust.toml's matching entry spells out.
 [templates.gtk4]
-input_path = "~/.config/matugen/templates/gtk.css"
-output_path = "~/.config/gtk-4.0/gtk.css"
+input_path = "~/.config/matugen/templates/gtk4.css"
+output_path = "~/.local/state/aphotic/gtk4.css"
 
 [templates.wal_colors]
 input_path = "~/.config/matugen/templates/colors-wal-plain"

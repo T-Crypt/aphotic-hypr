@@ -147,6 +147,20 @@ Singleton {
         Quickshell.execDetached(["aphotic", "greeter", "sync"]);
     }
 
+    // Everything that has to wait for the colour engine to finish writing
+    // its templates, in one place. Three code paths below reach this
+    // point (no clamp, a clamp that failed, a clamp that ran), and each
+    // used to fire the theme hooks on its own, so anything added here had
+    // to be added three times or it silently covered two paths out of
+    // three. The GTK4 deploy is exactly that kind of thing: the engine
+    // stages ~/.local/state/aphotic/gtk4.css and this is what installs it
+    // with the live font stamped in (see cmd_theme.sh's
+    // _aphotic_theme_refresh_gtk).
+    function _afterEngine(): void {
+        Quickshell.execDetached(["aphotic", "theme", "refresh-gtk"]);
+        Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
+    }
+
     Process {
         id: awwwProc
     }
@@ -179,7 +193,7 @@ Singleton {
             if (root._pendingClamp)
                 root._startClamp(root._pendingClamp);
             else
-                Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
+                root._afterEngine();
         }
     }
 
@@ -231,7 +245,7 @@ Singleton {
             if (clampProc.taggedGeneration !== root._generation)
                 return;
             if (exitCode !== 0) {
-                Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
+                root._afterEngine();
                 return;
             }
             csProc.taggedGeneration = root._generation;
@@ -247,7 +261,7 @@ Singleton {
         onExited: {
             if (csProc.taggedGeneration !== root._generation)
                 return;
-            Quickshell.execDetached(["aphotic", "plugin", "run-theme-hooks"]);
+            root._afterEngine();
         }
     }
 }

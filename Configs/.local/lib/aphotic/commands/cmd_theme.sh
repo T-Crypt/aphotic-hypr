@@ -9,6 +9,7 @@
 # @cmd.opt: download <name>           | Download a theme from APHOTIC_THEMES_REPO
 # @cmd.opt: update <name>|--all       | Refresh a downloaded theme's files from the repo
 # @cmd.opt: remove <name>             | Delete a downloaded (non-core) theme
+# @cmd.opt: refresh-gtk               | Re-deploy the GTK4/libadwaita stylesheet and restart idle GTK4 apps
 # @cmd.opt: ensure-default            | Apply the install-time theme if none is set yet (startup.lua only)
 #
 # Themes live as directories under APHOTIC_AWWW_DIR, each with a
@@ -341,6 +342,104 @@ _aphotic_theme_clamp_palette() {
 # pins from theme.toml, then persist state. wallpaper_file may be
 # empty to fall back to the theme's declared default (or its first
 # wallpaper alphabetically).
+# ---------------------------------------------------------------------
+# GTK4 / libadwaita
+#
+# GTK3 apps follow gtk-theme-name, so adw-gtk3 plus the generated
+# gtk-3.0/gtk.css already themes them. GTK4 ones do not: libadwaita
+# compiles its palette in and ignores the theme name outright, which is
+# why Files, Text Editor, Calculator and the rest of the stock GNOME set
+# sit at Adwaita's grey next to a themed desktop. The one thing it does
+# read is ~/.config/gtk-4.0/gtk.css.
+#
+# Both color engines render that stylesheet to a staging file. Two things
+# still have to happen to it, and neither is something a color engine can
+# do: the live UI font has to be stamped in, and the apps already running
+# have to be told, because libadwaita reads the file once at process
+# start and never again.
+# ---------------------------------------------------------------------
+
+APHOTIC_GTK4_STAGED="${APHOTIC_STATE_HOME}/gtk4.css"
+APHOTIC_GTK4_CSS="${XDG_CONFIG_HOME:-$HOME/.config}/gtk-4.0/gtk.css"
+
+# GTK4 apps that outlive their last window as a D-Bus service, so closing
+# the window is not enough to make them re-read the stylesheet. Each row
+# is `window class|process name|quit command`. Add a row to theme another
+# one; anything not listed still picks the new colors up the next time it
+# is launched, which is all a non-resident app needs.
+APHOTIC_GTK4_DAEMONS=(
+    "org.gnome.Nautilus|nautilus|nautilus -q"
+)
+
+_aphotic_theme_ui_font() {
+    local font=""
+    if command -v gsettings >/dev/null 2>&1; then
+        font="$(gsettings get org.gnome.desktop.interface font-name 2>/dev/null | sed -e "s/^'//" -e "s/'$//" -e 's/ [0-9.]*$//')"
+    fi
+    printf '%s' "${font:-Inter}"
+}
+
+# How many windows of a given class are on screen right now. Used to
+# leave an app alone rather than quitting it out from under someone --
+# see the call site.
+_aphotic_theme_window_count() {
+    local class="$1"
+    command -v hyprctl >/dev/null 2>&1 || { printf '0'; return; }
+    command -v jq >/dev/null 2>&1 || { printf '0'; return; }
+    hyprctl -j clients 2>/dev/null | jq --arg c "$class" '[.[] | select(.class == $c)] | length' 2>/dev/null || printf '0'
+}
+
+# Restarting a daemon that has a window open would close that window, and
+# the stylesheet is not worth someone's in-progress file copy. An app
+# with nothing on screen is only a background service, so quitting it
+# costs nothing: it respawns on the next launch and reads the new file
+# then. One with a window open is skipped and picks the colors up when it
+# is next started.
+_aphotic_theme_restart_gtk4_daemons() {
+    local row class proc quit open
+    for row in "${APHOTIC_GTK4_DAEMONS[@]}"; do
+        IFS='|' read -r class proc quit <<<"$row"
+        pgrep -x "$proc" >/dev/null 2>&1 || continue
+
+        open="$(_aphotic_theme_window_count "$class")"
+        if [[ "$open" -gt 0 ]]; then
+            aphotic_warn "${proc} has ${open} window(s) open, leaving it alone -- new colors apply next launch"
+            continue
+        fi
+
+        local -a quit_cmd
+        read -ra quit_cmd <<<"$quit"
+        "${quit_cmd[@]}" >/dev/null 2>&1 || true
+    done
+}
+
+# Deploys the staged stylesheet with the live font stamped in.
+#
+# Renders to a temp file and copies it over the destination rather than
+# editing in place. ~/.config/gtk-4.0/gtk.css is a symlink on some setups
+# and both `sed -i` and `install` unlink the destination first, which
+# turns the link into a plain file; every later theme switch then keeps
+# writing a path nothing reads. `cp` writes through the link instead.
+_aphotic_theme_refresh_gtk() {
+    if [[ ! -f "$APHOTIC_GTK4_STAGED" ]]; then
+        aphotic_warn "no GTK4 stylesheet at ${APHOTIC_GTK4_STAGED} yet -- apply a theme first"
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$APHOTIC_GTK4_CSS")"
+
+    local font tmp
+    font="$(_aphotic_theme_ui_font)"
+    tmp="$(mktemp)"
+    sed -E "s/font-family:[^;]+;/font-family: \"${font}\", sans-serif;/" "$APHOTIC_GTK4_STAGED" > "$tmp"
+    cp "$tmp" "$APHOTIC_GTK4_CSS"
+    chmod 644 "$APHOTIC_GTK4_CSS"
+    rm -f "$tmp"
+
+    _aphotic_theme_restart_gtk4_daemons
+    return 0
+}
+
 _aphotic_theme_apply() {
     local theme_name="$1" wallpaper_file="${2:-}"
     local dir; dir="$(_aphotic_theme_dir "$theme_name")"
@@ -418,6 +517,9 @@ _aphotic_theme_apply() {
     fi
 
     cp "$image_path" "${APHOTIC_AWWW_DIR}/current-wallpaper" 2>/dev/null || true
+
+    # Deploy the GTK4/libadwaita stylesheet the engine above just staged.
+    _aphotic_theme_refresh_gtk
 
     # Plugin theme-hooks (see docs/PLUGIN_SYSTEM.md) -- fire-and-forget,
     # the shared implementation (cmd_plugin.sh) already backgrounds each
@@ -569,6 +671,7 @@ aphotic_cmd_theme() {
         update) _aphotic_theme_update "${1:-}" ;;
         remove) _aphotic_theme_remove "${1:-}" ;;
         ensure-default) _aphotic_theme_ensure_default ;;
+        refresh-gtk) _aphotic_theme_refresh_gtk ;;
         set)
             local name="${1:-}"
             [[ -z "$name" ]] && { aphotic_err "usage: aphotic theme set <name>"; return 1; }
@@ -627,7 +730,7 @@ aphotic_cmd_theme() {
             ;;
         ""|-h|--help)
             cat <<HELP
-Usage: aphotic theme <list|set|next|prev|download|update|remove|ensure-default> [args]
+Usage: aphotic theme <list|set|next|prev|download|update|remove|refresh-gtk|ensure-default> [args]
 
   list [--remote] [--json]  List theme folders (${APHOTIC_AWWW_DIR}), or
                              --remote: what's available from
@@ -642,6 +745,12 @@ Usage: aphotic theme <list|set|next|prev|download|update|remove|ensure-default> 
                              theme (skips the ones that ship with Aphotic)
   remove <name>              Delete a downloaded theme; refuses to take out
                              one of the themes that ships with Aphotic
+  refresh-gtk                Re-deploy ~/.config/gtk-4.0/gtk.css from the
+                             current theme with the live UI font stamped
+                             in, and restart the GTK4 apps sitting idle in
+                             the background so they read it. Runs as part
+                             of `theme set`; call it by hand after
+                             changing your interface font
   ensure-default             Apply the install-time theme if none is set
                              yet (no-op once a theme has ever been
                              applied); called once from Hyprland's

@@ -66,6 +66,11 @@ aphotic_cmd_scheme() {
                 else
                     aphotic_warn "wallust not found, skipping palette regeneration"
                 fi
+
+                # Deploy the GTK4/libadwaita stylesheet the engine above
+                # staged. cmd_theme.sh is already sourced for
+                # _aphotic_toml_get, so the function is in scope.
+                _aphotic_theme_refresh_gtk
             else
                 aphotic_log "no active theme/wallpaper found in ${APHOTIC_THEME_STATE_FILE}, skipping palette regeneration"
             fi
