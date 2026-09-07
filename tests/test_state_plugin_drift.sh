@@ -39,16 +39,19 @@ _aphotic_state_plugins_declared && fail "expected _aphotic_state_plugins_declare
 
 # --- [plugins] declared: foo desired+installed (ok), bar desired but
 #     missing, baz installed+enabled but not desired (extra), qux
-#     installed but disabled and not desired (silent -- neither side) ---
+#     installed but disabled and not desired (silent -- neither side),
+#     quux desired, installed, but disabled (needs `enable`, not
+#     `install` -- install refuses on an already-installed plugin) ---
 
 cat > "$DOTS/aphotic.toml" <<'EOF'
 [plugins]
-enabled = ["foo", "bar"]
+enabled = ["foo", "bar", "quux"]
 EOF
 
 install_plugin "foo"
 install_plugin "qux"
-echo '{"disabled": ["qux"]}' > "$APHOTIC_PLUGINS_STATE_FILE"
+install_plugin "quux"
+echo '{"disabled": ["qux", "quux"]}' > "$APHOTIC_PLUGINS_STATE_FILE"
 
 _aphotic_state_plugins_declared || fail "expected _aphotic_state_plugins_declared to be true once [plugins] exists"
 
@@ -56,6 +59,7 @@ drift="$(_aphotic_state_plugin_drift)"
 grep -qxF $'foo\tok' <<<"$drift" || fail "expected foo to report ok, got: $drift"
 grep -qxF $'bar\tmissing' <<<"$drift" || fail "expected bar to report missing, got: $drift"
 grep -qxF $'baz\textra' <<<"$drift" || fail "expected baz to report extra, got: $drift"
+grep -qxF $'quux\tdisabled' <<<"$drift" || fail "expected desired+installed+disabled quux to report disabled, got: $drift"
 grep -q "^qux" <<<"$drift" && fail "expected disabled+undesired qux to be silent, got: $drift"
 
 echo "ok: test_state_plugin_drift"
