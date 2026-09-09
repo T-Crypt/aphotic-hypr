@@ -31,10 +31,14 @@ recordings/
 # .zvec-grep/ holds zvec-grep's semantic index over docs/ + architectural prose.
 .zvec-grep/
 
-# graphify-out/ is committed for team contributions (knowledge graph).
-# Only exclude local cost tracking.
-graphify-out/cost.json
+# graphify-out/ holds a generated knowledge graph over this checkout: 5MB
+# of machine-written JSON that rewrites tens of thousands of lines on every
+# rebuild, and it needed a custom merge driver to survive two people
+# touching it at once. Point a local graphify instance at the checkout
+# instead of sharing the output.
+graphify-out/
 
-# [epiq]: local hydrated state is never committed
-.epiq/events/
-.epiq/log/
+# Local agent tooling state, same class as .claude/ and docs/ above:
+# per-machine, never shipped, not portable between checkouts.
+.epiq/
+.opencode/
