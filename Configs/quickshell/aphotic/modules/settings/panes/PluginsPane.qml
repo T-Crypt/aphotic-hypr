@@ -153,6 +153,12 @@ ColumnLayout {
                         root.installed = [];
                     }
                 }
+                // The CLI has answered, so the optimistic overlay has done
+                // its job. Held back while more actions are still queued,
+                // or rows would snap back to their pre-click state in the
+                // gap between two commands.
+                if (!root.actionBusy && root.actionQueue.length === 0)
+                    root.pendingEnabled = ({});
                 root.refreshing = false;
             }
         }
@@ -215,11 +221,31 @@ ColumnLayout {
     Process {
         id: actionProc
         onExited: {
+            // Stays busy across the drain, so a click landing between two
+            // queued commands still queues rather than pre-empting one.
+            if (root.actionQueue.length > 0) {
+                actionDrain.start();
+                return;
+            }
+            root.actionBusy = false;
             // Force the next installed-list parse to reassign even if the
-            // raw JSON is byte-identical to what the optimistic toggle
-            // already wrote -- the CLI is the source of truth.
+            // raw JSON is byte-identical to what the optimistic overlay
+            // already showed -- the CLI is the source of truth.
             root._lastInstalledRaw = "";
             root.refresh();
+        }
+    }
+
+    // Launches the next queued action off the event loop rather than from
+    // inside onExited, so the process is fully settled before it restarts.
+    Timer {
+        id: actionDrain
+
+        interval: 0
+        onTriggered: {
+            const next = root.actionQueue[0];
+            root.actionQueue = root.actionQueue.slice(1);
+            actionProc.exec(next);
         }
     }
 
@@ -247,7 +273,7 @@ ColumnLayout {
         running: root.screenState.settings
         repeat: true
         onTriggered: {
-            if (!actionProc.running)
+            if (!root.actionBusy)
                 root.refresh();
         }
     }
@@ -271,6 +297,45 @@ ColumnLayout {
     // binding it as a property means the list recomputes once per
     // `installed` change and delegates just read it.
     readonly property var installedNamesList: root.installed.map(p => p.name)
+
+    // Optimistic enable/disable state for actions still in flight, keyed
+    // by plugin name. The toggle icon reads this ahead of the CLI's own
+    // answer so a click lands at once; installedProc clears it when the
+    // reply arrives. Deliberately separate from `installed` rather than
+    // written back into it: reassigning that array hands the Repeater a
+    // new model reference, so every installed delegate is destroyed and
+    // rebuilt instead of the one binding that changed re-evaluating. That
+    // is the same trap availableProc's raw-text guard above exists to
+    // avoid.
+    property var pendingEnabled: ({})
+
+    function isEnabled(entry: var): bool {
+        const pending = root.pendingEnabled[entry.name];
+        return pending === undefined ? entry.enabled === true : pending;
+    }
+
+    // Pending CLI actions. Quickshell's Process ignores `running = true`
+    // on a process that is already running (see services/Settings.qml's
+    // own note on why it switched to exec()), so a second click while the
+    // first command was in flight used to be dropped on the floor. With
+    // the optimistic flag above already flipped, the refresh that follows
+    // would then flip the row back, and the click would look like it had
+    // never happened.
+    property var actionQueue: []
+    // Tracked here rather than read off actionProc.running, which does not
+    // become true until after exec() returns -- two clicks in the same
+    // event-loop frame both saw an idle process and the second exec()
+    // replaced the first command instead of queueing behind it.
+    property bool actionBusy: false
+
+    function runAction(args: var): void {
+        if (root.actionBusy) {
+            root.actionQueue = [...root.actionQueue, args];
+            return;
+        }
+        root.actionBusy = true;
+        actionProc.exec(args);
+    }
 
     // Height shared by the category rail and the browse column beside it.
     // Both were pinned at a flat 400, which fits CategoryRail's seven
@@ -654,9 +719,13 @@ ColumnLayout {
                     }
 
                     MaterialIcon {
-                        text: installedRow.modelData.enabled ? "toggle_on" : "toggle_off"
+                        id: toggleIcon
+
+                        readonly property bool on: root.isEnabled(installedRow.modelData)
+
+                        text: toggleIcon.on ? "toggle_on" : "toggle_off"
                         fill: 1
-                        color: installedRow.modelData.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: toggleIcon.on ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                         fontStyle: Tokens.font.icon.medium
 
                         StateLayer {
@@ -664,17 +733,12 @@ ColumnLayout {
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
                             onClicked: {
-                                // Optimistic update: flip the enabled flag
-                                // locally so the UI responds instantly instead
-                                // of waiting for the CLI subprocess + refresh
-                                // cycle to complete.
                                 const name = installedRow.modelData.name;
-                                const shouldEnable = !installedRow.modelData.enabled;
-                                root.installed = root.installed.map(p =>
-                                    p.name === name ? Object.assign({}, p, { enabled: shouldEnable }) : p
-                                );
-                                actionProc.command = ["aphotic", "plugin", shouldEnable ? "enable" : "disable", name];
-                                actionProc.running = true;
+                                const shouldEnable = !root.isEnabled(installedRow.modelData);
+                                root.pendingEnabled = Object.assign({}, root.pendingEnabled, {
+                                    [name]: shouldEnable
+                                });
+                                root.runAction(["aphotic", "plugin", shouldEnable ? "enable" : "disable", name]);
                             }
                         }
                     }
@@ -688,10 +752,7 @@ ColumnLayout {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
-                            onClicked: {
-                                actionProc.command = ["aphotic", "plugin", "remove", installedRow.modelData.name];
-                                actionProc.running = true;
-                            }
+                            onClicked: root.runAction(["aphotic", "plugin", "remove", installedRow.modelData.name])
                         }
                     }
                 }
