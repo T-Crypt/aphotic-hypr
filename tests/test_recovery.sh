@@ -32,8 +32,24 @@ source "$LIB_DIR/globalcontrol.sh"
 # Nothing in this test may reach the real systemd, the real journal or
 # the real shell -- a stubbed PATH is what keeps `apply` from restarting
 # anything on the machine running the tests.
+#
+# pgrep belongs in this list. `apply` routes through
+# _aphotic_recovery_restart_shell -> cmd_reload.sh -> aphotic_shell_stop
+# $(aphotic_shell_pids), and aphotic_shell_pids is a real `pgrep -f "qs -c
+# aphotic"`. Stubbing systemctl and qs does nothing to stop that: on a
+# machine with Aphotic running it found the developer's live shell and
+# SIGTERMed it, which systemd counts as a clean stop, so the bar simply
+# vanished with no failure recorded anywhere. Reporting no matches is also
+# what this test wants on the merits -- see the header, it drives the bash
+# side with no quickshell anywhere.
 mkdir -p "$WORKDIR/bin"
 export CALL_LOG="$WORKDIR/calls.log"
+cat > "$WORKDIR/bin/pgrep" <<'STUB'
+#!/usr/bin/env bash
+echo "pgrep $*" >> "$CALL_LOG"
+exit 1
+STUB
+chmod +x "$WORKDIR/bin/pgrep"
 for stub in systemctl journalctl qs hyprctl; do
     cat > "$WORKDIR/bin/$stub" <<EOF
 #!/usr/bin/env bash
@@ -43,6 +59,20 @@ EOF
     chmod +x "$WORKDIR/bin/$stub"
 done
 export PATH="$WORKDIR/bin:$PATH"
+
+# Second layer, because the pgrep stub above is one edit away from being
+# the only thing between this test and a developer's running desktop.
+# `kill` is a shell builtin, and a function of the same name shadows it in
+# bash's lookup order, so this catches any signal the sourced code sends
+# without needing it on PATH. `kill -0` is a liveness probe, not a signal
+# (cmd_recovery.sh uses it for its lock file), so it passes through.
+kill() {
+    if [[ "${1:-}" == "-0" ]]; then
+        builtin kill "$@"
+        return
+    fi
+    echo "kill $*" >> "$CALL_LOG"
+}
 
 source "$COMMANDS_DIR/cmd_recovery.sh"
 
@@ -134,3 +164,11 @@ aphotic_cmd_recovery apply demolish >/dev/null 2>&1 || rc=$?
 [[ "$rc" -ne 0 ]] || fail "an unknown recovery action must fail"
 
 echo "PASS: recovery record/suspect/status + safe mode round-trip + apply"
+
+# The whole point of the stubs above: a test run must never signal a
+# process on the machine running it.
+if [[ -f "$CALL_LOG" ]] && grep -q '^kill ' "$CALL_LOG"; then
+    fail "recovery signalled a real process during the test: $(grep '^kill ' "$CALL_LOG")"
+fi
+
+echo "PASS: recovery never signals a process outside its sandbox"
