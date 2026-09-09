@@ -214,26 +214,63 @@ ColumnLayout {
 
     Process {
         id: actionProc
-        onExited: root.refresh()
+        onExited: {
+            // Force the next installed-list parse to reassign even if the
+            // raw JSON is byte-identical to what the optimistic toggle
+            // already wrote -- the CLI is the source of truth.
+            root._lastInstalledRaw = "";
+            root.refresh();
+        }
     }
 
-    // Install now runs in a detached kitty terminal (see the Install
-    // button below) rather than a tracked Process, so there's no
-    // onExited to hook a refresh onto -- poll instead, same "cheap and
-    // self-correcting" convention as Themes.qml/Colours.qml's own state-
-    // file polling. 2s is frequent enough that "Install" flipping to
-    // "Installed" reads as prompt without re-running `aphotic plugin
-    // list` (two subprocess spawns) fast enough to matter.
+    // Install runs in a detached kitty terminal (see the Install button
+    // below) rather than a tracked Process, so there's no onExited to
+    // hook a refresh onto -- poll instead, same "cheap and self-
+    // correcting" convention as Themes.qml/Colours.qml's own state-file
+    // polling. 5s rather than 2s: the installed/available lists rarely
+    // change on their own (the FileView watcher in PluginRegistry.qml
+    // already handles the state-file reactively), so this poll mainly
+    // catches installs that run in the external terminal.
+    //
+    // Gated on the settings window being open -- SettingsPanel.qml's
+    // paneLoader keeps whatever pane was last shown alive even after the
+    // Settings window closes, so an ungated timer would spawn all three
+    // list subprocesses every 5s forever behind the whole shell, the exact
+    // background lag this pane used to contribute with many plugins
+    // installed. Reopening the window refreshes immediately (see
+    // Connections below), so the gating never reads as stale on return.
+    // Skipped entirely while an action is in flight: the optimistic
+    // toggle already updated the UI, and actionProc.onExited forces a
+    // reconciliation refresh when the CLI finishes.
     Timer {
-        interval: 2000
-        running: true
+        interval: 5000
+        running: root.screenState.settings
         repeat: true
-        onTriggered: root.refresh()
+        onTriggered: {
+            if (!actionProc.running)
+                root.refresh();
+        }
     }
 
-    function installedNames(): var {
-        return root.installed.map(p => p.name);
+    // Refresh the moment the Settings window reopens (the pane stays
+    // mounted across open/close, so raw-text guards above would otherwise
+    // keep showing whatever snapshot the timer last produced -- which
+    // could be stale if the user changed plugins from the CLI while the
+    // window was closed).
+    Connections {
+        target: root.screenState
+        function onSettingsChanged() {
+            if (root.screenState.settings)
+                root.refresh();
+        }
     }
+
+    // Cached name list, used by every available-row's `isInstalled`.
+    // Previously a function call in the delegate body re-mapped the whole
+    // array per delegate per evaluation (O(n*m) across the browse list);
+    // binding it as a property means the list recomputes once per
+    // `installed` change and delegates just read it.
+    readonly property var installedNamesList: root.installed.map(p => p.name)
 
     // Small pill, same idiom as the "Installed"/"Install"/GitHub-link
     // pills already in this file (StyledRect, radius.full, sized to
@@ -616,7 +653,16 @@ ColumnLayout {
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
                             onClicked: {
-                                actionProc.command = ["aphotic", "plugin", installedRow.modelData.enabled ? "disable" : "enable", installedRow.modelData.name];
+                                // Optimistic update: flip the enabled flag
+                                // locally so the UI responds instantly instead
+                                // of waiting for the CLI subprocess + refresh
+                                // cycle to complete.
+                                const name = installedRow.modelData.name;
+                                const shouldEnable = !installedRow.modelData.enabled;
+                                root.installed = root.installed.map(p =>
+                                    p.name === name ? Object.assign({}, p, { enabled: shouldEnable }) : p
+                                );
+                                actionProc.command = ["aphotic", "plugin", shouldEnable ? "enable" : "disable", name];
                                 actionProc.running = true;
                             }
                         }
@@ -843,7 +889,7 @@ ColumnLayout {
                                         id: availableRow
 
                                         required property var modelData
-                                        readonly property bool isInstalled: root.installedNames().includes(availableRow.modelData.name)
+                                        readonly property bool isInstalled: root.installedNamesList.includes(availableRow.modelData.name)
                                         readonly property bool isUnhosted: availableRow.hostVerdict === "inert"
 
                                         icon: "extension"
