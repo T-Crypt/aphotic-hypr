@@ -26,12 +26,14 @@ Thumbs.db
 
 recordings/
 
-# Local agent-tooling state: retrieval/graph indexes over this checkout,
-# not shipped output and not portable between machines. graphify-out/
-# holds a knowledge-graph snapshot (graphify skill); .zvec-grep/ holds
-# zvec-grep's semantic index over docs/ + architectural prose.
-graphify-out/
+# Local agent-tooling state: retrieval indexes over this checkout,
+# not shipped output and not portable between machines.
+# .zvec-grep/ holds zvec-grep's semantic index over docs/ + architectural prose.
 .zvec-grep/
+
+# graphify-out/ is committed for team contributions (knowledge graph).
+# Only exclude local cost tracking.
+graphify-out/cost.json
 
 # [epiq]: local hydrated state is never committed
 .epiq/events/
