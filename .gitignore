@@ -26,9 +26,19 @@ Thumbs.db
 
 recordings/
 
-# Local agent-tooling state: retrieval/graph indexes over this checkout,
-# not shipped output and not portable between machines. graphify-out/
-# holds a knowledge-graph snapshot (graphify skill); .zvec-grep/ holds
-# zvec-grep's semantic index over docs/ + architectural prose.
-graphify-out/
+# Local agent-tooling state: retrieval indexes over this checkout,
+# not shipped output and not portable between machines.
+# .zvec-grep/ holds zvec-grep's semantic index over docs/ + architectural prose.
 .zvec-grep/
+
+# graphify-out/ holds a generated knowledge graph over this checkout: 5MB
+# of machine-written JSON that rewrites tens of thousands of lines on every
+# rebuild, and it needed a custom merge driver to survive two people
+# touching it at once. Point a local graphify instance at the checkout
+# instead of sharing the output.
+graphify-out/
+
+# Local agent tooling state, same class as .claude/ and docs/ above:
+# per-machine, never shipped, not portable between checkouts.
+.epiq/
+.opencode/
