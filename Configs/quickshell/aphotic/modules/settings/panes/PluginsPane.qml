@@ -153,6 +153,12 @@ ColumnLayout {
                         root.installed = [];
                     }
                 }
+                // The CLI has answered, so the optimistic overlay has done
+                // its job. Held back while more actions are still queued,
+                // or rows would snap back to their pre-click state in the
+                // gap between two commands.
+                if (!root.actionBusy && root.actionQueue.length === 0)
+                    root.pendingEnabled = ({});
                 root.refreshing = false;
             }
         }
@@ -214,26 +220,133 @@ ColumnLayout {
 
     Process {
         id: actionProc
-        onExited: root.refresh()
+        onExited: {
+            // Stays busy across the drain, so a click landing between two
+            // queued commands still queues rather than pre-empting one.
+            if (root.actionQueue.length > 0) {
+                actionDrain.start();
+                return;
+            }
+            root.actionBusy = false;
+            // Force the next installed-list parse to reassign even if the
+            // raw JSON is byte-identical to what the optimistic overlay
+            // already showed -- the CLI is the source of truth.
+            root._lastInstalledRaw = "";
+            root.refresh();
+        }
     }
 
-    // Install now runs in a detached kitty terminal (see the Install
-    // button below) rather than a tracked Process, so there's no
-    // onExited to hook a refresh onto -- poll instead, same "cheap and
-    // self-correcting" convention as Themes.qml/Colours.qml's own state-
-    // file polling. 2s is frequent enough that "Install" flipping to
-    // "Installed" reads as prompt without re-running `aphotic plugin
-    // list` (two subprocess spawns) fast enough to matter.
+    // Launches the next queued action off the event loop rather than from
+    // inside onExited, so the process is fully settled before it restarts.
     Timer {
-        interval: 2000
-        running: true
-        repeat: true
-        onTriggered: root.refresh()
+        id: actionDrain
+
+        interval: 0
+        onTriggered: {
+            const next = root.actionQueue[0];
+            root.actionQueue = root.actionQueue.slice(1);
+            actionProc.exec(next);
+        }
     }
 
-    function installedNames(): var {
-        return root.installed.map(p => p.name);
+    // Install runs in a detached kitty terminal (see the Install button
+    // below) rather than a tracked Process, so there's no onExited to
+    // hook a refresh onto -- poll instead, same "cheap and self-
+    // correcting" convention as Themes.qml/Colours.qml's own state-file
+    // polling. 5s rather than 2s: the installed/available lists rarely
+    // change on their own (the FileView watcher in PluginRegistry.qml
+    // already handles the state-file reactively), so this poll mainly
+    // catches installs that run in the external terminal.
+    //
+    // Gated on the settings window being open -- SettingsPanel.qml's
+    // paneLoader keeps whatever pane was last shown alive even after the
+    // Settings window closes, so an ungated timer would spawn all three
+    // list subprocesses every 5s forever behind the whole shell, the exact
+    // background lag this pane used to contribute with many plugins
+    // installed. Reopening the window refreshes immediately (see
+    // Connections below), so the gating never reads as stale on return.
+    // Skipped entirely while an action is in flight: the optimistic
+    // toggle already updated the UI, and actionProc.onExited forces a
+    // reconciliation refresh when the CLI finishes.
+    Timer {
+        interval: 5000
+        running: root.screenState.settings
+        repeat: true
+        onTriggered: {
+            if (!root.actionBusy)
+                root.refresh();
+        }
     }
+
+    // Refresh the moment the Settings window reopens (the pane stays
+    // mounted across open/close, so raw-text guards above would otherwise
+    // keep showing whatever snapshot the timer last produced -- which
+    // could be stale if the user changed plugins from the CLI while the
+    // window was closed).
+    Connections {
+        target: root.screenState
+        function onSettingsChanged() {
+            if (root.screenState.settings)
+                root.refresh();
+        }
+    }
+
+    // Cached name list, used by every available-row's `isInstalled`.
+    // Previously a function call in the delegate body re-mapped the whole
+    // array per delegate per evaluation (O(n*m) across the browse list);
+    // binding it as a property means the list recomputes once per
+    // `installed` change and delegates just read it.
+    readonly property var installedNamesList: root.installed.map(p => p.name)
+
+    // Optimistic enable/disable state for actions still in flight, keyed
+    // by plugin name. The toggle icon reads this ahead of the CLI's own
+    // answer so a click lands at once; installedProc clears it when the
+    // reply arrives. Deliberately separate from `installed` rather than
+    // written back into it: reassigning that array hands the Repeater a
+    // new model reference, so every installed delegate is destroyed and
+    // rebuilt instead of the one binding that changed re-evaluating. That
+    // is the same trap availableProc's raw-text guard above exists to
+    // avoid.
+    property var pendingEnabled: ({})
+
+    function isEnabled(entry: var): bool {
+        const pending = root.pendingEnabled[entry.name];
+        return pending === undefined ? entry.enabled === true : pending;
+    }
+
+    // Pending CLI actions. Quickshell's Process ignores `running = true`
+    // on a process that is already running (see services/Settings.qml's
+    // own note on why it switched to exec()), so a second click while the
+    // first command was in flight used to be dropped on the floor. With
+    // the optimistic flag above already flipped, the refresh that follows
+    // would then flip the row back, and the click would look like it had
+    // never happened.
+    property var actionQueue: []
+    // Tracked here rather than read off actionProc.running, which does not
+    // become true until after exec() returns -- two clicks in the same
+    // event-loop frame both saw an idle process and the second exec()
+    // replaced the first command instead of queueing behind it.
+    property bool actionBusy: false
+
+    function runAction(args: var): void {
+        if (root.actionBusy) {
+            root.actionQueue = [...root.actionQueue, args];
+            return;
+        }
+        root.actionBusy = true;
+        actionProc.exec(args);
+    }
+
+    // Height shared by the category rail and the browse column beside it.
+    // Both were pinned at a flat 400, which fits CategoryRail's seven
+    // entries exactly but caps the plugin list at roughly three rows and
+    // hides the rest behind an inner scroll nested inside the pane's own
+    // scroll -- reported as the browse list being cut off. Grow to the
+    // list instead, floored at 400 so the rail still never scrolls and
+    // bounded near half the screen so a large index can't push the rest
+    // of the pane off the bottom. No cycle: browseList's implicit height
+    // comes from its width, which this never feeds.
+    readonly property real browseColumnHeight: Math.max(400, Math.min(Screen.height * 0.5, browseList.implicitHeight))
 
     // Small pill, same idiom as the "Installed"/"Install"/GitHub-link
     // pills already in this file (StyledRect, radius.full, sized to
@@ -606,9 +719,13 @@ ColumnLayout {
                     }
 
                     MaterialIcon {
-                        text: installedRow.modelData.enabled ? "toggle_on" : "toggle_off"
+                        id: toggleIcon
+
+                        readonly property bool on: root.isEnabled(installedRow.modelData)
+
+                        text: toggleIcon.on ? "toggle_on" : "toggle_off"
                         fill: 1
-                        color: installedRow.modelData.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: toggleIcon.on ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                         fontStyle: Tokens.font.icon.medium
 
                         StateLayer {
@@ -616,8 +733,12 @@ ColumnLayout {
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
                             onClicked: {
-                                actionProc.command = ["aphotic", "plugin", installedRow.modelData.enabled ? "disable" : "enable", installedRow.modelData.name];
-                                actionProc.running = true;
+                                const name = installedRow.modelData.name;
+                                const shouldEnable = !root.isEnabled(installedRow.modelData);
+                                root.pendingEnabled = Object.assign({}, root.pendingEnabled, {
+                                    [name]: shouldEnable
+                                });
+                                root.runAction(["aphotic", "plugin", shouldEnable ? "enable" : "disable", name]);
                             }
                         }
                     }
@@ -631,10 +752,7 @@ ColumnLayout {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
-                            onClicked: {
-                                actionProc.command = ["aphotic", "plugin", "remove", installedRow.modelData.name];
-                                actionProc.running = true;
-                            }
+                            onClicked: root.runAction(["aphotic", "plugin", "remove", installedRow.modelData.name])
                         }
                     }
                 }
@@ -689,13 +807,10 @@ ColumnLayout {
 
         StyledRect {
             Layout.preferredWidth: 220
-            // Was 300, same fixed height as the browse column next to it --
-            // but with the search box gone (showSearch: false below) and 7
-            // real categories at ~60px/row with no inner spacing, 300 still
-            // clipped the list into its own inner scroll for no reason this
-            // box needs one. 400 fits all 7 without scrolling and keeps
-            // this column and the browse column matched (see below).
-            Layout.preferredHeight: 400
+            // Matched to the browse column beside it -- see
+            // root.browseColumnHeight for why 400 is the floor and not
+            // the fixed value it used to be.
+            Layout.preferredHeight: root.browseColumnHeight
             radius: Tokens.rounding.large
             color: Colours.tPalette.m3surfaceContainer
 
@@ -711,7 +826,7 @@ ColumnLayout {
 
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 400
+            Layout.preferredHeight: root.browseColumnHeight
             spacing: Tokens.spacing.small
 
             // Security is the one category that can be legitimately
@@ -797,118 +912,129 @@ ColumnLayout {
                 font: Tokens.font.body.small
             }
 
-            Flickable {
-                id: browseFlick
-
+            // Plain Item wrapper so browseScrollThumb below is a sibling
+            // of the Flickable instead of a child of this ColumnLayout.
+            // As a layout child the thumb was allotted a real row of its
+            // own (28px, its minimum height, plus the column spacing),
+            // shrinking the list viewport by that much and leaving dead
+            // space under it -- read as the browse list being cut off.
+            Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: root.availableGroups.length > 0
-                contentWidth: width
-                contentHeight: browseList.implicitHeight
-                clip: true
-                boundsBehavior: Flickable.StopAtBounds
-                // Trims the drag/scroll travel so the thumb below stays a
-                // true position indicator instead of racing ahead of it.
-                rightMargin: 16
 
-                ColumnLayout {
-                    id: browseList
-                    width: parent.width
-                    spacing: Tokens.spacing.medium
+                Flickable {
+                    id: browseFlick
 
-                    Repeater {
-                        model: root.availableGroups
+                    anchors.fill: parent
+                    visible: root.availableGroups.length > 0
+                    contentWidth: width
+                    contentHeight: browseList.implicitHeight
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
 
-                        ColumnLayout {
-                            id: layerGroup
+                    ColumnLayout {
+                        id: browseList
+                        // Inset by the thumb's width so a row never runs
+                        // under it. Was Flickable.rightMargin, which adds
+                        // scrollable area rather than reserving a gutter --
+                        // it made the list horizontally flickable by 16px.
+                        width: browseFlick.width - 16
+                        spacing: Tokens.spacing.medium
 
-                            required property var modelData
+                        Repeater {
+                            model: root.availableGroups
 
-                            Layout.fillWidth: true
-                            spacing: Tokens.spacing.small
+                            ColumnLayout {
+                                id: layerGroup
 
-                            StyledText {
-                                text: layerGroup.modelData.label
-                                color: Colours.palette.m3onSurfaceVariant
-                                font: Tokens.font.label.medium
-                            }
+                                required property var modelData
 
-                            SettingsGroup {
                                 Layout.fillWidth: true
+                                spacing: Tokens.spacing.small
 
-                                Repeater {
-                                    model: layerGroup.modelData.plugins
+                                StyledText {
+                                    text: layerGroup.modelData.label
+                                    color: Colours.palette.m3onSurfaceVariant
+                                    font: Tokens.font.label.medium
+                                }
 
-                                    PluginRow {
-                                        id: availableRow
+                                SettingsGroup {
+                                    Layout.fillWidth: true
 
-                                        required property var modelData
-                                        readonly property bool isInstalled: root.installedNames().includes(availableRow.modelData.name)
-                                        readonly property bool isUnhosted: availableRow.hostVerdict === "inert"
+                                    Repeater {
+                                        model: layerGroup.modelData.plugins
 
-                                        icon: "extension"
-                                        label: `${availableRow.modelData.display_name}  ·  v${availableRow.modelData.version}`
-                                        description: availableRow.modelData.description
-                                        capabilities: availableRow.modelData.capabilities ?? []
-                                        surfaces: availableRow.modelData.ui?.surfaces ?? []
-                                        // Absent reads as "ok": an older CLI's --json
-                                        // carries no host_support at all, and defaulting
-                                        // the other way would mark every plugin
-                                        // unavailable rather than none.
-                                        hostVerdict: availableRow.modelData.host_support?.verdict ?? "ok"
-                                        unhosted: availableRow.modelData.host_support?.unhosted ?? ""
+                                        PluginRow {
+                                            id: availableRow
 
-                                        StyledRect {
-                                            id: installButton
+                                            required property var modelData
+                                            readonly property bool isInstalled: root.installedNamesList.includes(availableRow.modelData.name)
+                                            readonly property bool isUnhosted: availableRow.hostVerdict === "inert"
 
-                                            readonly property bool actionable: !availableRow.isInstalled && !availableRow.isUnhosted
+                                            icon: "extension"
+                                            label: `${availableRow.modelData.display_name}  ·  v${availableRow.modelData.version}`
+                                            description: availableRow.modelData.description
+                                            capabilities: availableRow.modelData.capabilities ?? []
+                                            surfaces: availableRow.modelData.ui?.surfaces ?? []
+                                            // Absent reads as "ok": an older CLI's --json
+                                            // carries no host_support at all, and defaulting
+                                            // the other way would mark every plugin
+                                            // unavailable rather than none.
+                                            hostVerdict: availableRow.modelData.host_support?.verdict ?? "ok"
+                                            unhosted: availableRow.modelData.host_support?.unhosted ?? ""
 
-                                            implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
-                                            implicitHeight: 32
-                                            radius: Tokens.rounding.full
-                                            color: installButton.actionable ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                                            StyledRect {
+                                                id: installButton
 
-                                            StyledText {
-                                                id: installLabel
-                                                anchors.centerIn: parent
-                                                text: availableRow.isInstalled ? qsTr("Installed") : availableRow.isUnhosted ? qsTr("Unavailable") : qsTr("Install")
-                                                color: installButton.actionable ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
-                                                font: Tokens.font.label.small
-                                            }
+                                                readonly property bool actionable: !availableRow.isInstalled && !availableRow.isUnhosted
 
-                                            StateLayer {
-                                                anchors.fill: parent
-                                                radius: parent.radius
-                                                disabled: !installButton.actionable
-                                            }
+                                                implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
+                                                implicitHeight: 32
+                                                radius: Tokens.rounding.full
+                                                color: installButton.actionable ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                enabled: installButton.actionable
-                                                cursorShape: installButton.actionable ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                                onClicked: {
-                                                    // Install used to run silently through
-                                                    // actionProc (no stdout/stderr capture at
-                                                    // all) -- on a machine with no local
-                                                    // aphotic-plugins checkout yet, the real
-                                                    // CLI failure (see cmd_plugin.sh) was
-                                                    // discarded with zero UI feedback: the
-                                                    // button just sat there. Routing through
-                                                    // a real, visible terminal instead of
-                                                    // trying to reimplement progress/error
-                                                    // display in QML -- same CLI command
-                                                    // either way (`aphotic plugin install`,
-                                                    // now self-sufficient: clones/pulls the
-                                                    // plugins repo itself, see
-                                                    // _aphotic_plugin_sync_repo), just with
-                                                    // real output the user can actually read,
-                                                    // including the git clone/pull step.
-                                                    // `--hold` keeps the window open after
-                                                    // the command exits instead of it
-                                                    // vanishing the instant install finishes
-                                                    // (or fails). No windowrule floats
-                                                    // kitty, so this tiles normally.
-                                                    Quickshell.execDetached(["kitty", "--hold", "-T", `Installing ${availableRow.modelData.display_name}`, "aphotic", "plugin", "install", availableRow.modelData.name]);
+                                                StyledText {
+                                                    id: installLabel
+                                                    anchors.centerIn: parent
+                                                    text: availableRow.isInstalled ? qsTr("Installed") : availableRow.isUnhosted ? qsTr("Unavailable") : qsTr("Install")
+                                                    color: installButton.actionable ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                                    font: Tokens.font.label.small
+                                                }
+
+                                                StateLayer {
+                                                    anchors.fill: parent
+                                                    radius: parent.radius
+                                                    disabled: !installButton.actionable
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    enabled: installButton.actionable
+                                                    cursorShape: installButton.actionable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                                    onClicked: {
+                                                        // Install used to run silently through
+                                                        // actionProc (no stdout/stderr capture at
+                                                        // all) -- on a machine with no local
+                                                        // aphotic-plugins checkout yet, the real
+                                                        // CLI failure (see cmd_plugin.sh) was
+                                                        // discarded with zero UI feedback: the
+                                                        // button just sat there. Routing through
+                                                        // a real, visible terminal instead of
+                                                        // trying to reimplement progress/error
+                                                        // display in QML -- same CLI command
+                                                        // either way (`aphotic plugin install`,
+                                                        // now self-sufficient: clones/pulls the
+                                                        // plugins repo itself, see
+                                                        // _aphotic_plugin_sync_repo), just with
+                                                        // real output the user can actually read,
+                                                        // including the git clone/pull step.
+                                                        // `--hold` keeps the window open after
+                                                        // the command exits instead of it
+                                                        // vanishing the instant install finishes
+                                                        // (or fails). No windowrule floats
+                                                        // kitty, so this tiles normally.
+                                                        Quickshell.execDetached(["kitty", "--hold", "-T", `Installing ${availableRow.modelData.display_name}`, "aphotic", "plugin", "install", availableRow.modelData.name]);
+                                                    }
                                                 }
                                             }
                                         }
@@ -918,54 +1044,54 @@ ColumnLayout {
                         }
                     }
                 }
-            }
 
-            // Real draggable scrollbar, not a wheel-only Flickable -- see
-            // docs/ideas.md UX-04. 12px press band / 28px thumb floor,
-            // the project's stated standard (SettingsPanel.qml's own
-            // scrollThumb predates it at 8px/24px; not copied here).
-            StyledRect {
-                id: browseScrollThumb
+                // Real draggable scrollbar, not a wheel-only Flickable -- see
+                // docs/ideas.md UX-04. 12px press band / 28px thumb floor,
+                // the project's stated standard (SettingsPanel.qml's own
+                // scrollThumb predates it at 8px/24px; not copied here).
+                StyledRect {
+                    id: browseScrollThumb
 
-                visible: browseFlick.contentHeight > browseFlick.height
-                x: browseFlick.x + browseFlick.width - width
-                y: browseFlick.y + browseFlick.visibleArea.yPosition * browseFlick.height
-                width: 12
-                height: Math.max(28, browseFlick.visibleArea.heightRatio * browseFlick.height)
-                radius: Tokens.rounding.full
-                color: Colours.palette.m3onSurfaceVariant
-                opacity: browseDragArea.pressed ? 0.7 : browseDragArea.containsMouse ? 0.55 : 0.35
+                    visible: browseFlick.contentHeight > browseFlick.height
+                    x: browseFlick.x + browseFlick.width - width
+                    y: browseFlick.y + browseFlick.visibleArea.yPosition * browseFlick.height
+                    width: 12
+                    height: Math.max(28, browseFlick.visibleArea.heightRatio * browseFlick.height)
+                    radius: Tokens.rounding.full
+                    color: Colours.palette.m3onSurfaceVariant
+                    opacity: browseDragArea.pressed ? 0.7 : browseDragArea.containsMouse ? 0.55 : 0.35
 
-                Behavior on opacity {
-                    Anim { type: Anim.StandardSmall }
-                }
-
-                MouseArea {
-                    id: browseDragArea
-
-                    anchors.fill: parent
-                    anchors.margins: -4
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    preventStealing: true
-
-                    property real pressY: 0
-                    property real pressContentY: 0
-
-                    onPressed: mouse => {
-                        pressY = mapToItem(browseFlick, mouse.x, mouse.y).y;
-                        pressContentY = browseFlick.contentY;
+                    Behavior on opacity {
+                        Anim { type: Anim.StandardSmall }
                     }
-                    onPositionChanged: mouse => {
-                        if (!pressed)
-                            return;
-                        const trackHeight = browseFlick.height - browseScrollThumb.height;
-                        if (trackHeight <= 0)
-                            return;
-                        const scrollable = browseFlick.contentHeight - browseFlick.height;
-                        const deltaY = mapToItem(browseFlick, mouse.x, mouse.y).y - pressY;
-                        const deltaContent = deltaY / trackHeight * scrollable;
-                        browseFlick.contentY = Math.max(0, Math.min(scrollable, pressContentY + deltaContent));
+
+                    MouseArea {
+                        id: browseDragArea
+
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        preventStealing: true
+
+                        property real pressY: 0
+                        property real pressContentY: 0
+
+                        onPressed: mouse => {
+                            pressY = mapToItem(browseFlick, mouse.x, mouse.y).y;
+                            pressContentY = browseFlick.contentY;
+                        }
+                        onPositionChanged: mouse => {
+                            if (!pressed)
+                                return;
+                            const trackHeight = browseFlick.height - browseScrollThumb.height;
+                            if (trackHeight <= 0)
+                                return;
+                            const scrollable = browseFlick.contentHeight - browseFlick.height;
+                            const deltaY = mapToItem(browseFlick, mouse.x, mouse.y).y - pressY;
+                            const deltaContent = deltaY / trackHeight * scrollable;
+                            browseFlick.contentY = Math.max(0, Math.min(scrollable, pressContentY + deltaContent));
+                        }
                     }
                 }
             }
