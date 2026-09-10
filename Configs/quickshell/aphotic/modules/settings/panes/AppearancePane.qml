@@ -344,6 +344,66 @@ Item {
 
             StyledText {
                 Layout.topMargin: Tokens.spacing.small
+                text: qsTr("Wallpaper Picker")
+                color: Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.label.medium
+            }
+
+            SettingsGroup {
+                Layout.fillWidth: true
+
+                SettingsRow {
+                    icon: "view_carousel"
+                    label: qsTr("Launcher layout")
+                    description: qsTr("How SUPER+SHIFT+W presents your wallpapers")
+
+                    RowLayout {
+                        spacing: Tokens.spacing.small
+
+                        Repeater {
+                            model: [
+                                { id: "coverflow", label: qsTr("Coverflow") },
+                                { id: "grid", label: qsTr("Grid") },
+                                { id: "dock", label: qsTr("Dock") }
+                            ]
+
+                            StyledRect {
+                                id: layoutPill
+
+                                required property var modelData
+                                readonly property bool active: layoutPill.modelData.id === Settings.wallpaperPickerLayout
+
+                                Layout.preferredHeight: 28
+                                Layout.preferredWidth: layoutLabel.implicitWidth + Tokens.padding.medium * 2
+                                radius: Tokens.rounding.full
+                                color: layoutPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                                StyledText {
+                                    id: layoutLabel
+                                    anchors.centerIn: parent
+                                    text: layoutPill.modelData.label
+                                    color: layoutPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                    font: Tokens.font.label.small
+                                }
+
+                                StateLayer {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    showHoverBackground: !layoutPill.active
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: Settings.wallpaperPickerLayout = layoutPill.modelData.id
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            StyledText {
+                Layout.topMargin: Tokens.spacing.small
                 text: qsTr("Wallpaper Slideshow")
                 color: Colours.palette.m3onSurfaceVariant
                 font: Tokens.font.label.medium

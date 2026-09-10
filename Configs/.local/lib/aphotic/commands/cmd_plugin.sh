@@ -39,7 +39,7 @@ _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 # is reported as unhosted, which is the safe direction to fail -- a
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay pet_action"
+APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action"
 APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
@@ -239,6 +239,13 @@ _aphotic_plugin_ui_json() {
         entries+=("$entry")
     fi
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.fullscreen-overlay fullscreen-overlay)"; then
+        entries+=("$entry")
+    fi
+    # manifest v3.8. Unlike [ui.overlay], this one takes no anchor or
+    # width/height: BackgroundWindow is already a statically sized
+    # full-screen surface, so there is no geometry for a manifest to
+    # budget and nothing for a plugin to place itself against.
+    if entry="$(_aphotic_plugin_surface_json "$manifest" ui.background background)"; then
         entries+=("$entry")
     fi
 

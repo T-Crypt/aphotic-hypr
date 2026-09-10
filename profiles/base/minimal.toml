@@ -11,4 +11,4 @@ prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcon
 # surface using it just silently draws its fallback. In both profiles for
 # the same reason a shelled-out binary is: a feature that works on full
 # and quietly does nothing on minimal is worse than one that is absent.
-main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "kitty", "awww", "xdg-desktop-portal-hyprland", "wallust-git", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava"]
+main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "qt6-multimedia", "ffmpeg", "kitty", "awww", "xdg-desktop-portal-hyprland", "wallust-git", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava"]
