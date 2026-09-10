@@ -48,6 +48,45 @@ build_shell_shaders() {
 # (SDDM theme, wayland-sessions) so --config-only never asks for a
 # password -- extracted rather than duplicated so the sync path and the
 # full install can never drift apart.
+# Pre-generate the wallpaper picker's thumbnail cache so the first
+# SUPER+W is warm. Without this, opening the picker on a fresh install
+# spawns ffmpeg for every wallpaper in the theme and fills the cards in
+# as they land -- correct, but visibly so.
+#
+# Runs in the background and never blocks the install: the picker
+# generates whatever is missing on demand anyway, so the worst case for
+# a failure here is the behaviour we had before. Only the active theme's
+# wallpapers are warmed, not every theme's -- that is what the picker
+# opens on, and doing all of them on a large collection would spend real
+# time on images the user may never look at.
+build_wallpaper_thumbs() {
+  local script="${APHOTIC_DOTS_DIR:-$HOME/Aphotic-Hypr}/Configs/.local/lib/aphotic/wallpaper_thumbs.py"
+  local awww_dir="$HOME/.config/awww"
+  local theme=""
+
+  [[ -f "$script" ]] || return 0
+  command -v ffmpeg &>/dev/null || return 0
+  command -v python3 &>/dev/null || return 0
+  [[ -d "$awww_dir" ]] || return 0
+
+  if [[ -f "$HOME/.local/state/aphotic/theme.json" ]]; then
+    theme=$(jq -r '.theme // empty' "$HOME/.local/state/aphotic/theme.json" 2>/dev/null || true)
+  fi
+  [[ -n "$theme" && -d "$awww_dir/$theme" ]] || return 0
+
+  (
+    find "$awww_dir/$theme" -maxdepth 1 -type f \
+      \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' \
+         -o -iname '*.webp' -o -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mov' \
+         -o -iname '*.mkv' -o -iname '*.m4v' \) -print0 \
+      | xargs -0 -r python3 "$script" >/dev/null 2>&1
+  ) &
+  disown 2>/dev/null || true
+
+  echo -e "$CNT - Warming the wallpaper thumbnail cache in the background..."
+  return 0
+}
+
 deploy_user_configs() {
   echo -e "$CNT - Copying config files..."
   CUSTOM_LUA="$HOME/.config/hypr/custom.lua"
@@ -201,6 +240,7 @@ deploy_user_configs() {
   "$HOME/.local/bin/aphotic" plugin relink-ui-modules &>> "$INSTLOG" || true
 
   build_shell_shaders
+  build_wallpaper_thumbs
 
   echo -e "$CNT - Enabling the Aphotic shell restart-supervision unit..."
   mkdir -p "$HOME/.config/systemd/user"

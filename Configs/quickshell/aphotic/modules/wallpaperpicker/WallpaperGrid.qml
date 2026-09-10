@@ -23,10 +23,14 @@ Item {
 
     focus: true
 
+    // The focus grab is load-bearing: without it the arrow keys land on
+    // whatever had focus before and the grid cannot be driven from the
+    // keyboard at all.
     function focusActive(): void {
         const idx = root.model.activeIndex;
         grid.currentIndex = idx >= 0 ? idx : 0;
         grid.positionViewAtIndex(grid.currentIndex, GridView.Contain);
+        root.forceActiveFocus();
     }
 
     // Arrow keys move the selection and queue a preview; the preview itself
@@ -65,6 +69,7 @@ Item {
             cacheBuffer: root.cellHeight * 3
 
             model: root.model.count
+            reuseItems: true
 
             // A wheel-only view is against the rule in this repo, so the
             // scrollbar beside it is a real draggable one rather than an
@@ -82,6 +87,11 @@ Item {
                 required property int index
 
                 property bool hovered: false
+
+                // Recycled cells come back with whatever hover state they
+                // were pooled with; everything else here derives from
+                // index, which Qt re-evaluates on reuse.
+                GridView.onReused: cell.hovered = false
 
                 width: grid.cellWidth
                 height: grid.cellHeight

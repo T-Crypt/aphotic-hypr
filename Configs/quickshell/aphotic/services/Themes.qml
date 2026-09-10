@@ -55,6 +55,7 @@ Singleton {
     readonly property bool activeWallpaperIsVideo: root.isVideo(root.activeWallpaper)
     readonly property string activeVideoPath: root.activeWallpaperIsVideo && root.activeTheme ? `${root.awwwDir}/${root.activeTheme}/${root.activeWallpaper}` : ""
 
+    property string _lastScan: ""
     property bool _scanned: false
     property bool _stateLoaded: false
     property bool _writePending: false
@@ -364,7 +365,7 @@ Singleton {
                     }
                 }
 
-                root.themes = themeList.map(t => {
+                const scanned = themeList.map(t => {
                     const toml = t._tomlText ? root._parseFlatToml(t._tomlText) : {};
                     return {
                         name: t.name,
@@ -389,6 +390,17 @@ Singleton {
                         wallpapers: t.wallpapers.sort()
                     };
                 }).filter(t => t.wallpapers.length > 0).sort((a, b) => a.name.localeCompare(b.name));
+
+                // Reassigning an identical list is not free: every view
+                // bound to it resets, and a ListView resetting throws away
+                // contentX. The wallpaper picker rescans on open so a
+                // newly dropped file shows up, and that used to jump the
+                // deck back to the left edge the instant it opened.
+                const serialised = JSON.stringify(scanned);
+                if (serialised !== root._lastScan) {
+                    root._lastScan = serialised;
+                    root.themes = scanned;
+                }
 
                 root._scanned = true;
                 root._applyLoadedState();

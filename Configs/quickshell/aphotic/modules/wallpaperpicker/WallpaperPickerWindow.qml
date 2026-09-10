@@ -54,6 +54,7 @@ PanelWindow {
                 pickerModel.cancelPreview();
                 return;
             }
+            root.everOpened = true;
             // Nothing watches ~/.config/awww, so a wallpaper dropped in
             // since the shell started would otherwise not appear until a
             // restart. Opening the picker is the natural moment to look.
@@ -86,14 +87,25 @@ PanelWindow {
         onClicked: pickerModel.revertAndClose()
     }
 
+    // Built on first open and kept afterwards, so every later open is
+    // immediate rather than reconstructing a view over the whole
+    // wallpaper list. Nothing here runs while the window is hidden: the
+    // PanelWindow is not visible, the model's preview timer is stopped on
+    // close, and the layouts drive off the model rather than polling.
+    // Switching layout in Settings swaps sourceComponent and the old one
+    // goes, so at most one is ever resident.
+    property bool everOpened: false
+
+    onLayoutChanged: {
+        if (!root.screenState.wallpaperPicker)
+            root.everOpened = false;
+    }
+
     Loader {
         id: layoutLoader
 
         anchors.fill: parent
-        // Only built once the picker is actually opened, and torn down with
-        // it: three layouts kept resident would each hold a view over every
-        // wallpaper for the whole session.
-        active: root.screenState.wallpaperPicker
+        active: root.screenState.wallpaperPicker || root.everOpened
         sourceComponent: root.layout === "grid" ? gridComp : root.layout === "dock" ? dockComp : coverflowComp
 
         onLoaded: Qt.callLater(() => layoutLoader.item?.focusActive())
