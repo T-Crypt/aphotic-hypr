@@ -223,6 +223,17 @@ Singleton {
     // services/WallpaperCycle.qml) -- interval in minutes.
     property bool wallpaperAutoCycleEnabled: false
     property int wallpaperAutoCycleInterval: 15
+    // Which layout SUPER+W opens the full-screen picker in. Coverflow
+    // is what the picker has always been, so it stays the default.
+    readonly property var wallpaperPickerLayouts: ["coverflow", "grid", "dock"]
+    property string wallpaperPickerLayout: "coverflow"
+    // Owned by the live-wallpaper plugin (see its [owns] table). Kept here
+    // rather than in plugin state for the same reason agentGraph*'s keys
+    // are: one settings file, one schema, one place a user's preferences
+    // survive a plugin being reinstalled.
+    property bool liveWallpaperPauseOnBattery: true
+    property bool liveWallpaperPauseWhenOccluded: true
+    property bool liveWallpaperMuted: true
 
     // "" = auto-detect via IP geolocation (services/Weather.qml), non-empty
     // = geocoded via Open-Meteo's geocoding API (city/place name or
@@ -383,6 +394,10 @@ Singleton {
             dndEnabled: root.dndEnabled,
             wallpaperAutoCycleEnabled: root.wallpaperAutoCycleEnabled,
             wallpaperAutoCycleInterval: root.wallpaperAutoCycleInterval,
+            wallpaperPickerLayout: root.wallpaperPickerLayout,
+            liveWallpaperPauseOnBattery: root.liveWallpaperPauseOnBattery,
+            liveWallpaperPauseWhenOccluded: root.liveWallpaperPauseWhenOccluded,
+            liveWallpaperMuted: root.liveWallpaperMuted,
             weatherLocation: root.weatherLocation,
             weatherUnits: root.weatherUnits,
             osdEnabled: root.osdEnabled,
@@ -655,6 +670,10 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onDndEnabledChanged: root._saveState()
     onWallpaperAutoCycleEnabledChanged: root._saveState()
     onWallpaperAutoCycleIntervalChanged: root._saveState()
+    onWallpaperPickerLayoutChanged: root._saveState()
+    onLiveWallpaperPauseOnBatteryChanged: root._saveState()
+    onLiveWallpaperPauseWhenOccludedChanged: root._saveState()
+    onLiveWallpaperMutedChanged: root._saveState()
     onWeatherLocationChanged: root._saveState()
     onWeatherUnitsChanged: root._saveState()
     onOsdEnabledChanged: root._saveState()
@@ -845,6 +864,14 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.wallpaperAutoCycleEnabled = data.wallpaperAutoCycleEnabled;
                 if (typeof data.wallpaperAutoCycleInterval === "number")
                     root.wallpaperAutoCycleInterval = data.wallpaperAutoCycleInterval;
+                if (root.wallpaperPickerLayouts.includes(data.wallpaperPickerLayout))
+                    root.wallpaperPickerLayout = data.wallpaperPickerLayout;
+                if (typeof data.liveWallpaperPauseOnBattery === "boolean")
+                    root.liveWallpaperPauseOnBattery = data.liveWallpaperPauseOnBattery;
+                if (typeof data.liveWallpaperPauseWhenOccluded === "boolean")
+                    root.liveWallpaperPauseWhenOccluded = data.liveWallpaperPauseWhenOccluded;
+                if (typeof data.liveWallpaperMuted === "boolean")
+                    root.liveWallpaperMuted = data.liveWallpaperMuted;
                 if (typeof data.weatherLocation === "string")
                     root.weatherLocation = data.weatherLocation;
                 if (typeof data.weatherUnits === "string" && ["celsius", "fahrenheit"].includes(data.weatherUnits))
