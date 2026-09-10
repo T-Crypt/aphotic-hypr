@@ -1,8 +1,11 @@
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -161,6 +164,12 @@ def test_icon_selection_uses_the_first_available_fallback():
     ) == "firefox"
 
 
+# Every other test here runs the policy through node, which is why they
+# pass anywhere. This one is the end-to-end check that the policy's answer
+# actually reaches notify-send, so it needs the real shell runtime. CI
+# installs pytest and nothing else, so it skips there rather than failing
+# on a `qs` that was never going to exist.
+@pytest.mark.skipif(shutil.which("qs") is None, reason="needs Quickshell (qs) to run the shell probe")
 def test_source_identity_reaches_notify_send(tmp_path):
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
@@ -196,8 +205,8 @@ ShellRoot {
         env["QT_QPA_PLATFORM"] = "offscreen"
         env["XDG_RUNTIME_DIR"] = str(runtime_dir)
         env["TOAST_LOG"] = str(log)
-        subprocess.run(
-            ["timeout", "2", "qs", "-p", Path(probe.name).name],
+        result = subprocess.run(
+            ["timeout", "10", "qs", "-p", Path(probe.name).name],
             cwd=qml_root,
             env=env,
             capture_output=True,
@@ -207,6 +216,11 @@ ShellRoot {
     finally:
         Path(probe.name).unlink(missing_ok=True)
 
+    assert log.exists(), (
+        "notify-send was never called.\n"
+        f"qs exited {result.returncode}\n"
+        f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )
     assert log.read_text().splitlines() == [
         "-a",
         "YouTube",
