@@ -223,7 +223,7 @@ Singleton {
     // services/WallpaperCycle.qml) -- interval in minutes.
     property bool wallpaperAutoCycleEnabled: false
     property int wallpaperAutoCycleInterval: 15
-    // Which layout SUPER+SHIFT+W opens the full-screen picker in. Coverflow
+    // Which layout SUPER+W opens the full-screen picker in. Coverflow
     // is what the picker has always been, so it stays the default.
     readonly property var wallpaperPickerLayouts: ["coverflow", "grid", "dock"]
     property string wallpaperPickerLayout: "coverflow"
