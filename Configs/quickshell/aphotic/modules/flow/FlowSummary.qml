@@ -9,7 +9,14 @@ import "FlowModel.js" as Model
 
 ColumnLayout {
     id: root
-    readonly property var flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles)
+    // summarize(), not build(): the popout shows planes and two counts,
+    // so it has no reason to lay out the map's nodes and edges.
+    readonly property var flow: Model.summarize(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles, ({
+        ai: InstallProfile.aiEnabled,
+        gaming: InstallProfile.gamingEnabled,
+        security: InstallProfile.securityEnabled,
+        dev: InstallProfile.devEnabled
+    }))
     spacing: 8
     StyledText {
         text: qsTr("Aphotic Flow")
@@ -28,9 +35,13 @@ ColumnLayout {
                     Layout.fillWidth: true
                     implicitHeight: 3
                     radius: 2
-                    color: plane.modelData.phase === "negotiate" ? "#f4bd72" : plane.modelData.phase === "monitor" || plane.modelData.phase === "claims active" ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
+                    color: plane.modelData.phase === "negotiate" ? "#f4bd72" : plane.modelData.active ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
                 }
-                StyledText { text: plane.modelData.label; font: Tokens.font.label.medium }
+                StyledText {
+                    text: plane.modelData.label
+                    font: Tokens.font.label.medium
+                    opacity: plane.modelData.installed ? 1 : 0.45
+                }
             }
         }
     }

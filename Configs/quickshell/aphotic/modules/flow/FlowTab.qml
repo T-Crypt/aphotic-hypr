@@ -14,6 +14,16 @@ Item {
     readonly property bool presented: visible && opacity > 0 && !!Window.window && Window.window.visible
     property bool motion: true
 
+    // Which planes this install actually carries. A plane the user never
+    // installed reads as "not installed" rather than an idle one that
+    // will never wake.
+    readonly property var layers: ({
+        ai: InstallProfile.aiEnabled,
+        gaming: InstallProfile.gamingEnabled,
+        security: InstallProfile.securityEnabled,
+        dev: InstallProfile.devEnabled
+    })
+
     Loader {
         anchors.fill: parent
         active: root.presented
@@ -27,7 +37,7 @@ Item {
             muted: Colours.palette.m3onSurfaceVariant
             motion: root.motion
             onMotionChanged: root.motion = motion
-            flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles)
+            flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles, root.layers)
             pending: ResourceEngine.pending
             metrics: [
                 {label:"CPU", value:Math.round(SystemUsage.cpuPerc*100)+"%"},

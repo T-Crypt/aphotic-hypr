@@ -24,13 +24,23 @@ Rectangle {
     property string selectionKind: "resource"
     property string selectionKey: "gpu-vram"
     property real travel: 1
-    readonly property var selected: (selectionKind === "resource" ? flow.resources : flow.workloads).find(n => n.key === selectionKey) || null
+    readonly property var selected: (selectionKind === "resource" ? flow.resources : selectionKind === "plane" ? (flow.planes || []) : flow.workloads).find(n => n.key === selectionKey) || null
     signal decide(int negotiationId, string decision)
+
+    // The map only changes when the model's signature changes. Metric
+    // ticks and palette changes rebuild `flow` every second without
+    // moving a node, and a settled map must not repaint or replay the
+    // pulse on those.
+    property string _signature: "-"
 
     Behavior on background { enabled: root.motion; ColorAnimation { duration: 180 } }
     Behavior on surface { enabled: root.motion; ColorAnimation { duration: 180 } }
 
     onFlowChanged: {
+        const next = flow.signature || "";
+        if (next === root._signature)
+            return;
+        root._signature = next;
         paths.requestPaint();
         if (motion && visible && !pulse.running) pulse.restart();
     }
@@ -101,12 +111,38 @@ Rectangle {
                 Rectangle {
                     id: plane
                     required property var modelData
+                    readonly property bool chosen: root.selectionKind === "plane" && root.selectionKey === plane.modelData.key
+                    objectName: "plane-" + modelData.key
                     Layout.fillWidth: true
-                    implicitHeight: 42
+                    implicitHeight: 58
                     radius: 12
-                    color: root.surface
-                    border.color: plane.modelData.phase === "monitor" ? Qt.alpha(root.accent,0.7) : Qt.alpha(root.muted,0.15)
-                    Copy { anchors.centerIn: parent; text: plane.modelData.label + "  /  " + plane.modelData.phase; color: plane.modelData.phase === "monitor" ? root.accent : root.muted }
+                    enabled: plane.modelData.installed
+                    opacity: plane.enabled ? 1 : 0.55
+                    color: plane.chosen ? Qt.alpha(root.accent,0.12) : root.surface
+                    border.width: 1
+                    border.color: plane.chosen ? root.accent : plane.modelData.active ? Qt.alpha(root.accent,0.7) : Qt.alpha(root.muted,0.15)
+                    Column {
+                        anchors.left: parent.left; anchors.leftMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - 24
+                        spacing: 3
+                        Copy {
+                            width: parent.width
+                            text: plane.modelData.label + "  /  " + plane.modelData.phase
+                            color: plane.modelData.active ? root.accent : root.muted
+                            font.pixelSize: 12
+                        }
+                        Copy {
+                            width: parent.width
+                            text: plane.modelData.detail.split("\n")[0]
+                            color: root.muted
+                            font.pixelSize: 10
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: plane.enabled
+                        onClicked: { root.selectionKind = "plane"; root.selectionKey = plane.modelData.key; }
+                    }
                 }
             }
         }
@@ -114,10 +150,12 @@ Rectangle {
             Layout.fillWidth: true
             spacing: 8
             Repeater {
-                model: root.metrics
+                model: root.metrics.length
                 Rectangle {
                     id: metric
-                    required property var modelData
+                    objectName: "metric-" + metric.index
+                    required property int index
+                    readonly property var modelData: root.metrics[metric.index] || ({label:"", value:""})
                     Layout.fillWidth: true
                     implicitHeight: 56
                     radius: 12
@@ -175,14 +213,14 @@ Rectangle {
                         }
                     }
                     Repeater {
-                        model: root.flow.edges
+                        model: root.motion ? root.flow.edges : []
                         Rectangle {
                             id: spark
                             required property var modelData
                             readonly property real t: root.travel
                             readonly property real dx: map.width-map.leftWidth-map.rightWidth
                             width: 5; height: 5; radius: 3
-                            visible: pulse.running && root.motion
+                            visible: pulse.running
                             color: spark.modelData.contended ? root.warning : root.accent
                             opacity: spark.modelData.foreground ? 1 : 0.4
                             x: map.leftWidth + dx*(3*(1-t)*(1-t)*t*0.45+3*(1-t)*t*t*0.55+t*t*t)-2.5
