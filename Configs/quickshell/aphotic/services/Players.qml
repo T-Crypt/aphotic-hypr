@@ -4,7 +4,9 @@ import QtQml
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 import qs.config
+import "../utils/MediaNotifications.js" as MediaNotifications
 
 Singleton {
     id: root
@@ -15,6 +17,13 @@ Singleton {
 
     // Dedup key for progressive metadata (e.g. mpv-mpris/yt-dlp player fills title then artist later).
     property string lastNowPlayingKey: ""
+    readonly property real audibleThreshold: 0.001
+    readonly property bool hasPendingNowPlaying: {
+        const player = root.active;
+        if (!GlobalConfig.utilities.toasts.nowPlaying || !player)
+            return false;
+        return MediaNotifications.shouldNotify(player, true, root.lastNowPlayingKey, root.getIdentity(player));
+    }
 
     function getIdentity(player: MprisPlayer): string {
         if (!player)
@@ -49,17 +58,21 @@ Singleton {
         if (!player)
             return;
 
-        const title = player.trackTitle ?? "";
-        const artist = player.trackArtist ?? "";
-        if (!title || !artist)
+        const monitors = [];
+        for (let i = 0; i < peakMonitors.count; ++i) {
+            const monitor = peakMonitors.objectAt(i);
+            if (monitor)
+                monitors.push(monitor);
+        }
+        const audible = MediaNotifications.hasAudibleOutput(player, monitors, audibleThreshold, getIdentity(player), PwNodeType.AudioOutStream);
+
+        if (!MediaNotifications.shouldNotify(player, audible, lastNowPlayingKey, getIdentity(player)))
             return;
 
-        const key = `${getIdentity(player)}\0${player.uniqueId}\0${title}\0${artist}`;
-        if (key === lastNowPlayingKey)
-            return;
-
-        lastNowPlayingKey = key;
-        Toaster.toast(qsTr("Now Playing"), qsTr("%1 - %2").arg(artist).arg(title), "music_note");
+        const source = MediaNotifications.sourceFor(player, getIdentity(player));
+        const icon = MediaNotifications.firstAvailableIcon(source.iconCandidates, candidate => !!Quickshell.iconPath(candidate, true), "music_note");
+        lastNowPlayingKey = MediaNotifications.trackKey(player, getIdentity(player));
+        Toaster.toastFrom(source.name, qsTr("Now Playing"), qsTr("%1 - %2").arg(player.trackArtist).arg(player.trackTitle), icon);
     }
 
     onActiveChanged: lastNowPlayingKey = ""
@@ -77,7 +90,25 @@ Singleton {
             root.maybeToastNowPlaying();
         }
 
+        function onIsPlayingChanged(): void {
+            root.maybeToastNowPlaying();
+        }
+
         target: root.active
+    }
+
+    Instantiator {
+        id: peakMonitors
+
+        model: root.hasPendingNowPlaying ? Audio.streams.filter(stream => MediaNotifications.isOutputStream(stream, PwNodeType.AudioOutStream)) : []
+
+        delegate: PwNodePeakMonitor {
+            required property var modelData
+
+            node: modelData
+            enabled: true
+            onPeakChanged: root.maybeToastNowPlaying()
+        }
     }
 
     PersistentProperties {
