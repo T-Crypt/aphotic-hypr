@@ -45,3 +45,4 @@ CavaProvider 1.0 CavaProvider.qml
 BeatTracker 1.0 BeatTracker.qml
 CircularBuffer 1.0 CircularBuffer.qml
 CustomShortcut 1.0 CustomShortcut.qml
+singleton WallpaperThumbs 1.0 WallpaperThumbs.qml

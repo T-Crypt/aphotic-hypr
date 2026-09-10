@@ -1,5 +1,8 @@
 module qs.modules.wallpaperpicker
 WallpaperBackdrop 1.0 WallpaperBackdrop.qml
 WallpaperCard 1.0 WallpaperCard.qml
+WallpaperDock 1.0 WallpaperDock.qml
 WallpaperFilmstrip 1.0 WallpaperFilmstrip.qml
+WallpaperGrid 1.0 WallpaperGrid.qml
+WallpaperPickerModel 1.0 WallpaperPickerModel.qml
 WallpaperPickerWindow 1.0 WallpaperPickerWindow.qml

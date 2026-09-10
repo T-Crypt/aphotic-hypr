@@ -36,6 +36,25 @@ Singleton {
     readonly property list<string> wallpapersInActiveTheme: activeThemeInfo?.wallpapers ?? []
     readonly property bool ready: _scanned && _stateLoaded
 
+    // Kept in step with wallpaper_thumbs.py's own list and with scanProc's
+    // find below -- a format in one and not the others either never gets
+    // scanned or gets scanned and then never renders.
+    readonly property var videoExtensions: [".mp4", ".webm", ".mov", ".mkv", ".m4v"]
+
+    function isVideo(file: string): bool {
+        if (!file)
+            return false;
+        const lower = file.toLowerCase();
+        return root.videoExtensions.some(ext => lower.endsWith(ext));
+    }
+
+    // The two properties the live-wallpaper plugin reads. Nothing in core
+    // reads activeVideoPath: the base shell only ever deals in the poster
+    // still, so a video wallpaper degrades to its first frame with no
+    // plugin installed rather than to a blank desktop.
+    readonly property bool activeWallpaperIsVideo: root.isVideo(root.activeWallpaper)
+    readonly property string activeVideoPath: root.activeWallpaperIsVideo && root.activeTheme ? `${root.awwwDir}/${root.activeTheme}/${root.activeWallpaper}` : ""
+
     property bool _scanned: false
     property bool _stateLoaded: false
     property bool _writePending: false
@@ -132,8 +151,26 @@ Singleton {
             const p = root._pendingApply;
             if (!p)
                 return;
+
+            // Neither awww nor wallust speaks video, so a video wallpaper
+            // applies through one extracted frame instead. Generating that
+            // frame is a subprocess, so the apply has to wait for it --
+            // _pendingApply stays set and onPosterReady below re-enters
+            // this handler once the still exists. Everything downstream of
+            // here (setWallpaper, the clamp chain, the theme hooks) only
+            // ever sees an ordinary image path.
+            if (root.isVideo(p.file)) {
+                const video = `${root.awwwDir}/${p.themeName}/${p.file}`;
+                const poster = WallpaperThumbs.posterFor(video);
+                if (!poster) {
+                    WallpaperThumbs.ensurePoster(video);
+                    return;
+                }
+                p.posterPath = poster;
+            }
+
             root._pendingApply = null;
-            const fullPath = `${root.awwwDir}/${p.themeName}/${p.file}`;
+            const fullPath = p.posterPath ?? `${root.awwwDir}/${p.themeName}/${p.file}`;
             const paletteClamp = p.info.paletteAnchor ? {
                 theme: p.themeName,
                 anchor: p.info.paletteAnchor,
@@ -142,6 +179,23 @@ Singleton {
                 maxLightShift: p.info.paletteMaxLightShift ?? ""
             } : null;
             Wallpapers.setWallpaper(fullPath, p.info.backend ?? "", p.info.palette ?? "", p.info.colorscheme ?? "", p.info.style ?? "", p.info.papirusColor ?? "", p.info.iconTheme ?? "", p.info.cursorTheme ?? "", p.info.gtkTheme ?? "", p.info.engineName ?? "", p.info.scheme ?? "", p.info.contrast ?? "", paletteClamp);
+        }
+    }
+
+    // A poster arriving is the only thing an in-flight video apply is
+    // waiting on. Restarting the debounce rather than applying inline keeps
+    // one code path for both the still and the video case, and lets a
+    // faster second pick preempt this one exactly as it already could.
+    Connections {
+        target: WallpaperThumbs
+
+        function onPosterReady(source: string, poster: string): void {
+            const p = root._pendingApply;
+            if (!p || !root.isVideo(p.file))
+                return;
+            if (source !== `${root.awwwDir}/${p.themeName}/${p.file}`)
+                return;
+            applyDebounce.restart();
         }
     }
 
@@ -268,7 +322,7 @@ Singleton {
     Process {
         id: scanProc
 
-        command: ["sh", "-c", `for d in "${root.awwwDir}"/*/; do name=$(basename "$d"); printf 'THEME\\t%s\\n' "$name"; find "$d" -maxdepth 1 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' \\) -printf 'WALL\\t%f\\n'; if [ -f "$d/theme.toml" ]; then printf 'TOML_BEGIN\\n'; cat "$d/theme.toml"; printf 'TOML_END\\n'; fi; done`]
+        command: ["sh", "-c", `for d in "${root.awwwDir}"/*/; do name=$(basename "$d"); printf 'THEME\\t%s\\n' "$name"; find "$d" -maxdepth 1 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.mkv' -o -iname '*.m4v' \\) -printf 'WALL\\t%f\\n'; if [ -f "$d/theme.toml" ]; then printf 'TOML_BEGIN\\n'; cat "$d/theme.toml"; printf 'TOML_END\\n'; fi; done`]
         stdout: StdioCollector {
             onStreamFinished: {
                 const themeList = [];
