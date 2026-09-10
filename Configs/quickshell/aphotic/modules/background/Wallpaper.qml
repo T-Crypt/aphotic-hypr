@@ -59,7 +59,7 @@ Item {
                     }
 
                     StyledText {
-                        text: qsTr("Pick one with SUPER+SHIFT+W")
+                        text: qsTr("Pick one with SUPER+W")
                         color: Colours.palette.m3onSurfaceVariant
                         font.pointSize: Tokens.fontSize.normal
                     }

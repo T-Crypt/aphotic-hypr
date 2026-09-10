@@ -355,7 +355,7 @@ Item {
                 SettingsRow {
                     icon: "view_carousel"
                     label: qsTr("Launcher layout")
-                    description: qsTr("How SUPER+SHIFT+W presents your wallpapers")
+                    description: qsTr("How SUPER+W presents your wallpapers")
 
                     RowLayout {
                         spacing: Tokens.spacing.small
