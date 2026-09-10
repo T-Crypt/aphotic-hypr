@@ -90,6 +90,18 @@ Item {
         root.cancelPreview();
         root._originalTheme = Themes.activeTheme;
         root._originalWallpaper = Themes.activeWallpaper;
+        root.prewarm();
+    }
+
+    // Ask for every thumbnail up front rather than letting each delegate
+    // queue its own as it scrolls into view. Same total work either way,
+    // but it lands in one subprocess instead of one per scrolled-past
+    // burst, so the deck never waits on a cold cell mid-scroll.
+    // WallpaperThumbs skips anything already cached, so on a warm cache
+    // this costs one process that generates nothing.
+    function prewarm(): void {
+        for (const entry of root.entries)
+            WallpaperThumbs.thumbFor(entry.path);
     }
 
     function queuePreview(index: int): void {
