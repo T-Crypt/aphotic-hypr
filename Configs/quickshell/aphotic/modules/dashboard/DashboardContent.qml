@@ -4,6 +4,7 @@ import QtQuick.Effects
 import qs.config
 import qs.components
 import qs.services
+import qs.modules.flow
 
 ColumnLayout {
     id: root
@@ -43,6 +44,7 @@ ColumnLayout {
     // appended below are the genuinely layered ones, and stay gated.
     readonly property var tabs: [
         { id: "dashboard", icon: "dashboard", label: qsTr("Dashboard") },
+        { id: "flow", icon: "hub", label: qsTr("Flow") },
         { id: "performance", icon: "monitoring", label: qsTr("Performance") },
         { id: "workspaces", icon: "grid_view", label: qsTr("Workspaces") },
         { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") },
@@ -142,6 +144,8 @@ ColumnLayout {
                     return null;
 
                 switch (root.currentTab) {
+                case "flow":
+                    return flowComp;
                 case "performance":
                     return performanceComp;
                 case "workspaces":
@@ -198,6 +202,10 @@ ColumnLayout {
     Component {
         id: dashboardComp
         DashboardTab {}
+    }
+    Component {
+        id: flowComp
+        FlowTab {}
     }
     Component {
         id: performanceComp
