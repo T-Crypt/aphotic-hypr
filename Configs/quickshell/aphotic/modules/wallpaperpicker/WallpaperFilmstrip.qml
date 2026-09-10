@@ -8,7 +8,7 @@ import qs.services
 Item {
     id: root
 
-    required property ScreenState screenState
+    required property WallpaperPickerModel model
 
     readonly property int cellHeight: Math.max(120, Math.round(root.height * 0.219))
     readonly property int cellWidth: Math.round(cellHeight * 16 / 9)
@@ -36,19 +36,17 @@ Item {
     readonly property real maxFlickVelocity: 4800
     readonly property real singleStepVelocity: Math.sqrt(2 * flickDeceleration * slotPitch)
 
-    readonly property string backdropSource: root._pathFor(strip.currentIndex)
+    readonly property string backdropSource: root._backdropFor(strip.currentIndex)
 
     // The strip runs endlessly in both directions by giving the ListView the
     // wallpaper list repeated an odd number of times and living in the middle
     // copy. A "slot" is an index into that repeated space; the wallpaper it
     // shows is slot modulo the real list length.
-    readonly property int wallpaperCount: Themes.wallpapersInActiveTheme.length
+    readonly property int wallpaperCount: root.model.count
     readonly property int reps: 21
     readonly property int slotCount: wallpaperCount > 0 ? wallpaperCount * reps : 0
     readonly property int anchorBase: wallpaperCount * Math.floor(reps / 2)
 
-    property string _originalWallpaper: ""
-    property int _previewIndex: -1
     property int settledIndex: -1
     property int _pendingIndex: -1
 
@@ -62,12 +60,16 @@ Item {
     }
 
     function _fileFor(slot: int): string {
-        return Themes.wallpapersInActiveTheme[root._logical(slot)] ?? "";
+        return root.model.entries[root._logical(slot)]?.file ?? "";
     }
 
     function _pathFor(slot: int): string {
-        const file = root._fileFor(slot);
-        return file ? `file://${Themes.awwwDir}/${Themes.activeTheme}/${file}` : "";
+        return root.model.previewFor(root._logical(slot));
+    }
+
+    // The backdrop wants the original, not the thumbnail the cards use.
+    function _backdropFor(slot: int): string {
+        return root.model.fullSizeFor(root._logical(slot));
     }
 
     // Sliding back to the middle copy once the strip is at rest keeps either
@@ -86,47 +88,21 @@ Item {
             root.settledIndex += shift;
     }
 
-    // Themes.setTheme() writes ~/.local/state/aphotic/theme.json and queues
-    // wallust + awww, which rewrites Colours.qml and so hot-reloads the whole
-    // Quickshell scene graph. Firing that per scrolled-past index is what made
-    // the strip stutter, so the live preview waits for the strip to come to
-    // rest and _commit() flushes whatever is still pending.
-    function _applyPreview(): void {
-        previewDelay.stop();
-        const index = root._previewIndex;
-        root._previewIndex = -1;
-        if (index < 0)
-            return;
-        const file = Themes.wallpapersInActiveTheme[index];
-        if (file && file !== Themes.activeWallpaper)
-            Themes.setWallpaperInActiveTheme(file);
-    }
-
     function _cancelPreview(): void {
-        previewDelay.stop();
-        root._previewIndex = -1;
+        root.model.cancelPreview();
     }
 
     // The wallpaper being chosen is whatever the strip is heading for, which
-    // is not what _previewIndex holds while the strip is still moving:
-    // _goToIndex clears it on purpose, and a coasting flick never sets it at
-    // all. Reading it directly meant Enter or a click during any movement
-    // closed the picker having applied nothing, leaving the desktop on the
-    // wallpaper before last.
+    // is not what the model's pending preview holds while the strip is still
+    // moving: _goToIndex clears it on purpose, and a coasting flick never
+    // sets it at all. Passing _focusIndex explicitly is what stops Enter or a
+    // click during movement closing the picker having applied nothing.
     function _commit(): void {
-        root._previewIndex = root._logical(root._focusIndex);
-        root._applyPreview();
-        root.screenState.wallpaperPicker = false;
+        root.model.commit(root._logical(root._focusIndex));
     }
 
-    // Escaping without having moved used to re-apply the wallpaper that was
-    // already active, spending a full wallust + awww + sddm-sync run to
-    // arrive back where it started.
     function _revertAndClose(): void {
-        root._cancelPreview();
-        if (root._originalWallpaper && root._originalWallpaper !== Themes.activeWallpaper)
-            Themes.setWallpaperInActiveTheme(root._originalWallpaper);
-        root.screenState.wallpaperPicker = false;
+        root.model.revertAndClose();
     }
 
     function _clampVelocity(v: real): real {
@@ -159,9 +135,9 @@ Item {
     // lands if the theme scan has not produced a list yet -- so this runs
     // again when one arrives.
     function _anchorToActive(): void {
-        if (!root.screenState?.wallpaperPicker || root.wallpaperCount <= 0)
+        if (!root.model.open || root.wallpaperCount <= 0)
             return;
-        const idx = Themes.wallpapersInActiveTheme.indexOf(Themes.activeWallpaper);
+        const idx = root.model.activeIndex;
         const slot = root.anchorBase + (idx !== -1 ? idx : root._logical(strip.currentIndex));
         strip.currentIndex = slot;
         strip.contentX = root._targetContentX(slot);
@@ -175,7 +151,7 @@ Item {
     // between two slots. Re-anchoring whenever the offset changes is what
     // keeps the selected card actually centred.
     function _recenter(): void {
-        if (!root.screenState?.wallpaperPicker)
+        if (!root.model.open)
             return;
         strip.contentX = root._targetContentX(strip.currentIndex);
     }
@@ -187,8 +163,7 @@ Item {
         root._reanchor();
         settleAnim.to = root._targetContentX(strip.currentIndex);
         settleAnim.restart();
-        root._previewIndex = root._logical(strip.currentIndex);
-        previewDelay.restart();
+        root.model.queuePreview(root._logical(strip.currentIndex));
         root.settledIndex = strip.currentIndex;
     }
 
@@ -239,50 +214,14 @@ Item {
     Keys.onReturnPressed: root._commit()
     Keys.onEscapePressed: root._revertAndClose()
 
-    Connections {
-        target: root.screenState
-        function onWallpaperPickerChanged() {
-            if (!root.screenState.wallpaperPicker)
-                return;
-            root._cancelPreview();
-            root._abortGlide();
-            root._originalWallpaper = Themes.activeWallpaper;
-            root._anchorToActive();
-            Qt.callLater(root._recenter);
-            root.settledIndex = -1;
-            root.settledIndex = strip.currentIndex;
-            root.forceActiveFocus();
-        }
-    }
-
-    Repeater {
-        model: Themes.wallpapersInActiveTheme
-
-        Item {
-            id: preload
-
-            required property string modelData
-
-            visible: false
-
-            readonly property string path: `file://${Themes.awwwDir}/${Themes.activeTheme}/${preload.modelData}`
-
-            Image {
-                source: preload.path
-                asynchronous: true
-                cache: true
-                sourceSize.width: root.cellWidth
-                sourceSize.height: root.cellHeight
-            }
-
-            Image {
-                source: preload.path
-                asynchronous: true
-                cache: true
-                sourceSize.width: root.matteWidth
-                sourceSize.height: root.matteHeight
-            }
-        }
+    // Called by the window when this layout becomes the visible one.
+    function focusActive(): void {
+        root._abortGlide();
+        root._anchorToActive();
+        Qt.callLater(root._recenter);
+        root.settledIndex = -1;
+        root.settledIndex = strip.currentIndex;
+        root.forceActiveFocus();
     }
 
     Column {
@@ -309,18 +248,15 @@ Item {
             model: root.slotCount
 
             onContentXChanged: {
-                // This filmstrip's item tree stays alive even while the
-                // picker window is hidden (only PanelWindow.visible
-                // toggles). Switching themes from Settings elsewhere
-                // reassigns Themes.wallpapersInActiveTheme, which resets
-                // this (currently invisible) ListView's model -- Qt resets
-                // contentX to 0 as part of that, re-entering this handler
-                // while QQuickItemView::setModel is still mid-update.
-                // None of this logic is meaningful while the picker isn't
-                // open, so skip it rather than let it run reentrantly.
-                // The margins below also nudge contentX during creation,
-                // before the required screenState is assigned.
-                if (!root.screenState?.wallpaperPicker)
+                // Switching themes from Settings elsewhere reassigns the
+                // model's entry list, which resets this ListView's model --
+                // Qt resets contentX to 0 as part of that, re-entering this
+                // handler while QQuickItemView::setModel is still
+                // mid-update. None of this logic is meaningful while the
+                // picker isn't open, so skip it rather than let it run
+                // reentrantly. The margins below also nudge contentX during
+                // creation, before the required model is assigned.
+                if (!root.model.open)
                     return;
                 const idx = root._indexAtCenter();
                 if (idx !== -1 && idx !== strip.currentIndex)
@@ -342,13 +278,6 @@ Item {
                 root._settle();
             }
             onDragStarted: root._abortGlide()
-
-            Timer {
-                id: previewDelay
-
-                interval: Tokens.anim.durations.expressiveSlowEffects
-                onTriggered: root._applyPreview()
-            }
 
             SpringAnimation {
                 id: settleAnim
@@ -373,8 +302,7 @@ Item {
                         return;
                     strip.currentIndex = landed;
                     root._reanchor();
-                    root._previewIndex = root._logical(strip.currentIndex);
-                    previewDelay.restart();
+                    root.model.queuePreview(root._logical(strip.currentIndex));
                     root.settledIndex = strip.currentIndex;
                 }
             }
@@ -460,7 +388,7 @@ Item {
 
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: root._fileFor(strip.currentIndex) || Themes.activeWallpaper
+                text: root._fileFor(strip.currentIndex)
                 font: Tokens.font.title.large
                 color: Colours.palette.m3onSurface
                 animate: true

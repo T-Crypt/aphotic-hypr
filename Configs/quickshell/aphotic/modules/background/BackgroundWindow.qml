@@ -152,6 +152,29 @@ PanelWindow {
             }
         }
 
+        // Plugin-owned background surfaces (manifest v3.8). Declared after
+        // the still wallpaper and before the clock so a plugin paints over
+        // the wallpaper but never over the desktop furniture. Core owns
+        // this window and its static geometry; the plugin ships a plain
+        // Item, exactly as [ui.overlay] does.
+        //
+        // No plugin id appears here, and none may: the registry answers
+        // surfacesFor("background") and this only knows that background
+        // surfaces exist.
+        Repeater {
+            model: PluginRegistry.surfacesFor("background")
+
+            Loader {
+                id: backgroundSurface
+
+                required property var modelData
+
+                anchors.fill: parent
+                asynchronous: true
+                source: backgroundSurface.modelData.componentUrl
+            }
+        }
+
         Loader {
             id: clockLoader
 

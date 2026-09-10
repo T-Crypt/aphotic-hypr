@@ -10,6 +10,8 @@ StyledClippingRect {
 
     required property var modelData // { theme, file }
     readonly property bool active: root.modelData.theme === Themes.activeTheme && root.modelData.file === Themes.activeWallpaper
+    readonly property string sourcePath: `${Themes.awwwDir}/${root.modelData.theme}/${root.modelData.file}`
+    readonly property bool isVideo: Themes.isVideo(root.modelData.file)
 
     implicitWidth: 120
     implicitHeight: 120
@@ -22,7 +24,16 @@ StyledClippingRect {
         id: thumb
 
         anchors.fill: parent
-        source: `file://${Themes.awwwDir}/${root.modelData.theme}/${root.modelData.file}`
+        // The cached thumb where one exists, the source image until it
+        // does. A video has no still to fall back to, so it stays on the
+        // placeholder below rather than handing Image a file it cannot
+        // decode.
+        source: {
+            const thumb = WallpaperThumbs.thumbFor(root.sourcePath);
+            if (thumb)
+                return thumb;
+            return root.isVideo ? "" : `file://${root.sourcePath}`;
+        }
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: true
@@ -68,6 +79,26 @@ StyledClippingRect {
             text: root.modelData.theme
             color: Colours.contrastOn(labelScrim.color)
             font: Tokens.font.label.small
+        }
+    }
+
+    StyledRect {
+        visible: root.isVideo
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.margins: Tokens.padding.small
+        implicitWidth: videoBadge.implicitWidth + Tokens.padding.small * 2
+        implicitHeight: videoBadge.implicitHeight + Tokens.padding.extraSmall
+        radius: Tokens.rounding.full
+        color: Qt.alpha(Colours.palette.m3shadow, 0.65)
+
+        MaterialIcon {
+            id: videoBadge
+            anchors.centerIn: parent
+            text: "movie"
+            fill: 1
+            color: Colours.palette.m3onSurface
+            fontStyle: Tokens.font.icon.small
         }
     }
 
