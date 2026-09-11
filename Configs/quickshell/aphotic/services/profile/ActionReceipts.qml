@@ -22,6 +22,11 @@ Singleton {
     property var _state: Receipts.newState()
     property var _all: []
 
+    function importHandover(lease: var, stage: var): void {
+        if (Receipts.importHandover(root._state, lease, stage))
+            root._refresh();
+    }
+
     function request(input: var): string {
         const result = Receipts.request(root._state, input, Date.now());
         if (!result.ok)

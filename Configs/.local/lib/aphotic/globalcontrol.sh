@@ -325,6 +325,27 @@ aphotic_plugin_is_enabled() {
 #
 # Prints "<plugin>\t<script path>" for the first enabled plugin whose [cli]
 # block matches, and fails if none does.
+aphotic_plugin_cli_gate() {
+    local manifest="$1" dependency layer layers
+    dependency="$(aphotic_toml_get "$manifest" cli requires_plugin)"
+    if [[ -n "$dependency" ]]; then
+        [[ "$dependency" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || return 1
+        [[ "$manifest" != "$APHOTIC_PLUGINS_DIR/$dependency/plugin.toml" ]] || return 1
+        [[ -f "$APHOTIC_PLUGINS_DIR/$dependency/plugin.toml" ]] || return 1
+        aphotic_plugin_is_enabled "$dependency" || return 1
+    fi
+    layer="$(aphotic_toml_get "$manifest" cli requires_layer)"
+    [[ -n "$layer" ]] || return 0
+    case "$layer" in ai|dev|gaming|security) ;; *) return 1 ;; esac
+    [[ -f "$APHOTIC_DOTS_DIR/aphotic.toml" ]] || return 0
+    layers="$(aphotic_toml_get_array "$APHOTIC_DOTS_DIR/aphotic.toml" install layers)"
+    if [[ "$layer" == security ]]; then
+        grep -Eq '^exploit($|-)' <<<"$layers"
+    else
+        grep -qx "$layer" <<<"$layers"
+    fi
+}
+
 aphotic_plugin_cli_resolve() {
     local command="$1" subcommand="${2:-}"
     local name dir manifest caps script
@@ -335,6 +356,7 @@ aphotic_plugin_cli_resolve() {
 
         dir="${APHOTIC_PLUGINS_DIR}/${name}"
         manifest="${dir}/plugin.toml"
+        aphotic_plugin_cli_gate "$manifest" || continue
         caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
         grep -qx "cli" <<<"$caps" || continue
 
@@ -375,6 +397,7 @@ aphotic_plugin_cli_top_level() {
 
         dir="${APHOTIC_PLUGINS_DIR}/${name}"
         manifest="${dir}/plugin.toml"
+        aphotic_plugin_cli_gate "$manifest" || continue
         caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
         grep -qx "cli" <<<"$caps" || continue
         [[ -z "$(aphotic_toml_get "$manifest" cli subcommand)" ]] || continue
@@ -398,6 +421,7 @@ aphotic_plugin_cli_help() {
 
         dir="${APHOTIC_PLUGINS_DIR}/${name}"
         manifest="${dir}/plugin.toml"
+        aphotic_plugin_cli_gate "$manifest" || continue
         caps="$(aphotic_toml_get_array "$manifest" plugin capabilities)"
         grep -qx "cli" <<<"$caps" || continue
         [[ "$(aphotic_toml_get "$manifest" cli command)" == "$command" ]] || continue

@@ -74,7 +74,10 @@ Singleton {
             gracefulStop: descriptor.gracefulStop ?? null,
             onShelter: descriptor.onShelter ?? null,
             onUnshelter: descriptor.onUnshelter ?? null,
-            shelterState: descriptor.shelterState ?? null
+            shelterState: descriptor.shelterState ?? null,
+            handoverState: descriptor.handoverState ?? null,
+            handoverShelter: descriptor.handoverShelter ?? null,
+            handoverRestore: descriptor.handoverRestore ?? null
         };
         root._profiles = profiles;
 
@@ -154,6 +157,10 @@ Singleton {
         const waiting = [];
         for (const claim of profile.claims) {
             const negotiation = ResourceEngine.register(Object.assign({}, claim, { owner: id }));
+            if (negotiation?.blocked) {
+                root.deactivate(id, negotiation.reason);
+                return false;
+            }
             if (negotiation)
                 waiting.push(negotiation.id);
         }

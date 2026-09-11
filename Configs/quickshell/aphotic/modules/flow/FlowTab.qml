@@ -25,8 +25,21 @@ Item {
         dev: InstallProfile.devEnabled
     })
 
+    Text {
+        id: recoveryNotice
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: parent.width
+        wrapMode: Text.Wrap
+        color: Colours.palette.m3error
+        visible: Handover.recovery.length > 0 || Handover.error.length > 0
+        text: (Handover.error || "Host handover needs recovery: " + Handover.recovery.map(l => l.id).join(", "))
+            + "\nFrom a terminal: aphotic handover status; aphotic handover recover <lease-id>"
+    }
+
     Loader {
         anchors.fill: parent
+        anchors.topMargin: recoveryNotice.visible ? recoveryNotice.implicitHeight + 8 : 0
         active: root.presented
         sourceComponent: FlowScene {
             id: scene
