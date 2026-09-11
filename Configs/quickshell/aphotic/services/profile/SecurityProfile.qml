@@ -47,7 +47,61 @@ Singleton {
         });
     }
 
+    // The Security plane's workload passports. A VPN session is one
+    // passport keyed on the session, and an explicit lab engagement opens
+    // its own. Both are owner-driven: nothing here scans for VMs.
+    function engagementStarted(label: string, kind: string): string {
+        if (!root.enabled || !label)
+            return "";
+        return WorkloadPassports.open({
+            plane: "security",
+            owner: root.profileId,
+            label: label,
+            trigger: kind || "engagement-start",
+            workloadId: "security-engagement",
+            sessionId: `engagement:${kind || "lab"}:${label}`,
+            sourceAt: Date.now()
+        });
+    }
+
+    function engagementEnded(token: string, reason: string): bool {
+        return WorkloadPassports.close(token, reason || "engagement-end");
+    }
+
     property bool _registered: false
+    property string _vpnToken: ""
+    property string _dndReceipt: ""
+
+    // DND is an action with a receipt, not a phase. The request is filed
+    // before the toggle and settled after it, so Flow can say whether the
+    // desktop actually went quiet and, on the way out, whether the value
+    // was still the one Aphotic set.
+    function _applyDnd(): void {
+        const before = Settings.dndEnabled;
+        root._dndReceipt = ActionReceipts.request({
+            profileId: root.profileId,
+            kind: "dnd",
+            before: before,
+            reason: "engagement in progress"
+        });
+        DoNotDisturb.setSecurityActive(true);
+        if (Settings.dndEnabled)
+            ActionReceipts.applied(root._dndReceipt, Settings.dndEnabled);
+        else
+            ActionReceipts.failed(root._dndReceipt, "do not disturb did not take");
+    }
+
+    function _restoreDnd(): void {
+        if (!root._dndReceipt) {
+            DoNotDisturb.setSecurityActive(false);
+            return;
+        }
+        const action = ActionReceipts.restore(root._dndReceipt, Settings.dndEnabled);
+        root._dndReceipt = "";
+        if (action === "preserve")
+            return;
+        DoNotDisturb.setSecurityActive(false);
+    }
 
     // snapshot is the "notifications" part only, which StateSnapshot
     // defines as exactly {dnd: Settings.dndEnabled} -- the one thing this
@@ -68,8 +122,8 @@ Singleton {
             label: qsTr("Security"),
             snapshot: ["notifications"],
             claims: [],
-            onApply: () => DoNotDisturb.setSecurityActive(true),
-            onRestore: () => DoNotDisturb.setSecurityActive(false)
+            onApply: () => root._applyDnd(),
+            onRestore: () => root._restoreDnd()
         });
     }
 
@@ -91,6 +145,8 @@ Singleton {
         if (!root._registered)
             return;
         root._registered = false;
+        root._vpnToken = "";
+        WorkloadPassports.closeOwner(root.profileId, "layer-disabled");
         ProfileEngine.unregister(root.profileId);
     }
 
@@ -105,8 +161,22 @@ Singleton {
             if (Vpn.connected) {
                 if (!ProfileEngine.isActive(root.profileId))
                     ProfileEngine.activate(root.profileId, "vpn-connect");
-            } else if (ProfileEngine.isActive(root.profileId)) {
-                ProfileEngine.deactivate(root.profileId, "vpn-disconnect");
+                root._vpnToken = WorkloadPassports.open({
+                    plane: "security",
+                    owner: root.profileId,
+                    label: qsTr("VPN session"),
+                    trigger: "vpn-connect",
+                    workloadId: "security-vpn",
+                    sessionId: "vpn",
+                    sourceAt: Date.now()
+                });
+            } else {
+                if (ProfileEngine.isActive(root.profileId))
+                    ProfileEngine.deactivate(root.profileId, "vpn-disconnect");
+                if (root._vpnToken) {
+                    WorkloadPassports.close(root._vpnToken, "vpn-disconnect");
+                    root._vpnToken = "";
+                }
             }
         }
     }

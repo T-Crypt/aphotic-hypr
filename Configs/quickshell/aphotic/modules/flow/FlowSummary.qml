@@ -16,7 +16,7 @@ ColumnLayout {
         gaming: InstallProfile.gamingEnabled,
         security: InstallProfile.securityEnabled,
         dev: InstallProfile.devEnabled
-    }))
+    }), WorkloadPassports.live, ActionReceipts.all)
     spacing: 8
     StyledText {
         text: qsTr("Aphotic Flow")
@@ -47,7 +47,11 @@ ColumnLayout {
     }
     StyledText {
         Layout.fillWidth: true
-        text: qsTr("%1 claims · %2 contended · SUPER+D → Flow").arg(root.flow.claimCount).arg(root.flow.contentionCount)
+        text: root.flow.pendingActions
+            ? qsTr("%1 claims · %2 contended · %3 action pending · SUPER+D → Flow").arg(root.flow.claimCount).arg(root.flow.contentionCount).arg(root.flow.pendingActions)
+            : root.flow.staleCount
+                ? qsTr("%1 claims · %2 contended · %3 stale · SUPER+D → Flow").arg(root.flow.claimCount).arg(root.flow.contentionCount).arg(root.flow.staleCount)
+                : qsTr("%1 claims · %2 contended · SUPER+D → Flow").arg(root.flow.claimCount).arg(root.flow.contentionCount)
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.label.small
         wrapMode: Text.WordWrap

@@ -29,6 +29,13 @@ QtObject {
 
     property bool _registered: false
 
+    // model name -> passport token, and model name -> pending unload
+    // receipt. The AI plane's workloads come from the runtime's own
+    // lifecycle report; a GPU process nothing identifies stays
+    // unclassified rather than being guessed into this plane.
+    property var _tokens: ({})
+    property var _unloads: ({})
+
     onEnabledChanged: root._register()
     onRunningModelsChanged: root._sync()
 
@@ -70,6 +77,17 @@ QtObject {
             if (amount <= 0)
                 continue;
             resident[model.name] = true;
+            root._tokens[model.name] = WorkloadPassports.open({
+                plane: "ai",
+                owner: root.owner,
+                label: model.name,
+                trigger: "model-resident",
+                workloadId: `ollama-${model.name}`,
+                sessionId: `model:${model.name}`,
+                sourceAt: Date.now(),
+                claims: [{ resource: root.resource, amount: amount, unit: "MiB",
+                    measuredAt: Date.now(), origin: "measured" }]
+            });
             const known = ResourceEngine.claimById(model.name);
             if (known && known.owner === root.owner && known.amount === amount)
                 continue;
@@ -88,6 +106,20 @@ QtObject {
             if (!resident[claim.id])
                 ResourceEngine.release(claim.id);
         }
+
+        // The poll that proves a model left is also what settles the
+        // unload receipt. Until it does, the receipt stays "requested":
+        // asking Ollama to drop a model is not the same as it dropping.
+        for (const name of Object.keys(root._tokens)) {
+            if (resident[name])
+                continue;
+            WorkloadPassports.close(root._tokens[name], "model-unloaded");
+            delete root._tokens[name];
+            if (root._unloads[name]) {
+                ActionReceipts.applied(root._unloads[name], "unloaded");
+                delete root._unloads[name];
+            }
+        }
     }
 
     // Deliberately does not release the claim: the next /api/ps poll does
@@ -97,6 +129,15 @@ QtObject {
     function _unload(id: string): void {
         if (!id || !root.host)
             return;
+        if (!root._unloads[id]) {
+            root._unloads[id] = ActionReceipts.request({
+                profileId: root.owner,
+                workloadId: `ollama-${id}`,
+                kind: "model-unload",
+                before: "resident",
+                reason: "graceful stop requested"
+            });
+        }
         root._unloadProc.exec(["curl", "-s", "-m", "10", "-X", "POST", `${root.host}/api/generate`, "-d", JSON.stringify({
             model: id,
             keep_alive: 0

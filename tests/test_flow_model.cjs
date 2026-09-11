@@ -80,3 +80,65 @@ assert.equal(s.planes.length, 4);
 assert.equal(s.resources, undefined);
 assert.equal(ctx.summarize([], {}, {}, {}, {}).planes.every(p => p.installed), true);
 console.log('Flow planes, install gates, signature and summary: 26 assertions passed');
+
+// --- passports, receipts and the contention projection -----------------
+const pass = (over={}) => Object.assign({token:'w1', plane:'dev', owner:'dev', label:'build',
+    trigger:'build-start', status:'live', claims:[]}, over);
+
+// Work an owner reported shows up even with no claim behind it, and is
+// never counted as capacity.
+let w = ctx.build([], spec, {}, {}, {}, [pass()]);
+assert.equal(w.workloads.length, 1);
+assert.equal(w.workloads[0].key, 'dev');
+assert.equal(w.workloads[0].claims.length, 0);
+assert.equal(w.workloads[0].phase, 'reported');
+assert.equal(w.resources.find(r => r.key === 'gpu-vram').total, 0);
+assert.match(w.workloads[0].detail, /1 workload/);
+assert.equal(w.planes.find(p => p.key === 'dev').active, true);
+
+// A stale source is labelled stale, not finished.
+let st = ctx.build([], spec, {}, {}, {}, [pass({status:'stale'})]);
+assert.equal(st.workloads[0].stale, true);
+assert.equal(st.staleCount, 1);
+assert.match(st.workloads[0].work[0].detail, /source went quiet/);
+
+// Receipts ride with their owner and pending never reads as applied.
+let rc = ctx.build([], spec, {}, {}, {}, [pass()],
+    [{id:'r1', profileId:'dev', kind:'shelter', status:'requested'},
+     {id:'r2', profileId:'dev', kind:'dnd', status:'failed'}]);
+assert.equal(rc.pendingActions, 1);
+assert.equal(rc.workloads[0].receipts[0].statusLabel, 'Requested');
+assert.equal(ctx.receiptLabel({status:'applied', completedAt:1757000000000}).slice(0,7), 'Applied');
+assert.match(rc.workloads[0].detail, /1 pending · 1 failed/);
+
+// The signature moves when a passport or receipt changes, so the map
+// repaints on those and still ignores a metric tick.
+const base = ctx.build([], spec, {}, {}, {}, [pass()], []).signature;
+assert.notEqual(ctx.build([], spec, {}, {}, {}, [pass({status:'stale'})], []).signature, base);
+assert.notEqual(ctx.build([], spec, {}, {}, {}, [pass()], [{id:'r1', profileId:'dev', status:'requested'}]).signature, base);
+assert.equal(ctx.build([], spec, {}, {}, {}, [pass()], []).signature, base);
+
+// Contention preview: declared arithmetic only, and an unsupported owner
+// says so instead of offering an action.
+const neg = {resource:'gpu-vram', unit:'MiB', total:120, budget:90,
+    claimant:{owner:'ai', amount:70}, requestor:{owner:'gaming', amount:50},
+    claimantSuspendable:true};
+const proj = ctx.projection(neg, [{owner:'ai', resource:'gpu-vram', amount:70},
+    {owner:'gaming', resource:'gpu-vram', amount:50}]);
+assert.equal(proj.reclaimable, '70 MiB');
+assert.equal(proj.after, '50 MiB');
+assert.equal(proj.fits, true);
+assert.match(proj.note, /Nothing changes until you choose/);
+const unsupported = ctx.projection(Object.assign({}, neg, {claimantSuspendable:false}), []);
+assert.equal(unsupported.supported, false);
+assert.equal(unsupported.reclaimable, '0 MiB');
+assert.match(unsupported.note, /no graceful stop/);
+assert.equal(ctx.projection(null, []), null);
+
+const sp = ctx.summarize([], spec, {}, {}, {}, [pass(), pass({token:'w2', status:'stale'})],
+    [{id:'r1', profileId:'dev', status:'requested'}]);
+assert.equal(sp.workloadCount, 2);
+assert.equal(sp.staleCount, 1);
+assert.equal(sp.pendingActions, 1);
+
+console.log('Flow passports, receipts and projection: 22 assertions passed');
