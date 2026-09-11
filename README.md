@@ -213,6 +213,7 @@ https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
 -   Local Ollama model management
 -   Agent workflow graph
 -   Resource arbitration
+-   Flow resource map in Command Center
 -   Gaming profile with GameMode integration
 -   GPU process and VRAM accounting
 -   Developer and security tooling
