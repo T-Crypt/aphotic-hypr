@@ -463,7 +463,15 @@ _aphotic_plugin_describe() {
     # upgrade is noise that trains people to ignore the signal. A plugin
     # that genuinely gained a profile block still differs from null, so the
     # real case is unaffected.
-    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else {profile: null, cli: null, chat_provider: null, actions: null} + . end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    # Projected down to exactly the keys `expected` names, not compared
+    # whole. The registry also carries display metadata (display_name,
+    # description, category, requires_binaries) that the shell reads
+    # instead of re-running this function; a whole-object compare would
+    # read every one of those as an extra key and flag all of them as
+    # drift. Drift means "this plugin's contract changed", and a
+    # display string is not contract -- a manifest edit still refreshes
+    # it on the next sync.
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({profile: null, cli: null, chat_provider: null, actions: null} + .) | {version, capabilities, owns, ui, profile, cli, chat_provider, actions} end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
     [[ "$expected" != "$stored" ]] && drifted="true"
 
     jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"
@@ -478,6 +486,58 @@ _aphotic_plugin_list_installed_json() {
     printf '%s\n' "${entries[@]:-}" | jq -s 'map(select(. != null))'
 }
 
+# How long a fetched catalogue is served from disk before the next call
+# refetches. The index is a list of what exists to install, not live
+# state, so a few hours stale costs nothing; `--refresh` and every
+# install/remove path bypass it.
+APHOTIC_PLUGINS_INDEX_TTL="${APHOTIC_PLUGINS_INDEX_TTL:-21600}"
+
+_aphotic_plugin_index_cache_file() {
+    echo "${APHOTIC_STATE_HOME}/plugin-index.json"
+}
+
+# Annotated catalogue, served from disk when it is younger than the TTL.
+# Settings -> Plugins reads this file directly rather than shelling out at
+# all, so the fetch happens on an explicit refresh instead of on every
+# pane open. $1: "true" to ignore the cache and refetch.
+# The cache file carries the security-index trust flag alongside the
+# plugins, so the shell answers "is the security index trusted" from the
+# same file it already watches instead of spawning a third process for it.
+# Emits the plain plugins array on stdout: that is what `list --remote
+# --json` has always printed and what its callers parse.
+_aphotic_plugin_index_cached() {
+    local force="${1:-false}" cache age data trusted
+    cache="$(_aphotic_plugin_index_cache_file)"
+
+    if [[ "$force" != "true" && -s "$cache" ]]; then
+        age=$(( $(date +%s) - $(stat -c %Y "$cache" 2>/dev/null || echo 0) ))
+        if [[ "$age" -lt "$APHOTIC_PLUGINS_INDEX_TTL" ]]; then
+            jq -c '.plugins // []' "$cache" 2>/dev/null && return 0
+        fi
+    fi
+
+    data="$(_aphotic_plugin_annotate_remote_json "$(_aphotic_plugin_list_remote_json)")"
+    # A failed fetch yields an empty list. Keeping the last good catalogue
+    # rather than overwriting it with nothing means going offline leaves
+    # the pane showing what it showed before, not an empty index.
+    if [[ "$(jq -r 'length' <<<"$data" 2>/dev/null || echo 0)" -eq 0 && -s "$cache" ]]; then
+        jq -c '.plugins // []' "$cache" 2>/dev/null && return 0
+    fi
+
+    trusted="false"
+    aphotic_plugins_security_index_trusted && trusted="true"
+
+    mkdir -p "$(dirname "$cache")"
+    # Piped, never --argjson: a catalogue of any real size exceeds
+    # ARG_MAX as a command-line argument. A 2000-entry index fails
+    # outright that way.
+    printf '%s\n' "$data" | jq --argjson trusted "$trusted" \
+        --argjson fetched_at "$(date +%s)" \
+        '{fetched_at: $fetched_at, trusted: $trusted, plugins: .}' \
+        > "${cache}.tmp" && mv "${cache}.tmp" "$cache"
+    printf '%s\n' "$data"
+}
+
 _aphotic_plugin_list_remote_json() {
     aphotic_require curl || return 1
     local main_data security_data
@@ -490,8 +550,10 @@ _aphotic_plugin_list_remote_json() {
     # "installable but hidden" -- it's not fetched at all.
     if aphotic_plugins_security_index_trusted; then
         security_data="$(curl -fsSL -m 10 "$APHOTIC_PLUGINS_SECURITY_INDEX_URL" 2>/dev/null || echo '{"plugins": []}')"
-        jq -n --argjson a "$main_data" --argjson b "$security_data" \
-            '{plugins: (($a.plugins // []) + ($b.plugins // []))}'
+        # Slurped from stdin rather than passed as two --argjson values:
+        # either index is large enough to exceed ARG_MAX on its own.
+        printf '%s\n%s\n' "$main_data" "$security_data" \
+            | jq -s '{plugins: ((.[0].plugins // []) + (.[1].plugins // []))}'
     else
         echo "$main_data"
     fi
@@ -501,18 +563,39 @@ _aphotic_plugin_list_remote_json() {
 # `host_support: {verdict, unhosted}`. Additive on purpose: Settings ->
 # Plugins reads this same `list --remote --json` and ignores fields it
 # does not know, so an older pane keeps working against a newer CLI.
+# One jq pass over the whole index, not a shell loop. This used to fork
+# _aphotic_plugin_entry_verdict plus a rewriting jq per catalogue entry --
+# four processes each, so a 2000-plugin index cost 8000 of them and
+# Settings -> Plugins waited on all of it. The verdict rule below is a
+# direct port of _aphotic_plugin_host_verdict; that function stays the
+# single answer for an on-disk manifest, and tests/test_plugin_host_gate.sh
+# holds the two in step.
 _aphotic_plugin_annotate_remote_json() {
-    local data="$1" entry verdict annotated=()
+    local data="$1"
 
-    while IFS= read -r entry; do
-        [[ -n "$entry" ]] || continue
-        verdict="$(_aphotic_plugin_entry_verdict "$entry")"
-        annotated+=("$(jq --arg v "${verdict%%:*}" --arg u "${verdict#*:}" \
-            '. + {host_support: {verdict: $v, unhosted: (if $v == "ok" then "" else $u end)}}' \
-            <<<"$entry")")
-    done < <(jq -c '(.plugins // [])[]' <<<"$data")
-
-    printf '%s\n' "${annotated[@]:-}" | jq -s 'map(select(. != null))'
+    jq --arg hosted_caps "$APHOTIC_PLUGIN_HOSTED_CAPABILITIES" \
+       --arg hosted_surfaces "$APHOTIC_PLUGIN_HOSTED_SURFACES" '
+        ($hosted_caps | split(" ")) as $hc
+        | ($hosted_surfaces | split(" ")) as $hs
+        | def verdict:
+            [(.capabilities // [])[] | select(. != null and . != "")] as $caps
+            | [(.ui.surfaces // [])[].surface | select(. != null and . != "")] as $rawsurf
+            | ($rawsurf | unique) as $surfs
+            # Capability order first, then surfaces, matching the order
+            # the shell function builds its message in.
+            | ([$caps[] | select(. as $c | $hc | index($c) | not) | . + " capability"]
+               + [$surfs[] | select(. as $s | $hs | index($s) | not) | . + " surface"]) as $unhosted
+            | ([$caps[] | select(. as $c | $hc | index($c)) | select(. != "ui-surface")]
+               + [$surfs[] | select(. as $s | $hs | index($s))] | length) as $working
+            | if ($unhosted | length) == 0 then
+                  {verdict: "ok", unhosted: ""}
+              elif $working > 0 then
+                  {verdict: "partial", unhosted: ($unhosted | join(", "))}
+              else
+                  {verdict: "inert", unhosted: ($unhosted | join(", "))}
+              end;
+        (.plugins // []) | map(. + {host_support: verdict})
+    ' <<<"$data"
 }
 
 # Fire every enabled theme-hook plugin's on_theme_change script, piping
@@ -772,6 +855,7 @@ _aphotic_plugin_install_deps() {
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
     local name="$1" dir manifest version caps owns ui profile cli chat_provider actions tmp
+    local display desc category binaries
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
     manifest="${dir}/plugin.toml"
@@ -779,6 +863,17 @@ _aphotic_plugin_registry_sync() {
 
     version="$(aphotic_toml_get "$manifest" plugin version)"
     caps="$(aphotic_toml_get_array "$manifest" plugin capabilities | jq -R . | jq -s .)"
+    # Display metadata, stored so the shell can render the whole installed
+    # list straight out of this file. Settings -> Plugins used to shell out
+    # to `aphotic plugin list --json` to get these four, which re-reads
+    # every manifest on the machine -- ~200ms per installed plugin, paid on
+    # every pane open. They are a copy of the manifest by definition; a
+    # manifest edited in place refreshes them on the next sync, same as
+    # every other field here.
+    display="$(aphotic_toml_get "$manifest" plugin display_name)"
+    desc="$(aphotic_toml_get "$manifest" plugin description)"
+    category="$(aphotic_toml_get "$manifest" plugin category)"
+    binaries="$(aphotic_toml_get_array "$manifest" requires binaries | jq -R . | jq -s .)"
     owns="$(_aphotic_plugin_owns_json "$manifest")"
     ui="$(_aphotic_plugin_ui_json "$manifest")"
     profile="$(_aphotic_plugin_profile_json "$manifest")"
@@ -790,6 +885,10 @@ _aphotic_plugin_registry_sync() {
     tmp="$(mktemp)"
     jq --arg n "$name" \
        --arg version "${version:-0.0.0}" \
+       --arg display_name "${display:-$name}" \
+       --arg description "${desc:-}" \
+       --arg category "${category:-}" \
+       --argjson requires_binaries "${binaries:-[]}" \
        --argjson capabilities "${caps:-[]}" \
        --argjson owns "$owns" \
        --argjson ui "$ui" \
@@ -797,7 +896,7 @@ _aphotic_plugin_registry_sync() {
        --argjson cli "$cli" \
        --argjson chat_provider "$chat_provider" \
        --argjson actions "$actions" \
-       '.installed = ((.installed // {}) + {($n): {version: $version, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions}})' \
+       '.installed = ((.installed // {}) + {($n): {version: $version, display_name: $display_name, description: $description, category: $category, requires_binaries: $requires_binaries, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions}})' \
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
     # Every install and update funnels through here, so this is the one
     # place that has to record "a plugin's code changed" for recovery.
@@ -1305,16 +1404,41 @@ _aphotic_plugin_validate() {
     return 0
 }
 
+# Entries written before the registry carried display metadata have no
+# display_name, so the shell would render them as a bare id with no
+# description or category. Re-syncing them is the same work an install
+# does, just deferred; the jq test costs one fork and answers "no" for
+# every invocation after the first, so this is cheap to sit in front of
+# every subcommand.
+#
+# The shell tolerates the gap on its own (it falls back to the plugin id),
+# so a failure here is not worth interrupting a command over.
+_aphotic_plugin_registry_backfill() {
+    [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || return 0
+    command -v jq >/dev/null 2>&1 || return 0
+    jq -e '(.installed // {}) | to_entries | any(.value | has("display_name") | not)' \
+        "$APHOTIC_PLUGINS_STATE_FILE" >/dev/null 2>&1 || return 0
+
+    local name
+    while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        _aphotic_plugin_registry_sync "$name" >/dev/null 2>&1 || true
+    done < <(jq -r '(.installed // {}) | keys[]' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)
+}
+
 aphotic_cmd_plugin() {
     local sub="${1:-}"; shift || true
 
+    _aphotic_plugin_registry_backfill
+
     case "$sub" in
         list)
-            local remote="false" as_json="false" category=""
+            local remote="false" as_json="false" category="" refresh="false"
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     --remote) remote="true"; shift ;;
                     --json) as_json="true"; shift ;;
+                    --refresh) refresh="true"; shift ;;
                     --category) category="${2:-}"; shift 2 ;;
                     *) shift ;;
                 esac
@@ -1324,11 +1448,14 @@ aphotic_cmd_plugin() {
 
             local data
             if [[ "$remote" == "true" ]]; then
-                data="$(_aphotic_plugin_list_remote_json)"
+                # Annotated and cached in one step. Filtering by category
+                # happens after, not before, so the cached file always
+                # holds the whole catalogue rather than whichever slice
+                # the last caller happened to ask for.
+                data="$(_aphotic_plugin_index_cached "$refresh")"
                 if [[ -n "$category" ]]; then
-                    data="$(echo "$data" | jq --arg c "$category" '{plugins: ((.plugins // []) | map(select(.category == $c)))}')"
+                    data="$(echo "$data" | jq --arg c "$category" 'map(select(.category == $c))')"
                 fi
-                data="$(_aphotic_plugin_annotate_remote_json "$data")"
                 [[ "$as_json" == "true" ]] && { echo "$data"; return 0; }
                 echo "$data" | jq -r '.[] | "\(.name)\t\(.display_name)\t\(.version)\t\(if .host_support.verdict == "inert" then "NOT SUPPORTED" elif .host_support.verdict == "partial" then "partly supported" else "" end)\t\(.description)"' | column -t -s $'\t'
 
