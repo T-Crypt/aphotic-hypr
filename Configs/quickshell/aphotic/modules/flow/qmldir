@@ -1,0 +1,4 @@
+module qs.modules.flow
+FlowTab 1.0 FlowTab.qml
+FlowScene 1.0 FlowScene.qml
+FlowSummary 1.0 FlowSummary.qml

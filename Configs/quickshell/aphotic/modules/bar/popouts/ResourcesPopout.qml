@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.components
 import qs.services
+import qs.modules.flow
 
 ColumnLayout {
     id: root
@@ -28,6 +29,8 @@ ColumnLayout {
     implicitWidth: 300
 
     spacing: Tokens.spacing.medium
+
+    FlowSummary { Layout.fillWidth: true }
 
     component UsageBar: StyledRect {
         id: usageBar

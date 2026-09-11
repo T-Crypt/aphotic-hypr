@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.5
+
+Command Center gains Flow, a live map of which resources your AI, gaming, security and dev work is claiming.
+
 ## 2.0.4
 
 The desktop pet plugin ships three drawn pets, Lumen, Cipher and Kozumi, each repainted to your theme colours.
