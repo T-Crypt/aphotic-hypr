@@ -33,13 +33,13 @@ Singleton {
     // this exact meaning inverted (true meant horizontal) until the rename
     // -- see settings.json load below for the migration of existing users'
     // persisted state. Defaults to true here because barSkin's own default
-    // is "minimal", and setBarStyle()'s one-time first-selection default
-    // (below) only fires on an actual switch *to* minimal -- a fresh
-    // install that starts on minimal already needs the matching top/
+    // is "capsule", and setBarStyle()'s one-time first-selection default
+    // (below) only fires on an actual switch *to* capsule -- a fresh
+    // install that starts on capsule already needs the matching top/
     // horizontal layout from the very first render, not the vertical/left
-    // layout minimal was never designed to support (Settings' own Bar Style
-    // picker already warns left/right placement may not render correctly
-    // for it).
+    // layout the floating styles were never designed to support (Settings'
+    // own Bar Style picker already warns left/right placement may not
+    // render correctly for them).
     property bool barHorizontal: true
     property bool barPositionBottom: false
     // Expanded from a purely cosmetic "outer strip background" choice
@@ -53,7 +53,11 @@ Singleton {
     // Anyone with a pre-existing `barSkin: "minimal"` in settings.json
     // gets the new structural style on next load, not the old outline
     // look -- a deliberate one-time behavior change, not a bug.
-    property string barSkin: "minimal"
+    // Capsule is what a fresh install starts on: it is the style that
+    // shows Aphotic as its own thing rather than as a conventional bar,
+    // and its position defaults match the ones declared above, so a first
+    // render needs no correction pass.
+    property string barSkin: "capsule"
     // Whichever of "pill"/"square" was last active, so cycling/switching
     // back to the "full" style (from dock/taskbar/minimal) restores the
     // user's own preference instead of hardcoding one.
@@ -62,12 +66,12 @@ Singleton {
     // default applied (dock -> bottom, minimal -> top) -- applied once
     // ever per style, not every time it's re-selected, so a user's own
     // later position override sticks.
-    // "minimal" pre-included: barSkin already defaults to it with the
+    // "capsule" pre-included: barSkin already defaults to it with the
     // matching position defaults above applied directly, so it must not
     // look like an unresolved first selection -- setBarStyle() would
-    // otherwise force-reset position the next time "minimal" is chosen,
+    // otherwise force-reset position the next time "capsule" is chosen,
     // clobbering a user's own deliberate position change in the meantime.
-    property var barStyleDefaultsApplied: ["minimal"]
+    property var barStyleDefaultsApplied: ["capsule"]
 
     readonly property string barStyle: ["dock", "taskbar", "minimal", "capsule"].includes(barSkin) ? barSkin : "full"
 
