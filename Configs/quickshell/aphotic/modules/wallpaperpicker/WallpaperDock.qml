@@ -22,6 +22,12 @@ Item {
 
     readonly property string backdropSource: root.model.fullSizeFor(strip.currentIndex)
 
+    // Unused while the dock renders its backdrop lossless (the wallpaper
+    // is the whole screen), stated so the window never has to fall back
+    // to another layout's geometry on this one's behalf.
+    readonly property int bandHeight: root.height
+    readonly property int bandFade: 0
+
     // Proximity magnification, the same quadratic falloff DockBar uses for
     // app icons so the two docks in this shell feel like one idea.
     readonly property real magnifyRadius: root.cellWidth * 1.3
@@ -213,7 +219,10 @@ Item {
 
                     x: highlight.slotX - Tokens.padding.small
                     y: strip.height - Tokens.padding.large - root.cellHeight - Tokens.padding.small
-                    z: -1
+                    // Under the selected card, which draws over the ring's
+                    // middle, but above every neighbour so a magnified one
+                    // beside it cannot paint over the border.
+                    z: 199
                     width: root.cellWidth + Tokens.padding.small * 2
                     height: root.cellHeight + Tokens.padding.small * 2
                     radius: Tokens.rounding.large
@@ -268,7 +277,13 @@ Item {
                     width: root.cellWidth
                     height: strip.height
 
-                    z: cell.index === strip.currentIndex ? 2 : Math.round(cell.magnify * 100)
+                    // magnifyFalloff returns 1 at rest, so every unmagnified
+                    // neighbour sits at 100 and a hovered one climbs to 130.
+                    // The selected cell was given 2, which put it and the
+                    // highlight ring behind its own neighbours rather than
+                    // on top of them -- the selection read as landing on the
+                    // wrong card. Above the whole magnify range instead.
+                    z: cell.index === strip.currentIndex ? 200 : Math.round(cell.magnify * 100)
 
                     // Scaling a wrapper rather than the card's own width and
                     // height keeps every cell the same size, so the deck

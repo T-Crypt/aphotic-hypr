@@ -21,6 +21,14 @@ Item {
 
     readonly property string backdropSource: root.model.fullSizeFor(grid.currentIndex)
 
+    // The grid fills the window, so its backdrop has to as well. The
+    // window used to hand every layout the coverflow's band (63% of the
+    // height, faded at the top), which left the rows below that point
+    // sitting on unblurred wallpaper. No fade for the same reason: there
+    // is no band edge to soften when the band is the whole screen.
+    readonly property int bandHeight: root.height
+    readonly property int bandFade: 0
+
     focus: true
 
     // The focus grab is load-bearing: without it the arrow keys land on
