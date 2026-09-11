@@ -141,4 +141,54 @@ assert.equal(sp.workloadCount, 2);
 assert.equal(sp.staleCount, 1);
 assert.equal(sp.pendingActions, 1);
 
+// --- the shell-activity layer ------------------------------------------
+const shellOn = {enabled:true, ready:true, cpuPerc:0.031, cores:1.0, memoryMib:480,
+    gpuNote:'Per-process GPU is not measurable here.'};
+
+// Off by default and absent from the map entirely.
+let off = ctx.build([claim('a','ai',70)], spec, {}, {}, {}, [], [], {enabled:false});
+assert.equal(off.shellShown, false);
+assert.equal(off.workloads.some(w => w.shell), false);
+assert.equal(ctx.shellNode(null), null);
+
+let on = ctx.build([claim('a','ai',70)], spec, {}, {}, {}, [], [], shellOn);
+const node = on.workloads.find(w => w.shell);
+assert.ok(node, 'the shell node is on the map');
+assert.equal(on.shellShown, true);
+assert.equal(node.key, '__shell');
+assert.equal(node.claims.length, 0, 'the shell holds no claims');
+assert.match(node.summary, /3\.1% of CPU/);
+assert.match(node.summary, /480 MiB/);
+assert.match(node.detail, /never arbitrated, never contended and never negotiated/);
+assert.match(node.detail, /not measurable/);
+
+// It cannot touch arbitration: same claim count, same contention, and no
+// claim reaches the resource totals.
+assert.equal(on.claimCount, off.claimCount);
+assert.equal(on.contentionCount, off.contentionCount);
+assert.equal(on.resources.find(r => r.key === 'gpu-vram').total,
+    off.resources.find(r => r.key === 'gpu-vram').total);
+assert.equal(on.resources.find(r => r.key === 'cpu').claims.length, 0);
+
+// It draws to cpu and memory only, and never as a contended edge.
+const shellIdx = on.workloads.indexOf(node);
+const shellEdges = on.edges.filter(e => e.workload === shellIdx);
+assert.equal(shellEdges.length, 2);
+assert.equal(shellEdges.every(e => e.shell === true && e.contended === false), true);
+assert.equal(shellEdges.map(e => on.resources[e.resource].key).sort().join(','), 'cpu,memory');
+
+// Turning it on is a map change; a CPU tick underneath it is not.
+assert.notEqual(on.signature, off.signature);
+assert.equal(ctx.build([claim('a','ai',70)], spec, {}, {}, {}, [], [],
+    Object.assign({}, shellOn, {cpuPerc:0.44, cores:14, memoryMib:900})).signature, on.signature);
+
+// Before the first sample it says so rather than showing a zero.
+assert.match(ctx.shellNode({enabled:true, ready:false}).summary, /sampling/);
+
+// The truncation count still describes real workloads, not the shell.
+let many = ctx.build(Array.from({length:30},(_,i)=>claim('c'+i,'p'+i,i)), spec, {}, {}, {}, [], [], shellOn);
+assert.equal(many.workloads.length, 9, 'eight workloads plus the shell');
+assert.equal(many.hiddenWorkloads, 22);
+
 console.log('Flow passports, receipts and projection: 22 assertions passed');
+console.log('Flow shell-activity layer: 20 assertions passed');
