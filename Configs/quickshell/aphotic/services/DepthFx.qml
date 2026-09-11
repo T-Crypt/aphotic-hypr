@@ -34,12 +34,17 @@ QtObject {
     // (36.4% shipped, 27.3% with breathing off, 18.3% with no shell).
     //
     // Stepping one shared value instead caps the repaint rate at
-    // `pulseRate` rather than the refresh rate. At 13 Hz the 2600 ms
-    // half-cycle still gets ~34 steps, each moving a blurred glow's
-    // opacity by about 0.016 -- below what reads as a step on a soft
+    // `pulseRate` rather than the refresh rate. At 8 Hz the 2600 ms
+    // half-cycle still gets ~21 steps, each moving a blurred glow's
+    // opacity by about 0.026 -- below what reads as a step on a soft
     // shape, and the cosine ramp keeps the same ease-in-out shape the
     // two chained InOutSine animations had.
-    readonly property int pulseRate: 13
+    //
+    // This is the shell's whole idle repaint budget once chrome shadows
+    // stopped re-blurring on every content change: measured idle, the two
+    // windows holding a glow render at exactly this rate and nothing else
+    // renders at all.
+    readonly property int pulseRate: 8
 
     // 0..1..0 over a full rise+fall. Consumers map it onto their own
     // range rather than being driven directly, so a one-shot effect can
