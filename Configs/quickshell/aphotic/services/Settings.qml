@@ -117,6 +117,11 @@ Singleton {
     property bool capsuleExpandOnHover: true
     property bool capsuleAnimations: true
 
+    // Flow's shell-activity layer. Off by default: it is the only thing
+    // in Flow that measures Aphotic instead of the machine, and it costs
+    // a small periodic read while it is on.
+    property bool flowShellActivity: false
+
     // name: "full" | "dock" | "taskbar" | "minimal" -- the single entry
     // point for changing bar style, shared by the Settings tab, the CLI
     // (`aphotic bar style`), and the IPC handler below, so all three
@@ -383,6 +388,7 @@ Singleton {
             capsuleShapedArt: root.capsuleShapedArt,
             capsuleExpandOnHover: root.capsuleExpandOnHover,
             capsuleAnimations: root.capsuleAnimations,
+            flowShellActivity: root.flowShellActivity,
             agentSelectedProvider: root.agentSelectedProvider,
             agentGraphEnabled: root.agentGraphEnabled,
             agentGraphQuality: root.agentGraphQuality,
@@ -842,6 +848,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.capsuleExpandOnHover = data.capsuleExpandOnHover;
                 if (typeof data.capsuleAnimations === "boolean")
                     root.capsuleAnimations = data.capsuleAnimations;
+                if (typeof data.flowShellActivity === "boolean")
+                    root.flowShellActivity = data.flowShellActivity;
                 if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "opencode"].includes(data.agentSelectedProvider))
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.agentGraphEnabled === "boolean")

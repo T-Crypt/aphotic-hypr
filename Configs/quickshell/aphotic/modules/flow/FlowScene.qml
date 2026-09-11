@@ -24,6 +24,9 @@ Rectangle {
     property var projection: null
     property var events: []
     property bool motion: true
+    // The shell-activity layer: Aphotic's own draw, drawn as a node that
+    // is explicitly not a claim.
+    property bool shellActivity: false
     property string selectionKind: "resource"
     property string selectionKey: "gpu-vram"
     property real travel: 1
@@ -33,6 +36,7 @@ Rectangle {
     readonly property int receiptCount: (root.flow.receipts || []).length
     signal decide(int negotiationId, string decision)
     signal exportReceipts()
+    signal shellActivityToggled()
 
     // The map only changes when the model's signature changes. Metric
     // ticks and palette changes rebuild `flow` every second without
@@ -108,6 +112,14 @@ Rectangle {
             }
             Item { Layout.fillWidth: true }
             Copy { text: root.flow.contentionCount ? root.flow.contentionCount + (root.flow.contentionCount === 1 ? " resource contended" : " resources contended") : "Room to breathe"; color: root.flow.contentionCount ? root.warning : root.accent }
+            Action {
+                objectName: "shellActivityAction"
+                text: "Shell activity"
+                chosen: root.shellActivity
+                ToolTip.visible: hovered
+                ToolTip.text: "Show what Aphotic itself is using. Measured, never claimed."
+                onClicked: root.shellActivityToggled()
+            }
             Action { text: root.motion ? "Motion on" : "Motion off"; onClicked: root.motion = !root.motion }
         }
         RowLayout {
@@ -213,10 +225,12 @@ Rectangle {
                                 c.beginPath();
                                 c.moveTo(x1,map.ry(edge.resource));
                                 c.bezierCurveTo(x1+(x2-x1)*0.45,map.ry(edge.resource),x2-(x2-x1)*0.45,map.wy(edge.workload),x2,map.wy(edge.workload));
-                                c.strokeStyle = edge.contended ? root.warning : root.accent;
-                                c.globalAlpha = edge.contended ? 0.7 : edge.foreground ? 0.5 : 0.2;
+                                c.setLineDash(edge.shell ? [3, 4] : []);
+                                c.strokeStyle = edge.shell ? root.secondary : edge.contended ? root.warning : root.accent;
+                                c.globalAlpha = edge.shell ? 0.45 : edge.contended ? 0.7 : edge.foreground ? 0.5 : 0.2;
                                 c.lineWidth = edge.contended ? 2 : 1.2;
                                 c.stroke();
+                                c.setLineDash([]);
                             }
                         }
                     }
@@ -262,7 +276,7 @@ Rectangle {
                             width: map.rightWidth; height: 32
                             opacity: modelData.foreground || chosen ? 1 : 0.65
                             chosen: root.selectionKind === "workload" && root.selectionKey === modelData.key
-                            text: modelData.label
+                            text: modelData.shell ? "◇ " + modelData.label : modelData.label
                             onClicked: { root.selectionKind = "workload"; root.selectionKey = modelData.key; }
                             ToolTip.visible: hovered
                             ToolTip.text: modelData.summary
@@ -299,7 +313,7 @@ Rectangle {
                         Copy { text: "CLAIM LENS"; color: root.accent; font.pixelSize: 10; font.letterSpacing: 1.5 }
                         Copy { width: parent.width; text: root.selected ? root.selected.label : "Select a node"; font.pixelSize: 20 }
                         Copy { width: parent.width; text: root.selected ? root.selected.detail : "Inspect a resource or workload to see what it requests and why."; wrapMode: Text.WordWrap; color: root.muted }
-                        Copy { width: parent.width; text: root.selected ? root.selected.summary : ""; wrapMode: Text.WordWrap; color: root.selected && root.selected.contended ? root.warning : root.accent }
+                        Copy { width: parent.width; text: root.selected ? root.selected.summary : ""; wrapMode: Text.WordWrap; color: root.selected && root.selected.contended ? root.warning : root.selected && root.selected.shell ? root.secondary : root.accent }
                         Repeater {
                             model: root.selected ? root.selected.claims.slice(0,64) : []
                             Column {
