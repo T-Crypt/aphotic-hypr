@@ -62,10 +62,17 @@ Item {
     // focus grab is the whole reason it exists: without it the arrow keys
     // land on whatever had focus before and the deck cannot be driven from
     // the keyboard at all.
+    // True only while the deck is being placed rather than driven, so the
+    // ring lands on its card instead of gliding the whole width of the
+    // library to reach it when the picker opens on a late wallpaper.
+    property bool placing: false
+
     function focusActive(): void {
         const idx = root.model.activeIndex;
+        root.placing = true;
         strip.currentIndex = idx >= 0 ? idx : 0;
         strip.contentX = root._centeredContentX(strip.currentIndex);
+        Qt.callLater(() => root.placing = false);
         root.forceActiveFocus();
     }
 
@@ -188,6 +195,53 @@ Item {
             radius: Tokens.rounding.extraLarge
             color: Qt.alpha(Colours.palette.m3surfaceContainer, 0.55)
 
+            // A card leaving the deck dissolves into the tray rather than
+            // meeting the clip edge as a cut. The tray's own colour at the
+            // boundary, gone by the inner end.
+            Rectangle {
+                z: 10
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.margins: 1
+                width: root.cellWidth * 0.45
+
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+
+                    GradientStop {
+                        position: 0
+                        color: tray.color
+                    }
+                    GradientStop {
+                        position: 1
+                        color: "transparent"
+                    }
+                }
+            }
+
+            Rectangle {
+                z: 10
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.margins: 1
+                width: root.cellWidth * 0.45
+
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+
+                    GradientStop {
+                        position: 0
+                        color: "transparent"
+                    }
+                    GradientStop {
+                        position: 1
+                        color: tray.color
+                    }
+                }
+            }
+
             ListView {
                 id: strip
 
@@ -196,7 +250,14 @@ Item {
                 height: parent.height
                 orientation: ListView.Horizontal
                 spacing: root.cellGap
-                clip: false
+                // Contained, not free-floating. cacheBuffer builds delegates
+                // well beyond the viewport, and unclipped they drew outside
+                // the tray and off the screen, so the grey shape read as an
+                // island the cards ignored. The tray already reserves
+                // cellHeight * magnifyExtra of headroom, so a card at full
+                // magnification still clears the top edge by padding.large:
+                // nothing is cut vertically by turning this on.
+                clip: true
                 cacheBuffer: root.cellWidth * 4
                 boundsBehavior: Flickable.StopAtBounds
 
@@ -268,6 +329,8 @@ Item {
                     }
 
                     Behavior on x {
+                        enabled: !root.placing
+
                         NumberAnimation {
                             duration: Tokens.anim.durations.expressiveFastSpatial
                             easing: Tokens.anim.emphasizedDecel
