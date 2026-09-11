@@ -177,6 +177,81 @@ Singleton {
         return actions;
     }
 
+    // Everything Settings -> Plugins needs to draw one installed row,
+    // built once per plugins.json change. The pane used to get this by
+    // running `aphotic plugin list --json`, which re-reads every manifest
+    // on the machine -- measured at ~200ms per installed plugin, paid on
+    // every pane open and again every 5 seconds while Settings was open.
+    // The CLI writes all of it into the registry at install time, so
+    // reading it here costs nothing and updates reactively through the
+    // FileView below, the way every other consumer of this file already
+    // works.
+    //
+    // display_name/description/category/requires_binaries are absent on an
+    // entry written before the registry carried them. The fallbacks keep
+    // such a row rendering as itself rather than blank; `aphotic plugin`
+    // backfills them on its next run.
+    readonly property var installedList: {
+        const rows = [];
+        for (const name of Object.keys(root._installed)) {
+            const entry = root._installed[name] ?? ({});
+            const display = entry.display_name || name;
+            const description = entry.description ?? "";
+            const category = entry.category ?? "";
+            rows.push({
+                name: name,
+                displayName: display,
+                description: description,
+                category: category,
+                version: entry.version ?? "0.0.0",
+                capabilities: entry.capabilities ?? [],
+                requiresBinaries: entry.requires_binaries ?? [],
+                configKeys: entry.owns?.config_keys ?? [],
+                externalConfig: entry.owns?.external_config ?? [],
+                surfaces: root._surfacesOf(name),
+                requiresLayer: root.requiredLayerOf(name),
+                enabled: root.isEnabled(name),
+                installed: true,
+                // Precomputed so filtering a long list is a substring test
+                // per row rather than three toLowerCase() calls per row per
+                // keystroke.
+                searchKey: `${name} ${display} ${description} ${category}`.toLowerCase()
+            });
+        }
+        return rows.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    }
+
+    // Installed names as an object used as a set. The Plugins pane checks
+    // "is this catalogue entry already installed" once per visible row;
+    // against an array that is a linear scan per row, which is O(n*m) across
+    // a catalogue of any size.
+    readonly property var installedNames: {
+        const set = ({});
+        for (const name of Object.keys(root._installed))
+            set[name] = true;
+        return set;
+    }
+
+    // The one layer a plugin needs, read off whichever surface or profile
+    // declares it -- the same derivation the gate below applies, exposed so
+    // a caller asking "what does this need" gets the same answer the gate
+    // will give rather than deriving it a second time.
+    function requiredLayerOf(name: string): string {
+        for (const surface of root._surfacesOf(name)) {
+            if (surface.requiresLayer.length > 0)
+                return surface.requiresLayer;
+        }
+        return root._installed[name]?.profile?.requires_layer ?? "";
+    }
+
+    // Public alias for the gate vocabulary below. A caller deciding whether
+    // to offer an install needs exactly the answer the shell will give when
+    // it comes to draw the surface, and a second copy of this list is a
+    // second answer -- the Plugins pane shipped with one.
+    function layerEnabled(layer: string): bool {
+        return root._layerEnabled(layer);
+    }
+
     // A pre-`ui.surfaces` registry entry (written by a CLI older than the
     // surface unification) still carries a bare `dashboard_tab` object.
     // Reading it as one ungated dashboard surface keeps an install that
