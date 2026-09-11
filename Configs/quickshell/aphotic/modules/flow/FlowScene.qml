@@ -201,6 +201,7 @@ Rectangle {
                     function wy(i: int): real { return (i + 0.5) * height / Math.max(1,root.flow.workloads.length); }
                     Canvas {
                         id: paths
+                        objectName: "flowPaths"
                         anchors.fill: parent
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
