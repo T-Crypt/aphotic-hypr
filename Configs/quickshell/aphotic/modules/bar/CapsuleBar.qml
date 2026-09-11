@@ -30,7 +30,13 @@ Item {
     // That is the whole fix for the worst bug in the first pass: the pill
     // is centred along its length, so any change to that length slid every
     // control sideways out from under the pointer.
-    readonly property int rowThickness: Settings.barInnerWidth + Tokens.padding.extraSmall * 2
+    // The pill's length already grows to its content; its thickness did
+    // not, so a control wider than the configured bar width was clipped by
+    // the pill rather than fitting inside it. Docked to a side, that is
+    // what cut the status icons off. Same floor-not-cap rule the row
+    // itself uses along its length.
+    readonly property real rowCross: root.horizontal ? collapsedRow.implicitHeight : collapsedRow.implicitWidth
+    readonly property int rowThickness: Math.max(Settings.barInnerWidth, root.rowCross) + Tokens.padding.extraSmall * 2
     readonly property real rowExtent: root.horizontal ? collapsedRow.implicitWidth : collapsedRow.implicitHeight
     readonly property real alongExtent: Math.max(rowExtent + Tokens.padding.medium * 2, Config.bar.capsule.minLength)
 

@@ -76,8 +76,16 @@ Item {
         return out;
     }
 
-    implicitWidth: Settings.barHorizontal ? groupLayout.implicitWidth : Settings.barInnerWidth
-    implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : groupLayout.implicitHeight
+    // The cross-axis is a floor, not a cap. A status entry that draws an
+    // icon beside text (Bluetooth with a battery percentage, for one) is
+    // wider than it is tall, so it clears a horizontal bar's thickness and
+    // overflows a vertical one -- where the pill below clips, and the icon
+    // is simply cut off. Taking the larger of the configured thickness and
+    // what the content actually measures lets a side bar widen to fit
+    // instead of truncating, and changes nothing for a bar whose icons
+    // already fit.
+    implicitWidth: Settings.barHorizontal ? groupLayout.implicitWidth : Math.max(Settings.barInnerWidth, groupLayout.implicitWidth)
+    implicitHeight: Settings.barHorizontal ? Math.max(Settings.barInnerWidth, groupLayout.implicitHeight) : groupLayout.implicitHeight
 
 
     GridLayout {
@@ -147,8 +155,11 @@ Item {
                 radius: Tokens.rounding.full
                 clip: true
 
-                Layout.preferredWidth: Settings.barHorizontal ? pillIcons.implicitWidth + Tokens.padding.medium * 2 : Settings.barInnerWidth
-                Layout.preferredHeight: Settings.barHorizontal ? Settings.barInnerWidth : pillIcons.implicitHeight + Tokens.padding.medium * 2
+                // Same floor on the cross-axis as the root above, for the
+                // same reason: this rect clips, so a pill pinned to the
+                // configured thickness cuts any entry wider than it.
+                Layout.preferredWidth: Settings.barHorizontal ? pillIcons.implicitWidth + Tokens.padding.medium * 2 : Math.max(Settings.barInnerWidth, pillIcons.implicitWidth + Tokens.padding.medium * 2)
+                Layout.preferredHeight: Settings.barHorizontal ? Math.max(Settings.barInnerWidth, pillIcons.implicitHeight + Tokens.padding.medium * 2) : pillIcons.implicitHeight + Tokens.padding.medium * 2
 
                 HoverPill {
                     container: pillIcons
