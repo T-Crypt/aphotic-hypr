@@ -110,6 +110,11 @@ Singleton {
                 Hyprland.refreshWorkspaces();
             } else if (n.includes("window") || n.includes("group") || ["pin", "fullscreen", "changefloatingmode", "minimize"].includes(n)) {
                 Hyprland.refreshToplevels();
+                // A workspace's hasfullscreen flag only moves on this
+                // event, and RenderGate reads it to decide whether
+                // anything decorative can still be seen.
+                if (n === "fullscreen")
+                    Hyprland.refreshWorkspaces();
             }
         }
 

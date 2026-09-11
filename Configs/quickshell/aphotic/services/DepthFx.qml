@@ -50,7 +50,9 @@ QtObject {
 
     readonly property Timer _pulseClock: Timer {
         interval: Math.round(1000 / root.pulseRate)
-        running: root.glowIntensity > 0
+        // Nothing breathes behind a fullscreen window: the repaint would
+        // cost the same and reach nobody.
+        running: root.glowIntensity > 0 && RenderGate.decorative
         repeat: true
         onTriggered: {
             root._pulsePhase = (root._pulsePhase + interval / (root.pulsePeriod * 2)) % 1;

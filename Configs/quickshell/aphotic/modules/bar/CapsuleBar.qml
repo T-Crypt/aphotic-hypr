@@ -137,13 +137,12 @@ Item {
             }
         }
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Colours.palette.m3shadow
-            shadowOpacity: 0.5
-            shadowBlur: 0.5
-            shadowVerticalOffset: 2
+        // Shadow from the shape, not from the content: see
+        // components/ShapeShadow.qml for what layering the content cost.
+        ShapeShadow {
+            anchors.fill: parent
+            radius: parent.radius
+            color: parent.color
         }
 
         GridLayout {
@@ -264,13 +263,12 @@ Item {
             radius: Tokens.rounding.extraLarge
             color: Colours.tPalette.m3surfaceContainer
 
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: Colours.palette.m3shadow
-                shadowOpacity: 0.5
-                shadowBlur: 0.5
-                shadowVerticalOffset: 2
+            // Shadow from the shape, not from the content: see
+            // components/ShapeShadow.qml.
+            ShapeShadow {
+                anchors.fill: parent
+                radius: parent.radius
+                color: parent.color
             }
 
             Loader {
