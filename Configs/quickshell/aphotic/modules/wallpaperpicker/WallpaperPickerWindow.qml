@@ -69,12 +69,17 @@ PanelWindow {
         active: root.screenState.wallpaperPicker
         source: layoutLoader.item?.backdropSource ?? ""
         lossless: root.losslessBackdrop
-        bandHeight: filmstripMetrics.bandHeight
-        fadeExtent: filmstripMetrics.bandFade
+        // Each layout states the band it needs. Every layout used to be
+        // handed the coverflow's (63% of the height, faded at the top),
+        // which is right for a filmstrip sitting in the lower two thirds
+        // and wrong for the grid, whose rows run the full height and so ran
+        // off the bottom of the blur onto bare wallpaper.
+        bandHeight: layoutLoader.item?.bandHeight ?? filmstripMetrics.bandHeight
+        fadeExtent: layoutLoader.item?.bandFade ?? filmstripMetrics.bandFade
     }
 
-    // The band geometry is the coverflow's, and the backdrop needs it before
-    // the layout that defines it necessarily exists.
+    // The coverflow's geometry, kept as the fallback for the window between
+    // the picker opening and its layout being built.
     QtObject {
         id: filmstripMetrics
 
