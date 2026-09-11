@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Io
+import qs.services
 import qs.services.profile
 
 // Ollama as the Resource Engine's first real claimant: every model
@@ -35,6 +36,7 @@ QtObject {
     // unclassified rather than being guessed into this plane.
     property var _tokens: ({})
     property var _unloads: ({})
+    property bool _memoryHeld: false
 
     onEnabledChanged: root._register()
     onRunningModelsChanged: root._sync()
@@ -60,11 +62,11 @@ QtObject {
     //
     // A model /api/ps reports with size_vram 0 is resident in system RAM,
     // not on the GPU (Ollama falls back to CPU inference when it can't fit
-    // or can't reach the card), so it is not a gpu-vram claimant at all.
-    // Registering it anyway would put a zero-amount claim in the table that
-    // adds nothing to the total but can still be picked as the incumbent to
-    // suspend -- offering to stop a CPU-resident model to free VRAM it was
-    // never holding.
+    // or can't reach the card), so it is not a gpu-vram claimant. A
+    // zero-amount VRAM claim would add nothing to the total and could
+    // still be picked as the incumbent to suspend -- offering to stop a
+    // CPU-resident model to free VRAM it was never holding. It claims
+    // against memory instead, where the bytes actually are.
     function _sync(): void {
         if (!root._registered)
             return;
@@ -74,6 +76,42 @@ QtObject {
             if (!model?.name)
                 continue;
             const amount = Math.round((model.size_vram ?? 0) / (1024 * 1024));
+            // A model Ollama loaded into system RAM is resident work
+            // holding real memory, and until now it was dropped on the
+            // floor because it holds no VRAM. It claims against memory
+            // instead, at the same measured precision.
+            const ram = Math.round(((model.size ?? 0) - (model.size_vram ?? 0)) / (1024 * 1024));
+            if (ram > 0) {
+                const ramId = `${model.name} (system RAM)`;
+                resident[ramId] = true;
+                if (!root._memoryHeld) {
+                    root._memoryHeld = true;
+                    SystemCapacity.acquire("memory");
+                }
+                root._tokens[ramId] = WorkloadPassports.open({
+                    plane: "ai",
+                    owner: root.owner,
+                    label: ramId,
+                    trigger: "model-resident-cpu",
+                    workloadId: `ollama-${model.name}-ram`,
+                    sessionId: `model-ram:${model.name}`,
+                    sourceAt: Date.now(),
+                    claims: [{ resource: "memory", amount: ram, unit: "MiB",
+                        measuredAt: Date.now(), origin: "measured" }]
+                });
+                const knownRam = ResourceEngine.claimById(ramId);
+                if (!knownRam || knownRam.owner !== root.owner || knownRam.amount !== ram) {
+                    ResourceEngine.register({
+                        id: ramId,
+                        owner: root.owner,
+                        resource: "memory",
+                        amount: ram,
+                        priority: "background",
+                        label: ramId,
+                        origin: "dynamic"
+                    });
+                }
+            }
             if (amount <= 0)
                 continue;
             resident[model.name] = true;
@@ -105,6 +143,11 @@ QtObject {
         for (const claim of ResourceEngine.claimsOf(root.owner)) {
             if (!resident[claim.id])
                 ResourceEngine.release(claim.id);
+        }
+
+        if (root._memoryHeld && ResourceEngine.claimsOf(root.owner).every(c => c.resource !== "memory")) {
+            root._memoryHeld = false;
+            SystemCapacity.release("memory");
         }
 
         // The poll that proves a model left is also what settles the
