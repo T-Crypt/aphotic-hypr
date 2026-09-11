@@ -77,13 +77,30 @@ Item {
         strip.contentX = root._centeredContentX(strip.currentIndex);
     }
 
-    function _maxContentX(): real {
-        return Math.max(0, strip.contentWidth - strip.width);
+    // Half a viewport minus half a card, so the first and last cards can sit
+    // in the middle of the tray like every card between them. Without it the
+    // clamp below pinned contentX at zero for the opening slots, and the deck
+    // read as sitting left of the tray it is drawn inside. Only applied once
+    // the deck actually scrolls: a handful of cards that already fit are
+    // centred as a group by the tray itself.
+    readonly property real edgeMargin: strip.contentWidth > strip.width ? Math.max(0, (strip.width - root.cellWidth) / 2) : 0
+
+    // contentX runs from -leftMargin, not from zero. A margined ListView
+    // leaves originX at zero and moves the lower bound instead, so clamping
+    // at zero is what stopped the leading cards from ever centring.
+    function _minContentX(): real {
+        return -strip.leftMargin;
     }
 
+    function _maxContentX(): real {
+        return Math.max(root._minContentX(), strip.contentWidth + strip.rightMargin - strip.width);
+    }
+
+    // Items sit at index * slotPitch. originX stays zero here because this
+    // model is a plain count with no repetition, unlike the filmstrip's.
     function _centeredContentX(index: int): real {
         const raw = index * root.slotPitch + root.cellWidth / 2 - strip.width / 2;
-        return Math.max(0, Math.min(raw, root._maxContentX()));
+        return Math.max(root._minContentX(), Math.min(raw, root._maxContentX()));
     }
 
     // One path for the wheel and the arrow keys both. Scrolling used to
@@ -186,6 +203,9 @@ Item {
                 model: root.model.count
                 reuseItems: true
 
+                leftMargin: root.edgeMargin
+                rightMargin: root.edgeMargin
+
                 onWidthChanged: Qt.callLater(root._recenterIfIdle)
                 onContentWidthChanged: Qt.callLater(root._recenterIfIdle)
 
@@ -217,6 +237,12 @@ Item {
 
                     readonly property real slotX: strip.currentIndex * root.slotPitch
 
+                    // The cards magnify under the pointer and the ring did
+                    // not, so the border drifted off whichever card it was
+                    // meant to be hugging. Same factor, same origin as the
+                    // card's own scale: the bottom centre of its cell.
+                    readonly property real mag: strip.currentItem?.magnify ?? 1
+
                     x: highlight.slotX - Tokens.padding.small
                     y: strip.height - Tokens.padding.large - root.cellHeight - Tokens.padding.small
                     // Under the selected card, which draws over the ring's
@@ -231,6 +257,15 @@ Item {
                     border.width: 2
                     border.color: Colours.palette.m3primary
                     opacity: 0.55 + 0.45 * DepthFx.pulse
+
+                    transform: Scale {
+                        origin.x: highlight.width / 2
+                        // Distance from this ring's top edge down to the cell
+                        // bottom, which is where the card scales from.
+                        origin.y: Tokens.padding.large + root.cellHeight + Tokens.padding.small
+                        xScale: highlight.mag
+                        yScale: highlight.mag
+                    }
 
                     Behavior on x {
                         NumberAnimation {
