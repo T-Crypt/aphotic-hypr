@@ -42,3 +42,4 @@ graphify-out/
 # per-machine, never shipped, not portable between checkouts.
 .epiq/
 .opencode/
+.gate/

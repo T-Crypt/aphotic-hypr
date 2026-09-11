@@ -129,7 +129,13 @@ https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
 <td width="50%"><p align="center"><img src="./assets/screenshots/dashboard-wallpaper.png" width="440"><br><sub>Wallpapers tab: the active theme's own set</sub></p></td>
 <td width="50%"><p align="center"><img src="./assets/screenshots/dashboard-chat.png" width="440"><br><sub>AI Chat tab: provider and model picker</sub></p></td>
 </tr>
+<tr>
+<td width="50%"><p align="center"><img src="./assets/screenshots/flow-contended.png" width="440"><br><sub>Flow: two workloads contending for VRAM, with the negotiation offered rather than applied</sub></p></td>
+<td width="50%"><p align="center"><img src="./assets/screenshots/flow-calm.png" width="440"><br><sub>Flow: the same map with room to breathe, every plane monitoring</sub></p></td>
+</tr>
 </table>
+
+<sub>Both Flow captures are illustrative fixtures with simulated claims and metrics. They perform no system actions.</sub>
 
 </details>
 
