@@ -38,6 +38,13 @@ Singleton {
     function registerEngagementClaim(resourceKey: string, amount: real): var {
         if (!root.enabled || !resourceKey || !(amount > 0))
             return null;
+        // Capacity arrives with the first claim against it and leaves with
+        // the last, so an install that never runs an engagement still
+        // declares nothing.
+        if (!root._capacityHeld[resourceKey]) {
+            root._capacityHeld[resourceKey] = true;
+            SystemCapacity.acquire(resourceKey);
+        }
         return ResourceEngine.register({
             id: `security-engagement-${resourceKey}`,
             owner: root.profileId,
@@ -68,6 +75,15 @@ Singleton {
         return WorkloadPassports.close(token, reason || "engagement-end");
     }
 
+    function releaseEngagementClaims(): void {
+        for (const key of Object.keys(root._capacityHeld)) {
+            ResourceEngine.release(`security-engagement-${key}`);
+            SystemCapacity.release(key);
+            delete root._capacityHeld[key];
+        }
+    }
+
+    property var _capacityHeld: ({})
     property bool _registered: false
     property string _vpnToken: ""
     property string _dndReceipt: ""
@@ -146,6 +162,7 @@ Singleton {
             return;
         root._registered = false;
         root._vpnToken = "";
+        root.releaseEngagementClaims();
         WorkloadPassports.closeOwner(root.profileId, "layer-disabled");
         ProfileEngine.unregister(root.profileId);
     }
@@ -177,6 +194,7 @@ Singleton {
                     WorkloadPassports.close(root._vpnToken, "vpn-disconnect");
                     root._vpnToken = "";
                 }
+                root.releaseEngagementClaims();
             }
         }
     }
