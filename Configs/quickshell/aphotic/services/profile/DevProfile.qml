@@ -64,6 +64,23 @@ Singleton {
         if (!root.enabled || !label)
             return "";
         const now = Date.now();
+
+        // A worker count the wrapper asked for is a real reservation, so
+        // it becomes a real claim. Capacity comes with it and goes away
+        // with the last build, which is how core avoids declaring a
+        // resource on a machine that never builds anything.
+        if (workers > 0) {
+            SystemCapacity.acquire("cpu");
+            ResourceEngine.register({
+                id: `dev-build-${pid}`,
+                owner: root.profileId,
+                resource: "cpu",
+                amount: workers,
+                priority: "background",
+                label: label,
+                origin: "declared"
+            });
+        }
         return WorkloadPassports.open({
             plane: "dev",
             owner: root.profileId,
@@ -77,7 +94,11 @@ Singleton {
         });
     }
 
-    function buildFinished(token: string, reason: string): bool {
+    function buildFinished(token: string, reason: string, pid: int): bool {
+        if (pid > 0 && ResourceEngine.claimById(`dev-build-${pid}`)) {
+            ResourceEngine.release(`dev-build-${pid}`);
+            SystemCapacity.release("cpu");
+        }
         return WorkloadPassports.close(token, reason || "build-end");
     }
 
