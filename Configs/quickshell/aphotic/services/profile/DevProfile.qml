@@ -53,18 +53,71 @@ Singleton {
         });
     }
 
+    // The Dev plane's workload passports. A project session is one
+    // passport; an opt-in build wrapper opens its own, keyed on the real
+    // process so a reused pid cannot inherit the previous build's entry.
+    //
+    // Worker count is declared intent, not measured CPU, and is labelled
+    // that way. Nothing here scans command lines: a build only appears if
+    // a launcher wrapper says it started.
+    function buildStarted(label: string, pid: int, startedAt: real, workers: int): string {
+        if (!root.enabled || !label)
+            return "";
+        const now = Date.now();
+        return WorkloadPassports.open({
+            plane: "dev",
+            owner: root.profileId,
+            label: label,
+            trigger: "build-start",
+            workloadId: `dev-build-${pid}`,
+            process: { pid: pid, startedAt: startedAt },
+            sourceAt: now,
+            claims: workers > 0 ? [{ resource: "cpu", amount: workers, unit: "threads",
+                measuredAt: now, origin: "declared" }] : []
+        });
+    }
+
+    function buildFinished(token: string, reason: string): bool {
+        return WorkloadPassports.close(token, reason || "build-end");
+    }
+
     function projectOpened(path: string): void {
         if (!root.enabled || !path || path === root._activeProjectPath)
             return;
 
-        if (root._activeProjectPath.length > 0)
+        if (root._activeProjectPath.length > 0) {
             ProfileEngine.deactivate(root.profileId, "project-switch");
+            root._closeSession("project-switch");
+        }
 
         root._activeProjectPath = path;
         ProfileEngine.activate(root.profileId, "project-open");
+        root._openSession();
+    }
+
+    // Keyed on the path so two projects stay two workloads, while the
+    // displayed label is the directory name only.
+    function _openSession(): void {
+        root._sessionToken = WorkloadPassports.open({
+            plane: "dev",
+            owner: root.profileId,
+            label: root.activeProjectName,
+            trigger: "project-open",
+            workloadId: "dev-project",
+            sessionId: `project:${root._activeProjectPath}`,
+            sourceAt: Date.now()
+        });
+    }
+
+    function _closeSession(reason: string): void {
+        if (!root._sessionToken)
+            return;
+        WorkloadPassports.close(root._sessionToken, reason);
+        root._sessionToken = "";
     }
 
     property string _activeProjectPath: ""
+    property string _sessionToken: ""
     property bool _registered: false
 
     function _register(): void {
@@ -89,6 +142,8 @@ Singleton {
         root._register();
         if (!root.enabled && root._activeProjectPath.length > 0) {
             ProfileEngine.deactivate(root.profileId, "layer-disabled");
+            root._closeSession("layer-disabled");
+            WorkloadPassports.closeOwner(root.profileId, "layer-disabled");
             root._activeProjectPath = "";
         }
     }

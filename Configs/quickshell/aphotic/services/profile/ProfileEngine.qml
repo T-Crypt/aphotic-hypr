@@ -71,7 +71,10 @@ Singleton {
             onApply: descriptor.onApply ?? null,
             onExit: descriptor.onExit ?? null,
             onRestore: descriptor.onRestore ?? null,
-            gracefulStop: descriptor.gracefulStop ?? null
+            gracefulStop: descriptor.gracefulStop ?? null,
+            onShelter: descriptor.onShelter ?? null,
+            onUnshelter: descriptor.onUnshelter ?? null,
+            shelterState: descriptor.shelterState ?? null
         };
         root._profiles = profiles;
 
@@ -114,6 +117,14 @@ Singleton {
 
     function stateOf(id: string): var {
         return root._states[id] ?? null;
+    }
+
+    // Who can take their background work down a notch on request. A
+    // caller checks this first so asking everyone does not leave a trail
+    // of refusal receipts for owners that were never going to answer.
+    function canShelter(id: string): bool {
+        return typeof root._profiles[id]?.onShelter === "function"
+            && typeof root._profiles[id]?.onUnshelter === "function";
     }
 
     function canSuspend(id: string): bool {
@@ -214,6 +225,73 @@ Singleton {
         if (!root._transition(id, "monitor"))
             return false;
         root.anomalyAcknowledged(id);
+        return true;
+    }
+
+    // Frame shelter: a foreground profile asks another owner to take its
+    // background work down a notch, and that owner decides what that
+    // means. The engine carries the request and the receipt; the policy,
+    // and anything hardware-specific, lives in the owner's own hook.
+    //
+    // Nothing is applied here. An owner with no hook is a refusal with a
+    // reason, not a silent no-op, and the receipt says so.
+    function requestShelter(owner: string, reason: string): string {
+        const hook = root._profiles[owner]?.onShelter;
+        const id = ActionReceipts.request({
+            profileId: owner,
+            kind: "shelter",
+            before: "full",
+            reason: reason || "foreground work requested headroom"
+        });
+        if (!id)
+            return "";
+        if (typeof hook !== "function") {
+            ActionReceipts.failed(id, "owner has no shelter hook");
+            return id;
+        }
+        try {
+            const applied = hook(reason);
+            if (applied === false)
+                ActionReceipts.failed(id, "owner declined");
+            else
+                ActionReceipts.applied(id, typeof applied === "string" ? applied : "sheltered");
+        } catch (e) {
+            ActionReceipts.failed(id, `shelter hook threw: ${e}`);
+        }
+        return id;
+    }
+
+    // The restore half. It hands the owner's hook the value the receipt
+    // recorded, and skips the call when the receipt says the state was
+    // already changed by something else.
+    function releaseShelter(owner: string, receiptId: string): bool {
+        const receipt = ActionReceipts.byId(receiptId);
+        if (!receipt || receipt.profileId !== owner)
+            return false;
+        const hook = root._profiles[owner]?.onUnshelter;
+        if (typeof hook !== "function") {
+            ActionReceipts.restoreFailed(receiptId, "owner has no unshelter hook");
+            return false;
+        }
+        const reader = root._profiles[owner]?.shelterState;
+        let current = receipt.after;
+        if (typeof reader === "function") {
+            try {
+                current = String(reader() ?? "");
+            } catch (e) {
+                ActionReceipts.restoreFailed(receiptId, `shelterState threw: ${e}`);
+                return false;
+            }
+        }
+        const action = ActionReceipts.restore(receiptId, current);
+        if (action !== "restore")
+            return action === "preserve";
+        try {
+            hook();
+        } catch (e) {
+            ActionReceipts.restoreFailed(receiptId, `unshelter hook threw: ${e}`);
+            return false;
+        }
         return true;
     }
 

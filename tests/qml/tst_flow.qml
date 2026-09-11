@@ -95,4 +95,35 @@ TestCase {
         compare(scene.flow.planes.length,4);
         compare(scene.flow.planes.filter(p => p.active).length,0);
     }
+    function test_contention_preview_is_a_projection() {
+        const negotiation = {id:9,resource:'cpu',resourceLabel:'CPU',unit:'cores',total:9,budget:7.2,
+            claimant:{owner:'ai',amount:6},requestor:{owner:'gaming',amount:3},claimantSuspendable:true};
+        scene.pending = negotiation;
+        scene.projection = Model.projection(negotiation, [{owner:'ai',resource:'cpu',amount:6}]);
+        wait(20);
+        const preview = findChild(scene,'contentionPreview');
+        compare(preview.visible,true);
+        verify(preview.text.indexOf('Projection') === 0);
+        verify(preview.text.indexOf('6 cores') > 0);
+        verify(preview.text.indexOf('Nothing changes until you choose') > 0);
+        compare(decision.count,0);
+    }
+    function test_preview_hidden_without_a_negotiation() {
+        scene.pending = null;
+        scene.projection = null;
+        wait(20);
+        compare(findChild(scene,'contentionPreview').visible,false);
+    }
+    function test_receipt_lens_does_not_promote_a_request() {
+        scene.flow = Model.build([], {cpu:{capacity:8,safetyMargin:0.1,unit:'cores'}}, {}, {}, {},
+            [{token:'w1',plane:'ai',owner:'ai',label:'llama',trigger:'model-resident',status:'stale',claims:[]}],
+            [{id:'r1',profileId:'ai',kind:'model-unload',status:'requested',requestedAt:0}]);
+        wait(20);
+        mouseClick(findChild(scene,'workload-ai'));
+        compare(scene.selectedReceipts.length,1);
+        compare(scene.selectedReceipts[0].statusLabel,'Requested');
+        compare(scene.selectedWork[0].stale,true);
+        verify(scene.selectedWork[0].detail.indexOf('source went quiet') > 0);
+        verify(findChild(scene,'exportReceiptsAction').visible);
+    }
 }
