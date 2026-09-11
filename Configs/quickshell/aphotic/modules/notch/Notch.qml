@@ -165,13 +165,14 @@ StyledRect {
     radius: root.collapsedThick / 2 + (Tokens.rounding.extraLarge - root.collapsedThick / 2) * root.alongT
     color: Colours.tPalette.m3surfaceContainer
 
-    layer.enabled: true
-    layer.effect: MultiEffect {
-        shadowEnabled: true
-        shadowColor: Colours.palette.m3shadow
-        shadowOpacity: 0.5
-        shadowBlur: 0.5
-        shadowVerticalOffset: 2
+    // Shadow from the shape, not from the content. The notch redraws
+    // whenever its idle strip ticks, and layering the whole surface meant
+    // every one of those ticks re-ran a five-level blur pyramid. See
+    // components/ShapeShadow.qml.
+    ShapeShadow {
+        anchors.fill: parent
+        radius: root.radius
+        color: root.color
     }
 
     // Gated here rather than mounted inside NotchProcessTile: the tile
