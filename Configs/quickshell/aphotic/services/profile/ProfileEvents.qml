@@ -25,7 +25,7 @@ import qs.services.profile
 Singleton {
     id: root
 
-    readonly property var kinds: ["compositor.raw", "window.open", "window.close", "window.focus", "workspace.focus", "monitor.change", "profile.phase", "profile.anomaly", "resource.claim", "resource.negotiation"]
+    readonly property var kinds: ["compositor.raw", "window.open", "window.close", "window.focus", "workspace.focus", "monitor.change", "profile.phase", "profile.anomaly", "resource.claim", "resource.negotiation", "workload.passport", "action.receipt"]
 
     readonly property int subscriberCount: root._subs.length
     readonly property bool idle: root._subs.length === 0
@@ -138,6 +138,40 @@ Singleton {
 
         function onNegotiationResolved(negotiation: var, decision: string): void {
             root.publish("resource.negotiation", { action: "resolved", decision: decision, negotiation: negotiation });
+        }
+    }
+
+    Connections {
+        target: WorkloadPassports
+        enabled: !root.idle
+
+        function onOpened(passport: var): void {
+            root.publish("workload.passport", { action: "open", passport: passport });
+        }
+
+        function onChanged(passport: var): void {
+            root.publish("workload.passport", { action: "update", passport: passport });
+        }
+
+        function onStaled(passport: var): void {
+            root.publish("workload.passport", { action: "stale", passport: passport });
+        }
+
+        function onEnded(passport: var): void {
+            root.publish("workload.passport", { action: "close", passport: passport });
+        }
+    }
+
+    Connections {
+        target: ActionReceipts
+        enabled: !root.idle
+
+        function onFiled(receipt: var): void {
+            root.publish("action.receipt", { action: "filed", receipt: receipt });
+        }
+
+        function onSettled(receipt: var): void {
+            root.publish("action.receipt", { action: "settled", receipt: receipt });
         }
     }
 }

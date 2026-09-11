@@ -19,13 +19,20 @@ Rectangle {
     property var flow: ({resources:[],workloads:[],edges:[],planes:[],claimCount:0,contentionCount:0})
     property var metrics: []
     property var pending: null
+    // The declared-budget arithmetic behind the pending negotiation. A
+    // projection, never a measurement, and never an action.
+    property var projection: null
     property var events: []
     property bool motion: true
     property string selectionKind: "resource"
     property string selectionKey: "gpu-vram"
     property real travel: 1
     readonly property var selected: (selectionKind === "resource" ? flow.resources : selectionKind === "plane" ? (flow.planes || []) : flow.workloads).find(n => n.key === selectionKey) || null
+    readonly property var selectedWork: root.selected && root.selected.work ? root.selected.work : []
+    readonly property var selectedReceipts: root.selected && root.selected.receipts ? root.selected.receipts : []
+    readonly property int receiptCount: (root.flow.receipts || []).length
     signal decide(int negotiationId, string decision)
+    signal exportReceipts()
 
     // The map only changes when the model's signature changes. Metric
     // ticks and palette changes rebuild `flow` every second without
@@ -194,6 +201,7 @@ Rectangle {
                     function wy(i: int): real { return (i + 0.5) * height / Math.max(1,root.flow.workloads.length); }
                     Canvas {
                         id: paths
+                        objectName: "flowPaths"
                         anchors.fill: parent
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
@@ -306,14 +314,72 @@ Rectangle {
                             }
                         }
                         Copy { width: parent.width; visible: root.selected && root.selected.claims.length > 64; text: "Inspector limited to 64 claims."; color: root.warning; wrapMode: Text.WordWrap }
-                        Copy { width: parent.width; text: "ACTION TRUTH\nLifecycle phase is reported by the engine. Individual applied-action receipts are not yet available. Dimming does not change process scheduling."; wrapMode: Text.WordWrap; color: root.muted; font.pixelSize: 11 }
+
+                        Copy {
+                            width: parent.width
+                            visible: root.selectedWork.length > 0
+                            text: "REPORTED WORK"
+                            color: root.accent; font.pixelSize: 10; font.letterSpacing: 1.5
+                        }
+                        Repeater {
+                            model: root.selectedWork.slice(0,16)
+                            Column {
+                                id: work
+                                required property var modelData
+                                width: parent.width
+                                spacing: 3
+                                Copy { width: parent.width; text: work.modelData.label; wrapMode: Text.WordWrap }
+                                Copy {
+                                    width: parent.width
+                                    text: work.modelData.detail
+                                    color: work.modelData.stale ? root.warning : root.muted
+                                    wrapMode: Text.WordWrap; font.pixelSize: 11
+                                }
+                            }
+                        }
+
+                        Copy {
+                            width: parent.width
+                            text: "WHAT CHANGED"
+                            color: root.accent; font.pixelSize: 10; font.letterSpacing: 1.5
+                        }
+                        Repeater {
+                            model: root.selectedReceipts.slice(0,16)
+                            Column {
+                                id: receipt
+                                required property var modelData
+                                width: parent.width
+                                spacing: 3
+                                Copy { width: parent.width; text: receipt.modelData.kind; wrapMode: Text.WordWrap; font.pixelSize: 12 }
+                                Copy {
+                                    width: parent.width
+                                    text: receipt.modelData.statusLabel + (receipt.modelData.error ? " · " + receipt.modelData.error : "")
+                                    color: receipt.modelData.status === "failed" || receipt.modelData.status === "restore-failed" ? root.warning
+                                        : receipt.modelData.status === "requested" ? root.secondary : root.muted
+                                    wrapMode: Text.WordWrap; font.pixelSize: 11
+                                }
+                            }
+                        }
+                        Copy {
+                            width: parent.width
+                            visible: root.selectedReceipts.length === 0
+                            text: "No actions recorded for this node. A lifecycle phase is the engine reporting movement, not proof an external command landed."
+                            wrapMode: Text.WordWrap; color: root.muted; font.pixelSize: 11
+                        }
+                        Action {
+                            objectName: "exportReceiptsAction"
+                            visible: root.receiptCount > 0
+                            text: "Export receipts"
+                            onClicked: root.exportReceipts()
+                        }
+                        Copy { width: parent.width; text: "Dimming does not change process scheduling."; wrapMode: Text.WordWrap; color: root.muted; font.pixelSize: 11 }
                     }
                 }
             }
         }
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: root.pending ? 82 : 46
+            implicitHeight: root.pending ? (root.projection ? 108 : 82) : 46
             radius: 14
             color: root.pending ? Qt.alpha(root.warning,0.09) : root.surface
             border.color: root.pending ? Qt.alpha(root.warning,0.4) : "transparent"
@@ -323,6 +389,17 @@ Rectangle {
                     Layout.fillWidth: true
                     text: root.pending ? "NEGOTIATION · " + root.pending.resourceLabel + " · " + root.pending.claimant.owner + " ↔ " + root.pending.requestor.owner : (root.events.length ? root.events[0] : "Listening while visible · no additional process scanner")
                     color: root.pending ? root.warning : root.muted
+                }
+                Copy {
+                    objectName: "contentionPreview"
+                    Layout.fillWidth: true
+                    visible: !!root.pending && !!root.projection
+                    font.pixelSize: 11
+                    color: root.projection && root.projection.fits ? root.secondary : root.warning
+                    text: root.projection
+                        ? "Projection · asks " + root.projection.requested + " · " + root.projection.owner + " holds " + root.projection.reclaimable
+                            + " · stopping it leaves " + root.projection.after + " against a " + root.projection.budget + " budget. " + root.projection.note
+                        : ""
                 }
                 RowLayout {
                     visible: !!root.pending

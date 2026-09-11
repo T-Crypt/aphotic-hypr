@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
+import Quickshell
 import Quickshell.Services.UPower
 import qs.services
 import qs.services.profile
@@ -37,8 +38,9 @@ Item {
             muted: Colours.palette.m3onSurfaceVariant
             motion: root.motion
             onMotionChanged: root.motion = motion
-            flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles, root.layers)
+            flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles, root.layers, WorkloadPassports.live, ActionReceipts.all)
             pending: ResourceEngine.pending
+            projection: Model.projection(ResourceEngine.pending, ResourceEngine.claims)
             metrics: [
                 {label:"CPU", value:Math.round(SystemUsage.cpuPerc*100)+"%"},
                 {label:"GPU", value:SystemUsage.gpuStatsAvailable ? Math.round(SystemUsage.gpuPerc*100)+"%" : "Unavailable"},
@@ -59,9 +61,25 @@ Item {
             function record(message: string): void {
                 events = [Qt.formatTime(new Date(),"hh:mm:ss") + " · " + message].concat(events).slice(0,12);
             }
+            // Export is an explicit user action and writes nothing on its
+            // own: the text goes to the clipboard, so the user decides
+            // where it lands.
+            onExportReceipts: {
+                Quickshell.clipboardText = ActionReceipts.exportText();
+                scene.record("receipts copied to clipboard");
+            }
             onDecide: (negotiationId, decision) => {
                 if (ResourceEngine.pending && ResourceEngine.pending.id === negotiationId)
                     ResourceEngine.resolve(decision);
+            }
+            // Inside the visibility-gated loader, so it stops with the
+            // view. Passport staleness only matters to something looking
+            // at it.
+            Timer {
+                running: WorkloadPassports.liveCount > 0
+                interval: 15000
+                repeat: true
+                onTriggered: WorkloadPassports.refresh()
             }
             SystemUsageWatch {}
             NetworkUsageWatch {}
@@ -69,6 +87,18 @@ Item {
                 target: ProfileEngine
                 function onPhaseChanged(id: string, from: string, to: string): void {
                     scene.record(id + " · " + from + " → " + to);
+                }
+            }
+            Connections {
+                target: ActionReceipts
+                function onSettled(receipt: var): void {
+                    scene.record(receipt.profileId + " · " + receipt.kind + " · " + ActionReceipts.label(receipt));
+                }
+            }
+            Connections {
+                target: WorkloadPassports
+                function onStaled(passport: var): void {
+                    scene.record(passport.label + " · source went quiet");
                 }
             }
             Connections {
