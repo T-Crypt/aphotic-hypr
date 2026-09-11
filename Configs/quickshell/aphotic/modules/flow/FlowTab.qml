@@ -38,7 +38,19 @@ Item {
             muted: Colours.palette.m3onSurfaceVariant
             motion: root.motion
             onMotionChanged: root.motion = motion
-            flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles, root.layers, WorkloadPassports.live, ActionReceipts.all)
+            flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles, root.layers, WorkloadPassports.live, ActionReceipts.all, ({
+                enabled: Settings.flowShellActivity,
+                ready: ShellUsage.ready,
+                cpuPerc: ShellUsage.cpuPerc,
+                cores: ShellUsage.cores,
+                memoryMib: ShellUsage.memoryMib,
+                gpuNote: ShellUsage.gpuNote
+            }))
+            shellActivity: Settings.flowShellActivity
+            onShellActivityToggled: {
+                Settings.flowShellActivity = !Settings.flowShellActivity;
+                scene.record(Settings.flowShellActivity ? "shell activity shown" : "shell activity hidden");
+            }
             pending: ResourceEngine.pending
             projection: Model.projection(ResourceEngine.pending, ResourceEngine.claims)
             metrics: [
@@ -80,6 +92,16 @@ Item {
                 interval: 15000
                 repeat: true
                 onTriggered: WorkloadPassports.refresh()
+            }
+            // Aphotic only measures itself while the layer is on and the
+            // view is up. Off by default, and torn down with the loader.
+            LazyLoader {
+                active: Settings.flowShellActivity
+
+                QtObject {
+                    Component.onCompleted: ShellUsage.acquire()
+                    Component.onDestruction: ShellUsage.release()
+                }
             }
             SystemUsageWatch {}
             NetworkUsageWatch {}

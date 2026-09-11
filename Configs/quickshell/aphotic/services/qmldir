@@ -28,6 +28,7 @@ singleton SafeMode 1.0 SafeMode.qml
 singleton SessionLockState 1.0 SessionLockState.qml
 singleton Settings 1.0 Settings.qml
 singleton Switcher 1.0 Switcher.qml
+singleton ShellUsage 1.0 ShellUsage.qml
 singleton SystemCapacity 1.0 SystemCapacity.qml
 singleton SystemUsage 1.0 SystemUsage.qml
 singleton Themes 1.0 Themes.qml

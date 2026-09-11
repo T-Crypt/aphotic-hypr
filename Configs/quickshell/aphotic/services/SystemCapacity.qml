@@ -42,6 +42,18 @@ Singleton {
             root._memProc.running = true;
     }
 
+    // Read a capacity without declaring it. Flow's shell-activity layer
+    // needs the thread count to turn the shell's own CPU time into a
+    // percentage, and that is a display detail, not a claim on anything.
+    function probe(key: string): void {
+        if (root._known[key])
+            return;
+        if (key === "cpu")
+            root._cpuProc.running = true;
+        else if (key === "memory")
+            root._memProc.running = true;
+    }
+
     function release(key: string): void {
         if (!root._holders[key])
             return;

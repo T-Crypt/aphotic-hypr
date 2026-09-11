@@ -98,7 +98,29 @@ function summarize(claims, specs, states, profiles, layers, passports, receipts)
         pendingActions:receipts.filter(r => r.status === 'requested').length};
 }
 
-function build(claims, specs, states, profiles, layers, passports, receipts) {
+// The shell's own draw, as a node on the map that is explicitly not a
+// claim. It never reaches resourceNodes, claimCount or contention: Aphotic
+// does not arbitrate against the software it is asking to yield, and a
+// number that cannot cause a negotiation must not be drawn as if it could.
+function shellNode(shell) {
+    if (!shell || !shell.enabled)
+        return null;
+    const cores = number(shell.cores);
+    const mib = number(shell.memoryMib);
+    const cpuCopy = shell.ready ? amount(cores, 'threads') + ' (' + Math.round(number(shell.cpuPerc) * 1000) / 10 + '% of CPU)' : 'sampling';
+    const memCopy = mib > 0 ? amount(mib, 'MiB') : 'sampling';
+    return {key: '__shell', label: 'Aphotic shell', shell: true, foreground: false,
+        plane: '', phase: 'shell activity', claims: [],
+        resources: ['cpu', 'memory'],
+        cpuPerc: number(shell.cpuPerc), cores: cores, memoryMib: mib,
+        summary: 'Shell activity · ' + cpuCopy + ' · ' + memCopy,
+        detail: 'What Aphotic itself is using, measured from its own process.\n'
+            + 'CPU: ' + cpuCopy + '\nMemory: ' + memCopy
+            + '\nThis is not a claim. It is never arbitrated, never contended and never negotiated.'
+            + (shell.gpuNote ? '\n' + shell.gpuNote : '')};
+}
+
+function build(claims, specs, states, profiles, layers, passports, receipts, shell) {
     claims = claims || [];
     specs = specs || {};
     states = states || {};
@@ -127,9 +149,15 @@ function build(claims, specs, states, profiles, layers, passports, receipts) {
             summary:(foreground ? 'Foreground' : 'Background') + ' · ' + held.length + ' claims' + (work.length ? ' · ' + work.length + ' work' : '')};
     }).sort((a,b) => Number(b.foreground)-Number(a.foreground) || a.key.localeCompare(b.key));
     const shownResources = resources.slice().sort((a,b) => Number(b.contended)-Number(a.contended) || Number(b.claims.length>0)-Number(a.claims.length>0)).slice(0,6);
-    const shownWorkloads = workloads.slice(0,8);
+    const shell_ = shellNode(shell);
+    const shownWorkloads = workloads.slice(0,8).concat(shell_ ? [shell_] : []);
     const edges = [];
     shownResources.forEach((r, ri) => shownWorkloads.forEach((w, wi) => {
+        if (w.shell) {
+            if (w.resources.indexOf(r.key) >= 0)
+                edges.push({resource:ri, workload:wi, contended:false, foreground:false, shell:true});
+            return;
+        }
         if (w.claims.some(c => c.resource === r.key))
             edges.push({resource:ri, workload:wi, contended:r.contended, foreground:w.foreground});
     }));
@@ -137,10 +165,13 @@ function build(claims, specs, states, profiles, layers, passports, receipts) {
     return {resources:shownResources, workloads:shownWorkloads, edges:edges.slice(0,24), planes:planes,
         workloadCount:passports.length, staleCount:passports.filter(p => p.status === 'stale').length,
         pendingActions:receipts.filter(r => r.status === 'requested').length, receipts:receipts,
-        hiddenResources:resources.length-shownResources.length, hiddenWorkloads:workloads.length-shownWorkloads.length,
+        hiddenResources:resources.length-shownResources.length,
+        hiddenWorkloads:Math.max(0, workloads.length-8),
+        shellShown:!!shell_,
         hiddenEdges:Math.max(0,edges.length-24), claimCount:claims.length,
         contentionCount:resources.filter(r=>r.contended).length,
-        signature:signature(claims, resources, planes, passports, receipts)};
+        signature:signature(claims, resources, planes, passports, receipts)
+            + (shell_ ? '#shell' : '')};
 }
 
 // --- workload passports -------------------------------------------------

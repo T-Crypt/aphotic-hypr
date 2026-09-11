@@ -126,4 +126,37 @@ TestCase {
         verify(scene.selectedWork[0].detail.indexOf('source went quiet') > 0);
         verify(findChild(scene,'exportReceiptsAction').visible);
     }
+    function test_shell_activity_is_opt_in_and_not_a_claim() {
+        const shell = {enabled:true, ready:true, cpuPerc:0.031, cores:1, memoryMib:480};
+        scene.flow = Model.build([{id:'a',owner:'gaming',resource:'cpu',amount:3,priority:'foreground',origin:'dynamic',label:'Game'}],
+            {cpu:{capacity:8,safetyMargin:0.1,unit:'cores'}}, {}, {}, {}, [], [], shell);
+        scene.shellActivity = true;
+        wait(20);
+        const node = findChild(scene,'workload-__shell');
+        verify(node);
+        verify(node.text.indexOf('Aphotic shell') > 0);
+        mouseClick(node);
+        compare(scene.selected.key,'__shell');
+        compare(scene.selected.claims.length,0);
+        compare(scene.flow.claimCount,1);
+        verify(scene.selected.detail.indexOf('never arbitrated') > 0);
+        compare(findChild(scene,'shellActivityAction').chosen,true);
+    }
+    function test_shell_activity_off_leaves_no_node() {
+        scene.shellActivity = false;
+        scene.flow = Model.build([], {cpu:{capacity:8,safetyMargin:0.1,unit:'cores'}}, {}, {}, {}, [], [], {enabled:false});
+        wait(20);
+        compare(findChild(scene,'workload-__shell'), null);
+        compare(findChild(scene,'shellActivityAction').chosen,false);
+    }
+    function test_shell_activity_button_asks_rather_than_assumes() {
+        const spy = Qt.createQmlObject('import QtTest; SignalSpy {}', test);
+        spy.target = scene;
+        spy.signalName = 'shellActivityToggled';
+        scene.shellActivity = false;
+        wait(20);
+        mouseClick(findChild(scene,'shellActivityAction'));
+        compare(spy.count,1);
+        compare(scene.shellActivity,false,'the view does not flip itself; the setting owns the state');
+    }
 }
