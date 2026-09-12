@@ -16,6 +16,12 @@ def test_minimal_profile_excludes_extras():
     assert "hyprland" not in result["main"], "hyprland is orchestrator-special-cased, not profile data"
 
 
+def test_minimal_profile_ships_shell_fonts():
+    result = merge_packages(str(ROOT / "profiles/base/minimal.toml"), [])
+    for package in ["ttf-material-symbols-variable", "inter-font", "ttf-jetbrains-mono-nerd"]:
+        assert package in result["main"], f"{package} missing from minimal shell profile"
+
+
 def test_full_profile_has_expected_packages():
     result = merge_packages(str(ROOT / "profiles/base/full.toml"), [])
     for pkg in ["quickshell", "firefox", "starship", "sddm", "matugen"]:
@@ -126,6 +132,7 @@ def test_multiple_layers_and_custom_apps_all_merge():
 
 if __name__ == "__main__":
     test_minimal_profile_excludes_extras()
+    test_minimal_profile_ships_shell_fonts()
     test_full_profile_has_expected_packages()
     test_gaming_layer_adds_packages()
     test_exploit_layer_adds_packages()

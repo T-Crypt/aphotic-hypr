@@ -455,6 +455,26 @@ restart_shell_if_enabled() {
   fi
 }
 
+start_awww_daemon_if_needed() {
+  command -v awww-daemon >/dev/null 2>&1 || return 0
+  local user_id
+  user_id="$(id -u)"
+  pgrep -u "$user_id" -x awww-daemon >/dev/null 2>&1 && return 0
+  echo -e "$CNT - Starting awww-daemon for the active graphical session..."
+  awww-daemon &>> "$INSTLOG" &
+  disown 2>/dev/null || true
+}
+
+initialize_graphical_session() {
+  systemctl --user is-active --quiet graphical-session.target || return 0
+  echo -e "$CNT - A graphical session is already running -- initializing the wallpaper and shell now."
+  start_awww_daemon_if_needed
+  if [[ -x "$HOME/.local/bin/aphotic" ]]; then
+    "$HOME/.local/bin/aphotic" theme ensure-default &>> "$INSTLOG" || echo -e "$CWR - Could not initialize the default theme; the shell will still start (run 'aphotic theme ensure-default' manually if the wallpaper is blank)."
+  fi
+  restart_shell_if_enabled
+}
+
 config_sync() {
   if [[ ! -f "$APHOTIC_TOML" ]]; then
     echo -e "$CWR - No aphotic.toml found -- inferring the installed profile from packages so the System pane isn't stuck on \"unknown\"."

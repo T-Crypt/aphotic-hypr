@@ -490,6 +490,8 @@ main() {
     fi
   fi
 
+  write_aphotic_toml "$APHOTIC_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)" "$ISAMD"
+
   if [[ "$want_configs" == "1" ]]; then
     CFG_COPIED=1
     deploy_user_configs
@@ -499,22 +501,12 @@ main() {
     fi
     install_vscode_extensions
 
-    # Hyprland's exec-once only fires at its own startup, never on a config
-    # reload -- if a graphical session is already up (e.g. Omarchy's sddm
-    # autologin straight into Hyprland, or install.sh just run from a
-    # terminal inside an existing session), aphotic-shell.service's exec-once
-    # start already silently missed its one chance. Start it explicitly now.
-    if systemctl --user is-active --quiet graphical-session.target; then
-      echo -e "$CNT - A graphical session is already running -- starting the shell now rather than waiting on Hyprland's exec-once, which won't fire again for this session."
-      restart_shell_if_enabled
-    fi
+    initialize_graphical_session
   fi
 
   print_stage 7 "Shell setup"
   activate_starship
   activate_zsh
-
-  write_aphotic_toml "$APHOTIC_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)" "$ISAMD"
 
   echo -e "\n\e[1;32m── Install summary ──\e[0m"
   echo -e "  Profile:       $PROFILE"
