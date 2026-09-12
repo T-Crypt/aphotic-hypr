@@ -107,7 +107,7 @@ _resolve_install_cmd() {
     _pacman_install_cmd
     return 0
   fi
-  # --removemake: AUR builds (wallust-git needs rust, python-pyamdgpuinfo
+  # --removemake: AUR builds (wallust needs rust, python-pyamdgpuinfo
   # needs cython/python-build/python-installer, etc.) otherwise leave their
   # makedepends behind as orphans forever -- harmless, but Omarchy's own
   # `omarchy update` surfaces exactly those as "orphan packages" and offers
