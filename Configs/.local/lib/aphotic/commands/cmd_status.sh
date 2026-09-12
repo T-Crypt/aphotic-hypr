@@ -67,8 +67,11 @@ HELP
     IFS=$'\t' read -r _ daemon_state _ <<<"$(grep '^daemon' <<<"$services")"
     IFS=$'\t' read -r _ dm_state _ <<<"$(grep '^displaymanager' <<<"$services")"
 
+    local passthrough
+    passthrough="$(_aphotic_state_passthrough --json)"
     if [[ "$as_json" -eq 1 ]]; then
         jq -nc \
+            --argjson passthrough "$passthrough" \
             --arg version "$APHOTIC_VERSION" \
             --arg profile "${profile:-}" \
             --arg layers "${layers:-}" \
@@ -83,7 +86,7 @@ HELP
             --argjson pluginsDisabled "$disabled" \
             --arg daemon "$daemon_state" \
             --arg displayManager "$dm_state" \
-            '{version: $version, profile: $profile, layers: ($layers | split(",") | map(select(length > 0))),
+            '{passthrough: $passthrough, version: $version, profile: $profile, layers: ($layers | split(",") | map(select(length > 0))),
               versionDrift: {status: $driftStatus, branch: $driftBranch, head: $driftHead, commitsBehind: $driftBehind},
               plugins: {declared: $pluginsDeclared, ok: $pluginsOk, missing: $pluginsMissing, extra: $pluginsExtra, disabled: $pluginsDisabled},
               services: {daemon: $daemon, displayManager: $displayManager}}'
@@ -113,6 +116,7 @@ HELP
     else
         echo "Plugins:  not declared in aphotic.toml, drift not tracked"
     fi
+    printf 'Passthrough: %s\n' "$(jq -r '.status' <<<"$passthrough")"
     printf 'Daemon:   %s\n' "$daemon_state"
     printf 'Display manager: %s\n' "$dm_state"
 }

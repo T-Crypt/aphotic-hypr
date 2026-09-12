@@ -3,7 +3,7 @@ name = "full"
 description = "Full install: today's complete package set"
 
 [packages]
-prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcontrols2", "qt5-graphicaleffects", "gtk3", "polkit-gnome", "pipewire", "wireplumber", "jq", "curl", "wl-clipboard", "cliphist", "python-requests", "python-pillow", "pacman-contrib", "kvantum", "kvantum-qt5", "lm_sensors", "pciutils", "nvidia-utils", "radeontop", "intel-gpu-tools", "glib2", "dbus", "libnotify", "procps-ng", "util-linux", "gawk"]
+prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcontrols2", "qt5-graphicaleffects", "gtk3", "polkit-gnome", "pipewire", "wireplumber", "jq", "curl", "wl-clipboard", "cliphist", "python", "python-requests", "python-pillow", "pacman-contrib", "kvantum", "kvantum-qt5", "lm_sensors", "pciutils", "nvidia-utils", "radeontop", "intel-gpu-tools", "glib2", "dbus", "libnotify", "procps-ng", "util-linux", "mkinitcpio", "gawk"]
 # qt6-imageformats is what lets the shell decode WebP, TIFF, TGA and
 # JPEG 2000; Qt reads only PNG, JPEG, GIF and SVG without it. Desktop pet
 # sprite sheets are WebP wherever they come from, and an image Qt cannot

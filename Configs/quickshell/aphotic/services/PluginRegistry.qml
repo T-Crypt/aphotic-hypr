@@ -99,6 +99,7 @@ Singleton {
                 label: profile.label || profile.id,
                 snapshot: profile.snapshot ?? [],
                 requiresLayer: profile.requires_layer ?? "",
+                requiresPlugin: profile.requires_plugin ?? "",
                 requiresData: profile.requires_data ?? "",
                 componentUrl: `file://${root.pluginsDir}/${name}/${profile.component}`
             };
@@ -133,6 +134,7 @@ Singleton {
                 label: provider.label || provider.id,
                 backend: provider.backend,
                 requiresLayer: provider.requires_layer ?? "",
+                requiresPlugin: provider.requires_plugin ?? "",
                 requiresData: provider.requires_data ?? "",
                 statePath: `${Quickshell.env("HOME")}/.config/aphotic/plugins/${name}/${provider.state || "provider.json"}`
             };
@@ -167,6 +169,7 @@ Singleton {
                     label: action.label || action.id,
                     icon: action.icon || "bolt",
                     requiresLayer: action.requires_layer ?? "",
+                    requiresPlugin: action.requires_plugin ?? "",
                     requiresData: action.requires_data ?? "",
                     componentUrl: `file://${root.pluginsDir}/${name}/${action.component}`
                 };
@@ -271,6 +274,7 @@ Singleton {
             icon: s.icon || "extension",
             label: s.label || name,
             requiresLayer: s.requires_layer ?? "",
+            requiresPlugin: s.requires_plugin ?? "",
             requiresData: s.requires_data ?? "",
             parent: s.parent || root._defaultParent(s),
             // Overlay only. The host budgets its surface from these once
@@ -302,7 +306,8 @@ Singleton {
     }
 
     function _gateSatisfied(surface: var): bool {
-        return root._layerEnabled(surface.requiresLayer) && root._dataAvailable(surface.requiresData);
+        return root._layerEnabled(surface.requiresLayer) && root._dataAvailable(surface.requiresData)
+            && (!surface.requiresPlugin || (surface.requiresPlugin !== surface.plugin && root.isEnabled(surface.requiresPlugin)));
     }
 
     // An unrecognised token fails closed. A manifest naming a layer or a

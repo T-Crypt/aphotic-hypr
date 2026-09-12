@@ -30,7 +30,9 @@ import qs.services.profile
 Singleton {
     id: root
 
-    readonly property var claims: root._claims
+    readonly property var claims: root._claims.concat(root.leaseClaims)
+    property var leaseClaims: []
+    property bool leaseRecoveryBlocked: false
     readonly property var resources: root._resources
 
     // Head of the negotiation queue -- the one the prompt is showing.
@@ -39,7 +41,7 @@ Singleton {
     readonly property var pending: root._queue.length > 0 ? root._queue[0] : null
     readonly property int pendingCount: root._queue.length
 
-    readonly property bool dormant: root._claims.length === 0 && root._queue.length === 0
+    readonly property bool dormant: root.claims.length === 0 && root._queue.length === 0
 
     // Resources that have claims but no declared capacity. _contentionFor
     // skips those deliberately -- an undeclared resource has nothing to
@@ -123,11 +125,11 @@ Singleton {
     }
 
     function claimsFor(resource: string): var {
-        return root._claims.filter(c => c.resource === resource);
+        return root.claims.filter(c => c.resource === resource);
     }
 
     function claimsOf(owner: string): var {
-        return root._claims.filter(c => c.owner === owner);
+        return root.claims.filter(c => c.owner === owner);
     }
 
     // Returns the negotiation this registration raised, or null. A caller
@@ -140,6 +142,12 @@ Singleton {
             return null;
         }
 
+        const held = root.leaseClaims.filter(c => c.resource === claim.resource);
+        const spec = root.resourceSpec(claim.resource);
+        const total = root.claimsFor(claim.resource).filter(c => c.id !== claim.id).reduce((n, c) => n + c.amount, claim.amount);
+        if (root.leaseRecoveryBlocked || held.some(c => c.exclusive)
+                || (held.length && (!spec || total > spec.capacity * (1 - spec.safetyMargin))))
+            return {blocked: true, reason: "Resource held by host handover", resource: claim.resource};
         const next = root._claims.filter(c => c.id !== claim.id);
         next.push(claim);
         root._claims = next;

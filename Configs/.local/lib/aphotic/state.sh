@@ -149,3 +149,11 @@ _aphotic_state_service_drift() {
         printf 'displaymanager\tok\t\n'
     fi
 }
+
+# Opted-out passthrough performs no hardware discovery.
+_aphotic_state_passthrough() {
+    python3 "${LIB_DIR}/passthrough.py" --config "${APHOTIC_DOTS_DIR}/aphotic.toml" "$@" || {
+        local result=$?
+        [[ "$result" -eq 1 ]] || return "$result"
+    }
+}

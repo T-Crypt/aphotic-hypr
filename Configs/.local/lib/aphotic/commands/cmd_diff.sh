@@ -79,6 +79,12 @@ HELP
     [[ "$dm_state" == "conflict" ]] && changes=$((changes + 1))
     [[ "$drift_status" == "behind" ]] && changes=$((changes + 1))
 
+    local passthrough
+    passthrough="$(_aphotic_state_passthrough --json)"
+    local passthrough_changes
+    passthrough_changes="$(jq '[.checks[] | select(.status != "ok")] | length' <<<"$passthrough")"
+    [[ "$(jq -r '.status' <<<"$passthrough")" != INVALID ]] || passthrough_changes=1
+    changes=$((changes + passthrough_changes))
     if [[ "$as_json" -eq 1 ]]; then
         local missing_json="[]" plugin_missing_json="[]" plugin_extra_json="[]" plugin_disabled_json="[]"
         [[ -n "$missing_packages" ]] && missing_json="$(printf '%s\n' "$missing_packages" | jq -R . | jq -sc .)"
@@ -87,6 +93,7 @@ HELP
         [[ "${#plugin_disabled[@]}" -gt 0 ]] && plugin_disabled_json="$(printf '%s\n' "${plugin_disabled[@]}" | jq -R . | jq -sc .)"
 
         jq -nc \
+            --argjson passthrough "$passthrough" \
             --argjson missingPackages "$missing_json" \
             --argjson pluginsDeclared "$plugins_declared" \
             --argjson pluginsOk "$plugin_ok" \
@@ -99,7 +106,7 @@ HELP
             --arg versionStatus "$drift_status" \
             --argjson versionCommitsBehind "${drift_behind:-0}" \
             --argjson changesRequired "$changes" \
-            '{missingPackages: $missingPackages,
+            '{passthrough: $passthrough, missingPackages: $missingPackages,
               plugins: {declared: $pluginsDeclared, ok: $pluginsOk, missing: $pluginsMissing, extra: $pluginsExtra, disabled: $pluginsDisabled},
               services: {daemon: $daemon, displayManager: $displayManager, displayManagerDetail: $displayManagerDetail},
               version: {status: $versionStatus, commitsBehind: $versionCommitsBehind},
@@ -108,6 +115,8 @@ HELP
     fi
 
     echo "Aphotic system drift"
+    printf 'Passthrough: %s\n' "$(jq -r '.status' <<<"$passthrough")"
+    jq -r '.checks[] | "  [\(.status)] \(.key): desired \(.desired), actual \(.actual)"' <<<"$passthrough"
     echo
 
     if [[ "$missing_count" -eq 0 ]]; then

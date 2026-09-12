@@ -505,7 +505,7 @@ ShellRoot {
     // services/ that runs on its own rather than answering a reader
     // belongs in this list, and tests/test_singleton_reachability.py
     // fails the build if it does not.
-    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, Switcher]
+    readonly property var _residentSingletons: [Handover, SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, Switcher]
 
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than

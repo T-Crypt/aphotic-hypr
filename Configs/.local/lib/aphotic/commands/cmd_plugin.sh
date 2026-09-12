@@ -167,7 +167,7 @@ _aphotic_plugin_owns_json() {
 }
 
 _aphotic_plugin_surface_json() {
-    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent anchor width height trigger
+    local manifest="$1" section="$2" surface="$3" id icon label component layer dependency data parent anchor width height trigger
     component="$(aphotic_toml_get "$manifest" "$section" component)"
     [[ -n "$component" ]] || return 1
 
@@ -175,6 +175,7 @@ _aphotic_plugin_surface_json() {
     icon="$(aphotic_toml_get "$manifest" "$section" icon)"
     label="$(aphotic_toml_get "$manifest" "$section" label)"
     layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
+    dependency="$(aphotic_toml_get "$manifest" "$section" requires_plugin)"
     data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
     parent="$(aphotic_toml_get "$manifest" "$section" parent)"
     # Overlay only -- the surface budget the host sizes its window from
@@ -194,13 +195,14 @@ _aphotic_plugin_surface_json() {
         --arg label "${label:-}" \
         --arg component "$component" \
         --arg requires_layer "${layer:-}" \
+        --arg requires_plugin "${dependency:-}" \
         --arg requires_data "${data:-}" \
         --arg parent "${parent:-}" \
         --argjson anchor "$(jq -n --arg a "${anchor:-}" '$a')" \
         --argjson width "${width:-0}" \
         --argjson height "${height:-0}" \
         --argjson trigger "$(jq -n --arg t "${trigger:-}" '$t')" \
-        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height, trigger: $trigger}'
+        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_plugin: $requires_plugin, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height, trigger: $trigger}'
 }
 
 _aphotic_plugin_ui_json() {
@@ -265,7 +267,7 @@ _aphotic_plugin_ui_json() {
 # component, and a second declaration in the manifest would be a second
 # source of truth for the same fact, drifting the moment one is edited.
 _aphotic_plugin_profile_json() {
-    local manifest="$1" id label component layer data snapshot
+    local manifest="$1" id label component layer dependency data snapshot
     component="$(aphotic_toml_get "$manifest" profile component)"
     id="$(aphotic_toml_get "$manifest" profile id)"
     if [[ -z "$component" ]] || [[ -z "$id" ]]; then
@@ -275,6 +277,7 @@ _aphotic_plugin_profile_json() {
 
     label="$(aphotic_toml_get "$manifest" profile label)"
     layer="$(aphotic_toml_get "$manifest" profile requires_layer)"
+    dependency="$(aphotic_toml_get "$manifest" profile requires_plugin)"
     data="$(aphotic_toml_get "$manifest" profile requires_data)"
     snapshot="$(aphotic_toml_get_array "$manifest" profile snapshot | jq -R . | jq -s .)"
 
@@ -283,9 +286,10 @@ _aphotic_plugin_profile_json() {
         --arg label "${label:-$id}" \
         --arg component "$component" \
         --arg requires_layer "${layer:-}" \
+        --arg requires_plugin "${dependency:-}" \
         --arg requires_data "${data:-}" \
         --argjson snapshot "${snapshot:-[]}" \
-        '{id: $id, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, snapshot: $snapshot}'
+        '{id: $id, label: $label, component: $component, requires_layer: $requires_layer, requires_plugin: $requires_plugin, requires_data: $requires_data, snapshot: $snapshot}'
 }
 
 # The `cli` capability (manifest v3.2). A plugin declaring one contributes
@@ -296,7 +300,7 @@ _aphotic_plugin_profile_json() {
 # reads the manifest directly through aphotic_plugin_cli_resolve, since a
 # command must work whether or not a registry sync has run.
 _aphotic_plugin_cli_json() {
-    local manifest="$1" command subcommand script summary
+    local manifest="$1" command subcommand script summary layer dependency
     command="$(aphotic_toml_get "$manifest" cli command)"
     script="$(aphotic_toml_get "$manifest" cli script)"
     if [[ -z "$command" ]] || [[ -z "$script" ]]; then
@@ -306,13 +310,17 @@ _aphotic_plugin_cli_json() {
 
     subcommand="$(aphotic_toml_get "$manifest" cli subcommand)"
     summary="$(aphotic_toml_get "$manifest" cli summary)"
+    layer="$(aphotic_toml_get "$manifest" cli requires_layer)"
+    dependency="$(aphotic_toml_get "$manifest" cli requires_plugin)"
 
     jq -n \
+        --arg requires_layer "${layer:-}" \
+        --arg requires_plugin "${dependency:-}" \
         --arg command "$command" \
         --arg subcommand "${subcommand:-}" \
         --arg script "$script" \
         --arg summary "${summary:-}" \
-        '{command: $command, subcommand: $subcommand, script: $script, summary: $summary}'
+        '{requires_layer: $requires_layer, requires_plugin: $requires_plugin, command: $command, subcommand: $subcommand, script: $script, summary: $summary}'
 }
 
 # The `chat-provider` capability (manifest v3.3). A plugin declaring one
@@ -331,7 +339,7 @@ _aphotic_plugin_cli_json() {
 # re-pull or a re-render is a single atomic write the shell picks up live
 # rather than a snapshot that goes stale.
 _aphotic_plugin_chat_provider_json() {
-    local manifest="$1" id label backend state layer data
+    local manifest="$1" id label backend state layer dependency data
     id="$(aphotic_toml_get "$manifest" chat_provider id)"
     backend="$(aphotic_toml_get "$manifest" chat_provider backend)"
     if [[ -z "$id" ]] || [[ -z "$backend" ]]; then
@@ -342,6 +350,7 @@ _aphotic_plugin_chat_provider_json() {
     label="$(aphotic_toml_get "$manifest" chat_provider label)"
     state="$(aphotic_toml_get "$manifest" chat_provider state)"
     layer="$(aphotic_toml_get "$manifest" chat_provider requires_layer)"
+    dependency="$(aphotic_toml_get "$manifest" chat_provider requires_plugin)"
     data="$(aphotic_toml_get "$manifest" chat_provider requires_data)"
 
     jq -n \
@@ -350,8 +359,9 @@ _aphotic_plugin_chat_provider_json() {
         --arg backend "$backend" \
         --arg state "${state:-provider.json}" \
         --arg requires_layer "${layer:-}" \
+        --arg requires_plugin "${dependency:-}" \
         --arg requires_data "${data:-}" \
-        '{id: $id, label: $label, backend: $backend, state: $state, requires_layer: $requires_layer, requires_data: $requires_data}'
+        '{id: $id, label: $label, backend: $backend, state: $state, requires_layer: $requires_layer, requires_plugin: $requires_plugin, requires_data: $requires_data}'
 }
 
 # The `action` capability (manifest v3.7, `ACT-01`). An action is a named
@@ -368,7 +378,7 @@ _aphotic_plugin_chat_provider_json() {
 # this capability is given before that reader has to grow, and the sixth
 # action a plugin wants is the trigger to revisit it.
 _aphotic_plugin_action_entry_json() {
-    local manifest="$1" section="$2" id component icon label layer data
+    local manifest="$1" section="$2" id component icon label layer dependency data
     id="$(aphotic_toml_get "$manifest" "$section" id)"
     component="$(aphotic_toml_get "$manifest" "$section" component)"
     if [[ -z "$id" ]] || [[ -z "$component" ]]; then
@@ -378,6 +388,7 @@ _aphotic_plugin_action_entry_json() {
     icon="$(aphotic_toml_get "$manifest" "$section" icon)"
     label="$(aphotic_toml_get "$manifest" "$section" label)"
     layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
+    dependency="$(aphotic_toml_get "$manifest" "$section" requires_plugin)"
     data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
 
     jq -n \
@@ -386,8 +397,9 @@ _aphotic_plugin_action_entry_json() {
         --arg label "${label:-$id}" \
         --arg component "$component" \
         --arg requires_layer "${layer:-}" \
+        --arg requires_plugin "${dependency:-}" \
         --arg requires_data "${data:-}" \
-        '{id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data}'
+        '{id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_plugin: $requires_plugin, requires_data: $requires_data}'
 }
 
 _aphotic_plugin_actions_json() {
@@ -455,7 +467,7 @@ _aphotic_plugin_describe() {
     # second time is deliberate: a second description of that shape is the
     # class of bug the flag exists to catch.
     local stored expected drifted="false"
-    expected="$(jq -cS '{version, capabilities, owns, ui, profile, cli, chat_provider, actions}' <<<"$entry")"
+    expected="$(jq -cS '{version, capabilities, owns, ui, profile, cli, chat_provider, actions} | walk(if type == "object" then (if .requires_plugin == "" then del(.requires_plugin) else . end) | (if .requires_layer == "" then del(.requires_layer) else . end) else . end)' <<<"$entry")"
     # Missing keys are filled with the same null a fresh sync would write
     # BEFORE comparing. Without this, every entry on disk reports drift the
     # moment the registry schema grows a field -- one did (`profile`,
@@ -471,7 +483,7 @@ _aphotic_plugin_describe() {
     # drift. Drift means "this plugin's contract changed", and a
     # display string is not contract -- a manifest edit still refreshes
     # it on the next sync.
-    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({profile: null, cli: null, chat_provider: null, actions: null} + .) | {version, capabilities, owns, ui, profile, cli, chat_provider, actions} end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({profile: null, cli: null, chat_provider: null, actions: null} + .) | {version, capabilities, owns, ui, profile, cli, chat_provider, actions} | walk(if type == "object" then (if .requires_plugin == "" then del(.requires_plugin) else . end) | (if .requires_layer == "" then del(.requires_layer) else . end) else . end) end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
     [[ "$expected" != "$stored" ]] && drifted="true"
 
     jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"

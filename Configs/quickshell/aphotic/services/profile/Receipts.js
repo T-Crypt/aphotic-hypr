@@ -7,7 +7,7 @@
 // label only when the owner reports the operation succeeded, so a failed
 // action can never read as a visual success.
 
-var KINDS = ['dnd', 'scheduler', 'power', 'model-unload', 'workspace', 'shelter'];
+var KINDS = ['dnd', 'scheduler', 'power', 'model-unload', 'workspace', 'shelter', 'handover'];
 var STATUSES = ['requested', 'applied', 'failed', 'restored', 'restore-failed'];
 var LIMITS = {items: 128, text: 64};
 
@@ -160,4 +160,20 @@ function stats(state) {
     return {total: state.items.length, pending: pending(state).length,
         failed: state.items.filter(function (r) { return r.status === 'failed' || r.status === 'restore-failed'; }).length,
         dropped: state.dropped, rejected: state.rejected};
+}
+
+function importHandover(state, lease, stage) {
+    var id = 'handover:' + lease.id + ':' + stage.id;
+    var existing = byId(state, id);
+    var statuses = {prepared: 'requested', applying: 'requested', applied: 'applied', restored: 'restored', 'restore-failed': 'restore-failed'};
+    if (!statuses[stage.status]) return false;
+    var receipt = {id: id, profileId: lease.owner, workloadId: lease.id,
+        kind: 'handover', status: statuses[stage.status], requestedAt: stage.requestedAt || lease.createdAt || 0,
+        completedAt: stage.restoredAt || stage.completedAt || null, before: redact(stage.kind === 'file' ? 'saved host file' : JSON.stringify(stage.before)),
+        after: redact(stage.kind === 'file' ? 'owned host file' : JSON.stringify(stage.after)),
+        reason: redact(stage.id), error: redact(stage.error || stage.applyError || ''), preserved: !!stage.preserved};
+    if (existing) Object.assign(existing, receipt);
+    else state.items.push(receipt);
+    while (state.items.length > LIMITS.items) { state.items.shift(); state.dropped++; }
+    return true;
 }

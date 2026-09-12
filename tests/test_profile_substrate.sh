@@ -38,12 +38,15 @@ for s in ProfileEngine ResourceEngine; do
 done
 
 # Zero cost when no profile is active: the substrate owns no timer and
-# watches no file. StateSnapshot's two Process objects are on-demand only.
+# watches no file except the durable handover journal. StateSnapshot's two Process objects are on-demand only.
 for f in "$SUB"/*.qml "$UI"/*.qml; do
   grep -qE '^\s*Timer\s*\{' "$f" && fail "$f declares a Timer -- the substrate must add no polling"
-  grep -q 'FileView' "$f" && fail "$f uses a FileView -- the substrate must add no always-on file watch"
+  [[ "$f" == "$SUB/Handover.qml" ]] || ! grep -q 'FileView' "$f" || fail "$f uses a FileView -- the substrate must add no always-on file watch"
   grep -qE '^\s*Timer\s*\{|triggeredOnStart' "$f" && fail "$f looks like it polls"
 done
+
+[[ "$(grep -cE '^\s*FileView\s*\{' "$SUB/Handover.qml")" -eq 1 ]] || fail "handover must use one journal watch"
+grep -qE '^\s*Process\s*\{' "$SUB/Handover.qml" && fail "handover must not own a process"
 
 # Comments in these files legitimately name the things the code must never
 # do ("never touches kernel/sysctl"), so the safety greps below read code

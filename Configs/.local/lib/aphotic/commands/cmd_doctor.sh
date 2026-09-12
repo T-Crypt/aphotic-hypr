@@ -153,4 +153,6 @@ aphotic_cmd_doctor() {
     echo
     echo "Version:"
     _aphotic_doctor_version_drift
+    echo
+    _aphotic_state_passthrough
 }
