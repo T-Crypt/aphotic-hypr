@@ -90,7 +90,7 @@ install_software() {
   # On a terminal the spinner line carries the name itself; only the
   # non-TTY branch (no spinner) needs it printed up front.
   [[ -t 1 ]] || echo -en "$CNT - Now installing $pkg "
-  # --removemake: AUR builds (wallust-git needs rust, python-pyamdgpuinfo
+  # --removemake: AUR builds (wallust needs rust, python-pyamdgpuinfo
   # needs cython/python-build/python-installer, etc.) otherwise leave their
   # makedepends behind as orphans forever -- harmless, but Omarchy's own
   # `omarchy update` surfaces exactly those as "orphan packages" and offers
