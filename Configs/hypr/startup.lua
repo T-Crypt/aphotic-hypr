@@ -20,17 +20,17 @@ hl.on("hyprland.start", function()
     -- ever told awww-daemon what to show, leaving "No wallpaper set"
     -- until SUPER+SHIFT+W was used manually. Polls for the daemon's
     -- socket itself rather than assuming the sleep above was long enough.
-    hl.exec_cmd("aphotic theme ensure-default")
+    hl.exec_cmd("~/.local/bin/aphotic theme ensure-default")
     -- Connects only if Settings.vpnAutoConnect is true (checked inside
     -- the command itself, see cmd_vpn.sh's `autostart` subcommand) --
     -- warns and no-ops without passwordless sudo, same as everything
     -- else in commands/README.md's sudoers section.
-    hl.exec_cmd("aphotic vpn autostart")
+    hl.exec_cmd("~/.local/bin/aphotic vpn autostart")
     -- No-op unless the installed version changed since the last time this
     -- ran (see cmd_whatsnew.sh) -- catches "git pull without a fresh
     -- install.sh run" as well as the normal post-install case, which
     -- already triggers this same command directly from install.sh.
-    hl.exec_cmd("aphotic whatsnew")
+    hl.exec_cmd("~/.local/bin/aphotic whatsnew")
 
     -- Cursor theme/size, icon theme, and gtk-theme used to be hardcoded
     -- here, but that meant every reboot silently overwrote whatever was

@@ -16,4 +16,4 @@ prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcon
 # codeberg archive that gets regenerated, and the -git one now builds
 # 4.0.0-alpha. lib/install/wallust.sh installs the upstream static binary
 # against a pinned sha256 instead, and never fails the install.
-main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "qt6-multimedia", "ffmpeg", "kitty", "awww", "xdg-desktop-portal-hyprland", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava"]
+main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "qt6-multimedia", "ffmpeg", "kitty", "awww", "xdg-desktop-portal-hyprland", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava", "ttf-jetbrains-mono-nerd", "ttf-material-symbols-variable", "inter-font"]
