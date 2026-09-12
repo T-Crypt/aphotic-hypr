@@ -11,4 +11,9 @@ prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcon
 # surface using it just silently draws its fallback. In both profiles for
 # the same reason a shelled-out binary is: a feature that works on full
 # and quietly does nothing on minimal is worse than one that is absent.
-main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "qt6-multimedia", "ffmpeg", "kitty", "awww", "xdg-desktop-portal-hyprland", "wallust", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava"]
+# wallust is not in this list on purpose. No Arch repo carries it, and
+# both AUR routes broke: the stable package pins a checksum against a
+# codeberg archive that gets regenerated, and the -git one now builds
+# 4.0.0-alpha. lib/install/wallust.sh installs the upstream static binary
+# against a pinned sha256 instead, and never fails the install.
+main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "qt6-multimedia", "ffmpeg", "kitty", "awww", "xdg-desktop-portal-hyprland", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava"]

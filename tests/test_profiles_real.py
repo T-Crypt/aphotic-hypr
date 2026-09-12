@@ -18,9 +18,27 @@ def test_minimal_profile_excludes_extras():
 
 def test_full_profile_has_expected_packages():
     result = merge_packages(str(ROOT / "profiles/base/full.toml"), [])
-    for pkg in ["quickshell", "firefox", "starship", "sddm", "wallust"]:
+    for pkg in ["quickshell", "firefox", "starship", "sddm", "matugen"]:
         assert pkg in result["main"], f"{pkg} missing from full profile"
     assert result["main"].count("firefox") == 1
+
+
+def test_wallust_is_not_a_package_list_entry():
+    """No Arch repo carries wallust, and both AUR routes broke: the stable
+    package pins a checksum against a codeberg archive that gets
+    regenerated, and the -git one builds 4.0.0-alpha. lib/install/wallust.sh
+    installs the upstream static binary against a pinned sha256 instead.
+    Putting it back in a profile would abort a fresh install again."""
+    for profile in ("full", "minimal"):
+        result = merge_packages(str(ROOT / f"profiles/base/{profile}.toml"), [])
+        for field in ("main", "prep"):
+            assert "wallust" not in result[field], (
+                f"wallust is back in {profile}.toml [{field}]; "
+                "it is installed by lib/install/wallust.sh, not by pacman"
+            )
+            assert "wallust-git" not in result[field], (
+                f"wallust-git is back in {profile}.toml [{field}]"
+            )
 
 
 def test_full_profile_ships_thunars_thumbnailer():
