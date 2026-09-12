@@ -387,7 +387,7 @@ main() {
   AUR_HELPER=""
   AUR_HELPER=$(ensure_aur_helper) || AUR_HELPER=""
   if [[ -z "$AUR_HELPER" ]]; then
-    echo -e "$CWR - No AUR helper (yay/paru) is available on PATH. AUR packages will fail to resolve."
+    echo -e "$CWR - No AUR helper (yay/paru) is available on PATH. Repo packages still install through pacman; only the AUR-only ones will be reported and skipped."
     echo -e "$CWR   Fix it manually: sudo pacman -S --needed base-devel git && git clone https://aur.archlinux.org/yay.git /tmp/yay && cd /tmp/yay && makepkg -si"
   else
     echo -e "$COK - Using AUR helper: $AUR_HELPER"

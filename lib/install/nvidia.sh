@@ -44,8 +44,11 @@ install_nvidia_driver() {
     fi
 
     echo -e "$CNT - Uninstalling existing NVIDIA driver (${DETECTED_NVIDIA_DRIVER}) before installing Aphotic's recommended nvidia-open-dkms..."
+    # pacman, not "$AUR_HELPER": removal never needs an AUR helper, and an
+    # empty one (failed yay bootstrap) would run as the empty command and
+    # report a driver that "wouldn't uninstall cleanly" when nothing tried.
     # shellcheck disable=SC2086
-    "$AUR_HELPER" -R --noconfirm $(echo "$DETECTED_NVIDIA_DRIVER" | tr ',' ' ') &>> "$INSTLOG" || {
+    sudo pacman -R --noconfirm $(echo "$DETECTED_NVIDIA_DRIVER" | tr ',' ' ') &>> "$INSTLOG" || {
       echo -e "$CER - Failed to remove the existing driver (${DETECTED_NVIDIA_DRIVER}) -- see ${INSTLOG}. Not proceeding with a fresh install on top of a driver that wouldn't uninstall cleanly."
       return 1
     }
