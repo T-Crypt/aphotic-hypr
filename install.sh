@@ -22,6 +22,7 @@ source "$ROOT_DIR/lib/install/assistant.sh"
 source "$ROOT_DIR/lib/install/nvidia.sh"
 source "$ROOT_DIR/lib/install/amd.sh"
 source "$ROOT_DIR/lib/install/gpu_compute.sh"
+source "$ROOT_DIR/lib/install/wallust.sh"
 source "$ROOT_DIR/lib/install/packages.sh"
 source "$ROOT_DIR/lib/install/detect.sh"
 source "$ROOT_DIR/lib/install/system_prep.sh"
@@ -355,6 +356,11 @@ main() {
       fi
     fi
     echo "  would install hyprland"
+    if command -v wallust >/dev/null 2>&1; then
+      echo "  wallust: already installed ($(command -v wallust)), would be left alone"
+    else
+      echo "  would install wallust $WALLUST_VERSION from upstream (pinned sha256, not a package)"
+    fi
     if [[ "$(any_layer_requires_blackarch "$LAYERS")" == "true" ]]; then
       ensure_blackarch_repo
     fi
@@ -456,6 +462,10 @@ main() {
   # `ollama` the ai layer installs, and before setup_assistant, which
   # pulls a model and wants the GPU runner already in place.
   setup_gpu_compute
+
+  # Not in the package lists: no repo carries it and both AUR routes are
+  # broken (see lib/install/wallust.sh). Never fatal.
+  setup_wallust || true
 
   if [[ "$ASSISTANT" == "true" ]]; then
     setup_assistant || echo -e "$CWR - Aphotic Assistant setup did not finish; see $INSTLOG. The rest of the install continues."
