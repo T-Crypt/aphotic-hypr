@@ -24,6 +24,18 @@ enable_core_services() {
   sudo systemctl enable --now bluetooth.service &>> "$INSTLOG"
   echo -e "$CNT - Enabling display manager (sddm)..."
   sudo systemctl enable sddm &>> "$INSTLOG"
+  # pacman, not "$AUR_HELPER": a removal never needs an AUR helper, and an
+  # empty one (failed yay bootstrap) would just run as the empty command.
+  # Only name portals that are actually installed -- pacman -R aborts the
+  # whole transaction on the first "target not found", so passing both
+  # unconditionally meant one absent portal left the other one installed.
   echo -e "$CNT - Removing conflicting desktop portals..."
-  "$AUR_HELPER" -R --noconfirm xdg-desktop-portal-gnome xdg-desktop-portal-gtk &>> "$INSTLOG" || true
+  local portals=()
+  local portal
+  for portal in xdg-desktop-portal-gnome xdg-desktop-portal-gtk; do
+    pacman -Qq "$portal" &>/dev/null && portals+=("$portal")
+  done
+  if ((${#portals[@]} > 0)); then
+    sudo pacman -R --noconfirm "${portals[@]}" &>> "$INSTLOG" || true
+  fi
 }
