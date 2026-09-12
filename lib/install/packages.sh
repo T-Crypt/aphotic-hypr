@@ -115,6 +115,42 @@ _resolve_install_cmd() {
   PKG_INSTALL_CMD=("$AUR_HELPER" -S --noconfirm --removemake)
 }
 
+# yay and paru keep a git clone of the PKGBUILD plus every downloaded
+# source under a build dir nothing ever prunes (yay's cleanAfter is false by
+# default). A build that fails or gets interrupted leaves a half-written
+# tarball there, and makepkg validates that file on the next run rather than
+# fetching it again: "One or more files did not pass the validity check".
+# A modified PKGBUILD blocks the helper's own `git pull` the same way, which
+# under --noconfirm (no clean-build menu) surfaces as two attempts, exit 1
+# and a demand for manual intervention. Neither state clears on its own, so
+# every later run fails the same way on a package that is fine.
+_aur_build_dir() {
+  local pkg="$1" cache="${XDG_CACHE_HOME:-$HOME/.cache}" dir
+  for dir in "$cache/yay/$pkg" "$cache/paru/clone/$pkg"; do
+    [[ -d "$dir/.git" ]] && { echo "$dir"; return 0; }
+  done
+  return 1
+}
+
+# Clears the derived files in that build dir. Returns 0 only when it removed
+# something, so the caller knows a retry has a reason to behave differently.
+_clear_aur_build_cache() {
+  local pkg="$1" dir
+  dir=$(_aur_build_dir "$pkg") || return 1
+  # A tracked file the user edited is theirs. Resetting it would throw away
+  # a deliberate PKGBUILD change, which rule 5 does not allow this script to
+  # do on its own, so name it and stop.
+  if [[ -n "$(git -C "$dir" status --porcelain --untracked-files=no 2>/dev/null)" ]]; then
+    echo -e "$CWR   $dir has local edits to tracked files, so the AUR helper cannot update it."
+    echo -e "$CWR   Left alone. Review them, then discard with: git -C $dir checkout -- ."
+    return 1
+  fi
+  # Everything untracked in there was downloaded or built, never authored.
+  git -C "$dir" clean -fdx &>> "$INSTLOG" || return 1
+  echo -e "$CNT   Cleared stale downloads under $dir and retrying once."
+  return 0
+}
+
 # A failure used to print nothing but "check the install.log" -- on a log
 # that is megabytes of pacman progress bars, the one line that says why
 # (an unresolved target, a bad signature, a 404 off a stale mirror) is
@@ -155,25 +191,37 @@ install_software() {
   [[ -t 1 ]] || echo -en "$CNT - Now installing $pkg "
   local PKG_INSTALL_CMD=()
   _resolve_install_cmd "$pkg"
-  "${PKG_INSTALL_CMD[@]}" "$pkg" &>> "$INSTLOG" &
-  local pkg_pid=$!
-  show_progress "$pkg_pid" "installing $pkg"
-  local rc=0
-  wait "$pkg_pid" 2>/dev/null || rc=$?
 
-  if _pkg_installed "$pkg"; then
-    echo -e "$COK - $pkg was installed."
-    return 0
-  fi
+  # Two attempts at most, and the second one only happens after the stale
+  # build cache that caused the first failure is gone. A retry that changes
+  # nothing just fails twice as slowly.
+  local rc=0 pkg_pid
+  local attempt
+  for attempt in 1 2; do
+    "${PKG_INSTALL_CMD[@]}" "$pkg" &>> "$INSTLOG" &
+    pkg_pid=$!
+    show_progress "$pkg_pid" "installing $pkg"
+    rc=0
+    wait "$pkg_pid" 2>/dev/null || rc=$?
 
-  # 130/143: the helper died from the user's Ctrl+C or a TERM, not from
-  # anything wrong with the package. Now that an optional failure no
-  # longer aborts, skipping on a signal would make an interrupt
-  # unstoppable -- it would just walk to the next package.
-  if ((rc == 130 || rc == 143)); then
-    echo -e "$CER - Interrupted while installing $pkg -- stopping here. Nothing further will be installed."
-    exit "$rc"
-  fi
+    if _pkg_installed "$pkg"; then
+      echo -e "$COK - $pkg was installed."
+      return 0
+    fi
+
+    # 130/143: the helper died from the user's Ctrl+C or a TERM, not from
+    # anything wrong with the package. Now that an optional failure no
+    # longer aborts, skipping on a signal would make an interrupt
+    # unstoppable -- it would just walk to the next package.
+    if ((rc == 130 || rc == 143)); then
+      echo -e "$CER - Interrupted while installing $pkg -- stopping here. Nothing further will be installed."
+      exit "$rc"
+    fi
+
+    ((attempt == 1)) || break
+    echo -e "$CWR - $pkg did not build. Checking whether a stale AUR build cache explains it..."
+    _clear_aur_build_cache "$pkg" || break
+  done
 
   # An AUR package with no helper on PATH is its own diagnosis, and the
   # generic "submit an issue" line sends the user down the wrong path.
