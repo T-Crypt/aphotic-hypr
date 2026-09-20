@@ -115,5 +115,25 @@ source "$ROOT/lib/install/wallust.sh"
   || fail "WALLUST_URL must use an uploaded release asset, not a generated archive"
 [[ "$WALLUST_SHA256" =~ ^[0-9a-f]{64}$ ]] || fail "WALLUST_SHA256 is not a sha256"
 
+# 7. Dry-run with mismatched checksum must refuse and write nothing.
+WALLUST_URL="file:///bad.tar.gz"
+WALLUST_SHA256="$GOOD_SUM"
+DRY_RUN=1
+set +e
+out=$(setup_wallust 2>&1) || true
+set -e
+[[ "$out" == *"[dry-run]"* ]] || fail "expected a dry-run plan, got: $out"
+[[ -e "$DEST/wallust" ]] && fail "dry-run must not write anything even with bad checksum"
+unset DRY_RUN
+
+# 8. Non-dry-run with mismatched checksum must refuse and write nothing.
+WALLUST_URL="file:///bad.tar.gz"
+WALLUST_SHA256="$GOOD_SUM"
+set +e
+out=$(setup_wallust 2>&1) || true
+set -e
+[[ "$out" == *"failed its checksum"* ]] || fail "expected a checksum refusal, got: $out"
+[[ -e "$DEST/wallust" ]] && fail "mismatched download must never reach $DEST even without dry-run"
+
 export PATH="$PATH_BACKUP"
 echo "PASS: wallust binary install"

@@ -43,3 +43,18 @@ graphify-out/
 .epiq/
 .opencode/
 .gate/
+
+# === AI-AGENT-TOOLING-BLOCK (do not commit any AI tooling to this public repo) ===
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.cursorrules
+.cursor/
+.claude
+.claude/
+.opencode
+.opencode/
+.aider*
+.github/copilot-instructions.md
+codevec*
+*.mcp.json
