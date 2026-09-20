@@ -14,6 +14,10 @@ maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
 ## 2.0.5
 
+## 2.0.6
+
+TBD
+
 Command Center gains Flow, a live map of which resources your AI, gaming, security and dev work is claiming.
 
 ## 2.0.4
