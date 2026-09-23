@@ -92,6 +92,7 @@ QtObject {
     }
 
     function _releaseAll(): void {
+        ResourceEngine.measure(root.resource, null);
         for (const claim of ResourceEngine.claims) {
             if (root._isMine(claim.id))
                 ResourceEngine.release(claim.id);
@@ -146,7 +147,7 @@ QtObject {
 
         switch (root.vendor) {
         case "nvidia":
-            root._capacityProc.command = ["sh", "-c", "command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits"];
+            root._capacityProc.command = ["sh", "-c", "command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=memory.total,memory.reserved --format=csv,noheader,nounits"];
             break;
         case "amd":
             // Connector entries (card0-DP-1) glob alongside the card
@@ -171,22 +172,47 @@ QtObject {
     // amdgpu reports bytes (kernel docs, "Misc AMDGPU driver
     // information"); nvidia-smi reports MiB. Both are summed across
     // cards to match the aggregate Ollama's own claims sum against.
+    // The budget is the card minus what the driver reserves for itself (read
+    // from nvidia-smi, not guessed) minus a small headroom for the
+    // compositor's own growth. A flat percentage held back gigabytes on a
+    // large card and too little on a small one.
+    readonly property int headroomMb: 256
+
     function _declareFrom(text: string): void {
-        const values = text.trim().split("\n").map(line => parseInt(line.trim(), 10)).filter(v => !isNaN(v) && v > 0);
-        if (values.length === 0)
+        const rows = text.trim().split("\n").map(line => line.split(",").map(v => parseInt(v.trim(), 10))).filter(r => !isNaN(r[0]) && r[0] > 0);
+        if (rows.length === 0)
             return;
 
-        const total = values.reduce((a, b) => a + b, 0);
+        const total = rows.reduce((a, r) => a + r[0], 0);
         const mb = root._probeVendor === "amd" ? Math.round(total / (1024 * 1024)) : total;
         if (mb <= 0)
             return;
+        const reported = rows.reduce((a, r) => a + (isNaN(r[1]) ? 0 : r[1]), 0);
+        // amdgpu exposes no reserved figure; hold back 5% within 256-512 MB.
+        const reserved = root._probeVendor === "amd" ? Math.max(256, Math.min(512, Math.round(mb * 0.05))) : reported;
 
         ResourceEngine.declareResource(root.resource, {
             label: qsTr("GPU VRAM"),
             unit: "MB",
             capacity: mb,
-            safetyMargin: 0.1
+            safetyMargin: Math.min(0.5, (reserved + root.headroomMb) / mb)
         });
+    }
+
+    // The same XML the process scan reads carries each card's memory, so the
+    // live figure costs nothing extra and only exists while the scan runs.
+    function _measureFrom(xml: string): void {
+        let total = 0, reserved = 0, used = 0;
+        for (const block of xml.match(/<fb_memory_usage>[\s\S]*?<\/fb_memory_usage>/g) ?? []) {
+            const field = tag => parseInt((block.match(new RegExp(`<${tag}>([^<]*)</${tag}>`)) ?? [])[1], 10);
+            if (!isNaN(field("total"))) {
+                total += field("total");
+                reserved += isNaN(field("reserved")) ? 0 : field("reserved");
+                used += isNaN(field("used")) ? 0 : field("used");
+            }
+        }
+        if (total > 0)
+            ResourceEngine.measure(root.resource, { total: total, reserved: reserved, used: used });
     }
 
     // Ollama is excluded because OllamaClaims registers a precise
@@ -255,6 +281,7 @@ QtObject {
     function _syncProcesses(text: string): void {
         if (!root.scanning)
             return;
+        root._measureFrom(text);
 
         const seen = ({});
 
