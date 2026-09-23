@@ -14,6 +14,11 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user start aphotic-shell.service")
     hl.exec_cmd("blueman-applet")
     hl.exec_cmd("nm-applet --indicator")
+    -- D-Bus activation of kdeconnectd did not fire here, leaving the tray
+    -- indicator with no daemon and pairing dead. The unit skips itself when
+    -- KDE Connect is not installed.
+    hl.exec_cmd("systemctl --user start kdeconnectd.service")
+    hl.exec_cmd("command -v kdeconnect-indicator >/dev/null && kdeconnect-indicator")
     hl.exec_cmd("sleep 1 && awww-daemon")
     -- No-op once a theme has ever been applied (checks for theme.json) --
     -- a fresh install has neither, so nothing in this file previously
