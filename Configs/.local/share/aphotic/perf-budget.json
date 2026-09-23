@@ -1,0 +1,7 @@
+{
+  "shell_vram_mib": 350,
+  "shell_vram_inference_mib": 500,
+  "idle_gpu_util_pct": 10,
+  "shell_rss_mib": 350,
+  "shell_cpu_pct": 2
+}
