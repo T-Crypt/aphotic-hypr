@@ -11,6 +11,9 @@ on:
       - .github/workflows/install-dry-run.yml
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: install-dry-run-${{ github.ref }}
   cancel-in-progress: true
