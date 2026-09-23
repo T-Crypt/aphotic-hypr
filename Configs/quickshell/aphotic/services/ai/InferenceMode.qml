@@ -67,7 +67,7 @@ Singleton {
 
     function _stateSignature(): string {
         const models = AiProviders.llamaSwapRunningModels
-            .filter(entry => entry?.name && !entry.name.startsWith("text-embedding"))
+            .filter(entry => entry?.name && !entry.embedding)
             .map(entry => entry.name).sort().join("|");
         const triggered = Core.triggeredModels(WorkloadPassports.ofOwner("llama-swap")).sort().join("|");
         return `${Core.claimSignature(ResourceEngine.claims)}#${models}#${triggered}`;
