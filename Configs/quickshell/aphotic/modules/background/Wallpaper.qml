@@ -2,6 +2,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell.Io
 import qs.config
 import qs.components
 import qs.services
@@ -12,20 +13,56 @@ Item {
     property string source: Wallpapers.current
     property Image current: one
     property bool completed
+    property size _nativeSize: Qt.size(0, 0)
 
     onSourceChanged: {
         if (!source)
             current = null;
-        else if (current === one)
+        else
+            root._probe();
+    }
+
+    Component.onCompleted: {
+        if (source)
+            Qt.callLater(root._probe);
+        completed = true;
+    }
+
+    // Qt upscales to sourceSize as readily as it downscales, so the cap
+    // needs the file's real size first. A header read is cheap; a failed
+    // one leaves the size unknown and the screen cap applies.
+    function _probe(): void {
+        sizeProc.exec(["python3", "-c", "import sys\nfrom PIL import Image\nprint(*Image.open(sys.argv[1]).size)", root.source.replace(/^file:\/\//, "").replace(/\?.*$/, "")]);
+    }
+
+    function _advance(): void {
+        if (root.current === one)
             two.update();
         else
             one.update();
     }
 
-    Component.onCompleted: {
-        if (source)
-            Qt.callLater(() => one.update());
-        completed = true;
+    // Decode at screen size only when the file is larger than the screen
+    // needs; a smaller file decodes at its own size and the GPU scales it.
+    function _capFor(native: size): var {
+        const sw = Math.ceil(root.width * Screen.devicePixelRatio);
+        const sh = Math.ceil(root.height * Screen.devicePixelRatio);
+        if (sw <= 0 || sh <= 0)
+            return undefined;
+        if (native.width > 0 && native.height > 0 && Math.max(sw / native.width, sh / native.height) >= 1)
+            return undefined;
+        return Qt.size(sw, sh);
+    }
+
+    Process {
+        id: sizeProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const dims = text.trim().split(" ").map(Number);
+                root._nativeSize = dims.length === 2 && dims[0] > 0 ? Qt.size(dims[0], dims[1]) : Qt.size(0, 0);
+                root._advance();
+            }
+        }
     }
 
     Loader {
@@ -80,23 +117,24 @@ Item {
         id: img
 
         function update(): void {
-            if (path === root.source)
+            if (path === root.source) {
                 root.current = this;
-            else
-                path = root.source;
+                return;
+            }
+            img.cap = root._capFor(root._nativeSize);
+            path = root.source;
         }
 
         property string path
+        property var cap
         source: path
         cache: true
         asynchronous: true
         fillMode: Image.PreserveAspectCrop
-        // Decode at screen size, not file size: a bundled 7680x4320 wallpaper
-        // is 127 MiB of VRAM per image uncapped and 25 MiB capped, and there
-        // are two images per screen for the crossfade.
-        sourceSize: root.width > 0 && root.height > 0
-            ? Qt.size(Math.ceil(root.width * Screen.devicePixelRatio), Math.ceil(root.height * Screen.devicePixelRatio))
-            : undefined
+        // Fixed when the image loads, so probing the next wallpaper never
+        // reloads the one on screen. A 7680x4320 file is 127 MiB of VRAM
+        // uncapped and 25 MiB capped at 3440x1440.
+        sourceSize: img.cap
 
         anchors.fill: parent
 
