@@ -393,7 +393,7 @@ ColumnLayout {
                     const rate = LlamaSwapStats.tokensPerSecond > 0
                         ? qsTr(" · %1 tok/s").arg(Math.round(LlamaSwapStats.tokensPerSecond))
                         : "";
-                    return qsTr("Active · %1%2").arg(InferenceMode.model || qsTr("llama-swap")).arg(rate);
+                    return qsTr("Active · %1%2").arg(InferenceMode.model || qsTr("Local model")).arg(rate);
                 }
 
                 RowLayout {
@@ -432,6 +432,72 @@ ColumnLayout {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+        visible: InstallProfile.aiEnabled
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("LM Studio")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsRow {
+                icon: "dns"
+                label: qsTr("Host")
+                description: AiConfig.lmStudioHostConfigured ? AiConfig.lmStudioHost : qsTr("Not set -- LM Studio models are not tracked")
+
+                StyledRect {
+                    Layout.preferredWidth: 200
+                    Layout.preferredHeight: 32
+                    radius: Tokens.rounding.full
+                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                    TextInput {
+                        id: lmStudioHostInput
+
+                        anchors.fill: parent
+                        anchors.leftMargin: Tokens.padding.medium
+                        anchors.rightMargin: Tokens.padding.medium
+                        verticalAlignment: TextInput.AlignVCenter
+                        clip: true
+                        font: Tokens.font.label.small
+                        color: Colours.palette.m3onSurface
+                        text: AiConfig.lmStudioHost
+
+                        Keys.onReturnPressed: AiConfig.lmStudioHost = lmStudioHostInput.text.trim()
+
+                        StyledText {
+                            visible: lmStudioHostInput.text.length === 0
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("http://host:1234")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+                    }
+                }
+            }
+
+            SettingsRow {
+                visible: AiConfig.lmStudioHostConfigured
+                icon: AiProviders.lmStudioReachable ? "check_circle" : "error"
+                label: qsTr("Status")
+                description: {
+                    if (!AiProviders.lmStudioReachable)
+                        return qsTr("Not reachable at %1").arg(AiConfig.lmStudioHost);
+                    const running = AiProviders.lmStudioRunningModels.map(model => model.name);
+                    return running.length > 0 ? qsTr("Running: %1").arg(running.join(", ")) : qsTr("Reachable, no model loaded");
                 }
             }
         }

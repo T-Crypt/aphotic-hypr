@@ -14,23 +14,27 @@ const claims = [
     { id: 'model', owner: 'llama-swap', resource: 'gpu-vram', amount: 4096 },
     { id: 'other', owner: 'ollama', resource: 'gpu-vram', amount: 8192 },
 ];
-assert.deepEqual(Array.from(inference.eligibleClaims(claims), claim => claim.id), ['model']);
-assert.equal(inference.claimSignature(claims), 'model');
-assert.equal(inference.claimSignature([{ ...claims[1], amount: 4200 }]), 'model');
-assert.equal(inference.claimSignature([{ ...claims[1], id: 'model-2' }]), 'model-2');
+const backends = { 'llama-swap': {}, ollama: {} };
+assert.deepEqual(Array.from(inference.eligibleClaims(claims, backends), claim => claim.id), ['model', 'other']);
+assert.equal(inference.claimSignature(claims, backends), 'llama-swap:model|ollama:other');
+assert.equal(inference.claimSignature([{ ...claims[1], amount: 4200 }], backends), 'llama-swap:model');
+assert.equal(inference.claimSignature([{ ...claims[1], id: 'model-2' }], backends), 'llama-swap:model-2');
 
 const models = [
-    { name: 'bge-embed', state: 'running', embedding: true },
-    { name: 'CyberTiel', state: 'running' },
-    { name: 'Qwen', state: 'loading' },
+    { owner: 'llama-swap', label: 'llama-swap', name: 'CyberTiel' },
+    { owner: 'ollama', label: 'Ollama', name: 'Qwen' },
 ];
-assert.equal(inference.selectModel(models, ''), 'CyberTiel');
-assert.equal(inference.selectModel(models, 'Qwen'), 'Qwen');
-assert.equal(inference.selectModel([{ name: 'bge-embed', embedding: true }], ''), '');
-assert.equal(inference.selectTriggeredModel([
-    { label: 'Qwen', claims: [{ resource: 'gpu-vram', amount: 1024 }] },
-    { label: 'CyberTiel', claims: [{ resource: 'gpu-vram', amount: 4096 }] },
-], [{ name: 'Qwen' }, { name: 'CyberTiel' }], ''), 'CyberTiel');
+const modelClaims = [
+    { id: 'CyberTiel', owner: 'llama-swap', resource: 'gpu-vram', amount: 4096 },
+    { id: 'Qwen', owner: 'ollama', resource: 'gpu-vram', amount: 8192 },
+];
+assert.equal(inference.selectActiveModel(models, modelClaims, []).name, 'Qwen');
+assert.equal(inference.selectActiveModel(models, [], []).name, 'CyberTiel');
+assert.equal(inference.selectActiveModel([], claims, []), null);
+assert.equal(inference.selectActiveModel(models, [], [
+    { owner: 'llama-swap', label: 'CyberTiel', claims: [{ resource: 'gpu-vram', amount: 4096 }] },
+    { owner: 'ollama', label: 'Qwen', claims: [{ resource: 'gpu-vram', amount: 1024 }] },
+]).name, 'CyberTiel');
 assert.equal(inference.acceptStatsModel('', 'CyberTiel', false), false);
 assert.equal(inference.acceptStatsModel('', 'CyberTiel', true), true);
 assert.equal(inference.acceptStatsModel('CyberTiel', 'CyberTiel', false), true);
@@ -91,12 +95,7 @@ assert.equal(
     'keyword decoration:blur:enabled 1 ; keyword decoration:shadow:enabled 0 ; keyword animations:enabled 1',
 );
 
-console.log('Inference core: 28 assertions passed');
-
-// A resident model names the mode even before /running has been polled.
-assert.equal(
-    inference.selectTriggeredModel([{ label: "CyberTiel", claims: [{ resource: "gpu-vram", amount: 22978 }] }], [], ""),
-    "CyberTiel");
+console.log('Inference core assertions passed');
 
 // Before Quickshell knows the parser, the render command must still work.
 {
@@ -105,10 +104,3 @@ assert.equal(
     assert.match(cmd[2], /hyprctl eval 'hl\.config\(.*enabled = false.*\)' \| grep -qx ok \|\| hyprctl --batch/);
     assert.equal(snapshot.renderCommand({ blur: 1, shadow: 1, animations: 1 }, { blur: 1, shadow: 1, animations: 1 }, true), null);
 }
-
-// A chat model counts while it is still loading; embeddings never do.
-assert.deepEqual(inference.runningChatModels([
-    { name: "CyberTiel", state: "starting" },
-    { name: "my-embedder", state: "ready", embedding: true },
-    { name: "Gemma-4-26B", state: "stopping" }
-]), ["CyberTiel"]);

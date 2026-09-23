@@ -1,47 +1,64 @@
-function eligibleClaims(claims) {
+function eligibleClaims(claims, backends) {
+    const owners = Object.keys(backends || {});
     return (claims || []).filter(claim => claim
-        && claim.owner === "llama-swap"
-        && claim.resource === "gpu-vram"
+        && owners.includes(claim.owner)
         && Number(claim.amount || 0) >= 2048);
 }
 
-// llama-swap lists a model as soon as it starts loading, seconds before its
-// VRAM shows up as a measured claim. Embedding models never count.
-function runningChatModels(models) {
-    return (models || []).filter(model => model?.name
-        && !model.embedding
-        && (model.state === "starting" || model.state === "ready" || !model.state)).map(model => model.name);
+function eligibilityKeys(models, claims, backends) {
+    const active = (models || []).filter(model => model?.owner && model?.name)
+        .map(model => `${model.owner}:${model.name}`);
+    return active.concat(eligibleClaims(claims, backends).map(claim => `${claim.owner}:${claim.id}`));
 }
 
-function claimSignature(claims) {
-    return eligibleClaims(claims).map(claim => String(claim.id)).sort().join("|");
+function claimSignature(claims, backends) {
+    return eligibleClaims(claims, backends)
+        .map(claim => `${claim.owner}:${claim.id}`)
+        .sort().join("|");
 }
 
-function selectModel(models, preferred) {
-    const available = (models || []).filter(model => model?.name
-        && !model.embedding);
-    if (preferred && available.some(model => model.name === preferred))
-        return preferred;
-    return available[0]?.name || "";
+function activeSignature(models) {
+    return (models || []).map(model => `${model.owner}:${model.name}`).sort().join("|");
 }
 
-function triggeredModels(passports) {
-    return (passports || []).filter(passport => (passport?.claims || []).some(claim => claim
-        && claim.resource === "gpu-vram"
-        && Number(claim.amount || 0) >= 2048)).map(passport => passport.label).filter(Boolean);
+function _modelName(value) {
+    const suffix = " (system RAM)";
+    const text = String(value || "");
+    return text.endsWith(suffix) ? text.slice(0, -suffix.length) : text;
 }
 
-function selectTriggeredModel(passports, models, preferred) {
-    const running = (models || []).filter(model => model?.name
-        && !model.embedding).map(model => model.name);
-    // Passports close when a model unloads, so they stand on their own;
-    // the running list lags a poll behind and is empty until one lands.
-    const triggered = triggeredModels(passports).filter(name => running.length === 0 || running.includes(name));
-    if (preferred && triggered.includes(preferred))
-        return preferred;
-    if (triggered.length > 0)
-        return triggered[0];
-    return selectModel(models, preferred);
+function _claimAmount(model, claims, passports) {
+    let largest = 0;
+    for (const claim of (claims || [])) {
+        if (claim?.owner !== model.owner)
+            continue;
+        if (_modelName(claim.id) !== model.name && _modelName(claim.label) !== model.name)
+            continue;
+        largest = Math.max(largest, Number(claim.amount || 0));
+    }
+    for (const passport of (passports || [])) {
+        if (passport?.owner !== model.owner || _modelName(passport.label) !== model.name)
+            continue;
+        for (const claim of (passport.claims || []))
+            largest = Math.max(largest, Number(claim?.amount || 0));
+    }
+    return largest;
+}
+
+function selectActiveModel(models, claims, passports) {
+    const active = (models || []).filter(model => model?.owner && model?.name);
+    if (active.length === 0)
+        return null;
+    let selected = active[0];
+    let largest = _claimAmount(selected, claims, passports);
+    for (let i = 1; i < active.length; i++) {
+        const amount = _claimAmount(active[i], claims, passports);
+        if (amount > largest) {
+            selected = active[i];
+            largest = amount;
+        }
+    }
+    return selected;
 }
 
 function acceptStatsModel(current, candidate, generating) {
