@@ -55,11 +55,13 @@ def _hypr_commands():
     for name in ("keybinds.lua", "startup.lua"):
         text = (ROOT / "Configs/hypr" / name).read_text()
         for cmd in re.findall(r'exec_cmd\(\s*"([^"]+)"', text):
+            # A program behind a `command -v` check is optional by design.
+            guarded = set(re.findall(r"command -v ([\w.+-]+)", cmd))
             for part in re.split(r"&&|\|\||;|\|", cmd):
                 w = part.strip().split()
                 while w and (w[0] in ("sleep", "command", "-v") or re.fullmatch(r"[0-9.]+", w[0])):
                     w = w[1:]
-                if w and not w[0].startswith(("/", "~")):
+                if w and not w[0].startswith(("/", "~")) and w[0] not in guarded:
                     words.add(w[0])
     return words
 
