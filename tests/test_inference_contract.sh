@@ -11,7 +11,9 @@ AI="$QS/services/ai"
 PROFILE="$QS/services/profile"
 
 for file in "$AI/LlamaSwapStats.qml" "$AI/InferenceMode.qml" \
-            "$AI/InferenceCore.js" "$PROFILE/ResourcePolicy.js" \
+            "$AI/InferenceCore.js" "$AI/LocalInference.qml" \
+            "$AI/LocalInferenceCore.js" "$AI/BackendModels.js" \
+            "$AI/LmStudioClaims.qml" "$PROFILE/ResourcePolicy.js" \
             "$PROFILE/StateSnapshotCore.js" "$QS/services/PluginRegistryCore.js"; do
     [[ -f "$file" ]] || fail "missing $file"
 done
@@ -20,6 +22,8 @@ grep -q '^singleton LlamaSwapStats 1.0 LlamaSwapStats.qml$' "$AI/qmldir" \
     || fail "LlamaSwapStats is not registered"
 grep -q '^singleton InferenceMode 1.0 InferenceMode.qml$' "$AI/qmldir" \
     || fail "InferenceMode is not registered"
+grep -q '^singleton LocalInference 1.0 LocalInference.qml$' "$AI/qmldir" \
+    || fail "LocalInference is not registered"
 grep -qE '_residentSingletons:.*InferenceMode' "$QS/shell.qml" \
     || fail "InferenceMode is not resident"
 
@@ -31,6 +35,16 @@ grep -q 'property string inferenceMode: "auto"' "$AI/AiConfig.qml" \
     || fail "inference mode is not persisted by AiConfig"
 grep -q 'onInferenceModeChanged' "$AI/InferenceMode.qml" \
     || fail "InferenceMode does not follow persisted mode changes"
+grep -q 'LocalInference.activeModels' "$AI/InferenceMode.qml" \
+    || fail "InferenceMode does not use the backend registry"
+! grep -q 'AiProviders.llamaSwapRunningModels\|owner === "llama-swap"' "$AI/InferenceMode.qml" "$AI/InferenceCore.js" \
+    || fail "InferenceMode still has a llama-swap-only eligibility branch"
+grep -q 'property string lmStudioHost: ""' "$AI/AiConfig.qml" \
+    && grep -q 'lmStudioHost: root.lmStudioHost' "$AI/AiConfig.qml" \
+    || fail "LM Studio host is not persisted by AiConfig"
+grep -q 'AiConfig.lmStudioHostConfigured' "$AI/AiProviders.qml" \
+    && grep -q 'interval: root.lmStudioReachable ? 5000 : 30000' "$AI/AiProviders.qml" \
+    || fail "LM Studio polling is not host-gated with backoff"
 
 grep -q 'root._wanted ? root._runningModels : \[\]' "$AI/LlamaSwapStats.qml" \
     || fail "LlamaSwapStats creates pollers without holders"
@@ -78,5 +92,8 @@ grep -q 'LlamaSwapStats.hold("settings-ai", root.visible)' "$QS/modules/settings
     || fail "AI settings does not hold stats only while visible"
 grep -q 'label: qsTr("Inference mode")' "$QS/modules/settings/panes/AiPane.qml" \
     || fail "AI settings has no inference mode row"
+grep -q 'text: qsTr("LM Studio")' "$QS/modules/settings/panes/AiPane.qml" \
+    && grep -q 'AiProviders.lmStudioReachable' "$QS/modules/settings/panes/AiPane.qml" \
+    || fail "AI settings has no LM Studio host status"
 
 echo "PASS: inference shared API contract"

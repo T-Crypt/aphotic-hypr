@@ -1,0 +1,7 @@
+{
+  "data": [
+    { "id": "chat-model", "type": "llm", "state": "loaded" },
+    { "id": "embed-model", "type": "embeddings", "state": "loaded" },
+    { "id": "idle-model", "type": "llm", "state": "not-loaded" }
+  ]
+}

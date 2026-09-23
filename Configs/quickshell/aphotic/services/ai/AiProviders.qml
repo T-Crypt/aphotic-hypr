@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import qs.services
 import qs.services.ai
+import "BackendModels.js" as BackendModels
 
 // Uniform interface over the four AI Chat providers. Claude is the only
 // claude-CLI-subprocess-based provider; Ollama/Gemini/ChatGPT are direct
@@ -236,6 +237,9 @@ Singleton {
 
     property var ollamaModels: []
     property var ollamaRunningModels: []
+    property var _ollamaCapabilities: ({})
+    property var _ollamaCapabilityRequested: ({})
+    property var _ollamaCapabilityQueue: []
     property bool pulling: false
     // Real reachability signal, separate from ollamaHostConfigured (which
     // only means "a host STRING is set," not "something is actually
@@ -295,11 +299,54 @@ Singleton {
         ollamaPsProc.running = true;
     }
 
+    function _resetOllamaCapabilities(): void {
+        root._ollamaCapabilities = ({});
+        root._ollamaCapabilityRequested = ({});
+        root._ollamaCapabilityQueue = [];
+    }
+
+    function _queueOllamaCapabilities(models: var): void {
+        const requested = Object.assign({}, root._ollamaCapabilityRequested);
+        const queue = root._ollamaCapabilityQueue.slice();
+        for (const model of (models ?? [])) {
+            const name = model?.name ?? "";
+            if (!name || requested[name])
+                continue;
+            requested[name] = true;
+            queue.push(name);
+        }
+        root._ollamaCapabilityRequested = requested;
+        root._ollamaCapabilityQueue = queue;
+        root._startOllamaCapabilityQuery();
+    }
+
+    function _startOllamaCapabilityQuery(): void {
+        if (ollamaShowProc.running || root._ollamaCapabilityQueue.length === 0 || !AiConfig.ollamaHostConfigured)
+            return;
+        const queue = root._ollamaCapabilityQueue.slice();
+        const name = queue.shift();
+        root._ollamaCapabilityQueue = queue;
+        ollamaShowProc.modelName = name;
+        ollamaShowProc.requestHost = AiConfig.ollamaHost;
+        ollamaShowProc.command = ["curl", "-s", "-m", "5", "-X", "POST", `${AiConfig.ollamaHost}/api/show`, "-d", JSON.stringify({ model: name })];
+        ollamaShowProc.running = true;
+    }
+
+    function _recordOllamaCapability(name: string, embedding: bool): void {
+        const next = Object.assign({}, root._ollamaCapabilities);
+        next[name] = embedding;
+        root._ollamaCapabilities = next;
+        root.ollamaRunningModels = BackendModels.ollamaRunningModels({ models: root.ollamaRunningModels }, next);
+    }
+
     // llama-swap's own /running list, the same way refreshRunningModels()
     // reads Ollama's /api/ps. LlamaSwapClaims (mounted in shell.qml, next to
     // the GpuVramSource it needs) turns each entry into a claim.
     property var llamaSwapRunningModels: []
     property bool llamaSwapReachable: false
+
+    property var lmStudioRunningModels: []
+    property bool lmStudioReachable: false
 
     function refreshLlamaSwapRunning(): void {
         if (!AiConfig.llamaSwapHostConfigured) {
@@ -309,6 +356,19 @@ Singleton {
         }
         llamaSwapRunningProc.command = ["curl", "-s", "-m", "5", `${AiConfig.llamaSwapHost}/running`];
         llamaSwapRunningProc.running = true;
+    }
+
+    function refreshLmStudioRunning(): void {
+        if (!AiConfig.lmStudioHostConfigured) {
+            root.lmStudioRunningModels = [];
+            root.lmStudioReachable = false;
+            return;
+        }
+        if (lmStudioModelsProc.running)
+            return;
+        lmStudioModelsProc.requestHost = AiConfig.lmStudioHost;
+        lmStudioModelsProc.command = ["curl", "-s", "-m", "5", `${AiConfig.lmStudioHost}/api/v0/models`];
+        lmStudioModelsProc.running = true;
     }
 
     function deleteModel(name: string): void {
@@ -328,11 +388,15 @@ Singleton {
     Connections {
         target: AiConfig
         function onOllamaHostChanged() {
+            root._resetOllamaCapabilities();
             root.refreshOllamaModels();
             root.refreshRunningModels();
         }
         function onLlamaSwapHostChanged() {
             root.refreshLlamaSwapRunning();
+        }
+        function onLmStudioHostChanged() {
+            root.refreshLmStudioRunning();
         }
     }
 
@@ -432,13 +496,33 @@ Singleton {
             onStreamFinished: {
                 try {
                     const data = JSON.parse(text);
-                    root.ollamaRunningModels = (data.models ?? []).map(m => ({ name: m.name, size: m.size, size_vram: m.size_vram }));
+                    root.ollamaRunningModels = BackendModels.ollamaRunningModels(data, root._ollamaCapabilities);
+                    root._queueOllamaCapabilities(data.models ?? []);
                 } catch (e) {
                     // Host unreachable or unexpected response -- leave
                     // ollamaRunningModels as-is.
                 }
             }
         }
+    }
+
+    Process {
+        id: ollamaShowProc
+
+        property string modelName: ""
+        property string requestHost: ""
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (ollamaShowProc.requestHost !== AiConfig.ollamaHost)
+                    return;
+                try {
+                    root._recordOllamaCapability(ollamaShowProc.modelName, BackendModels.ollamaEmbedding(JSON.parse(text)));
+                } catch (e) {
+                }
+            }
+        }
+        onExited: Qt.callLater(root._startOllamaCapabilityQuery)
     }
 
     // Cleared on a failed request for the same reason as ollamaPsProc: a
@@ -470,6 +554,32 @@ Singleton {
                     }));
                 } catch (e) {
                     // Unexpected response -- keep the last list.
+                }
+            }
+        }
+    }
+
+    Process {
+        id: lmStudioModelsProc
+        property string requestHost: ""
+        onExited: exitCode => {
+            if (lmStudioModelsProc.requestHost !== AiConfig.lmStudioHost)
+                return;
+            if (exitCode !== 0) {
+                root.lmStudioReachable = false;
+                root.lmStudioRunningModels = [];
+            }
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (lmStudioModelsProc.requestHost !== AiConfig.lmStudioHost)
+                    return;
+                try {
+                    root.lmStudioRunningModels = BackendModels.lmStudioModels(JSON.parse(text));
+                    root.lmStudioReachable = true;
+                } catch (e) {
+                    root.lmStudioReachable = false;
+                    root.lmStudioRunningModels = [];
                 }
             }
         }
@@ -508,6 +618,14 @@ Singleton {
         triggeredOnStart: true
         running: InstallProfile.aiEnabled && AiConfig.ollamaHostConfigured && !root.startingOllama && !root.stoppingOllama
         onTriggered: root.refreshRunningModels()
+    }
+
+    Timer {
+        interval: root.lmStudioReachable ? 5000 : 30000
+        repeat: true
+        triggeredOnStart: true
+        running: InstallProfile.aiEnabled && AiConfig.lmStudioHostConfigured
+        onTriggered: root.refreshLmStudioRunning()
     }
 
     // llama-swap pushes a modelStatus event the moment a model starts or
@@ -563,6 +681,11 @@ Singleton {
         runningModels: root.ollamaRunningModels
         host: AiConfig.ollamaHost
         enabled: InstallProfile.aiEnabled && AiConfig.ollamaHostConfigured
+    }
+
+    LmStudioClaims {
+        runningModels: root.lmStudioRunningModels
+        enabled: InstallProfile.aiEnabled && AiConfig.lmStudioHostConfigured
     }
 
     // Gated on the same install-time signal AgentProviders.qml's presence

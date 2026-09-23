@@ -25,6 +25,7 @@ Singleton {
     // No loopback fallback, unlike ollamaHost: llama-swap has no standard
     // port and nothing installs it, so an unset host means "not in use".
     property string llamaSwapHost: ""
+    property string lmStudioHost: ""
     property string inferenceMode: "auto"
 
     // Set by install.sh's lib/install/assistant.sh (NVIDIA-gated, opt-in),
@@ -36,6 +37,7 @@ Singleton {
 
     readonly property bool ollamaHostConfigured: root.ollamaHost.length > 0
     readonly property bool llamaSwapHostConfigured: root.llamaSwapHost.length > 0
+    readonly property bool lmStudioHostConfigured: root.lmStudioHost.length > 0
 
     property bool _loaded: false
 
@@ -47,6 +49,7 @@ Singleton {
             ollamaHost: root.ollamaHost,
             ollamaModel: root.ollamaModel,
             llamaSwapHost: root.llamaSwapHost,
+            lmStudioHost: root.lmStudioHost,
             inferenceMode: root.inferenceMode,
             assistantEnabled: root.assistantEnabled,
             assistantModel: root.assistantModel,
@@ -67,6 +70,7 @@ Singleton {
     onOllamaHostChanged: root._save()
     onOllamaModelChanged: root._save()
     onLlamaSwapHostChanged: root._save()
+    onLmStudioHostChanged: root._save()
     onInferenceModeChanged: root._save()
     onAssistantEnabledChanged: root._save()
     onAssistantModelChanged: root._save()
@@ -88,6 +92,8 @@ Singleton {
                     root.ollamaModel = data.ollamaModel;
                 if (typeof data.llamaSwapHost === "string")
                     root.llamaSwapHost = data.llamaSwapHost;
+                if (typeof data.lmStudioHost === "string")
+                    root.lmStudioHost = data.lmStudioHost;
                 if (data.inferenceMode === "auto" || data.inferenceMode === "off")
                     root.inferenceMode = data.inferenceMode;
                 if (typeof data.assistantEnabled === "boolean")
