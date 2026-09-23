@@ -52,6 +52,15 @@ _aphotic_perf_read_stat() {
     ' "${APHOTIC_PROC_ROOT:-/proc}/${pid}/stat" 2>/dev/null || true
 }
 
+# smaps_rollup "Pss_Anon:" (kB) → MiB, one decimal; null when the file or
+# the field is missing.
+_aphotic_perf_read_heap() {
+    local kb
+    kb="$(awk '/^Pss_Anon:/ { print $2; exit }' "${APHOTIC_PROC_ROOT:-/proc}/${1}/smaps_rollup" 2>/dev/null)" || true
+    [[ "$kb" =~ ^[0-9]+$ ]] || { printf 'null\n'; return 0; }
+    awk -v kb="$kb" 'BEGIN { printf "%.1f", kb / 1024 }'
+}
+
 # nvidia-smi pmon output → "name<TAB>pid<TAB>type<TAB>fb<TAB>sm" lines,
 # sm averaged over the samples for a pid, fb from the last sample ("-" = 0).
 _aphotic_perf_parse_pmon() {
@@ -118,13 +127,13 @@ _aphotic_perf_cpu() {
 # Signed delta "cur vs prev" with a unit; n/a when either side has no data.
 _aphotic_perf_delta() {
     local cur="$1" prev="$2" unit="$3"
-    if [[ "$cur" == "na" || "$prev" == "na" ]]; then
+    if [[ "$cur" == "na" || "$cur" == "null" || "$prev" == "na" || "$prev" == "null" ]]; then
         printf 'n/a\n'; return 0
     fi
     awk -v a="$cur" -v b="$prev" -v u="$unit" 'BEGIN { d = a - b; if (d >= 0) printf "+%.1f%s", d, u; else printf "%.1f%s", d, u }'
 }
 
-# Last history line → "s_vram<TAB>card_used<TAB>hypr_sm<TAB>s_rss<TAB>s_cpu"; na when absent.
+# Last history line → "s_vram<TAB>card_used<TAB>hypr_sm<TAB>s_rss<TAB>s_heap<TAB>s_cpu"; na when absent.
 _aphotic_perf_prev() { python3 - "$1" <<'PY'
 import sys, json
 path = sys.argv[1]
@@ -139,7 +148,7 @@ for l in reversed(lines):
     except Exception:
         pass
 if doc is None:
-    print("\t".join(["na"] * 5)); sys.exit(0)
+    print("\t".join(["na"] * 6)); sys.exit(0)
 def num(v):
     if v is None: return "na"
     try: return float(v)
@@ -164,6 +173,7 @@ card = g.get("card_used_mib") if isinstance(g, dict) else None
 sh = doc.get("shell")
 out = [procs_fb({"qs", "quickshell"}), card, proc_sm({"Hyprland"}),
        num(sh.get("rss_mib")) if isinstance(sh, dict) else "na",
+       num(sh.get("heap_mib")) if isinstance(sh, dict) else "na",
        num(sh.get("cpu_avg")) if isinstance(sh, dict) else "na"]
 print("\t".join(str(x) for x in out))
 PY
@@ -181,12 +191,12 @@ args = sys.argv[1:]
 payload = open(args[-1]).read()
 args = args[:-1]
 ts, label = args[0], args[1]
-def obj(rss, cpu, threads):
+def obj(rss, heap, cpu, threads):
     if rss == "null": return None
-    return {"rss_mib": num(rss), "cpu_avg": num(cpu) or 0.0, "threads": int(threads)}
-shell = obj(*args[2:5])
-hyprland = obj(*args[5:8])
-used, total, util = num(args[8]), num(args[9]), num(args[10])
+    return {"rss_mib": num(rss), "heap_mib": num(heap), "cpu_avg": num(cpu) or 0.0, "threads": int(threads)}
+shell = obj(*args[2:6])
+hyprland = obj(*args[6:10])
+used, total, util = num(args[10]), num(args[11]), num(args[12])
 procs, monitors = [], []
 mode = 0
 for line in payload.splitlines():
@@ -220,10 +230,10 @@ sh = doc.get("shell")
 vals = {"shell_vram_mib": fb({"qs", "quickshell"}),
         "shell_vram_inference_mib": fb({"qs", "quickshell", "Hyprland", "Xwayland"}),
         "idle_gpu_util_pct": g.get("card_util") if isinstance(g, dict) else None,
-        "shell_rss_mib": sh.get("rss_mib") if isinstance(sh, dict) else None,
+        "shell_heap_mib": sh.get("heap_mib") if isinstance(sh, dict) else None,
         "shell_cpu_pct": sh.get("cpu_avg") if isinstance(sh, dict) else None}
 for name in ("shell_vram_mib", "shell_vram_inference_mib", "idle_gpu_util_pct",
-             "shell_rss_mib", "shell_cpu_pct"):
+             "shell_heap_mib", "shell_cpu_pct"):
     v = vals[name]
     if v is None or name not in bud:
         print("%s\tna\t%s\tSKIP" % (name, bud.get(name, "?"))); continue
@@ -237,17 +247,18 @@ PY
 }
 
 _aphotic_perf_print() {
-    local samples="$1" label="$2" d_svram d_card d_hsm d_srss d_scpu
+    local samples="$1" label="$2" d_svram d_card d_hsm d_srss d_sheap d_scpu
     d_svram="$(_aphotic_perf_delta "$_aphotic_perf_s_vram" "$_aphotic_perf_prev_svram" " MiB")"
     d_card="$(_aphotic_perf_delta "${_aphotic_perf_gpu_used:-na}" "$_aphotic_perf_prev_card" " MiB")"
     d_hsm="$(_aphotic_perf_delta "$_aphotic_perf_hypr_sm" "$_aphotic_perf_prev_hsm" "%")"
     d_srss="$(_aphotic_perf_delta "$_aphotic_perf_s_rss" "$_aphotic_perf_prev_srss" " MiB")"
+    d_sheap="$(_aphotic_perf_delta "$_aphotic_perf_s_heap" "$_aphotic_perf_prev_sheap" " MiB")"
     d_scpu="$(_aphotic_perf_delta "$_aphotic_perf_s_cpu" "$_aphotic_perf_prev_scpu" "%")"
 
     printf 'Aphotic perf snapshot %s  (%s samples)\n' "$_aphotic_perf_ts" "$samples"
     [[ -n "$label" ]] && printf '  label: %s\n' "$label"
 
-    local name pid type fb sm
+    local name pid type fb sm s_heap_disp="n/a"
     if [[ -n "$_aphotic_perf_gpu_used" ]]; then
         printf '  GPU: %s MiB used / %s MiB total, util %s%%\n' "$_aphotic_perf_gpu_used" "$_aphotic_perf_gpu_total" "$_aphotic_perf_gpu_util"
         if [[ -n "$_aphotic_perf_procs" ]]; then
@@ -263,8 +274,9 @@ _aphotic_perf_print() {
     fi
 
     if [[ -n "$_aphotic_perf_s_pid" ]]; then
-        printf '  shell qs (pid %s): rss %s MiB, cpu %s%%, %s threads\n' \
-            "$_aphotic_perf_s_pid" "$_aphotic_perf_s_rss" "$_aphotic_perf_s_cpu" "$_aphotic_perf_s_threads"
+        [[ "$_aphotic_perf_s_heap" != "null" && -n "$_aphotic_perf_s_heap" ]] && s_heap_disp="$_aphotic_perf_s_heap"
+        printf '  shell qs (pid %s): rss %s MiB, heap %s MiB, cpu %s%%, %s threads\n' \
+            "$_aphotic_perf_s_pid" "$_aphotic_perf_s_rss" "$s_heap_disp" "$_aphotic_perf_s_cpu" "$_aphotic_perf_s_threads"
     else
         printf '  shell qs: not running\n'
     fi
@@ -292,6 +304,7 @@ _aphotic_perf_print() {
         printf '    card VRAM      %s\n' "$d_card"
         printf '    Hyprland SM%%  %s\n' "$d_hsm"
         printf '    shell RSS      %s\n' "$d_srss"
+        printf '    shell heap     %s\n' "$d_sheap"
         printf '    shell CPU      %s\n' "$d_scpu"
     else
         printf '    (no previous snapshot)\n'
@@ -332,11 +345,13 @@ _aphotic_perf_collect() {
     done
     t1="$(date +%s)"; wall=$((t1 - t0))
 
-    local s_cpu h_cpu s_rss_mib h_rss_mib
+    local s_cpu h_cpu s_rss_mib h_rss_mib s_heap="null" h_heap="null"
     s_cpu="$(_aphotic_perf_cpu "$shell_pid" "$fs_ut" "$fs_st" "$s_ut" "$s_st" "$wall")"
     h_cpu="$(_aphotic_perf_cpu "$hypr_pid" "$fh_ut" "$fh_st" "$h_ut" "$h_st" "$wall")"
     s_rss_mib="$(awk -v p="$s_rss" -v sz="$page" 'BEGIN { printf "%.1f", p * sz / 1048576 }')"
     h_rss_mib="$(awk -v p="$h_rss" -v sz="$page" 'BEGIN { printf "%.1f", p * sz / 1048576 }')"
+    [[ -n "$shell_pid" ]] && s_heap="$(_aphotic_perf_read_heap "$shell_pid")"
+    [[ -n "$hypr_pid" ]] && h_heap="$(_aphotic_perf_read_heap "$hypr_pid")"
 
     local gpu_used="" gpu_total="" gpu_util="" proc_rows="" card
     if [[ -n "$pmon_pid" ]]; then
@@ -360,10 +375,10 @@ _aphotic_perf_collect() {
     fi
 
     # Previous snapshot values, read before appending this one.
-    local hist p_svram="na" p_card="na" p_hsm="na" p_srss="na" p_scpu="na" has_prev=0
+    local hist p_svram="na" p_card="na" p_hsm="na" p_srss="na" p_sheap="na" p_scpu="na" has_prev=0
     hist="$(_aphotic_perf_hist)"
     if [[ -s "$hist" ]]; then
-        IFS=$'\t' read -r p_svram p_card p_hsm p_srss p_scpu < <(_aphotic_perf_prev "$hist")
+        IFS=$'\t' read -r p_svram p_card p_hsm p_srss p_sheap p_scpu < <(_aphotic_perf_prev "$hist")
         [[ "$p_svram" != "na" || "$p_srss" != "na" ]] && has_prev=1
     fi
 
@@ -378,9 +393,11 @@ _aphotic_perf_collect() {
     mkdir -p "$(dirname "$hist")"
     _aphotic_perf_emit "$ts" "${label:-}" \
         "$([ -n "$shell_pid" ] && echo "$s_rss_mib" || echo null)" \
+        "$s_heap" \
         "$([ -n "$shell_pid" ] && echo "$s_cpu" || echo null)" \
         "$([ -n "$shell_pid" ] && echo "$s_threads" || echo null)" \
         "$([ -n "$hypr_pid" ] && echo "$h_rss_mib" || echo null)" \
+        "$h_heap" \
         "$([ -n "$hypr_pid" ] && echo "$h_cpu" || echo null)" \
         "$([ -n "$hypr_pid" ] && echo "$h_threads" || echo null)" \
         "${gpu_used:-null}" "${gpu_total:-null}" "${gpu_util:-null}" "$pay" >> "$hist"
@@ -395,6 +412,7 @@ _aphotic_perf_collect() {
     _aphotic_perf_s_vram="$s_vram"
     _aphotic_perf_hypr_sm="$hypr_sm"
     _aphotic_perf_s_rss="$s_rss_mib"
+    _aphotic_perf_s_heap="$s_heap"
     _aphotic_perf_s_cpu="$s_cpu"
     _aphotic_perf_s_threads="$s_threads"
     _aphotic_perf_s_pid="${shell_pid:-}"
@@ -405,6 +423,7 @@ _aphotic_perf_collect() {
     _aphotic_perf_prev_card="$p_card"
     _aphotic_perf_prev_hsm="$p_hsm"
     _aphotic_perf_prev_srss="$p_srss"
+    _aphotic_perf_prev_sheap="$p_sheap"
     _aphotic_perf_prev_scpu="$p_scpu"
     _aphotic_perf_has_prev="$has_prev"
 
@@ -504,7 +523,7 @@ except Exception:
             case "$name" in
                 shell_vram_mib|shell_vram_inference_mib) disp="$(awk -v v="$val" -v l="$limit" 'BEGIN { printf "%.0f MiB / %.0f MiB", v, l }')" ;;
                 idle_gpu_util_pct) disp="$(awk -v v="$val" -v l="$limit" 'BEGIN { printf "%.0f%% / %.0f%%", v, l }')" ;;
-                shell_rss_mib) disp="$(awk -v v="$val" -v l="$limit" 'BEGIN { printf "%.0f MiB / %.0f MiB", v, l }')" ;;
+                shell_heap_mib) disp="$(awk -v v="$val" -v l="$limit" 'BEGIN { printf "%.0f MiB / %.0f MiB", v, l }')" ;;
                 shell_cpu_pct) disp="$(awk -v v="$val" -v l="$limit" 'BEGIN { printf "%.1f%% / %.1f%%", v, l }')" ;;
             esac
         fi
