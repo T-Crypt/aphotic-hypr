@@ -14,6 +14,7 @@ Item {
     property Image current: one
     property bool completed
     property size _nativeSize: Qt.size(0, 0)
+    property string _probeSource: ""
 
     onSourceChanged: {
         if (!source)
@@ -32,6 +33,12 @@ Item {
     // needs the file's real size first. A header read is cheap; a failed
     // one leaves the size unknown and the screen cap applies.
     function _probe(): void {
+        // Startup reaches here twice for one source. A second exec kills the
+        // first run, and acting on that empty result loaded an upscaled
+        // texture whose peak the driver never gave back.
+        if (sizeProc.running && root._probeSource === root.source)
+            return;
+        root._probeSource = root.source;
         sizeProc.exec(["python3", "-c", "import sys\nfrom PIL import Image\nprint(*Image.open(sys.argv[1]).size)", root.source.replace(/^file:\/\//, "").replace(/\?.*$/, "")]);
     }
 
@@ -56,12 +63,18 @@ Item {
 
     Process {
         id: sizeProc
+        property string out: ""
         stdout: StdioCollector {
-            onStreamFinished: {
-                const dims = text.trim().split(" ").map(Number);
-                root._nativeSize = dims.length === 2 && dims[0] > 0 ? Qt.size(dims[0], dims[1]) : Qt.size(0, 0);
-                root._advance();
-            }
+            onStreamFinished: sizeProc.out = text
+        }
+        // A run killed by a newer probe exits abnormally; only a finished
+        // run advances the crossfade.
+        onExited: (exitCode, exitStatus) => {
+            if (exitStatus !== 0 || root._probeSource !== root.source)
+                return;
+            const dims = exitCode === 0 ? sizeProc.out.trim().split(" ").map(Number) : [];
+            root._nativeSize = dims.length === 2 && dims[0] > 0 ? Qt.size(dims[0], dims[1]) : Qt.size(0, 0);
+            root._advance();
         }
     }
 
