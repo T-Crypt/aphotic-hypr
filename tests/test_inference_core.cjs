@@ -20,13 +20,13 @@ assert.equal(inference.claimSignature([{ ...claims[1], amount: 4200 }]), 'model'
 assert.equal(inference.claimSignature([{ ...claims[1], id: 'model-2' }]), 'model-2');
 
 const models = [
-    { name: 'text-embedding-bge', state: 'running' },
+    { name: 'bge-embed', state: 'running', embedding: true },
     { name: 'CyberTiel', state: 'running' },
     { name: 'Qwen', state: 'loading' },
 ];
 assert.equal(inference.selectModel(models, ''), 'CyberTiel');
 assert.equal(inference.selectModel(models, 'Qwen'), 'Qwen');
-assert.equal(inference.selectModel([{ name: 'text-embedding-bge' }], ''), '');
+assert.equal(inference.selectModel([{ name: 'bge-embed', embedding: true }], ''), '');
 assert.equal(inference.selectTriggeredModel([
     { label: 'Qwen', claims: [{ resource: 'gpu-vram', amount: 1024 }] },
     { label: 'CyberTiel', claims: [{ resource: 'gpu-vram', amount: 4096 }] },
@@ -109,6 +109,6 @@ assert.equal(
 // A chat model counts while it is still loading; embeddings never do.
 assert.deepEqual(inference.runningChatModels([
     { name: "CyberTiel", state: "starting" },
-    { name: "text-embedding-nomic-embed-text-v1.5", state: "ready" },
+    { name: "my-embedder", state: "ready", embedding: true },
     { name: "Gemma-4-26B", state: "stopping" }
 ]), ["CyberTiel"]);

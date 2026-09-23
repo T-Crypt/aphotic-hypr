@@ -9,7 +9,7 @@ function eligibleClaims(claims) {
 // VRAM shows up as a measured claim. Embedding models never count.
 function runningChatModels(models) {
     return (models || []).filter(model => model?.name
-        && !String(model.name).startsWith("text-embedding")
+        && !model.embedding
         && (model.state === "starting" || model.state === "ready" || !model.state)).map(model => model.name);
 }
 
@@ -19,7 +19,7 @@ function claimSignature(claims) {
 
 function selectModel(models, preferred) {
     const available = (models || []).filter(model => model?.name
-        && !String(model.name).startsWith("text-embedding"));
+        && !model.embedding);
     if (preferred && available.some(model => model.name === preferred))
         return preferred;
     return available[0]?.name || "";
@@ -33,7 +33,7 @@ function triggeredModels(passports) {
 
 function selectTriggeredModel(passports, models, preferred) {
     const running = (models || []).filter(model => model?.name
-        && !String(model.name).startsWith("text-embedding")).map(model => model.name);
+        && !model.embedding).map(model => model.name);
     // Passports close when a model unloads, so they stand on their own;
     // the running list lags a poll behind and is empty until one lands.
     const triggered = triggeredModels(passports).filter(name => running.length === 0 || running.includes(name));
