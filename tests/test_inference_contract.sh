@@ -65,7 +65,7 @@ grep -q 'inference-render.json' "$AI/InferenceMode.qml" \
     && grep -q 'id: staleRestore' "$AI/InferenceMode.qml" \
     || fail "InferenceMode does not recover render state after a crash"
 
-grep -q 'if (!contention.claimantSuspendable)' "$PROFILE/ResourceEngine.qml" \
+grep -q 'if (!contention.claimantSuspendable || !ProfileEngine.isRegistered(claim.owner))' "$PROFILE/ResourceEngine.qml" \
     && grep -q 'readonly property var overBudget' "$PROFILE/ResourceEngine.qml" \
     || fail "a conflict with nothing suspendable must not open a prompt"
 
