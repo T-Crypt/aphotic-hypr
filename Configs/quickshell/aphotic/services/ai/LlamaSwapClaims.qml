@@ -28,6 +28,8 @@ BackendClaims {
     priority: "foreground"
     models: (root.runningModels ?? []).map(m => ({
         name: m?.name ?? "",
+        embedding: m?.embedding === true,
+        state: m?.state ?? "",
         pid: root._portToPid[String(m?.port ?? 0)] ?? 0
     }))
     unload: name => {

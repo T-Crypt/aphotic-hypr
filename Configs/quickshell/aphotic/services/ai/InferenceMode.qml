@@ -20,6 +20,7 @@ Singleton {
 
     property bool _active: false
     property string _model: ""
+    property string _owner: ""
     property var _tuned: []
     property string _signature: ""
     property string _manualOverride: ""
@@ -61,20 +62,17 @@ Singleton {
     }
 
     function _eligible(): var {
-        return Core.eligibleClaims(ResourceEngine.claims).map(c => c.id)
-            .concat(Core.runningChatModels(AiProviders.llamaSwapRunningModels));
+        return Core.eligibilityKeys(LocalInference.activeModels, ResourceEngine.claims, LocalInference.backends);
     }
 
     function _stateSignature(): string {
-        const models = AiProviders.llamaSwapRunningModels
-            .filter(entry => entry?.name && !entry.embedding)
-            .map(entry => entry.name).sort().join("|");
-        const triggered = Core.triggeredModels(WorkloadPassports.ofOwner("llama-swap")).sort().join("|");
-        return `${Core.claimSignature(ResourceEngine.claims)}#${models}#${triggered}`;
+        const selected = root._candidateModel();
+        const candidate = selected ? `${selected.owner}:${selected.name}` : "";
+        return `${Core.claimSignature(ResourceEngine.claims, LocalInference.backends)}#${Core.activeSignature(LocalInference.activeModels)}#${candidate}`;
     }
 
-    function _candidateModel(): string {
-        return Core.selectTriggeredModel(WorkloadPassports.ofOwner("llama-swap"), AiProviders.llamaSwapRunningModels, root._model);
+    function _candidateModel(): var {
+        return Core.selectActiveModel(LocalInference.activeModels, ResourceEngine.claims, WorkloadPassports.live);
     }
 
     function _onModelChange(): void {
@@ -85,9 +83,12 @@ Singleton {
         if (root._ready)
             root._manualOverride = "";
 
-        const nextModel = root._candidateModel();
-        if (nextModel !== root._model) {
+        const candidate = root._candidateModel();
+        const nextModel = candidate?.name ?? "";
+        const nextOwner = candidate?.owner ?? "";
+        if (nextModel !== root._model || nextOwner !== root._owner) {
             root._model = nextModel;
+            root._owner = nextOwner;
             if (root._active) {
                 root._closePassport("model-changed");
                 root._openPassport();
@@ -119,9 +120,11 @@ Singleton {
     function _activate(reason: string): void {
         if (root._active)
             return;
-        root._model = root._candidateModel();
+        const candidate = root._candidateModel();
+        root._model = candidate?.name ?? "";
+        root._owner = candidate?.owner ?? "";
         root._active = true;
-        if (!ProfileEngine.activate("inference", reason || "llama-swap")) {
+        if (!ProfileEngine.activate("inference", reason || "local-inference")) {
             root._active = false;
             return;
         }
@@ -188,8 +191,8 @@ Singleton {
         root._passport = WorkloadPassports.open({
             plane: "ai",
             owner: "inference",
-            label: `Inference mode · ${root._model || "llama-swap"}`,
-            trigger: "llama-swap",
+            label: `Inference mode · ${root._model || "Local model"}`,
+            trigger: root._owner || "local-inference",
             workloadId: "inference-mode",
             sessionId: "inference-mode",
             sourceAt: Date.now()
@@ -248,8 +251,9 @@ Singleton {
     }
 
     Connections {
-        target: AiProviders
-        function onLlamaSwapRunningModelsChanged(): void { root._onModelChange(); }
+        target: LocalInference
+        function onBackendsChanged(): void { root._onModelChange(); }
+        function onActiveModelsChanged(): void { root._onModelChange(); }
     }
 
     Connections {

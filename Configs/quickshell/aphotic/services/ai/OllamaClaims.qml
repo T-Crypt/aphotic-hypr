@@ -20,6 +20,8 @@ BackendClaims {
     label: qsTr("Ollama")
     models: (root.runningModels ?? []).map(m => ({
         name: m?.name ?? "",
+        embedding: m?.embedding === true,
+        state: m?.state ?? "",
         vramMiB: (m?.size_vram ?? 0) / (1024 * 1024),
         ramMiB: ((m?.size ?? 0) - (m?.size_vram ?? 0)) / (1024 * 1024)
     }))
