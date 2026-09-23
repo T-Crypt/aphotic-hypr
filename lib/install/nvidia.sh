@@ -10,17 +10,25 @@ detect_nvidia() {
   fi
 }
 
-# Real, reported bug this guards against: a user with an already-working
-# proprietary driver (nvidia/nvidia-dkms) ran install.sh and it blindly
-# tried to install nvidia-open-dkms on top, with zero check for what was
-# already there -- nvidia/nvidia-open (and their -dkms/-lts variants)
-# provide overlapping files, so pacman/the AUR helper either refuses on
-# a conflict or silently replaces a driver the user deliberately chose
-# and had working. Covers every real variant: proprietary (nvidia,
-# nvidia-lts, nvidia-dkms) and open (nvidia-open, nvidia-open-lts,
-# nvidia-open-dkms).
+# Every installed NVIDIA kernel driver, whatever its package is called.
+# Matching names missed legacy branches (nvidia-580xx-dkms), beta drivers
+# and distro kernel-module packages, so the keep/replace prompt never
+# showed and nvidia-open-dkms then failed on the NVIDIA-MODULE conflict.
+# Every one of them provides NVIDIA-MODULE.
+nvidia_driver_packages() {
+  LC_ALL=C pacman -Qi 2>/dev/null | awk '/^Name/ { name = $3 } /^Provides/ && /[[:space:]]NVIDIA-MODULE([[:space:]]|$)/ { print name }'
+}
+
 detect_nvidia_driver_installed() {
-  pacman -Qq 2>/dev/null | grep -qE '^nvidia(-open)?(-lts|-dkms)?$'
+  [[ -n "$(nvidia_driver_packages)" ]]
+}
+
+# The open kernel modules, the only NVIDIA driver in Arch's repos, need a
+# Turing or newer GPU. lspci names the die: Kepler (GK), Maxwell (GM),
+# Pascal (GP), Volta (GV) and older (GF, GT, G) parts cannot run them.
+# A card lspci cannot name counts as modern.
+nvidia_needs_legacy_driver() {
+  lspci | grep -E "(VGA|3D)" | grep -i nvidia | grep -qE '\b(G[KMPVF]|GT|G)[0-9]{2,3}[A-Z]*\b'
 }
 
 # Installs the actual Nvidia kernel driver (+ matching kernel headers) via
@@ -30,6 +38,19 @@ detect_nvidia_driver_installed() {
 # package-install) -- $NVIDIA_DRIVER_ACTION arrives here already resolved,
 # this function only acts on it.
 install_nvidia_driver() {
+  # Checked before the keep/replace branch: replacing a working legacy
+  # driver with one this GPU cannot run would leave no driver at all.
+  if nvidia_needs_legacy_driver; then
+    if [[ -n "$DETECTED_NVIDIA_DRIVER" ]]; then
+      echo -e "$CNT - This NVIDIA GPU predates Turing; keeping its driver (${DETECTED_NVIDIA_DRIVER})."
+    else
+      echo -e "$CWR - This NVIDIA GPU predates Turing, and Arch's nvidia-open-dkms cannot drive it. Aphotic will not install an NVIDIA driver."
+      echo -e "$CWR   Maxwell and Pascal cards use the 580xx branch: yay -S nvidia-580xx-dkms nvidia-580xx-utils"
+      echo -e "$CWR   Older cards need the 470xx or 390xx branch. Reboot after installing it."
+    fi
+    return 0
+  fi
+
   if [[ -n "$DETECTED_NVIDIA_DRIVER" ]]; then
     if [[ "$NVIDIA_DRIVER_ACTION" == "keep" ]]; then
       echo -e "$CNT - Keeping existing NVIDIA driver (${DETECTED_NVIDIA_DRIVER}) -- skipping Aphotic's own driver install."
@@ -78,6 +99,12 @@ install_nvidia_driver() {
 # even on the "keep existing driver" path (a driver that predates Aphotic
 # may never have had these set), not just on a fresh install.
 configure_nvidia_modules() {
+  # mkinitcpio fails the whole image build on a MODULES entry it cannot
+  # find, so the wiring waits until a driver module is really installed.
+  if ! detect_nvidia_driver_installed; then
+    echo -e "$CWR - No NVIDIA driver module is installed, so the initramfs is left as it is."
+    return 0
+  fi
   echo -e "$CNT - Configuring Nvidia modules..."
   sudo sed -i 's/MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
   if ! sudo grep -qF "options nvidia-drm modeset=1" /etc/modprobe.d/nvidia.conf 2>/dev/null; then

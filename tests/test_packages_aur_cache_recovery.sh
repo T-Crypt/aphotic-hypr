@@ -32,7 +32,7 @@ FAKE_BIN="$WORKDIR/bin"
 #!/usr/bin/env bash
 op="\$1"; shift
 case "\$op" in
-  -Qq) /bin/grep -qxF "\$1" "$WORKDIR/installed" 2>/dev/null ;;
+  -Qq|-T) /bin/grep -qxF "\$1" "$WORKDIR/installed" 2>/dev/null ;;
   -Si) exit 1 ;;
   *) exit 0 ;;
 esac
