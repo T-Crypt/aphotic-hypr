@@ -62,9 +62,54 @@ show_progress() {
 # the install.
 FAILED_OPTIONAL_PACKAGES=()
 
+# A failure report opens pre-filled with what it takes to reproduce it:
+# #209 arrived as a bare title with no log. The user sees and can edit all
+# of it before submitting; home paths and anything shaped like a secret are
+# redacted first.
+_issue_body_for() {
+  local pkg="$1" drivers="" gpu log=""
+  declare -F nvidia_driver_packages >/dev/null && drivers="$(nvidia_driver_packages 2>/dev/null | paste -sd, -)"
+  gpu="$(lspci 2>/dev/null | grep -Ei 'vga|3d|display' | sed 's/^[^ ]* //' | paste -sd';' -)"
+  # The newest lines, not only ones naming the package: pacman's real error
+  # ("conflicting files", "failed to commit transaction") rarely names it.
+  [[ -n "${INSTLOG:-}" && -r "$INSTLOG" ]] && log="$(tail -n 40 "$INSTLOG")"
+  {
+    echo "Package: $pkg"
+    echo "Aphotic: $(cat "${ROOT_DIR:-.}/VERSION" 2>/dev/null || echo unknown)"
+    echo "Profile: ${PROFILE:-unknown}, layers: ${LAYERS:-none}"
+    echo "Kernel: $(uname -r)"
+    echo "GPU: ${gpu:-unknown}"
+    echo "NVIDIA driver packages: ${drivers:-none}"
+    echo "AUR helper: ${AUR_HELPER:-none}"
+    echo
+    echo "Last lines of install.log:"
+    echo '```'
+    printf '%s\n' "$log"
+    echo '```'
+  } | sed -E "s#${HOME:-/nonexistent}#~#g; s/((token|key|password|passwd|secret)[A-Za-z_]*[[:space:]]*[=:][[:space:]]*)[^[:space:]]+/\1<redacted>/Ig"
+}
+
 _issue_url_for() {
-  local pkg="${1//+/%2B}"
-  printf '%s/new?title=Install%%20package%%20failed:%%20%s' "$APHOTIC_ISSUES_URL" "$pkg"
+  local pkg="$1"
+  _issue_body_for "$pkg" | "${PYTHON_BIN:-python3}" -c '
+import sys, urllib.parse
+base, pkg = sys.argv[1], sys.argv[2]
+body = sys.stdin.read()
+head, sep, log = body.partition("```\n")
+lines = log.split("\n")
+q = lambda s: urllib.parse.quote(s, safe="")
+title = q("Install package failed: " + pkg)
+def url(b):
+    return base + "/new?title=" + title + "&body=" + q(b)
+# Browsers and GitHub reject very long URLs; drop the oldest log lines first.
+while len(url(head + sep + "\n".join(lines))) > 7000 and len(lines) > 3:
+    lines.pop(0)
+print(url(head + sep + "\n".join(lines)))
+' "$APHOTIC_ISSUES_URL" "$pkg"
+}
+
+_issue_notice() {
+  echo -e "$CWR   The issue link below opens pre-filled with your GPU, kernel and the last lines of install.log. Review it before submitting."
 }
 
 _package_in_list() {
@@ -238,6 +283,7 @@ install_software() {
     echo -e "$CER - Error installing -- $pkg -- Submit issue request for install package -- $pkg"
     [[ -n "$why" ]] && echo -e "$CWR   $why"
     echo -e "$CWR   Skipped, the install continues. Output: $INSTLOG"
+    _issue_notice
     echo -e "$CWR   $(_issue_url_for "$pkg")"
     return 0
   fi
@@ -250,6 +296,7 @@ install_software() {
     _print_install_failure_detail
   fi
   echo -e "$CER   Submit issue request for install package -- $pkg"
+  _issue_notice
   echo -e "$CER   $(_issue_url_for "$pkg")"
   exit 1
 }

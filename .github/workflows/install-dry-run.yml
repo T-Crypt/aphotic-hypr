@@ -1,0 +1,47 @@
+name: Install dry run
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - install.sh
+      - lib/**
+      - profiles/**
+      - tools/check_profile_packages.sh
+      - .github/workflows/install-dry-run.yml
+  workflow_dispatch:
+
+concurrency:
+  group: install-dry-run-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  arch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container: archlinux:latest
+    steps:
+      - name: Prepare Arch
+        run: |
+          pacman -Syu --noconfirm --needed git sudo python which pciutils curl
+          useradd -m tester
+          echo 'tester ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/tester
+
+      - uses: actions/checkout@v4
+
+      - name: Dry run both profiles
+        run: |
+          chown -R tester: "$GITHUB_WORKSPACE"
+          for profile in minimal full; do
+            echo "=== $profile"
+            out="$(sudo -u tester ./install.sh --dry-run --profile "$profile" --no-assistant </dev/null 2>&1)" \
+              || { echo "$out"; echo "::error::--dry-run --profile $profile exited non-zero"; exit 1; }
+            echo "$out"
+            if grep -q 'ERROR' <<<"$out"; then
+              echo "::error::--dry-run --profile $profile printed an ERROR line"
+              exit 1
+            fi
+          done
+
+      - name: Every profile package resolves
+        run: bash tools/check_profile_packages.sh
