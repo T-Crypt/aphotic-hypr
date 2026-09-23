@@ -432,7 +432,7 @@ Singleton {
             onStreamFinished: {
                 try {
                     const data = JSON.parse(text);
-                    root.ollamaRunningModels = (data.models ?? []).map(m => ({ name: m.name, size_vram: m.size_vram }));
+                    root.ollamaRunningModels = (data.models ?? []).map(m => ({ name: m.name, size: m.size, size_vram: m.size_vram }));
                 } catch (e) {
                     // Host unreachable or unexpected response -- leave
                     // ollamaRunningModels as-is.

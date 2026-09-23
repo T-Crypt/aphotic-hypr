@@ -2,58 +2,40 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Io
-import qs.services
-import qs.services.profile
 
-// llama-swap as a Resource Engine claimant, beside OllamaClaims.
+// llama-swap's adapter onto BackendClaims. /running names each model but
+// not the memory it holds, so each model is matched to the llama-server
+// serving it (by the port llama-swap started it on) and that PID is
+// adopted: the claim carries nvidia-smi's measured figure. A model with no
+// matching local process (llama-swap on another machine) holds no VRAM
+// here and claims nothing.
 //
-// llama-swap's /running list names each model but not the memory it holds.
-// Each model is matched to the llama-server process serving it (by the port
-// llama-swap started it on) and that PID is adopted into GpuVramSource, so
-// the claim carries nvidia-smi's measured figure under this owner instead
-// of an anonymous gpu-proc- claim. A model with no matching local process
-// (llama-swap running on another machine) holds no VRAM here and claims
-// nothing.
-//
-// Driven off the runningModels AiProviders hands in; the only process this
-// owns is a pgrep that runs when the set of running models changes.
-QtObject {
+// Foreground priority: a loaded model is the top claim, but it keeps its
+// graceful stop, so a later foreground claimant can still negotiate and
+// Suspend unloads it.
+BackendClaims {
     id: root
 
     property var runningModels: []
     property string host: ""
-    property bool enabled: false
-    property var gpuVram: null
-
-    readonly property string owner: "llama-swap"
-
-    property bool _registered: false
-
-    // model name -> adopted PID, passport token, pending unload receipt.
-    property var _pids: ({})
-    property var _tokens: ({})
-    property var _unloads: ({})
 
     property var _portToPid: ({})
     property string _resolvedKey: ""
     property string _pendingKey: ""
 
-    onEnabledChanged: root._register()
-    onRunningModelsChanged: root._resolve()
-
-    Component.onCompleted: root._register()
-
-    function _register(): void {
-        if (root._registered || !root.enabled)
-            return;
-        root._registered = true;
-        ProfileEngine.register({
-            id: root.owner,
-            label: qsTr("llama-swap"),
-            gracefulStop: claim => root._unload(claim?.id ?? "")
-        });
-        root._resolve();
+    owner: "llama-swap"
+    label: qsTr("llama-swap")
+    priority: "foreground"
+    models: (root.runningModels ?? []).map(m => ({
+        name: m?.name ?? "",
+        pid: root._portToPid[String(m?.port ?? 0)] ?? 0
+    }))
+    unload: name => {
+        if (root.host)
+            root._unloadProc.exec(["curl", "-s", "-m", "10", "-X", "POST", `${root.host}/api/models/unload/${encodeURI(name)}`]);
     }
+
+    onRunningModelsChanged: root._resolve()
 
     function _modelKey(): string {
         return (root.runningModels ?? []).map(m => `${m.name}:${m.port}:${m.state}`).sort().join("|");
@@ -62,17 +44,12 @@ QtObject {
     // The PID lookup only reruns when a model starts, stops or changes
     // state. Every other poll reuses the last mapping.
     function _resolve(): void {
-        if (!root._registered)
-            return;
         const key = root._modelKey();
-        if (key === root._resolvedKey) {
-            root._sync();
+        if (key === root._resolvedKey)
             return;
-        }
         if (key === "") {
             root._resolvedKey = key;
             root._portToPid = ({});
-            root._sync();
             return;
         }
         if (root._pidProc.running)
@@ -90,77 +67,6 @@ QtObject {
                 map[port[1]] = pid;
         }
         return map;
-    }
-
-    function _sync(): void {
-        const resident = ({});
-        for (const model of (root.runningModels ?? [])) {
-            const pid = root._portToPid[String(model?.port ?? 0)] ?? 0;
-            if (!model?.name || !pid)
-                continue;
-            resident[model.name] = true;
-
-            if (root._pids[model.name] !== pid) {
-                if (root._pids[model.name])
-                    root.gpuVram?.unadopt(root._pids[model.name]);
-                root.gpuVram?.adopt(pid, root.owner, "foreground");
-                root._pids[model.name] = pid;
-            }
-
-            // GpuVramSource registers the claim on its next scan, so the
-            // first passport after a load carries no amount yet.
-            const claim = ResourceEngine.claimById(`${root.owner}-proc-${pid}`);
-            root._tokens[model.name] = WorkloadPassports.open({
-                plane: "ai",
-                owner: root.owner,
-                label: model.name,
-                trigger: "model-resident",
-                workloadId: `llama-swap-${model.name}`,
-                sessionId: `model:${model.name}`,
-                sourceAt: Date.now(),
-                claims: claim ? [{ resource: "gpu-vram", amount: claim.amount, unit: "MiB",
-                    measuredAt: Date.now(), origin: "measured" }] : []
-            });
-        }
-
-        for (const name of Object.keys(root._pids)) {
-            if (resident[name])
-                continue;
-            root.gpuVram?.unadopt(root._pids[name]);
-            delete root._pids[name];
-        }
-
-        // Same settle rule as OllamaClaims: the unload receipt stays
-        // "requested" until a poll proves the model is gone.
-        for (const name of Object.keys(root._tokens)) {
-            if (resident[name])
-                continue;
-            WorkloadPassports.close(root._tokens[name], "model-unloaded");
-            delete root._tokens[name];
-            if (root._unloads[name]) {
-                ActionReceipts.applied(root._unloads[name], "unloaded");
-                delete root._unloads[name];
-            }
-        }
-    }
-
-    // Leaves the claim in place: GpuVramSource drops it once the process
-    // is gone, and the next /running poll closes the passport.
-    function _unload(claimId: string): void {
-        const pid = parseInt(claimId.split("-").pop(), 10);
-        const name = Object.keys(root._pids).find(n => root._pids[n] === pid) ?? "";
-        if (!name || !root.host)
-            return;
-        if (!root._unloads[name]) {
-            root._unloads[name] = ActionReceipts.request({
-                profileId: root.owner,
-                workloadId: `llama-swap-${name}`,
-                kind: "model-unload",
-                before: "resident",
-                reason: "graceful stop requested"
-            });
-        }
-        root._unloadProc.exec(["curl", "-s", "-m", "10", "-X", "POST", `${root.host}/api/models/unload/${encodeURI(name)}`]);
     }
 
     property Process _pidProc: Process {
