@@ -9,6 +9,8 @@ import Quickshell
 import Quickshell.Io
 import qs.services
 import qs.services.ai
+import qs.services.profile
+import "PluginRegistryCore.js" as RegistryCore
 
 // Read-only view of ~/.local/state/aphotic/plugins.json's "installed"
 // map (manifest v3 -- see docs/archive/PLUGIN_SYSTEM.md). The CLI
@@ -35,6 +37,18 @@ Singleton {
     readonly property var _installed: root._data.installed ?? ({})
 
     property var _data: ({})
+    property bool _sheltered: false
+
+    Component.onCompleted: ProfileEngine.register({
+        id: "plugin-surfaces",
+        label: qsTr("Plugin surfaces"),
+        onShelter: () => {
+            root._sheltered = true;
+            return "unloaded";
+        },
+        onUnshelter: () => root._sheltered = false,
+        shelterState: () => root._sheltered ? "unloaded" : "full"
+    })
 
     function isInstalled(name: string): bool {
         return Object.prototype.hasOwnProperty.call(root._installed, name);
@@ -70,7 +84,8 @@ Singleton {
     }
 
     function surfacesFor(surface: string): var {
-        return root.surfaceRegistrations.filter(s => s.surface === surface && root._gateSatisfied(s));
+        return RegistryCore.surfacesFor(root.surfaceRegistrations, root._installed, surface, root._sheltered)
+            .filter(s => root._gateSatisfied(s));
     }
 
     function settingsSectionsFor(category: string): var {
