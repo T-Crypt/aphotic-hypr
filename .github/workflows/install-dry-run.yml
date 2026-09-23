@@ -24,6 +24,9 @@ jobs:
       - name: Prepare Arch
         run: |
           pacman -Syu --noconfirm --needed git sudo python which pciutils curl
+          # The installer refuses a non-systemd base by checking for this
+          # directory. A container has no systemd, and a dry run changes nothing.
+          mkdir -p /run/systemd/system
           useradd -m tester
           echo 'tester ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/tester
 
