@@ -5,7 +5,7 @@ local mainMod = "SUPER"
 -- Main binds
 hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("kitty"), { description = "Open terminal" })
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("qs -c aphotic ipc call lock engage"), { description = "Lock screen" })
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("wlogout --protocol layer-shell"), { description = "Open power/logout menu" })
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("qs -c aphotic ipc call session toggle"), { description = "Open power/logout menu" })
 hl.bind(mainMod .. " + backspace", hl.dsp.exec_cmd("qs -c aphotic ipc call session toggle"), { description = "Toggle session menu" })
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "Open file manager" })
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("qs -c aphotic ipc call launcher toggle"), { description = "Toggle app launcher" })
