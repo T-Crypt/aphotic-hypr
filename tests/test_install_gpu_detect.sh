@@ -116,6 +116,91 @@ fixture <<'EOF'
 EOF
 check "no VGA/3D device" false false
 
+# --- NVIDIA cards the open kernel modules cannot drive ---------------
+# Arch ships only nvidia-open now, which needs Turing or newer. lspci
+# names the die; workstation parts carry a suffix (GP107GL).
+
+legacy() {
+    local name="$1" want="$2" got=modern
+    fixture <<<"01:00.0 VGA compatible controller: NVIDIA Corporation $name"
+    nvidia_needs_legacy_driver && got=legacy
+    [[ "$got" == "$want" ]] || fail "$name: expected $want, got $got"
+}
+legacy "GP104 [GeForce GTX 1080]" legacy
+legacy "GP107GL [Quadro P600]" legacy
+legacy "GM206 [GeForce GTX 960]" legacy
+legacy "GK208B [GeForce GT 710]" legacy
+legacy "GP107 [GeForce GT 1030]" legacy
+legacy "TU116 [GeForce GTX 1660 SUPER]" modern
+legacy "TU117GLM [Quadro T1000 Mobile]" modern
+legacy "GA102 [GeForce RTX 3090]" modern
+legacy "AD102 [GeForce RTX 4090]" modern
+legacy "GB202 [GeForce RTX 5090]" modern
+legacy "Device 2d04" modern
+
+# --- an installed driver is found by what it provides, not its name ---
+# A legacy branch or a distro module package slipped past the old name
+# match, so the installer never asked and nvidia-open-dkms then hit the
+# NVIDIA-MODULE conflict.
+
+cat > "$TESTHOME/bin/pacman" <<'STUB'
+#!/usr/bin/env bash
+cat "$PACMAN_QI_FIXTURE"
+STUB
+chmod +x "$TESTHOME/bin/pacman"
+PACMAN_QI_FIXTURE="$TESTHOME/qi"; export PACMAN_QI_FIXTURE
+
+cat > "$PACMAN_QI_FIXTURE" <<'EOF'
+Name            : nvidia-580xx-utils
+Provides        : vulkan-driver  nvidia-utils  opengl-driver
+
+Name            : nvidia-580xx-dkms
+Provides        : NVIDIA-MODULE  nvidia
+
+Name            : fake-nvidia-module-docs
+Provides        : NVIDIA-MODULE-DOCS
+EOF
+got="$(nvidia_driver_packages | paste -sd, -)"
+[[ "$got" == "nvidia-580xx-dkms" ]] || fail "legacy branch driver should be detected, got '$got'"
+detect_nvidia_driver_installed || fail "detect_nvidia_driver_installed should see nvidia-580xx-dkms"
+
+cat > "$PACMAN_QI_FIXTURE" <<'EOF'
+Name            : nvidia-utils
+Provides        : vulkan-driver  opengl-driver  nvidia-libgl
+EOF
+! detect_nvidia_driver_installed || fail "userspace alone is not a driver"
+rm -f "$TESTHOME/bin/pacman"
+
+# --- a pre-Turing card never gets nvidia-open, and keeps its driver ---
+
+INSTALLED=""
+install_software() { INSTALLED+="$1 "; }
+sudo() { INSTALLED+="sudo:$* "; }
+INSTLOG=/dev/null
+
+fixture <<<"01:00.0 VGA compatible controller: NVIDIA Corporation GP104 [GeForce GTX 1080]"
+DETECTED_NVIDIA_DRIVER=""; NVIDIA_DRIVER_ACTION=""
+install_nvidia_driver > "$TESTHOME/nv.out"
+out="$(cat "$TESTHOME/nv.out")"
+[[ -z "$INSTALLED" ]] || fail "pre-Turing with no driver must install nothing, got: $INSTALLED"
+grep -q "nvidia-580xx-dkms" <<<"$out" || fail "pre-Turing skip should name the legacy branch: $out"
+
+DETECTED_NVIDIA_DRIVER="nvidia-580xx-dkms"; NVIDIA_DRIVER_ACTION="reinstall"
+install_nvidia_driver >/dev/null
+[[ -z "$INSTALLED" ]] || fail "reinstall on pre-Turing must not remove the working driver, got: $INSTALLED"
+
+fixture <<<"01:00.0 VGA compatible controller: NVIDIA Corporation AD102 [GeForce RTX 4090]"
+DETECTED_NVIDIA_DRIVER=""; NVIDIA_DRIVER_ACTION=""
+cat > "$TESTHOME/bin/pacman" <<'STUB'
+#!/usr/bin/env bash
+echo linux
+STUB
+chmod +x "$TESTHOME/bin/pacman"
+install_nvidia_driver >/dev/null
+[[ "$INSTALLED" == *"nvidia-open-dkms"* ]] || fail "Turing+ with no driver should install nvidia-open-dkms, got: $INSTALLED"
+rm -f "$TESTHOME/bin/pacman"
+unset -f install_software sudo
+
 # --- the runner choice that hangs off the vendor ----------------------
 
 DETECTED_NVIDIA_PRESENT="true" DETECTED_AMD_PRESENT="false"
@@ -192,4 +277,4 @@ grep -q "would install AMD graphics userspace" <<<"$out" || fail "AMD userspace 
 
 rm -f "$ROOT/aphotic.toml"
 
-echo "PASS: GPU vendor detection (AMD CPU is not an AMD GPU, hybrid, legacy radeon) and the Ollama runner choice"
+echo "PASS: GPU vendor detection (AMD CPU is not an AMD GPU, hybrid, legacy radeon), pre-Turing NVIDIA, NVIDIA-MODULE driver detection, and the Ollama runner choice"
