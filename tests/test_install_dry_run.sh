@@ -8,9 +8,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 rm -f aphotic.toml
 
-output=$(bash install.sh --dry-run --profile full --with gaming,dev,ai --theme default 2>&1)
-status=$?
-[[ "$status" -eq 0 ]] || fail "install.sh --dry-run exited $status"
+# Under set -e a failing command substitution ended the test before any
+# message, so an intermittent failure left nothing to diagnose.
+status=0
+output=$(bash install.sh --dry-run --profile full --with gaming,dev,ai --theme default </dev/null 2>&1) || status=$?
+if [[ "$status" -ne 0 ]]; then
+  echo "$output" | tail -n 25
+  fail "install.sh --dry-run exited $status"
+fi
 
 for pkg in quickshell gamemode mangohud neovim ollama llmfit spotify; do
   echo "$output" | grep -q -- "$pkg" || fail "expected '$pkg' in dry-run plan"
