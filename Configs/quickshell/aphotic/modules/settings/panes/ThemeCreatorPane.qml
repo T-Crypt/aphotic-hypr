@@ -204,7 +204,7 @@ ColumnLayout {
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full
                     disabled: !root.created
-                    onClicked: Quickshell.execDetached(["thunar", root.themeDir])
+                    onClicked: Quickshell.execDetached(["xdg-open", root.themeDir])
                 }
             }
         }

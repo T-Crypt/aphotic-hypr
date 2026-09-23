@@ -40,6 +40,7 @@ SHELL_BINARIES = {
     "wl-copy": "wl-clipboard",
     "swappy": "swappy",
     "swaylock": "swaylock-effects",
+    "xdg-open": "xdg-utils",
 }
 
 # Base-system binaries the QML shells out to: every Arch install has
