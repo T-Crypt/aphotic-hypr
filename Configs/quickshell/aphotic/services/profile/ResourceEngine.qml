@@ -92,6 +92,18 @@ Singleton {
         return true;
     }
 
+    // Live use reported by whoever declared the resource, for display.
+    // Arbitration still reads declared capacity and claims; this only lets a
+    // reader show what the hardware says right now. Null clears it.
+    function measure(key: string, value: var): void {
+        const spec = root._resources[key];
+        if (!spec)
+            return;
+        const next = Object.assign({}, root._resources);
+        next[key] = Object.assign({}, spec, { measured: value ? Object.assign({ at: Date.now() }, value) : null });
+        root._resources = next;
+    }
+
     function undeclareResource(key: string): void {
         if (!Object.prototype.hasOwnProperty.call(root._resources, key))
             return;

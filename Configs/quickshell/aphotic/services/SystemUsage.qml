@@ -271,6 +271,11 @@ Singleton {
                             updated.temp = milli / 1000;
                         updated.statsAvailable = gotPerc || gotTemp;
                     }
+                    // A single utilization sample swings from 11% to 56% on an
+                    // idle desktop, so two readers a second apart disagreed.
+                    // Smooth over roughly the last five samples.
+                    if (updated.statsAvailable && gpu.statsAvailable && updated.perc !== gpu.perc)
+                        updated.perc = gpu.perc * 0.65 + updated.perc * 0.35;
                     const gpus = root._gpus.slice();
                     gpus[idx] = updated;
                     root._gpus = gpus;

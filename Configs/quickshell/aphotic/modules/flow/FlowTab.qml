@@ -65,7 +65,10 @@ Item {
             function vramClaimed(): string {
                 const spec = ResourceEngine.resources["gpu-vram"];
                 const claims = ResourceEngine.claims.filter(c => c.resource === "gpu-vram");
-                return spec ? Model.amount(claims.reduce((sum,c) => sum+c.amount,0), spec.unit) : "Undeclared";
+                if (!spec)
+                    return "Undeclared";
+                const claimed = Model.amount(claims.reduce((sum,c) => sum+c.amount,0), spec.unit);
+                return spec.measured ? Model.amount(spec.measured.used, spec.unit) + " in use · " + claimed + " claimed" : claimed;
             }
             function rate(bytes: real): string {
                 return bytes >= 1048576 ? (bytes/1048576).toFixed(1)+"M" : Math.round(bytes/1024)+"K";
