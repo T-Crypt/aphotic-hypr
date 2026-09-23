@@ -39,8 +39,10 @@ recordings/
 graphify-out/
 
 # Local agent tooling state, same class as .claude/ and docs/ above:
-# per-machine, never shipped, not portable between checkouts.
-.epiq/
+# per-machine, never shipped, not portable between checkouts. The one
+# exception is the epiq board pointer, which every checkout needs.
+.epiq/*
+!.epiq/project.json
 .opencode/
 .gate/
 
