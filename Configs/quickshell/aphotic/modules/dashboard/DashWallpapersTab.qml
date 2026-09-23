@@ -90,7 +90,7 @@ ColumnLayout {
 
         IconButton {
             icon: "folder_open"
-            onClicked: Quickshell.execDetached(["thunar", root.themeFolder])
+            onClicked: Quickshell.execDetached(["xdg-open", root.themeFolder])
         }
     }
 

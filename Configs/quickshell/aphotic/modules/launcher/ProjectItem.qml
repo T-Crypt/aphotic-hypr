@@ -18,7 +18,8 @@ Item {
 
     function execute(): void {
         Quickshell.execDetached(["kitty", "--directory", root.modelData.path, "zsh", "-ic", "claude"]);
-        Quickshell.execDetached(["code", root.modelData.path]);
+        // The editor is a full-profile app; minimal still gets the terminal.
+        Quickshell.execDetached(["sh", "-c", 'command -v code >/dev/null && exec code "$1"', "sh", root.modelData.path]);
         // Fire-and-forget notification to any plugin declaring the
         // project-hook capability -- see cmd_plugin.sh's
         // run-project-hooks / _aphotic_plugin_run_hook_by_capability.
