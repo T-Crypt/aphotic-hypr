@@ -27,6 +27,7 @@ import qs.modules.keybinds
 import qs.modules.negotiation
 import qs.services
 import qs.services.profile
+import qs.services.ai
 
 ShellRoot {
     id: root
@@ -381,6 +382,15 @@ ShellRoot {
     // the resource this declares.
     GpuVramSource {
         id: gpuVramSource
+    }
+
+    // Mounted here rather than inside AiProviders like OllamaClaims: it
+    // adopts llama-server PIDs into GpuVramSource, which is not a singleton.
+    LlamaSwapClaims {
+        gpuVram: gpuVramSource
+        runningModels: AiProviders.llamaSwapRunningModels
+        host: AiConfig.llamaSwapHost
+        enabled: InstallProfile.aiEnabled && AiConfig.llamaSwapHostConfigured
     }
 
     // Every enabled plugin that registers an `overlay` surface, one window

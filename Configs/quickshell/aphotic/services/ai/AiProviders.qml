@@ -295,6 +295,22 @@ Singleton {
         ollamaPsProc.running = true;
     }
 
+    // llama-swap's own /running list, the same way refreshRunningModels()
+    // reads Ollama's /api/ps. LlamaSwapClaims (mounted in shell.qml, next to
+    // the GpuVramSource it needs) turns each entry into a claim.
+    property var llamaSwapRunningModels: []
+    property bool llamaSwapReachable: false
+
+    function refreshLlamaSwapRunning(): void {
+        if (!AiConfig.llamaSwapHostConfigured) {
+            root.llamaSwapRunningModels = [];
+            root.llamaSwapReachable = false;
+            return;
+        }
+        llamaSwapRunningProc.command = ["curl", "-s", "-m", "5", `${AiConfig.llamaSwapHost}/running`];
+        llamaSwapRunningProc.running = true;
+    }
+
     function deleteModel(name: string): void {
         ollamaDeleteProc.exec(["curl", "-s", "-m", "10", "-X", "DELETE", `${AiConfig.ollamaHost}/api/delete`, "-d", JSON.stringify({ name })]);
     }
@@ -314,6 +330,9 @@ Singleton {
         function onOllamaHostChanged() {
             root.refreshOllamaModels();
             root.refreshRunningModels();
+        }
+        function onLlamaSwapHostChanged() {
+            root.refreshLlamaSwapRunning();
         }
     }
 
@@ -422,6 +441,37 @@ Singleton {
         }
     }
 
+    // Cleared on a failed request for the same reason as ollamaPsProc: a
+    // server that stopped answering has nothing loaded. `proxy` carries the
+    // port llama-swap started that model's llama-server on, which is how
+    // LlamaSwapClaims finds its PID.
+    //
+    // Polled rather than streamed: /api/events does push model state
+    // changes, but the same stream carries every upstream log line, which
+    // is far more text than this list during a load.
+    Process {
+        id: llamaSwapRunningProc
+        onExited: exitCode => {
+            root.llamaSwapReachable = exitCode === 0;
+            if (exitCode !== 0)
+                root.llamaSwapRunningModels = [];
+        }
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const data = JSON.parse(text);
+                    root.llamaSwapRunningModels = (data.running ?? []).filter(m => m?.model).map(m => ({
+                        name: m.model,
+                        state: m.state ?? "",
+                        port: parseInt((m.proxy ?? "").split(":").pop(), 10) || 0
+                    }));
+                } catch (e) {
+                    // Unexpected response -- keep the last list.
+                }
+            }
+        }
+    }
+
     // DELETE /api/delete takes no response body worth parsing -- just
     // re-list the installed models once it's done.
     Process {
@@ -455,6 +505,16 @@ Singleton {
         triggeredOnStart: true
         running: InstallProfile.aiEnabled && AiConfig.ollamaHostConfigured && !root.startingOllama && !root.stoppingOllama
         onTriggered: root.refreshRunningModels()
+    }
+
+    // Same cadence and backoff as ollamaPsPoll. Nothing runs until a
+    // llama-swap host is set.
+    Timer {
+        interval: root.llamaSwapReachable ? 5000 : 30000
+        repeat: true
+        triggeredOnStart: true
+        running: InstallProfile.aiEnabled && AiConfig.llamaSwapHostConfigured
+        onTriggered: root.refreshLlamaSwapRunning()
     }
 
     OllamaClaims {

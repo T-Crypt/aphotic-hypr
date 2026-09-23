@@ -7,3 +7,4 @@ singleton AiKeys 1.0 AiKeys.qml
 singleton AiProviders 1.0 AiProviders.qml
 singleton IntelligenceSessions 1.0 IntelligenceSessions.qml
 OllamaClaims 1.0 OllamaClaims.qml
+LlamaSwapClaims 1.0 LlamaSwapClaims.qml

@@ -313,6 +313,75 @@ ColumnLayout {
         }
     }
 
+    // A llama-swap server's running models become Resource Engine claims
+    // (LlamaSwapClaims). Nothing is polled until a host is set.
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+        visible: InstallProfile.aiEnabled
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("llama-swap")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsRow {
+                icon: "dns"
+                label: qsTr("Host")
+                description: AiConfig.llamaSwapHostConfigured ? AiConfig.llamaSwapHost : qsTr("Not set -- llama-swap models are not tracked")
+
+                StyledRect {
+                    Layout.preferredWidth: 200
+                    Layout.preferredHeight: 32
+                    radius: Tokens.rounding.full
+                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                    TextInput {
+                        id: llamaSwapHostInput
+
+                        anchors.fill: parent
+                        anchors.leftMargin: Tokens.padding.medium
+                        anchors.rightMargin: Tokens.padding.medium
+                        verticalAlignment: TextInput.AlignVCenter
+                        clip: true
+                        font: Tokens.font.label.small
+                        color: Colours.palette.m3onSurface
+                        text: AiConfig.llamaSwapHost
+
+                        // Empty clears the host, which stops the poll.
+                        Keys.onReturnPressed: AiConfig.llamaSwapHost = llamaSwapHostInput.text.trim()
+
+                        StyledText {
+                            visible: llamaSwapHostInput.text.length === 0
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("http://host:9090")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+                    }
+                }
+            }
+
+            SettingsRow {
+                visible: AiConfig.llamaSwapHostConfigured
+                icon: AiProviders.llamaSwapReachable ? "check_circle" : "error"
+                label: qsTr("Status")
+                description: {
+                    if (!AiProviders.llamaSwapReachable)
+                        return qsTr("Not reachable at %1").arg(AiConfig.llamaSwapHost);
+                    const running = AiProviders.llamaSwapRunningModels.map(m => m.name);
+                    return running.length > 0 ? qsTr("Running: %1").arg(running.join(", ")) : qsTr("Reachable, no model loaded");
+                }
+            }
+        }
+    }
+
     ColumnLayout {
         id: ollamaModelsSection
 
