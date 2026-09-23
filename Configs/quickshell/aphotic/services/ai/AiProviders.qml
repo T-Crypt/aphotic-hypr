@@ -507,14 +507,53 @@ Singleton {
         onTriggered: root.refreshRunningModels()
     }
 
-    // Same cadence and backoff as ollamaPsPoll. Nothing runs until a
-    // llama-swap host is set.
+    // llama-swap pushes a modelStatus event the moment a model starts or
+    // stops, so the running list refreshes within a second instead of on
+    // a poll. The stream also carries every upstream log line; the filter
+    // looks at the event type before parsing anything. It is silent while
+    // nothing happens, and the slow poll below covers a dropped stream.
+    readonly property bool _llamaSwapWatch: InstallProfile.aiEnabled && AiConfig.llamaSwapHostConfigured
+
+    on_LlamaSwapWatchChanged: {
+        llamaSwapEvents.running = false;
+        if (root._llamaSwapWatch)
+            llamaSwapEventsRetry.restart();
+    }
+
+    Process {
+        id: llamaSwapEvents
+        command: ["curl", "-sN", "--max-time", "0", `${AiConfig.llamaSwapHost}/api/events`]
+        stdout: SplitParser {
+            onRead: line => {
+                if (line.indexOf('"type":"modelStatus"') !== -1)
+                    root.refreshLlamaSwapRunning();
+            }
+        }
+        onExited: {
+            if (root._llamaSwapWatch)
+                llamaSwapEventsRetry.restart();
+        }
+    }
+
     Timer {
-        interval: root.llamaSwapReachable ? 5000 : 30000
+        id: llamaSwapEventsRetry
+        interval: 5000
+        onTriggered: {
+            if (root._llamaSwapWatch && !llamaSwapEvents.running)
+                llamaSwapEvents.running = true;
+        }
+    }
+
+    Timer {
+        interval: 30000
         repeat: true
         triggeredOnStart: true
-        running: InstallProfile.aiEnabled && AiConfig.llamaSwapHostConfigured
-        onTriggered: root.refreshLlamaSwapRunning()
+        running: root._llamaSwapWatch
+        onTriggered: {
+            root.refreshLlamaSwapRunning();
+            if (!llamaSwapEvents.running)
+                llamaSwapEventsRetry.restart();
+        }
     }
 
     OllamaClaims {

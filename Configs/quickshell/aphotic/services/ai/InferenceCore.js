@@ -5,6 +5,14 @@ function eligibleClaims(claims) {
         && Number(claim.amount || 0) >= 2048);
 }
 
+// llama-swap lists a model as soon as it starts loading, seconds before its
+// VRAM shows up as a measured claim. Embedding models never count.
+function runningChatModels(models) {
+    return (models || []).filter(model => model?.name
+        && !String(model.name).startsWith("text-embedding")
+        && (model.state === "starting" || model.state === "ready" || !model.state)).map(model => model.name);
+}
+
 function claimSignature(claims) {
     return eligibleClaims(claims).map(claim => String(claim.id)).sort().join("|");
 }

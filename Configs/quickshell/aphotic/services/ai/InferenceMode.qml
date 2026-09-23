@@ -61,7 +61,8 @@ Singleton {
     }
 
     function _eligible(): var {
-        return Core.eligibleClaims(ResourceEngine.claims);
+        return Core.eligibleClaims(ResourceEngine.claims).map(c => c.id)
+            .concat(Core.runningChatModels(AiProviders.llamaSwapRunningModels));
     }
 
     function _stateSignature(): string {
@@ -125,6 +126,8 @@ Singleton {
             return;
         }
         root._openPassport();
+        if (reason !== "startup")
+            Toaster.toast(qsTr("Inference mode on"), qsTr("%1 is loaded. Effects and paused plugins come back when it unloads.").arg(root._model || qsTr("A model")), "memory");
     }
 
     function _deactivate(reason: string): void {
@@ -133,6 +136,7 @@ Singleton {
         root._active = false;
         root._closePassport(reason || "exit");
         ProfileEngine.deactivate("inference", reason || "exit");
+        Toaster.toast(qsTr("Inference mode off"), qsTr("Effects and plugins are back."), "memory");
     }
 
     function _apply(): void {
