@@ -27,6 +27,11 @@ Singleton {
     property var _shelters: ({})
     property bool _ready: false
 
+    // The pre-inference render state survives a shell crash here. Without it
+    // a restart mid-inference would re-enter, capture the tuned-down
+    // compositor as the baseline, and never bring blur back.
+    readonly property string _renderStatePath: `${Quickshell.env("HOME")}/.local/state/aphotic/inference-render.json`
+
     function enter(reason: string): void {
         root._manualOverride = "enter";
         graceTimer.stop();
@@ -144,13 +149,16 @@ Singleton {
                 changed.push("animations");
             root._tuned = changed;
             const command = SnapshotCore.renderCommand({ blur: 0, shadow: 0, animations: 0 }, render, Hypr.usingLua);
-            if (command)
+            if (command) {
+                stateWrite.exec(["sh", "-c", 'mkdir -p "$(dirname "$1")" && printf %s "$2" > "$1"', "sh", root._renderStatePath, JSON.stringify(render)]);
                 tuneProcess.exec(command);
+            }
         }
         root._shelterOthers();
     }
 
     function _restore(): void {
+        stateWrite.exec(["rm", "-f", root._renderStatePath]);
         root._releaseShelters();
         root._tuned = [];
     }
@@ -201,6 +209,10 @@ Singleton {
             onRestore: () => root._restore()
         });
         root._signature = root._stateSignature();
+        staleRead.exec(["cat", root._renderStatePath]);
+    }
+
+    function _start(): void {
         root._ready = true;
         root._sync("startup");
     }
@@ -251,6 +263,37 @@ Singleton {
             if (root.mode === "auto" && root._manualOverride !== "enter" && root._eligible().length === 0)
                 root._deactivate("idle-grace");
         }
+    }
+
+    Process {
+        id: staleRead
+        property string text: ""
+        stdout: StdioCollector {
+            onStreamFinished: staleRead.text = text
+        }
+        onExited: {
+            let saved = null;
+            try {
+                saved = JSON.parse(staleRead.text);
+            } catch (e) {}
+            const command = saved ? SnapshotCore.renderCommand(saved, null, Hypr.usingLua) : null;
+            if (command)
+                staleRestore.exec(command);
+            else
+                root._start();
+        }
+    }
+
+    Process {
+        id: staleRestore
+        onExited: {
+            stateWrite.exec(["rm", "-f", root._renderStatePath]);
+            root._start();
+        }
+    }
+
+    Process {
+        id: stateWrite
     }
 
     Process {
