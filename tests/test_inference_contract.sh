@@ -65,6 +65,10 @@ grep -q 'inference-render.json' "$AI/InferenceMode.qml" \
     && grep -q 'id: staleRestore' "$AI/InferenceMode.qml" \
     || fail "InferenceMode does not recover render state after a crash"
 
+grep -q 'if (!contention.claimantSuspendable)' "$PROFILE/ResourceEngine.qml" \
+    && grep -q 'readonly property var overBudget' "$PROFILE/ResourceEngine.qml" \
+    || fail "a conflict with nothing suspendable must not open a prompt"
+
 grep -q 'id: "plugin-surfaces"' "$QS/services/PluginRegistry.qml" \
     || fail "PluginRegistry does not register the core shelter owner"
 grep -q 'RegistryCore.surfacesFor' "$QS/services/PluginRegistry.qml" \
