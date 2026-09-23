@@ -7,7 +7,9 @@ singleton AiKeys 1.0 AiKeys.qml
 singleton AiProviders 1.0 AiProviders.qml
 singleton IntelligenceSessions 1.0 IntelligenceSessions.qml
 singleton InferenceMode 1.0 InferenceMode.qml
+singleton LocalInference 1.0 LocalInference.qml
 singleton LlamaSwapStats 1.0 LlamaSwapStats.qml
 OllamaClaims 1.0 OllamaClaims.qml
 LlamaSwapClaims 1.0 LlamaSwapClaims.qml
+LmStudioClaims 1.0 LmStudioClaims.qml
 BackendClaims 1.0 BackendClaims.qml
