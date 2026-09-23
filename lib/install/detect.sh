@@ -135,7 +135,7 @@ except Exception:
   if [[ "$(detect_nvidia)" == "true" ]]; then
     DETECTED_NVIDIA_PRESENT="true"
     if detect_nvidia_driver_installed; then
-      DETECTED_NVIDIA_DRIVER="$(pacman -Qq 2>/dev/null | grep -E '^nvidia(-open)?(-lts|-dkms)?$' | paste -sd, -)"
+      DETECTED_NVIDIA_DRIVER="$(nvidia_driver_packages | paste -sd, -)"
       echo -e "  $COK NVIDIA GPU detected, driver already installed: $DETECTED_NVIDIA_DRIVER"
     else
       echo -e "  $CNT NVIDIA GPU detected, no driver installed yet"

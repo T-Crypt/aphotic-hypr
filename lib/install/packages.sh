@@ -77,8 +77,11 @@ _package_in_list() {
 # with a bare "command not found" in the log, starting with the first entry
 # of the base prep list, qt5-wayland, which is a plain repo package pacman
 # would have installed without an AUR helper at all.
+# -T, not -Q: an installed package that provides the name counts, so
+# nvidia-580xx-utils satisfies nvidia-utils instead of pacman trying to
+# replace it and failing on the conflict.
 _pkg_installed() {
-  pacman -Qq "$1" &>/dev/null
+  pacman -T "$1" &>/dev/null
 }
 
 _pkg_in_repos() {
