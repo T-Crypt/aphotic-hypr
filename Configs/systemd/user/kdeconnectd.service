@@ -1,0 +1,19 @@
+[Unit]
+Description=KDE Connect daemon
+After=graphical-session.target
+PartOf=graphical-session.target
+# KDE Connect is optional and not in any base profile.
+ConditionPathExists=/usr/bin/kdeconnectd
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/kdeconnectd
+# Supervised because D-Bus activation alone left the daemon dead.
+Restart=on-failure
+RestartSec=3
+Slice=session.slice
+
+[Install]
+WantedBy=graphical-session.target
