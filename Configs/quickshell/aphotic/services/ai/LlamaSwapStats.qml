@@ -28,7 +28,7 @@ Singleton {
 
     readonly property bool _wanted: Object.keys(root._holders).length > 0
     readonly property var _runningModels: AiProviders.llamaSwapRunningModels
-        .filter(entry => entry?.name && !entry.name.startsWith("text-embedding"))
+        .filter(entry => entry?.name && !entry.embedding)
 
     function hold(owner: string, on: bool): void {
         if (!owner || on === Object.prototype.hasOwnProperty.call(root._holders, owner))

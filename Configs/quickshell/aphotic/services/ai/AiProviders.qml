@@ -463,6 +463,9 @@ Singleton {
                     root.llamaSwapRunningModels = (data.running ?? []).filter(m => m?.model).map(m => ({
                         name: m.model,
                         state: m.state ?? "",
+                        // Read from the launch command, not the name, so any
+                        // model a user configures is classified the same way.
+                        embedding: /(^|\s)--(embeddings?|reranking)(\s|$)/.test(m.cmd ?? ""),
                         port: parseInt((m.proxy ?? "").split(":").pop(), 10) || 0
                     }));
                 } catch (e) {
