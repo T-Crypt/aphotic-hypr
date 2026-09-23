@@ -21,6 +21,7 @@ Singleton {
     property bool _active: false
     property string _model: ""
     property string _owner: ""
+    property var _loadStates: ({})
     property var _tuned: []
     property string _signature: ""
     property string _manualOverride: ""
@@ -73,6 +74,19 @@ Singleton {
 
     function _candidateModel(): var {
         return Core.selectActiveModel(LocalInference.activeModels, ResourceEngine.claims, WorkloadPassports.live);
+    }
+
+    // Without this a model that ran out of memory while loading only showed
+    // up as inference mode quietly ending twenty seconds later.
+    function _trackLoads(): void {
+        const result = Core.trackLoads(root._loadStates, LocalInference.backends);
+        root._loadStates = result.states;
+        const vram = ResourceEngine.resources["gpu-vram"]?.measured ?? null;
+        for (const name of result.failed) {
+            Toaster.toast(qsTr("%1 stopped before it finished loading").arg(name),
+                vram ? qsTr("The GPU has %1 of %2 MiB in use. The model may not fit alongside what is running.").arg(vram.used).arg(vram.total)
+                     : qsTr("The model server stopped it. It may not fit in GPU memory; its log has the reason."), "error");
+        }
     }
 
     function _onModelChange(): void {
@@ -252,7 +266,7 @@ Singleton {
 
     Connections {
         target: LocalInference
-        function onBackendsChanged(): void { root._onModelChange(); }
+        function onBackendsChanged(): void { root._trackLoads(); root._onModelChange(); }
         function onActiveModelsChanged(): void { root._onModelChange(); }
     }
 

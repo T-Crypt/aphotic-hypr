@@ -104,3 +104,16 @@ console.log('Inference core assertions passed');
     assert.match(cmd[2], /hyprctl eval 'hl\.config\(.*enabled = false.*\)' \| grep -qx ok \|\| hyprctl --batch/);
     assert.equal(snapshot.renderCommand({ blur: 1, shadow: 1, animations: 1 }, { blur: 1, shadow: 1, animations: 1 }, true), null);
 }
+
+// A model seen starting that vanishes before ready is a failed load; one
+// that reached ready and then unloads is not.
+{
+    let r = inference.trackLoads({}, { swap: { models: [{ name: "Big", state: "starting" }, { name: "Small", state: "ready" }] } });
+    assert.equal(JSON.stringify(r.failed), "[]");
+    r = inference.trackLoads(r.states, { swap: { models: [] } });
+    assert.equal(JSON.stringify(r.failed), '["Big"]');
+    r = inference.trackLoads({}, { swap: { models: [{ name: "Ok", state: "starting" }] } });
+    r = inference.trackLoads(r.states, { swap: { models: [{ name: "Ok", state: "ready" }] } });
+    r = inference.trackLoads(r.states, { swap: { models: [] } });
+    assert.equal(JSON.stringify(r.failed), "[]");
+}

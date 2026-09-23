@@ -94,3 +94,26 @@ function updateStats(samples, name, slots, now) {
     next[name] = current;
     return { samples: next, current: current };
 }
+
+// A model a backend listed as starting or loading that vanishes before it
+// was ever ready failed to load. Returns the next state map and the names
+// that failed since the last call.
+function trackLoads(previous, backends) {
+    const next = {};
+    const failed = [];
+    for (const owner of Object.keys(backends || {})) {
+        for (const model of ((backends[owner] || {}).models || [])) {
+            if (!model?.name || model.embedding === true)
+                continue;
+            const key = owner + "\u0000" + model.name;
+            const state = String(model.state || "").toLowerCase();
+            const ready = state === "ready" || state === "loaded" || state === "";
+            next[key] = { owner: owner, name: String(model.name), ready: ready || previous?.[key]?.ready === true };
+        }
+    }
+    for (const key of Object.keys(previous || {})) {
+        if (!next[key] && previous[key].ready !== true)
+            failed.push(previous[key].name);
+    }
+    return { states: next, failed: failed };
+}
