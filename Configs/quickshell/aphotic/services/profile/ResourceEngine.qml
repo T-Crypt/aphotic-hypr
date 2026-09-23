@@ -40,6 +40,13 @@ Singleton {
     readonly property var pending: root._queue.length > 0 ? root._queue[0] : null
     readonly property int pendingCount: root._queue.length
 
+    // The latest over-budget state nothing could resolve: every other claim
+    // on the resource lacks a graceful stop, so there is no decision to ask
+    // for. Readers (Flow) show it; it never opens a prompt. Null once the
+    // resource is back under budget.
+    readonly property var overBudget: root._overBudget
+    property var _overBudget: null
+
     readonly property bool dormant: root._claims.length === 0 && root._queue.length === 0
 
     // Resources that have claims but no declared capacity. _contentionFor
@@ -147,8 +154,18 @@ Singleton {
         root.claimRegistered(claim);
 
         const contention = root._contentionFor(claim);
-        if (!contention)
+        if (!contention) {
+            if (root._overBudget?.resource === claim.resource)
+                root._overBudget = null;
             return null;
+        }
+        // A prompt whose only answer is "keep" asks nothing. Loading a model
+        // that fits raised one about the shell and compositor every time
+        // their measured memory moved.
+        if (!contention.claimantSuspendable) {
+            root._overBudget = contention;
+            return null;
+        }
         return root._raise(contention);
     }
 
