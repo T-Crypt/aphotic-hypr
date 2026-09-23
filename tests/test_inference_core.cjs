@@ -105,3 +105,10 @@ assert.equal(
     assert.match(cmd[2], /hyprctl eval 'hl\.config\(.*enabled = false.*\)' \| grep -qx ok \|\| hyprctl --batch/);
     assert.equal(snapshot.renderCommand({ blur: 1, shadow: 1, animations: 1 }, { blur: 1, shadow: 1, animations: 1 }, true), null);
 }
+
+// A chat model counts while it is still loading; embeddings never do.
+assert.deepEqual(inference.runningChatModels([
+    { name: "CyberTiel", state: "starting" },
+    { name: "text-embedding-nomic-embed-text-v1.5", state: "ready" },
+    { name: "Gemma-4-26B", state: "stopping" }
+]), ["CyberTiel"]);
