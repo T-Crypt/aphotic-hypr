@@ -4,7 +4,8 @@
 # Stubs nvidia-smi, pgrep, hyprctl and /proc (via APHOTIC_PROC_ROOT) on
 # PATH/env, then exercises `aphotic perf snapshot|budget|history`: pmon
 # parsing with "-" values and both C/G types, the no-NVIDIA path (gpu null,
-# never fails), history append + the delta column, budget PASS/OVER/SKIP and
+# never fails), smaps_rollup heap parsing (missing file → null → SKIP),
+# history append + the delta column, budget PASS/OVER/SKIP and
 # exit codes, and the history table.
 set -euo pipefail
 
@@ -45,6 +46,14 @@ write_stat 2000 Hyprland 700 400 12 60000
 printf 'qs\0-c\0aphotic\0' > "$PROC/1000/cmdline"
 printf 'qs\0-c\0other\0' > "$PROC/1001/cmdline"
 printf 'Hyprland\0--config\0x\0' > "$PROC/2000/cmdline"
+
+# smaps_rollup stubs: Pss_Anon kB → heap MiB (354304 → 346.0, 512000 → 500.0).
+write_smaps() { # pid pss_anon_kb
+    mkdir -p "$PROC/$1"
+    printf 'Rss: 600000 kB\nPss_Anon: %s kB\nPss_File: 4096 kB\n' "$2" > "$PROC/$1/smaps_rollup"
+}
+write_smaps 1000 354304
+write_smaps 2000 512000
 
 cat > "$FAKE_BIN/pgrep" <<'EOF'
 #!/usr/bin/env bash
@@ -99,6 +108,7 @@ out="$(bash "$APHO" perf snapshot --samples 3 --label baseline 2>&1)"
 [[ "$out" =~ 2100[[:space:]]+G[[:space:]]+0.0%[[:space:]]+120[[:space:]]+Hyprland ]] \
     || fail "expected a G-type Hyprland row with '-' sm parsed as 0: $out"
 [[ "$out" == *"2560x1440"* ]] || fail "monitor resolution missing: $out"
+[[ "$out" == *"heap 346.0 MiB"* ]] || fail "shell line should print heap from smaps_rollup: $out"
 [[ -s "$HIST" ]] || fail "history.jsonl was not written"
 [[ "$(wc -l < "$HIST")" -eq 1 ]] || fail "expected 1 history line: $(cat "$HIST")"
 
@@ -113,7 +123,9 @@ assert procs["Hyprland"]["fb_mib"] == 120 and procs["Hyprland"]["sm_avg"] == 0.0
 assert procs["Xwayland"]["sm_avg"] == 2.0 and procs["Xwayland"]["fb_mib"] == 30, procs
 sh = d["shell"]
 assert abs(sh["rss_mib"] - 195.3) < 0.5 and sh["threads"] == 8, sh
+assert abs(sh["heap_mib"] - 346.0) < 0.01, sh
 assert abs(d["hyprland"]["rss_mib"] - 234.4) < 0.5, d["hyprland"]
+assert abs(d["hyprland"]["heap_mib"] - 500.0) < 0.01, d["hyprland"]
 assert d["label"] == "baseline"
 assert len(d["monitors"]) == 2 and d["monitors"][0]["resolution"] == "2560x1440"
 assert d["monitors"][1]["refresh"] == 60.0
@@ -128,10 +140,13 @@ s = open(p).read()
 s = re.sub(r" (\d+)$", r" 60000", s, count=1)
 open(p, "w").write(s)
 PY
+write_smaps 1000 358400
 out="$(bash "$APHO" perf snapshot --samples 2 --label second 2>&1)"
 [[ "$out" == *"vs previous snapshot"* ]] || fail "second snapshot missing the delta block: $out"
 [[ "$out" == *"+39.1 MiB"* || "$out" == *"+39.0 MiB"* ]] \
     || fail "shell RSS delta missing (rss 50000 -> 60000 pages): $out"
+[[ "$out" =~ shell\ heap[[:space:]]+\+4\.0\ MiB ]] \
+    || fail "shell heap delta missing (Pss_Anon 354304 -> 358400 kB): $out"
 [[ "$(wc -l < "$HIST")" -eq 2 ]] || fail "expected 2 history lines after the second snapshot"
 note "second snapshot: history append + delta column"
 
@@ -143,6 +158,25 @@ out="$(bash "$APHO" perf snapshot --samples 1 --label longstat 2>&1)"
 [[ "$out" == *"rss 195.3 MiB"* && "$out" == *"8 threads"* ]] \
     || fail "stat with trailing kernel fields must still read rss/threads: $out"
 note "long /proc stat: rss/threads read by field index"
+
+# ---- smaps_rollup missing: heap null in JSON, budget SKIP ----
+rm -f "$PROC/1000/smaps_rollup"
+out="$(bash "$APHO" perf snapshot --samples 1 --label noheap 2>&1)"
+[[ "$out" == *"heap n/a MiB"* ]] || fail "shell line should print n/a heap when smaps is gone: $out"
+python3 - "$HIST" <<'PY' || fail "missing smaps_rollup should record heap_mib null"
+import json, sys
+d = json.loads([l for l in open(sys.argv[1]) if l.strip()][-1])
+assert d["label"] == "noheap", d
+assert d["shell"] is not None and d["shell"]["heap_mib"] is None, d["shell"]
+assert d["shell"]["rss_mib"] is not None, d["shell"]
+PY
+out="$(bash "$APHO" perf budget --from-history 2>&1)" \
+    || fail "budget with a null heap should SKIP, not OVER: $out"
+grep -q 'shell_heap_mib.*no data.*SKIP' <<<"$out" \
+    || fail "shell_heap_mib should read SKIP without smaps_rollup: $out"
+if grep -q 'shell_rss_mib' <<<"$out"; then fail "RSS must not appear as a budget row: $out"; fi
+write_smaps 1000 354304
+note "missing smaps_rollup: heap null, budget SKIP"
 
 # ---- no-NVIDIA path: nvidia-smi present but failing ----
 cat > "$FAKE_BIN/nvidia-smi" <<'EOF'
@@ -223,7 +257,7 @@ chmod +x "$FAKE_BIN/nvidia-smi" "$FAKE_BIN/hyprctl"
 
 mkdir -p "$XDG_DATA_HOME/aphotic"
 cat > "$XDG_DATA_HOME/aphotic/perf-budget.json" <<'EOF'
-{"shell_vram_mib": 350, "shell_vram_inference_mib": 500, "idle_gpu_util_pct": 10, "shell_rss_mib": 350, "shell_cpu_pct": 2}
+{"shell_vram_mib": 350, "shell_vram_inference_mib": 500, "idle_gpu_util_pct": 10, "shell_heap_mib": 350, "shell_cpu_pct": 2}
 EOF
 
 # ---- budget: all PASS against the latest snapshot ----
@@ -231,6 +265,9 @@ bash "$APHO" perf snapshot --samples 1 --label budgetbase >/dev/null 2>&1
 out="$(bash "$APHO" perf budget --from-history 2>&1)" || fail "all-PASS budget should exit 0: $out"
 [[ "$(grep -c 'PASS' <<<"$out")" -eq 5 ]] || fail "expected 5 PASS lines: $out"
 [[ "$(grep -c 'OVER' <<<"$out")" -eq 0 ]] || fail "expected no OVER lines: $out"
+grep -q 'shell_heap_mib.*346 MiB / 350 MiB.*PASS' <<<"$out" \
+    || fail "shell_heap_mib should read 346 / 350 PASS: $out"
+if grep -q 'shell_rss_mib' <<<"$out"; then fail "RSS must not be budgeted: $out"; fi
 note "budget: 5 PASS on a good snapshot, exit 0"
 
 # ---- budget: OVER and nonzero exit from a crafted snapshot ----
@@ -241,7 +278,7 @@ doc = {
     "gpu": {"card_used_mib": 4000, "card_total_mib": 8192, "card_util": 99,
             "procs": [{"name": "qs", "pid": 1500, "fb_mib": 400, "sm_avg": 80},
                       {"name": "Hyprland", "pid": 2100, "fb_mib": 500, "sm_avg": 90}]},
-    "shell": {"rss_mib": 900, "cpu_avg": 50, "threads": 12},
+    "shell": {"rss_mib": 900, "heap_mib": 900, "cpu_avg": 50, "threads": 12},
     "hyprland": {"rss_mib": 500, "cpu_avg": 10, "threads": 20},
     "monitors": [],
 }
@@ -253,9 +290,32 @@ rc=$?
 set -e
 [[ "$rc" -ne 0 ]] || fail "budget should exit 1 when any budget is OVER: $out"
 [[ "$out" == *"OVER"* ]] || fail "expected OVER lines: $out"
-[[ "$out" =~ shell_rss_mib.*OVER ]] || fail "shell_rss_mib should read OVER: $out"
+[[ "$out" =~ shell_heap_mib.*OVER ]] || fail "shell_heap_mib should read OVER: $out"
+if grep -q 'shell_rss_mib' <<<"$out"; then fail "RSS must not be budgeted even when huge: $out"; fi
 [[ "$(grep -c 'OVER' <<<"$out")" -eq 5 ]] || fail "expected all 5 budgets OVER: $out"
 note "budget: OVER rows and exit code 1"
+
+# ---- budget: history row without heap_mib → SKIP for that budget only ----
+python3 - "$HIST" <<'PY' || fail "failed to append crafted no-heap history line"
+import json, sys
+doc = {
+    "ts": "2026-09-23T00:30:00+00:00", "label": "noheaprow",
+    "gpu": {"card_used_mib": 1800, "card_total_mib": 8192, "card_util": 5,
+            "procs": [{"name": "qs", "pid": 1500, "fb_mib": 200, "sm_avg": 10},
+                      {"name": "Hyprland", "pid": 2100, "fb_mib": 120, "sm_avg": 5},
+                      {"name": "Xwayland", "pid": 2200, "fb_mib": 30, "sm_avg": 2}]},
+    "shell": {"rss_mib": 400, "cpu_avg": 1, "threads": 8},
+    "hyprland": {"rss_mib": 500, "cpu_avg": 1, "threads": 20},
+    "monitors": [],
+}
+open(sys.argv[1], "a").write(json.dumps(doc) + "\n")
+PY
+out="$(bash "$APHO" perf budget --from-history 2>&1)" || fail "no-heap-row budget should exit 0: $out"
+grep -q 'shell_heap_mib.*no data.*SKIP' <<<"$out" \
+    || fail "history row without heap_mib should SKIP shell_heap_mib: $out"
+[[ "$(grep -c 'SKIP' <<<"$out")" -eq 1 ]] || fail "only shell_heap_mib should SKIP: $out"
+[[ "$(grep -c 'PASS' <<<"$out")" -eq 4 ]] || fail "other 4 budgets should PASS: $out"
+note "budget: history row without heap_mib → SKIP, rest PASS"
 
 # ---- budget: SKIP when there is no data (gpu null, shell null) ----
 python3 - "$HIST" <<'PY' || fail "failed to append crafted no-data history line"
@@ -277,7 +337,7 @@ note "budget without --from-history takes a snapshot"
 out="$(bash "$APHO" perf history --last 4 2>&1)"
 [[ "$(grep -c '2026-' <<<"$out")" -eq 4 ]] || fail "history --last 4 should show 4 rows: $out"
 out="$(bash "$APHO" perf history 2>&1)"
-[[ "$out" == *baseline* && "$out" == *over* && "$out" == *skip* ]] \
+[[ "$out" == *longstat* && "$out" == *over* && "$out" == *skip* ]] \
     || fail "history rows should carry labels: $out"
 [[ "$(grep -c '2026-' <<<"$out")" -ge 9 ]] || fail "history default should show rows: $out"
 note "history table: --last N and defaults"
