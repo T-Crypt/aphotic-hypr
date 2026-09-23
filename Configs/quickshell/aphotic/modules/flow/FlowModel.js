@@ -34,7 +34,11 @@ function resourceNodes(claims, specs) {
         return {key:key, label:spec && spec.label || names[key] || key, claims:held,
             total:total, budget:budget, unit:unit, contended:contended,
             summary:held.length ? amount(total, unit) + ' claimed' : 'No claims',
-            detail:spec ? (spec.exclusive ? 'Exclusive resource' : budget === null ? 'Capacity unavailable' : 'Budget ' + amount(budget,unit) + ' · capacity ' + amount(spec.capacity,unit)) : 'Capacity undeclared · not arbitrated'};
+            measured:spec && spec.measured ? spec.measured : null,
+            detail:spec ? (spec.exclusive ? 'Exclusive resource'
+                : budget === null ? 'Capacity unavailable'
+                : (spec.measured ? 'In use ' + amount(spec.measured.used, unit) + ' of ' + amount(spec.measured.total, unit) + ' · ' : '')
+                    + 'Budget ' + amount(budget,unit) + ' · capacity ' + amount(spec.capacity,unit)) : 'Capacity undeclared · not arbitrated'};
     });
 }
 
