@@ -2,189 +2,30 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Io
-import qs.services
-import qs.services.profile
 
-// Ollama as the Resource Engine's first real claimant: every model
-// /api/ps reports resident becomes a background gpu-vram claim, so the
-// first foreground claimant to arrive (Gaming, once it exists) negotiates
-// against a measured number instead of a placeholder.
+// Ollama's adapter onto BackendClaims. /api/ps reports each model's own
+// size and size_vram, so the amounts are Ollama's measurement rather than
+// an adopted PID: GpuVramSource skips Ollama's runner for that reason. A
+// model with size_vram 0 is running in system RAM and claims memory only.
 //
-// Capacity for "gpu-vram" belongs to GpuVramSource, not here -- one place
-// declares the resource, everything else only claims against it. Claims
-// registered before it is declared are tracked and simply never
-// arbitrated, so there is no ordering requirement between the two.
-//
-// Everything is driven off the runningModels the parent hands in, so this
-// owns no poll of its own; AiProviders' single background /api/ps timer is
-// the one clock.
-QtObject {
+// Driven off the runningModels AiProviders hands in; AiProviders' /api/ps
+// timer is the one clock.
+BackendClaims {
     id: root
 
     property var runningModels: []
     property string host: ""
-    property bool enabled: false
 
-    readonly property string owner: "ollama"
-    readonly property string resource: "gpu-vram"
-
-    property bool _registered: false
-
-    // model name -> passport token, and model name -> pending unload
-    // receipt. The AI plane's workloads come from the runtime's own
-    // lifecycle report; a GPU process nothing identifies stays
-    // unclassified rather than being guessed into this plane.
-    property var _tokens: ({})
-    property var _unloads: ({})
-    property bool _memoryHeld: false
-
-    onEnabledChanged: root._register()
-    onRunningModelsChanged: root._sync()
-
-    Component.onCompleted: root._register()
-
-    function _register(): void {
-        if (root._registered || !root.enabled)
-            return;
-        root._registered = true;
-        ProfileEngine.register({
-            id: root.owner,
-            label: qsTr("Ollama"),
-            gracefulStop: claim => root._unload(claim?.id ?? "")
-        });
-        root._sync();
-    }
-
-    // Re-registers only what actually changed: register() is an upsert
-    // that re-runs contention on every call, so re-asserting an unchanged
-    // claim each poll would re-raise a negotiation the user already
-    // answered with "keep", every five seconds.
-    //
-    // A model /api/ps reports with size_vram 0 is resident in system RAM,
-    // not on the GPU (Ollama falls back to CPU inference when it can't fit
-    // or can't reach the card), so it is not a gpu-vram claimant. A
-    // zero-amount VRAM claim would add nothing to the total and could
-    // still be picked as the incumbent to suspend -- offering to stop a
-    // CPU-resident model to free VRAM it was never holding. It claims
-    // against memory instead, where the bytes actually are.
-    function _sync(): void {
-        if (!root._registered)
-            return;
-
-        const resident = {};
-        for (const model of (root.runningModels ?? [])) {
-            if (!model?.name)
-                continue;
-            const amount = Math.round((model.size_vram ?? 0) / (1024 * 1024));
-            // A model Ollama loaded into system RAM is resident work
-            // holding real memory, and until now it was dropped on the
-            // floor because it holds no VRAM. It claims against memory
-            // instead, at the same measured precision.
-            const ram = Math.round(((model.size ?? 0) - (model.size_vram ?? 0)) / (1024 * 1024));
-            if (ram > 0) {
-                const ramId = `${model.name} (system RAM)`;
-                resident[ramId] = true;
-                if (!root._memoryHeld) {
-                    root._memoryHeld = true;
-                    SystemCapacity.acquire("memory");
-                }
-                root._tokens[ramId] = WorkloadPassports.open({
-                    plane: "ai",
-                    owner: root.owner,
-                    label: ramId,
-                    trigger: "model-resident-cpu",
-                    workloadId: `ollama-${model.name}-ram`,
-                    sessionId: `model-ram:${model.name}`,
-                    sourceAt: Date.now(),
-                    claims: [{ resource: "memory", amount: ram, unit: "MiB",
-                        measuredAt: Date.now(), origin: "measured" }]
-                });
-                const knownRam = ResourceEngine.claimById(ramId);
-                if (!knownRam || knownRam.owner !== root.owner || knownRam.amount !== ram) {
-                    ResourceEngine.register({
-                        id: ramId,
-                        owner: root.owner,
-                        resource: "memory",
-                        amount: ram,
-                        priority: "background",
-                        label: ramId,
-                        origin: "dynamic"
-                    });
-                }
-            }
-            if (amount <= 0)
-                continue;
-            resident[model.name] = true;
-            root._tokens[model.name] = WorkloadPassports.open({
-                plane: "ai",
-                owner: root.owner,
-                label: model.name,
-                trigger: "model-resident",
-                workloadId: `ollama-${model.name}`,
-                sessionId: `model:${model.name}`,
-                sourceAt: Date.now(),
-                claims: [{ resource: root.resource, amount: amount, unit: "MiB",
-                    measuredAt: Date.now(), origin: "measured" }]
-            });
-            const known = ResourceEngine.claimById(model.name);
-            if (known && known.owner === root.owner && known.amount === amount)
-                continue;
-            ResourceEngine.register({
-                id: model.name,
-                owner: root.owner,
-                resource: root.resource,
-                amount: amount,
-                priority: "background",
-                label: model.name,
-                origin: "dynamic"
-            });
-        }
-
-        for (const claim of ResourceEngine.claimsOf(root.owner)) {
-            if (!resident[claim.id])
-                ResourceEngine.release(claim.id);
-        }
-
-        if (root._memoryHeld && ResourceEngine.claimsOf(root.owner).every(c => c.resource !== "memory")) {
-            root._memoryHeld = false;
-            SystemCapacity.release("memory");
-        }
-
-        // The poll that proves a model left is also what settles the
-        // unload receipt. Until it does, the receipt stays "requested":
-        // asking Ollama to drop a model is not the same as it dropping.
-        for (const name of Object.keys(root._tokens)) {
-            if (resident[name])
-                continue;
-            WorkloadPassports.close(root._tokens[name], "model-unloaded");
-            delete root._tokens[name];
-            if (root._unloads[name]) {
-                ActionReceipts.applied(root._unloads[name], "unloaded");
-                delete root._unloads[name];
-            }
-        }
-    }
-
-    // Deliberately does not release the claim: the next /api/ps poll does
-    // that, once the model is actually gone. ResourceEngine's contract is
-    // that the claim table keeps telling the truth even when a stop is
-    // slow or silently fails.
-    function _unload(id: string): void {
-        if (!id || !root.host)
-            return;
-        if (!root._unloads[id]) {
-            root._unloads[id] = ActionReceipts.request({
-                profileId: root.owner,
-                workloadId: `ollama-${id}`,
-                kind: "model-unload",
-                before: "resident",
-                reason: "graceful stop requested"
-            });
-        }
-        root._unloadProc.exec(["curl", "-s", "-m", "10", "-X", "POST", `${root.host}/api/generate`, "-d", JSON.stringify({
-            model: id,
-            keep_alive: 0
-        })]);
+    owner: "ollama"
+    label: qsTr("Ollama")
+    models: (root.runningModels ?? []).map(m => ({
+        name: m?.name ?? "",
+        vramMiB: (m?.size_vram ?? 0) / (1024 * 1024),
+        ramMiB: ((m?.size ?? 0) - (m?.size_vram ?? 0)) / (1024 * 1024)
+    }))
+    unload: name => {
+        if (root.host)
+            root._unloadProc.exec(["curl", "-s", "-m", "10", "-X", "POST", `${root.host}/api/generate`, "-d", JSON.stringify({ model: name, keep_alive: 0 })]);
     }
 
     property Process _unloadProc: Process {}

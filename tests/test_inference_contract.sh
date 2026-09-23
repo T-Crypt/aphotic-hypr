@@ -48,7 +48,8 @@ grep -q 'ProfileEngine.requestShelter' "$AI/InferenceMode.qml" \
 grep -q 'if (render)' "$AI/InferenceMode.qml" \
     || fail "InferenceMode makes sheltering depend on a successful render read"
 
-grep -q 'adopt(pid, root.owner, "foreground")' "$AI/LlamaSwapClaims.qml" \
+grep -q 'priority: "foreground"' "$AI/LlamaSwapClaims.qml" \
+    && grep -q 'adopt(pid, root.owner, root.priority)' "$AI/BackendClaims.qml" \
     || fail "llama-swap claims are not foreground priority"
 grep -q 'Policy.incumbent' "$PROFILE/ResourceEngine.qml" \
     || fail "ResourceEngine does not use the tested incumbent policy"
