@@ -57,8 +57,8 @@ grep -q 'addressableParts:.*"render"' "$PROFILE/StateSnapshot.qml" \
     || fail "render is not addressable by StateSnapshot"
 grep -q 'hyprctl getoption decoration:blur:enabled -j' "$PROFILE/StateSnapshot.qml" \
     || fail "render capture does not read Hyprland state"
-grep -q 'renderConfig.exec(\["hyprctl", "--batch"' "$PROFILE/StateSnapshot.qml" \
-    || fail "render restore is not issued as one batch"
+grep -q 'Core.renderCommand(snapshot.render, current, Hypr.usingLua)' "$PROFILE/StateSnapshot.qml" \
+    || fail "render restore does not use the parser-aware render command"
 
 grep -q 'id: "plugin-surfaces"' "$QS/services/PluginRegistry.qml" \
     || fail "PluginRegistry does not register the core shelter owner"
