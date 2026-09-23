@@ -162,7 +162,10 @@ Singleton {
         // A prompt whose only answer is "keep" asks nothing. Loading a model
         // that fits raised one about the shell and compositor every time
         // their measured memory moved.
-        if (!contention.claimantSuspendable) {
+        // Only a workload with a profile asks for arbitration. The catch-all
+        // per-process claims (compositor, shell, a terminal) are accounting:
+        // the shell starting up once asked to suspend a loaded model.
+        if (!contention.claimantSuspendable || !ProfileEngine.isRegistered(claim.owner)) {
             root._overBudget = contention;
             return null;
         }
