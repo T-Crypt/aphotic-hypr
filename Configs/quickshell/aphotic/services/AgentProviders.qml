@@ -85,6 +85,7 @@ Singleton {
     // AiConfig.ollamaHost, so it only ever reported a *local* Ollama, and
     // it needed the ollama binary in PATH to say anything at all.
     readonly property var ollamaLoadedModels: AiProviders.ollamaRunningModels.map(m => m.name)
+    readonly property var llamaSwapLoadedModels: AiProviders.llamaSwapRunningModels.map(m => m.name)
 
     // { harnessId: { sessionId: {id, event, tool, updatedAt} } }, built
     // entirely from the event tail below -- one entry per still-open

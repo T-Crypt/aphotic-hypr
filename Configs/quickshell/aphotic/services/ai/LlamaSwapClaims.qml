@@ -103,7 +103,7 @@ QtObject {
             if (root._pids[model.name] !== pid) {
                 if (root._pids[model.name])
                     root.gpuVram?.unadopt(root._pids[model.name]);
-                root.gpuVram?.adopt(pid, root.owner, "background");
+                root.gpuVram?.adopt(pid, root.owner, "foreground");
                 root._pids[model.name] = pid;
             }
 

@@ -24,6 +24,19 @@
 
 _aphotic_plugin_dir() { printf '%s/%s' "$APHOTIC_PLUGINS_DIR" "$1"; }
 
+_aphotic_plugin_root_value() {
+    local manifest="$1" key="$2"
+    awk -v key="$key" '
+        /^\[/ { exit }
+        $0 ~ "^[[:space:]]*"key"[[:space:]]*=" {
+            sub(/^[^=]*=[[:space:]]*/, "")
+            gsub(/^"|"$/, "")
+            print
+            exit
+        }
+    ' "$manifest"
+}
+
 # ---------------------------------------------------------------------
 # What this shell build actually has a host for.
 #
@@ -407,7 +420,7 @@ _aphotic_plugin_actions_json() {
 }
 
 _aphotic_plugin_describe() {
-    local name="$1" dir manifest display desc version category caps enabled missing bin
+    local name="$1" dir manifest display desc version category caps shelter enabled missing bin
     dir="$(_aphotic_plugin_dir "$name")"
     manifest="${dir}/plugin.toml"
     [[ -f "$manifest" ]] || return 1
@@ -417,6 +430,7 @@ _aphotic_plugin_describe() {
     version="$(aphotic_toml_get "$manifest" plugin version)"
     category="$(aphotic_toml_get "$manifest" plugin category)"
     caps="$(aphotic_toml_get_array "$manifest" plugin capabilities | jq -R . | jq -s .)"
+    shelter="$(_aphotic_plugin_root_value "$manifest" shelter)"
     enabled="false"
     aphotic_plugin_is_enabled "$name" && enabled="true"
 
@@ -433,6 +447,7 @@ _aphotic_plugin_describe() {
         --arg description "${desc:-}" \
         --arg version "${version:-0.0.0}" \
         --arg category "${category:-}" \
+        --arg shelter "${shelter:-}" \
         --argjson capabilities "${caps:-[]}" \
         --argjson enabled "$enabled" \
         --argjson missing_binaries "$missing" \
@@ -442,7 +457,7 @@ _aphotic_plugin_describe() {
         --argjson cli "$(_aphotic_plugin_cli_json "$manifest")" \
         --argjson chat_provider "$(_aphotic_plugin_chat_provider_json "$manifest")" \
         --argjson actions "$(_aphotic_plugin_actions_json "$manifest")" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions}')"
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, shelter: $shelter, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions}')"
 
     # The registry entry the shell actually reads is written by
     # _aphotic_plugin_registry_sync out of these same four manifest
@@ -455,7 +470,7 @@ _aphotic_plugin_describe() {
     # second time is deliberate: a second description of that shape is the
     # class of bug the flag exists to catch.
     local stored expected drifted="false"
-    expected="$(jq -cS '{version, capabilities, owns, ui, profile, cli, chat_provider, actions}' <<<"$entry")"
+    expected="$(jq -cS '{version, shelter, capabilities, owns, ui, profile, cli, chat_provider, actions}' <<<"$entry")"
     # Missing keys are filled with the same null a fresh sync would write
     # BEFORE comparing. Without this, every entry on disk reports drift the
     # moment the registry schema grows a field -- one did (`profile`,
@@ -471,7 +486,7 @@ _aphotic_plugin_describe() {
     # drift. Drift means "this plugin's contract changed", and a
     # display string is not contract -- a manifest edit still refreshes
     # it on the next sync.
-    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({profile: null, cli: null, chat_provider: null, actions: null} + .) | {version, capabilities, owns, ui, profile, cli, chat_provider, actions} end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({shelter: "", profile: null, cli: null, chat_provider: null, actions: null} + .) | {version, shelter, capabilities, owns, ui, profile, cli, chat_provider, actions} end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
     [[ "$expected" != "$stored" ]] && drifted="true"
 
     jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"
@@ -854,7 +869,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps owns ui profile cli chat_provider actions tmp
+    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions tmp
     local display desc category binaries
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
@@ -863,6 +878,7 @@ _aphotic_plugin_registry_sync() {
 
     version="$(aphotic_toml_get "$manifest" plugin version)"
     caps="$(aphotic_toml_get_array "$manifest" plugin capabilities | jq -R . | jq -s .)"
+    shelter="$(_aphotic_plugin_root_value "$manifest" shelter)"
     # Display metadata, stored so the shell can render the whole installed
     # list straight out of this file. Settings -> Plugins used to shell out
     # to `aphotic plugin list --json` to get these four, which re-reads
@@ -888,6 +904,7 @@ _aphotic_plugin_registry_sync() {
        --arg display_name "${display:-$name}" \
        --arg description "${desc:-}" \
        --arg category "${category:-}" \
+       --arg shelter "${shelter:-}" \
        --argjson requires_binaries "${binaries:-[]}" \
        --argjson capabilities "${caps:-[]}" \
        --argjson owns "$owns" \
@@ -896,7 +913,7 @@ _aphotic_plugin_registry_sync() {
        --argjson cli "$cli" \
        --argjson chat_provider "$chat_provider" \
        --argjson actions "$actions" \
-       '.installed = ((.installed // {}) + {($n): {version: $version, display_name: $display_name, description: $description, category: $category, requires_binaries: $requires_binaries, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions}})' \
+       '.installed = ((.installed // {}) + {($n): {version: $version, display_name: $display_name, description: $description, category: $category, shelter: $shelter, requires_binaries: $requires_binaries, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions}})' \
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
     # Every install and update funnels through here, so this is the one
     # place that has to record "a plugin's code changed" for recovery.
@@ -1416,7 +1433,7 @@ _aphotic_plugin_validate() {
 _aphotic_plugin_registry_backfill() {
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || return 0
     command -v jq >/dev/null 2>&1 || return 0
-    jq -e '(.installed // {}) | to_entries | any(.value | has("display_name") | not)' \
+    jq -e '(.installed // {}) | to_entries | any(.value | (has("display_name") and has("shelter")) | not)' \
         "$APHOTIC_PLUGINS_STATE_FILE" >/dev/null 2>&1 || return 0
 
     local name

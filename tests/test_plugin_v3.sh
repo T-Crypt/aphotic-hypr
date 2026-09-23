@@ -27,6 +27,8 @@ source "$COMMANDS_DIR/cmd_plugin.sh"
 PLUGDIR="$APHOTIC_PLUGINS_DIR/scratch-ui"
 mkdir -p "$PLUGDIR/qml"
 cat > "$PLUGDIR/plugin.toml" <<'EOF'
+shelter = "unload"
+
 [plugin]
 name = "scratch-ui"
 display_name = "Scratch UI"
@@ -83,6 +85,7 @@ EOF
 # --- describe: owns/ui present for the v3 plugin ---
 
 described="$(_aphotic_plugin_describe scratch-ui)"
+[[ "$(echo "$described" | jq -r '.shelter')" == "unload" ]] || fail "expected top-level shelter policy to be described"
 [[ "$(echo "$described" | jq -r '.owns.config_keys | length')" -eq 2 ]] || fail "expected 2 owned config keys"
 [[ "$(echo "$described" | jq -r '.owns.config_keys[1]')" == "scratchAccent" ]] || fail "expected second config key to be scratchAccent"
 [[ "$(echo "$described" | jq -r '.ui.surfaces | length')" == "3" ]] || fail "expected all three declared surfaces to be described"
@@ -152,6 +155,7 @@ _aphotic_plugin_registry_sync scratch-ui
 [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || fail "expected registry sync to create the state file"
 
 reg="$(jq -c '.installed["scratch-ui"]' "$APHOTIC_PLUGINS_STATE_FILE")"
+[[ "$(echo "$reg" | jq -r '.shelter')" == "unload" ]] || fail "expected registry entry to carry the shelter policy"
 [[ "$(echo "$reg" | jq -r '.version')" == "2.0.0" ]] || fail "expected registry entry version 2.0.0"
 [[ "$(echo "$reg" | jq -r '.ui.surfaces[0].component')" == "qml/ScratchTab.qml" ]] || fail "expected registry entry to carry the dashboard surface component path"
 [[ "$(echo "$reg" | jq -r '.ui.surfaces[1].surface')" == "notch" ]] || fail "expected registry entry to carry the notch surface too"

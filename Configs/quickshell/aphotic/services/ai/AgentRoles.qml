@@ -45,6 +45,7 @@ Singleton {
         { id: "opencode", label: "OpenCode", role: "harness", chat: false, locality: null },
         { id: "geminicli", label: "Gemini CLI", role: "harness", chat: false, locality: null },
         { id: "ollama", label: "Ollama", role: "provider", chat: true, locality: "local" },
+        { id: "llama-swap", label: "llama-swap", role: "provider", chat: false, locality: "local" },
         // Off unless aphotic.toml opts in with `[agents.unsloth] enabled =
         // true`. It runs GGUF weights directly rather than through Ollama's
         // model store, so it is a genuinely separate local backend -- but
