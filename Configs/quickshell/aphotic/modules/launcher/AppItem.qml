@@ -36,8 +36,8 @@ Item {
             id: icon
 
             asynchronous: true
-            name: root.modelData.icon
-            appClass: [root.modelData.id, root.modelData.name]
+            name: root.modelData?.icon ?? ""
+            appClass: root.modelData ? [root.modelData.id, root.modelData.name] : []
             size: parent.height * 0.7
             fontStyle: Tokens.font.icon.large
             anchors.verticalCenter: parent.verticalCenter

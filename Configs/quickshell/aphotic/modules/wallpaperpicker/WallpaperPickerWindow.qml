@@ -50,7 +50,7 @@ PanelWindow {
         target: root.screenState
 
         function onWallpaperPickerChanged(): void {
-            if (!root.screenState.wallpaperPicker) {
+            if (!root.screenState?.wallpaperPicker) {
                 pickerModel.cancelPreview();
                 return;
             }
@@ -102,7 +102,7 @@ PanelWindow {
     property bool everOpened: false
 
     onLayoutChanged: {
-        if (!root.screenState.wallpaperPicker)
+        if (!root.screenState?.wallpaperPicker)
             root.everOpened = false;
     }
 
