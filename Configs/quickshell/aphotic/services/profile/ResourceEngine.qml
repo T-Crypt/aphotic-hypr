@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.services.profile
+import "ResourcePolicy.js" as Policy
 
 // Cross-domain claim arbitration (docs/archive/OPT-IN-FEATURES.md section
 // 2). Tracks *claims*, never continuous usage: every state change here is
@@ -271,15 +272,7 @@ Singleton {
     // thing actually holding the memory. It does not make that thing
     // stoppable -- canSuspend still gates the button.
     function _incumbent(others: var): var {
-        const stoppable = others.filter(c => ProfileEngine.canSuspend(c.owner));
-        if (stoppable.length === 0)
-            return others.slice().sort((a, b) => b.amount - a.amount)[0] ?? null;
-
-        return stoppable.sort((a, b) => {
-            if (a.priority !== b.priority)
-                return a.priority === "background" ? -1 : 1;
-            return b.amount - a.amount;
-        })[0] ?? null;
+        return Policy.incumbent(others, owner => ProfileEngine.canSuspend(owner));
     }
 
     function _negotiation(spec: var, claimant: var, requestor: var, reason: string, total: real, budget: real): var {

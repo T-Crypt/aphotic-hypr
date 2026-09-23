@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import "StateSnapshotCore.js" as Core
 
 // One capture/restore path for desktop state, shared by every profile
 // regardless of which domain triggered the transition -- a gaming profile
@@ -36,6 +37,7 @@ Singleton {
     id: root
 
     readonly property var allParts: ["theme", "workspace", "monitors", "notifications"]
+    readonly property var addressableParts: root.allParts.concat(["render"])
 
     readonly property var snapshots: root._snapshots
     readonly property var capturedIds: Object.keys(root._snapshots)
@@ -58,12 +60,14 @@ Singleton {
     // lands; callers that must not mutate state before the capture is
     // finished wait for captured() (ProfileEngine parks in APPLY).
     function capture(profileId: string, parts: var): var {
-        const wanted = (Array.isArray(parts) && parts.length > 0 ? parts : root.allParts).filter(p => root.allParts.includes(p));
+        const wanted = (Array.isArray(parts) && parts.length > 0 ? parts : root.allParts).filter(p => root.addressableParts.includes(p));
+        const pending = wanted.filter(p => p === "monitors" || p === "render");
         const snapshot = {
             profileId: profileId,
             at: Date.now(),
             parts: wanted,
-            complete: !wanted.includes("monitors")
+            complete: pending.length === 0,
+            _pendingCapture: pending
         };
 
         if (wanted.includes("theme"))
@@ -75,10 +79,12 @@ Singleton {
 
         root._store(profileId, snapshot);
 
-        if (snapshot.complete)
+        if (snapshot.complete) {
             root.captured(profileId, wanted);
-        else
-            root._enqueue({ kind: "capture", profileId: profileId });
+        } else {
+            for (const part of pending)
+                root._enqueue({ kind: `capture-${part}`, profileId: profileId });
+        }
 
         return snapshot;
     }
@@ -107,11 +113,20 @@ Singleton {
             root.restored(profileId, []);
             return false;
         }
-        if (!snapshot.monitors) {
+        const pending = [];
+        if (snapshot.monitors)
+            pending.push("monitors");
+        if (snapshot.render)
+            pending.push("render");
+        if (pending.length === 0) {
             root._finishRestore(profileId, []);
             return true;
         }
-        root._enqueue({ kind: "restore", profileId: profileId });
+        snapshot._pendingRestore = pending;
+        snapshot._restoreApplied = [];
+        root._store(profileId, snapshot);
+        for (const part of pending)
+            root._enqueue({ kind: `restore-${part}`, profileId: profileId });
         return true;
     }
 
@@ -267,35 +282,70 @@ Singleton {
         if (root._reading || root._jobs.length === 0)
             return;
         root._reading = true;
-        monitorRead.exec(["hyprctl", "-j", "monitors"]);
+        if (root._jobs[0].kind.endsWith("render")) {
+            stateRead.exec(["sh", "-c", "hyprctl getoption decoration:blur:enabled -j; hyprctl getoption decoration:shadow:enabled -j; hyprctl getoption animations:enabled -j"]);
+        } else {
+            stateRead.exec(["hyprctl", "-j", "monitors"]);
+        }
     }
 
-    function _completeJob(live: var): void {
+    function _completeJob(raw: string): void {
         root._reading = false;
         const job = root._jobs[0];
         root._jobs = root._jobs.slice(1);
 
         if (job) {
-            if (job.kind === "capture")
-                root._completeCapture(job.profileId, live);
-            else
-                root._completeRestore(job.profileId, live);
+            if (job.kind.endsWith("render")) {
+                const render = Core.parseRender(raw);
+                if (job.kind === "capture-render")
+                    root._completeCaptureRender(job.profileId, render);
+                else
+                    root._completeRestoreRender(job.profileId, render);
+            } else {
+                let live = [];
+                try {
+                    live = JSON.parse(raw);
+                } catch (e) {
+                    console.warn(`StateSnapshot: could not read monitors: ${e}`);
+                }
+                if (job.kind === "capture-monitors")
+                    root._completeCaptureMonitors(job.profileId, Array.isArray(live) ? live : []);
+                else
+                    root._completeRestoreMonitors(job.profileId, Array.isArray(live) ? live : []);
+            }
         }
 
         root._pump();
     }
 
-    function _completeCapture(profileId: string, live: var): void {
+    function _completeCaptureMonitors(profileId: string, live: var): void {
         const snapshot = root._snapshots[profileId];
         if (!snapshot)
             return;
         snapshot.monitors = live.map(m => root.monitorState(m));
-        snapshot.complete = true;
-        root._store(profileId, snapshot);
-        root.captured(profileId, snapshot.parts);
+        root._completeCapturePart(profileId, snapshot, "monitors");
     }
 
-    function _completeRestore(profileId: string, live: var): void {
+    function _completeCaptureRender(profileId: string, render: var): void {
+        const snapshot = root._snapshots[profileId];
+        if (!snapshot)
+            return;
+        if (render)
+            snapshot.render = render;
+        else
+            console.warn("StateSnapshot: could not read render options");
+        root._completeCapturePart(profileId, snapshot, "render");
+    }
+
+    function _completeCapturePart(profileId: string, snapshot: var, part: string): void {
+        snapshot._pendingCapture = (snapshot._pendingCapture ?? []).filter(p => p !== part);
+        snapshot.complete = snapshot._pendingCapture.length === 0;
+        root._store(profileId, snapshot);
+        if (snapshot.complete)
+            root.captured(profileId, snapshot.parts);
+    }
+
+    function _completeRestoreMonitors(profileId: string, live: var): void {
         const snapshot = root._snapshots[profileId];
         if (!snapshot)
             return;
@@ -310,31 +360,45 @@ Singleton {
             commands.push(root.monitorCommand(entry));
         }
 
-        const applied = [];
         if (commands.length > 0) {
             monitorConfig.exec(["sh", "-c", commands.join("; ")]);
-            applied.push("monitors");
+            snapshot._restoreApplied.push("monitors");
         }
-        root._finishRestore(profileId, applied);
+        root._completeRestorePart(profileId, snapshot, "monitors");
+    }
+
+    function _completeRestoreRender(profileId: string, current: var): void {
+        const snapshot = root._snapshots[profileId];
+        if (!snapshot)
+            return;
+        const command = Core.renderCommand(snapshot.render, current, Hypr.usingLua);
+        if (command) {
+            renderConfig.exec(command);
+            snapshot._restoreApplied.push("render");
+        }
+        root._completeRestorePart(profileId, snapshot, "render");
+    }
+
+    function _completeRestorePart(profileId: string, snapshot: var, part: string): void {
+        snapshot._pendingRestore = (snapshot._pendingRestore ?? []).filter(p => p !== part);
+        root._store(profileId, snapshot);
+        if (snapshot._pendingRestore.length === 0)
+            root._finishRestore(profileId, snapshot._restoreApplied ?? []);
     }
 
     Process {
-        id: monitorRead
+        id: stateRead
 
         stdout: StdioCollector {
-            onStreamFinished: {
-                let live = [];
-                try {
-                    live = JSON.parse(text);
-                } catch (e) {
-                    console.warn(`StateSnapshot: could not read monitors: ${e}`);
-                }
-                root._completeJob(Array.isArray(live) ? live : []);
-            }
+            onStreamFinished: root._completeJob(text)
         }
     }
 
     Process {
         id: monitorConfig
+    }
+
+    Process {
+        id: renderConfig
     }
 }

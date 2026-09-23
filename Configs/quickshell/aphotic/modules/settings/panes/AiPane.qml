@@ -12,6 +12,10 @@ ColumnLayout {
 
     spacing: Tokens.spacing.largeIncreased
 
+    Component.onCompleted: LlamaSwapStats.hold("settings-ai", root.visible)
+    Component.onDestruction: LlamaSwapStats.hold("settings-ai", false)
+    onVisibleChanged: LlamaSwapStats.hold("settings-ai", root.visible)
+
     StyledText {
         text: qsTr("AI")
         font: Tokens.font.title.large
@@ -377,6 +381,57 @@ ColumnLayout {
                         return qsTr("Not reachable at %1").arg(AiConfig.llamaSwapHost);
                     const running = AiProviders.llamaSwapRunningModels.map(m => m.name);
                     return running.length > 0 ? qsTr("Running: %1").arg(running.join(", ")) : qsTr("Reachable, no model loaded");
+                }
+            }
+
+            SettingsRow {
+                icon: InferenceMode.active ? "speed" : "memory"
+                label: qsTr("Inference mode")
+                description: {
+                    if (!InferenceMode.active)
+                        return qsTr("Idle");
+                    const rate = LlamaSwapStats.tokensPerSecond > 0
+                        ? qsTr(" · %1 tok/s").arg(Math.round(LlamaSwapStats.tokensPerSecond))
+                        : "";
+                    return qsTr("Active · %1%2").arg(InferenceMode.model || qsTr("llama-swap")).arg(rate);
+                }
+
+                RowLayout {
+                    spacing: Tokens.spacing.small
+
+                    Repeater {
+                        model: [{ id: "auto", label: qsTr("Auto") }, { id: "off", label: qsTr("Off") }]
+
+                        StyledRect {
+                            id: inferencePill
+
+                            required property var modelData
+                            readonly property bool active: inferencePill.modelData.id === InferenceMode.mode
+
+                            Layout.preferredHeight: 28
+                            Layout.preferredWidth: inferenceLabel.implicitWidth + Tokens.padding.medium * 2
+                            radius: Tokens.rounding.full
+                            color: inferencePill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                            StyledText {
+                                id: inferenceLabel
+                                anchors.centerIn: parent
+                                text: inferencePill.modelData.label
+                                color: inferencePill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                font: Tokens.font.label.small
+                            }
+
+                            StateLayer {
+                                anchors.fill: parent
+                                radius: parent.radius
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: InferenceMode.setMode(inferencePill.modelData.id)
+                            }
+                        }
+                    }
                 }
             }
         }
