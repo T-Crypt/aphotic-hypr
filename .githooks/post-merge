@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+common=$(git -C "$root" rev-parse --git-common-dir 2>/dev/null) || exit 0
+[[ "$common" = /* ]] || common="$root/$common"
+main=$(cd "$common/.." 2>/dev/null && pwd -P) || exit 0
+[[ -d "$main/docs" ]] || exit 0
+
+python3 "$root/tools/docs/index.py" >/dev/null 2>&1 || true
+python3 "$root/tools/docs/status.py" --write >/dev/null 2>&1 || true
+

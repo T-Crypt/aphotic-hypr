@@ -1,5 +1,7 @@
 # Agent working docs - not part of the shipped rice
 docs/
+!tools/docs/
+!tools/docs/**
 CLAUDE.md
 AGENTS.md
 .superpowers/
