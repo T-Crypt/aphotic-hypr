@@ -91,6 +91,12 @@ Item {
         cache: true
         asynchronous: true
         fillMode: Image.PreserveAspectCrop
+        // Decode at screen size, not file size: a bundled 7680x4320 wallpaper
+        // is 127 MiB of VRAM per image uncapped and 25 MiB capped, and there
+        // are two images per screen for the crossfade.
+        sourceSize: root.width > 0 && root.height > 0
+            ? Qt.size(Math.ceil(root.width * Screen.devicePixelRatio), Math.ceil(root.height * Screen.devicePixelRatio))
+            : undefined
 
         anchors.fill: parent
 
@@ -112,10 +118,20 @@ Item {
             }
         }
 
+        // The image that faded out drops its texture; only the visible
+        // wallpaper stays resident.
         transitions: Transition {
-            Anim {
-                target: img
-                properties: "opacity,scale"
+            SequentialAnimation {
+                Anim {
+                    target: img
+                    properties: "opacity,scale"
+                }
+                ScriptAction {
+                    script: {
+                        if (root.current !== img)
+                            img.path = "";
+                    }
+                }
             }
         }
     }
