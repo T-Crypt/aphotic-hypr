@@ -22,6 +22,9 @@ Singleton {
     property string activeProvider: "ollama"
     property string ollamaHost: ""
     property string ollamaModel: ""
+    // No loopback fallback, unlike ollamaHost: llama-swap has no standard
+    // port and nothing installs it, so an unset host means "not in use".
+    property string llamaSwapHost: ""
 
     // Set by install.sh's lib/install/assistant.sh (NVIDIA-gated, opt-in),
     // never by the shell itself -- there's no QML-side "install" action,
@@ -31,6 +34,7 @@ Singleton {
     property string assistantInstalledAt: ""
 
     readonly property bool ollamaHostConfigured: root.ollamaHost.length > 0
+    readonly property bool llamaSwapHostConfigured: root.llamaSwapHost.length > 0
 
     property bool _loaded: false
 
@@ -41,6 +45,7 @@ Singleton {
             activeProvider: root.activeProvider,
             ollamaHost: root.ollamaHost,
             ollamaModel: root.ollamaModel,
+            llamaSwapHost: root.llamaSwapHost,
             assistantEnabled: root.assistantEnabled,
             assistantModel: root.assistantModel,
             assistantInstalledAt: root.assistantInstalledAt
@@ -59,6 +64,7 @@ Singleton {
     }
     onOllamaHostChanged: root._save()
     onOllamaModelChanged: root._save()
+    onLlamaSwapHostChanged: root._save()
     onAssistantEnabledChanged: root._save()
     onAssistantModelChanged: root._save()
     onAssistantInstalledAtChanged: root._save()
@@ -77,6 +83,8 @@ Singleton {
                     root.ollamaHost = data.ollamaHost;
                 if (typeof data.ollamaModel === "string")
                     root.ollamaModel = data.ollamaModel;
+                if (typeof data.llamaSwapHost === "string")
+                    root.llamaSwapHost = data.llamaSwapHost;
                 if (typeof data.assistantEnabled === "boolean")
                     root.assistantEnabled = data.assistantEnabled;
                 if (typeof data.assistantModel === "string")
