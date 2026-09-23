@@ -60,6 +60,10 @@ grep -q 'hyprctl getoption decoration:blur:enabled -j' "$PROFILE/StateSnapshot.q
 grep -q 'Core.renderCommand(snapshot.render, current, Hypr.usingLua)' "$PROFILE/StateSnapshot.qml" \
     || fail "render restore does not use the parser-aware render command"
 
+grep -q 'inference-render.json' "$AI/InferenceMode.qml" \
+    && grep -q 'id: staleRestore' "$AI/InferenceMode.qml" \
+    || fail "InferenceMode does not recover render state after a crash"
+
 grep -q 'id: "plugin-surfaces"' "$QS/services/PluginRegistry.qml" \
     || fail "PluginRegistry does not register the core shelter owner"
 grep -q 'RegistryCore.surfacesFor' "$QS/services/PluginRegistry.qml" \
