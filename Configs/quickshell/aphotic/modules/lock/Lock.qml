@@ -30,8 +30,10 @@ Scope {
     // is entirely fine for what this drives (pausing the wallpaper
     // auto-cycle timer), so polling sidesteps it rather than chasing a
     // native fix.
+    // engage(), unlock() and Pam's unlock now write the state directly;
+    // this slow poll only catches a lock path the shell does not own.
     Timer {
-        interval: 500
+        interval: 5000
         running: true
         repeat: true
         triggeredOnStart: true
@@ -49,10 +51,12 @@ Scope {
 
         function engage(): void {
             root.lock.locked = true;
+            SessionLockState.locked = true;
         }
 
         function unlock(): void {
             root.lock.locked = false;
+            SessionLockState.locked = false;
         }
 
         function isLocked(): bool {

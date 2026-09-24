@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell.Wayland
 import Quickshell.Services.Pam
+import qs.services
 
 Item {
     id: root
@@ -89,7 +90,10 @@ Item {
     Timer {
         id: unlockDelay
         interval: 700
-        onTriggered: root.lock.locked = false
+        onTriggered: {
+            root.lock.locked = false;
+            SessionLockState.locked = false;
+        }
     }
 
     Connections {
