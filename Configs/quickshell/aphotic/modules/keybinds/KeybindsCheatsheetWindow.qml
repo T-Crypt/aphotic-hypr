@@ -49,159 +49,170 @@ PanelWindow {
         Keys.onEscapePressed: root.screenState.keybindsCheatsheet = false
     }
 
-    StyledClippingRect {
-        id: sheet
-
+    Loader {
+        id: sheetLoader
         anchors.centerIn: parent
-        width: 900
-        height: 780
-        radius: Tokens.rounding.extraLarge
-        color: Colours.tPalette.m3surfaceContainer
-        border.width: Config.border.thickness
-        border.color: Colours.palette.m3outlineVariant
+        active: root.visible
+        sourceComponent: sheetComp
+    }
 
-        // Swallow clicks on the sheet itself so they don't fall through
-        // to the full-screen MouseArea behind it and close the sheet.
-        MouseArea {
-            anchors.fill: parent
-        }
+    Component {
+        id: sheetComp
 
-        DepthGradient {
-            anchors.fill: parent
-            radius: sheet.radius
-            baseColour: sheet.color
-        }
+        StyledClippingRect {
+            id: sheet
 
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: Tokens.padding.extraLarge
-            spacing: Tokens.spacing.large
+            anchors.centerIn: parent
+            width: 900
+            height: 780
+            radius: Tokens.rounding.extraLarge
+            color: Colours.tPalette.m3surfaceContainer
+            border.width: Config.border.thickness
+            border.color: Colours.palette.m3outlineVariant
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.medium
-
-                MaterialIcon {
-                    text: "keyboard"
-                    fontStyle: Tokens.font.icon.large
-                    color: Colours.palette.m3primary
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: qsTr("Keybinds")
-                    font: Tokens.font.title.large
-                }
-
-                StyledText {
-                    text: qsTr("%1 binds").arg(HyprKeybinds.entries.length)
-                    color: Colours.palette.m3onSurfaceVariant
-                    font: Tokens.font.label.medium
-                }
-
-                StyledRect {
-                    Layout.preferredWidth: 32
-                    Layout.preferredHeight: 32
-                    radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
-
-                    MaterialIcon {
-                        anchors.centerIn: parent
-                        text: "close"
-                        color: Colours.palette.m3onSurfaceVariant
-                        fontStyle: Tokens.font.icon.small
-                    }
-
-                    StateLayer {
-                        anchors.fill: parent
-                        radius: parent.radius
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: root.screenState.keybindsCheatsheet = false
-                    }
-                }
+            // Swallow clicks on the sheet itself so they don't fall through
+            // to the full-screen MouseArea behind it and close the sheet.
+            MouseArea {
+                anchors.fill: parent
             }
 
-            Flickable {
-                id: sheetFlick
+            DepthGradient {
+                anchors.fill: parent
+                radius: sheet.radius
+                baseColour: sheet.color
+            }
 
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                contentWidth: width
-                contentHeight: columnContent.implicitHeight
-                boundsBehavior: Flickable.StopAtBounds
-                clip: true
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: Tokens.padding.extraLarge
+                spacing: Tokens.spacing.large
 
-                ColumnLayout {
-                    id: columnContent
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Tokens.spacing.medium
 
-                    width: sheetFlick.width
-                    spacing: Tokens.spacing.largeIncreased
+                    MaterialIcon {
+                        text: "keyboard"
+                        fontStyle: Tokens.font.icon.large
+                        color: Colours.palette.m3primary
+                    }
 
-                    Repeater {
-                        model: HyprKeybinds.categorizedEntries
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: qsTr("Keybinds")
+                        font: Tokens.font.title.large
+                    }
 
-                        ColumnLayout {
-                            id: group
+                    StyledText {
+                        text: qsTr("%1 binds").arg(HyprKeybinds.entries.length)
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.medium
+                    }
 
-                            required property var modelData
+                    StyledRect {
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
+                        radius: Tokens.rounding.full
+                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
 
-                            Layout.fillWidth: true
-                            spacing: Tokens.spacing.small
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            text: "close"
+                            color: Colours.palette.m3onSurfaceVariant
+                            fontStyle: Tokens.font.icon.small
+                        }
 
-                            StyledText {
-                                text: group.modelData.category
-                                color: Colours.palette.m3primary
-                                font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
-                            }
+                        StateLayer {
+                            anchors.fill: parent
+                            radius: parent.radius
+                        }
 
-                            StyledRect {
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.screenState.keybindsCheatsheet = false
+                        }
+                    }
+                }
+
+                Flickable {
+                    id: sheetFlick
+
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    contentWidth: width
+                    contentHeight: columnContent.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
+                    clip: true
+
+                    ColumnLayout {
+                        id: columnContent
+
+                        width: sheetFlick.width
+                        spacing: Tokens.spacing.largeIncreased
+
+                        Repeater {
+                            model: HyprKeybinds.categorizedEntries
+
+                            ColumnLayout {
+                                id: group
+
+                                required property var modelData
+
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 1
-                                color: Colours.palette.m3outlineVariant
-                                opacity: 0.5
-                            }
+                                spacing: Tokens.spacing.small
 
-                            GridLayout {
-                                Layout.fillWidth: true
-                                columns: 2
-                                columnSpacing: Tokens.spacing.medium
-                                rowSpacing: Tokens.spacing.extraSmall
+                                StyledText {
+                                    text: group.modelData.category
+                                    color: Colours.palette.m3primary
+                                    font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
+                                }
 
-                                Repeater {
-                                    model: group.modelData.items
+                                StyledRect {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 1
+                                    color: Colours.palette.m3outlineVariant
+                                    opacity: 0.5
+                                }
 
-                                    RowLayout {
-                                        id: bindRow
+                                GridLayout {
+                                    Layout.fillWidth: true
+                                    columns: 2
+                                    columnSpacing: Tokens.spacing.medium
+                                    rowSpacing: Tokens.spacing.extraSmall
 
-                                        required property var modelData
+                                    Repeater {
+                                        model: group.modelData.items
 
-                                        Layout.fillWidth: true
-                                        spacing: Tokens.spacing.medium
+                                        RowLayout {
+                                            id: bindRow
 
-                                        StyledRect {
-                                            Layout.preferredWidth: comboText.implicitWidth + Tokens.padding.medium * 2
-                                            Layout.preferredHeight: comboText.implicitHeight + Tokens.padding.extraSmall * 2
-                                            radius: Tokens.rounding.small
-                                            color: Colours.tPalette.m3surfaceContainer
+                                            required property var modelData
+
+                                            Layout.fillWidth: true
+                                            spacing: Tokens.spacing.medium
+
+                                            StyledRect {
+                                                Layout.preferredWidth: comboText.implicitWidth + Tokens.padding.medium * 2
+                                                Layout.preferredHeight: comboText.implicitHeight + Tokens.padding.extraSmall * 2
+                                                radius: Tokens.rounding.small
+                                                color: Colours.tPalette.m3surfaceContainer
+
+                                                StyledText {
+                                                    id: comboText
+                                                    anchors.centerIn: parent
+                                                    text: bindRow.modelData.combo
+                                                    font: Tokens.font.mono.small
+                                                    color: Colours.palette.m3onSurfaceVariant
+                                                }
+                                            }
 
                                             StyledText {
-                                                id: comboText
-                                                anchors.centerIn: parent
-                                                text: bindRow.modelData.combo
-                                                font: Tokens.font.mono.small
-                                                color: Colours.palette.m3onSurfaceVariant
+                                                Layout.fillWidth: true
+                                                text: bindRow.modelData.description
+                                                font: Tokens.font.body.medium
+                                                color: Colours.palette.m3onSurface
+                                                elide: Text.ElideRight
                                             }
-                                        }
-
-                                        StyledText {
-                                            Layout.fillWidth: true
-                                            text: bindRow.modelData.description
-                                            font: Tokens.font.body.medium
-                                            color: Colours.palette.m3onSurface
-                                            elide: Text.ElideRight
                                         }
                                     }
                                 }
