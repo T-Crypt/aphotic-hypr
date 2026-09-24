@@ -12,11 +12,11 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
-## 2.0.5
-
 ## 2.0.6
 
-TBD
+Inference mode steps the desktop aside for local models, and the installer now finishes on plain Arch and recovers from broken upstream packages.
+
+## 2.0.5
 
 Command Center gains Flow, a live map of which resources your AI, gaming, security and dev work is claiming.
 
