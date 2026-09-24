@@ -8,6 +8,7 @@ ColorWheel 1.0 ColorWheel.qml
 DepthGradient 1.0 DepthGradient.qml
 DepthLayer 1.0 DepthLayer.qml
 KbCodeField 1.0 KbCodeField.qml
+KeyboardStateWatch 1.0 KeyboardStateWatch.qml
 Logo 1.0 Logo.qml
 MaterialIcon 1.0 MaterialIcon.qml
 NetworkUsageWatch 1.0 NetworkUsageWatch.qml

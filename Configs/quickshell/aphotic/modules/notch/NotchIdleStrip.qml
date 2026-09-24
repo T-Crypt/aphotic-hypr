@@ -7,12 +7,13 @@ import qs.components
 import qs.services
 
 // Idle deliberately carries no clock: the bar already owns one in every
-// style that shows the time, and a second one two centimetres away is just
-// a duplicate. What is left is the smallest useful affordance -- live CPU
-// and memory, off SystemUsage's always-running base poll, so idle costs
-// nothing extra.
+// style that shows the time. What is left is live CPU and memory usage.
 GridLayout {
     id: root
+
+    SystemUsageWatch {
+        detailed: false
+    }
 
     // Side-docked bars leave a strip only as wide as the bar is thick, so
     // the same content stacks down it instead of running off both ends

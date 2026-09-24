@@ -66,9 +66,8 @@ Item {
                 fill: 1
 
                 SequentialAnimation on opacity {
-                    running: device.modelData?.state !== BluetoothDeviceState.Connected // qmllint disable unresolved-type
-                    alwaysRunToEnd: true
-                    loops: Animation.Infinite
+                    running: device.modelData?.state === BluetoothDeviceState.Connecting // qmllint disable unresolved-type
+                    loops: 3
 
                     Anim {
                         from: 1

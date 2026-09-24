@@ -6,6 +6,10 @@ import qs.services.profile
 MaterialIcon {
     required property color colour
 
+    SystemUsageWatch {
+        detailed: false
+    }
+
     readonly property real highLoad: Math.max(SystemUsage.cpuPerc, SystemUsage.memPerc)
 
     animate: true

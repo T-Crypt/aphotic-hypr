@@ -247,6 +247,8 @@ Item {
                             DelegateChoice {
                                 roleValue: "kbLayout"
                                 delegate: EntryWrapper {
+                                    KeyboardStateWatch {}
+
                                     StyledText {
                                         animate: true
                                         text: Hypr.kbLayout

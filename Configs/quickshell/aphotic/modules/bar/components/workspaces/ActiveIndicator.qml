@@ -67,6 +67,8 @@ Item {
     // glow first, target painting over it to hide the solid core.
     BioluminescentGlow {
         target: pill
+        breathing: false
+        intensity: DepthFx.glowIntensity * 0.725
     }
 
     StyledClippingRect {

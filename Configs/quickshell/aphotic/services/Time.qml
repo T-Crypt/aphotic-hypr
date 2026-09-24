@@ -5,11 +5,11 @@ import Quickshell
 import qs.config
 
 Singleton {
-    property alias enabled: clock.enabled
-    readonly property date date: clock.date
-    readonly property int hours: clock.hours
-    readonly property int minutes: clock.minutes
-    readonly property int seconds: clock.seconds
+    property alias enabled: secondsClock.enabled
+    readonly property date date: secondsClock.date
+    readonly property int hours: minuteClock.hours
+    readonly property int minutes: minuteClock.minutes
+    readonly property int seconds: secondsClock.seconds
 
     readonly property string timeStr: format(Settings.twelveHourClock ? "hh:mm:A" : "hh:mm")
     readonly property list<string> timeComponents: timeStr.split(":")
@@ -18,12 +18,19 @@ Singleton {
     readonly property string amPmStr: timeComponents[2] ?? ""
 
     function format(fmt: string): string {
-        return Qt.formatDateTime(clock.date, fmt);
+        return Qt.formatDateTime(fmt.includes("s") ? secondsClock.date : minuteClock.date, fmt);
     }
 
     SystemClock {
-        id: clock
+        id: secondsClock
 
         precision: SystemClock.Seconds
+    }
+
+    SystemClock {
+        id: minuteClock
+
+        enabled: secondsClock.enabled
+        precision: SystemClock.Minutes
     }
 }

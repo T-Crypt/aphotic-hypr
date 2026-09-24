@@ -32,6 +32,8 @@ Singleton {
     property string kbLayout: ""
     property bool capsLock: false
     property bool numLock: false
+    readonly property bool keyboardStateWanted: root._keyboardWatchers > 0
+    property int _keyboardWatchers: 0
 
     signal configReloaded
     // Re-emitted so anything that needs the compositor's raw stream
@@ -102,7 +104,7 @@ Singleton {
             } else if (["openwindow", "closewindow", "movewindow"].includes(n)) {
                 Hyprland.refreshToplevels();
                 Hyprland.refreshWorkspaces();
-            } else if (n === "activelayout") {
+            } else if (n === "activelayout" && root.keyboardStateWanted) {
                 root.refreshKeyboardState();
             } else if (n.includes("mon")) {
                 Hyprland.refreshMonitors();
@@ -123,6 +125,19 @@ Singleton {
 
     function refreshKeyboardState(): void {
         keyboardStateProc.running = true;
+    }
+
+    function subscribeKeyboardState(): void {
+        const wasWanted = root.keyboardStateWanted;
+        root._keyboardWatchers = root._keyboardWatchers + 1;
+        if (!wasWanted) {
+            root.refreshKeyboardState();
+            ledListProc.running = true;
+        }
+    }
+
+    function unsubscribeKeyboardState(): void {
+        root._keyboardWatchers = Math.max(0, root._keyboardWatchers - 1);
     }
 
     Process {
@@ -194,14 +209,9 @@ Singleton {
         }
     }
 
-    Component.onCompleted: {
-        root.refreshKeyboardState();
-        ledListProc.running = true;
-    }
-
     Timer {
         interval: 2000
-        running: true
+        running: root.keyboardStateWanted
         repeat: true
         onTriggered: {
             if (root._ledPaths.length > 0)

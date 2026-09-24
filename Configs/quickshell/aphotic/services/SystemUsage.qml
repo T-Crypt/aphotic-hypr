@@ -51,6 +51,15 @@ Singleton {
     // between. Same "sleeping until seen" shape as GpuVramSource's
     // `scanning` gate.
     readonly property bool detailedMonitoring: root._watchers > 0
+    readonly property bool wanted: root._subscribers > 0
+
+    function subscribe(): void {
+        root._subscribers = root._subscribers + 1;
+    }
+
+    function unsubscribe(): void {
+        root._subscribers = Math.max(0, root._subscribers - 1);
+    }
 
     function beginDetailedMonitoring(): void {
         root._watchers = root._watchers + 1;
@@ -104,6 +113,7 @@ Singleton {
     property real _memUsed: 0
     property real _memTotal: 0
     property var _disks: []
+    property int _subscribers: 0
     property int _watchers: 0
     property int _fastWatchers: 0
 
@@ -378,7 +388,7 @@ Singleton {
 
     Timer {
         interval: Config.dashboard.resourceUpdateInterval
-        running: true
+        running: root.wanted
         repeat: true
         triggeredOnStart: true
         onTriggered: {
