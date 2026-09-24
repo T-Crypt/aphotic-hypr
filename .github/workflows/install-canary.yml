@@ -1,0 +1,104 @@
+name: Nightly install canary
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'profiles/base/**'
+      - 'install.sh'
+      - 'lib/install/**'
+      - 'tools/canary/**'
+      - '.github/workflows/install-canary.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container: archlinux:latest
+    steps:
+      - name: Prepare Arch
+        run: |
+          set -euo pipefail
+          # The installer enables multilib for the 32-bit GPU libraries.
+          printf '\n[multilib]\nInclude = /etc/pacman.d/mirrorlist\n' >> /etc/pacman.conf
+          pacman -Syu --needed --noconfirm base-devel git sudo github-cli jq
+          useradd --create-home canary
+          echo 'canary ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/canary
+          chmod 0440 /etc/sudoers.d/canary
+
+      - uses: actions/checkout@v4
+
+      - name: Run install canary
+        id: canary
+        continue-on-error: true
+        env:
+          CANARY_BUILD_USER: canary
+        run: bash tools/canary/run_canary.sh
+
+      - name: Upload canary results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-canary
+          path: canary-out/
+          if-no-files-found: error
+
+      - name: Update canary issues
+        if: always() && github.event_name != 'pull_request' && hashFiles('canary-out/status.json') != ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status=canary-out/status.json
+          run_date=$(jq -r '.date' "$status")
+          gh label create canary --repo "$GITHUB_REPOSITORY" --color B60205 \
+            --description "Nightly install canary" --force >/dev/null
+          gh label create install --repo "$GITHUB_REPOSITORY" --color 0E8A16 \
+            --description "Installer" --force >/dev/null
+
+          # Close issues for packages that install again, even while others fail.
+          broken_titles=$(jq -r '.broken[].package | "install: \(.) is failing upstream"' "$status")
+          gh issue list --repo "$GITHUB_REPOSITORY" --state open --label canary \
+            --limit 1000 --json number,title \
+            | jq -r '.[] | "\(.number)\t\(.title)"' \
+            | while IFS=$'\t' read -r number title; do
+                if ! grep -qxF -- "$title" <<< "$broken_titles"; then
+                  gh issue close "$number" --repo "$GITHUB_REPOSITORY" \
+                    --comment "Green again on $run_date"
+                fi
+              done
+
+          if jq -e '.broken | length > 0' "$status" >/dev/null; then
+            while IFS= read -r broken; do
+              package=$(jq -r '.package' <<< "$broken")
+              error_tail=$(jq -r '.error_tail' <<< "$broken")
+              title="install: $package is failing upstream"
+              issue_number=$(
+                gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+                  --label canary --limit 1000 --json number,title \
+                  | jq -r --arg title "$title" '.[] | select(.title == $title) | .number' \
+                  | sed -n '1p'
+              )
+              body=$(printf 'Canary failed on %s.\n\n```text\n%s\n```' "$run_date" "$error_tail")
+              if [[ -n "$issue_number" ]]; then
+                gh issue comment "$issue_number" --repo "$GITHUB_REPOSITORY" --body "$body"
+              else
+                gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" \
+                  --label canary --label install --body "$body"
+              fi
+            done < <(jq -c '.broken[]' "$status")
+          fi
+
+      - name: Fail broken canary
+        if: always() && steps.canary.outcome == 'failure'
+        run: exit 1

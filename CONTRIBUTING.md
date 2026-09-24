@@ -125,6 +125,14 @@ This project verifies live, not just "it parses":
 5. Revert any temporary debug overrides and check `git diff` before
    marking the PR ready — no debug residue.
 
+The install canary installs every base package for real each night in a
+fresh Arch container: both profiles, the packages the installer names
+directly (Hyprland, the GPU stacks), and each AUR package built and
+installed as a non-root user. A failure opens or updates one issue per
+package, and a package that installs again gets its issue closed. The
+canary also runs on any pull request that touches the profiles, the
+installer or the canary, without filing issues.
+
 ## Scope boundaries
 
 - Arch/AUR-only — no multi-distro installer branching.
