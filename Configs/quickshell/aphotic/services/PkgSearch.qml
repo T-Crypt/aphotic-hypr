@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "PkgSearchRank.js" as PkgSearchRank
 
 // Arch/AUR-only. `helper` resolves to "yay"/"paru"/"" (Component.onCompleted
 // probe below) -- `available` gates both the bar/IPC toggle and the search
@@ -87,7 +88,7 @@ Singleton {
                 description: desc
             });
         }
-        return out;
+        return PkgSearchRank.rankResults(out, root._lastSearchedQuery);
     }
 
     Process {
