@@ -37,11 +37,13 @@ install_yay() {
     return 0
   fi
   rm -rf /tmp/yay-bootstrap
-  git clone https://aur.archlinux.org/yay.git /tmp/yay-bootstrap || {
+  # ensure_aur_helper's stdout is captured as the helper name, so the build
+  # output must go to stderr or it ends up inside AUR_HELPER.
+  git clone https://aur.archlinux.org/yay.git /tmp/yay-bootstrap >&2 || {
     echo "Failed to clone yay from AUR" >&2
     exit 1
   }
-  (cd /tmp/yay-bootstrap && makepkg -si --noconfirm)
+  (cd /tmp/yay-bootstrap && makepkg -si --noconfirm) >&2
   # makepkg -si can fail to actually land the binary (build error, sudo
   # prompt timeout, a conflicting local package) while still returning a
   # permissive zero here in some cases -- don't claim success until yay

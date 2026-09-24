@@ -433,6 +433,10 @@ main() {
   # returns 1 from ensure_aur_helper) would silently leave AUR_HELPER empty.
   AUR_HELPER=""
   AUR_HELPER=$(ensure_aur_helper) || AUR_HELPER=""
+  # Anything else that leaks onto stdout would break every later call, so
+  # keep only a name that resolves as a command.
+  AUR_HELPER="${AUR_HELPER##*$'\n'}"
+  command -v "$AUR_HELPER" >/dev/null 2>&1 || AUR_HELPER=""
   if [[ -z "$AUR_HELPER" ]]; then
     echo -e "$CWR - No AUR helper (yay/paru) is available on PATH. Repo packages still install through pacman; only the AUR-only ones will be reported and skipped."
     echo -e "$CWR   Fix it manually: sudo pacman -S --needed base-devel git && git clone https://aur.archlinux.org/yay.git /tmp/yay && cd /tmp/yay && makepkg -si"
