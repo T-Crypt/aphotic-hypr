@@ -625,9 +625,11 @@ Singleton {
 
     // llama-swap pushes a modelStatus event the moment a model starts or
     // stops, so the running list refreshes within a second instead of on
-    // a poll. The stream also carries every upstream log line; the filter
-    // looks at the event type before parsing anything. It is silent while
-    // nothing happens, and the slow poll below covers a dropped stream.
+    // a poll. The stream also carries every upstream log line, so grep
+    // drops everything else before it reaches the shell. setpriv kills
+    // curl and grep if the shell dies, so a restart leaves no orphans.
+    // It is silent while nothing happens, and the slow poll below covers
+    // a dropped stream.
     readonly property bool _llamaSwapWatch: InstallProfile.aiEnabled && AiConfig.llamaSwapHostConfigured
 
     on_LlamaSwapWatchChanged: {
@@ -638,7 +640,7 @@ Singleton {
 
     Process {
         id: llamaSwapEvents
-        command: ["curl", "-sN", "--max-time", "0", `${AiConfig.llamaSwapHost}/api/events`]
+        command: ["sh", "-c", "setpriv --pdeathsig KILL curl -sN --max-time 0 \"$1/api/events\" | setpriv --pdeathsig KILL grep --line-buffered -F '\"type\":\"modelStatus\"'", "sh", AiConfig.llamaSwapHost]
         stdout: SplitParser {
             onRead: line => {
                 if (line.indexOf('"type":"modelStatus"') !== -1)
