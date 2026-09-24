@@ -154,19 +154,25 @@ if [[ $EUID -eq 0 ]]; then
   chown "$BUILD_USER:$(id -gn "$BUILD_USER")" "$aur_root"
 fi
 
-for package in "${aur_packages[@]}"; do
-  package_dir="$aur_root/$package"
-  package_log="$TEMP_DIR/aur-$package.log"
-  printf 'Building AUR package %s\n' "$package"
-  if ! "${AS_BUILD_USER[@]}" git clone \
-    "https://aur.archlinux.org/$package.git" "$package_dir" &> "$package_log"; then
-    record_failure "$package" aur "$package_log"
-    continue
+# Build AUR packages the way the installer does: bootstrap yay from the
+# AUR, then install each package through it.
+yay_ready=0
+if ((${#aur_packages[@]})); then
+  yay_log="$TEMP_DIR/aur-yay.log"
+  if "${AS_BUILD_USER[@]}" git clone https://aur.archlinux.org/yay.git \
+    "$aur_root/yay" &> "$yay_log" \
+    && (cd "$aur_root/yay" && "${AS_BUILD_USER[@]}" makepkg -si --noconfirm) >> "$yay_log" 2>&1; then
+    yay_ready=1
+  else
+    record_failure yay aur "$yay_log"
   fi
-  if ! (
-    cd "$package_dir"
-    "${AS_BUILD_USER[@]}" makepkg -si --noconfirm
-  ) >> "$package_log" 2>&1; then
+fi
+
+for package in "${aur_packages[@]}"; do
+  ((yay_ready)) || break
+  package_log="$TEMP_DIR/aur-$package.log"
+  printf 'Installing AUR package %s\n' "$package"
+  if ! (cd "$aur_root" && "${AS_BUILD_USER[@]}" yay -S --needed --noconfirm --removemake "$package") &> "$package_log"; then
     record_failure "$package" aur "$package_log"
   fi
 done
