@@ -185,12 +185,18 @@ Item {
     implicitWidth: Tokens.sizes.launcher.width
     implicitHeight: previewHeight + (useGrid ? grid.height : list.height) + Tokens.padding.large
 
+    // Created on open by a Loader: start hidden for one tick so the fade-in
+    // plays and onVisibleChanged still consumes the prefill.
+    property bool shown: false
+
     visible: opacity > 0
-    opacity: screenState.launcher ? 1 : 0
+    opacity: root.shown && screenState.launcher ? 1 : 0
 
     Behavior on opacity {
         Anim {}
     }
+
+    Component.onCompleted: Qt.callLater(() => root.shown = true)
 
     onVisibleChanged: {
         if (visible) {
