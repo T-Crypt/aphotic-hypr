@@ -164,3 +164,71 @@ jobs:
       - name: Fail broken canary
         if: always() && steps.canary.outcome == 'failure'
         run: exit 1
+
+  publish-status:
+    needs: canary
+    if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: install-canary-status
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download canary results
+        uses: actions/download-artifact@v4
+        with:
+          name: install-canary
+          path: canary-out
+
+      - name: Publish canary status
+        run: |
+          set -euo pipefail
+          artifact_status="$RUNNER_TEMP/status.json"
+          artifact_lock="$RUNNER_TEMP/known-good.lock"
+          cp canary-out/status.json "$artifact_status"
+          if [[ -f canary-out/known-good.lock ]]; then
+            cp canary-out/known-good.lock "$artifact_lock"
+          fi
+
+          git fetch origin +refs/heads/canary-status:refs/remotes/origin/canary-status || true
+          if git show-ref --verify --quiet refs/remotes/origin/canary-status; then
+            git switch --force-create canary-status refs/remotes/origin/canary-status
+          else
+            git switch --orphan canary-status
+          fi
+
+          previous_last_green=""
+          if [[ -f status.json ]]; then
+            previous_last_green=$(jq -r '.last_green // empty' status.json)
+          fi
+          run_date=$(jq -r '.date' "$artifact_status")
+          green=$(jq -r '.green' "$artifact_status")
+          if [[ "$green" == "true" ]]; then
+            last_green="$run_date"
+          else
+            last_green="$previous_last_green"
+          fi
+
+          if [[ -n "$last_green" ]]; then
+            jq --arg last_green "$last_green" '. + {last_green: $last_green}' \
+              "$artifact_status" > status.json
+          else
+            jq '. + {last_green: null}' "$artifact_status" > status.json
+          fi
+          if [[ "$green" == "true" && -f "$artifact_lock" ]]; then
+            cp "$artifact_lock" known-good.lock
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add status.json
+          [[ ! -f "$artifact_lock" ]] || git add known-good.lock
+          if ! git diff --cached --quiet; then
+            git commit -m "canary: publish $run_date status"
+            git push origin HEAD:canary-status
+          fi

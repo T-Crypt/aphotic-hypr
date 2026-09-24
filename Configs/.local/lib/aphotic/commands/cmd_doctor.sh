@@ -90,6 +90,53 @@ _aphotic_doctor_version_drift() {
     esac
 }
 
+_aphotic_doctor_snapshot() {
+    local state_file="${XDG_STATE_HOME:-${HOME:-}/.local/state}/aphotic/snapshot"
+    local snapshot_date status status_date green answer snapshot_lib
+    [[ -r "$state_file" ]] || return 0
+
+    snapshot_date=$(sed -n 's/^snapshot=//p' "$state_file" | awk 'NR == 1 { print; exit }')
+    [[ -n "$snapshot_date" ]] || return 0
+    echo
+    echo "Package snapshot:"
+    printf '  [warn] system packages use the %s archive snapshot\n' "$snapshot_date"
+
+    snapshot_lib="${APHOTIC_DOTS_DIR:-}/lib/install/snapshot.sh"
+    if [[ ! -r "$snapshot_lib" ]]; then
+        echo "  [warn] could not find the snapshot status helper"
+        return 0
+    fi
+    # shellcheck source=lib/install/snapshot.sh
+    source "$snapshot_lib"
+    status=$(_snapshot_fetch_status 2>/dev/null) || {
+        echo "  [warn] could not check the current install canary"
+        return 0
+    }
+    status_date=$(sed -n 's/.*"date"[[:space:]]*:[[:space:]]*"\([0-9][0-9-]*\)".*/\1/p' <<< "$status" | awk 'NR == 1 { print; exit }')
+    green=$(sed -n 's/.*"green"[[:space:]]*:[[:space:]]*\(true\|false\).*/\1/p' <<< "$status" | awk 'NR == 1 { print; exit }')
+
+    if [[ "$green" != "true" ]]; then
+        printf '  [warn] the install canary is still failing%s; keep the snapshot for now\n' "${status_date:+ as of $status_date}"
+        return 0
+    fi
+
+    printf '  [ok]   the install canary is green again%s\n' "${status_date:+ as of $status_date}"
+    echo "  Run 'sudo pacman -Syu' to return to current package versions."
+    if [[ -t 0 ]]; then
+        printf 'Have you updated and want to clear the snapshot state? [y/N] '
+        IFS= read -r answer || answer=""
+        if [[ "$answer" =~ ^[Yy]$ ]]; then
+            if rm -f "$state_file"; then
+                echo "  [ok]   snapshot state cleared"
+            else
+                echo "  [warn] could not clear $state_file"
+            fi
+        fi
+    else
+        echo "  Run aphotic doctor in a terminal after updating to clear the snapshot state."
+    fi
+}
+
 aphotic_cmd_doctor() {
     echo "Aphotic doctor — aphotic ${APHOTIC_VERSION}"
     echo
@@ -153,4 +200,5 @@ aphotic_cmd_doctor() {
     echo
     echo "Version:"
     _aphotic_doctor_version_drift
+    _aphotic_doctor_snapshot
 }

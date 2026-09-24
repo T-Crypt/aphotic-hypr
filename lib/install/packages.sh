@@ -61,6 +61,8 @@ show_progress() {
 # at the end of the run so the list doesn't scroll away behind the rest of
 # the install.
 FAILED_OPTIONAL_PACKAGES=()
+FAILED_OPTIONAL_REPO_PACKAGES=()
+declare -A APHOTIC_FORCED_FAILURES=()
 
 _package_in_list() {
   [[ $'\n'"$2"$'\n' == *$'\n'"$1"$'\n'* ]]
@@ -92,6 +94,12 @@ _pacman_install_cmd() {
   return 0
 }
 
+_snapshot_unavailable_package() {
+  printf 'error: %s is unavailable in the %s official repository snapshot\n' \
+    "$1" "${APHOTIC_ACTIVE_SNAPSHOT_DATE:-unknown}" >&2
+  return 1
+}
+
 # Fills PKG_INSTALL_CMD with what should install <package>: pacman for
 # anything a configured repo carries, the AUR helper otherwise. Preferring
 # pacman for repo packages also keeps a helper from fuzzy-matching a repo
@@ -101,6 +109,15 @@ _pacman_install_cmd() {
 # "command not found" that says nothing about the package.
 _resolve_install_cmd() {
   local pkg="$1"
+  if [[ -n "${APHOTIC_ACTIVE_SNAPSHOT_DATE:-}" ]]; then
+    if declare -F _snapshot_install_active >/dev/null \
+        && _snapshot_package_is_official "$pkg"; then
+      PKG_INSTALL_CMD=(_snapshot_install_active)
+    else
+      PKG_INSTALL_CMD=(_snapshot_unavailable_package)
+    fi
+    return 0
+  fi
   if [[ -z "${AUR_HELPER:-}" ]] || _pkg_in_repos "$pkg"; then
     _pacman_install_cmd
     return 0
@@ -156,7 +173,10 @@ _clear_aur_build_cache() {
 # abort the run. "optional" is for packages a layer or custom_apps.lst
 # added: those are reported with an issue link and skipped.
 install_software() {
-  local pkg="$1" requirement="${2:-required}"
+  local pkg="$1" requirement="${2:-required}" snapshot_date="" official_repo=0
+  if declare -F _snapshot_package_is_official >/dev/null && _snapshot_package_is_official "$pkg"; then
+    official_repo=1
+  fi
   if _pkg_installed "$pkg"; then
     echo -e "$COK - $pkg is already installed."
     return 0
@@ -177,11 +197,17 @@ install_software() {
   local rc=0 pkg_pid
   local attempt
   for attempt in 1 2; do
-    "${PKG_INSTALL_CMD[@]}" "$pkg" &>> "$INSTLOG" &
-    pkg_pid=$!
-    show_progress "$pkg_pid" "installing $pkg"
     rc=0
-    wait "$pkg_pid" 2>/dev/null || rc=$?
+    if [[ "${APHOTIC_FORCE_FAIL:-}" == "$pkg" && -z "${APHOTIC_FORCED_FAILURES[$pkg]:-}" ]]; then
+      APHOTIC_FORCED_FAILURES["$pkg"]=1
+      printf 'error: forced first-install failure for %s\n' "$pkg" >> "$INSTLOG"
+      rc=1
+    else
+      "${PKG_INSTALL_CMD[@]}" "$pkg" &>> "$INSTLOG" &
+      pkg_pid=$!
+      show_progress "$pkg_pid" "installing $pkg"
+      wait "$pkg_pid" 2>/dev/null || rc=$?
+    fi
 
     if _pkg_installed "$pkg"; then
       echo -e "$COK - $pkg was installed."
@@ -198,6 +224,7 @@ install_software() {
     fi
 
     ((attempt == 1)) || break
+    [[ -n "${APHOTIC_ACTIVE_SNAPSHOT_DATE:-}" ]] && break
     echo -e "$CWR - $pkg did not build. Checking whether a stale AUR build cache explains it..."
     _clear_aur_build_cache "$pkg" || break
   done
@@ -205,12 +232,15 @@ install_software() {
   # An AUR package with no helper on PATH is its own diagnosis, and the
   # generic "submit an issue" line sends the user down the wrong path.
   local why=""
-  if [[ -z "${AUR_HELPER:-}" ]] && ! _pkg_in_repos "$pkg"; then
+  if [[ -n "${APHOTIC_ACTIVE_SNAPSHOT_DATE:-}" ]] && ((official_repo == 0)); then
+    why="$pkg is not in the ${APHOTIC_ACTIVE_SNAPSHOT_DATE} official repository snapshot, so the installer cannot install it from the archive."
+  elif [[ -z "${AUR_HELPER:-}" ]] && ! _pkg_in_repos "$pkg"; then
     why="$pkg isn't in any configured repo and no AUR helper (yay/paru) is on PATH, so nothing could build it."
   fi
 
   if [[ "$requirement" == "optional" ]]; then
     FAILED_OPTIONAL_PACKAGES+=("$pkg")
+    ((official_repo)) && FAILED_OPTIONAL_REPO_PACKAGES+=("$pkg")
     echo -e "$CER - $pkg failed to install."
     [[ -n "$why" ]] && echo -e "$CWR   $why"
     echo -e "$CWR   Skipped, the install continues. Output: $INSTLOG"
@@ -220,18 +250,43 @@ install_software() {
   echo -e "$CER   $pkg is required, so the install can't continue without it."
   [[ -n "$why" ]] && echo -e "$CER   $why"
   install_failure_explain "$pkg" "$INSTLOG"
+  if [[ -z "${APHOTIC_ACTIVE_SNAPSHOT_DATE:-}" ]] && declare -F snapshot_last_green >/dev/null; then
+    snapshot_date=$(snapshot_last_green)
+    if [[ -n "$snapshot_date" && "$snapshot_date" != "$(date -u +%F)" ]]; then
+      if ((official_repo)); then
+        if APHOTIC_SNAPSHOT_DATE="$snapshot_date" snapshot_offer "$pkg"; then
+          return 0
+        fi
+      else
+        echo -e "$CWR   AUR packages cannot come from the Arch Linux Archive."
+      fi
+    fi
+  fi
   install_offer_report "$pkg" "$INSTLOG"
   exit 1
 }
 
 report_failed_optional_packages() {
   ((${#FAILED_OPTIONAL_PACKAGES[@]} > 0)) || return 0
-  local pkg
+  local pkg snapshot_date="" snapshot_recovered=0
   echo -e "\n\e[1;31m── ${#FAILED_OPTIONAL_PACKAGES[@]} optional package(s) failed to install ──\e[0m"
   echo -e "  None of these are part of the shell itself, so the install finished without them."
   for pkg in "${FAILED_OPTIONAL_PACKAGES[@]}"; do
     install_failure_explain "$pkg" "$INSTLOG"
   done
+  if ((${#FAILED_OPTIONAL_REPO_PACKAGES[@]} > 0)) \
+      && [[ -z "${APHOTIC_ACTIVE_SNAPSHOT_DATE:-}" ]] \
+      && declare -F snapshot_last_green >/dev/null; then
+    snapshot_date=$(snapshot_last_green)
+    if [[ -n "$snapshot_date" && "$snapshot_date" != "$(date -u +%F)" ]]; then
+      if APHOTIC_SNAPSHOT_DATE="$snapshot_date" snapshot_offer "${FAILED_OPTIONAL_REPO_PACKAGES[@]}"; then
+        snapshot_recovered=1
+      fi
+    fi
+  fi
+  if ((snapshot_recovered)) && ((${#FAILED_OPTIONAL_REPO_PACKAGES[@]} == ${#FAILED_OPTIONAL_PACKAGES[@]})); then
+    return 0
+  fi
   echo -e "  Full output for each failure: $INSTLOG"
   echo -e "  To retry them after a fix: re-run ./install.sh with the same --with layers."
   install_offer_report "optional" "$INSTLOG"
