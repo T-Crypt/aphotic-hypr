@@ -27,6 +27,16 @@ SCHEMA_VERSION = 1
 STATE = os.environ.get("APHOTIC_STATE_HOME", os.path.expanduser("~/.local/state/aphotic"))
 QUOTA = os.path.join(STATE, "agent-quota.json")
 
+# The statusLine slot also feeds the shared event stream, as a `quota`
+# line. Same file and rotation policy as agent_hook.py's EVENTS.
+EVENTS = os.path.join(STATE, "agent-events.jsonl")
+EVENTS_MAX_BYTES = 512 * 1024
+EVENTS_KEEP_LINES = 1000
+QUOTA_THROTTLE = os.path.join(STATE, "agent-quota-throttle.json")
+QUOTA_THROTTLE_SECONDS = 60
+# Only Claude Code's statusLine slot writes here.
+PROVIDER_BY_HARNESS = {"claude": "anthropic"}
+
 
 def atomic_write(path: str, text: str) -> None:
     """Write `text` to `path` via a same-directory temp file and rename."""
@@ -78,8 +88,11 @@ def context_window(payload: dict) -> dict | None:
     return record
 
 
-def build_record(payload: dict, now: float) -> dict:
-    """Build the quota record for one statusline invocation."""
+def collect_windows(payload: dict) -> dict:
+    """Every named quota window the payload reports, keyed by field name.
+
+    Shared by the local record and the v2 `quota` event line.
+    """
     limits = payload.get("rate_limits")
     limits = limits if isinstance(limits, dict) else {}
     windows = {}
@@ -90,6 +103,12 @@ def build_record(payload: dict, now: float) -> dict:
     parsed = context_window(payload)
     if parsed:
         windows["context"] = parsed
+    return windows
+
+
+def build_record(payload: dict, now: float) -> dict:
+    """Build the quota record for one statusline invocation."""
+    windows = collect_windows(payload)
 
     model = payload.get("model")
     model = model if isinstance(model, dict) else {}
@@ -144,6 +163,92 @@ def format_line(record: dict) -> str:
     return " · ".join(parts)
 
 
+def bare_windows(windows: dict) -> dict:
+    """`windows` stripped to the quota schema's usedPercent/resetsAt.
+
+    The local record also carries a `size` that the event line drops.
+    """
+    return {name: {"usedPercent": w["usedPercent"], "resetsAt": w["resetsAt"]} for name, w in windows.items()}
+
+
+def build_quota_event(payload: dict, windows: dict, now: float) -> dict:
+    """A `quota` line for the event stream."""
+    harness = payload.get("harness") or "claude"
+    record = {
+        "v": 2,
+        "harness": harness,
+        "sessionId": payload.get("session_id") or "",
+        "event": "quota",
+        "status": "running",
+        "t": int(now * 1000),
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
+        "quota": bare_windows(windows),
+    }
+    provider = PROVIDER_BY_HARNESS.get(harness)
+    if provider:
+        record["provider"] = provider
+    return record
+
+
+def append_event_line(record: dict) -> None:
+    """Append one line to the shared events stream, then trim it.
+
+    The trim threshold matches agent_hook.py's so the file rotates the same way.
+    """
+    line = json.dumps(record, separators=(",", ":")) + "\n"
+    with open(EVENTS, "a", encoding="utf-8") as fh:
+        fh.write(line)
+    if os.path.getsize(EVENTS) > EVENTS_MAX_BYTES:
+        with open(EVENTS, "r", encoding="utf-8") as fh:
+            lines = fh.readlines()[-EVENTS_KEEP_LINES:]
+        atomic_write(EVENTS, "".join(lines))
+
+
+def load_throttle() -> dict:
+    try:
+        with open(QUOTA_THROTTLE, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def should_emit_quota(state: dict, session_id: str, windows: dict, now: float) -> bool:
+    """The statusLine runs on every turn, but a `quota` line need not.
+
+    At most one per session per QUOTA_THROTTLE_SECONDS, unless windows changed.
+    """
+    prev = state.get(session_id)
+    if not isinstance(prev, dict):
+        return True
+    try:
+        elapsed = now - float(prev.get("t", 0))
+    except (TypeError, ValueError):
+        elapsed = QUOTA_THROTTLE_SECONDS + 1
+    if elapsed >= QUOTA_THROTTLE_SECONDS:
+        return True
+    return prev.get("windows") != windows
+
+
+def maybe_emit_quota_event(payload: dict, windows: dict, now: float) -> None:
+    """Append a `quota` line, throttled per session (see should_emit_quota).
+
+    A payload with no window writes nothing.
+    """
+    if not windows:
+        return
+    session_id = payload.get("session_id") or ""
+    state = load_throttle()
+    if not should_emit_quota(state, session_id, windows, now):
+        return
+
+    os.makedirs(STATE, exist_ok=True)
+    append_event_line(build_quota_event(payload, windows, now))
+
+    state[session_id] = {"t": now, "windows": windows}
+    atomic_write(QUOTA_THROTTLE, json.dumps(state, separators=(",", ":")))
+
+
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
@@ -152,7 +257,8 @@ def main() -> int:
     if not isinstance(payload, dict):
         return 0
 
-    record = build_record(payload, time.time())
+    now = time.time()
+    record = build_record(payload, now)
 
     try:
         os.makedirs(STATE, exist_ok=True)
@@ -163,6 +269,11 @@ def main() -> int:
         except (OSError, ValueError):
             pass
         atomic_write(QUOTA, json.dumps(merge(existing, record), separators=(",", ":")))
+    except OSError:
+        pass
+
+    try:
+        maybe_emit_quota_event(payload, collect_windows(payload), now)
     except OSError:
         pass
 
