@@ -57,8 +57,18 @@ PanelWindow {
         Keys.onEscapePressed: root.screenState.pkgInstall = false
     }
 
-    PkgInstallContent {
+    Loader {
         anchors.centerIn: parent
-        screenState: root.screenState
+        focus: true
+        active: root.showContent
+        sourceComponent: contentComp
+    }
+
+    Component {
+        id: contentComp
+
+        PkgInstallContent {
+            screenState: root.screenState
+        }
     }
 }
