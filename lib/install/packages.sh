@@ -113,6 +113,8 @@ _resolve_install_cmd() {
     if declare -F _snapshot_install_active >/dev/null \
         && _snapshot_package_is_official "$pkg"; then
       PKG_INSTALL_CMD=(_snapshot_install_active)
+    elif [[ -n "${AUR_HELPER:-}" ]] && declare -F _snapshot_aur_install >/dev/null; then
+      PKG_INSTALL_CMD=(_snapshot_aur_install)
     else
       PKG_INSTALL_CMD=(_snapshot_unavailable_package)
     fi
@@ -233,7 +235,7 @@ install_software() {
   # generic "submit an issue" line sends the user down the wrong path.
   local why=""
   if [[ -n "${APHOTIC_ACTIVE_SNAPSHOT_DATE:-}" ]] && ((official_repo == 0)); then
-    why="$pkg is not in the ${APHOTIC_ACTIVE_SNAPSHOT_DATE} official repository snapshot, so the installer cannot install it from the archive."
+    why="$pkg is not in the ${APHOTIC_ACTIVE_SNAPSHOT_DATE} official repository snapshot, and did not build against it."
   elif [[ -z "${AUR_HELPER:-}" ]] && ! _pkg_in_repos "$pkg"; then
     why="$pkg isn't in any configured repo and no AUR helper (yay/paru) is on PATH, so nothing could build it."
   fi
