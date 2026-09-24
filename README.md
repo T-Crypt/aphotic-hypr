@@ -405,6 +405,8 @@ Run the installer:
 ./install.sh
 ```
 
+Want the development branch? Add `--channel edge`.
+
 > [!TIP]
 > Prefer to skip the prompts entirely:
 > ```
