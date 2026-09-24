@@ -91,8 +91,42 @@ Singleton {
         if (!event || !event.sessionId || !event.event)
             return;
 
+        event = root.normalize(event);
+
         root._sessions = root.applyTo(root._sessions, event);
         root.record(event);
+    }
+
+    // Maps a v2 record onto the v1 names the fold and every reader use,
+    // so v1 and v2 lines can share one tail. v1 records pass through.
+    function normalize(record: var): var {
+        if (!record || record.v !== 2)
+            return record;
+
+        const out = Object.assign({}, record);
+        out.timestamp = record.ts || (record.t ? new Date(record.t).toISOString() : "");
+
+        if (record.event === "session_start" || record.event === "session_end") {
+            // unchanged
+        } else if (record.status === "compacting") {
+            out.event = "pre_compact";
+        } else if (record.event === "tool_call") {
+            if (record.toolStatus === "running")
+                out.event = "pre_tool_use";
+            else if (record.toolStatus === "completed")
+                out.event = "post_tool_use";
+            else if (record.toolStatus === "errored")
+                out.event = "post_tool_use_failure";
+        } else if (record.event === "turn") {
+            if (record.status === "running")
+                out.event = "user_prompt_submit";
+            else if (record.status === "waiting")
+                out.event = "notification";
+            else if (record.status === "idle")
+                out.event = record.agentId ? "subagent_stop" : "stop";
+        }
+
+        return out;
     }
 
     // Pure, and exported for the same reason AgentGraphService's fold is:
@@ -130,6 +164,8 @@ Singleton {
             session.status = "ended";
             session.endedAt = event.t ?? 0;
             session.subagents = [];
+        } else if (event.event === "usage" || event.event === "quota" || event.event === "error") {
+            // No lifecycle meaning; the default branch would mark the session idle.
         } else {
             session.endedAt = 0;
             if (event.event === "notification")
