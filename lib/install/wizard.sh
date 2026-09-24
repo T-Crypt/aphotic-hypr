@@ -310,6 +310,10 @@ resolve_config() {
     PROFILE="full"
     LAYERS=""
     [[ -z "$THEME" ]] && THEME="tokyonight"
+    # Nobody is at a terminal to answer the config prompt, and its default
+    # is "no", which leaves bare Hyprland. The daily-driver default means
+    # the whole desktop.
+    [[ -z "$COPY_CONFIGS" && ! -t 0 ]] && COPY_CONFIGS=1
     # Return here, not just fall through -- LAYERS="" is this branch's real
     # answer (no optional layers), and the -z checks below can't tell that
     # apart from "not resolved yet," which would otherwise re-trigger
