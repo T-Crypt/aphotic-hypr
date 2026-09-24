@@ -184,6 +184,7 @@ ColumnLayout {
                 width: tileHost.width
                 y: (1 - tileHost.enterT) * Tokens.spacing.medium
                 asynchronous: true
+                active: root.shownTileId === pluginTileLoader.modelData.id
                 visible: root.shownTileId === pluginTileLoader.modelData.id
                 source: pluginTileLoader.modelData.componentUrl
             }
