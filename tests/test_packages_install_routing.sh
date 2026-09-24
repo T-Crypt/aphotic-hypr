@@ -71,7 +71,9 @@ export PATH="$FAKE_BIN:$PATH_BACKUP"
 : > "$WORKDIR/installed"
 : > "$WORKDIR/calls"
 
-# shellcheck source=/dev/null
+# shellcheck source=lib/install/report.sh
+source "$ROOT/lib/install/report.sh"
+# shellcheck source=lib/install/packages.sh
 source "$ROOT/lib/install/packages.sh"
 set +e
 
