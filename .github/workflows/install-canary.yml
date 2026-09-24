@@ -21,6 +21,22 @@ defaults:
     shell: bash
 
 jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      run: ${{ steps.release.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve newest release
+        id: release
+        run: bash tools/canary/resolve_release_tag.sh >> "$GITHUB_OUTPUT"
+
   installer:
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -162,6 +178,47 @@ jobs:
           fi
 
       - name: Fail broken canary
+        if: always() && steps.canary.outcome == 'failure'
+        run: exit 1
+
+  release-canary:
+    needs: release
+    if: needs.release.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container: archlinux:latest
+    permissions:
+      contents: read
+    steps:
+      - name: Prepare Arch
+        run: |
+          set -euo pipefail
+          printf '\n[multilib]\nInclude = /etc/pacman.d/mirrorlist\n' >> /etc/pacman.conf
+          pacman -Syu --needed --noconfirm base-devel git sudo
+          useradd --create-home canary
+          echo 'canary ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/canary
+          chmod 0440 /etc/sudoers.d/canary
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - name: Run release install canary
+        id: canary
+        continue-on-error: true
+        env:
+          CANARY_BUILD_USER: canary
+        run: bash tools/canary/run_canary.sh
+
+      - name: Upload release canary results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-canary-${{ needs.release.outputs.tag }}
+          path: canary-out/
+          if-no-files-found: error
+
+      - name: Fail broken release canary
         if: always() && steps.canary.outcome == 'failure'
         run: exit 1
 
