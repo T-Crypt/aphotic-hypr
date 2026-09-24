@@ -177,7 +177,7 @@ Singleton {
 
     Process {
         id: ledListProc
-        command: ["sh", "-c", "for f in /sys/class/leds/*::capslock/brightness /sys/class/leds/*::numlock/brightness; do [ -r \"$f\" ] && echo \"$f\"; done; true"]
+        command: ["sh", "-c", "for f in /sys/class/leds/*::capslock/brightness /sys/class/leds/*::numlock/brightness; do [ -r \"$f\" ] && echo \"$f\"; done"]
         stdout: StdioCollector {
             onStreamFinished: root._ledPaths = text.split("\n").filter(l => l.length > 0)
         }
