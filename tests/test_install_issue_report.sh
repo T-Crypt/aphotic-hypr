@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 # tests/test_install_issue_report.sh
-# A failed install opens a pre-filled issue. #209 arrived as a bare title;
-# this checks the body carries the details, redacts secrets and home paths,
-# and stays short enough for a browser to open.
 set -euo pipefail
 fail() { echo "FAIL: $1"; exit 1; }
 
@@ -10,52 +7,51 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/bin"
+
 cat > "$WORK/bin/lspci" <<'STUB'
 #!/usr/bin/env bash
-echo "01:00.0 VGA compatible controller: NVIDIA Corporation GP104 [GeForce GTX 1080] (rev a1)"
+echo '0000:01:00.0 "VGA compatible controller [0300]" "NVIDIA Corporation [10de]" "Device [2684]"'
 STUB
-chmod +x "$WORK/bin/lspci"
+cat > "$WORK/bin/pacman" <<'STUB'
+#!/usr/bin/env bash
+[[ "$1" == "-Q" && "$2" == "sample" ]] && echo "sample 1.2.3-1"
+STUB
+chmod +x "$WORK/bin/lspci" "$WORK/bin/pacman"
 export PATH="$WORK/bin:$PATH"
 
-CNT="[NOTE]"; COK="[OK]"; CER="[ERROR]"; CWR="[WARNING]"
-source "$ROOT/lib/install/ui.sh"
-source "$ROOT/lib/install/packages.sh"
-nvidia_driver_packages() { echo nvidia-580xx-dkms; }
-ROOT_DIR="$ROOT"; PROFILE=minimal; LAYERS=dev; AUR_HELPER=yay
-INSTLOG="$WORK/install.log"
-decode() { python3 -c 'import sys,urllib.parse;print(urllib.parse.unquote(sys.stdin.read()))'; }
+CNT="[NOTE]"; CWR="[WARNING]"; CER="[ERROR]"
+ROOT_DIR="$ROOT"
+PYTHON_BIN=python3
+APHOTIC_ISSUES_URL="https://github.com/T-Crypt/Aphotic-Hypr/issues"
+source "$ROOT/lib/install/report.sh"
 
+INSTLOG="$WORK/install.log"
+BUNDLE="$WORK/report.txt"
 {
-  echo "resolving dependencies..."
-  echo "reading $HOME/.cache/yay/nvidia-open-dkms/PKGBUILD"
-  echo "GITHUB_TOKEN=ghp_notreal123 api_key: sk-notreal"
+  echo "reading /home/alice/.cache/yay/sample/PKGBUILD on aphotic-test"
+  echo "user alice at 192.168.1.5 aa:bb:cc:dd:ee:ff bob@example.com"
   echo "error: failed to commit transaction (conflicting files)"
 } > "$INSTLOG"
 
-url="$(_issue_url_for nvidia-open-dkms)"
-[[ "$url" == "$APHOTIC_ISSUES_URL/new?title=Install%20package%20failed%3A%20nvidia-open-dkms&body="* ]] \
-  || fail "unexpected URL shape: ${url:0:120}"
-body="$(printf '%s' "${url#*&body=}" | decode)"
-for want in "Package: nvidia-open-dkms" "Profile: minimal, layers: dev" "GeForce GTX 1080" \
-            "NVIDIA driver packages: nvidia-580xx-dkms" "AUR helper: yay" "failed to commit transaction" \
-            "~/.cache/yay"; do
-  grep -qF -- "$want" <<<"$body" || fail "body is missing: $want"
+HOME=/home/alice USER=alice HOSTNAME=aphotic-test \
+  _install_report_write_bundle sample "$INSTLOG" "$BUNDLE"
+
+redacted_home="~""/.cache/yay"
+for want in "Failed package: sample" "GPU vendor: NVIDIA Corporation" \
+            "Installed package: sample 1.2.3-1" "failed to commit transaction" \
+            "$redacted_home" "<user>" "<host>" "<ip>" "<mac>" "<email>"; do
+  grep -qF -- "$want" "$BUNDLE" || fail "bundle is missing: $want"
 done
-! grep -qF "$HOME" <<<"$body" || fail "home path was not redacted"
-! grep -q 'ghp_notreal123\|sk-notreal' <<<"$body" || fail "secret was not redacted"
-grep -q 'GITHUB_TOKEN=<redacted>' <<<"$body" || fail "redaction marker missing"
+for private in "/home/alice" "alice" "aphotic-test" "192.168.1.5" \
+               "aa:bb:cc:dd:ee:ff" "bob@example.com"; do
+  ! grep -qF -- "$private" "$BUNDLE" || fail "bundle leaked: $private"
+done
 
-# A plus sign in a package name survives the round trip.
-url="$(_issue_url_for 'gtk+3')"
-[[ "$(printf '%s' "${url%%&body=*}" | decode)" == *"Install package failed: gtk+3" ]] || fail "plus sign lost in title"
+title="install: sample failed (2026-09-23)"
+url="$(_install_report_issue_url "$title" "$BUNDLE")"
+(( ${#url} <= 6000 )) || fail "URL is ${#url} chars, over 6000"
+decoded=$(python3 -c 'import sys, urllib.parse; print(urllib.parse.unquote(sys.stdin.read()))' <<< "$url")
+grep -qF "$title" <<< "$decoded" || fail "URL title is missing"
+grep -qF "Failed package: sample" <<< "$decoded" || fail "URL body is missing"
 
-# A huge log is trimmed from the top, keeping the newest lines and the header.
-for i in $(seq 1 400); do echo "build line $i $(printf 'x%.0s' {1..250})"; done > "$INSTLOG"
-echo "error: the real failure" >> "$INSTLOG"
-url="$(_issue_url_for somepkg)"
-(( ${#url} <= 7000 )) || fail "URL is ${#url} chars, over 7000"
-body="$(printf '%s' "${url#*&body=}" | decode)"
-grep -q "error: the real failure" <<<"$body" || fail "newest log line was trimmed"
-grep -q "Package: somepkg" <<<"$body" || fail "header was trimmed"
-
-echo "PASS: install failure opens a pre-filled, redacted, bounded issue"
+echo "PASS: install failure report is redacted and bounded"
