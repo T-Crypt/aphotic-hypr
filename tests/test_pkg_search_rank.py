@@ -18,7 +18,7 @@ const fs = require("fs");
 const vm = require("vm");
 const context = {{}};
 vm.createContext(context);
-vm.runInContext(fs.readFileSync({json.dumps(str(RANKER))}, "utf8"), context);
+vm.runInContext(fs.readFileSync({json.dumps(str(RANKER))}, "utf8").replace(/^\.pragma library\s*/, ""), context);
 
 function parse(output) {{
     const lines = output.split("\\n");
