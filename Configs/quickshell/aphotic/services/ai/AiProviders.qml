@@ -290,13 +290,53 @@ Singleton {
         ollamaStopProc.exec(["sh", "-c", "pkill -x ollama"]);
     }
 
+    // One-shot JSON GET with no subprocess, for the periodic backend polls
+    // below. Hands the caller the response text on HTTP 200, "" otherwise
+    // (connection failure, timeout, non-200), which callers treat the same
+    // way the curl-based Process handlers treated a failed poll.
+    function _getJson(url: string, timeoutMs: int, onDone: var): void {
+        const xhr = new XMLHttpRequest();
+        xhr.timeout = timeoutMs;
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState !== XMLHttpRequest.DONE)
+                return;
+            onDone(xhr.status === 200 ? xhr.responseText : "");
+        };
+        xhr.open("GET", url);
+        xhr.send();
+    }
+
     function refreshRunningModels(): void {
         if (!AiConfig.ollamaHostConfigured) {
             root.ollamaRunningModels = [];
             return;
         }
-        ollamaPsProc.command = ["curl", "-s", "-m", "5", `${AiConfig.ollamaHost}/api/ps`];
-        ollamaPsProc.running = true;
+        if (root._ollamaPsInFlight)
+            return;
+        root._ollamaPsInFlight = true;
+        root._getJson(`${AiConfig.ollamaHost}/api/ps`, 5000, text => {
+            root._ollamaPsInFlight = false;
+            // Unlike ollamaModels (kept stale on purpose above), a resident-in-
+            // VRAM list read from a host that answered nothing is definitionally
+            // wrong -- nothing is loaded if the server is gone. Clearing on a
+            // failed request is what lets OllamaClaims' claims drop when Ollama
+            // stops, instead of the claim table carrying a model that no longer
+            // exists.
+            if (text.length === 0) {
+                root.ollamaReachable = false;
+                root.ollamaRunningModels = [];
+                return;
+            }
+            root.ollamaReachable = true;
+            try {
+                const data = JSON.parse(text);
+                root.ollamaRunningModels = BackendModels.ollamaRunningModels(data, root._ollamaCapabilities);
+                root._queueOllamaCapabilities(data.models ?? []);
+            } catch (e) {
+                // Host unreachable or unexpected response -- leave
+                // ollamaRunningModels as-is.
+            }
+        });
     }
 
     function _resetOllamaCapabilities(): void {
@@ -347,6 +387,10 @@ Singleton {
 
     property var lmStudioRunningModels: []
     property bool lmStudioReachable: false
+    // Guard against a second poll overlapping one still in flight.
+    property bool _lmStudioInFlight: false
+    property bool _ollamaPsInFlight: false
+    property bool _llamaSwapRunningInFlight: false
 
     function refreshLlamaSwapRunning(): void {
         if (!AiConfig.llamaSwapHostConfigured) {
@@ -354,8 +398,35 @@ Singleton {
             root.llamaSwapReachable = false;
             return;
         }
-        llamaSwapRunningProc.command = ["curl", "-s", "-m", "5", `${AiConfig.llamaSwapHost}/running`];
-        llamaSwapRunningProc.running = true;
+        if (root._llamaSwapRunningInFlight)
+            return;
+        root._llamaSwapRunningInFlight = true;
+        root._getJson(`${AiConfig.llamaSwapHost}/running`, 5000, text => {
+            root._llamaSwapRunningInFlight = false;
+            // Cleared on a failed request for the same reason as the Ollama
+            // /api/ps poll above: a server that stopped answering has nothing
+            // loaded. `proxy` carries the port llama-swap started that model's
+            // llama-server on, which is how LlamaSwapClaims finds its PID.
+            if (text.length === 0) {
+                root.llamaSwapReachable = false;
+                root.llamaSwapRunningModels = [];
+                return;
+            }
+            root.llamaSwapReachable = true;
+            try {
+                const data = JSON.parse(text);
+                root.llamaSwapRunningModels = (data.running ?? []).filter(m => m?.model).map(m => ({
+                    name: m.model,
+                    state: m.state ?? "",
+                    // Read from the launch command, not the name, so any
+                    // model a user configures is classified the same way.
+                    embedding: /(^|\s)--(embeddings?|reranking)(\s|$)/.test(m.cmd ?? ""),
+                    port: parseInt((m.proxy ?? "").split(":").pop(), 10) || 0
+                }));
+            } catch (e) {
+                // Unexpected response -- keep the last list.
+            }
+        });
     }
 
     function refreshLmStudioRunning(): void {
@@ -364,11 +435,24 @@ Singleton {
             root.lmStudioReachable = false;
             return;
         }
-        if (lmStudioModelsProc.running)
+        if (root._lmStudioInFlight)
             return;
-        lmStudioModelsProc.requestHost = AiConfig.lmStudioHost;
-        lmStudioModelsProc.command = ["curl", "-s", "-m", "5", `${AiConfig.lmStudioHost}/api/v0/models`];
-        lmStudioModelsProc.running = true;
+        root._lmStudioInFlight = true;
+        const requestHost = AiConfig.lmStudioHost;
+        root._getJson(`${requestHost}/api/v0/models`, 5000, text => {
+            root._lmStudioInFlight = false;
+            // A reply that belongs to a host the user has already left is
+            // dropped, exactly as the old Process's requestHost check did.
+            if (requestHost !== AiConfig.lmStudioHost)
+                return;
+            try {
+                root.lmStudioRunningModels = BackendModels.lmStudioModels(JSON.parse(text));
+                root.lmStudioReachable = true;
+            } catch (e) {
+                root.lmStudioReachable = false;
+                root.lmStudioRunningModels = [];
+            }
+        });
     }
 
     function deleteModel(name: string): void {
@@ -477,35 +561,6 @@ Singleton {
         onRunningChanged: if (running) attempts = 0
     }
 
-    // GET /api/ps -- currently-loaded (in-VRAM) models, separate from the
-    // full installed-models list above.
-    Process {
-        id: ollamaPsProc
-        // Unlike ollamaModels (kept stale on purpose above), a resident-in-
-        // VRAM list read from a host that answered nothing is definitionally
-        // wrong -- nothing is loaded if the server is gone. Clearing on a
-        // hard curl failure is what lets OllamaClaims' claims drop when
-        // Ollama stops, instead of the claim table carrying a model that
-        // no longer exists.
-        onExited: exitCode => {
-            root.ollamaReachable = exitCode === 0;
-            if (exitCode !== 0)
-                root.ollamaRunningModels = [];
-        }
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const data = JSON.parse(text);
-                    root.ollamaRunningModels = BackendModels.ollamaRunningModels(data, root._ollamaCapabilities);
-                    root._queueOllamaCapabilities(data.models ?? []);
-                } catch (e) {
-                    // Host unreachable or unexpected response -- leave
-                    // ollamaRunningModels as-is.
-                }
-            }
-        }
-    }
-
     Process {
         id: ollamaShowProc
 
@@ -523,66 +578,6 @@ Singleton {
             }
         }
         onExited: Qt.callLater(root._startOllamaCapabilityQuery)
-    }
-
-    // Cleared on a failed request for the same reason as ollamaPsProc: a
-    // server that stopped answering has nothing loaded. `proxy` carries the
-    // port llama-swap started that model's llama-server on, which is how
-    // LlamaSwapClaims finds its PID.
-    //
-    // Polled rather than streamed: /api/events does push model state
-    // changes, but the same stream carries every upstream log line, which
-    // is far more text than this list during a load.
-    Process {
-        id: llamaSwapRunningProc
-        onExited: exitCode => {
-            root.llamaSwapReachable = exitCode === 0;
-            if (exitCode !== 0)
-                root.llamaSwapRunningModels = [];
-        }
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const data = JSON.parse(text);
-                    root.llamaSwapRunningModels = (data.running ?? []).filter(m => m?.model).map(m => ({
-                        name: m.model,
-                        state: m.state ?? "",
-                        // Read from the launch command, not the name, so any
-                        // model a user configures is classified the same way.
-                        embedding: /(^|\s)--(embeddings?|reranking)(\s|$)/.test(m.cmd ?? ""),
-                        port: parseInt((m.proxy ?? "").split(":").pop(), 10) || 0
-                    }));
-                } catch (e) {
-                    // Unexpected response -- keep the last list.
-                }
-            }
-        }
-    }
-
-    Process {
-        id: lmStudioModelsProc
-        property string requestHost: ""
-        onExited: exitCode => {
-            if (lmStudioModelsProc.requestHost !== AiConfig.lmStudioHost)
-                return;
-            if (exitCode !== 0) {
-                root.lmStudioReachable = false;
-                root.lmStudioRunningModels = [];
-            }
-        }
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (lmStudioModelsProc.requestHost !== AiConfig.lmStudioHost)
-                    return;
-                try {
-                    root.lmStudioRunningModels = BackendModels.lmStudioModels(JSON.parse(text));
-                    root.lmStudioReachable = true;
-                } catch (e) {
-                    root.lmStudioReachable = false;
-                    root.lmStudioRunningModels = [];
-                }
-            }
-        }
     }
 
     // DELETE /api/delete takes no response body worth parsing -- just
@@ -608,7 +603,7 @@ Singleton {
     // reality when nothing is on screen. Ollama publishes no model
     // load/unload event, so polling /api/ps is the only source there is.
     // Backs off to 30s while the host isn't answering so a machine with no
-    // Ollama running isn't paying for a curl every five seconds, and holds
+    // Ollama running isn't paying for a poll every five seconds, and holds
     // off entirely mid-start/stop so it can't fight those retry timers over
     // ollamaReachable.
     Timer {
