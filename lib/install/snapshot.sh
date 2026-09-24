@@ -140,6 +140,21 @@ _snapshot_install_packages() {
   printf '%b\n' "${COK:-[OK]} - System packages now use the $snapshot_date snapshot."
 }
 
+# AUR packages are not in the archive, but they still build: the helper
+# resolves their repo dependencies against the same snapshot config, so
+# nothing mixes snapshot and current versions.
+_snapshot_aur_install() {
+  local package="$1" config_file rc=0
+  config_file=$(mktemp "${TMPDIR:-/tmp}/aphotic-pacman.XXXXXX.conf") || return 1
+  if ! _snapshot_write_pacman_config "${APHOTIC_PACMAN_CONF:-/etc/pacman.conf}" "$config_file" "${APHOTIC_ACTIVE_SNAPSHOT_DATE:-}"; then
+    rm -f "$config_file"
+    return 1
+  fi
+  "$AUR_HELPER" --config "$config_file" -S --noconfirm --removemake "$package" || rc=$?
+  rm -f "$config_file"
+  return "$rc"
+}
+
 snapshot_install() {
   local package="$1" snapshot_date="$2"
   _snapshot_install_packages "$snapshot_date" "$package"

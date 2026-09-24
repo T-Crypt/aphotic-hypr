@@ -209,7 +209,7 @@ def test_forced_repo_failure_recovers_through_snapshot(tmp_path: Path):
     assert "normal " not in calls.read_text()
     assert calls.read_text().count("snapshot ") == 2
     assert "snapshot guard=1" in calls.read_text()
-    assert "cannot install it from the archive" in result.stdout
+    assert "did not build against it" in result.stdout
     state = (home / ".local/state/aphotic/snapshot").read_text()
     assert "snapshot=2026-09-21" in state
     assert "snapshot_packages=sample second" in state
