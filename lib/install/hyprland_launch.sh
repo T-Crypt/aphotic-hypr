@@ -3,6 +3,10 @@
 set -euo pipefail
 
 offer_start_hyprland() {
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "$CNT - Container mode: skipping the login-screen launch."
+    return 0
+  fi
   # A graphical session already running (Omarchy's sddm autologin, or
   # install.sh run from a terminal inside an existing session) has no login
   # screen to offer -- the shell was already restarted into it above.

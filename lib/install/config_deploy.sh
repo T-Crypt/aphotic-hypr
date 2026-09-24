@@ -242,46 +242,50 @@ deploy_user_configs() {
   build_shell_shaders
   build_wallpaper_thumbs
 
-  echo -e "$CNT - Enabling the Aphotic shell restart-supervision unit..."
-  mkdir -p "$HOME/.config/systemd/user"
-  # Same symlink treatment as above -- these three unit files are only
-  # ever added to or edited in the repo, never hand-written per machine,
-  # so there's no user-owned-copy case to preserve the way custom.lua
-  # has one. Concretely bit already: aphotic-agent-usage.service/.timer
-  # postdated this machine's last cp -R and were never installed at all
-  # (`systemctl --user is-enabled` reported "not-found"), so the Live
-  # Agent Activity Module silently never ran.
-  for unit in "$ROOT_DIR/Configs/systemd/user/"*; do
-    ln -sfn "$unit" "$HOME/.config/systemd/user/$(basename "$unit")"
-  done
-  systemctl --user daemon-reload &>> "$INSTLOG"
-  systemctl --user enable aphotic-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
-  # A --config-only run on a clone that has never been installed has no saved
-  # layer list, and "no layers" must not be read as "the user turned ai off" --
-  # that would strip hooks and disable a timer nobody asked to remove.
-  if [[ "$CONFIG_ONLY" == "1" && "$LAYERS_KNOWN" != "1" ]]; then
-    echo -e "$CWR - No aphotic.toml found; leaving the agent usage timer exactly as it is."
-  elif layer_selected "ai"; then
-    echo -e "$CNT - Enabling the agent usage-tracking timer..."
-    systemctl --user enable --now aphotic-agent-usage.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-agent-usage.timer; the bar's agent popout will show stale/no usage data until it's enabled manually."
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "$CNT - Container mode: skipping user service setup."
   else
-    echo -e "$CNT - AI layer not selected; leaving the agent usage-tracking timer off."
-    systemctl --user disable --now aphotic-agent-usage.timer &>> "$INSTLOG" || true
-  fi
-  echo -e "$CNT - Enabling the SDDM background sync timer..."
-  systemctl --user enable --now aphotic-sddm-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-sddm-sync.timer; the SDDM login background will only update via the per-theme-change best-effort call, not this periodic catch-up. Enable manually with 'systemctl --user enable --now aphotic-sddm-sync.timer'."
+    echo -e "$CNT - Enabling the Aphotic shell restart-supervision unit..."
+    mkdir -p "$HOME/.config/systemd/user"
+    # Same symlink treatment as above -- these three unit files are only
+    # ever added to or edited in the repo, never hand-written per machine,
+    # so there's no user-owned-copy case to preserve the way custom.lua
+    # has one. Concretely bit already: aphotic-agent-usage.service/.timer
+    # postdated this machine's last cp -R and were never installed at all
+    # (`systemctl --user is-enabled` reported "not-found"), so the Live
+    # Agent Activity Module silently never ran.
+    for unit in "$ROOT_DIR/Configs/systemd/user/"*; do
+      ln -sfn "$unit" "$HOME/.config/systemd/user/$(basename "$unit")"
+    done
+    systemctl --user daemon-reload &>> "$INSTLOG"
+    systemctl --user enable aphotic-shell.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-shell.service; the shell will still start via Hyprland's exec-once but won't auto-restart on crash."
+    # A --config-only run on a clone that has never been installed has no saved
+    # layer list, and "no layers" must not be read as "the user turned ai off" --
+    # that would strip hooks and disable a timer nobody asked to remove.
+    if [[ "$CONFIG_ONLY" == "1" && "$LAYERS_KNOWN" != "1" ]]; then
+      echo -e "$CWR - No aphotic.toml found; leaving the agent usage timer exactly as it is."
+    elif layer_selected "ai"; then
+      echo -e "$CNT - Enabling the agent usage-tracking timer..."
+      systemctl --user enable --now aphotic-agent-usage.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-agent-usage.timer; the bar's agent popout will show stale/no usage data until it's enabled manually."
+    else
+      echo -e "$CNT - AI layer not selected; leaving the agent usage-tracking timer off."
+      systemctl --user disable --now aphotic-agent-usage.timer &>> "$INSTLOG" || true
+    fi
+    echo -e "$CNT - Enabling the SDDM background sync timer..."
+    systemctl --user enable --now aphotic-sddm-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-sddm-sync.timer; the SDDM login background will only update via the per-theme-change best-effort call, not this periodic catch-up. Enable manually with 'systemctl --user enable --now aphotic-sddm-sync.timer'."
 
-  # Only relevant once the greetd preview scaffold has actually been
-  # deployed (install.sh's --with-greetd-preview, setup_greetd_greeter) --
-  # otherwise this would just run a no-op warning every 5 minutes forever.
-  # Checks GREETD_PREVIEW too, not just the directory, because this runs
-  # *before* setup_greetd_greeter() on a fresh --with-greetd-preview
-  # install -- the directory itself doesn't exist yet on that first pass.
-  if [[ -d /etc/aphotic/greeter || "${GREETD_PREVIEW:-0}" == "1" ]]; then
-    echo -e "$CNT - Enabling the greetd greeter sync timer..."
-    systemctl --user enable --now aphotic-greeter-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-greeter-sync.timer; enable manually with 'systemctl --user enable --now aphotic-greeter-sync.timer'."
-  else
-    systemctl --user disable --now aphotic-greeter-sync.timer &>> "$INSTLOG" || true
+    # Only relevant once the greetd preview scaffold has actually been
+    # deployed (install.sh's --with-greetd-preview, setup_greetd_greeter) --
+    # otherwise this would just run a no-op warning every 5 minutes forever.
+    # Checks GREETD_PREVIEW too, not just the directory, because this runs
+    # *before* setup_greetd_greeter() on a fresh --with-greetd-preview
+    # install -- the directory itself doesn't exist yet on that first pass.
+    if [[ -d /etc/aphotic/greeter || "${GREETD_PREVIEW:-0}" == "1" ]]; then
+      echo -e "$CNT - Enabling the greetd greeter sync timer..."
+      systemctl --user enable --now aphotic-greeter-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-greeter-sync.timer; enable manually with 'systemctl --user enable --now aphotic-greeter-sync.timer'."
+    else
+      systemctl --user disable --now aphotic-greeter-sync.timer &>> "$INSTLOG" || true
+    fi
   fi
   # install.sh installs NO plugins, deliberately (docs/PLUGIN_LAYER_MODEL.md):
   # a layer puts the tooling on the machine and unlocks *discovery* of that
@@ -332,6 +336,10 @@ deploy_user_configs() {
 # out of deploy_user_configs() (used as-is by --config-only, which must
 # never ask for a password).
 setup_login_manager_theme() {
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "$CNT - Container mode: skipping login-manager setup."
+    return 0
+  fi
   echo -e "$CNT - Setting up the login screen..."
   sudo tar -xf "$ROOT_DIR/src/sugar-candy.tar.gz" -C /usr/share/sddm/themes/
   sudo chown -R "$USER:$USER" /usr/share/sddm/themes/sugar-candy
@@ -353,6 +361,10 @@ setup_login_manager_theme() {
 # commands/cmd_displaymanager.sh) -- this function only makes that switch
 # possible to validate, per docs/archive/BACKLOG.md's DM-02 entry.
 setup_greetd_greeter() {
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "$CNT - Container mode: skipping greeter setup."
+    return 0
+  fi
   echo -e "$CNT - Deploying the greetd greeter preview (inert -- sddm stays active)..."
 
   sudo mkdir -p /etc/xdg/quickshell/aphotic-greeter
@@ -446,6 +458,10 @@ kill_omarchy_shell_if_running() {
 # for a session that's already up, so if aphotic-shell.service's exec-once
 # start never happened, nothing else will trigger it without this.
 restart_shell_if_enabled() {
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "$CNT - Container mode: skipping the user-service shell restart."
+    return 0
+  fi
   [[ "${DETECTED_OMARCHY:-0}" == "1" ]] && kill_omarchy_shell_if_running
   if systemctl --user is-enabled aphotic-shell.service &>/dev/null; then
     kill_orphan_qs_processes
@@ -466,6 +482,10 @@ start_awww_daemon_if_needed() {
 }
 
 initialize_graphical_session() {
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "$CNT - Container mode: skipping graphical-session initialization."
+    return 0
+  fi
   systemctl --user is-active --quiet graphical-session.target || return 0
   echo -e "$CNT - A graphical session is already running -- initializing the wallpaper and shell now."
   start_awww_daemon_if_needed

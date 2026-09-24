@@ -93,11 +93,15 @@ PYEOF
 detect_environment() {
   echo -e "$CNT - Checking what's already on this machine..."
 
-  local vm_chassis
-  vm_chassis=$(hostnamectl | grep Chassis || true)
-  if [[ "$vm_chassis" == *"vm"* ]]; then
-    DETECTED_VM=1
-    echo -e "  $CWR running in a VM ($vm_chassis) -- fine for testing the install, which is exercised in a VM before it ships. It is not a supported daily driver: GPU layers do not apply, and Hyprland needs a render node, so give the guest a VirtIO-GPU display. See https://github.com/T-Crypt/Aphotic-Hypr/wiki/Proxmox-Test-VM"
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "  $CNT container mode: skipping the systemd chassis lookup"
+  else
+    local vm_chassis
+    vm_chassis=$(hostnamectl | grep Chassis || true)
+    if [[ "$vm_chassis" == *"vm"* ]]; then
+      DETECTED_VM=1
+      echo -e "  $CWR running in a VM ($vm_chassis) -- fine for testing the install, which is exercised in a VM before it ships. It is not a supported daily driver: GPU layers do not apply, and Hyprland needs a render node, so give the guest a VirtIO-GPU display. See https://github.com/T-Crypt/Aphotic-Hypr/wiki/Proxmox-Test-VM"
+    fi
   fi
 
   if [[ -f "$APHOTIC_TOML" ]]; then

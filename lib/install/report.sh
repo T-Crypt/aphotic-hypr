@@ -233,7 +233,9 @@ install_offer_report() {
   fi
   issue_url=$(_install_report_issue_url "$title" "$bundle")
   printf 'Open this prefilled issue and review it before submitting:\n%s\n' "$issue_url"
-  if [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] && command -v xdg-open >/dev/null 2>&1; then
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    printf '%b\n' "${CNT:-[NOTE]} - Container mode: skipping the browser launch."
+  elif [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] && command -v xdg-open >/dev/null 2>&1; then
     xdg-open "$issue_url" >/dev/null 2>&1 || true
   fi
   rm -f "$bundle"

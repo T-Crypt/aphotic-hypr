@@ -278,7 +278,9 @@ main() {
   # nothing pointing back at why -- so this checks and fails fast
   # instead, for both a full install and --config-only (config-only
   # still restarts aphotic-shell.service via systemctl --user).
-  if [[ ! -d /run/systemd/system ]]; then
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "$CNT - Container mode: skipping the systemd preflight."
+  elif [[ ! -d /run/systemd/system ]]; then
     echo -e "$CER - systemd isn't running as PID 1 (no /run/systemd/system) -- Aphotic isn't supported on a non-systemd base. Nothing has been changed."
     exit 1
   fi

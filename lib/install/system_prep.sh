@@ -20,10 +20,14 @@ enable_core_services() {
     echo -e "$CNT - [dry-run] would enable bluetooth.service and sddm, and remove xdg-desktop-portal-gnome/-gtk"
     return 0
   fi
-  echo -e "$CNT - Enabling bluetooth service..."
-  sudo systemctl enable --now bluetooth.service &>> "$INSTLOG"
-  echo -e "$CNT - Enabling display manager (sddm)..."
-  sudo systemctl enable sddm &>> "$INSTLOG"
+  if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+    echo -e "$CNT - Container mode: skipping Bluetooth and display-manager service setup."
+  else
+    echo -e "$CNT - Enabling bluetooth service..."
+    sudo systemctl enable --now bluetooth.service &>> "$INSTLOG"
+    echo -e "$CNT - Enabling display manager (sddm)..."
+    sudo systemctl enable sddm &>> "$INSTLOG"
+  fi
   # pacman, not "$AUR_HELPER": a removal never needs an AUR helper, and an
   # empty one (failed yay bootstrap) would just run as the empty command.
   # Only name portals that are actually installed -- pacman -R aborts the
