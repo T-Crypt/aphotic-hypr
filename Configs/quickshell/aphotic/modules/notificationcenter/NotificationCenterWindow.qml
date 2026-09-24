@@ -57,10 +57,22 @@ PanelWindow {
         Keys.onEscapePressed: root.screenState.notificationCenter = false
     }
 
-    NotificationCenterContent {
+    Loader {
+        id: contentLoader
+
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
-        screenState: root.screenState
+        width: contentLoader.implicitWidth
+        active: root.showContent
+        sourceComponent: contentComp
+    }
+
+    Component {
+        id: contentComp
+
+        NotificationCenterContent {
+            screenState: root.screenState
+        }
     }
 }
