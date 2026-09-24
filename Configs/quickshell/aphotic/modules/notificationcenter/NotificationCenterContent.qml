@@ -13,7 +13,12 @@ Item {
 
     required property ScreenState screenState
 
-    readonly property bool open: root.screenState.notificationCenter
+    // Created on open by a Loader: start closed for one tick so the
+    // Behaviors below play the slide-in.
+    property bool ready: false
+    readonly property bool open: root.ready && root.screenState.notificationCenter
+
+    Component.onCompleted: Qt.callLater(() => root.ready = true)
     readonly property int cardWidth: 400
 
     implicitWidth: root.cardWidth
