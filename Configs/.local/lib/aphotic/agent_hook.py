@@ -16,27 +16,44 @@ MAX_RUNS = 25
 MAX_RUN_BYTES = 2 * 1024 * 1024
 MODEL_TAIL_BYTES = 64 * 1024
 
-EVENT_NAMES = {
+# Keyed by the raw Claude Code hook name, because several raw events
+# fold into the same kind ("turn") with different statuses.
+V2_KIND = {
     "SessionStart": "session_start",
-    "UserPromptSubmit": "user_prompt_submit",
-    "PreToolUse": "pre_tool_use",
-    "PostToolUse": "post_tool_use",
-    "PostToolUseFailure": "post_tool_use_failure",
-    "Notification": "notification",
-    "PreCompact": "pre_compact",
-    "PostCompact": "post_compact",
-    "Stop": "stop",
-    "SubagentStop": "subagent_stop",
     "SessionEnd": "session_end",
+    "UserPromptSubmit": "turn",
+    "PreToolUse": "tool_call",
+    "PostToolUse": "tool_call",
+    "PostToolUseFailure": "tool_call",
+    "Notification": "turn",
+    "PreCompact": "turn",
+    "PostCompact": "turn",
+    "Stop": "turn",
+    "SubagentStop": "turn",
 }
-STATUS = {
-    "user_prompt_submit": "running",
-    "pre_tool_use": "running",
-    "post_tool_use": "completed",
-    "post_tool_use_failure": "errored",
-    "pre_compact": "compacting",
-    "post_compact": "running",
+V2_STATUS = {
+    "SessionStart": "running",
+    "SessionEnd": "ended",
+    "UserPromptSubmit": "running",
+    "PreToolUse": "running",
+    "PostToolUse": "running",
+    "PostToolUseFailure": "running",
+    "Notification": "waiting",
+    "PreCompact": "compacting",
+    "PostCompact": "running",
+    "Stop": "idle",
+    "SubagentStop": "idle",
 }
+TOOL_STATUS = {
+    "PreToolUse": "running",
+    "PostToolUse": "completed",
+    "PostToolUseFailure": "errored",
+}
+# Only Claude Code runs through this script, but a harness override
+# can still name a harness this hook has no provider for.
+PROVIDER_BY_HARNESS = {"claude": "anthropic"}
+CACHE_READ_KEYS = ("cache_read_input_tokens", "cache_read_tokens")
+CACHE_WRITE_KEYS = ("cache_creation_input_tokens", "cache_write_tokens")
 
 
 def atomic_write(path, text):
@@ -135,15 +152,59 @@ def cached_session(path):
     return data if isinstance(data, dict) else {}
 
 
+def first_present(mapping, keys):
+    """The first numeric value found under any of `keys`.
+
+    None if no key is present or every match is non-numeric.
+    """
+    for key in keys:
+        value = mapping.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return value
+    return None
+
+
+def usage_record_from_response(response, common):
+    """A `usage` line from a tool_response's usage block.
+
+    Every lookup is guarded, so a missing or malformed block yields no line.
+    """
+    if not isinstance(response, dict):
+        return None
+    usage = response.get("usage")
+    if not isinstance(usage, dict):
+        return None
+
+    record = dict(common)
+    record["event"] = "usage"
+    found = False
+    for src, field in (("input_tokens", "inputTokens"), ("output_tokens", "outputTokens")):
+        value = usage.get(src)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            record[field] = value
+            found = True
+    read = first_present(usage, CACHE_READ_KEYS)
+    if read is not None:
+        record["cacheReadTokens"] = read
+        found = True
+    written = first_present(usage, CACHE_WRITE_KEYS)
+    if written is not None:
+        record["cacheWriteTokens"] = written
+        found = True
+    return record if found else None
+
+
 def main():
     try:
         payload = json.load(sys.stdin)
     except Exception:
         sys.exit(0)
+    if not isinstance(payload, dict):
+        sys.exit(0)
 
     session_id = payload.get("session_id") or ""
     raw_event = payload.get("hook_event_name") or ""
-    event = EVENT_NAMES.get(raw_event)
+    event = V2_KIND.get(raw_event)
     if not session_id or not event:
         sys.exit(0)
 
@@ -151,11 +212,11 @@ def main():
     stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
 
     record = {
-        "v": 1,
+        "v": 2,
         "sessionId": session_id,
         "event": event,
-        "status": STATUS.get(event, "idle"),
-        "timestamp": stamp,
+        "status": V2_STATUS.get(raw_event, "idle"),
+        "ts": stamp,
         "t": int(now * 1000),
     }
     for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
@@ -167,6 +228,10 @@ def main():
         if value not in (None, ""):
             record[field] = value
 
+    tool_status = TOOL_STATUS.get(raw_event)
+    if tool_status:
+        record["toolStatus"] = tool_status
+
     harness = payload.get("harness") or "claude"
 
     # The default has to reach the record, not just the session file below.
@@ -174,6 +239,10 @@ def main():
     # harnesses do), so without this every Claude event is untagged and a
     # reader cannot tell "this is Claude" from "nobody said".
     record["harness"] = harness
+
+    provider = PROVIDER_BY_HARNESS.get(harness)
+    if provider:
+        record["provider"] = provider
 
     session_file = os.path.join(SESSIONS, "%s.json" % session_id)
     known = cached_session(session_file)
@@ -195,6 +264,7 @@ def main():
     # turns subagent parentage from a guess into an exact link: this record's
     # toolId is the parent of every later event carrying agent_id == spawnedAgentId.
     response = payload.get("tool_response")
+    usage_line = None
     if isinstance(response, dict):
         spawned = response.get("agentId")
         if spawned:
@@ -206,17 +276,33 @@ def main():
         if resolved:
             record["agentModel"] = resolved
 
+        if raw_event == "PostToolUse":
+            common = {
+                "v": 2,
+                "sessionId": session_id,
+                "status": record["status"],
+                "ts": stamp,
+                "t": record["t"],
+                "harness": harness,
+            }
+            if provider:
+                common["provider"] = provider
+            usage_line = usage_record_from_response(response, common)
+
     try:
         os.makedirs(SESSIONS, exist_ok=True)
         os.makedirs(RUNS, exist_ok=True)
     except OSError:
         sys.exit(0)
 
-    line = json.dumps(record, separators=(",", ":")) + "\n"
+    lines = [json.dumps(record, separators=(",", ":")) + "\n"]
+    if usage_line:
+        lines.append(json.dumps(usage_line, separators=(",", ":")) + "\n")
+    blob = "".join(lines)
 
     try:
         with open(EVENTS, "a") as fh:
-            fh.write(line)
+            fh.write(blob)
         trim()
     except OSError:
         pass
@@ -229,7 +315,7 @@ def main():
     try:
         if not os.path.exists(run_file) or os.path.getsize(run_file) < MAX_RUN_BYTES:
             with open(run_file, "a") as fh:
-                fh.write(line)
+                fh.write(blob)
         if event == "session_start":
             prune_runs()
     except OSError:
