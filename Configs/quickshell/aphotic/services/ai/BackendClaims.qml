@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.services
+import qs.services.ai
 import qs.services.profile
 
 // The one claimant every local inference backend feeds. An adapter turns
@@ -9,7 +10,7 @@ import qs.services.profile
 // each entry into Resource Engine claims, Flow passports and unload
 // receipts the same way for every backend.
 //
-// A model entry is { name, vramMiB, ramMiB, pid }:
+// A model entry is { name, embedding, state, vramMiB, ramMiB, pid }:
 // - with a pid and a gpuVram source, the PID is adopted, so GpuVramSource
 //   registers nvidia-smi's measured figure under this owner;
 // - otherwise vramMiB is the backend's own measurement, registered as-is;
@@ -34,10 +35,16 @@ QtObject {
     property var _unloads: ({})
     property bool _memoryHeld: false
 
-    onEnabledChanged: root._register()
+    onEnabledChanged: {
+        root._register();
+        root._sync();
+    }
     onModelsChanged: root._sync()
 
-    Component.onCompleted: root._register()
+    Component.onCompleted: {
+        root._register();
+        root._sync();
+    }
 
     function _register(): void {
         if (root._registered || !root.enabled || !root.owner)
@@ -48,7 +55,6 @@ QtObject {
             label: root.label || root.owner,
             gracefulStop: claim => root._stop(claim?.id ?? "")
         });
-        root._sync();
     }
 
     function _adoptedId(pid: int): string {
@@ -88,12 +94,14 @@ QtObject {
     }
 
     function _sync(): void {
+        const models = root.enabled ? (root.models ?? []) : [];
+        LocalInference.report(root.owner, root.label, models);
         if (!root._registered)
             return;
 
         const resident = ({});
         const owned = ({});
-        for (const model of (root.models ?? [])) {
+        for (const model of models) {
             if (!model?.name)
                 continue;
             const name = model.name;
