@@ -80,6 +80,7 @@ BASE_SYSTEM = {
     "readlink": "coreutils",
     "rm": "coreutils",
     "sed": "sed",
+    "setpriv": "util-linux",
     "sh": "shell",
     "sort": "coreutils",
     "sudo": "sudo",
