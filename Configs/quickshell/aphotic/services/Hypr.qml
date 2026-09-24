@@ -145,12 +145,70 @@ Singleton {
         }
     }
 
+    // Caps and num lock come from the kernel's keyboard LEDs, read in
+    // process instead of forking hyprctl every tick. Hyprland sets every
+    // keyboard's LEDs to the shared lock state, so any LED that reads on
+    // means the lock is on. With no keyboard LEDs (VMs, virtual keyboards)
+    // this falls back to polling hyprctl.
+    property list<string> _ledPaths: []
+
+    function _readLeds(): void {
+        let caps = false;
+        let num = false;
+        for (let i = 0; i < ledViews.count; i++) {
+            const view = ledViews.objectAt(i);
+            view.reload();
+            const text = view.text().trim();
+            if (text === "") {
+                // The device went away; list the LEDs again.
+                ledListProc.running = true;
+                return;
+            }
+            if (text !== "0") {
+                if (view.path.includes("::capslock/"))
+                    caps = true;
+                else
+                    num = true;
+            }
+        }
+        root.capsLock = caps;
+        root.numLock = num;
+    }
+
+    Process {
+        id: ledListProc
+        command: ["sh", "-c", "for f in /sys/class/leds/*::capslock/brightness /sys/class/leds/*::numlock/brightness; do [ -r \"$f\" ] && echo \"$f\"; done; true"]
+        stdout: StdioCollector {
+            onStreamFinished: root._ledPaths = text.split("\n").filter(l => l.length > 0)
+        }
+    }
+
+    Instantiator {
+        id: ledViews
+        model: root._ledPaths
+        delegate: FileView {
+            required property string modelData
+            path: modelData
+            blockLoading: true
+            printErrors: false
+        }
+    }
+
+    Component.onCompleted: {
+        root.refreshKeyboardState();
+        ledListProc.running = true;
+    }
+
     Timer {
         interval: 2000
         running: true
         repeat: true
-        triggeredOnStart: true
-        onTriggered: root.refreshKeyboardState()
+        onTriggered: {
+            if (root._ledPaths.length > 0)
+                root._readLeds();
+            else
+                root.refreshKeyboardState();
+        }
     }
 
     Connections {
