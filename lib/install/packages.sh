@@ -62,56 +62,6 @@ show_progress() {
 # the install.
 FAILED_OPTIONAL_PACKAGES=()
 
-# A failure report opens pre-filled with what it takes to reproduce it:
-# #209 arrived as a bare title with no log. The user sees and can edit all
-# of it before submitting; home paths and anything shaped like a secret are
-# redacted first.
-_issue_body_for() {
-  local pkg="$1" drivers="" gpu log=""
-  declare -F nvidia_driver_packages >/dev/null && drivers="$(nvidia_driver_packages 2>/dev/null | paste -sd, -)"
-  gpu="$(lspci 2>/dev/null | grep -Ei 'vga|3d|display' | sed 's/^[^ ]* //' | paste -sd';' -)"
-  # The newest lines, not only ones naming the package: pacman's real error
-  # ("conflicting files", "failed to commit transaction") rarely names it.
-  [[ -n "${INSTLOG:-}" && -r "$INSTLOG" ]] && log="$(tail -n 40 "$INSTLOG")"
-  {
-    echo "Package: $pkg"
-    echo "Aphotic: $(cat "${ROOT_DIR:-.}/VERSION" 2>/dev/null || echo unknown)"
-    echo "Profile: ${PROFILE:-unknown}, layers: ${LAYERS:-none}"
-    echo "Kernel: $(uname -r)"
-    echo "GPU: ${gpu:-unknown}"
-    echo "NVIDIA driver packages: ${drivers:-none}"
-    echo "AUR helper: ${AUR_HELPER:-none}"
-    echo
-    echo "Last lines of install.log:"
-    echo '```'
-    printf '%s\n' "$log"
-    echo '```'
-  } | sed -E "s#${HOME:-/nonexistent}#~#g; s/((token|key|password|passwd|secret)[A-Za-z_]*[[:space:]]*[=:][[:space:]]*)[^[:space:]]+/\1<redacted>/Ig"
-}
-
-_issue_url_for() {
-  local pkg="$1"
-  _issue_body_for "$pkg" | "${PYTHON_BIN:-python3}" -c '
-import sys, urllib.parse
-base, pkg = sys.argv[1], sys.argv[2]
-body = sys.stdin.read()
-head, sep, log = body.partition("```\n")
-lines = log.split("\n")
-q = lambda s: urllib.parse.quote(s, safe="")
-title = q("Install package failed: " + pkg)
-def url(b):
-    return base + "/new?title=" + title + "&body=" + q(b)
-# Browsers and GitHub reject very long URLs; drop the oldest log lines first.
-while len(url(head + sep + "\n".join(lines))) > 7000 and len(lines) > 3:
-    lines.pop(0)
-print(url(head + sep + "\n".join(lines)))
-' "$APHOTIC_ISSUES_URL" "$pkg"
-}
-
-_issue_notice() {
-  echo -e "$CWR   The issue link below opens pre-filled with your GPU, kernel and the last lines of install.log. Review it before submitting."
-}
-
 _package_in_list() {
   [[ $'\n'"$2"$'\n' == *$'\n'"$1"$'\n'* ]]
 }
@@ -199,25 +149,6 @@ _clear_aur_build_cache() {
   return 0
 }
 
-# A failure used to print nothing but "check the install.log" -- on a log
-# that is megabytes of pacman progress bars, the one line that says why
-# (an unresolved target, a bad signature, a 404 off a stale mirror) is
-# unfindable. Surface it where the failure is reported.
-_print_install_failure_detail() {
-  [[ -n "${INSTLOG:-}" && -r "${INSTLOG:-}" ]] || return 0
-  local detail
-  detail=$(tail -n 200 "$INSTLOG" 2>/dev/null \
-    | tr '\r' '\n' \
-    | sed $'s/\033\\[[0-9;?]*[a-zA-Z]//g' \
-    | grep -iE '^[[:space:]]*(error|warning|::.*failed|.*: command not found)' \
-    | tail -n 5)
-  [[ -n "$detail" ]] || return 0
-  echo -e "$CER   Last error lines from $INSTLOG:"
-  while IFS= read -r line; do
-    echo -e "$CER     $line"
-  done <<< "$detail"
-}
-
 # install_software <package> [required|optional]
 #
 # Defaults to "required" -- every direct caller (hyprland, the NVIDIA
@@ -280,24 +211,16 @@ install_software() {
 
   if [[ "$requirement" == "optional" ]]; then
     FAILED_OPTIONAL_PACKAGES+=("$pkg")
-    echo -e "$CER - Error installing -- $pkg -- Submit issue request for install package -- $pkg"
+    echo -e "$CER - $pkg failed to install."
     [[ -n "$why" ]] && echo -e "$CWR   $why"
     echo -e "$CWR   Skipped, the install continues. Output: $INSTLOG"
-    _issue_notice
-    echo -e "$CWR   $(_issue_url_for "$pkg")"
     return 0
   fi
 
-  echo -e "$CER - $pkg install had failed, please check the install.log"
   echo -e "$CER   $pkg is required, so the install can't continue without it."
-  if [[ -n "$why" ]]; then
-    echo -e "$CER   $why"
-  else
-    _print_install_failure_detail
-  fi
-  echo -e "$CER   Submit issue request for install package -- $pkg"
-  _issue_notice
-  echo -e "$CER   $(_issue_url_for "$pkg")"
+  [[ -n "$why" ]] && echo -e "$CER   $why"
+  install_failure_explain "$pkg" "$INSTLOG"
+  install_offer_report "$pkg" "$INSTLOG"
   exit 1
 }
 
@@ -307,11 +230,11 @@ report_failed_optional_packages() {
   echo -e "\n\e[1;31m── ${#FAILED_OPTIONAL_PACKAGES[@]} optional package(s) failed to install ──\e[0m"
   echo -e "  None of these are part of the shell itself, so the install finished without them."
   for pkg in "${FAILED_OPTIONAL_PACKAGES[@]}"; do
-    echo -e "  Error installing -- $pkg -- Submit issue request for install package -- $pkg"
-    echo -e "    $(_issue_url_for "$pkg")"
+    install_failure_explain "$pkg" "$INSTLOG"
   done
   echo -e "  Full output for each failure: $INSTLOG"
   echo -e "  To retry them after a fix: re-run ./install.sh with the same --with layers."
+  install_offer_report "optional" "$INSTLOG"
 }
 
 # install_package_list <newline-separated packages> [required-subset]
