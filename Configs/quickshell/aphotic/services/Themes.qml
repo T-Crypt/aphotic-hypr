@@ -263,6 +263,11 @@ Singleton {
 
         path: root.statePath
         watchChanges: true
+        onFileChanged: {
+            reload();
+            watchChanges = false;
+            watchChanges = true;
+        }
         onLoaded: {
             if (root._writePending) {
                 root._writePending = false;
@@ -283,21 +288,10 @@ Singleton {
         }
     }
 
-    // watchChanges above relies on an OS-level file watch that does not
-    // reliably survive this path being replaced out from under it -- the
-    // CLI (`aphotic theme`/`aphotic wallpaper -f`, see cmd_theme.sh's
-    // _aphotic_theme_write_state) always writes via a temp file + atomic
-    // rename onto this exact path, and after the first such rename the
-    // watch stops firing for any later one, so a second `aphotic
-    // wallpaper -f` in the same shell session silently stopped updating
-    // activeTheme/activeWallpaper (and so the Settings panel) until the
-    // whole shell was restarted. Polling is the only mechanism this repo
-    // controls that survives repeated external rewrites of the same
-    // path -- the file is a few bytes, so re-reading it every second is
-    // free, and reload() on unchanged content is a no-op (same values
-    // back into the same properties).
+    // The watch is re-armed after each change in case a rename drops it;
+    // this 5 s reload is the safety net if an external write is missed.
     Timer {
-        interval: 1000
+        interval: 5000
         running: true
         repeat: true
         onTriggered: stateFile.reload()
