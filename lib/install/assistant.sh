@@ -182,7 +182,11 @@ setup_assistant() {
   render_assistant_prompt "$PROFILE" "$LAYERS" "$THEME"
 
   if [[ "$DRY_RUN" != "1" ]]; then
-    sudo systemctl enable --now ollama.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable ollama.service; start Ollama yourself before the Assistant can pull/use a model."
+    if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
+      echo -e "$CNT - Container mode: skipping the Ollama service setup."
+    else
+      sudo systemctl enable --now ollama.service &>> "$INSTLOG" || echo -e "$CWR - Could not enable ollama.service; start Ollama yourself before the Assistant can pull/use a model."
+    fi
   fi
 
   local model="" source_label=""

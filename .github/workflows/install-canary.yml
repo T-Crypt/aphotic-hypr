@@ -21,6 +21,68 @@ defaults:
     shell: bash
 
 jobs:
+  installer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container: archlinux:latest
+    permissions:
+      contents: read
+    steps:
+      - name: Prepare Arch
+        run: |
+          set -euo pipefail
+          pacman -Syu --needed --noconfirm git sudo
+          useradd --create-home canary
+          echo 'canary ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/canary
+          chmod 0440 /etc/sudoers.d/canary
+          if command -v yay >/dev/null 2>&1; then
+            echo 'yay must not be preinstalled' >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Run installer
+        id: installer
+        continue-on-error: true
+        env:
+          APHOTIC_CONTAINER: '1'
+        run: |
+          set -euo pipefail
+          mkdir -p installer-out
+          : > install.log
+          : > installer-console.log
+          chown -R canary:canary "$GITHUB_WORKSPACE"
+          set +e
+          sudo --non-interactive -H -u canary -- \
+            env APHOTIC_CONTAINER="$APHOTIC_CONTAINER" \
+            bash -c 'cd "$1" && ./install.sh --channel edge < /dev/null' \
+            bash "$GITHUB_WORKSPACE" 2>&1 | tee installer-console.log
+          installer_status=${PIPESTATUS[0]}
+          set -e
+          cp install.log installer-console.log installer-out/
+
+          if ((installer_status != 0)); then
+            echo "install.sh exited with $installer_status" >&2
+            exit 1
+          fi
+          if ! grep -Fq 'Install complete' installer-console.log; then
+            echo 'install.sh exited without its completion marker' >&2
+            exit 1
+          fi
+
+      - name: Upload installer failure
+        if: always() && steps.installer.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-canary-failure
+          path: installer-out/
+          if-no-files-found: error
+
+      - name: Fail installer canary
+        if: always() && steps.installer.outcome == 'failure'
+        run: exit 1
+
   canary:
     runs-on: ubuntu-latest
     timeout-minutes: 180
