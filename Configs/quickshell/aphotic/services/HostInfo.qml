@@ -39,13 +39,36 @@ Singleton {
         }
     }
 
-    Component.onCompleted: hostnameProc.exec(["uname", "-n"])
+    Component.onCompleted: {
+        hostnameProc.exec(["uname", "-n"]);
+        ipRefresh.restart();
+    }
+
+    Connections {
+        target: Nmcli
+        function onActiveConnectionChanged() {
+            ipRefresh.restart();
+        }
+        function onActiveInterfaceChanged() {
+            ipRefresh.restart();
+        }
+        function onIsConnectedChanged() {
+            ipRefresh.restart();
+        }
+    }
 
     Timer {
-        interval: 15000
+        id: ipRefresh
+        interval: 1500
+        onTriggered: ipProc.exec(["ip", "route", "get", "1.1.1.1"])
+    }
+
+    // A DHCP renewal or a VPN can move the address without changing the
+    // active connection, so check now and then anyway.
+    Timer {
+        interval: 300000
         running: true
         repeat: true
-        triggeredOnStart: true
-        onTriggered: ipProc.exec(["ip", "route", "get", "1.1.1.1"])
+        onTriggered: ipRefresh.restart()
     }
 }
