@@ -284,21 +284,12 @@ Singleton {
         }
     }
 
-    Process {
-        id: statProc
-        command: ["head", "-n1", "/proc/stat"]
-        stdout: SplitParser {
-            onRead: data => {
-                const sample = root._parseStatLine(data);
-                if (root._prevCpu) {
-                    const dIdle = sample.idle - root._prevCpu.idle;
-                    const dTotal = sample.total - root._prevCpu.total;
-                    if (dTotal > 0)
-                        root._cpuPerc = Math.max(0, Math.min(1, 1 - dIdle / dTotal));
-                }
-                root._prevCpu = sample;
-            }
-        }
+    FileView {
+        id: statFile
+
+        path: "/proc/stat"
+        blockLoading: true
+        printErrors: false
     }
 
     Process {
@@ -348,21 +339,12 @@ Singleton {
         }
     }
 
-    Process {
-        id: memProc
-        command: ["cat", "/proc/meminfo"]
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: data => {
-                const m = data.match(/^(MemTotal|MemAvailable):\s+(\d+)/);
-                if (!m)
-                    return;
-                if (m[1] === "MemTotal")
-                    root._memTotal = parseInt(m[2], 10);
-                else
-                    root._memUsed = root._memTotal - parseInt(m[2], 10);
-            }
-        }
+    FileView {
+        id: memFile
+
+        path: "/proc/meminfo"
+        blockLoading: true
+        printErrors: false
     }
 
     Process {
@@ -400,8 +382,29 @@ Singleton {
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            statProc.running = true;
-            memProc.running = true;
+            statFile.reload();
+            const statLine = statFile.text().split("\n")[0];
+            const sample = statLine ? root._parseStatLine(statLine) : null;
+            if (sample && root._prevCpu) {
+                const dIdle = sample.idle - root._prevCpu.idle;
+                const dTotal = sample.total - root._prevCpu.total;
+                if (dTotal > 0)
+                    root._cpuPerc = Math.max(0, Math.min(1, 1 - dIdle / dTotal));
+            }
+            if (sample)
+                root._prevCpu = sample;
+
+            memFile.reload();
+            const memLines = memFile.text().split("\n");
+            for (let i = 0; i < memLines.length; i++) {
+                const m = memLines[i].match(/^(MemTotal|MemAvailable):\s+(\d+)/);
+                if (!m)
+                    continue;
+                if (m[1] === "MemTotal")
+                    root._memTotal = parseInt(m[2], 10);
+                else
+                    root._memUsed = root._memTotal - parseInt(m[2], 10);
+            }
         }
     }
 
