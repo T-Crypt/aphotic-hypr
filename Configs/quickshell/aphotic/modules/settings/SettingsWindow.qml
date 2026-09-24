@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.components
+import qs.config
 
 PanelWindow {
     id: root
@@ -41,8 +42,12 @@ PanelWindow {
     function consumeRequestedCategory(): void {
         if (!root.visible || root.screenState.settingsCategory === "")
             return;
-        settingsPanel.currentCategory = root.screenState.settingsCategory;
+        const category = root.screenState.settingsCategory;
         root.screenState.settingsCategory = "";
+        Qt.callLater(() => {
+            if (settingsLoader.item)
+                settingsLoader.item.currentCategory = category;
+        });
     }
 
     onVisibleChanged: root.consumeRequestedCategory()
@@ -52,6 +57,15 @@ PanelWindow {
 
         function onSettingsCategoryChanged(): void {
             root.consumeRequestedCategory();
+        }
+
+        function onSettingsChanged(): void {
+            if (root.screenState.settings) {
+                releasePanel.stop();
+                root.everOpened = true;
+            } else {
+                releasePanel.restart();
+            }
         }
     }
 
@@ -63,11 +77,31 @@ PanelWindow {
         Keys.onEscapePressed: root.screenState.settings = false
     }
 
-    SettingsPanel {
-        id: settingsPanel
+    // The panel exists only while Settings is open, plus its close
+    // animation, so a closed Settings costs no memory.
+    property bool everOpened: false
+
+    Timer {
+        id: releasePanel
+        interval: Tokens.anim.durations.normal
+        onTriggered: root.everOpened = false
+    }
+
+    Loader {
+        id: settingsLoader
 
         anchors.centerIn: parent
-        screenState: root.screenState
+        active: root.screenState.settings || root.everOpened
+        sourceComponent: settingsPanelComp
+    }
+
+    Component {
+        id: settingsPanelComp
+
+        SettingsPanel {
+            anchors.centerIn: parent
+            screenState: root.screenState
+        }
     }
 
     // Gated on the state rather than this window's own `visible`: the
