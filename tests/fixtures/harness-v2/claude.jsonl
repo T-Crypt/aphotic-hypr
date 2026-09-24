@@ -1,0 +1,14 @@
+{"v":2,"harness":"claude","sessionId":"c1","event":"session_start","status":"running","t":1788022637252,"ts":"2026-09-23T10:00:00Z","model":"claude-sonnet-5","provider":"anthropic","cwd":"/home/t/Aphotic-Hypr"}
+{"v":2,"harness":"claude","sessionId":"c1","event":"turn","status":"running","t":1788022638000,"ts":"2026-09-23T10:00:01Z"}
+{"v":2,"harness":"claude","sessionId":"c1","event":"tool_call","status":"running","t":1788022639000,"ts":"2026-09-23T10:00:02Z","tool":"Bash","toolId":"tc1","toolStatus":"running"}
+{"v":2,"harness":"claude","sessionId":"c1","event":"tool_call","status":"running","t":1788022640000,"tool":"Bash","toolId":"tc1","toolStatus":"completed","durationMs":120}
+{"v":2,"harness":"claude","sessionId":"c1","event":"tool_call","status":"running","t":1788022641000,"ts":"2026-09-23T10:00:04Z","tool":"Read","toolId":"tc2","toolStatus":"errored"}
+{"v":2,"harness":"claude","sessionId":"c1","event":"usage","status":"running","t":1788022650000,"ts":"2026-09-23T10:00:50Z","inputTokens":425,"outputTokens":1180,"cacheReadTokens":900,"cacheWriteTokens":0,"cost":{"amount":0.014,"currency":"USD"}}
+{"v":2,"harness":"claude","sessionId":"c1","event":"quota","status":"running","t":1788022660000,"ts":"2026-09-23T10:01:00Z","quota":{"fiveHour":{"usedPercent":54.2,"resetsAt":1788710000}}}
+{"v":2,"harness":"claude","sessionId":"c1","event":"turn","status":"compacting","t":1788022665000,"ts":"2026-09-23T10:01:05Z"}
+{"v":2,"harness":"claude","sessionId":"c1","event":"error","status":"idle","t":1788022670000,"ts":"2026-09-23T10:01:10Z","error":{"kind":"api","message":"429 rate limited"}}
+{"v":2,"harness":"claude","sessionId":"c1","event":"turn","status":"idle","t":1788022680000,"ts":"2026-09-23T10:01:20Z"}
+{"v":2,"harness":"claude","sessionId":"c1","event":"session_end","status":"ended","t":1788024999000,"ts":"2026-09-23T10:39:59Z","endReason":"clear"}
+this is not json
+{"v":1,"sessionId":"c1","event":"pre_tool_use","status":"running","timestamp":"2026-09-23T10:00:02Z","t":1788022639000,"tool":"Bash"}
+{"v":2,"harness":"claude","sessionId":"c1","event":"turn","status":"running","t":1788022690000,"ts":"2026-09-23T10:01:30Z","futureField":"ignored","experimental":{"nested":true}}
