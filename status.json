@@ -1,6 +1,17 @@
 {
-  "date": "2026-09-25",
-  "green": true,
-  "broken": [],
+  "date": "2026-09-26",
+  "green": false,
+  "broken": [
+    {
+      "package": "visual-studio-code-bin",
+      "source": "aur",
+      "error_tail": " -> 1 error occurred:\n\t* request failed: Get \"https://aur.archlinux.org/rpc?arg%5B%5D=visual-studio-code-bin&type=info&v=5\": unexpected EOF\n\n\n -> Failed to find AUR package for visual-studio-code-bin:1 error occurred:\n\t* request failed: Get \"https://aur.archlinux.org/rpc?arg=visual-studio-code-bin&by=provides&type=search&v=5\": unexpected EOF\n\n\n -> No AUR package found for visual-studio-code-bin\n -> no package found for targets"
+    },
+    {
+      "package": "zsh-theme-powerlevel10k-git",
+      "source": "aur",
+      "error_tail": " -> 1 error occurred:\n\t* request failed: Get \"https://aur.archlinux.org/rpc?arg%5B%5D=zsh-theme-powerlevel10k-git&type=info&v=5\": unexpected EOF\n\n\n -> Failed to find AUR package for zsh-theme-powerlevel10k-git:1 error occurred:\n\t* request failed: Get \"https://aur.archlinux.org/rpc?arg=zsh-theme-powerlevel10k-git&by=provides&type=search&v=5\": unexpected EOF\n\n\n -> No AUR package found for zsh-theme-powerlevel10k-git\n -> no package found for targets"
+    }
+  ],
   "last_green": "2026-09-25"
 }
