@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import qs.services.ai
 import "InferenceCore.js" as Core
+import qs.services
 
 Singleton {
     id: root
@@ -97,6 +98,12 @@ Singleton {
                     if (!slots.running)
                         slots.exec(["curl", "-s", "-m", "2", poller.url]);
                 }
+            }
+
+            property ActivityProbe probe: ActivityProbe {
+                name: "ai.llama-swap-slots"
+                kind: "network"
+                timer: poller.timer
             }
 
             property Process slots: Process {

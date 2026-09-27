@@ -387,6 +387,11 @@ ShellRoot {
             render: {
                 decorative: RenderGate.decorative,
                 covered: RenderGate.covered
+            },
+            activity: Activity.snapshot(),
+            plugins: {
+                enabled: PluginRegistry.enabledPlugins,
+                safeMode: SafeMode.active
             }
         };
     }

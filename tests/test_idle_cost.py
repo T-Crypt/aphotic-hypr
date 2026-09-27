@@ -10,6 +10,10 @@ so an always-on cost is a reviewed decision instead of an accident.
 Conditional `running:` bindings are not flagged -- gating on a consumer
 being present is exactly the fix. Neither are timers started imperatively
 (`start()`/`restart()`), which run when something asks for them.
+
+Every repeating Timer, gated or not, must also carry an ActivityProbe
+naming it, so `aphotic runtime` and `aphotic perf` report its real state
+instead of it running invisibly.
 """
 import re
 from pathlib import Path
@@ -78,3 +82,43 @@ def test_no_unreviewed_always_on_work():
 def test_allowlist_has_no_stale_entries():
     stale = sorted(set(ALWAYS_ON) - set(_always_on()))
     assert not stale, f"ALWAYS_ON names work that no longer runs at rest; drop it: {stale}"
+
+
+def _repeating_timers():
+    for path in sorted(QML.rglob("*.qml")):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for kind, block in _blocks(text):
+            if kind == "Timer" and _prop(block, "repeat") == "true":
+                yield path, text, block
+
+
+def test_every_repeating_timer_has_a_probe():
+    missing = []
+    for path, text, block in _repeating_timers():
+        rel = str(path.relative_to(QML))
+        tid = _prop(block, "id")
+        # A timer held in a property (`property Timer x: Timer {...}`) is
+        # referenced through that property instead of an id.
+        before = text[:text.index(block)].rstrip().splitlines()[-1] if text.index(block) else ""
+        held = re.search(r"property\s+Timer\s+(\w+)\s*:\s*$", before)
+        refs = [tid] if tid else []
+        if held:
+            refs += [f"root.{held.group(1)}", f"poller.{held.group(1)}"]
+        probed = any(re.search(rf"^\s*timer:\s*{re.escape(r)}\s*$", text, re.M) for r in refs)
+        if not probed:
+            missing.append(f"{rel} ({tid or (held.group(1) if held else 'no id')})")
+    assert not missing, (
+        "repeating timers with no ActivityProbe -- give the Timer an id and add "
+        f"`ActivityProbe {{ name: ...; kind: ...; timer: <id> }}` beside it: {missing}")
+
+
+def test_probe_names_are_unique_per_file_and_well_formed():
+    seen = {}
+    for path in sorted(QML.rglob("*.qml")):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for m in re.finditer(r"ActivityProbe\s*\{(.*?)\}", text, re.S):
+            name = _prop(m.group(1), "name").strip('"')
+            assert re.fullmatch(r"[a-z0-9]+([.-][a-z0-9]+)*", name), f"{path.name}: bad probe name {name!r}"
+            assert name not in seen or seen[name] == path, f"probe name {name!r} used in {seen.get(name)} and {path}"
+            seen[name] = path
+    assert len(seen) >= 20

@@ -492,7 +492,9 @@ treating system resources as static configuration.
 
 `tests/test_idle_cost.py` enforces it. A repeating timer or an infinite
 animation that runs unconditionally fails CI unless it is listed with the
-reason it has to run at rest.
+reason it has to run at rest. Every repeating timer reports whether it is
+live, so `aphotic runtime` lists what the shell is doing at rest, and
+`aphotic perf` records it with each snapshot.
 
 ## Keybindings
 

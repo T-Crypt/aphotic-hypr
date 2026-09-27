@@ -222,6 +222,8 @@ Singleton {
     // that never fires a hook event at all -- correctness there doesn't
     // need 5s freshness, so this fires 12x slower than it used to.
     Timer {
+        id: agentReconcile
+
         interval: 60000
         running: root.active
         repeat: true
@@ -234,6 +236,12 @@ Singleton {
             if (root._findIndex("opencode") !== -1)
                 opencodePgrep.exec(["pgrep", "-x", "-c", "opencode"]);
         }
+    }
+
+    ActivityProbe {
+        name: "agents.reconcile"
+        kind: "process"
+        timer: agentReconcile
     }
 
     // Quota windows, written by the harness's own statusLine command

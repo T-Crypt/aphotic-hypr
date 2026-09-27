@@ -950,10 +950,18 @@ Item {
                     }
 
                     Timer {
+                        id: sparklineTick
+
                         interval: Config.dashboard.resourceUpdateInterval
                         running: sparklineCanvas.presented
                         repeat: true
                         onTriggered: sparklineCanvas._tickCount++
+                    }
+
+                    ActivityProbe {
+                        name: "dashboard.sparkline"
+                        kind: "render"
+                        timer: sparklineTick
                     }
 
                     NumberAnimation on slideProgress {

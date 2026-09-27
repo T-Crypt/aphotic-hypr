@@ -40,7 +40,11 @@ case "$*" in
  "context":{"current":"game","previous":"default","policy":{}},
  "resources":{"level":"contention","surfaced":true,"headline":"GPU VRAM contended · ollama, gaming","resource":null,"negotiation":null,
    "history":[{"decision":"keep","label":"GPU VRAM","requestor":"gaming","claimant":"ollama"}],"dormant":false},
- "render":{"decorative":false,"covered":true}}
+ "render":{"decorative":false,"covered":true},
+ "activity":{"active":1,"idle":1,"wakeupsPerMinute":30,"probes":[
+   {"name":"system.base","kind":"file","instances":1,"active":1,"interval":2000,"wakeupsPerMinute":30},
+   {"name":"weather","kind":"network","instances":1,"active":0,"interval":1200000,"wakeupsPerMinute":0}]},
+ "plugins":{"enabled":["pets"],"safeMode":false}}
 JSON
     ;;
 esac
@@ -102,6 +106,11 @@ grep -q "CONTENTION  GPU VRAM contended" <<<"$out" || fail "resource line missin
 grep -q "Motion         gated" <<<"$out" || fail "motion line missing"
 grep -q "^\* DP-1 .*owner=launcher .*open=workspace, launcher" <<<"$out" || fail "screen line missing: $out"
 grep -q "keep .*GPU VRAM: gaming vs ollama" <<<"$out" || fail "history line missing: $out"
+
+grep -q "^Activity  1 active, 1 idle, ~30 scheduled wakeups/min" <<<"$out" || fail "activity header missing: $out"
+grep -q "system.base .*file .*ACTIVE .*every 2s" <<<"$out" || fail "active probe row missing: $out"
+grep -q "weather .*network .*idle .*every 1200s" <<<"$out" || fail "idle probe row missing: $out"
+grep -q "^Plugins        pets" <<<"$out" || fail "plugins line missing: $out"
 
 # --json passes the shell's JSON through untouched.
 reset_logs

@@ -33,11 +33,19 @@ Scope {
     // engage(), unlock() and Pam's unlock now write the state directly;
     // this slow poll only catches a lock path the shell does not own.
     Timer {
+        id: lockReconcile
+
         interval: 5000
         running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: SessionLockState.locked = lock.locked
+    }
+
+    ActivityProbe {
+        name: "lock.reconcile"
+        kind: "poll"
+        timer: lockReconcile
     }
 
     Pam {
