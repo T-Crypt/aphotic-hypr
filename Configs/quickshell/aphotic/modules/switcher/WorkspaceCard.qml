@@ -17,11 +17,17 @@ StyledClippingRect {
     required property var card
     required property real cardHeight
     required property bool active
+    property real reveal: 1
 
     readonly property real scale: root.cardHeight / root.card.rect.height
 
     implicitHeight: root.cardHeight
     implicitWidth: Math.round(root.card.rect.width * root.scale)
+
+    opacity: root.reveal
+    transform: Translate {
+        y: (1 - root.reveal) * Tokens.spacing.large
+    }
 
     radius: Tokens.rounding.large
     color: Colours.layer(Colours.tPalette.m3surfaceContainer, 1)

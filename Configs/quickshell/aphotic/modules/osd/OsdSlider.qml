@@ -9,6 +9,7 @@ Item {
     required property string icon
     required property real value
     property real to: 1
+    property real reveal: 1
 
     signal moved(value: real)
     signal wheelUp()
@@ -16,6 +17,11 @@ Item {
 
     implicitWidth: Tokens.sizes.osd.sliderWidth
     implicitHeight: Tokens.sizes.osd.sliderHeight
+
+    opacity: root.reveal
+    transform: Translate {
+        x: (1 - root.reveal) * Tokens.spacing.large
+    }
 
     StyledRect {
         anchors.fill: parent

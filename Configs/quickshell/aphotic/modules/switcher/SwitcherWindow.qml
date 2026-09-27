@@ -29,7 +29,7 @@ PanelWindow {
     // One monitor shows the switcher: the one that was focused when it
     // opened. The others stay as they are rather than each drawing their
     // own copy of the same snapshot.
-    visible: Switcher.open && Switcher.monitorName === (Hypr.monitorFor(root.modelData)?.name ?? "")
+    visible: reveal.active && Switcher.monitorName === (Hypr.monitorFor(root.modelData)?.name ?? "")
 
     WlrLayershell.namespace: "aphotic-switcher"
     WlrLayershell.layer: WlrLayer.Overlay
@@ -66,112 +66,127 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        color: Qt.alpha(Colours.palette.m3shadow, 0.55)
+        color: Colours.palette.m3shadow
+        opacity: reveal.visibleProgress * 0.55
     }
 
-    StyledClippingRect {
-        id: panel
+    SurfaceReveal {
+        id: reveal
 
         anchors.centerIn: parent
-        width: root.panelWidth
-        implicitHeight: content.implicitHeight + Tokens.padding.extraLarge * 2
-        radius: Tokens.rounding.extraLarge
-        color: Colours.tPalette.m3surfaceContainer
-        border.width: Config.border.thickness
-        border.color: Colours.palette.m3outlineVariant
+        shown: Switcher.open
+        hiddenScale: 0.94
 
-        // Swallow clicks on the panel so they don't reach the
-        // cancel-on-click-outside handler behind it.
-        MouseArea {
-            anchors.fill: parent
+        Elevation {
+            target: panel
+            level: 3
         }
 
-        DepthGradient {
-            anchors.fill: parent
-            radius: panel.radius
-            baseColour: panel.color
-        }
+        StyledClippingRect {
+            id: panel
 
-        ColumnLayout {
-            id: content
+            width: root.panelWidth
+            implicitHeight: content.implicitHeight + Tokens.padding.extraLarge * 2
+            radius: Tokens.rounding.extraLarge
+            color: Colours.tPalette.m3surfaceContainer
+            border.width: Config.border.thickness
+            border.color: Colours.palette.m3outlineVariant
 
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.margins: Tokens.padding.extraLarge
-            spacing: Tokens.spacing.large
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.medium
-
-                MaterialIcon {
-                    text: "swap_horiz"
-                    fontStyle: Tokens.font.icon.large
-                    color: Colours.palette.m3primary
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: qsTr("Switch window")
-                    font: Tokens.font.title.large
-                }
-
-                StyledText {
-                    text: qsTr("%n window(s)", "", Switcher.windows.length)
-                    color: Colours.palette.m3onSurfaceVariant
-                    font: Tokens.font.label.medium
-                }
+            // Swallow clicks on the panel so they don't reach the
+            // cancel-on-click-outside handler behind it.
+            MouseArea {
+                anchors.fill: parent
             }
 
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignHCenter
-                spacing: Tokens.spacing.medium
+            DepthGradient {
+                anchors.fill: parent
+                radius: panel.radius
+                baseColour: panel.color
+            }
 
-                Repeater {
-                    model: Switcher.cards
+            ColumnLayout {
+                id: content
 
-                    WorkspaceCard {
-                        required property var modelData
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.margins: Tokens.padding.extraLarge
+                spacing: Tokens.spacing.large
 
-                        card: modelData
-                        cardHeight: root.cardHeight
-                        active: Switcher.currentWorkspace === modelData.id
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Tokens.spacing.medium
+
+                    MaterialIcon {
+                        text: "swap_horiz"
+                        fontStyle: Tokens.font.icon.large
+                        color: Colours.palette.m3primary
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: qsTr("Switch window")
+                        font: Tokens.font.title.large
+                    }
+
+                    StyledText {
+                        text: qsTr("%n window(s)", "", Switcher.windows.length)
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.medium
                     }
                 }
-            }
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.medium
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: Tokens.spacing.medium
 
-                AppIcon {
-                    visible: !!Switcher.current
-                    appClass: Switcher.current?.appClass ?? ""
-                    size: 24
+                    Repeater {
+                        model: Switcher.cards
+
+                        WorkspaceCard {
+                            required property var modelData
+
+                            reveal: reveal.staggered(index)
+
+                            card: modelData
+                            cardHeight: root.cardHeight
+                            active: Switcher.currentWorkspace === modelData.id
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Tokens.spacing.medium
+
+                    AppIcon {
+                        visible: !!Switcher.current
+                        appClass: Switcher.current?.appClass ?? ""
+                        size: 24
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        font: Tokens.font.body.large
+                        text: Switcher.current ? Switcher.current.title : qsTr("Workspace %1").arg(Switcher.selectedWorkspace)
+                    }
+
+                    StyledText {
+                        text: Switcher.current ? Switcher.current.appClass : qsTr("empty desktop")
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.medium
+                    }
                 }
 
                 StyledText {
                     Layout.fillWidth: true
-                    elide: Text.ElideRight
-                    font: Tokens.font.body.large
-                    text: Switcher.current ? Switcher.current.title : qsTr("Workspace %1").arg(Switcher.selectedWorkspace)
-                }
-
-                StyledText {
-                    text: Switcher.current ? Switcher.current.appClass : qsTr("empty desktop")
+                    horizontalAlignment: Text.AlignHCenter
                     color: Colours.palette.m3onSurfaceVariant
-                    font: Tokens.font.label.medium
+                    font: Tokens.font.label.small
+                    text: qsTr("Tab cycle  ·  A-; workspace  ·  1-9 window  ·  arrows move  ·  release Alt to switch  ·  Esc cancel")
                 }
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                horizontalAlignment: Text.AlignHCenter
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.label.small
-                text: qsTr("Tab cycle  ·  A-; workspace  ·  1-9 window  ·  arrows move  ·  release Alt to switch  ·  Esc cancel")
             }
         }
     }
