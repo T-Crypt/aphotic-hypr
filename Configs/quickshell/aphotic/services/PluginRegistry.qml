@@ -50,6 +50,10 @@ Singleton {
         shelterState: () => root._sheltered ? "unloaded" : "full"
     })
 
+    // Installed and past isEnabled(), in registry order. What the runtime
+    // report counts and what PluginApi revokes handles against.
+    readonly property var enabledPlugins: Object.keys(root._installed).filter(n => root.isEnabled(n))
+
     function isInstalled(name: string): bool {
         return Object.prototype.hasOwnProperty.call(root._installed, name);
     }

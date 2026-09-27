@@ -91,10 +91,18 @@ Item {
             // view. Passport staleness only matters to something looking
             // at it.
             Timer {
+                id: passportTick
+
                 running: WorkloadPassports.liveCount > 0
                 interval: 15000
                 repeat: true
                 onTriggered: WorkloadPassports.refresh()
+            }
+
+            ActivityProbe {
+                name: "flow.passports"
+                kind: "poll"
+                timer: passportTick
             }
             // Aphotic only measures itself while the layer is on and the
             // view is up. Off by default, and torn down with the loader.

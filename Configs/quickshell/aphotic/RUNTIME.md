@@ -159,13 +159,58 @@ Plugins read `RuntimeContext.current` and `.policy`, and connect to
 
 ## Inspecting it
 
-`aphotic runtime` prints each screen's surfaces, the context, the
-posture, whether decorative motion is gated, and the last answered
-negotiations. `aphotic runtime --json` is the same data for scripts.
+`aphotic runtime` prints:
+
+- each screen's surfaces
+- the context and the posture
+- whether decorative motion is gated
+- every piece of repeating work the shell has loaded, and whether it is
+  live
+- the enabled plugins
+- the last answered negotiations
+
+`aphotic runtime --json` is the same data for scripts.
+
+## Activity (`services/Activity.qml`, `services/ActivityProbe.qml`)
+
+Every repeating `Timer` carries an `ActivityProbe` beside it:
+
+```qml
+Timer {
+    id: weatherRefresh
+    interval: 20 * 60 * 1000
+    running: true
+    repeat: true
+    onTriggered: root.refresh()
+}
+
+ActivityProbe {
+    name: "weather"
+    kind: "network"   // poll | file | process | network | render
+    timer: weatherRefresh
+}
+```
+
+The probe reads the timer's own `running` and `interval`, so the report
+is the real state rather than a description of it. A module that was
+never constructed never reports, so absence from the list means not
+loaded. Wakeups are scheduled wakeups: 60 s over each live timer's
+interval. They say how often the shell asked to be woken, which is the
+number a regression moves.
+
+`aphotic perf snapshot` asks the running shell for the same report and
+records the context, posture, live probes and wakeups/min in each
+`history.jsonl` row, so a slower snapshot can be tied to what was
+running. Add `"shell_wakeups_per_min": <n>` to `perf-budget.json` to have
+`aphotic perf budget` judge it. No default ships, because the right
+number depends on the bar style and plugins a machine runs.
 
 ## Idle cost
 
-`tests/test_idle_cost.py` fails on any repeating `Timer` or infinite
-animation whose `running:` is a literal `true`, unless it is listed with
-the reason it has to run at rest. Gate new periodic work on whatever
-reads it.
+`tests/test_idle_cost.py` enforces three rules:
+
+- A repeating `Timer` or infinite animation whose `running:` is a
+  literal `true` fails unless it is listed with the reason it has to run
+  at rest. Gate new periodic work on whatever reads it.
+- Every repeating `Timer` must have an `ActivityProbe`.
+- Probe names must be well-formed and unique.

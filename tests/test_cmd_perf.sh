@@ -333,6 +333,48 @@ out="$(bash "$APHO" perf budget 2>&1)" || fail "budget take-one should exit 0: $
 [[ "$(grep -c 'PASS' <<<"$out")" -eq 5 ]] || fail "take-one budget expected 5 PASS: $out"
 note "budget without --from-history takes a snapshot"
 
+# ---- runtime: the shell's own activity report lands in the snapshot ----
+cat > "$FAKE_BIN/qs" <<'EOF2'
+#!/usr/bin/env bash
+[[ "$*" == *"ipc call aphotic runtime"* ]] || exit 1
+cat <<'JSON'
+{"context":{"current":"game"},"resources":{"level":"pressure"},
+ "activity":{"active":2,"idle":1,"wakeupsPerMinute":42,
+   "probes":[{"name":"system.base","active":1},{"name":"weather","active":0},{"name":"hypr.lock-keys","active":1}]},
+ "plugins":{"enabled":["pets","agent-graph"]}}
+JSON
+EOF2
+chmod +x "$FAKE_BIN/qs"
+bash "$APHO" perf snapshot --samples 2 --label rt >/dev/null 2>&1 || fail "snapshot with a runtime answer should exit 0"
+python3 - "$HIST" <<'PY' || fail "runtime block missing or wrong in the snapshot"
+import json, sys
+doc = json.loads(open(sys.argv[1]).read().splitlines()[-1])
+rt = doc["runtime"]
+assert rt["context"] == "game" and rt["resources"] == "pressure", rt
+assert rt["activity"]["wakeups_per_min"] == 42, rt
+assert rt["activity"]["live"] == ["hypr.lock-keys", "system.base"], rt
+assert rt["plugins"] == 2, rt
+PY
+# Opt-in wakeups budget: absent means no row; present is judged.
+out="$(bash "$APHO" perf budget --from-history 2>&1)" || true
+if grep -q 'shell_wakeups_per_min' <<<"$out"; then fail "wakeups row must not appear unless budgeted: $out"; fi
+python3 - "$XDG_DATA_HOME/aphotic/perf-budget.json" <<'PY'
+import json, sys
+b = json.load(open(sys.argv[1])); b["shell_wakeups_per_min"] = 30
+json.dump(b, open(sys.argv[1], "w"))
+PY
+out="$(bash "$APHO" perf budget --from-history 2>&1)" && fail "42 wakeups/min over a 30 budget should exit nonzero: $out"
+grep -q 'shell_wakeups_per_min.*OVER' <<<"$out" || fail "expected an OVER wakeups row: $out"
+python3 - "$XDG_DATA_HOME/aphotic/perf-budget.json" <<'PY'
+import json, sys
+b = json.load(open(sys.argv[1])); del b["shell_wakeups_per_min"]
+json.dump(b, open(sys.argv[1], "w"))
+PY
+rm -f "$FAKE_BIN/qs"
+# Drop this row again so the history-table checks below see the rows they expect.
+sed -i '$d' "$HIST"
+note "runtime: context, posture and live pollers recorded; wakeups budget opt-in"
+
 # ---- history table ----
 out="$(bash "$APHO" perf history --last 4 2>&1)"
 [[ "$(grep -c '2026-' <<<"$out")" -eq 4 ]] || fail "history --last 4 should show 4 rows: $out"

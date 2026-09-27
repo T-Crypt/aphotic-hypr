@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # aphotic runtime — the running shell's composed state in one read: which
-# surface owns each screen, the runtime context, and the Resource Engine's
-# posture (quiet/settling/pressure/contention/negotiating).
+# surface owns each screen, the runtime context, the Resource Engine's
+# posture (quiet/settling/pressure/contention/negotiating), every
+# repeating piece of work the shell has loaded and whether it is live,
+# and the enabled plugins. Modules that are not loaded report nothing:
+# absence from the activity list means not constructed.
 # @cmd: runtime
-# @cmd.desc: Show surfaces, runtime context and resource posture
+# @cmd.desc: Show surfaces, runtime context, resource posture and shell activity
 # @cmd.group: CORE
 # @cmd.opt: [--json]            | Print the raw JSON instead of the summary
 # @cmd.opt: back                | Close whatever owns the keyboard on the focused screen
@@ -49,6 +52,25 @@ for sc in s.get("screens", []):
     owner = sc.get("focusOwner") or "-"
     stack = ", ".join(sc.get("stack", [])) or "-"
     print("%s %-12s %-9s owner=%-18s open=%s" % (mark, sc.get("screen", "?"), sc.get("mode", "?"), owner, stack))
+act = s.get("activity") or {}
+probes = act.get("probes") or []
+if probes:
+    print()
+    print("Activity  %d active, %d idle, ~%s scheduled wakeups/min" % (act.get("active", 0), act.get("idle", 0), act.get("wakeupsPerMinute", 0)))
+    for p in probes:
+        state = "ACTIVE" if p.get("active") else "idle"
+        every = p.get("interval") or 0
+        cadence = ("every %gs" % (every / 1000.0)) if every else ""
+        inst = (" x%d" % p["instances"]) if p.get("instances", 1) > 1 else ""
+        print("  %-26s %-7s %-7s %s%s" % (p.get("name", "?"), p.get("kind", ""), state, cadence, inst))
+plug = s.get("plugins") or {}
+if plug:
+    names = plug.get("enabled") or []
+    line = ", ".join(names) if names else "none"
+    if plug.get("safeMode"):
+        line += "  (safe mode: none loaded)"
+    print()
+    print("%-14s %s" % ("Plugins", line))
 hist = res.get("history") or []
 if hist:
     print()

@@ -1,5 +1,7 @@
 module qs.services
 singleton Actions 1.0 Actions.qml
+singleton Activity 1.0 Activity.qml
+ActivityProbe 1.0 ActivityProbe.qml
 singleton AgentProviders 1.0 AgentProviders.qml
 singleton Audio 1.0 Audio.qml
 singleton Brightness 1.0 Brightness.qml
