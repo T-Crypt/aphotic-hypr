@@ -286,6 +286,14 @@ surface bound only while an installed plugin registers one. Manifest
 format, every capability, and the current plugin roster: [Plugin
 System](https://t-crypt.github.io/aphotic-hypr/docs/plugin-system/).
 
+A plugin reaches the running shell through a versioned API handle
+carrying only what its manifest's `[api]` block declares: reading the
+runtime context and resource posture, suggesting a context switch,
+giving its surfaces a role, and notifying. Disabling the plugin revokes
+the handle. `aphotic plugin api` lists the calls, and
+[`RUNTIME.md`](Configs/quickshell/aphotic/RUNTIME.md#plugin-api-servicespluginapiqml-servicespluginapicorejs)
+has the contract.
+
 Repository: [T-Crypt/aphotic-plugins](https://github.com/T-Crypt/aphotic-plugins)
 
 ## Desktop Pets

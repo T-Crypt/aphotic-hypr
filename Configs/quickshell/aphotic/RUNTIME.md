@@ -18,7 +18,13 @@ run under node in CI (`tests/test_*.cjs`) exactly as QML runs them.
         │                          │
         └────────────┬─────────────┘
                      ▼
-        bar · notch · launcher · dashboard · negotiation · plugins
+        bar · notch · launcher · dashboard · negotiation
+                     │
+                     ▼
+            PluginApi.handle(name)  ── only what [api].uses declares
+                     │
+                     ▼
+                  plugins
 ```
 
 None of them polls. Every change is a flag flip, a claim, a hold or a
@@ -63,12 +69,14 @@ backs out of a blocking modal, because backing out of a negotiation would
 be a decision. The CLI is `aphotic runtime back`, and the IPC call is
 `qs -c aphotic ipc call aphotic back`.
 
-**Plugin surfaces.** `Surfaces.declare(name, role)` gives a plugin-owned
-surface a role. It has no `ScreenState` flag, so the plugin reports its
-own opens and closes with `Surfaces.track(screenState, name, open)` and
-closes itself on `Surfaces.closeRequested(screenState, name)`. An
-undeclared name in the stack is inert: it closes nothing and nothing
-closes it.
+**Plugin surfaces.** A plugin gives its surfaces roles through its API
+handle (`surface.declare`, below), not by calling Surfaces directly. The
+handle namespaces the name as `plugin:<plugin>/<local>`, so a plugin can
+never shadow or close a core surface or another plugin's. The plugin
+reports its own opens and closes, because it has no `ScreenState` flag,
+and closes itself when asked. Undeclaring a surface also removes it from
+every screen's stack. An unknown name in a stack is inert: it closes
+nothing and nothing closes it.
 
 **Adding a core surface.** Add the flag to `ScreenState`, its
 `on<Flag>Changed: Surfaces.track(...)` line, and its role in
@@ -156,6 +164,57 @@ the notch palette.
 
 Plugins read `RuntimeContext.current` and `.policy`, and connect to
 `RuntimeContext.switched(from, to)`.
+
+## Plugin API (`services/PluginApi.qml`, `services/PluginApiCore.js`)
+
+The supported way for a plugin to reach the running shell. Surfaces and
+hooks say where a plugin mounts; `[api]` says what it may ask the shell
+for once it is there.
+
+```toml
+[api]
+version = 1
+uses = ["context.observe", "resource.observe"]
+```
+
+```qml
+readonly property var api: PluginApi.handle("my-plugin")
+// api.context.current(), api.resources.level() ... read in bindings, reactive
+```
+
+| `uses` | Handle | What it does |
+| :-- | :-- | :-- |
+| `context.observe` | `context.current()`, `.policy()`, `.contexts()` | read the runtime context |
+| `context.request` | `context.request(name, reason)` | suggest a switch. The user gets a notification naming the plugin and its reason, and switches from its action or doesn't. At most one suggestion per plugin per minute. |
+| `resource.observe` | `resources.level()`, `.surfaced()`, `.resource()`, `.headline()` | read the resource posture |
+| `surface.declare` | `surfaces.declare(local, role)`, `.track(screenState, local, open)`, `.onCloseRequested(fn)` | give a plugin surface a role in the surface policy |
+| `notifications.publish` | `notify(summary, body)` | notify under the plugin's display name, subject to DND and the context popup floor |
+
+The rules the handle follows:
+
+- **Only what was declared.** The handle carries only the calls named in
+  `uses`. An undeclared call is absent, and `api.has(use)` asks without
+  touching it.
+- **Checked at call time.** Every call re-checks the grant, so disabling
+  or removing the plugin revokes the handle it already holds. Its
+  declared surfaces and close handlers are dropped the same tick.
+  `handle()` returns null while the plugin is disabled, including in safe
+  mode.
+- **Versioned.** `aphotic plugin install` refuses a plugin whose
+  `[api].version` is newer than the shell's, because its first call
+  would fail. `aphotic plugin validate` reports that as an error and an
+  unknown `uses` entry as a warning. `aphotic plugin api` lists the
+  version and every call.
+- **Part of the contract.** The `[api]` block is stored in the registry,
+  and editing it in place reads as drift in `aphotic plugin list`.
+- **Plugins without `[api]` work exactly as before.** They get no handle
+  calls.
+
+QML cannot sandbox imports, so a plugin can still reach services
+directly. That is not a supported contract and can break between
+releases. The handle is supported, and it is versioned. `api.uses` in
+`cmd_plugin.sh` and `USES` in `PluginApiCore.js` are held equal by
+`tests/test_plugin_api.sh`.
 
 ## Inspecting it
 
