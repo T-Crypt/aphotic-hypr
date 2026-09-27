@@ -159,7 +159,7 @@ Item {
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.model.entries[strip.currentIndex]?.file ?? ""
-                font: Tokens.font.title.large
+                font: Settings.barSignal ? Tokens.font.title.builders.large.weight(Font.DemiBold).build() : Tokens.font.title.large
                 color: Colours.palette.m3onSurface
                 animate: true
             }
@@ -167,7 +167,8 @@ Item {
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.model.entries[strip.currentIndex]?.theme ?? ""
-                font: Tokens.font.label.medium
+                font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+                font.capitalization: Settings.barSignal ? Font.SmallCaps : Font.MixedCase
                 color: Colours.palette.m3onSurfaceVariant
                 animate: true
             }
@@ -185,8 +186,14 @@ Item {
             // Headroom for the tallest a magnified card can grow to, so a
             // card near the edge is never clipped by its own tray.
             implicitHeight: root.cellHeight * (1 + root.magnifyExtra) + Tokens.padding.large * 2
-            radius: Tokens.rounding.extraLarge
-            color: Qt.alpha(Colours.palette.m3surfaceContainer, 0.55)
+            radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+            color: Settings.barSignal ? Colours.signalStyle.glass : Qt.alpha(Colours.palette.m3surfaceContainer, 0.55)
+            border.width: Settings.barSignal ? 1 : 0
+            border.color: Colours.signalStyle.hairline
+
+            Behavior on radius {
+                Anim { type: Anim.DefaultEffects }
+            }
 
             ListView {
                 id: strip

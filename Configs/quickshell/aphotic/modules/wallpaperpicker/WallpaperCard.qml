@@ -157,7 +157,7 @@ Item {
     BevelPath {
         anchors.fill: parent
         fillColour: "transparent"
-        strokeColour: Qt.tint(Colours.palette.m3outlineVariant, Qt.alpha(Colours.palette.m3primary, 0.5 * root.closeness))
+        strokeColour: Settings.barSignal ? (root.active ? Colours.palette.m3primary : Colours.signalStyle.hairline) : Qt.tint(Colours.palette.m3outlineVariant, Qt.alpha(Colours.palette.m3primary, 0.5 * root.closeness))
         strokeWidth: 1.5
         opacity: 0.25 + 0.35 * root.closeness
         chamfer: root.chamfer

@@ -389,7 +389,7 @@ Item {
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root._fileFor(strip.currentIndex)
-                font: Tokens.font.title.large
+                font: Settings.barSignal ? Tokens.font.title.builders.large.weight(Font.DemiBold).build() : Tokens.font.title.large
                 color: Colours.palette.m3onSurface
                 animate: true
             }
