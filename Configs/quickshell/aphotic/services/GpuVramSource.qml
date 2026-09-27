@@ -360,4 +360,10 @@ QtObject {
         running: root.scanning
         onTriggered: root._processProc.running = true
     }
+
+    property ActivityProbe _processPollProbe: ActivityProbe {
+        name: "gpu-vram.processes"
+        kind: "process"
+        timer: root._processPoll
+    }
 }

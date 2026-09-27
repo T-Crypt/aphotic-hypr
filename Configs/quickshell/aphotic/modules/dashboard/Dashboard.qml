@@ -2,6 +2,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Window
 import Quickshell.Services.UPower
 import qs.config
 import qs.components
@@ -869,6 +870,11 @@ Item {
                     property int _tickCount: 0
                     property int _lastTickCount: -1
 
+                    // The tab stays loaded while the dashboard is closed on
+                    // it, and the slide below repaints every frame. Same
+                    // on-screen test FlowTab uses.
+                    readonly property bool presented: !!Window.window && Window.window.visible
+
                     function checkAndAnimate(): void {
                         const currentLength = (downHistory || []).length;
                         if (currentLength > 0 && _tickCount !== _lastTickCount) {
@@ -944,10 +950,18 @@ Item {
                     }
 
                     Timer {
+                        id: sparklineTick
+
                         interval: Config.dashboard.resourceUpdateInterval
-                        running: true
+                        running: sparklineCanvas.presented
                         repeat: true
                         onTriggered: sparklineCanvas._tickCount++
+                    }
+
+                    ActivityProbe {
+                        name: "dashboard.sparkline"
+                        kind: "render"
+                        timer: sparklineTick
                     }
 
                     NumberAnimation on slideProgress {
@@ -955,7 +969,7 @@ Item {
                         to: 1
                         duration: Config.dashboard.resourceUpdateInterval
                         loops: Animation.Infinite
-                        running: true
+                        running: sparklineCanvas.presented
                     }
 
                     Behavior on smoothMax {

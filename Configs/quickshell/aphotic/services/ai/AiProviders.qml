@@ -530,6 +530,12 @@ Singleton {
         onRunningChanged: if (running) attempts = 0
     }
 
+    ActivityProbe {
+        name: "ai.ollama-start-retry"
+        kind: "network"
+        timer: ollamaStartupRetry
+    }
+
     Process {
         id: ollamaStopProc
         onExited: exitCode => {
@@ -559,6 +565,12 @@ Singleton {
             }
         }
         onRunningChanged: if (running) attempts = 0
+    }
+
+    ActivityProbe {
+        name: "ai.ollama-stop-retry"
+        kind: "network"
+        timer: ollamaStopRetry
     }
 
     Process {
@@ -615,12 +627,26 @@ Singleton {
         onTriggered: root.refreshRunningModels()
     }
 
+    ActivityProbe {
+        name: "ai.ollama-ps"
+        kind: "network"
+        timer: ollamaPsPoll
+    }
+
     Timer {
+        id: lmStudioPoll
+
         interval: root.lmStudioReachable ? 5000 : 30000
         repeat: true
         triggeredOnStart: true
         running: InstallProfile.aiEnabled && AiConfig.lmStudioHostConfigured
         onTriggered: root.refreshLmStudioRunning()
+    }
+
+    ActivityProbe {
+        name: "ai.lmstudio-ps"
+        kind: "network"
+        timer: lmStudioPoll
     }
 
     // llama-swap pushes a modelStatus event the moment a model starts or
@@ -663,6 +689,8 @@ Singleton {
     }
 
     Timer {
+        id: llamaSwapReconcile
+
         interval: 30000
         repeat: true
         triggeredOnStart: true
@@ -672,6 +700,12 @@ Singleton {
             if (!llamaSwapEvents.running)
                 llamaSwapEventsRetry.restart();
         }
+    }
+
+    ActivityProbe {
+        name: "ai.llama-swap-reconcile"
+        kind: "network"
+        timer: llamaSwapReconcile
     }
 
     OllamaClaims {

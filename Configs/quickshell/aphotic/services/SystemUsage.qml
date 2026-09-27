@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.services
 
 // Pure QML/proc-filesystem system monitor -- no native plugin needed.
 // GPU name comes from `lspci` (always available, vendor-neutral).
@@ -377,6 +378,8 @@ Singleton {
     }
 
     Timer {
+        id: baseSample
+
         interval: Config.dashboard.resourceUpdateInterval
         running: true
         repeat: true
@@ -408,6 +411,12 @@ Singleton {
         }
     }
 
+    ActivityProbe {
+        name: "system.base"
+        kind: "file"
+        timer: baseSample
+    }
+
     // triggeredOnStart is what makes opening a surface feel instant: the
     // gate going true fires a tick immediately rather than leaving the
     // card blank for up to 30s.
@@ -419,6 +428,8 @@ Singleton {
     // tick. `df` was running every 2s forever for a reading nothing was
     // displaying most of the time. See docs/archive/BACKLOG.md's E2-09.
     Timer {
+        id: detailSample
+
         interval: Config.dashboard.detailUpdateInterval
         running: root.detailedMonitoring
         repeat: true
@@ -429,16 +440,30 @@ Singleton {
         }
     }
 
+    ActivityProbe {
+        name: "system.detail"
+        kind: "process"
+        timer: detailSample
+    }
+
     // Split out of the timer above rather than sharing it: the two used to
     // tick together, so making the GPU poll fast enough to sit beside a 2s
     // CPU meter would have dragged `sensors -j` along at the same rate for
     // a reading that moves in single degrees over minutes.
     Timer {
+        id: detailFastSample
+
         interval: root.fastMonitoring ? Config.dashboard.detailFastUpdateInterval : Config.dashboard.detailUpdateInterval
         running: root.detailedMonitoring
         repeat: true
         triggeredOnStart: true
         onTriggered: root._pollGpu()
+    }
+
+    ActivityProbe {
+        name: "system.detail-fast"
+        kind: "process"
+        timer: detailFastSample
     }
 
     Component.onCompleted: {

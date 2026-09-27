@@ -256,6 +256,16 @@ negotiates rather than deciding for you. It stays dormant until something
 claims a resource. Full mechanism, boundaries, and current state:
 [Resource Engine](https://t-crypt.github.io/aphotic-hypr/docs/resource-engine/).
 
+The shell reads that state directly, so Flow is not the only place it
+shows up. One surface controller decides how the launcher, Command
+Center, Settings, the Workspace plane and the negotiation prompt coexist
+on each screen. Resource pressure and contention show up quietly in the
+bar and the notch. A manual **runtime context** (`aphotic context set
+focus|dev|game|present`) changes popups, motion and when resource state
+is shown, without installing or changing anything. `aphotic runtime`
+prints all three. Contracts:
+[`RUNTIME.md`](Configs/quickshell/aphotic/RUNTIME.md).
+
 ## Profiles
 
 Four optional layers merge onto a `minimal` or `full` base profile:
@@ -275,6 +285,14 @@ of them to function. A plugin can also claim the **Workspace plane**
 surface bound only while an installed plugin registers one. Manifest
 format, every capability, and the current plugin roster: [Plugin
 System](https://t-crypt.github.io/aphotic-hypr/docs/plugin-system/).
+
+A plugin reaches the running shell through a versioned API handle
+carrying only what its manifest's `[api]` block declares: reading the
+runtime context and resource posture, suggesting a context switch,
+giving its surfaces a role, and notifying. Disabling the plugin revokes
+the handle. `aphotic plugin api` lists the calls, and
+[`RUNTIME.md`](Configs/quickshell/aphotic/RUNTIME.md#plugin-api-servicespluginapiqml-servicespluginapicorejs)
+has the contract.
 
 Repository: [T-Crypt/aphotic-plugins](https://github.com/T-Crypt/aphotic-plugins)
 
@@ -479,6 +497,12 @@ The shell favors:
 
 The Resource Engine extends this approach to active workloads instead of
 treating system resources as static configuration.
+
+`tests/test_idle_cost.py` enforces it. A repeating timer or an infinite
+animation that runs unconditionally fails CI unless it is listed with the
+reason it has to run at rest. Every repeating timer reports whether it is
+live, so `aphotic runtime` lists what the shell is doing at rest, and
+`aphotic perf` records it with each snapshot.
 
 ## Keybindings
 
