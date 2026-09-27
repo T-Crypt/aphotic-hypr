@@ -1,4 +1,4 @@
-# canary 2026-09-25
+# canary 2026-09-27
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -17,7 +17,7 @@ at-spi2-core 2.60.7-1
 attr 2.6.0-1
 audit 4.2.1-1
 autoconf 2.73-1
-automake 1.18.1-1
+automake 1.19-1
 avahi 1:0.9rc5-1
 awww 0.12.1-1
 base 3-3
@@ -37,9 +37,9 @@ btop 1.4.7-1
 bubblewrap 0.13.0-1
 bzip2 1.0.8-6
 ca-certificates 20240618-1
-ca-certificates-mozilla 3.129-1
+ca-certificates-mozilla 3.130-1
 ca-certificates-utils 20240618-1
-cairo 1.18.4-1
+cairo 1.18.6-1
 cairomm-1.16 1.18.1-1
 cava 1.0.0-1
 cfitsio 1:4.7.0-1
@@ -90,7 +90,7 @@ flex 2.6.4-6
 fontconfig 2:2.18.3-2
 freeglut 3.8.0-1
 freetype2 2.14.3-1
-fribidi 1.0.16-2
+fribidi 1.0.17-1
 fuse-common 3.18.3-1
 fuse3 3.18.3-1
 garcon 4.20.0-2
@@ -161,9 +161,9 @@ hyprcursor 0.1.13-7
 hyprgraphics 0.5.1-4
 hypridle 0.1.8-2
 hyprland 0.56.2-3
-hyprland-guiutils 0.2.2-3
+hyprland-guiutils 0.2.2-4
 hyprlang 0.6.8-5
-hyprtoolkit 0.5.4-6
+hyprtoolkit 0.6.0-1
 hyprutils 0.14.2-1
 hyprwire 0.3.1-3
 iana-etc 20260617-1
@@ -186,9 +186,9 @@ json-c 0.19-1
 json-glib 1.10.8-1
 kbd 2.10.0-1
 keyutils 1.6.3-4
-kitty 0.48.2-1
-kitty-shell-integration 0.48.2-1
-kitty-terminfo 0.48.2-1
+kitty 0.49.1-1
+kitty-shell-integration 0.49.1-1
+kitty-terminfo 0.49.1-1
 kmod 34.2-1
 krb5 1.22.2-1
 kvantum 1.1.8-1
@@ -494,7 +494,7 @@ nm-connection-editor 1.36.0-2
 noto-fonts-emoji 1:2.051-1
 npth 1.8-1
 nspr 4.40-1
-nss 3.129-1
+nss 3.130-1
 numactl 2.0.19-1
 nvidia-open-dkms 615.71.09-1
 nvidia-utils 615.71.09-1
@@ -505,7 +505,7 @@ onetbb 2023.1.0-1
 oniguruma 6.9.10-1
 openal 1.25.2-2
 opencore-amr 0.1.6-2
-openexr 3.5.0-2
+openexr 3.5.1-1
 openjpeg2 2.5.4-1
 openjph 0.32.0-1
 openssh 10.5p1-1
@@ -642,7 +642,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 79-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.139.0-1
+visual-studio-code-bin 1.139.1-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.357.0-1
