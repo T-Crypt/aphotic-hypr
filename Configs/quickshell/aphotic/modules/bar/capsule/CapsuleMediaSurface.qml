@@ -30,10 +30,18 @@ Item {
     // signal is the only way to tick it. Runs at 1Hz, and only while this
     // area is both open and playing.
     Timer {
+        id: mediaPositionTick
+
         running: root.live && (root.player?.isPlaying ?? false) && (root.player?.positionSupported ?? false) && (root.player?.length ?? 0) > 0
         interval: 1000
         repeat: true
         onTriggered: root.player?.positionChanged()
+    }
+
+    ActivityProbe {
+        name: "bar.capsule-media"
+        kind: "render"
+        timer: mediaPositionTick
     }
 
     GridLayout {

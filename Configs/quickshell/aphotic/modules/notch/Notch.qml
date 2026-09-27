@@ -97,6 +97,17 @@ StyledRect {
         root.tileId = "";
     }
 
+    // Something taking the keyboard on this screen collapses the hub, so
+    // a launcher or dashboard never opens beside an expanded tile.
+    Connections {
+        target: root.screenState
+
+        function onEngagedChanged(): void {
+            if (root.screenState.engaged)
+                root.collapse();
+        }
+    }
+
     onTileIdChanged: {
         if (root.tileId !== "")
             root.shownTileId = root.tileId;

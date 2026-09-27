@@ -206,7 +206,9 @@ ColumnLayout {
 
     Component {
         id: processComp
-        NotchProcessTile {}
+        NotchProcessTile {
+            screenState: root.screenState
+        }
     }
 
     Component {
