@@ -76,7 +76,7 @@ Item {
             implicitWidth: Settings.barHorizontal ? (start && end ? end.x + end.size - start.x + 2 : 0) : (Settings.barInnerWidth - Tokens.padding.small + 2)
             implicitHeight: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small + 2) : (start && end ? end.y + end.size - start.y + 2 : 0)
 
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Settings.barSignal ? "transparent" : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
             radius: Tokens.rounding.full
 
             property bool shown: false

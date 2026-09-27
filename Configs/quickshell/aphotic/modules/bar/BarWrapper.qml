@@ -153,8 +153,8 @@ Item {
         // minimal draw their own full-bleed background internally
         // (TaskbarBar.qml/MinimalBar.qml), matching their own described
         // look instead of inheriting Full's rounded-strip treatment.
-        radius: Settings.barSkin === "square" ? Tokens.rounding.small : Tokens.rounding.full
-        color: Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? 0 : Settings.barSkin === "square" ? Tokens.rounding.small : Tokens.rounding.full
+        color: Settings.barSignal ? Qt.alpha(Colours.palette.m3surface, 0.86) : Colours.tPalette.m3surfaceContainer
         border.width: 0
         border.color: Colours.palette.m3outlineVariant
         visible: root.shouldBeVisible && Settings.barStyle === "full"
@@ -165,8 +165,67 @@ Item {
 
         DepthGradient {
             anchors.fill: parent
+            visible: !Settings.barSignal
             radius: parent.radius
             baseColour: Colours.tPalette.m3surfaceContainer
+        }
+
+        Item {
+            id: signalLine
+
+            readonly property var win: QsWindow.window
+            readonly property bool horizontal: Settings.barHorizontal
+            // Where this line starts along the bar, in window coordinates.
+            readonly property real origin: {
+                background.x + background.y;
+                if (!Settings.barSignal || !background.Window.window)
+                    return 0;
+                const p = QsWindow.itemPosition(background);
+                return horizontal ? p.x : p.y;
+            }
+
+            visible: Settings.barSignal
+            x: horizontal ? 0 : (Settings.barPositionRight ? 0 : parent.width - 1)
+            y: horizontal ? (Settings.barPositionBottom ? 0 : parent.height - 1) : 0
+            width: horizontal ? parent.width : 1
+            height: horizontal ? 1 : parent.height
+
+            Rectangle {
+                anchors.fill: parent
+                color: Qt.alpha(Colours.palette.m3outlineVariant, 0.5)
+            }
+
+            Rectangle {
+                readonly property real start: (signalLine.win?.signalHoverStart ?? 0) - signalLine.origin
+                readonly property real length: signalLine.win?.signalHoverLength ?? 0
+
+                x: signalLine.horizontal ? start : 0
+                y: signalLine.horizontal ? 0 : start
+                width: signalLine.horizontal ? length : 1
+                height: signalLine.horizontal ? 1 : length
+                color: Colours.palette.m3onSurface
+                opacity: signalLine.win?.signalHoverOwner ? 0.45 : 0
+
+                Behavior on opacity {
+                    Anim {
+                        type: Anim.FastEffects
+                    }
+                }
+            }
+
+            Rectangle {
+                readonly property real start: (signalLine.win?.signalActiveStart ?? 0) - signalLine.origin
+                readonly property real length: signalLine.win?.signalActiveLength ?? 0
+                readonly property real thickness: 2
+
+                x: signalLine.horizontal ? start : (Settings.barPositionRight ? 0 : 1 - thickness)
+                y: signalLine.horizontal ? (Settings.barPositionBottom ? 0 : 1 - thickness) : start
+                width: signalLine.horizontal ? length : thickness
+                height: signalLine.horizontal ? thickness : length
+                radius: thickness / 2
+                color: Colours.palette.m3primary
+                visible: length > 0
+            }
         }
     }
 

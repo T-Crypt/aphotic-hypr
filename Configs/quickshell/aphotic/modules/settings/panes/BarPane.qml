@@ -194,7 +194,8 @@ ColumnLayout {
             label: qsTr("Full style background")
             presets: [
                 { value: "pill", label: qsTr("Pill") },
-                { value: "square", label: qsTr("Square") }
+                { value: "square", label: qsTr("Square") },
+                { value: "signal", label: qsTr("Signal line") }
             ]
             value: Settings.barSkin
             onSelected: value => Settings.barSkin = value

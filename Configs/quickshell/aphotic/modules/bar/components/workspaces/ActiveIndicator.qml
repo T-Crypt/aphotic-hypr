@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import qs.config
 import qs.components
 import qs.components.effects
@@ -43,7 +44,23 @@ Item {
 
     // 0..1: how far the edges have separated, in workspace-size units.
     // Drives the cross-axis squash below so a stretching pill thins out.
+    readonly property real crossSize: Settings.barSignal ? Math.round(Settings.barInnerWidth * 0.34) : Settings.barInnerWidth - Tokens.padding.small
     readonly property real stretch: currentSize > 0 ? Math.min(1, Math.abs(leading - trailing) / currentSize) : 0
+
+    function publishSignal(): void {
+        const win = QsWindow.window;
+        if (!Settings.barSignal || !root.Window.window || !win || win.signalActiveStart === undefined)
+            return;
+        const p = QsWindow.itemPosition(root);
+        win.signalActiveStart = Settings.barHorizontal ? p.x : p.y;
+        win.signalActiveLength = Settings.barHorizontal ? width : height;
+    }
+
+    onXChanged: publishSignal()
+    onYChanged: publishSignal()
+    onWidthChanged: publishSignal()
+    onHeightChanged: publishSignal()
+    Component.onCompleted: publishSignal()
 
     property int cWs
     property int lastWs
@@ -57,8 +74,8 @@ Item {
     y: Settings.barHorizontal ? 0 : offset + mask.y
     // Cross axis thins up to 12% while stretched; the Loader centers the
     // pill on that axis, so it stays centered as it squashes.
-    implicitWidth: Settings.barHorizontal ? size : (Settings.barInnerWidth - Tokens.padding.small) * (1 - 0.12 * stretch)
-    implicitHeight: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small) * (1 - 0.12 * stretch) : size
+    implicitWidth: Settings.barHorizontal ? size : root.crossSize * (1 - 0.12 * stretch)
+    implicitHeight: Settings.barHorizontal ? root.crossSize * (1 - 0.12 * stretch) : size
 
     // The pill has to clip: `colouriser` below renders the WHOLE workspace
     // row and slides it under this window so only the active cell's glyph
