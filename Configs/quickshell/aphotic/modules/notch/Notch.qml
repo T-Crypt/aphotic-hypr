@@ -198,7 +198,6 @@ StyledRect {
         visible: root.joined
         radius: root.wing
         color: root.color
-        edgeColor: Colours.signalStyle.hairline
         corner: root.dockHorizontal ? (root.barSide === "bottom" ? 2 : 0) : (root.barSide === "right" ? 2 : 3)
         x: root.dockHorizontal ? -radius : (root.barSide === "right" ? parent.width - radius : 0)
         y: root.dockHorizontal ? (root.barSide === "bottom" ? parent.height - radius : 0) : -radius
@@ -208,7 +207,6 @@ StyledRect {
         visible: root.joined
         radius: root.wing
         color: root.color
-        edgeColor: Colours.signalStyle.hairline
         corner: root.dockHorizontal ? (root.barSide === "bottom" ? 3 : 1) : (root.barSide === "right" ? 0 : 1)
         x: root.dockHorizontal ? parent.width : (root.barSide === "right" ? parent.width - radius : 0)
         y: root.dockHorizontal ? (root.barSide === "bottom" ? parent.height - radius : 0) : parent.height
@@ -329,36 +327,6 @@ StyledRect {
             color: "transparent"
             border.width: 1
             border.color: Colours.palette.m3outlineVariant
-        }
-
-        // Open outline: every side but the one joined to the bar.
-        Shape {
-            anchors.fill: parent
-            visible: root.joined
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeWidth: 1
-                strokeColor: Colours.signalStyle.hairline
-                fillColor: "transparent"
-
-                PathSvg {
-                    path: {
-                        const w = root.width, h = root.height;
-                        const r = Math.min(root.radius, w / 2, h / 2);
-                        switch (root.barSide) {
-                        case "bottom":
-                            return `M0,${h} L0,${r} A${r},${r} 0 0 1 ${r},0 L${w - r},0 A${r},${r} 0 0 1 ${w},${r} L${w},${h}`;
-                        case "left":
-                            return `M0,0 L${w - r},0 A${r},${r} 0 0 1 ${w},${r} L${w},${h - r} A${r},${r} 0 0 1 ${w - r},${h} L0,${h}`;
-                        case "right":
-                            return `M${w},0 L${r},0 A${r},${r} 0 0 0 0,${r} L0,${h - r} A${r},${r} 0 0 0 ${r},${h} L${w},${h}`;
-                        default:
-                            return `M0,0 L0,${h - r} A${r},${r} 0 0 0 ${r},${h} L${w - r},${h} A${r},${r} 0 0 0 ${w},${h - r} L${w},0`;
-                        }
-                    }
-                }
-            }
         }
     }
 }
