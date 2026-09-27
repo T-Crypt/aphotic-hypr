@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.components
+import qs.services
 
 PanelWindow {
     id: root
@@ -24,7 +25,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.settings
+    visible: screenState.settings && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 
