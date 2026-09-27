@@ -13,6 +13,8 @@ Item {
     required property string label
     required property list<string> command
 
+    property real reveal: 1
+
     signal activated
 
     function exec(): void {
@@ -24,6 +26,10 @@ Item {
     implicitHeight: Tokens.sizes.session.button + label_.implicitHeight + Tokens.spacing.small
 
     activeFocusOnTab: true
+    opacity: root.reveal
+    transform: Translate {
+        y: (1 - root.reveal) * Tokens.spacing.large
+    }
 
     Keys.onEnterPressed: exec()
     Keys.onReturnPressed: exec()
