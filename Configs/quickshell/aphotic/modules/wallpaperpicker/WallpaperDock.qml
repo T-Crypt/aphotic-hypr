@@ -166,9 +166,8 @@ Item {
 
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: root.model.entries[strip.currentIndex]?.theme ?? ""
+                text: Settings.barSignal ? (root.model.entries[strip.currentIndex]?.theme ?? "").toUpperCase() : (root.model.entries[strip.currentIndex]?.theme ?? "")
                 font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
-                font.capitalization: Settings.barSignal ? Font.SmallCaps : Font.MixedCase
                 color: Colours.palette.m3onSurfaceVariant
                 animate: true
             }
