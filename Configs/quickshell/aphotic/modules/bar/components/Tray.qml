@@ -84,20 +84,21 @@ StyledRect {
 
         add: Transition {
             Anim {
+                type: Anim.DefaultSpatial
                 properties: "scale"
                 from: 0
                 to: 1
-                easing: Tokens.anim.standardDecel
             }
         }
 
         move: Transition {
             Anim {
+                type: Anim.DefaultSpatial
                 properties: "scale"
                 to: 1
-                easing: Tokens.anim.standardDecel
             }
             Anim {
+                type: Anim.DefaultSpatial
                 properties: "x,y"
             }
         }
@@ -165,25 +166,35 @@ StyledRect {
                 fontStyle: Tokens.font.icon.medium
 
                 Behavior on rotation {
-                    Anim {}
+                    Anim {
+                        type: Anim.DefaultSpatial
+                    }
                 }
 
                 Behavior on anchors.bottomMargin {
-                    Anim {}
+                    Anim {
+                        type: Anim.DefaultSpatial
+                    }
                 }
 
                 Behavior on anchors.rightMargin {
-                    Anim {}
+                    Anim {
+                        type: Anim.DefaultSpatial
+                    }
                 }
             }
         }
     }
 
     Behavior on implicitHeight {
-        Anim {}
+        Anim {
+            type: Anim.DefaultSpatial
+        }
     }
 
     Behavior on implicitWidth {
-        Anim {}
+        Anim {
+            type: Anim.DefaultSpatial
+        }
     }
 }
