@@ -33,7 +33,7 @@ Item {
 
     Elevation {
         target: frame
-        level: 3
+        level: Settings.barSignal ? 2 : 3
     }
 
     StyledRect {
@@ -41,9 +41,12 @@ Item {
 
         anchors.fill: parent
         radius: Tokens.rounding.large
-        color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+        color: Settings.barSignal ? Colours.signalStyle.glass : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
 
         StyledRect {
+            visible: !Settings.barSignal
             anchors.fill: parent
             anchors.margins: 1
             radius: Math.max(0, parent.radius - 1)
@@ -62,7 +65,7 @@ Item {
             width: Tokens.sizes.workspace.railWidth
             height: parent.height
             radius: Tokens.rounding.large
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Settings.barSignal ? Colours.signalStyle.base : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
             clip: true
 
             Column {
@@ -75,16 +78,16 @@ Item {
                     height: 58
 
                     StyledRect {
-                        width: 34
-                        height: 34
+                        width: Settings.barSignal ? 32 : 34
+                        height: Settings.barSignal ? 32 : 34
                         anchors.verticalCenter: parent.verticalCenter
                         radius: Tokens.rounding.medium
-                        color: Colours.palette.m3primary
+                        color: Settings.barSignal ? Qt.alpha(Colours.signalStyle.tint(0), 0.3) : Colours.palette.m3primary
 
                         MaterialIcon {
                             anchors.centerIn: parent
                             text: "space_dashboard"
-                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            color: Settings.barSignal ? Colours.legibleAccent(Colours.signalStyle.tint(0), Colours.signalStyle.base) : Colours.contrastOn(Colours.palette.m3primary)
                             fontStyle: Tokens.font.icon.medium
                             fill: 1
                         }
@@ -99,13 +102,13 @@ Item {
 
                         StyledText {
                             text: qsTr("Workspace")
-                            font: Tokens.font.title.small
+                            font: Settings.barSignal ? Tokens.font.headline.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.small
                             color: Colours.palette.m3onSurface
                         }
 
                         StyledText {
-                            text: qsTr("Plugin tools")
-                            font: Tokens.font.label.small
+                            text: Settings.barSignal ? qsTr("Plugin tools").toUpperCase() : qsTr("Plugin tools")
+                            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.small
                             color: Colours.palette.m3onSurfaceVariant
                         }
                     }
@@ -116,7 +119,7 @@ Item {
                     topPadding: Tokens.spacing.small
                     bottomPadding: Tokens.spacing.extraSmall
                     text: qsTr("AVAILABLE")
-                    font: Tokens.font.label.builders.small.weight(Font.Medium).build()
+                    font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.builders.small.weight(Font.Medium).build()
                     color: Colours.palette.m3onSurfaceVariant
                 }
 
@@ -134,9 +137,10 @@ Item {
                         width: parent.width
                         height: Tokens.sizes.workspace.itemHeight
                         radius: Tokens.rounding.medium
-                        color: Qt.alpha(Colours.palette.m3primary, 0.14)
+                        color: Settings.barSignal ? Qt.alpha(Colours.signalStyle.tint(navigationList.activeIndex), 0.13) : Qt.alpha(Colours.palette.m3primary, 0.14)
 
                         Behavior on y { Anim { type: Anim.DefaultSpatial } }
+                        Behavior on color { CAnim {} }
 
                         StyledRect {
                             anchors.left: parent.left
@@ -144,7 +148,7 @@ Item {
                             width: 3
                             height: parent.height - Tokens.spacing.large
                             radius: Tokens.rounding.full
-                            color: Colours.palette.m3primary
+                            color: Settings.barSignal ? Colours.signalStyle.tint(navigationList.activeIndex) : Colours.palette.m3primary
                         }
                     }
 
@@ -158,6 +162,7 @@ Item {
                             required property var modelData
                             required property int index
                             readonly property bool active: root.activeId === navItem.modelData.id
+                            readonly property color tint: Colours.signalStyle.tint(navItem.index)
 
                             x: 0
                             y: navItem.index * Tokens.sizes.workspace.itemHeight
@@ -176,21 +181,35 @@ Item {
                                 anchors.rightMargin: Tokens.padding.small
                                 spacing: Tokens.spacing.small
 
-                                MaterialIcon {
+                                StyledRect {
+                                    id: navChip
+
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: navItem.modelData.icon
-                                    color: navItem.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
-                                    fontStyle: Tokens.font.icon.small
-                                    fill: navItem.active ? 1 : 0
+                                    width: Settings.barSignal ? 32 : navIcon.implicitWidth
+                                    height: Settings.barSignal ? 32 : navIcon.implicitHeight
+                                    radius: Tokens.rounding.medium
+                                    color: Settings.barSignal ? Qt.alpha(navItem.tint, navItem.active ? 0.3 : 0.16) : "transparent"
+
+                                    Behavior on color { CAnim {} }
+
+                                    MaterialIcon {
+                                        id: navIcon
+
+                                        anchors.centerIn: parent
+                                        text: navItem.modelData.icon
+                                        color: Settings.barSignal ? Colours.legibleAccent(navItem.tint, Colours.signalStyle.base) : (navItem.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant)
+                                        fontStyle: Tokens.font.icon.small
+                                        fill: navItem.active ? 1 : 0
+                                    }
                                 }
 
                                 StyledText {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width - 32
+                                    width: parent.width - (Settings.barSignal ? 56 : 32)
                                     elide: Text.ElideRight
                                     text: navItem.modelData.label
-                                    font: Tokens.font.label.builders.medium.weight(navItem.active ? Font.Medium : Font.Normal).build()
-                                    color: navItem.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                                    font: Settings.barSignal && navItem.active ? Tokens.font.label.builders.medium.weight(Font.DemiBold).build() : Tokens.font.label.builders.medium.weight(navItem.active ? Font.Medium : Font.Normal).build()
+                                    color: Settings.barSignal ? (navItem.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (navItem.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant)
                                 }
                             }
                         }
@@ -203,8 +222,29 @@ Item {
             width: parent.width - navigation.width - parent.spacing
             height: parent.height
             radius: Tokens.rounding.large
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 1)
+            color: Settings.barSignal ? Colours.signalStyle.surface : Colours.layer(Colours.palette.m3surfaceContainerHigh, 1)
             clip: true
+
+            // Accent glow falling from the top of the pane, behind its content.
+            Rectangle {
+                visible: Settings.barSignal
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: 160
+                topLeftRadius: parent.radius
+                topRightRadius: parent.radius
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: Qt.alpha(Colours.palette.m3primary, 0.1)
+                    }
+                    GradientStop {
+                        position: 1
+                        color: Qt.alpha(Colours.palette.m3primary, 0)
+                    }
+                }
+            }
 
             Loader {
                 id: paneLoader

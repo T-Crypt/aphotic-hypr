@@ -79,7 +79,7 @@ PanelWindow {
 
         Elevation {
             target: panel
-            level: 3
+            level: Settings.barSignal ? 2 : 3
         }
 
         StyledClippingRect {
@@ -88,9 +88,9 @@ PanelWindow {
             width: root.panelWidth
             implicitHeight: content.implicitHeight + Tokens.padding.extraLarge * 2
             radius: Tokens.rounding.extraLarge
-            color: Colours.tPalette.m3surfaceContainer
-            border.width: Config.border.thickness
-            border.color: Colours.palette.m3outlineVariant
+            color: Settings.barSignal ? Colours.signalStyle.glass : Colours.tPalette.m3surfaceContainer
+            border.width: Settings.barSignal ? 1 : Config.border.thickness
+            border.color: Settings.barSignal ? Colours.signalStyle.hairline : Colours.palette.m3outlineVariant
 
             // Swallow clicks on the panel so they don't reach the
             // cancel-on-click-outside handler behind it.
@@ -100,6 +100,7 @@ PanelWindow {
 
             DepthGradient {
                 anchors.fill: parent
+                visible: !Settings.barSignal
                 radius: panel.radius
                 baseColour: panel.color
             }
@@ -146,12 +147,14 @@ PanelWindow {
 
                         WorkspaceCard {
                             required property var modelData
+                            required property int index
 
                             reveal: reveal.staggered(index)
 
                             card: modelData
                             cardHeight: root.cardHeight
                             active: Switcher.currentWorkspace === modelData.id
+                            tintIndex: index
                         }
                     }
                 }
