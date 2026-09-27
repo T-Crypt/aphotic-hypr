@@ -31,11 +31,10 @@ Item {
     signal shake
 
     function handleKey(event: var): void {
-        if (root.waiting)
-            return;
-
+        // Typing is kept while greetd is busy; only submitting waits.
         if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-            root._submit();
+            if (!root.waiting)
+                root._submit();
         } else if (event.key === Qt.Key_Escape) {
             root._reset();
         } else if (event.key === Qt.Key_Backspace) {
@@ -91,7 +90,6 @@ Item {
             root.prompt = message || qsTr("Password");
             root.maskInput = !echoResponse;
             root.waiting = !responseRequired;
-            root.buffer = "";
             if (error) {
                 root.errorText = message;
                 root.shake();
@@ -137,7 +135,9 @@ Item {
             // Keep the name that was entered and open a fresh conversation,
             // so a mistyped password only needs the password again.
             const name = root.username;
+            const typedAhead = root.buffer;
             root._reset();
+            root.buffer = typedAhead;
             if (name.length > 0 && Greetd.available) {
                 root.username = name;
                 root.waiting = true;
