@@ -27,6 +27,7 @@ singleton RenderGate 1.0 RenderGate.qml
 singleton SafeMode 1.0 SafeMode.qml
 singleton SessionLockState 1.0 SessionLockState.qml
 singleton Settings 1.0 Settings.qml
+singleton Surfaces 1.0 Surfaces.qml
 singleton Switcher 1.0 Switcher.qml
 singleton ShellUsage 1.0 ShellUsage.qml
 singleton SystemCapacity 1.0 SystemCapacity.qml

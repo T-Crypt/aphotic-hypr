@@ -25,7 +25,7 @@ PanelWindow {
     anchors.right: true
     implicitWidth: screen.width
     implicitHeight: screen.height
-    visible: screenState.workspace && PluginRegistry.surfacesFor("workspace").length > 0
+    visible: screenState.workspace && !Surfaces.suppressed && PluginRegistry.surfacesFor("workspace").length > 0
 
     MouseArea {
         anchors.fill: parent
