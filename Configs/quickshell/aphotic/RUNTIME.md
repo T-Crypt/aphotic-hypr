@@ -129,19 +129,26 @@ writes no user settings, so switching back to `default` undoes all of it.
 Contexts are switched by hand only and are not persisted across shell
 restarts.
 
-| Context | Popups | Motion | Resources surfaced from |
-| :-- | :-- | :-- | :-- |
-| `default` | all | full | pressure |
-| `focus` | critical only | reduced | contention |
-| `dev` | normal and critical | full | pressure |
-| `game` | critical only | reduced | pressure |
-| `present` | none | reduced | negotiating |
+| Context | Popups | Motion | Resources surfaced from | Plugin overlays |
+| :-- | :-- | :-- | :-- | :-- |
+| `default` | all | full | pressure | shown |
+| `focus` | critical only | reduced | contention | shown |
+| `dev` | normal and critical | full | pressure | shown |
+| `game` | critical only | reduced | pressure | unmounted |
+| `present` | none | reduced | negotiating | unmounted |
 
 - **Popups**: `Notifs.popupAllowed(urgency)`. DND still holds back
   everything, and held-back notifications still land in history.
 - **Motion**: `RenderGate.decorative` goes false. Every self-running
   animation already gated on it stops.
 - **Resources**: `ResourcePosture.surfaced`.
+- **Plugin overlays**: shell.qml empties the `overlay` surface model, so
+  pets and visualisers are destroyed rather than hidden, and cost nothing
+  until the context ends.
+
+Any context other than `default` shows its icon in the notch's collapsed
+strip. That is the one ambient sign that popups, motion or overlays are
+being held back on purpose.
 
 Switch contexts with `aphotic context list|current|set <name>|revert`,
 through the `context` IPC target, or with the `context.<name>` actions in

@@ -491,8 +491,10 @@ ShellRoot {
     // per screen. Nested rather than flattened because the two models are
     // independent: surfaces come and go as plugins are enabled, screens as
     // monitors are plugged, and neither should rebuild the other's windows.
+    // A runtime context that hides overlays (game, present) empties the
+    // model, so the windows are destroyed for as long as it lasts.
     Instantiator {
-        model: PluginRegistry.surfacesFor("overlay")
+        model: RuntimeContext.hidesOverlays ? [] : PluginRegistry.surfacesFor("overlay")
 
         delegate: Item {
             id: overlayHost

@@ -21,6 +21,7 @@ Singleton {
     readonly property var contexts: Policy.list()
     readonly property bool reducesMotion: Policy.reducesMotion(root._current)
     readonly property string resourceThreshold: Policy.resourceThreshold(root._current)
+    readonly property bool hidesOverlays: Policy.hidesOverlays(root._current)
 
     signal switched(from: string, to: string)
 
