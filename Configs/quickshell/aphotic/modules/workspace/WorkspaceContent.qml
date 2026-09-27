@@ -12,12 +12,20 @@ Item {
     readonly property var activeSurface: root.workspace.find(surface => surface.id === root.activeId) ?? null
     property string activeId: ""
     property bool surfaceActive: false
-    property int hoveredIndex: -1
 
     function _ensureActive(): void {
         if (root.workspace.some(surface => surface.id === root.activeId))
             return;
         root.activeId = root.workspace[0]?.id ?? "";
+    }
+
+    function _revealPane(): void {
+        paneFade.stop();
+        paneTravel.stop();
+        paneLoader.opacity = 0;
+        paneLoader.y = Tokens.spacing.medium;
+        paneFade.start();
+        paneTravel.start();
     }
 
     Component.onCompleted: root._ensureActive()
@@ -51,7 +59,7 @@ Item {
         StyledRect {
             id: navigation
 
-            width: 216
+            width: Tokens.sizes.workspace.railWidth
             height: parent.height
             radius: Tokens.rounding.large
             color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
@@ -116,39 +124,28 @@ Item {
                     id: navigationList
 
                     width: parent.width
-                    height: navigationRepeater.count * 48
+                    height: navigationRepeater.count * Tokens.sizes.workspace.itemHeight
 
                     readonly property int activeIndex: Math.max(0, root.workspace.findIndex(surface => surface.id === root.activeId))
 
                     StyledRect {
                         x: 0
-                        y: navigationList.activeIndex * 48
+                        y: navigationList.activeIndex * Tokens.sizes.workspace.itemHeight
                         width: parent.width
-                        height: 44
+                        height: Tokens.sizes.workspace.itemHeight
                         radius: Tokens.rounding.medium
-                        color: Colours.palette.m3primary
+                        color: Qt.alpha(Colours.palette.m3primary, 0.14)
 
-                        Behavior on y {
-                            SpringAnimation {
-                                spring: 4
-                                damping: 0.62
-                                mass: 0.9
-                                epsilon: 0.25
-                            }
+                        Behavior on y { Anim { type: Anim.DefaultSpatial } }
+
+                        StyledRect {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 3
+                            height: parent.height - Tokens.spacing.large
+                            radius: Tokens.rounding.full
+                            color: Colours.palette.m3primary
                         }
-                    }
-
-                    StyledRect {
-                        x: 0
-                        y: Math.max(0, root.hoveredIndex) * 48
-                        width: parent.width
-                        height: 44
-                        radius: Tokens.rounding.medium
-                        color: Colours.palette.m3onSurface
-                        opacity: root.hoveredIndex >= 0 && root.hoveredIndex !== navigationList.activeIndex ? 0.08 : 0
-
-                        Behavior on y { Anim { type: Anim.FastEffects } }
-                        Behavior on opacity { Anim { type: Anim.FastEffects } }
                     }
 
                     Repeater {
@@ -163,21 +160,14 @@ Item {
                             readonly property bool active: root.activeId === navItem.modelData.id
 
                             x: 0
-                            y: navItem.index * 48
+                            y: navItem.index * Tokens.sizes.workspace.itemHeight
                             width: navigationList.width
-                            height: 44
+                            height: Tokens.sizes.workspace.itemHeight
 
                             StateLayer {
                                 anchors.fill: parent
                                 radius: Tokens.rounding.medium
-                                stateOpacity: 0
                                 onClicked: root.activeId = navItem.modelData.id
-                                onContainsMouseChanged: {
-                                    if (containsMouse)
-                                        root.hoveredIndex = navItem.index;
-                                    else if (root.hoveredIndex === navItem.index)
-                                        root.hoveredIndex = -1;
-                                }
                             }
 
                             Row {
@@ -189,10 +179,9 @@ Item {
                                 MaterialIcon {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: navItem.modelData.icon
-                                    color: navItem.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                    color: navItem.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                                     fontStyle: Tokens.font.icon.small
                                     fill: navItem.active ? 1 : 0
-                                    Behavior on color { CAnim {} }
                                 }
 
                                 StyledText {
@@ -201,8 +190,7 @@ Item {
                                     elide: Text.ElideRight
                                     text: navItem.modelData.label
                                     font: Tokens.font.label.builders.medium.weight(navItem.active ? Font.Medium : Font.Normal).build()
-                                    color: navItem.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface
-                                    Behavior on color { CAnim {} }
+                                    color: navItem.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                                 }
                             }
                         }
@@ -219,10 +207,63 @@ Item {
             clip: true
 
             Loader {
-                anchors.fill: parent
+                id: paneLoader
+
+                x: 0
+                y: 0
+                width: parent.width
+                height: parent.height
+
                 active: root.surfaceActive && root.activeSurface !== null
                 asynchronous: true
+                opacity: 0
                 source: root.activeSurface?.componentUrl ?? ""
+
+                onStatusChanged: {
+                    if (paneLoader.status === Loader.Ready)
+                        root._revealPane();
+                }
+            }
+
+            Anim {
+                id: paneFade
+
+                alwaysRunToEnd: true
+                target: paneLoader
+                property: "opacity"
+                from: 0
+                to: 1
+                type: Anim.FastEffects
+            }
+
+            Anim {
+                id: paneTravel
+
+                alwaysRunToEnd: true
+                target: paneLoader
+                property: "y"
+                from: Tokens.spacing.medium
+                to: 0
+                type: Anim.FastSpatial
+            }
+
+            Column {
+                anchors.centerIn: parent
+                spacing: Tokens.spacing.small
+                visible: paneLoader.item === null
+
+                MaterialIcon {
+                    text: "widgets"
+                    color: Colours.palette.m3onSurfaceVariant
+                    opacity: 0.5
+                    fontStyle: Tokens.font.icon.large
+                }
+
+                StyledText {
+                    text: qsTr("No plugin surfaces")
+                    font: Tokens.font.label.medium
+                    color: Colours.palette.m3onSurfaceVariant
+                }
             }
         }
     }
