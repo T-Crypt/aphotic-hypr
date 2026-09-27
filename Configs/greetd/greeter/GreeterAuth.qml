@@ -24,6 +24,9 @@ Item {
     property bool maskInput: false
     property bool waiting: false
     property string errorText: ""
+    // greetd ends a conversation itself when authentication fails; cancelling
+    // it again would fail on the closed socket and bury the real message.
+    property bool _sessionOpen: false
 
     signal shake
 
@@ -41,6 +44,7 @@ Item {
             else
                 root.buffer = root.buffer.slice(0, -1);
         } else if (/^[^\x00-\x1F\x7F-\x9F]+$/.test(event.text)) {
+            root.errorText = "";
             root.buffer += event.text;
         }
     }
@@ -59,6 +63,7 @@ Item {
             root.buffer = "";
             root.waiting = true;
             root.errorText = "";
+            root._sessionOpen = true;
             Greetd.createSession(root.username);
         } else if (root.phase === GreeterAuth.Phase.Authenticating) {
             root.waiting = true;
@@ -68,8 +73,9 @@ Item {
     }
 
     function _reset(): void {
-        if (Greetd.available)
+        if (Greetd.available && root._sessionOpen)
             Greetd.cancelSession();
+        root._sessionOpen = false;
         root.phase = GreeterAuth.Phase.Username;
         root.prompt = qsTr("Username");
         root.maskInput = false;
@@ -93,12 +99,14 @@ Item {
         }
 
         function onAuthFailure(message: string): void {
-            root.errorText = message || qsTr("Authentication failed");
+            root._sessionOpen = false;
+            root.errorText = qsTr("Incorrect password");
             root.shake();
             retryTimer.restart();
         }
 
         function onError(message: string): void {
+            root._sessionOpen = false;
             root.errorText = message;
             root.shake();
             retryTimer.restart();
@@ -116,13 +124,22 @@ Item {
         }
     }
 
-    // Same 2.5s-then-retry shape as Pam.qml's stateReset, except a failure
-    // here must also start a brand-new session (cancelSession + a fresh
-    // createSession on next submit) -- greetd does not let a failed
-    // conversation be resumed.
+    // After a failure greetd needs a brand-new conversation; this reopens
+    // one for the same user once the error has had a moment on screen.
     Timer {
         id: retryTimer
-        interval: 2500
-        onTriggered: root._reset()
+        interval: 1200
+        onTriggered: {
+            // Keep the name that was entered and open a fresh conversation,
+            // so a mistyped password only needs the password again.
+            const name = root.username;
+            root._reset();
+            if (name.length > 0 && Greetd.available) {
+                root.username = name;
+                root.waiting = true;
+                root._sessionOpen = true;
+                Greetd.createSession(name);
+            }
+        }
     }
 }
