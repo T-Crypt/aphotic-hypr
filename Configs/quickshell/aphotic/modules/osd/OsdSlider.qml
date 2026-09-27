@@ -10,6 +10,7 @@ Item {
     required property real value
     property real to: 1
     property real reveal: 1
+    readonly property real fraction: Math.min(1, root.to > 0 ? root.value / root.to : 0)
 
     signal moved(value: real)
     signal wheelUp()
@@ -34,11 +35,13 @@ Item {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         radius: parent.height / 2
-        width: Math.max(height, parent.width * Math.min(1, root.to > 0 ? root.value / root.to : 0))
+        width: Math.max(height, parent.width * root.fraction)
         color: Colours.palette.m3primary
 
         Behavior on width {
-            Anim {}
+            Anim {
+                type: Anim.FastSpatial
+            }
         }
     }
 
@@ -48,6 +51,22 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: root.icon
         color: Colours.palette.m3onPrimary
+        scale: 0.9 + 0.25 * root.fraction
+
+        Behavior on scale {
+            Anim {
+                type: Anim.FastSpatial
+            }
+        }
+    }
+
+    StyledText {
+        anchors.right: parent.right
+        anchors.rightMargin: Tokens.padding.large
+        anchors.verticalCenter: parent.verticalCenter
+        text: Math.round(root.value * 100) + "%"
+        font: Tokens.font.label.medium
+        color: root.fraction > 0.85 ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
     }
 
     MouseArea {
