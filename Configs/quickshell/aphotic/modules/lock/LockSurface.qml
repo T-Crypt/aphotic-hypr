@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import Quickshell.Wayland
 import qs.config
 import qs.components
@@ -16,6 +17,55 @@ WlSessionLockSurface {
 
     DepthLayer {
         anchors.fill: parent
+        visible: !Settings.barSignal
+    }
+
+    // Signal: the wallpaper, blurred once into a static texture, under the
+    // same darkening gradient the login greeter uses.
+    Image {
+        id: wallpaper
+
+        anchors.fill: parent
+        visible: false
+        source: Settings.barSignal ? Wallpapers.current : ""
+        sourceSize.width: 1920
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        onStatusChanged: if (status === Image.Ready) wallpaperTexture.scheduleUpdate()
+    }
+
+    ShaderEffectSource {
+        id: wallpaperTexture
+
+        anchors.fill: parent
+        visible: false
+        sourceItem: wallpaper
+        live: false
+    }
+
+    MultiEffect {
+        anchors.fill: parent
+        visible: Settings.barSignal && wallpaper.status === Image.Ready
+        source: wallpaperTexture
+        blurEnabled: true
+        blur: 0.55
+        blurMax: 48
+        saturation: -0.1
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: Settings.barSignal
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: Qt.alpha(Colours.palette.m3surfaceContainer, 0.35)
+            }
+            GradientStop {
+                position: 1
+                color: Qt.alpha(Colours.palette.m3surfaceContainer, 0.8)
+            }
+        }
     }
 
     LockContent {
