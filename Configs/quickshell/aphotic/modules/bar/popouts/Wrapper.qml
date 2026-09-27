@@ -449,4 +449,15 @@ Item {
             group: root.currentTaskGroup
         }
     }
+
+    // A launcher, dashboard or any other surface taking the keyboard on
+    // this screen settles the hover popout under it (services/Surfaces.qml).
+    Connections {
+        target: root.screenState
+
+        function onEngagedChanged(): void {
+            if (root.screenState.engaged)
+                root.hasCurrent = false;
+        }
+    }
 }

@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import qs.services
 
 // Simple work/break countdown, shared by the bar's PomodoroStatus icon,
 // its popout, and the Dashboard's DashPomodoro card -- same "one service,
@@ -38,6 +39,8 @@ Singleton {
     }
 
     Timer {
+        id: pomodoroTick
+
         interval: 1000
         running: root.running
         repeat: true
@@ -51,5 +54,11 @@ Singleton {
             root.remaining = root.isBreak ? root.breakSeconds : root.workSeconds;
             Quickshell.execDetached(["notify-send", "-a", "aphotic", finishedBreak ? qsTr("Break's over") : qsTr("Time for a break"), finishedBreak ? qsTr("Back to work") : qsTr("Step away for %1 minutes").arg(root.breakSeconds / 60)]);
         }
+    }
+
+    ActivityProbe {
+        name: "pomodoro"
+        kind: "poll"
+        timer: pomodoroTick
     }
 }

@@ -156,10 +156,18 @@ Singleton {
     // The watch is re-armed after each change in case a rename drops it;
     // this 5 s reload is the safety net if an external write is missed.
     Timer {
+        id: paletteSafetyReload
+
         interval: 5000
         running: true
         repeat: true
         onTriggered: paletteFile.reload()
+    }
+
+    ActivityProbe {
+        name: "theme.palette-reload"
+        kind: "file"
+        timer: paletteSafetyReload
     }
 
     function _rawColor(key: string, fallback: string): color {
@@ -217,6 +225,23 @@ Singleton {
     // no-op (`return c`) — the bar's surfaces all rendered at the exact
     // same flat tone as the raw wallust background, which is why they
     // barely stood out from the desktop behind them on some wallpapers.
+    // Resource posture (services/ResourcePosture.qml) as a palette
+    // role, so every surface that shows it agrees and the wallpaper
+    // palette stays in charge of the hue. Pressure borrows the tertiary
+    // accent -- noticed, not wrong; contention and a pending negotiation
+    // use error. Anything else keeps the caller's own colour.
+    function posture(level: string, rest: color): color {
+        switch (level) {
+        case "pressure":
+            return root.palette.m3tertiary;
+        case "contention":
+        case "negotiating":
+            return root.palette.m3error;
+        default:
+            return rest;
+        }
+    }
+
     function layer(c: color, layerIndex: var): color {
         const amount = Math.min(0.16, (layerIndex ?? 1) * 0.05);
         return Qt.tint(c, Qt.alpha(palette.m3primary, amount));

@@ -50,6 +50,20 @@ Singleton {
         shelterState: () => root._sheltered ? "unloaded" : "full"
     })
 
+    // Installed and past isEnabled(), in registry order. What the runtime
+    // report counts and what PluginApi revokes handles against.
+    readonly property var enabledPlugins: Object.keys(root._installed).filter(n => root.isEnabled(n))
+
+    // The registry's [api] block for a plugin (manifest v3.9), or null.
+    // PluginApi turns it into what the plugin's handle carries.
+    function apiOf(name: string): var {
+        return root._installed[name]?.api ?? null;
+    }
+
+    function displayNameOf(name: string): string {
+        return root._installed[name]?.display_name || name;
+    }
+
     function isInstalled(name: string): bool {
         return Object.prototype.hasOwnProperty.call(root._installed, name);
     }

@@ -32,7 +32,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.keybindsCheatsheet
+    visible: screenState.keybindsCheatsheet && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 

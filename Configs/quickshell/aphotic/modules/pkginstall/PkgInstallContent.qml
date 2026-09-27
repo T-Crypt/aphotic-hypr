@@ -13,7 +13,12 @@ Item {
 
     required property ScreenState screenState
 
-    readonly property bool open: root.screenState.pkgInstall
+    // Created on open by a Loader: start closed for one tick so the
+    // Behaviors play the entrance.
+    property bool ready: false
+    Component.onCompleted: Qt.callLater(() => root.ready = true)
+
+    readonly property bool open: root.ready && root.screenState.pkgInstall
     readonly property int cardWidth: 560
     readonly property int cardHeight: 480
 
