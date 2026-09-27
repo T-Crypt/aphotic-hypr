@@ -18,9 +18,15 @@ Item {
     property real bottomLeftRadius: root.radius
     property real bottomRightRadius: root.radius
 
+    // Either a sibling placed before the target, or a child of the target
+    // (for targets inside a layout); a child with negative z draws below it.
+    readonly property bool inside: root.parent === root.target
+
+    z: inside ? -1 : 0
+
     RectangularShadow {
-        x: root.target.x
-        y: root.target.y
+        x: root.inside ? 0 : root.target.x
+        y: root.inside ? 0 : root.target.y
         width: root.target.width
         height: root.target.height
         radius: root.radius
@@ -31,7 +37,9 @@ Item {
         blur: root.blur
         offset: Qt.vector2d(0, root.offsetY)
         color: Colours.palette.m3shadow
-        opacity: root.target.opacity * root.levelOpacity
+        opacity: root.inside ? root.levelOpacity : root.target.opacity * root.levelOpacity
+        scale: root.inside ? 1 : root.target.scale
+        transformOrigin: root.target.transformOrigin
         cached: true
     }
 }

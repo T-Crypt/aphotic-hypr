@@ -25,7 +25,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.dashboard && !Surfaces.suppressed
+visible: reveal.active && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 
@@ -50,11 +50,17 @@ PanelWindow {
         acceptedButtons: Qt.AllButtons
     }
 
-    DashboardContent {
-        id: content
+    SurfaceReveal {
+        id: reveal
 
         anchors.centerIn: parent
-        screenState: root.screenState
+        shown: root.screenState.dashboard
+
+        DashboardContent {
+            id: content
+
+            screenState: root.screenState
+        }
     }
 
     // Gated on the state rather than this window's own `visible`: the

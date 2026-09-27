@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import qs.config
@@ -18,6 +17,11 @@ Item {
 
     implicitWidth: root.cardWidth
     width: root.implicitWidth
+
+    Elevation {
+        target: card
+        level: 3
+    }
 
     StyledRect {
         id: card
@@ -52,15 +56,6 @@ Item {
             Anim {
                 type: Anim.Emphasized
             }
-        }
-
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Colours.palette.m3shadow
-            shadowOpacity: 0.5
-            shadowBlur: 0.5
-            shadowVerticalOffset: 2
         }
 
         // No DepthLayer here -- this card's own content (a dense
@@ -300,6 +295,21 @@ Item {
                     Anim {
                         type: Anim.Emphasized
                         properties: "x,y"
+                    }
+                }
+
+                // Removed rows fade while sliding out toward the screen
+                // edge the card is docked to.
+                remove: Transition {
+                    Anim {
+                        type: Anim.FastEffects
+                        property: "x"
+                        to: Tokens.spacing.largeIncreased
+                    }
+                    Anim {
+                        type: Anim.FastEffects
+                        property: "opacity"
+                        to: 0
                     }
                 }
 

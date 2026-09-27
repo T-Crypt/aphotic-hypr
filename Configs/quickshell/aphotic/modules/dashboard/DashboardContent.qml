@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import qs.config
 import qs.components
 import qs.services
@@ -96,6 +95,11 @@ ColumnLayout {
     StyledRect {
         id: tabFrame
 
+        Elevation {
+            target: tabFrame
+            level: 3
+        }
+
         Layout.alignment: Qt.AlignHCenter
         // Both the outgoing and incoming loader report 0 while one unloads
         // and the other builds async, which is every first switch to a
@@ -124,15 +128,6 @@ ColumnLayout {
         color: Qt.alpha(Colours.tPalette.m3surfaceContainer, 0.85)
         border.width: 1
         border.color: Colours.palette.m3outlineVariant
-
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Colours.palette.m3shadow
-            shadowOpacity: 0.5
-            shadowBlur: 0.5
-            shadowVerticalOffset: 2
-        }
 
         DepthLayer {
             anchors.fill: parent
