@@ -64,7 +64,7 @@ PanelWindow {
 
         Elevation {
             target: sheet
-            level: 3
+            level: Settings.barSignal ? 2 : 3
         }
 
         StyledClippingRect {
@@ -73,9 +73,9 @@ PanelWindow {
             width: 900
             height: 780
             radius: Tokens.rounding.extraLarge
-            color: Colours.tPalette.m3surfaceContainer
-            border.width: Config.border.thickness
-            border.color: Colours.palette.m3outlineVariant
+            color: Settings.barSignal ? Colours.signalStyle.glass : Colours.tPalette.m3surfaceContainer
+            border.width: Settings.barSignal ? 1 : Config.border.thickness
+            border.color: Settings.barSignal ? Colours.signalStyle.hairline : Colours.palette.m3outlineVariant
 
             // Swallow clicks on the sheet itself so they don't fall through
             // to the full-screen MouseArea behind it and close the sheet.
@@ -87,6 +87,7 @@ PanelWindow {
                 anchors.fill: parent
                 radius: sheet.radius
                 baseColour: sheet.color
+                visible: !Settings.barSignal
             }
 
             ColumnLayout {
@@ -160,72 +161,127 @@ PanelWindow {
                         Repeater {
                             model: HyprKeybinds.categorizedEntries
 
-                            ColumnLayout {
+                            StyledRect {
                                 id: group
 
                                 required property var modelData
+                                required property int index
+
+                                readonly property bool signalSkin: Settings.barSignal
+                                readonly property color tint: Colours.signalStyle.tint(index)
 
                                 Layout.fillWidth: true
-                                spacing: Tokens.spacing.small
+                                implicitHeight: groupLayout.implicitHeight + (signalSkin ? Tokens.padding.medium * 2 : 0)
+                                radius: signalSkin ? Tokens.rounding.medium : 0
+                                color: signalSkin ? Colours.signalStyle.raised : "transparent"
+                                border.width: signalSkin ? 1 : 0
+                                border.color: signalSkin ? Colours.signalStyle.hairline : "transparent"
 
-                                StyledText {
-                                    text: group.modelData.category
-                                    color: Colours.palette.m3primary
-                                    font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
+                                Elevation {
+                                    visible: signalSkin
+                                    target: group
+                                    level: 1
                                 }
 
-                                StyledRect {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 1
-                                    color: Colours.palette.m3outlineVariant
-                                    opacity: 0.5
+                                Rectangle {
+                                    visible: signalSkin
+                                    x: group.radius
+                                    width: group.width - group.radius * 2
+                                    height: 1
+                                    color: Colours.signalStyle.edgeLight
                                 }
 
-                                GridLayout {
-                                    Layout.fillWidth: true
-                                    columns: 2
-                                    columnSpacing: Tokens.spacing.medium
-                                    rowSpacing: Tokens.spacing.extraSmall
+                                ColumnLayout {
+                                    id: groupLayout
 
-                                    Repeater {
-                                        model: group.modelData.items
+                                    anchors.fill: parent
+                                    anchors.margins: group.signalSkin ? Tokens.padding.medium : 0
+                                    spacing: group.signalSkin ? Tokens.spacing.medium : Tokens.spacing.small
 
-                                        RowLayout {
-                                            id: bindRow
+                                    RowLayout {
+                                        visible: group.signalSkin
+                                        Layout.fillWidth: true
+                                        spacing: Tokens.spacing.small
 
-                                            required property var modelData
-                                            required property int index
+                                        Rectangle {
+                                            Layout.preferredWidth: 6
+                                            Layout.preferredHeight: 6
+                                            radius: 3
+                                            color: group.tint
+                                        }
 
-                                            readonly property real staggerIn: index < 8 ? reveal.staggered(index) : 1
-
+                                        StyledText {
                                             Layout.fillWidth: true
-                                            spacing: Tokens.spacing.medium
-                                            opacity: bindRow.staggerIn
-                                            transform: Translate {
-                                                y: (1 - bindRow.staggerIn) * Tokens.spacing.large
-                                            }
+                                            text: group.modelData.category.toUpperCase()
+                                            color: Colours.palette.m3onSurfaceVariant
+                                            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                                        }
+                                    }
 
-                                            StyledRect {
-                                                Layout.preferredWidth: comboText.implicitWidth + Tokens.padding.medium * 2
-                                                Layout.preferredHeight: comboText.implicitHeight + Tokens.padding.extraSmall * 2
-                                                radius: Tokens.rounding.small
-                                                color: Colours.tPalette.m3surfaceContainer
+                                    StyledText {
+                                        visible: !group.signalSkin
+                                        text: group.modelData.category
+                                        color: Colours.palette.m3primary
+                                        font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
+                                    }
+
+                                    StyledRect {
+                                        visible: !group.signalSkin
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 1
+                                        color: Colours.palette.m3outlineVariant
+                                        opacity: 0.5
+                                    }
+
+                                    GridLayout {
+                                        Layout.fillWidth: true
+                                        columns: 2
+                                        columnSpacing: Tokens.spacing.medium
+                                        rowSpacing: Tokens.spacing.extraSmall
+
+                                        Repeater {
+                                            model: group.modelData.items
+
+                                            RowLayout {
+                                                id: bindRow
+
+                                                required property var modelData
+                                                required property int index
+
+                                                readonly property bool signalSkin: Settings.barSignal
+                                                readonly property real staggerIn: index < 8 ? reveal.staggered(index) : 1
+
+                                                Layout.fillWidth: true
+                                                spacing: Tokens.spacing.medium
+                                                opacity: bindRow.staggerIn
+                                                transform: Translate {
+                                                    y: (1 - bindRow.staggerIn) * Tokens.spacing.large
+                                                }
+
+                                                StyledRect {
+                                                    Layout.preferredWidth: comboText.implicitWidth + Tokens.padding.medium * 2
+                                                    Layout.preferredHeight: comboText.implicitHeight + Tokens.padding.extraSmall * 2
+                                                    radius: bindRow.signalSkin ? Tokens.rounding.full : Tokens.rounding.small
+                                                    color: bindRow.signalSkin ? Colours.signalStyle.raisedHi : Colours.tPalette.m3surfaceContainer
+                                                    border.width: bindRow.signalSkin ? 1 : 0
+                                                    border.color: bindRow.signalSkin ? Colours.signalStyle.hairline : "transparent"
+
+                                                    StyledText {
+                                                        id: comboText
+                                                        anchors.centerIn: parent
+                                                        text: bindRow.modelData.combo
+                                                        font: bindRow.signalSkin ? Tokens.font.mono.builders.small.weight(Font.DemiBold).build() : Tokens.font.mono.small
+                                                        color: Colours.palette.m3onSurfaceVariant
+                                                    }
+                                                }
 
                                                 StyledText {
-                                                    id: comboText
-                                                    anchors.centerIn: parent
-                                                    text: bindRow.modelData.combo
-                                                    font: Tokens.font.mono.small
-                                                    color: Colours.palette.m3onSurfaceVariant
+                                                    Layout.fillWidth: true
+                                                    text: bindRow.modelData.description
+                                                    font: Tokens.font.body.medium
+                                                    color: bindRow.signalSkin ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
+                                                    elide: Text.ElideRight
                                                 }
-                                            }
-
-                                            StyledText {
-                                                Layout.fillWidth: true
-                                                text: bindRow.modelData.description
-                                                font: Tokens.font.body.medium
-                                                color: Colours.palette.m3onSurface
-                                                elide: Text.ElideRight
                                             }
                                         }
                                     }

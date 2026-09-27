@@ -19,6 +19,7 @@ RowLayout {
     // two brand-new experimental features together yet.
     SessionButton {
         reveal: root.reveal ? root.reveal.staggered(0) : 1
+        tintIndex: 0
         icon: "lock"
         label: qsTr("Lock")
         command: ["swaylock"]
@@ -29,6 +30,7 @@ RowLayout {
 
     SessionButton {
         reveal: root.reveal ? root.reveal.staggered(1) : 1
+        tintIndex: 1
         icon: "bedtime"
         label: qsTr("Suspend")
         command: ["systemctl", "suspend"]
@@ -37,6 +39,7 @@ RowLayout {
 
     SessionButton {
         reveal: root.reveal ? root.reveal.staggered(2) : 1
+        tintIndex: 2
         icon: "logout"
         label: qsTr("Log out")
         command: ["hyprctl", "dispatch", "hl.dsp.exit()"]
@@ -45,6 +48,7 @@ RowLayout {
 
     SessionButton {
         reveal: root.reveal ? root.reveal.staggered(3) : 1
+        tintIndex: 1
         icon: "ac_unit"
         label: qsTr("Hibernate")
         command: ["systemctl", "hibernate"]
@@ -53,6 +57,8 @@ RowLayout {
 
     SessionButton {
         reveal: root.reveal ? root.reveal.staggered(4) : 1
+        tintIndex: 4
+        destructive: true
         icon: "restart_alt"
         label: qsTr("Reboot")
         command: ["systemctl", "reboot"]
@@ -61,6 +67,8 @@ RowLayout {
 
     SessionButton {
         reveal: root.reveal ? root.reveal.staggered(5) : 1
+        tintIndex: 5
+        destructive: true
         icon: "power_settings_new"
         label: qsTr("Shut down")
         command: ["systemctl", "poweroff"]
