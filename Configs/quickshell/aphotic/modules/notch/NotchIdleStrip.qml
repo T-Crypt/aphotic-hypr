@@ -26,6 +26,12 @@ GridLayout {
     property bool attention: false
 
     readonly property bool posture: ResourcePosture.surfaced && ResourcePosture.resource !== null
+    readonly property bool contextShown: RuntimeContext.current !== "default"
+
+    // The collapsed strip is 132px along the edge. The context icon costs
+    // a glyph and a gap, so the gauges give that back rather than the
+    // strip overflowing its own clip once the attention dot shows too.
+    readonly property int gaugeLength: root.contextShown ? 28 : 34
 
     flow: root.stacked ? GridLayout.TopToBottom : GridLayout.LeftToRight
     rowSpacing: Tokens.spacing.small
@@ -56,6 +62,17 @@ GridLayout {
         }
     }
 
+    // The runtime context, only when it is not default: the one ambient
+    // sign that popups, motion or overlays are being held back on purpose.
+    MaterialIcon {
+        Layout.alignment: Qt.AlignCenter
+        visible: root.contextShown
+        text: RuntimeContext.policy.icon
+        color: Colours.palette.m3secondary
+        fontStyle: Tokens.font.icon.small
+        fill: 1
+    }
+
     MaterialIcon {
         Layout.alignment: Qt.AlignCenter
         text: root.posture ? "hub" : "monitoring"
@@ -68,6 +85,7 @@ GridLayout {
         Layout.alignment: Qt.AlignCenter
         visible: !root.posture
         vertical: root.stacked
+        length: root.gaugeLength
         perc: SystemUsage.cpuPerc
         barColour: Colours.palette.m3primary
     }
@@ -76,6 +94,7 @@ GridLayout {
         Layout.alignment: Qt.AlignCenter
         visible: !root.posture
         vertical: root.stacked
+        length: root.gaugeLength
         perc: SystemUsage.memPerc
         barColour: Colours.palette.m3tertiary
     }
@@ -85,7 +104,7 @@ GridLayout {
         Layout.alignment: Qt.AlignCenter
         visible: root.posture
         vertical: root.stacked
-        length: 34 * 2 + Tokens.spacing.small
+        length: root.gaugeLength * 2 + Tokens.spacing.small
         perc: ResourcePosture.resource?.ratio ?? 0
         barColour: Colours.posture(ResourcePosture.level, Colours.palette.m3primary)
     }

@@ -15,6 +15,9 @@
 //   resources      the least ResourcePosture level the ambient shell
 //                  (bar, notch) surfaces: pressure | contention |
 //                  negotiating. A negotiation always opens its prompt.
+//   overlays       shown | hidden. Plugin `overlay` surfaces (pets,
+//                  visualisers) are unmounted, not hidden, so they cost
+//                  nothing while the context lasts. shell.qml.
 //
 // Plain functions so tests/test_runtime_context.cjs runs them under node.
 
@@ -23,19 +26,19 @@ var ORDER = ['default', 'focus', 'dev', 'game', 'present'];
 var CONTEXTS = {
     default: {label: 'Default', icon: 'desktop_windows',
         description: 'Everything behaves as configured.',
-        notifications: 'all', motion: 'full', resources: 'pressure'},
+        notifications: 'all', motion: 'full', resources: 'pressure', overlays: 'shown'},
     focus: {label: 'Focus', icon: 'center_focus_strong',
         description: 'Only critical popups, calmer motion, resources shown once contended.',
-        notifications: 'critical', motion: 'reduced', resources: 'contention'},
+        notifications: 'critical', motion: 'reduced', resources: 'contention', overlays: 'shown'},
     dev: {label: 'Dev', icon: 'code',
         description: 'Low-priority popups held back; resource pressure shown early.',
-        notifications: 'normal', motion: 'full', resources: 'pressure'},
+        notifications: 'normal', motion: 'full', resources: 'pressure', overlays: 'shown'},
     game: {label: 'Game', icon: 'sports_esports',
-        description: 'Only critical popups, no decorative motion, resource pressure shown early.',
-        notifications: 'critical', motion: 'reduced', resources: 'pressure'},
+        description: 'Only critical popups, no decorative motion or plugin overlays, resource pressure shown early.',
+        notifications: 'critical', motion: 'reduced', resources: 'pressure', overlays: 'hidden'},
     present: {label: 'Present', icon: 'present_to_all',
-        description: 'No popups, no decorative motion, resources shown only when a decision is needed.',
-        notifications: 'none', motion: 'reduced', resources: 'negotiating'}
+        description: 'No popups, motion or plugin overlays; resources shown only when a decision is needed.',
+        notifications: 'none', motion: 'reduced', resources: 'negotiating', overlays: 'hidden'}
 };
 
 // Popup floors against freedesktop urgency: 0 low, 1 normal, 2 critical.
@@ -67,4 +70,8 @@ function reducesMotion(name) {
 
 function resourceThreshold(name) {
     return policy(name).resources;
+}
+
+function hidesOverlays(name) {
+    return policy(name).overlays === 'hidden';
 }

@@ -48,3 +48,10 @@ assert.equal(ctx.atLeast('contention', C.resourceThreshold('present')), false);
 assert.equal(C.allowsPopup('dev', undefined), true);
 
 console.log('Runtime context: passed');
+
+// Overlays: only game and present unmount them.
+for (const id of ids) {
+    assert.ok(['shown', 'hidden'].includes(C.policy(id).overlays), id);
+    assert.equal(C.hidesOverlays(id), id === 'game' || id === 'present', id);
+}
+console.log('Context overlays: passed');
