@@ -22,7 +22,7 @@ Item {
 
             MaterialIcon {
                 text: Weather.conditionIcon
-                color: Colours.palette.m3secondary
+                color: Settings.barSignal ? Colours.palette.m3onSurface : Colours.palette.m3secondary
                 fontStyle: Tokens.font.icon.large
             }
 

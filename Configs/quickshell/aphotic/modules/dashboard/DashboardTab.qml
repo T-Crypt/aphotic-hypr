@@ -1,67 +1,260 @@
+import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.components
 import qs.services
 
-RowLayout {
-    spacing: Tokens.spacing.medium
+Item {
+    id: root
+
+    implicitWidth: layout.item?.implicitWidth ?? 0
+    implicitHeight: layout.item?.implicitHeight ?? 0
 
     component Card: StyledRect {
-        radius: Tokens.rounding.extraLarge
-        color: Colours.tPalette.m3surfaceContainer
-    }
+        id: card
 
-    Card {
-        Layout.preferredWidth: dateTime.implicitWidth
-        Layout.preferredHeight: dateTime.implicitHeight
+        property string title: ""
+        property int tintIndex: 0
+        readonly property real headerHeight: card.title.length > 0 && Settings.barSignal ? cardTitle.implicitHeight + Tokens.padding.medium : 0
 
-        DashDateTime {
-            id: dateTime
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.extraLarge
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
+
+        Elevation {
+            visible: Settings.barSignal
+            target: card
+            level: 1
+        }
+
+        Rectangle {
+            visible: Settings.barSignal
+            x: card.radius
+            width: card.width - card.radius * 2
+            height: 1
+            color: Colours.signalStyle.edgeLight
+        }
+
+        Row {
+            id: cardTitle
+
+            visible: card.headerHeight > 0
+            x: Tokens.padding.large
+            y: Tokens.padding.medium
+            spacing: Tokens.spacing.small
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 6
+                height: 6
+                radius: 3
+                color: Colours.signalStyle.tint(card.tintIndex)
+            }
+
+            StyledText {
+                text: card.title.toUpperCase()
+                color: Colours.palette.m3onSurfaceVariant
+                font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+            }
         }
     }
 
-    Card {
-        Layout.preferredWidth: calendar.implicitWidth
-        Layout.preferredHeight: calendar.implicitHeight
+    Loader {
+        id: layout
 
-        DashCalendar {
-            id: calendar
+        sourceComponent: Settings.barSignal ? bento : row
+    }
+
+    // Signal: grouped bento. Today (time and weather), Calendar, then Now
+    // playing over Focus and Controls, every column sharing one height.
+    Component {
+        id: bento
+
+        RowLayout {
+            spacing: Tokens.spacing.medium
+
+            Card {
+                id: todayCard
+
+                title: qsTr("Today")
+                tintIndex: 0
+                Layout.fillHeight: true
+                Layout.preferredWidth: Math.max(dateTime.implicitWidth, weather.implicitWidth) + Tokens.padding.large * 2
+                Layout.preferredHeight: todayCard.headerHeight + dateTime.implicitHeight + weather.implicitHeight + Tokens.padding.large * 2
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.topMargin: todayCard.headerHeight
+                    anchors.leftMargin: Tokens.padding.small
+                    anchors.rightMargin: Tokens.padding.small
+                    anchors.bottomMargin: Tokens.padding.small
+                    spacing: 0
+
+                    DashDateTime {
+                        id: dateTime
+
+                        Layout.alignment: Qt.AlignHCenter
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: Tokens.padding.large
+                        Layout.rightMargin: Tokens.padding.large
+                        implicitHeight: 1
+                        color: Colours.signalStyle.hairline
+                    }
+
+                    DashWeather {
+                        id: weather
+
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.fillHeight: true
+                    }
+                }
+            }
+
+            Card {
+                id: calendarCard
+
+                title: qsTr("Calendar")
+                tintIndex: 1
+                Layout.fillHeight: true
+                Layout.preferredWidth: calendar.implicitWidth
+                Layout.preferredHeight: calendarCard.headerHeight + calendar.implicitHeight
+
+                DashCalendar {
+                    id: calendar
+
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: calendarCard.headerHeight
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillHeight: true
+                spacing: Tokens.spacing.medium
+
+                Card {
+                    id: mediaCard
+
+                    title: qsTr("Now playing")
+                    tintIndex: 2
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredHeight: mediaCard.headerHeight + media.implicitHeight
+
+                    DashMedia {
+                        id: media
+
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.top: parent.top
+                        anchors.topMargin: mediaCard.headerHeight
+                    }
+                }
+
+                RowLayout {
+                    spacing: Tokens.spacing.medium
+
+                    Card {
+                        id: focusCard
+
+                        title: qsTr("Timer")
+                        tintIndex: 3
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: pomodoro.implicitWidth
+                        Layout.preferredHeight: focusCard.headerHeight + pomodoro.implicitHeight
+
+                        DashPomodoro {
+                            id: pomodoro
+
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.top: parent.top
+                            anchors.topMargin: focusCard.headerHeight
+                        }
+                    }
+
+                    Card {
+                        id: controlsCard
+
+                        title: qsTr("Controls")
+                        tintIndex: 0
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: quickToggles.implicitWidth
+                        Layout.preferredHeight: controlsCard.headerHeight + quickToggles.implicitHeight
+
+                        DashQuickToggles {
+                            id: quickToggles
+
+                            anchors.centerIn: parent
+                            anchors.verticalCenterOffset: controlsCard.headerHeight / 2
+                        }
+                    }
+                }
+            }
         }
     }
 
-    Card {
-        Layout.preferredWidth: media.implicitWidth
-        Layout.preferredHeight: media.implicitHeight
+    Component {
+        id: row
 
-        DashMedia {
-            id: media
-        }
-    }
+        RowLayout {
+            spacing: Tokens.spacing.medium
 
-    Card {
-        Layout.preferredWidth: pomodoro.implicitWidth
-        Layout.preferredHeight: pomodoro.implicitHeight
+            Card {
+                Layout.preferredWidth: dateTimeClassic.implicitWidth
+                Layout.preferredHeight: dateTimeClassic.implicitHeight
 
-        DashPomodoro {
-            id: pomodoro
-        }
-    }
+                DashDateTime {
+                    id: dateTimeClassic
+                }
+            }
 
-    Card {
-        Layout.preferredWidth: quickToggles.implicitWidth
-        Layout.preferredHeight: quickToggles.implicitHeight
+            Card {
+                Layout.preferredWidth: calendarClassic.implicitWidth
+                Layout.preferredHeight: calendarClassic.implicitHeight
 
-        DashQuickToggles {
-            id: quickToggles
-        }
-    }
+                DashCalendar {
+                    id: calendarClassic
+                }
+            }
 
-    Card {
-        Layout.preferredWidth: weather.implicitWidth
-        Layout.preferredHeight: weather.implicitHeight
+            Card {
+                Layout.preferredWidth: mediaClassic.implicitWidth
+                Layout.preferredHeight: mediaClassic.implicitHeight
 
-        DashWeather {
-            id: weather
+                DashMedia {
+                    id: mediaClassic
+                }
+            }
+
+            Card {
+                Layout.preferredWidth: pomodoroClassic.implicitWidth
+                Layout.preferredHeight: pomodoroClassic.implicitHeight
+
+                DashPomodoro {
+                    id: pomodoroClassic
+                }
+            }
+
+            Card {
+                Layout.preferredWidth: quickTogglesClassic.implicitWidth
+                Layout.preferredHeight: quickTogglesClassic.implicitHeight
+
+                DashQuickToggles {
+                    id: quickTogglesClassic
+                }
+            }
+
+            Card {
+                Layout.preferredWidth: weatherClassic.implicitWidth
+                Layout.preferredHeight: weatherClassic.implicitHeight
+
+                DashWeather {
+                    id: weatherClassic
+                }
+            }
         }
     }
 }

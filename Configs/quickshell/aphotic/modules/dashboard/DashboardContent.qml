@@ -77,11 +77,30 @@ ColumnLayout {
 
     spacing: Tokens.spacing.medium
 
-    CommandCenterTabBar {
+    // Signal: the tabs sit on their own glass capsule.
+    Item {
         Layout.alignment: Qt.AlignHCenter
-        currentTab: root.currentTab
-        tabs: root.tabs
-        onTabSelected: id => root.currentTab = id
+        readonly property real pad: Settings.barSignal ? Tokens.padding.small : 0
+        implicitWidth: tabBar.implicitWidth + pad * 2
+        implicitHeight: tabBar.implicitHeight + pad * 2
+
+        StyledRect {
+            visible: Settings.barSignal
+            anchors.fill: parent
+            radius: Tokens.rounding.full
+            color: Colours.signalStyle.glass
+            border.width: 1
+            border.color: Colours.signalStyle.hairline
+        }
+
+        CommandCenterTabBar {
+            id: tabBar
+
+            anchors.centerIn: parent
+            currentTab: root.currentTab
+            tabs: root.tabs
+            onTabSelected: id => root.currentTab = id
+        }
     }
 
     // Widget-card frame around whichever tab is active -- previously each
@@ -97,7 +116,7 @@ ColumnLayout {
 
         Elevation {
             target: tabFrame
-            level: 3
+            level: Settings.barSignal ? 2 : 3
         }
 
         Layout.alignment: Qt.AlignHCenter
@@ -124,10 +143,10 @@ ColumnLayout {
 
         Layout.preferredWidth: (tabFrame.tabWidth > 0 ? tabFrame.tabWidth : tabFrame.heldWidth) + Tokens.padding.extraLarge * 2
         Layout.preferredHeight: (tabFrame.tabHeight > 0 ? tabFrame.tabHeight : tabFrame.heldHeight) + Tokens.padding.extraLarge * 2
-        radius: Tokens.rounding.extraLarge
-        color: Qt.alpha(Colours.tPalette.m3surfaceContainer, 0.85)
+        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        color: Settings.barSignal ? Colours.signalStyle.glass : Qt.alpha(Colours.tPalette.m3surfaceContainer, 0.85)
         border.width: 1
-        border.color: Colours.palette.m3outlineVariant
+        border.color: Settings.barSignal ? Colours.signalStyle.hairline : Colours.palette.m3outlineVariant
 
         DepthLayer {
             anchors.fill: parent
@@ -136,6 +155,7 @@ ColumnLayout {
 
         DepthGradient {
             anchors.fill: parent
+            visible: !Settings.barSignal
             radius: parent.radius
             baseColour: Colours.tPalette.m3surfaceContainer
         }

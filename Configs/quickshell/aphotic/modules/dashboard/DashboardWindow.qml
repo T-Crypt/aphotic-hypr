@@ -29,6 +29,15 @@ PanelWindow {
     implicitWidth: screen.width
     implicitHeight: screen.height
 
+    // Signal: dim and (through the compositor's layer rule) frost the
+    // desktop behind the dashboard.
+    Rectangle {
+        anchors.fill: parent
+        visible: Settings.barSignal
+        color: Colours.palette.m3shadow
+        opacity: reveal.visibleProgress * 0.35
+    }
+
     MouseArea {
         anchors.fill: parent
         focus: true

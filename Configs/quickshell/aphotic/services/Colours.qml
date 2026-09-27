@@ -222,6 +222,8 @@ Singleton {
         readonly property color bar: Qt.alpha(Qt.tint(root.palette.m3surfaceContainer, Qt.alpha(root.palette.m3onSurface, 0.055)), 0.9)
         readonly property color surface: Qt.tint(root.palette.m3surfaceContainer, Qt.alpha(root.palette.m3onSurface, 0.07))
         readonly property color raised: Qt.tint(root.palette.m3surfaceContainer, Qt.alpha(root.palette.m3onSurface, 0.11))
+        // Translucent panel tone: the compositor blurs what shows through.
+        readonly property color glass: Qt.alpha(surface, 0.84)
         readonly property color hover: Qt.alpha(root.palette.m3onSurface, 0.06)
         readonly property color hairline: Qt.alpha(root.palette.m3outlineVariant, 0.38)
         readonly property color accentLine: root.palette.m3primary
