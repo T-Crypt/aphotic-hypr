@@ -256,6 +256,16 @@ negotiates rather than deciding for you. It stays dormant until something
 claims a resource. Full mechanism, boundaries, and current state:
 [Resource Engine](https://t-crypt.github.io/aphotic-hypr/docs/resource-engine/).
 
+The shell reads that state directly, so Flow is not the only place it
+shows up. One surface controller decides how the launcher, Command
+Center, Settings, the Workspace plane and the negotiation prompt coexist
+on each screen. Resource pressure and contention show up quietly in the
+bar and the notch. A manual **runtime context** (`aphotic context set
+focus|dev|game|present`) changes popups, motion and when resource state
+is shown, without installing or changing anything. `aphotic runtime`
+prints all three. Contracts:
+[`RUNTIME.md`](Configs/quickshell/aphotic/RUNTIME.md).
+
 ## Profiles
 
 Four optional layers merge onto a `minimal` or `full` base profile:
@@ -479,6 +489,10 @@ The shell favors:
 
 The Resource Engine extends this approach to active workloads instead of
 treating system resources as static configuration.
+
+`tests/test_idle_cost.py` enforces it. A repeating timer or an infinite
+animation that runs unconditionally fails CI unless it is listed with the
+reason it has to run at rest.
 
 ## Keybindings
 
