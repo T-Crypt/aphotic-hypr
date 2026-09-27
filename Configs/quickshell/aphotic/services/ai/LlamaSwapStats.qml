@@ -29,6 +29,11 @@ Singleton {
     readonly property bool _wanted: Object.keys(root._holders).length > 0
     readonly property var _runningModels: AiProviders.llamaSwapRunningModels
         .filter(entry => entry?.name && !entry.embedding)
+    // llama-swap loads a model on any request to its /upstream proxy, so
+    // polling there undoes a manual unload within a second. On loopback,
+    // ask the backend port directly: a stopped backend just refuses.
+    readonly property bool _localHost: /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/
+        .test(AiConfig.llamaSwapHost)
 
     function hold(owner: string, on: bool): void {
         if (!owner || on === Object.prototype.hasOwnProperty.call(root._holders, owner))
@@ -77,15 +82,20 @@ Singleton {
 
             required property var modelData
             readonly property string name: poller.modelData.name ?? ""
+            readonly property int port: poller.modelData.port ?? 0
+            readonly property string url: root._localHost && poller.port > 0
+                ? `http://127.0.0.1:${poller.port}/slots`
+                : `${AiConfig.llamaSwapHost}/upstream/${encodeURIComponent(poller.name)}/slots`
 
             property Timer timer: Timer {
                 interval: 1000
                 repeat: true
                 triggeredOnStart: true
                 running: root._wanted && AiConfig.llamaSwapHostConfigured && poller.name.length > 0
+                    && poller.modelData.state === "ready"
                 onTriggered: {
                     if (!slots.running)
-                        slots.exec(["curl", "-s", "-m", "2", `${AiConfig.llamaSwapHost}/upstream/${encodeURIComponent(poller.name)}/slots`]);
+                        slots.exec(["curl", "-s", "-m", "2", poller.url]);
                 }
             }
 
