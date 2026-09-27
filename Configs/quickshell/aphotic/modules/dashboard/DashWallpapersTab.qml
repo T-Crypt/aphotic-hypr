@@ -62,9 +62,9 @@ ColumnLayout {
 
             StyledText {
                 Layout.maximumWidth: 220
-                text: root.themeInfo?.displayName ?? Themes.activeTheme
-                color: Colours.palette.m3onSurface
-                font: Tokens.font.title.builders.medium.weight(Font.Medium).build()
+                text: Settings.barSignal ? (root.themeInfo?.displayName ?? Themes.activeTheme).toUpperCase() : (root.themeInfo?.displayName ?? Themes.activeTheme)
+                color: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
+                font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.title.builders.medium.weight(Font.Medium).build()
                 elide: Text.ElideRight
             }
 
@@ -117,7 +117,31 @@ ColumnLayout {
                     values: root.tileModel
                 }
 
-                WallpaperTile {}
+                StyledClippingRect {
+                    id: tileWrap
+
+                    required property var modelData
+                    implicitWidth: tile.implicitWidth
+                    implicitHeight: tile.implicitHeight
+                    radius: Settings.barSignal ? Tokens.rounding.medium : 0
+
+                    WallpaperTile {
+                        id: tile
+
+                        anchors.fill: parent
+                        modelData: tileWrap.modelData
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: Settings.barSignal
+                        radius: tileWrap.radius
+                        color: "transparent"
+                        border.width: 1
+                        border.color: Colours.signalStyle.hairline
+                    }
+
+                }
             }
         }
 
