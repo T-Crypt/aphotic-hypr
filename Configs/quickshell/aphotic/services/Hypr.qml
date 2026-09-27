@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import qs.config
+import qs.services
 
 Singleton {
     id: root
@@ -200,6 +201,8 @@ Singleton {
     }
 
     Timer {
+        id: lockKeyPoll
+
         interval: 2000
         running: true
         repeat: true
@@ -209,6 +212,12 @@ Singleton {
             else
                 root.refreshKeyboardState();
         }
+    }
+
+    ActivityProbe {
+        name: "hypr.lock-keys"
+        kind: "file"
+        timer: lockKeyPoll
     }
 
     Connections {

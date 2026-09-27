@@ -1,5 +1,7 @@
 module qs.services
 singleton Actions 1.0 Actions.qml
+singleton Activity 1.0 Activity.qml
+ActivityProbe 1.0 ActivityProbe.qml
 singleton AgentProviders 1.0 AgentProviders.qml
 singleton Audio 1.0 Audio.qml
 singleton Brightness 1.0 Brightness.qml
@@ -20,13 +22,17 @@ singleton Nmcli 1.0 Nmcli.qml
 singleton NotificationHistory 1.0 NotificationHistory.qml
 singleton PinnedSnippets 1.0 PinnedSnippets.qml
 singleton PkgSearch 1.0 PkgSearch.qml
+singleton PluginApi 1.0 PluginApi.qml
 singleton PluginRegistry 1.0 PluginRegistry.qml
 singleton Pomodoro 1.0 Pomodoro.qml
 singleton ProcessUsage 1.0 ProcessUsage.qml
 singleton RenderGate 1.0 RenderGate.qml
+singleton ResourcePosture 1.0 ResourcePosture.qml
+singleton RuntimeContext 1.0 RuntimeContext.qml
 singleton SafeMode 1.0 SafeMode.qml
 singleton SessionLockState 1.0 SessionLockState.qml
 singleton Settings 1.0 Settings.qml
+singleton Surfaces 1.0 Surfaces.qml
 singleton Switcher 1.0 Switcher.qml
 singleton ShellUsage 1.0 ShellUsage.qml
 singleton SystemCapacity 1.0 SystemCapacity.qml

@@ -12,6 +12,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // Directory-per-theme wallpaper sets following themes/THEME_SPEC.md:
 // ~/.config/awww/<theme>/theme.toml + wallpapers alongside it. The
@@ -291,10 +292,18 @@ Singleton {
     // The watch is re-armed after each change in case a rename drops it;
     // this 5 s reload is the safety net if an external write is missed.
     Timer {
+        id: themeStateSafetyReload
+
         interval: 5000
         running: true
         repeat: true
         onTriggered: stateFile.reload()
+    }
+
+    ActivityProbe {
+        name: "theme.state-reload"
+        kind: "file"
+        timer: themeStateSafetyReload
     }
 
     FileView {

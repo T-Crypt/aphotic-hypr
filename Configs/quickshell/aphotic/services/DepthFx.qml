@@ -64,4 +64,10 @@ QtObject {
             root.pulse = 0.5 - Math.cos(root._pulsePhase * 2 * Math.PI) / 2;
         }
     }
+
+    property ActivityProbe _pulseClockProbe: ActivityProbe {
+        name: "depthfx.pulse"
+        kind: "render"
+        timer: root._pulseClock
+    }
 }

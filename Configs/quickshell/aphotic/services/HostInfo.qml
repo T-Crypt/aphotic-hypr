@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // Hostname + primary LAN IP, polled here and shared by the bar's
 // HostInfoStatus icon and its popout -- same "one service, icon + popout
@@ -66,9 +67,17 @@ Singleton {
     // A DHCP renewal or a VPN can move the address without changing the
     // active connection, so check now and then anyway.
     Timer {
+        id: hostInfoRefresh
+
         interval: 300000
         running: true
         repeat: true
         onTriggered: ipRefresh.restart()
+    }
+
+    ActivityProbe {
+        name: "host-info"
+        kind: "process"
+        timer: hostInfoRefresh
     }
 }

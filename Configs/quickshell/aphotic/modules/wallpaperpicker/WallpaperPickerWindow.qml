@@ -25,7 +25,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.wallpaperPicker
+    visible: screenState.wallpaperPicker && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 
