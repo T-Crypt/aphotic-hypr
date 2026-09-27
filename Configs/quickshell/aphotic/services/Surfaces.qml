@@ -41,6 +41,10 @@ Singleton {
     property var _holders: []
     property var _declared: ({})
 
+    // Every ScreenState that has reported, so an undeclared surface can be
+    // taken out of every stack it is in. One per screen, and they persist.
+    property var _screens: []
+
     function roleOf(name: string): string {
         return Policy.roleOf(name, root._declared);
     }
@@ -56,12 +60,18 @@ Singleton {
         return true;
     }
 
+    // Also takes the name out of every screen's stack: a surface whose
+    // owner is gone must not linger as an entry nothing can close.
     function undeclare(name: string): void {
         if (!Object.prototype.hasOwnProperty.call(root._declared, name))
             return;
         const next = Object.assign({}, root._declared);
         delete next[name];
         root._declared = next;
+        for (const screenState of root._screens) {
+            if ((screenState?.surfaceStack ?? []).includes(name))
+                root.track(screenState, name, false);
+        }
     }
 
     function hold(owner: string): void {
@@ -82,6 +92,8 @@ Singleton {
     function track(screenState: var, name: string, open: bool): void {
         if (!screenState)
             return;
+        if (!root._screens.includes(screenState))
+            root._screens = root._screens.concat([screenState]);
         const next = Policy.transition(screenState.surfaceStack ?? [], name, open, root._declared);
         screenState.surfaceStack = next.stack;
         for (const displaced of next.close)

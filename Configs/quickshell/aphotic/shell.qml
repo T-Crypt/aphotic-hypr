@@ -391,7 +391,8 @@ ShellRoot {
             activity: Activity.snapshot(),
             plugins: {
                 enabled: PluginRegistry.enabledPlugins,
-                safeMode: SafeMode.active
+                safeMode: SafeMode.active,
+                apiVersion: PluginApi.version
             }
         };
     }
