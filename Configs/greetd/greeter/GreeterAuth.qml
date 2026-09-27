@@ -106,6 +106,10 @@ Item {
         }
 
         function onError(message: string): void {
+            // A failed authentication is followed by a transport error from the
+            // closed conversation; the failure message is the one that matters.
+            if (retryTimer.running)
+                return;
             root._sessionOpen = false;
             root.errorText = message;
             root.shake();
