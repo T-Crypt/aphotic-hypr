@@ -28,8 +28,6 @@
   <img src="./assets/preview.png" width="900">
 </p>
 
-https://github.com/user-attachments/assets/9a0674f6-482c-42ce-98a2-e6904b2163b5
-
 ## What you get
 
 - **One shell for the whole desktop.** Bar, notch, launcher, notifications,
