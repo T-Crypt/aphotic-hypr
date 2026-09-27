@@ -60,6 +60,21 @@ ColumnLayout {
             Anim { type: Anim.DefaultEffects }
         }
 
+        Elevation {
+            visible: Settings.barSignal
+            target: parent
+            level: 1
+        }
+
+        // Light catching the top edge, so the card reads as raised.
+        Rectangle {
+            visible: Settings.barSignal
+            x: parent.topLeftRadius
+            width: parent.width - parent.topLeftRadius - parent.topRightRadius
+            height: 1
+            color: Colours.signalStyle.edgeLight
+        }
+
         StateLayer {
             radius: Tokens.rounding.extraLarge
             onClicked: root.expanded = !root.expanded
@@ -78,12 +93,16 @@ ColumnLayout {
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
                 radius: Tokens.rounding.medium
-                color: Settings.barSignal ? "transparent" : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                color: Settings.barSignal ? Qt.alpha(Colours.palette.m3primary, root.expanded ? 0.22 : 0.12) : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                Behavior on color {
+                    CAnim {}
+                }
 
                 MaterialIcon {
                     anchors.centerIn: parent
                     text: root.icon
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Settings.barSignal ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
                 }
             }

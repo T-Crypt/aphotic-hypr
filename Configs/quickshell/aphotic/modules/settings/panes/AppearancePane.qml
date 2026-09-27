@@ -122,13 +122,13 @@ Item {
 
             StyledText {
                 text: qsTr("Appearance")
-                font: Tokens.font.title.large
+                font: Settings.barSignal ? Tokens.font.headline.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.large
             }
 
             StyledText {
-                text: qsTr("Theme")
+                text: Settings.barSignal ? qsTr("Theme").toUpperCase() : qsTr("Theme")
                 color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.label.medium
+                font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
             }
 
             GridLayout {
@@ -152,17 +152,79 @@ Item {
 
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        Layout.minimumHeight: 56
+                        Layout.minimumHeight: Settings.barSignal ? 92 : 56
                         radius: Tokens.rounding.medium
-                        color: themeCard.active ? Colours.layer(Colours.tPalette.m3surfaceContainer, 2) : Colours.tPalette.m3surfaceContainer
-                        border.width: themeCard.active ? 2 : 0
-                        border.color: Colours.palette.m3primary
+                        color: Settings.barSignal ? Colours.signalStyle.raised : themeCard.active ? Colours.layer(Colours.tPalette.m3surfaceContainer, 2) : Colours.tPalette.m3surfaceContainer
+                        border.width: themeCard.active ? 2 : Settings.barSignal ? 1 : 0
+                        border.color: themeCard.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
+
+                        readonly property string preview: Settings.barSignal && themeCard.modelData.defaultWallpaper ? WallpaperThumbs.thumbFor(`${Themes.awwwDir}/${themeCard.modelData.name}/${themeCard.modelData.defaultWallpaper}`) : ""
 
                         Behavior on color {
                             CAnim {}
                         }
 
+                        // Signal: each card previews its theme's own wallpaper.
+                        StyledClippingRect {
+                            anchors.fill: parent
+                            anchors.margins: themeCard.border.width
+                            visible: themeCard.preview.length > 0
+                            radius: themeCard.radius - themeCard.border.width
+                            color: "transparent"
+
+                            Image {
+                                anchors.fill: parent
+                                source: themeCard.preview
+                                sourceSize.width: 360
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                opacity: themeCard.active ? 0.8 : 0.45
+
+                                Behavior on opacity {
+                                    Anim { type: Anim.DefaultEffects }
+                                }
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                gradient: Gradient {
+                                    GradientStop {
+                                        position: 0.35
+                                        color: "transparent"
+                                    }
+                                    GradientStop {
+                                        position: 1
+                                        color: Qt.alpha(Colours.signalStyle.base, 0.9)
+                                    }
+                                }
+                            }
+                        }
+
+                        MaterialIcon {
+                            visible: Settings.barSignal && themeCard.active
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.margins: Tokens.padding.small
+                            text: "check_circle"
+                            fill: 1
+                            color: Colours.palette.m3primary
+                            fontStyle: Tokens.font.icon.small
+                        }
+
                         StyledText {
+                            visible: Settings.barSignal
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.bottom: parent.bottom
+                            anchors.margins: Tokens.padding.medium
+                            elide: Text.ElideRight
+                            text: themeCard.modelData.displayName
+                            color: Colours.palette.m3onSurface
+                            font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
+                        }
+
+                        StyledText {
+                            visible: !Settings.barSignal
                             anchors.centerIn: parent
                             anchors.margins: Tokens.padding.small
                             width: parent.width - Tokens.padding.small * 2
@@ -246,9 +308,9 @@ Item {
             StyledText {
                 visible: Themes.wallpapersInActiveTheme.length > 1
                 Layout.topMargin: Tokens.spacing.small
-                text: qsTr("Wallpaper")
+                text: Settings.barSignal ? qsTr("Wallpaper").toUpperCase() : qsTr("Wallpaper")
                 color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.label.medium
+                font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
             }
 
             Flow {
@@ -283,7 +345,9 @@ Item {
                         height: 32
                         width: Math.min(wallpaperLabel.implicitWidth + Tokens.padding.large * 2, 160)
                         radius: Tokens.rounding.full
-                        color: wallpaperPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+                        color: Settings.barSignal ? (wallpaperPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Colours.signalStyle.raised) : wallpaperPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+                        border.width: Settings.barSignal ? 1 : 0
+                        border.color: wallpaperPill.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
 
                         StyledText {
                             id: wallpaperLabel
@@ -291,7 +355,7 @@ Item {
                             width: wallpaperPill.width - Tokens.padding.large * 2
                             elide: Text.ElideMiddle
                             text: wallpaperPill.modelData
-                            color: wallpaperPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                            color: Settings.barSignal ? (wallpaperPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : wallpaperPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
                             font: Tokens.font.label.small
                         }
 
@@ -376,13 +440,15 @@ Item {
                                 Layout.preferredHeight: 28
                                 Layout.preferredWidth: layoutLabel.implicitWidth + Tokens.padding.medium * 2
                                 radius: Tokens.rounding.full
-                                color: layoutPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                                color: Settings.barSignal ? (layoutPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Colours.signalStyle.raised) : layoutPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                                border.width: Settings.barSignal ? 1 : 0
+                                border.color: layoutPill.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
 
                                 StyledText {
                                     id: layoutLabel
                                     anchors.centerIn: parent
                                     text: layoutPill.modelData.label
-                                    color: layoutPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                    color: Settings.barSignal ? (layoutPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : layoutPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
                                     font: Tokens.font.label.small
                                 }
 
@@ -440,13 +506,15 @@ Item {
                                 Layout.preferredHeight: 28
                                 Layout.preferredWidth: intervalLabel.implicitWidth + Tokens.padding.medium * 2
                                 radius: Tokens.rounding.full
-                                color: intervalPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                                color: Settings.barSignal ? (intervalPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Colours.signalStyle.raised) : intervalPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                                border.width: Settings.barSignal ? 1 : 0
+                                border.color: intervalPill.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
 
                                 StyledText {
                                     id: intervalLabel
                                     anchors.centerIn: parent
                                     text: qsTr("%1m").arg(intervalPill.modelData)
-                                    color: intervalPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                    color: Settings.barSignal ? (intervalPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : intervalPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
                                     font: Tokens.font.label.small
                                 }
 

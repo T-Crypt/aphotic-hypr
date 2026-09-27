@@ -34,12 +34,14 @@ ColumnLayout {
     signal categorySelected(id: string, sectionId: string)
 
     readonly property bool signalSkin: Settings.barSignal
+    readonly property var groupOrder: [...new Set(root.categories.map(c => c.group ?? ""))]
 
     readonly property var _categoryEntries: root.categories.map(c => ({
         id: c.id,
         icon: c.icon,
         label: c.label,
         description: c.description ?? "",
+        group: c.group ?? "",
         categoryId: c.id,
         sectionId: ""
     }))
@@ -133,6 +135,9 @@ ColumnLayout {
                         readonly property bool active: !categoryButton.isSection && categoryButton.modelData.categoryId === root.currentCategory
                         readonly property bool isFirst: categoryButton.index === 0
                         readonly property bool isLast: categoryButton.index === root.filteredCategories.length - 1
+                        readonly property color tint: Colours.signalStyle.tint(root.groupOrder.indexOf(categoryButton.modelData.group ?? ""))
+                        // First entry of its group, at rest: carries the group header.
+                        readonly property bool groupStart: root.signalSkin && !categoryButton.isSection && (categoryButton.modelData.group ?? "").length > 0 && (categoryButton.index === 0 || (root.filteredCategories[categoryButton.index - 1]?.group ?? "") !== categoryButton.modelData.group) && searchInput.text.trim().length === 0
 
                         Layout.fillWidth: true
                         // Inset on all sides while active, not just a color
@@ -148,16 +153,16 @@ ColumnLayout {
                         // instead of an accidental corner-only artifact.
                         Layout.leftMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.isSection ? Tokens.spacing.large : 0)
                         Layout.rightMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
-                        Layout.topMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
+                        Layout.topMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.groupStart ? groupHeader.implicitHeight + Tokens.spacing.large - (categoryButton.index === 0 ? Tokens.spacing.medium : 0) : 0)
                         Layout.bottomMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
                         implicitHeight: rowContent.implicitHeight + Tokens.padding.medium * 2
 
-                        color: root.signalSkin ? "transparent" : categoryButton.active ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                        color: root.signalSkin ? (categoryButton.active ? Qt.alpha(categoryButton.tint, 0.13) : "transparent") : categoryButton.active ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
 
-                        topLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isFirst ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                        topRightRadius: stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isFirst ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                        bottomLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isLast ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                        bottomRightRadius: stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isLast ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+                        topLeftRadius: root.signalSkin ? Tokens.rounding.medium : stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isFirst ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+                        topRightRadius: root.signalSkin ? Tokens.rounding.medium : stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isFirst ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+                        bottomLeftRadius: root.signalSkin ? Tokens.rounding.medium : stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isLast ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+                        bottomRightRadius: root.signalSkin ? Tokens.rounding.medium : stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isLast ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
 
                         Behavior on color {
                             CAnim {}
@@ -187,13 +192,25 @@ ColumnLayout {
                             Anim { type: Anim.DefaultEffects }
                         }
 
+                        StyledText {
+                            id: groupHeader
+
+                            visible: categoryButton.groupStart
+                            x: Tokens.padding.medium
+                            y: -implicitHeight - Tokens.spacing.small
+                            text: (categoryButton.modelData.group ?? "").toUpperCase()
+                            color: Colours.palette.m3onSurfaceVariant
+                            opacity: 0.75
+                            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                        }
+
                         StyledRect {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             width: 2
                             height: parent.height - Tokens.padding.small * 2
                             radius: Tokens.rounding.full
-                            color: Colours.signalStyle.accentLine
+                            color: categoryButton.tint
                             opacity: root.signalSkin && categoryButton.active ? 1 : 0
 
                             Behavior on opacity {
@@ -222,7 +239,7 @@ ColumnLayout {
                                 Layout.preferredWidth: 36
                                 Layout.preferredHeight: 36
                                 radius: Tokens.rounding.medium
-                                color: root.signalSkin ? "transparent" : categoryButton.active ? Colours.palette.m3primary : Colours.palette.m3secondaryContainer
+                                color: root.signalSkin ? Qt.alpha(categoryButton.tint, categoryButton.active ? 0.32 : 0.18) : categoryButton.active ? Colours.palette.m3primary : Colours.palette.m3secondaryContainer
 
                                 Behavior on color {
                                     CAnim {}
@@ -231,7 +248,7 @@ ColumnLayout {
                                 MaterialIcon {
                                     anchors.centerIn: parent
                                     text: categoryButton.modelData.icon
-                                    color: root.signalSkin ? (categoryButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (categoryButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSecondaryContainer)
+                                    color: root.signalSkin ? Colours.legibleAccent(categoryButton.tint, Colours.signalStyle.surface) : (categoryButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSecondaryContainer)
                                     fontStyle: Tokens.font.icon.builders.medium.weight(Font.Medium).build()
                                     fill: categoryButton.active ? 1 : 0
                                 }
@@ -245,7 +262,7 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     text: categoryButton.modelData.label
                                     color: root.signalSkin && !categoryButton.active ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
-                                    font: Tokens.font.body.medium
+                                    font: root.signalSkin && categoryButton.active ? Tokens.font.body.builders.medium.weight(Font.DemiBold).build() : Tokens.font.body.medium
                                     elide: Text.ElideRight
                                 }
 
