@@ -106,3 +106,21 @@ function headline(state) {
         return r.label + ' contended' + (r.owners.length ? ' · ' + r.owners.slice(0, 2).map(function (o) { return o.owner; }).join(', ') : '');
     return r.label + ' ' + Math.round(r.ratio * 100) + '% of budget';
 }
+
+// Contention episodes. `held` is the set of resource keys already at
+// contention or above; returns the new set and the keys that just
+// crossed into plain contention -- the case nobody is asked about,
+// because nothing on the resource can be suspended. A resource that
+// arrives already negotiating has its prompt; one that drops from
+// negotiating to contention after "keep" is the same episode.
+function episodes(held, state) {
+    held = held || [];
+    var now = ((state && state.resources) || []).filter(function (r) {
+        return atLeast(r.level, 'contention');
+    });
+    var keys = now.map(function (r) { return r.key; });
+    var fresh = now.filter(function (r) {
+        return r.level === 'contention' && held.indexOf(r.key) < 0;
+    });
+    return {held: keys, fresh: fresh};
+}
