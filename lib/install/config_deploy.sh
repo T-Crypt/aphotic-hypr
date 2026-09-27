@@ -372,7 +372,7 @@ setup_greetd_greeter() {
   sudo chown -R root:root /etc/xdg/quickshell/aphotic-greeter
 
   sudo mkdir -p /etc/greetd/aphotic
-  sudo cp "$ROOT_DIR/Configs/greetd/hyprland-greeter.conf" /etc/greetd/aphotic/hyprland-greeter.conf
+  sudo cp "$ROOT_DIR/Configs/greetd/hyprland-greeter.lua" /etc/greetd/aphotic/hyprland-greeter.lua
 
   # Chowned to the installing user, same reasoning as the sddm theme dir
   # above -- so 'aphotic greeter sync' (cmd_greeter.sh) can write here

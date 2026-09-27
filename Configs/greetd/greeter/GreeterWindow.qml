@@ -28,6 +28,14 @@ PanelWindow {
         id: wallpaper
 
         anchors.fill: parent
+    }
+
+    ShaderEffectSource {
+        id: wallpaperTexture
+
+        anchors.fill: parent
+        sourceItem: wallpaper
+        hideSource: true
         visible: false
     }
 
@@ -35,7 +43,7 @@ PanelWindow {
     // renders a single time rather than every frame.
     MultiEffect {
         anchors.fill: parent
-        source: wallpaper
+        source: wallpaperTexture
         blurEnabled: true
         blur: 0.55
         blurMax: 48

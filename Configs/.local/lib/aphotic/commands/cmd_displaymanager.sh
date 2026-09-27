@@ -18,7 +18,7 @@
 APHOTIC_GREETD_CONFIG="/etc/greetd/config.toml"
 APHOTIC_GREETD_BACKUP="/etc/greetd/config.toml.aphotic-backup"
 APHOTIC_GREETER_QML="/etc/xdg/quickshell/aphotic-greeter/shell.qml"
-APHOTIC_GREETER_HYPR_CONF="/etc/greetd/aphotic/hyprland-greeter.conf"
+APHOTIC_GREETER_HYPR_CONF="/etc/greetd/aphotic/hyprland-greeter.lua"
 
 _aphotic_dm_unit_state() {
     local unit="$1" enabled active

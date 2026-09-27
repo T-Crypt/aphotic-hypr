@@ -109,7 +109,7 @@ Item {
             root.waiting = true;
             // `quit: true` hands the actual process teardown to Quickshell's
             // own greetd binding -- the wrapping throwaway Hyprland instance
-            // (see Configs/greetd/hyprland-greeter.conf) exits right behind
+            // (see Configs/greetd/hyprland-greeter.lua) exits right behind
             // it once this process exits, releasing the VT/DRM device
             // before greetd starts the real session's Hyprland fresh.
             Greetd.launch(["start-hyprland"], [], true);

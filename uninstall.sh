@@ -95,9 +95,9 @@ json.dump(data, open(path, "w"), indent=2)' "$ASSISTANT_CONFIG"
   fi
 fi
 
-if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml || -f /etc/greetd/aphotic/hyprland-greeter.conf ]]; then
+if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml || -f /etc/greetd/aphotic/hyprland-greeter.lua ]]; then
   # Refuse outright, before ever asking, if greetd is the active display
-  # manager -- deleting /etc/greetd/aphotic/hyprland-greeter.conf out from
+  # manager -- deleting /etc/greetd/aphotic/hyprland-greeter.lua out from
   # under a live greetd.service leaves its config.toml pointing at a
   # compositor config that no longer exists, and the next boot/VT switch
   # gets no login screen at all with no TTY-accessible warning printed in
