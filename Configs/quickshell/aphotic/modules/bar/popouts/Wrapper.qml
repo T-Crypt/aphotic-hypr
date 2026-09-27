@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 import qs.components
 import qs.config
 import qs.services
@@ -215,13 +216,13 @@ Item {
         id: switchIn
 
         Anim {
-            type: Anim.FastEffects
+            type: Anim.DefaultEffects
             target: slideHost
             properties: "opacity"
             to: 1
         }
         Anim {
-            type: Anim.FastEffects
+            type: Anim.Emphasized
             target: slideHost
             properties: "x,y"
             to: 0
@@ -283,11 +284,11 @@ Item {
             }
         ]
         Behavior on scale {
-            Anim { type: root.hasCurrent ? Anim.FastSpatial : Anim.FastEffects }
+            Anim { type: root.hasCurrent ? Anim.Emphasized : Anim.EmphasizedSmall }
             enabled: root.hasCurrent || root.flyoutClosing
         }
         Behavior on opacity {
-            Anim { type: root.hasCurrent ? Anim.FastSpatial : Anim.FastEffects }
+            Anim { type: root.hasCurrent ? Anim.DefaultEffects : Anim.FastEffects }
             enabled: root.hasCurrent || root.flyoutClosing
         }
 
@@ -307,6 +308,7 @@ Item {
 
             radius: Tokens.rounding.medium
             color: flyout.color
+            edgeColor: Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
             corner: Settings.barHorizontal ? (Settings.barPositionBottom ? 2 : 0) : (Settings.barPositionRight ? 2 : 3)
             x: Settings.barHorizontal ? -radius : (Settings.barPositionRight ? parent.width - radius : 0)
             y: Settings.barHorizontal ? (Settings.barPositionBottom ? parent.height - radius : 0) : -radius
@@ -317,10 +319,40 @@ Item {
 
             radius: Tokens.rounding.medium
             color: flyout.color
+            edgeColor: Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
             corner: Settings.barHorizontal ? (Settings.barPositionBottom ? 3 : 1) : (Settings.barPositionRight ? 0 : 1)
             x: Settings.barHorizontal ? parent.width : (Settings.barPositionRight ? parent.width - radius : 0)
             y: Settings.barHorizontal ? (Settings.barPositionBottom ? parent.height - radius : 0) : parent.height
             visible: !root.flyoutFarClamped && parent.opacity > 0
+        }
+
+        // Signal skin: hairline around every side but the bar's, flowing on
+        // from the fillets.
+        Shape {
+            anchors.fill: flyout
+            z: 1
+            visible: Settings.barSignal && flyout.visible
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeWidth: 1
+                strokeColor: Colours.signalStyle.hairline
+                fillColor: "transparent"
+
+                PathSvg {
+                    path: {
+                        const w = flyout.width, h = flyout.height;
+                        const r = Math.min(Tokens.rounding.medium, w / 2, h / 2);
+                        if (Settings.barHorizontal && Settings.barPositionBottom)
+                            return `M0,${h} L0,${r} A${r},${r} 0 0 1 ${r},0 L${w - r},0 A${r},${r} 0 0 1 ${w},${r} L${w},${h}`;
+                        if (!Settings.barHorizontal && !Settings.barPositionRight)
+                            return `M0,0 L${w - r},0 A${r},${r} 0 0 1 ${w},${r} L${w},${h - r} A${r},${r} 0 0 1 ${w - r},${h} L0,${h}`;
+                        if (!Settings.barHorizontal)
+                            return `M${w},0 L${r},0 A${r},${r} 0 0 0 0,${r} L0,${h - r} A${r},${r} 0 0 0 ${r},${h} L${w},${h}`;
+                        return `M0,0 L0,${h - r} A${r},${r} 0 0 0 ${r},${h} L${w - r},${h} A${r},${r} 0 0 0 ${w},${h - r} L${w},0`;
+                    }
+                }
+            }
         }
 
         StyledRect {
@@ -335,7 +367,7 @@ Item {
             topRightRadius: (Settings.barHorizontal ? !Settings.barPositionBottom : Settings.barPositionRight) ? 0 : Tokens.rounding.medium
             bottomLeftRadius: (Settings.barHorizontal ? Settings.barPositionBottom : !Settings.barPositionRight) ? 0 : Tokens.rounding.medium
             bottomRightRadius: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? 0 : Tokens.rounding.medium
-            color: Colours.palette.m3surfaceContainerHigh
+            color: Settings.barSignal ? Colours.signalStyle.bar : Colours.palette.m3surfaceContainerHigh
 
             // Plain MouseArea, not HoverHandler -- see BarWrapper.qml's
             // hoverArea comment for the general reasoning. No buttons
@@ -530,11 +562,11 @@ Item {
             }
         ]
         Behavior on scale {
-            Anim { type: root.screenState.agentPanel ? Anim.FastSpatial : Anim.FastEffects }
+            Anim { type: root.screenState.agentPanel ? Anim.Emphasized : Anim.EmphasizedSmall }
             enabled: root.screenState.agentPanel || root.agentClosing
         }
         Behavior on opacity {
-            Anim { type: root.screenState.agentPanel ? Anim.FastSpatial : Anim.FastEffects }
+            Anim { type: root.screenState.agentPanel ? Anim.DefaultEffects : Anim.FastEffects }
             enabled: root.screenState.agentPanel || root.agentClosing
         }
 
@@ -552,6 +584,7 @@ Item {
 
             radius: Tokens.rounding.medium
             color: agentFlyout.color
+            edgeColor: Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
             corner: Settings.barHorizontal ? (Settings.barPositionBottom ? 2 : 0) : (Settings.barPositionRight ? 2 : 3)
             x: Settings.barHorizontal ? -radius : (Settings.barPositionRight ? parent.width - radius : 0)
             y: Settings.barHorizontal ? (Settings.barPositionBottom ? parent.height - radius : 0) : -radius
@@ -562,6 +595,7 @@ Item {
 
             radius: Tokens.rounding.medium
             color: agentFlyout.color
+            edgeColor: Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
             corner: Settings.barHorizontal ? (Settings.barPositionBottom ? 3 : 1) : (Settings.barPositionRight ? 0 : 1)
             x: Settings.barHorizontal ? parent.width : (Settings.barPositionRight ? parent.width - radius : 0)
             y: Settings.barHorizontal ? (Settings.barPositionBottom ? parent.height - radius : 0) : parent.height
@@ -578,7 +612,7 @@ Item {
             topRightRadius: (Settings.barHorizontal ? !Settings.barPositionBottom : Settings.barPositionRight) ? 0 : Tokens.rounding.medium
             bottomLeftRadius: (Settings.barHorizontal ? Settings.barPositionBottom : !Settings.barPositionRight) ? 0 : Tokens.rounding.medium
             bottomRightRadius: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? 0 : Tokens.rounding.medium
-            color: Colours.palette.m3surfaceContainerHigh
+            color: Settings.barSignal ? Colours.signalStyle.bar : Colours.palette.m3surfaceContainerHigh
 
             Loader {
                 id: agentLoader
