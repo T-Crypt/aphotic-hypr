@@ -71,6 +71,11 @@ QtObject {
         readonly property QtObject session: QtObject {
             readonly property int button: 96
         }
+
+        readonly property QtObject lock: QtObject {
+            readonly property int width: 380
+            readonly property int fieldHeight: 56
+        }
     }
 
     readonly property QtObject fontSize: QtObject {
