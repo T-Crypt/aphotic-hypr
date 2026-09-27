@@ -41,6 +41,10 @@ Item {
         return s;
     }
 
+    // 0..1: how far the edges have separated, in workspace-size units.
+    // Drives the cross-axis squash below so a stretching pill thins out.
+    readonly property real stretch: currentSize > 0 ? Math.min(1, Math.abs(leading - trailing) / currentSize) : 0
+
     property int cWs
     property int lastWs
 
@@ -51,8 +55,10 @@ Item {
 
     x: Settings.barHorizontal ? offset + mask.x : 0
     y: Settings.barHorizontal ? 0 : offset + mask.y
-    implicitWidth: Settings.barHorizontal ? size : (Settings.barInnerWidth - Tokens.padding.small)
-    implicitHeight: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small) : size
+    // Cross axis thins up to 12% while stretched; the Loader centers the
+    // pill on that axis, so it stays centered as it squashes.
+    implicitWidth: Settings.barHorizontal ? size : (Settings.barInnerWidth - Tokens.padding.small) * (1 - 0.12 * stretch)
+    implicitHeight: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small) * (1 - 0.12 * stretch) : size
 
     // The pill has to clip: `colouriser` below renders the WHOLE workspace
     // row and slides it under this window so only the active cell's glyph
@@ -106,14 +112,16 @@ Item {
     Behavior on leading {
         enabled: root.Config.bar.workspaces.activeTrail
 
-        EAnim {}
+        Anim {
+            type: Anim.FastSpatial
+        }
     }
 
     Behavior on trailing {
         enabled: root.Config.bar.workspaces.activeTrail
 
-        EAnim {
-            duration: Tokens.anim.durations.normal * 2
+        Anim {
+            type: Anim.SlowSpatial
         }
     }
 

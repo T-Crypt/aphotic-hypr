@@ -79,8 +79,11 @@ Item {
             color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
             radius: Tokens.rounding.full
 
-            scale: 0
-            Component.onCompleted: scale = 1
+            property bool shown: false
+            opacity: shown ? 1 : 0
+            scale: shown ? 1 : 0.8
+
+            Component.onCompleted: shown = true
 
             states: State {
                 name: "vertical"
@@ -93,9 +96,15 @@ Item {
                 }
             }
 
+            Behavior on opacity {
+                Anim {
+                    type: Anim.FastEffects
+                }
+            }
+
             Behavior on scale {
                 Anim {
-                    easing: Tokens.anim.standardDecel
+                    type: Anim.FastSpatial
                 }
             }
 
