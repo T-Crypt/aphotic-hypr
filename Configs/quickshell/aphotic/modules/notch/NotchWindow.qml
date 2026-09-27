@@ -24,6 +24,7 @@ PanelWindow {
     readonly property bool dockHorizontal: Settings.barHorizontal
     // Which way the hub opens: away from the edge the bar is docked
     // against, so the two never grow into each other.
+    readonly property real edgeGap: Settings.barSignal ? 0 : Config.notch.edgeGap
     readonly property bool growsPositive: root.dockHorizontal ? !Settings.barPositionBottom : !Settings.barPositionRight
 
     WlrLayershell.namespace: "aphotic-notch"
@@ -84,7 +85,7 @@ PanelWindow {
         // persisted orientation loads and flips the condition. Pinning the
         // docked-edge side and centring the other is also what makes the
         // panel grow away from the bar rather than about its own centre.
-        x: root.dockHorizontal ? (parent.width - width) / 2 : (root.growsPositive ? Config.notch.edgeGap : parent.width - width - Config.notch.edgeGap)
-        y: root.dockHorizontal ? (root.growsPositive ? Config.notch.edgeGap : parent.height - height - Config.notch.edgeGap) : (parent.height - height) / 2
+        x: root.dockHorizontal ? (parent.width - width) / 2 : (root.growsPositive ? root.edgeGap : parent.width - width - root.edgeGap)
+        y: root.dockHorizontal ? (root.growsPositive ? root.edgeGap : parent.height - height - root.edgeGap) : (parent.height - height) / 2
     }
 }

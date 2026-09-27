@@ -154,7 +154,7 @@ Item {
         // (TaskbarBar.qml/MinimalBar.qml), matching their own described
         // look instead of inheriting Full's rounded-strip treatment.
         radius: Settings.barSignal ? 0 : Settings.barSkin === "square" ? Tokens.rounding.small : Tokens.rounding.full
-        color: Settings.barSignal ? Qt.alpha(Colours.palette.m3surface, 0.86) : Colours.tPalette.m3surfaceContainer
+        color: Settings.barSignal ? Colours.signalStyle.bar : Colours.tPalette.m3surfaceContainer
         border.width: 0
         border.color: Colours.palette.m3outlineVariant
         visible: root.shouldBeVisible && Settings.barStyle === "full"
@@ -190,9 +190,24 @@ Item {
             width: horizontal ? parent.width : 1
             height: horizontal ? 1 : parent.height
 
+            // Baseline in two halves that open around the notch where it
+            // hangs from the bar, so the line flows into the notch outline.
+            readonly property real gap: root.screenState?.notchSpan ?? 0
+            readonly property real along: horizontal ? width : height
+            readonly property real half: Math.max(0, (along - gap) / 2)
+
             Rectangle {
-                anchors.fill: parent
-                color: Qt.alpha(Colours.palette.m3outlineVariant, 0.5)
+                width: signalLine.horizontal ? signalLine.half : 1
+                height: signalLine.horizontal ? 1 : signalLine.half
+                color: Colours.signalStyle.hairline
+            }
+
+            Rectangle {
+                x: signalLine.horizontal ? signalLine.along - signalLine.half : 0
+                y: signalLine.horizontal ? 0 : signalLine.along - signalLine.half
+                width: signalLine.horizontal ? signalLine.half : 1
+                height: signalLine.horizontal ? 1 : signalLine.half
+                color: Colours.signalStyle.hairline
             }
 
             Rectangle {
@@ -223,7 +238,7 @@ Item {
                 width: signalLine.horizontal ? length : thickness
                 height: signalLine.horizontal ? thickness : length
                 radius: thickness / 2
-                color: Colours.palette.m3primary
+                color: Colours.signalStyle.accentLine
                 visible: length > 0
             }
         }

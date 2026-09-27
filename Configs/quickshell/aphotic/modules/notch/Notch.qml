@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Shapes
 import QtQuick.Effects
 import Quickshell
 import qs.config
@@ -174,7 +175,44 @@ StyledRect {
     // identically) until the last few frames, then drops through the whole
     // visible range at once.
     radius: root.collapsedThick / 2 + (Tokens.rounding.extraLarge - root.collapsedThick / 2) * root.alongT
-    color: Colours.tPalette.m3surfaceContainer
+    color: root.joined ? Colours.signalStyle.bar : Colours.tPalette.m3surfaceContainer
+
+    // Signal skin: the notch hangs from the bar as one piece, so the corners
+    // on the bar side go square and fillets carry the bar edge into its sides.
+    readonly property bool joined: Settings.barSignal
+    readonly property string barSide: root.dockHorizontal ? (root.growsPositive ? "top" : "bottom") : (root.growsPositive ? "left" : "right")
+    readonly property real wing: Tokens.rounding.medium
+
+    topLeftRadius: root.joined && (root.barSide === "top" || root.barSide === "left") ? 0 : root.radius
+    topRightRadius: root.joined && (root.barSide === "top" || root.barSide === "right") ? 0 : root.radius
+    bottomLeftRadius: root.joined && (root.barSide === "bottom" || root.barSide === "left") ? 0 : root.radius
+    bottomRightRadius: root.joined && (root.barSide === "bottom" || root.barSide === "right") ? 0 : root.radius
+
+    Binding {
+        target: root.screenState
+        property: "notchSpan"
+        value: root.joined && root.visible ? (root.dockHorizontal ? root.width : root.height) + root.wing * 2 : 0
+    }
+
+    ConcaveCorner {
+        visible: root.joined
+        radius: root.wing
+        color: root.color
+        edgeColor: Colours.signalStyle.hairline
+        corner: root.dockHorizontal ? (root.barSide === "bottom" ? 2 : 0) : (root.barSide === "right" ? 2 : 3)
+        x: root.dockHorizontal ? -radius : (root.barSide === "right" ? parent.width - radius : 0)
+        y: root.dockHorizontal ? (root.barSide === "bottom" ? parent.height - radius : 0) : -radius
+    }
+
+    ConcaveCorner {
+        visible: root.joined
+        radius: root.wing
+        color: root.color
+        edgeColor: Colours.signalStyle.hairline
+        corner: root.dockHorizontal ? (root.barSide === "bottom" ? 3 : 1) : (root.barSide === "right" ? 0 : 1)
+        x: root.dockHorizontal ? parent.width : (root.barSide === "right" ? parent.width - radius : 0)
+        y: root.dockHorizontal ? (root.barSide === "bottom" ? parent.height - radius : 0) : parent.height
+    }
 
     // Shadow from the shape, not from the content. The notch redraws
     // whenever its idle strip ticks, and layering the whole surface meant
@@ -182,6 +220,7 @@ StyledRect {
     // components/ShapeShadow.qml.
     ShapeShadow {
         anchors.fill: parent
+        visible: !root.joined
         radius: root.radius
         color: root.color
     }
@@ -224,6 +263,7 @@ StyledRect {
 
         DepthGradient {
             anchors.fill: parent
+            visible: !root.joined
             radius: root.radius
             baseColour: root.color
             strength: 0.05
@@ -284,10 +324,41 @@ StyledRect {
         // from an opaque backdrop of nearly the same tone.
         StyledRect {
             anchors.fill: parent
+            visible: !root.joined
             radius: root.radius
             color: "transparent"
             border.width: 1
             border.color: Colours.palette.m3outlineVariant
+        }
+
+        // Open outline: every side but the one joined to the bar.
+        Shape {
+            anchors.fill: parent
+            visible: root.joined
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeWidth: 1
+                strokeColor: Colours.signalStyle.hairline
+                fillColor: "transparent"
+
+                PathSvg {
+                    path: {
+                        const w = root.width, h = root.height;
+                        const r = Math.min(root.radius, w / 2, h / 2);
+                        switch (root.barSide) {
+                        case "bottom":
+                            return `M0,${h} L0,${r} A${r},${r} 0 0 1 ${r},0 L${w - r},0 A${r},${r} 0 0 1 ${w},${r} L${w},${h}`;
+                        case "left":
+                            return `M0,0 L${w - r},0 A${r},${r} 0 0 1 ${w},${r} L${w},${h - r} A${r},${r} 0 0 1 ${w - r},${h} L0,${h}`;
+                        case "right":
+                            return `M${w},0 L${r},0 A${r},${r} 0 0 0 0,${r} L0,${h - r} A${r},${r} 0 0 0 ${r},${h} L${w},${h}`;
+                        default:
+                            return `M0,0 L0,${h - r} A${r},${r} 0 0 0 ${r},${h} L${w - r},${h} A${r},${r} 0 0 0 ${w},${h - r} L${w},0`;
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -9,6 +9,8 @@ Item {
     property int corner: 0
     property real radius: 0
     property color color: "transparent"
+    // Optional stroke along the curve only, for surfaces outlined by a hairline.
+    property color edgeColor: "transparent"
 
     width: root.radius
     height: root.radius
@@ -38,6 +40,22 @@ Item {
                 x: root.radius
                 y: root.radius
             }
+            PathArc {
+                x: 0
+                y: 0
+                radiusX: root.radius
+                radiusY: root.radius
+                direction: PathArc.Counterclockwise
+            }
+        }
+
+        ShapePath {
+            strokeWidth: 1
+            strokeColor: root.edgeColor
+            fillColor: "transparent"
+
+            startX: root.radius
+            startY: root.radius
             PathArc {
                 x: 0
                 y: 0
