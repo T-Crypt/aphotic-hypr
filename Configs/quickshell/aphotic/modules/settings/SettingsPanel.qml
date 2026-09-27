@@ -67,8 +67,10 @@ RowLayout {
 
         Layout.fillHeight: true
         Layout.preferredWidth: 300
-        radius: Tokens.rounding.extraLarge
-        color: Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        color: Settings.barSignal ? Colours.signalStyle.surface : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
 
         DepthLayer {
             anchors.fill: parent
@@ -97,8 +99,10 @@ RowLayout {
         Layout.fillHeight: true
         Layout.fillWidth: true
         Layout.leftMargin: Tokens.spacing.medium
-        radius: Tokens.rounding.extraLarge
-        color: Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        color: Settings.barSignal ? Colours.signalStyle.surface : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         clip: true
 
         property int _prevCategoryIndex: 0

@@ -33,6 +33,8 @@ ColumnLayout {
 
     signal categorySelected(id: string, sectionId: string)
 
+    readonly property bool signalSkin: Settings.barSignal
+
     readonly property var _categoryEntries: root.categories.map(c => ({
         id: c.id,
         icon: c.icon,
@@ -150,7 +152,7 @@ ColumnLayout {
                         Layout.bottomMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
                         implicitHeight: rowContent.implicitHeight + Tokens.padding.medium * 2
 
-                        color: categoryButton.active ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                        color: root.signalSkin ? "transparent" : categoryButton.active ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
 
                         topLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isFirst ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
                         topRightRadius: stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isFirst ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
@@ -185,6 +187,20 @@ ColumnLayout {
                             Anim { type: Anim.DefaultEffects }
                         }
 
+                        StyledRect {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 2
+                            height: parent.height - Tokens.padding.small * 2
+                            radius: Tokens.rounding.full
+                            color: Colours.signalStyle.accentLine
+                            opacity: root.signalSkin && categoryButton.active ? 1 : 0
+
+                            Behavior on opacity {
+                                Anim { type: Anim.DefaultEffects }
+                            }
+                        }
+
                         RowLayout {
                             id: rowContent
 
@@ -206,7 +222,7 @@ ColumnLayout {
                                 Layout.preferredWidth: 36
                                 Layout.preferredHeight: 36
                                 radius: Tokens.rounding.medium
-                                color: categoryButton.active ? Colours.palette.m3primary : Colours.palette.m3secondaryContainer
+                                color: root.signalSkin ? "transparent" : categoryButton.active ? Colours.palette.m3primary : Colours.palette.m3secondaryContainer
 
                                 Behavior on color {
                                     CAnim {}
@@ -215,7 +231,7 @@ ColumnLayout {
                                 MaterialIcon {
                                     anchors.centerIn: parent
                                     text: categoryButton.modelData.icon
-                                    color: categoryButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSecondaryContainer
+                                    color: root.signalSkin ? (categoryButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (categoryButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSecondaryContainer)
                                     fontStyle: Tokens.font.icon.builders.medium.weight(Font.Medium).build()
                                     fill: categoryButton.active ? 1 : 0
                                 }
@@ -228,6 +244,7 @@ ColumnLayout {
                                 StyledText {
                                     Layout.fillWidth: true
                                     text: categoryButton.modelData.label
+                                    color: root.signalSkin && !categoryButton.active ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
                                     font: Tokens.font.body.medium
                                     elide: Text.ElideRight
                                 }

@@ -42,11 +42,13 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: headerRow.implicitHeight + Tokens.padding.medium * 2
 
-        color: root.highlighted ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
-        topLeftRadius: Tokens.rounding.extraLarge
-        topRightRadius: Tokens.rounding.extraLarge
-        bottomLeftRadius: root.expanded ? Tokens.rounding.extraSmall : Tokens.rounding.extraLarge
-        bottomRightRadius: root.expanded ? Tokens.rounding.extraSmall : Tokens.rounding.extraLarge
+        color: Settings.barSignal ? (root.highlighted ? Qt.tint(Colours.signalStyle.raised, Colours.signalStyle.hover) : Colours.signalStyle.raised) : (root.highlighted ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : Colours.layer(Colours.tPalette.m3surfaceContainer, 2))
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
+        topLeftRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        topRightRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        bottomLeftRadius: root.expanded ? Tokens.rounding.extraSmall : (Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge)
+        bottomRightRadius: root.expanded ? Tokens.rounding.extraSmall : (Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge)
 
         Behavior on color {
             CAnim {}
@@ -76,7 +78,7 @@ ColumnLayout {
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
                 radius: Tokens.rounding.medium
-                color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                color: Settings.barSignal ? "transparent" : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
 
                 MaterialIcon {
                     anchors.centerIn: parent
@@ -93,7 +95,7 @@ ColumnLayout {
                 StyledText {
                     Layout.fillWidth: true
                     text: root.label
-                    font: Tokens.font.body.medium
+                    font: Settings.barSignal ? Tokens.font.body.builders.medium.weight(Font.DemiBold).build() : Tokens.font.body.medium
                     elide: Text.ElideRight
                 }
 
@@ -135,11 +137,22 @@ ColumnLayout {
 
         StyledRect {
             anchors.fill: parent
-            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+            color: Settings.barSignal ? Colours.signalStyle.raised : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+            border.width: Settings.barSignal ? 1 : 0
+            border.color: Colours.signalStyle.hairline
             topLeftRadius: Tokens.rounding.extraSmall
             topRightRadius: Tokens.rounding.extraSmall
-            bottomLeftRadius: Tokens.rounding.extraLarge
-            bottomRightRadius: Tokens.rounding.extraLarge
+            bottomLeftRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+            bottomRightRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        }
+
+        // Covers the body's top border so header and body meet on one line.
+        Rectangle {
+            visible: Settings.barSignal
+            x: 1
+            width: parent.width - 2
+            height: 1
+            color: Colours.signalStyle.raised
         }
 
         Loader {
