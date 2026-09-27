@@ -51,12 +51,12 @@ Singleton {
     // these carry. `invoke` is a plain callable here instead of a D-Bus
     // round trip, so an action can run something in this process without
     // a client sitting on the other end waiting to be called back.
-    function notify(summary: string, body: string, actions: var): void {
+    function notify(summary: string, body: string, actions: var, appName: string): void {
         const comp = notifComp.createObject(root, {
             popup: root.popupAllowed(NotificationUrgency.Normal),
             summary: summary,
             body: body,
-            appName: "Aphotic",
+            appName: appName || "Aphotic",
             actions: actions ?? []
         });
         root.list = [comp, ...root.list];

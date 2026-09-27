@@ -37,8 +37,22 @@ Singleton {
     readonly property int historyLimit: 20
     readonly property int settleMs: 4000
 
+    // A resource entered contention that no one will be asked about:
+    // over budget, nothing on it can be suspended. Once per episode; the
+    // episode ends when the resource drops below contention. The host
+    // decides what to do with it (shell.qml posts one notification).
+    signal contentionStarted(resource: var)
+
     property bool _settling: false
     property var _history: []
+    property var _held: []
+
+    onStateChanged: {
+        const next = Posture.episodes(root._held, root.state);
+        root._held = next.held;
+        for (const r of next.fresh)
+            root.contentionStarted(r);
+    }
 
     function atLeast(level: string, threshold: string): bool {
         return Posture.atLeast(level, threshold);

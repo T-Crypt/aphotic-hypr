@@ -80,3 +80,21 @@ for (const claims of [
 }
 
 console.log('Resource posture: passed');
+
+// Contention episodes: fire once on entry to plain contention, not for
+// negotiations, not again while it lasts, again after it clears.
+const over = [claim('a', 'ai', 600), claim('b', 'game', 400)];
+let ep = P.episodes([], P.assess(over, vram(), null, null, false));
+assert.deepEqual(Array.from(ep.fresh, r => r.key), ['gpu-vram']);
+ep = P.episodes(ep.held, P.assess(over, vram(), null, null, false));
+assert.equal(ep.fresh.length, 0);
+ep = P.episodes(ep.held, P.assess([claim('a', 'ai', 100)], vram(), null, null, false));
+assert.equal(ep.held.length, 0);
+ep = P.episodes(ep.held, P.assess(over, vram(), null, null, false));
+assert.equal(ep.fresh.length, 1);
+// Arriving as a negotiation: no notification now, and none when "keep" leaves it contended.
+ep = P.episodes([], P.assess(over, vram(), pending, null, false));
+assert.equal(ep.fresh.length, 0);
+ep = P.episodes(ep.held, P.assess(over, vram(), null, null, false));
+assert.equal(ep.fresh.length, 0);
+console.log('Contention episodes: passed');

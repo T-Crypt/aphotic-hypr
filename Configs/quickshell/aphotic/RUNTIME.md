@@ -104,9 +104,21 @@ Colour comes from `Colours.posture(level, rest)`. Pressure uses the
 palette's tertiary role and contention/negotiating use error, so
 wallpaper-driven palettes stay in charge of the hue.
 
-Current consumers: the bar's `resources` status icon, the notch idle
-strip (the CPU and memory gauges give way to the pressured resource), and
-the `resources.inspect` action, which opens the Command Center on Flow.
+Current consumers:
+
+- The bar's `resources` status icon.
+- The notch idle strip: the CPU and memory gauges give way to the
+  resource that needs attention.
+- The notch Processes tile: a banner with the headline and a **Flow**
+  button. Clicking the collapsed notch opens this tile first.
+- The `resources.inspect` action, which opens the Command Center on Flow.
+- One notification per contention episode that nobody will be asked
+  about: over budget, and nothing on the resource can be suspended. It
+  exists because a fullscreen game hides the bar and notch. It lands in
+  history whatever the context allows on screen, and carries an
+  **Inspect in Flow** action. A negotiation never notifies; it opens its
+  prompt. `ResourcePosture.contentionStarted(resource)` is the signal, and
+  shell.qml is the host that turns it into a notification.
 
 ## Runtime context (`services/RuntimeContext.qml`, `services/ContextPolicy.js`)
 

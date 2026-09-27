@@ -391,6 +391,30 @@ ShellRoot {
         };
     }
 
+    // Contention nobody will be asked about -- over budget, nothing on the
+    // resource can be suspended -- has no prompt, and a fullscreen game
+    // hides the bar and notch that show it. One notification per episode
+    // puts it in history (and on screen, if the context's popup floor
+    // allows) with a way into Flow. Negotiations need none: they open
+    // their own prompt.
+    Connections {
+        target: ResourcePosture
+
+        function onContentionStarted(resource: var): void {
+            const owners = (resource.owners ?? []).slice(0, 3).map(o => o.owner).join(", ");
+            Notifs.notify(qsTr("%1 over budget").arg(resource.label), owners ? qsTr("Held by %1. Nothing on it can be suspended, so there is nothing to decide.").arg(owners) : qsTr("Nothing on it can be suspended, so there is nothing to decide."), [
+                {
+                    identifier: "inspect",
+                    text: qsTr("Inspect in Flow"),
+                    icon: "hub",
+                    invoke: () => Actions.invoke("resources.inspect", {
+                        screenState: root.focusedScreenState()
+                    })
+                }
+            ]);
+        }
+    }
+
     // Manual only: nothing in the shell switches context on its own.
     // `aphotic context` is the CLI over these.
     IpcHandler {
