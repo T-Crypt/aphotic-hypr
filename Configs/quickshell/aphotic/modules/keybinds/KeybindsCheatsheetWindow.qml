@@ -32,7 +32,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-visible: reveal.active && !Surfaces.suppressed
+    visible: reveal.active && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 

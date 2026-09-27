@@ -12,6 +12,7 @@ Item {
     id: root
 
     required property ScreenState screenState
+    property SurfaceReveal reveal: null
 
     // Prefix sigils in the search box switch mode, matching the existing
     // convention of one script per Rofi mode (rofi-combi/-clipboard/-emoji/
@@ -185,19 +186,22 @@ Item {
     implicitWidth: Tokens.sizes.launcher.width
     implicitHeight: previewHeight + (useGrid ? grid.height : list.height) + Tokens.padding.large
 
-    visible: opacity > 0
-    opacity: screenState.launcher ? 1 : 0
-
-    Behavior on opacity {
-        Anim {}
+    Behavior on implicitHeight {
+        Anim { type: Anim.DefaultSpatial }
     }
 
-    onVisibleChanged: {
-        if (visible) {
-            search.text = root.screenState.launcherPrefill;
-            root.screenState.launcherPrefill = "";
-            search.forceActiveFocus();
-            refreshMode();
+    Connections {
+        target: root.screenState
+
+        function onLauncherChanged(): void {
+            if (!root.screenState.launcher)
+                return;
+            Qt.callLater(() => {
+                search.text = root.screenState.launcherPrefill;
+                root.screenState.launcherPrefill = "";
+                search.forceActiveFocus();
+                refreshMode();
+            });
         }
     }
 
@@ -210,7 +214,14 @@ Item {
             projectProc.exec(["sh", "-c", root.projectScanScript]);
     }
 
+    Elevation {
+        target: frame
+        level: 3
+    }
+
     StyledClippingRect {
+        id: frame
+
         anchors.fill: parent
         radius: Tokens.rounding.extraLarge
         color: Colours.palette.m3surfaceContainerHigh
@@ -453,6 +464,13 @@ Item {
 
                 required property var modelData
                 required property int index
+
+                readonly property real rowReveal: root.reveal ? root.reveal.staggered(index) : 1
+
+                opacity: rowReveal
+                transform: Translate {
+                    y: (1 - rowReveal) * Tokens.spacing.medium
+                }
 
                 width: ListView.view?.width ?? 0
                 height: Tokens.sizes.launcher.itemHeight

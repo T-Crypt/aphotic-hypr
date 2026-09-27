@@ -25,7 +25,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.launcher && !Surfaces.suppressed
+    visible: reveal.active && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 
@@ -34,8 +34,17 @@ PanelWindow {
         onClicked: root.screenState.launcher = false
     }
 
-    Launcher {
+    SurfaceReveal {
+        id: reveal
+
         anchors.centerIn: parent
-        screenState: root.screenState
+        shown: root.screenState.launcher
+        edge: "bottom"
+        hiddenScale: 0.96
+
+        Launcher {
+            screenState: root.screenState
+            reveal: reveal
+        }
     }
 }

@@ -23,7 +23,14 @@ Item {
     Component.onCompleted: root._ensureActive()
     onWorkspaceChanged: root._ensureActive()
 
+    Elevation {
+        target: frame
+        level: 3
+    }
+
     StyledRect {
+        id: frame
+
         anchors.fill: parent
         radius: Tokens.rounding.large
         color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
