@@ -37,6 +37,11 @@ PersistentProperties {
     // as launcherPrefill above.
     property string settingsCategory: ""
 
+    // Dashboard: tab id to show the next time it opens (e.g. "flow" from
+    // the resources.inspect action). Cleared by DashboardContent once
+    // consumed, same one-shot shape as settingsCategory.
+    property string dashboardTabRequest: ""
+
     // Every flag above that is a surface reports its changes to
     // Surfaces, which decides what the change does to the rest of this
     // screen (services/SurfacePolicy.js). The flags stay the one way to

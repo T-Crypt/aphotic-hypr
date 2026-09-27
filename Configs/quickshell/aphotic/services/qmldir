@@ -24,6 +24,8 @@ singleton PluginRegistry 1.0 PluginRegistry.qml
 singleton Pomodoro 1.0 Pomodoro.qml
 singleton ProcessUsage 1.0 ProcessUsage.qml
 singleton RenderGate 1.0 RenderGate.qml
+singleton ResourcePosture 1.0 ResourcePosture.qml
+singleton RuntimeContext 1.0 RuntimeContext.qml
 singleton SafeMode 1.0 SafeMode.qml
 singleton SessionLockState 1.0 SessionLockState.qml
 singleton Settings 1.0 Settings.qml

@@ -28,7 +28,27 @@ ColumnLayout {
     }
 
     onCurrentTabChanged: root._latchTab()
-    Component.onCompleted: root._latchTab()
+    Component.onCompleted: {
+        root._takeTabRequest();
+        root._latchTab();
+    }
+
+    function _takeTabRequest(): void {
+        const id = root.screenState.dashboardTabRequest;
+        if (!id)
+            return;
+        root.screenState.dashboardTabRequest = "";
+        if (root.tabs.some(t => t.id === id))
+            root.currentTab = id;
+    }
+
+    Connections {
+        target: root.screenState
+
+        function onDashboardTabRequestChanged(): void {
+            root._takeTabRequest();
+        }
+    }
 
     // Installed, enabled, and its own declared gate satisfied -- all three
     // decided by PluginRegistry off the plugin's manifest. This file knows
