@@ -17,6 +17,8 @@ Singleton {
     id: root
 
     Timer {
+        id: cycleTimer
+
         interval: Settings.wallpaperAutoCycleInterval * 60 * 1000
         running: Settings.wallpaperAutoCycleEnabled
         repeat: true
@@ -26,5 +28,11 @@ Singleton {
                 return;
             Quickshell.execDetached(["aphotic", "wallpaper", "--random"]);
         }
+    }
+
+    ActivityProbe {
+        name: "wallpaper.cycle"
+        kind: "poll"
+        timer: cycleTimer
     }
 }

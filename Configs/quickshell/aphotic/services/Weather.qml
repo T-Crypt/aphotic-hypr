@@ -245,10 +245,18 @@ Singleton {
     }
 
     Timer {
+        id: weatherRefresh
+
         interval: 20 * 60 * 1000
         running: true
         repeat: true
         onTriggered: root.refresh()
+    }
+
+    ActivityProbe {
+        name: "weather"
+        kind: "network"
+        timer: weatherRefresh
     }
 
     Connections {

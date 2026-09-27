@@ -13,6 +13,13 @@ Singleton {
     property list<NotifData> list: []
     readonly property list<NotifData> popups: list.filter(n => n.popup)
 
+    // DND holds every popup back; the runtime context holds back the ones
+    // under its urgency floor (services/ContextPolicy.js). Either way the
+    // notification still lands in history.
+    function popupAllowed(urgency: int): bool {
+        return !DoNotDisturb.enabled && RuntimeContext.allowsPopup(urgency);
+    }
+
     NotificationServer {
         id: server
 
@@ -26,7 +33,7 @@ Singleton {
         onNotification: notif => {
             notif.tracked = true;
             const comp = notifComp.createObject(root, {
-                popup: !DoNotDisturb.enabled,
+                popup: root.popupAllowed(notif.urgency),
                 notification: notif
             });
             root.list = [comp, ...root.list];
@@ -44,12 +51,12 @@ Singleton {
     // these carry. `invoke` is a plain callable here instead of a D-Bus
     // round trip, so an action can run something in this process without
     // a client sitting on the other end waiting to be called back.
-    function notify(summary: string, body: string, actions: var): void {
+    function notify(summary: string, body: string, actions: var, appName: string): void {
         const comp = notifComp.createObject(root, {
-            popup: !DoNotDisturb.enabled,
+            popup: root.popupAllowed(NotificationUrgency.Normal),
             summary: summary,
             body: body,
-            appName: "Aphotic",
+            appName: appName || "Aphotic",
             actions: actions ?? []
         });
         root.list = [comp, ...root.list];

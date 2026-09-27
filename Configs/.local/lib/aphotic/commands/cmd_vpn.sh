@@ -67,6 +67,10 @@ _aphotic_vpn_connect() {
     local config_path="${1:-}"
     [[ -n "$config_path" ]] || config_path="$(_aphotic_vpn_config_path)"
 
+    # Settings stores the path as typed, so expand a file:// URL or a ~.
+    config_path="${config_path/#file:\/\//}"
+    config_path="${config_path/#\~/$HOME}"
+
     if [[ -z "$config_path" ]]; then
         aphotic_err "no VPN config set — pass a path, or set one in Settings → Network, or 'aphotic config' (vpnConfigPath)"
         return 1

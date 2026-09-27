@@ -64,8 +64,23 @@ Singleton {
             icon: "palette",
             label: qsTr("Next theme"),
             plugin: ""
+        },
+        {
+            id: "resources.inspect",
+            icon: "hub",
+            label: qsTr("Inspect resources in Flow"),
+            plugin: ""
         }
-    ].concat(root._workspaceActions, root._settingsActions)
+    ].concat(root._workspaceActions, root._contextActions, root._settingsActions)
+
+    // One per runtime context, derived from RuntimeContext's own list so a
+    // context added there is an action here with no edit.
+    readonly property var _contextActions: RuntimeContext.contexts.map(c => ({
+        id: `context.${c.id}`,
+        icon: c.icon,
+        label: qsTr("Context: %1").arg(c.label),
+        plugin: ""
+    }))
 
     readonly property var _workspaceActions: PluginRegistry.surfacesFor("workspace").length > 0 ? [{
         id: "workspace.open",
@@ -110,7 +125,7 @@ Singleton {
             return;
         }
 
-        const handler = root._coreHandlers[id] ?? (id.startsWith("settings.") ? root._openSettingsCategory : null);
+        const handler = root._coreHandlers[id] ?? (id.startsWith("settings.") ? root._openSettingsCategory : id.startsWith("context.") ? root._setContext : null);
         if (handler)
             handler(context ?? ({}), id);
     }
@@ -158,8 +173,18 @@ Singleton {
         "workspace.open": context => {
             if (context.screenState)
                 context.screenState.workspace = true;
+        },
+        "resources.inspect": context => {
+            if (!context.screenState)
+                return;
+            context.screenState.dashboardTabRequest = "flow";
+            context.screenState.dashboard = true;
         }
     })
+
+    function _setContext(context: var, id: string): void {
+        RuntimeContext.set(id.slice("context.".length));
+    }
 
     function _openSettingsCategory(context: var, id: string): void {
         root._openSettings(context, id.slice("settings.".length));

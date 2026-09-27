@@ -189,7 +189,8 @@ def num(v):
     except Exception: return None
 args = sys.argv[1:]
 payload = open(args[-1]).read()
-args = args[:-1]
+runtime_raw = args[-2]
+args = args[:-2]
 ts, label = args[0], args[1]
 def obj(rss, heap, cpu, threads):
     if rss == "null": return None
@@ -212,8 +213,28 @@ for line in payload.splitlines():
 gpu = None
 if used is not None:
     gpu = {"card_used_mib": used, "card_total_mib": total, "card_util": util, "procs": procs}
+# What the shell itself reported over IPC (`aphotic runtime`), reduced to
+# what a regression moves: context, posture, and the repeating work that
+# was live. Null when the shell did not answer -- never inferred.
+runtime = None
+try:
+    rt = json.load(open(runtime_raw))
+    act = rt.get("activity") or {}
+    runtime = {
+        "context": (rt.get("context") or {}).get("current"),
+        "resources": (rt.get("resources") or {}).get("level"),
+        "activity": {
+            "active": act.get("active"),
+            "idle": act.get("idle"),
+            "wakeups_per_min": act.get("wakeupsPerMinute"),
+            "live": sorted(p.get("name") for p in (act.get("probes") or []) if p.get("active")),
+        },
+        "plugins": len((rt.get("plugins") or {}).get("enabled") or []),
+    }
+except Exception:
+    runtime = None
 print(json.dumps({"ts": ts, "label": label, "gpu": gpu, "shell": shell,
-                  "hyprland": hyprland, "monitors": monitors}, separators=(",", ":")))
+                  "hyprland": hyprland, "monitors": monitors, "runtime": runtime}, separators=(",", ":")))
 PY
 }
 
@@ -227,13 +248,21 @@ def fb(names):
     if not isinstance(g, dict): return None
     return sum(float(p.get("fb_mib", 0) or 0) for p in g.get("procs", []) if p.get("name") in names)
 sh = doc.get("shell")
-vals = {"shell_vram_mib": fb({"qs", "quickshell"}),
+rt = doc.get("runtime")
+act = rt.get("activity") if isinstance(rt, dict) else None
+vals = {"shell_wakeups_per_min": act.get("wakeups_per_min") if isinstance(act, dict) else None,
+        "shell_vram_mib": fb({"qs", "quickshell"}),
         "shell_vram_inference_mib": fb({"qs", "quickshell", "Hyprland", "Xwayland"}),
         "idle_gpu_util_pct": g.get("card_util") if isinstance(g, dict) else None,
         "shell_heap_mib": sh.get("heap_mib") if isinstance(sh, dict) else None,
         "shell_cpu_pct": sh.get("cpu_avg") if isinstance(sh, dict) else None}
 for name in ("shell_vram_mib", "shell_vram_inference_mib", "idle_gpu_util_pct",
-             "shell_heap_mib", "shell_cpu_pct"):
+             "shell_heap_mib", "shell_cpu_pct", "shell_wakeups_per_min"):
+    # Opt-in: no default budget ships for wakeups, because the right
+    # number depends on which bar style and plugins a machine runs. Set
+    # it after measuring your own idle desktop with `aphotic runtime`.
+    if name == "shell_wakeups_per_min" and name not in bud:
+        continue
     v = vals[name]
     if v is None or name not in bud:
         print("%s\tna\t%s\tSKIP" % (name, bud.get(name, "?"))); continue
@@ -366,6 +395,13 @@ _aphotic_perf_collect() {
     local monitors
     monitors="$(_aphotic_perf_monitors)"
 
+    # The shell's own account of what it had running, when it answers.
+    local runtime_raw
+    runtime_raw="$(mktemp)"
+    if [[ -n "$shell_pid" ]] && command -v qs >/dev/null 2>&1; then
+        timeout 3 qs -c aphotic ipc call aphotic runtime > "$runtime_raw" 2>/dev/null || : > "$runtime_raw"
+    fi
+
     local s_vram hypr_sm
     if [[ -n "$gpu_used" ]]; then
         s_vram="$(awk -F'\t' '{ if ($1 == "qs" || $1 == "quickshell") s += $4 } END { printf "%.1f", s + 0 }' <<<"$proc_rows")"
@@ -400,8 +436,8 @@ _aphotic_perf_collect() {
         "$h_heap" \
         "$([ -n "$hypr_pid" ] && echo "$h_cpu" || echo null)" \
         "$([ -n "$hypr_pid" ] && echo "$h_threads" || echo null)" \
-        "${gpu_used:-null}" "${gpu_total:-null}" "${gpu_util:-null}" "$pay" >> "$hist"
-    rm -f "$pay"
+        "${gpu_used:-null}" "${gpu_total:-null}" "${gpu_util:-null}" "$runtime_raw" "$pay" >> "$hist"
+    rm -f "$pay" "$runtime_raw"
 
     _aphotic_perf_ts="$ts"
     _aphotic_perf_gpu_used="$gpu_used"

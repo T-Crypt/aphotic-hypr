@@ -42,6 +42,28 @@ Singleton {
         disconnectProc.exec(["aphotic", "vpn", "disconnect"]);
     }
 
+    // The CLI reports failures as one coloured stderr line; strip the colour.
+    function _firstLine(text: string): string {
+        const lines = text.replace(/\u001B\[[0-9;]*m/g, "").split("\n")
+            .filter(line => line.trim().length > 0);
+        return lines.length > 0 ? lines[0].trim() : "";
+    }
+
+    function _finish(failTitle: string, exitCode: int, out: string, err: string): void {
+        root.busy = false;
+        if (exitCode !== 0) {
+            const body = root._firstLine(err) || root._firstLine(out)
+                || qsTr("exited with code %1").arg(exitCode);
+            Toaster.toast(failTitle, body, "error");
+            return;
+        }
+        // openvpn daemonizes and can still fail on auth, so show the CLI's
+        // line (it names the log) on success too.
+        const line = root._firstLine(out);
+        if (line.length > 0)
+            Toaster.toast(qsTr("VPN"), line, "vpn_key");
+    }
+
     FileView {
         path: root.markerPath
         watchChanges: true
@@ -52,11 +74,33 @@ Singleton {
 
     Process {
         id: connectProc
-        onExited: root.busy = false
+
+        stdout: StdioCollector {
+            id: connectStdout
+        }
+
+        stderr: StdioCollector {
+            id: connectStderr
+        }
+
+        onExited: exitCode => {
+            root._finish(qsTr("VPN connect failed"), exitCode, connectStdout.text, connectStderr.text);
+        }
     }
 
     Process {
         id: disconnectProc
-        onExited: root.busy = false
+
+        stdout: StdioCollector {
+            id: disconnectStdout
+        }
+
+        stderr: StdioCollector {
+            id: disconnectStderr
+        }
+
+        onExited: exitCode => {
+            root._finish(qsTr("VPN disconnect failed"), exitCode, disconnectStdout.text, disconnectStderr.text);
+        }
     }
 }

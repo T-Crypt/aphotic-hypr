@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.services
 
 Singleton {
     id: root
@@ -171,6 +172,8 @@ Singleton {
     }
 
     Timer {
+        id: networkSample
+
         interval: GlobalConfig.dashboard.resourceUpdateInterval
         running: root.wanted
         repeat: true
@@ -241,5 +244,11 @@ Singleton {
             root._prevTxBytes = data.tx;
             root._prevTimestamp = now;
         }
+    }
+
+    ActivityProbe {
+        name: "network.usage"
+        kind: "file"
+        timer: networkSample
     }
 }

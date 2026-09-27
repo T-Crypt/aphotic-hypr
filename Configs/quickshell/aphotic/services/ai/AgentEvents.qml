@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // The one reader of ~/.local/state/aphotic/agent-events.jsonl. Every
 // surface that wants harness session state -- the bar's agent indicator,
@@ -233,6 +234,8 @@ Singleton {
     }
 
     Timer {
+        id: eventsReconcile
+
         interval: 30000
         running: root._wanted
         repeat: true
@@ -242,5 +245,11 @@ Singleton {
             if (kept.length !== root._sessions.length)
                 root._sessions = kept;
         }
+    }
+
+    ActivityProbe {
+        name: "agents.events"
+        kind: "file"
+        timer: eventsReconcile
     }
 }
