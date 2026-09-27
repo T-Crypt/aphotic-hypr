@@ -12,11 +12,15 @@ RowLayout {
     required property string currentTab
     required property var tabs // [{ id, icon, label }]
 
+    readonly property Item activeTab: tabRepeater.count > 0 ? tabRepeater.itemAt(root.tabs.findIndex(t => t.id === root.currentTab)) : null
+
     signal tabSelected(id: string)
 
     spacing: Tokens.spacing.small
 
     Repeater {
+        id: tabRepeater
+
         model: root.tabs
 
         StyledRect {
@@ -63,21 +67,6 @@ RowLayout {
                 stateOpacity: Settings.barSignal ? (containsMouse && !tabButton.active ? 1 : 0) : (containsMouse ? 0.08 : 0)
                 color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
                 onClicked: root.tabSelected(tabButton.modelData.id)
-            }
-
-            // Signal: a 2px accent underline under the active tab.
-            StyledRect {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: 2
-                radius: Tokens.rounding.full
-                color: Colours.signalStyle.accentLine
-                opacity: Settings.barSignal && tabButton.active ? 1 : 0
-
-                Behavior on opacity {
-                    Anim { type: Anim.DefaultEffects }
-                }
             }
         }
     }

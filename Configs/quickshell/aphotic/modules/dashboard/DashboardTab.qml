@@ -66,50 +66,52 @@ Item {
         sourceComponent: Settings.barSignal ? bento : row
     }
 
-    // Signal: grouped bento. Today (time and weather), Calendar, then Now
-    // playing over Focus and Controls, every column sharing one height.
+    // Signal: grouped bento. Today over Weather, Calendar, then Now playing
+    // over Timer and Controls, every column sharing one height.
     Component {
         id: bento
 
         RowLayout {
             spacing: Tokens.spacing.medium
 
-            Card {
-                id: todayCard
-
-                title: qsTr("Today")
-                tintIndex: 0
+            ColumnLayout {
                 Layout.fillHeight: true
                 Layout.preferredWidth: Math.max(dateTime.implicitWidth, weather.implicitWidth) + Tokens.padding.large * 2
-                Layout.preferredHeight: todayCard.headerHeight + dateTime.implicitHeight + weather.implicitHeight + Tokens.padding.large * 2
+                spacing: Tokens.spacing.medium
 
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.topMargin: todayCard.headerHeight
-                    anchors.leftMargin: Tokens.padding.small
-                    anchors.rightMargin: Tokens.padding.small
-                    anchors.bottomMargin: Tokens.padding.small
-                    spacing: 0
+                Card {
+                    id: todayCard
+
+                    title: qsTr("Today")
+                    tintIndex: 0
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredHeight: todayCard.headerHeight + dateTime.implicitHeight
 
                     DashDateTime {
                         id: dateTime
 
-                        Layout.alignment: Qt.AlignHCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: todayCard.headerHeight / 2
                     }
+                }
 
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: Tokens.padding.large
-                        Layout.rightMargin: Tokens.padding.large
-                        implicitHeight: 1
-                        color: Colours.signalStyle.hairline
-                    }
+                Card {
+                    id: weatherCard
+
+                    title: qsTr("Weather")
+                    tintIndex: 1
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredHeight: weatherCard.headerHeight + weather.implicitHeight
 
                     DashWeather {
                         id: weather
 
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.fillHeight: true
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: weatherCard.headerHeight / 2
                     }
                 }
             }
@@ -118,7 +120,7 @@ Item {
                 id: calendarCard
 
                 title: qsTr("Calendar")
-                tintIndex: 1
+                tintIndex: 2
                 Layout.fillHeight: true
                 Layout.preferredWidth: calendar.implicitWidth
                 Layout.preferredHeight: calendarCard.headerHeight + calendar.implicitHeight
@@ -140,7 +142,7 @@ Item {
                     id: mediaCard
 
                     title: qsTr("Now playing")
-                    tintIndex: 2
+                    tintIndex: 3
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.preferredHeight: mediaCard.headerHeight + media.implicitHeight
@@ -161,7 +163,7 @@ Item {
                         id: focusCard
 
                         title: qsTr("Timer")
-                        tintIndex: 3
+                        tintIndex: 1
                         Layout.fillHeight: true
                         Layout.preferredWidth: pomodoro.implicitWidth
                         Layout.preferredHeight: focusCard.headerHeight + pomodoro.implicitHeight
