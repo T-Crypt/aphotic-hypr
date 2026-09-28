@@ -32,9 +32,12 @@ def generated_block(root: Path) -> str:
             root,
         )
     )
-    # Best effort: an offline machine still gets the last-known list.
-    subprocess.run(["git", "fetch", "-q", "origin", "main"], cwd=root, timeout=20,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    # Best effort: an offline or slow machine still gets the last-known list.
+    try:
+        subprocess.run(["git", "fetch", "-q", "origin", "main"], cwd=root, timeout=20,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    except subprocess.TimeoutExpired:
+        pass
     log = run(["git", "log", "origin/main", "-15", "--oneline"], root).splitlines()
     lines = [START, "", "### Open pull requests", ""]
     if pulls:
@@ -89,4 +92,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
