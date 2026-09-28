@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "VpnCore.js" as Core
 
 // Status/connect/disconnect for the raw-openvpn profile `aphotic vpn`
 // manages (see commands/cmd_vpn.sh's own header comment) -- deliberately
@@ -21,6 +22,12 @@ import Quickshell.Io
 // they stay the only two that shell out to the CLI (privileged process
 // management in bash, QML reflecting live state, per ROADMAP_FEATURES.md
 // PART C).
+//
+// Every VPN type is an adapter behind one contract in cmd_vpn.sh; this
+// singleton reads `aphotic vpn list --json` and aggregates it. The list is
+// re-read on the marker changing, on Nmcli's `nmcli monitor` reporting a
+// VPN change, after an action and on refresh() from a surface that opens,
+// never on a timer.
 Singleton {
     id: root
 
@@ -28,6 +35,42 @@ Singleton {
 
     property bool connected: false
     property bool busy: false
+
+    property var providers: []
+    readonly property var connections: Core.connections(root.providers)
+    readonly property var activeConnections: Core.active(root.providers)
+    readonly property var status: Core.status(root.providers)
+    property bool _refreshAgain: false
+
+    function refresh(): void {
+        if (listProc.running)
+            root._refreshAgain = true;
+        else
+            listProc.running = true;
+    }
+
+    function list(): var {
+        return root.connections;
+    }
+
+    function connectProvider(provider: string, id: string): void {
+        root._providerAction("connect", provider, id);
+    }
+
+    function disconnectProvider(provider: string, id: string): void {
+        root._providerAction("disconnect", provider, id);
+    }
+
+    function _providerAction(action: string, provider: string, id: string): void {
+        if (root.busy || !provider)
+            return;
+        root.busy = true;
+        const args = ["aphotic", "vpn", action, "--provider", provider];
+        if (id)
+            args.push(id);
+        actionProc.failTitle = action === "connect" ? qsTr("VPN connect failed") : qsTr("VPN disconnect failed");
+        actionProc.exec(args);
+    }
 
     function connectVpn(configPath: string): void {
         root.busy = true;
@@ -62,14 +105,66 @@ Singleton {
         const line = root._firstLine(out);
         if (line.length > 0)
             Toaster.toast(qsTr("VPN"), line, "vpn_key");
+        root.refresh();
     }
 
     FileView {
         path: root.markerPath
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: root.connected = true
-        onLoadFailed: root.connected = false
+        onLoaded: {
+            root.connected = true;
+            root.refresh();
+        }
+        onLoadFailed: {
+            root.connected = false;
+            root.refresh();
+        }
+    }
+
+    Connections {
+        target: Nmcli
+
+        function onVpnActiveChanged(): void {
+            root.refresh();
+        }
+
+        function onVpnConnectionNameChanged(): void {
+            root.refresh();
+        }
+    }
+
+    Process {
+        id: listProc
+
+        command: ["aphotic", "vpn", "list", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: root.providers = Core.parse(text)
+        }
+        onExited: {
+            if (root._refreshAgain) {
+                root._refreshAgain = false;
+                Qt.callLater(root.refresh);
+            }
+        }
+    }
+
+    Process {
+        id: actionProc
+
+        property string failTitle: ""
+
+        stdout: StdioCollector {
+            id: actionStdout
+        }
+
+        stderr: StdioCollector {
+            id: actionStderr
+        }
+
+        onExited: exitCode => {
+            root._finish(actionProc.failTitle, exitCode, actionStdout.text, actionStderr.text);
+        }
     }
 
     Process {

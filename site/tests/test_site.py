@@ -48,6 +48,17 @@ class SiteContractTests(unittest.TestCase):
         self.assertIn('prefers-reduced-motion', css)
         self.assertIn('localStorage', script)
 
+    def test_gallery_shots_point_at_real_images(self):
+        text = (ROOT / "gallery.md").read_text()
+        front = text.split("---")[1]
+        files = [line.split(":", 1)[1].strip() for line in front.splitlines() if line.strip().startswith("- file:")]
+        captions = [line.split(":", 1)[1].strip() for line in front.splitlines() if line.strip().startswith("caption:")]
+        self.assertTrue(files)
+        self.assertEqual(len(files), len(captions))
+        for name in files:
+            self.assertTrue((ROOT / "assets" / "gallery" / f"{name}.png").exists(), name)
+        self.assertIn("page.shots", text)
+
     def test_pages_workflow_exists(self):
         workflow = (ROOT.parent / ".github" / "workflows" / "deploy-pages.yml").read_text()
         for needle in ('github.repository }}.wiki.git', 'prepare_wiki.py', 'jekyll-build-pages', 'deploy-pages'):
