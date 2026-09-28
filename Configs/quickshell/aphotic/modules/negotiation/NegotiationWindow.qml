@@ -44,7 +44,13 @@ PanelWindow {
     implicitWidth: root.screen?.width ?? 0
     implicitHeight: root.screen?.height ?? 0
 
+    // Held for the window's whole life, fade-out included, so every
+    // other interactive surface stays hidden until the card is gone and
+    // the keyboard can only land here. See services/Surfaces.qml.
+    Component.onDestruction: Surfaces.release("negotiation")
+
     Component.onCompleted: {
+        Surfaces.hold("negotiation");
         const name = Hypr.focusedMonitor?.name;
         const screens = Quickshell.screens;
         for (let i = 0; i < screens.length; i++) {

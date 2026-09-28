@@ -208,11 +208,19 @@ Singleton {
     }
 
     Timer {
+        id: processSample
+
         interval: Config.notch.processUpdateInterval
         running: root.sampling
         repeat: true
         triggeredOnStart: true
         onTriggered: root._sweep()
+    }
+
+    ActivityProbe {
+        name: "processes"
+        kind: "process"
+        timer: processSample
     }
 
     // The steady-state timer above can only prime on its first tick, so
@@ -225,11 +233,19 @@ Singleton {
     // far too much to hang off the 1.5s /proc tick, and VRAM allocations
     // do not move at anything like that rate anyway.
     Timer {
+        id: processGpuSample
+
         interval: Config.notch.gpuUpdateInterval
         running: root.sampling && root.sortBy === "gpu" && root.gpuSupported
         repeat: true
         triggeredOnStart: true
         onTriggered: root._sweepGpu()
+    }
+
+    ActivityProbe {
+        name: "processes.gpu"
+        kind: "process"
+        timer: processGpuSample
     }
 
     Timer {

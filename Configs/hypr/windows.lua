@@ -37,3 +37,12 @@ hl.window_rule({ name = "float-viewnior",     match = { class = "^(Viewnior|view
 hl.window_rule({ name = "float-feh",          match = { class = "feh" },               float = true })
 hl.window_rule({ name = "float-pavucontrolqt",match = { class = "pavucontrol-qt" },    float = true })
 hl.window_rule({ name = "float-filerroller",  match = { class = "file-roller" },       float = true })
+
+-- Shell panels: blur what sits behind their translucent surfaces. ignore_alpha
+-- keeps the fully transparent parts of full-screen layers unblurred.
+hl.layer_rule({
+  name         = "blur-aphotic-panels",
+  match        = { namespace = "^aphotic-(bar|notch|capsule|dock|dashboard|settings|launcher|notificationcenter|notifications|osd|session|switcher|keybinds|workspace|intelligence|negotiation|pkginstall)$" },
+  blur         = true,
+  ignore_alpha = 0.2,
+})

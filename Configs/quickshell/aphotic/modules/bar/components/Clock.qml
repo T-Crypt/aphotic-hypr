@@ -18,7 +18,7 @@ StyledRect {
     implicitWidth: Settings.barHorizontal ? (hLayout.item?.implicitWidth ?? 0) + root.padding * 2 : Settings.barInnerWidth
     implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : (vLayout.item?.implicitHeight ?? 0) + root.padding * 2
 
-    color: Colours.palette.m3surfaceContainerHigh
+    color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 
     StateLayer {
@@ -33,17 +33,25 @@ StyledRect {
         active: Settings.barHorizontal
 
         sourceComponent: RowLayout {
-            spacing: Tokens.spacing.extraSmall
+            spacing: Settings.barSignal ? Tokens.spacing.small : Tokens.spacing.extraSmall
 
             Loader {
                 asynchronous: true
-                active: Config.bar.clock.showIcon
+                active: Config.bar.clock.showIcon && !Settings.barSignal
                 visible: active
 
                 sourceComponent: MaterialIcon {
                     text: "calendar_month"
                     color: root.colour
                 }
+            }
+
+            StyledText {
+                visible: Settings.barSignal
+                Layout.alignment: Qt.AlignVCenter
+                text: Time.format("ddd d")
+                font: Tokens.font.label.medium
+                color: Colours.palette.m3onSurfaceVariant
             }
 
             Loader {
@@ -72,8 +80,8 @@ StyledRect {
 
             StyledText {
                 text: `${Time.hourStr}:${Time.minuteStr}`
-                font: root.font.build()
-                color: root.colour
+                font: Settings.barSignal ? root.font.scale(1.15).weight(Font.DemiBold).build() : root.font.build()
+                color: Settings.barSignal ? Colours.palette.m3onSurface : root.colour
             }
 
             Loader {

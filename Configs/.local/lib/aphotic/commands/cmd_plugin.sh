@@ -8,6 +8,7 @@
 # @cmd.opt: enable|disable <name>                          | Toggle a plugin without uninstalling it
 # @cmd.opt: remove <name>                                  | Uninstall a plugin
 # @cmd.opt: validate <dir>                                  | Check a plugin folder's manifest and files before installing it
+# @cmd.opt: api [--json]                                    | The shell runtime API version and the calls a plugin may declare
 # @cmd.opt: trust-security-index                            | Opt into the separate security-category plugin index
 # @cmd.opt: untrust-security-index                          | Revoke that opt-in (hides security-category plugins again)
 #
@@ -54,6 +55,27 @@ _aphotic_plugin_root_value() {
 # ---------------------------------------------------------------------
 APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action"
 APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action"
+
+# ---------------------------------------------------------------------
+# The shell runtime API a plugin may call (manifest v3.9's [api]).
+#
+# Surfaces and hooks say where a plugin mounts; [api] says what it may
+# ask the running shell for once it is there:
+#
+#   [api]
+#   version = 1
+#   uses = ["context.observe", "resource.observe"]
+#
+# The shell hands each plugin a handle (PluginApi.handle(name)) carrying
+# only what `uses` names, checked again at call time so disabling or
+# removing the plugin revokes it. VERSION is the contract version this
+# build speaks: a plugin written against a newer one is refused at
+# install rather than failing on its first missing call. Grow USES in
+# the same commit as services/PluginApiCore.js; the test holds them
+# equal.
+# ---------------------------------------------------------------------
+APHOTIC_PLUGIN_API_VERSION=1
+APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
 # counts `-` as a word boundary, so `-w profile` matches "profile-hook"
@@ -403,6 +425,33 @@ _aphotic_plugin_action_entry_json() {
         '{id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data}'
 }
 
+# [api] -> {version, uses}, or null when the manifest has no [api]
+# section. A section with no version is version 1: that is the only one
+# there has been. A version that is not a whole number is kept as-is so
+# validate can name it rather than it silently reading as 1.
+_aphotic_plugin_api_json() {
+    local manifest="$1" version uses
+    grep -q '^[[:space:]]*\[api\][[:space:]]*$' "$manifest" 2>/dev/null || { echo 'null'; return 0; }
+    version="$(aphotic_toml_get "$manifest" api version)"
+    uses="$(aphotic_toml_get_array "$manifest" api uses | jq -R . | jq -s .)"
+    if [[ -z "$version" ]]; then
+        version=1
+    fi
+    if [[ "$version" =~ ^[0-9]+$ ]]; then
+        jq -cn --argjson v "$version" --argjson u "${uses:-[]}" '{version: $v, uses: $u}'
+    else
+        jq -cn --arg v "$version" --argjson u "${uses:-[]}" '{version: $v, uses: $u}'
+    fi
+}
+
+# The API version a manifest asks for, 0 when it declares no [api].
+_aphotic_plugin_api_version() {
+    local api
+    api="$(_aphotic_plugin_api_json "$1")"
+    [[ "$api" == "null" ]] && { echo 0; return 0; }
+    jq -r '.version' <<<"$api"
+}
+
 _aphotic_plugin_actions_json() {
     local manifest="$1" entries=() entry section
     for section in action action_2 action_3 action_4 action_5; do
@@ -457,7 +506,8 @@ _aphotic_plugin_describe() {
         --argjson cli "$(_aphotic_plugin_cli_json "$manifest")" \
         --argjson chat_provider "$(_aphotic_plugin_chat_provider_json "$manifest")" \
         --argjson actions "$(_aphotic_plugin_actions_json "$manifest")" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, shelter: $shelter, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions}')"
+        --argjson api "$(_aphotic_plugin_api_json "$manifest")" \
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, shelter: $shelter, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions, api: $api}')"
 
     # The registry entry the shell actually reads is written by
     # _aphotic_plugin_registry_sync out of these same four manifest
@@ -470,7 +520,7 @@ _aphotic_plugin_describe() {
     # second time is deliberate: a second description of that shape is the
     # class of bug the flag exists to catch.
     local stored expected drifted="false"
-    expected="$(jq -cS '{version, shelter, capabilities, owns, ui, profile, cli, chat_provider, actions}' <<<"$entry")"
+    expected="$(jq -cS '{version, shelter, capabilities, owns, ui, profile, cli, chat_provider, actions, api}' <<<"$entry")"
     # Missing keys are filled with the same null a fresh sync would write
     # BEFORE comparing. Without this, every entry on disk reports drift the
     # moment the registry schema grows a field -- one did (`profile`,
@@ -486,7 +536,7 @@ _aphotic_plugin_describe() {
     # drift. Drift means "this plugin's contract changed", and a
     # display string is not contract -- a manifest edit still refreshes
     # it on the next sync.
-    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({shelter: "", profile: null, cli: null, chat_provider: null, actions: null} + .) | {version, shelter, capabilities, owns, ui, profile, cli, chat_provider, actions} end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({shelter: "", profile: null, cli: null, chat_provider: null, actions: null, api: null} + .) | {version, shelter, capabilities, owns, ui, profile, cli, chat_provider, actions, api} end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
     [[ "$expected" != "$stored" ]] && drifted="true"
 
     jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"
@@ -869,7 +919,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions tmp
+    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api tmp
     local display desc category binaries
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
@@ -896,6 +946,7 @@ _aphotic_plugin_registry_sync() {
     cli="$(_aphotic_plugin_cli_json "$manifest")"
     chat_provider="$(_aphotic_plugin_chat_provider_json "$manifest")"
     actions="$(_aphotic_plugin_actions_json "$manifest")"
+    api="$(_aphotic_plugin_api_json "$manifest")"
 
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
     tmp="$(mktemp)"
@@ -913,7 +964,8 @@ _aphotic_plugin_registry_sync() {
        --argjson cli "$cli" \
        --argjson chat_provider "$chat_provider" \
        --argjson actions "$actions" \
-       '.installed = ((.installed // {}) + {($n): {version: $version, display_name: $display_name, description: $description, category: $category, shelter: $shelter, requires_binaries: $requires_binaries, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions}})' \
+       --argjson api "$api" \
+       '.installed = ((.installed // {}) + {($n): {version: $version, display_name: $display_name, description: $description, category: $category, shelter: $shelter, requires_binaries: $requires_binaries, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions, api: $api}})' \
        "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
     # Every install and update funnels through here, so this is the one
     # place that has to record "a plugin's code changed" for recovery.
@@ -1087,6 +1139,18 @@ _aphotic_plugin_install() {
     verdict="$(_aphotic_plugin_host_verdict \
         "$(aphotic_toml_get_array "${src}/plugin.toml" plugin capabilities)" \
         "$(_aphotic_plugin_manifest_surfaces "${src}/plugin.toml")")"
+    local wants_api
+    wants_api="$(_aphotic_plugin_api_version "${src}/plugin.toml")"
+    if [[ ! "$wants_api" =~ ^[0-9]+$ ]]; then
+        aphotic_err "'${name}': [api].version '${wants_api}' is not a whole number"
+        return 1
+    fi
+    if [[ "$wants_api" -gt "$APHOTIC_PLUGIN_API_VERSION" ]]; then
+        aphotic_err "'${name}' needs a newer Aphotic: it is written against plugin API v${wants_api}, this shell speaks v${APHOTIC_PLUGIN_API_VERSION}"
+        aphotic_log "its first call into the shell would fail, so this is a refusal rather than a warning -- 'aphotic update' first"
+        return 1
+    fi
+
     case "$verdict" in
         inert:*)
             aphotic_err "'${name}' needs a newer Aphotic: no host here for its ${verdict#inert:}"
@@ -1257,6 +1321,42 @@ _aphotic_plugin_remove() {
 # whether this particular build can host what it declares (that's
 # still _aphotic_plugin_host_verdict, surfaced here as a warning since
 # it's still worth knowing before installing).
+# What each [api].uses entry hands a plugin. Kept beside the list it
+# describes; PluginApiCore.js carries the same ids.
+_aphotic_plugin_api_describe() {
+    case "$1" in
+        context.observe) echo "read the runtime context and its policy (reactive)" ;;
+        context.request) echo "suggest a context switch; the user confirms from a notification" ;;
+        resource.observe) echo "read the resource posture: level, resource, headline, surfaced (reactive)" ;;
+        surface.declare) echo "give a plugin surface a role so it coexists with core surfaces" ;;
+        notifications.publish) echo "post a notification under the plugin's name, subject to DND and context" ;;
+        *) echo "" ;;
+    esac
+}
+
+_aphotic_plugin_api() {
+    local use
+    if [[ "${1:-}" == "--json" ]]; then
+        aphotic_require jq || return 1
+        for use in $APHOTIC_PLUGIN_API_USES; do
+            jq -cn --arg id "$use" --arg d "$(_aphotic_plugin_api_describe "$use")" '{id: $id, description: $d}'
+        done | jq -s --argjson v "$APHOTIC_PLUGIN_API_VERSION" '{version: $v, uses: .}'
+        return 0
+    fi
+    echo "Plugin API v${APHOTIC_PLUGIN_API_VERSION}"
+    echo
+    for use in $APHOTIC_PLUGIN_API_USES; do
+        printf '  %-24s %s\n' "$use" "$(_aphotic_plugin_api_describe "$use")"
+    done
+    echo
+    echo "Declare in plugin.toml:"
+    echo "  [api]"
+    echo "  version = ${APHOTIC_PLUGIN_API_VERSION}"
+    echo "  uses = [\"context.observe\"]"
+    echo
+    echo "In QML: PluginApi.handle(\"<plugin-name>\") returns the calls declared, or null while disabled."
+}
+
 _aphotic_plugin_validate() {
     local dir="$1" manifest name fails=0 warns=0
     [[ -n "$dir" ]] || { aphotic_err "usage: aphotic plugin validate <dir>"; return 1; }
@@ -1331,6 +1431,27 @@ _aphotic_plugin_validate() {
             warns=$((warns + 1))
         }
     done <<<"$caps"
+
+    # [api]: the version must be one this build speaks, and every `uses`
+    # entry should be a call it hands out. An unknown entry is a warning,
+    # same fail-open reasoning as capabilities above: the handle simply
+    # won't carry it.
+    local api_version use
+    api_version="$(_aphotic_plugin_api_version "$manifest")"
+    if [[ ! "$api_version" =~ ^[0-9]+$ ]]; then
+        aphotic_err "${name}: [api].version '${api_version}' is not a whole number"
+        fails=$((fails + 1))
+    elif [[ "$api_version" -gt "$APHOTIC_PLUGIN_API_VERSION" ]]; then
+        aphotic_err "${name}: [api].version ${api_version} is newer than this build's plugin API (v${APHOTIC_PLUGIN_API_VERSION}) -- install will refuse it"
+        fails=$((fails + 1))
+    fi
+    while IFS= read -r use; do
+        [[ -n "$use" ]] || continue
+        _aphotic_plugin_in_list "$use" "$APHOTIC_PLUGIN_API_USES" || {
+            aphotic_warn "${name}: [api].uses '${use}' isn't part of plugin API v${APHOTIC_PLUGIN_API_VERSION} (see 'aphotic plugin api') -- the handle won't carry it"
+            warns=$((warns + 1))
+        }
+    done < <(aphotic_toml_get_array "$manifest" api uses)
 
     # ui-surface and [ui.*] have to agree from both directions: the
     # capability with no section installs to nothing, and a section
@@ -1528,6 +1649,9 @@ aphotic_cmd_plugin() {
         validate)
             _aphotic_plugin_validate "${1:-}"
             ;;
+        api)
+            _aphotic_plugin_api "${1:-}"
+            ;;
         resync)
             # The bulk remedy drift reporting has always implied. `update`
             # rewrites one entry by reinstalling the plugin's files; this
@@ -1609,6 +1733,8 @@ Usage: aphotic plugin <list|install|update|enable|disable|remove|...> [args]
                               or hook path a safe relative path that exists,
                               no symlinks. Run this against a working tree
                               before 'install --link' ever loads it.
+  api [--json]                  The shell runtime API version and every
+                              call a plugin may declare in [api].uses
   resync                        Rewrite every installed plugin's registry entry
                                 from its manifest (no files touched)
   relink-ui-modules             Re-link every enabled ui-surface plugin's

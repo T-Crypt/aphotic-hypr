@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 Singleton {
     id: root
@@ -1623,6 +1624,12 @@ Singleton {
                 immediateCheckTimer.checkCount = 0;
             }
         }
+    }
+
+    ActivityProbe {
+        name: "network.nmcli-check"
+        kind: "process"
+        timer: immediateCheckTimer
     }
 
     Process {

@@ -2,6 +2,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Window
 import Quickshell.Services.UPower
 import qs.config
 import qs.components
@@ -151,8 +152,10 @@ Item {
         anchors.centerIn: parent
         width: 400
         height: 350
-        radius: Tokens.rounding.large
-        color: Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         visible: !Config.dashboard.performance.showCpu &&
                  !(Config.dashboard.performance.showGpu && SystemUsage.gpuDetected) &&
                  !Config.dashboard.performance.showMemory &&
@@ -213,8 +216,10 @@ Item {
         property color accentColor: Colours.palette.m3primary
         property real animatedPercentage: 0
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         Component.onCompleted: animatedPercentage = percentage
         onPercentageChanged: animatedPercentage = percentage
 
@@ -441,8 +446,10 @@ Item {
         property real animatedUsage: 0
         property real animatedTemp: 0
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         Component.onCompleted: {
             animatedUsage = usage;
             animatedTemp = tempProgress;
@@ -569,8 +576,10 @@ Item {
         readonly property real arcSweep: 1.5 * Math.PI
         property real animatedPercentage: 0
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         clip: true
         Component.onCompleted: animatedPercentage = percentage
         onPercentageChanged: animatedPercentage = percentage
@@ -675,8 +684,10 @@ Item {
         property real animatedPercentage: 0
         property color accentColor: Colours.palette.m3secondary
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         clip: true
         Component.onCompleted: {
             diskCount = SystemUsage.disks.length;
@@ -836,8 +847,10 @@ Item {
 
         property color accentColor: Colours.palette.m3primary
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         clip: true
 
         NetworkUsageWatch {}
@@ -868,6 +881,11 @@ Item {
                     property real slideProgress: 0
                     property int _tickCount: 0
                     property int _lastTickCount: -1
+
+                    // The tab stays loaded while the dashboard is closed on
+                    // it, and the slide below repaints every frame. Same
+                    // on-screen test FlowTab uses.
+                    readonly property bool presented: !!Window.window && Window.window.visible
 
                     function checkAndAnimate(): void {
                         const currentLength = (downHistory || []).length;
@@ -944,10 +962,18 @@ Item {
                     }
 
                     Timer {
+                        id: sparklineTick
+
                         interval: Config.dashboard.resourceUpdateInterval
-                        running: true
+                        running: sparklineCanvas.presented
                         repeat: true
                         onTriggered: sparklineCanvas._tickCount++
+                    }
+
+                    ActivityProbe {
+                        name: "dashboard.sparkline"
+                        kind: "render"
+                        timer: sparklineTick
                     }
 
                     NumberAnimation on slideProgress {
@@ -955,7 +981,7 @@ Item {
                         to: 1
                         duration: Config.dashboard.resourceUpdateInterval
                         loops: Animation.Infinite
-                        running: true
+                        running: sparklineCanvas.presented
                     }
 
                     Behavior on smoothMax {

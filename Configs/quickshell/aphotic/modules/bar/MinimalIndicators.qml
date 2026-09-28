@@ -47,7 +47,7 @@ Item {
         // continuous status readouts like wifi/battery, those stay in the
         // full StatusIcons cluster. Hidden (opacity 0, but still present/
         // hoverable) when inactive, dimmed on hover, full opacity when
-        // active, per the Omarchy reference. DND is the only real toggle
+        // active. DND is the only real toggle
         // this codebase has today; more (night light, screen-recording
         // indicator, ...) can be added here later without redesigning this.
         MinimalIndicatorIcon {

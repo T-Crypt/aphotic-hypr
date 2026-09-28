@@ -19,6 +19,15 @@ PanelWindow {
 
     readonly property int barWidth: Settings.barInnerWidth + Math.max(Tokens.padding.small, Config.border.thickness) * 2
 
+    // Signal-line skin: bar items publish where the active workspace and the
+    // hovered entry sit (window coordinates, along the bar), and the bar
+    // background lights that stretch of its edge line.
+    property real signalActiveStart: 0
+    property real signalActiveLength: 0
+    property real signalHoverStart: 0
+    property real signalHoverLength: 0
+    property Item signalHoverOwner: null
+
     WlrLayershell.namespace: "aphotic-bar"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.exclusionMode: ExclusionMode.Normal

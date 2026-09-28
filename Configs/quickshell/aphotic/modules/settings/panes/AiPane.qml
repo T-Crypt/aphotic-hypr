@@ -526,10 +526,18 @@ ColumnLayout {
         }
 
         Timer {
+            id: ollamaModelsPoll
+
             interval: 5000
             running: ollamaModelsSection.visible
             repeat: true
             onTriggered: AiProviders.refreshRunningModels()
+        }
+
+        ActivityProbe {
+            name: "settings.ai-models"
+            kind: "network"
+            timer: ollamaModelsPoll
         }
 
         StyledText {

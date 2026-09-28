@@ -20,6 +20,7 @@ StyledRect {
     required property real scale
     required property int badge
     required property bool selected
+    readonly property color tint: Colours.signalStyle.tint(root.index)
 
     x: (root.win.x - root.rect.x) * root.scale
     y: (root.win.y - root.rect.y) * root.scale
@@ -27,9 +28,20 @@ StyledRect {
     height: Math.max(14, root.win.height * root.scale)
 
     radius: Tokens.rounding.small
-    color: root.selected ? Qt.alpha(Colours.palette.m3primary, 0.28) : Colours.layer(Colours.palette.m3surfaceContainer, 2)
-    border.width: root.selected ? 2 : 1
-    border.color: root.selected ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
+    color: Settings.barSignal ? (root.selected ? Qt.alpha(root.tint, 0.13) : Colours.signalStyle.raised) : (root.selected ? Qt.alpha(Colours.palette.m3primary, 0.28) : Colours.layer(Colours.palette.m3surfaceContainer, 2))
+    border.width: Settings.barSignal ? (root.selected ? 0 : 1) : (root.selected ? 2 : 1)
+    border.color: Settings.barSignal ? Colours.signalStyle.hairline : (root.selected ? Colours.palette.m3primary : Colours.palette.m3outlineVariant)
+
+    Rectangle {
+        visible: Settings.barSignal && root.selected
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: 2
+        topLeftRadius: root.radius
+        bottomLeftRadius: root.radius
+        color: Colours.signalStyle.accentLine
+    }
 
     AppIcon {
         anchors.centerIn: parent
@@ -48,12 +60,12 @@ StyledRect {
         width: 15
         height: 15
         radius: Tokens.rounding.full
-        color: root.selected ? Colours.palette.m3primary : Colours.layer(Colours.palette.m3surfaceContainer, 3)
+        color: root.selected ? (Settings.barSignal ? Qt.alpha(root.tint, 0.3) : Colours.palette.m3primary) : Colours.layer(Colours.palette.m3surfaceContainer, 3)
 
         StyledText {
             anchors.centerIn: parent
             text: root.badge
-            color: root.selected ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+            color: root.selected ? (Settings.barSignal ? Colours.legibleAccent(root.tint, Colours.signalStyle.raised) : Colours.palette.m3onPrimary) : Colours.palette.m3onSurfaceVariant
             font: Tokens.font.label.small
         }
     }

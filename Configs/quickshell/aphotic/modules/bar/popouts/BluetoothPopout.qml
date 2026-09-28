@@ -23,12 +23,22 @@ ColumnLayout {
 
         StyledText {
             Layout.fillWidth: true
-            text: qsTr("Bluetooth")
+            text: Settings.barSignal ? qsTr("Bluetooth").toUpperCase() : qsTr("Bluetooth")
+            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.body.small
         }
 
         Item {
             implicitWidth: 44
             implicitHeight: 24
+
+            Rectangle {
+                visible: Settings.barSignal
+                anchors.fill: parent
+                radius: Tokens.rounding.full
+                color: Bluetooth.defaultAdapter?.enabled ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
+                border.width: 1
+                border.color: Bluetooth.defaultAdapter?.enabled ? Colours.palette.m3primary : Colours.signalStyle.hairline
+            }
 
             StateLayer {
                 radius: Tokens.rounding.full
@@ -62,8 +72,20 @@ ColumnLayout {
             implicitHeight: devLabel.implicitHeight + Tokens.padding.small * 2
 
             StateLayer {
-                radius: Tokens.rounding.small
+                radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.small
+                color: Settings.barSignal ? (devRow.modelData.connected ? Colours.palette.m3primary : Colours.signalStyle.hover) : Colours.palette.m3onSurface
+                stateOpacity: Settings.barSignal ? (devRow.modelData.connected ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0)) : (containsMouse ? 0.08 : 0)
                 onClicked: devRow.modelData.connected ? devRow.modelData.disconnect() : devRow.modelData.connect()
+            }
+
+            Rectangle {
+                visible: Settings.barSignal && devRow.modelData.connected
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 2
+                height: parent.height - Tokens.padding.small * 2
+                radius: Tokens.rounding.full
+                color: Colours.signalStyle.accentLine
             }
 
             RowLayout {
@@ -81,7 +103,7 @@ ColumnLayout {
                     id: devLabel
                     Layout.fillWidth: true
                     text: devRow.modelData.name
-                    color: devRow.modelData.connected ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                    color: Settings.barSignal ? (devRow.modelData.connected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (devRow.modelData.connected ? Colours.palette.m3primary : Colours.palette.m3onSurface)
                     elide: Text.ElideRight
                 }
 

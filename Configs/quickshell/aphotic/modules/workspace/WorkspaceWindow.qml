@@ -25,7 +25,7 @@ PanelWindow {
     anchors.right: true
     implicitWidth: screen.width
     implicitHeight: screen.height
-    visible: screenState.workspace && PluginRegistry.surfacesFor("workspace").length > 0
+    visible: reveal.active && PluginRegistry.surfacesFor("workspace").length > 0 && !Surfaces.suppressed
 
     MouseArea {
         anchors.fill: parent
@@ -41,11 +41,24 @@ PanelWindow {
         acceptedButtons: Qt.AllButtons
     }
 
-    WorkspaceContent {
-        id: content
+    Rectangle {
+        anchors.fill: parent
+        color: Colours.palette.m3shadow
+        opacity: reveal.visibleProgress * 0.45
+    }
+
+    SurfaceReveal {
+        id: reveal
+
         anchors.centerIn: parent
-        width: Math.min(parent.width - 96, 1520)
-        height: Math.min(parent.height - 128, 920)
-        surfaceActive: root.visible
+        shown: root.screenState.workspace
+        edge: "bottom"
+
+        WorkspaceContent {
+            id: content
+            width: Math.min(root.width - 96, 1520)
+            height: Math.min(root.height - 128, 920)
+            surfaceActive: root.visible
+        }
     }
 }

@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Layouts
 import qs.config
 import qs.components
@@ -59,13 +58,9 @@ Item {
             }
         }
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Colours.palette.m3shadow
-            shadowOpacity: 0.5
-            shadowBlur: 0.5
-            shadowVerticalOffset: 2
+        Elevation {
+            target: parent
+            level: 3
         }
 
         MouseArea {

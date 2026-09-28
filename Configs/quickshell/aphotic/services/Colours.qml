@@ -156,10 +156,18 @@ Singleton {
     // The watch is re-armed after each change in case a rename drops it;
     // this 5 s reload is the safety net if an external write is missed.
     Timer {
+        id: paletteSafetyReload
+
         interval: 5000
         running: true
         repeat: true
         onTriggered: paletteFile.reload()
+    }
+
+    ActivityProbe {
+        name: "theme.palette-reload"
+        kind: "file"
+        timer: paletteSafetyReload
     }
 
     function _rawColor(key: string, fallback: string): color {
@@ -208,6 +216,28 @@ Singleton {
         readonly property color m3shadow: "#000000"
     }
 
+    // Signal style tones: lifted a little off the base surface (often pure
+    // black) so shell surfaces read as layered dark glass, not holes.
+    readonly property QtObject signalStyle: QtObject {
+        readonly property color bar: Qt.alpha(Qt.tint(root.palette.m3surfaceContainer, Qt.alpha(root.palette.m3onSurface, 0.055)), 0.9)
+        readonly property color surface: Qt.tint(root.palette.m3surfaceContainer, Qt.alpha(root.palette.m3onSurface, 0.07))
+        readonly property color raised: Qt.tint(root.palette.m3surfaceContainer, Qt.alpha(root.palette.m3onSurface, 0.11))
+        // Translucent panel tone: the compositor blurs what shows through.
+        readonly property color glass: Qt.alpha(surface, 0.84)
+        readonly property color hover: Qt.alpha(root.palette.m3onSurface, 0.06)
+        readonly property color hairline: Qt.alpha(root.palette.m3outlineVariant, 0.38)
+        readonly property color accentLine: root.palette.m3primary
+        readonly property color base: Qt.tint(root.palette.m3surfaceContainer, Qt.alpha(root.palette.m3onSurface, 0.035))
+        readonly property color raisedHi: Qt.tint(root.palette.m3surfaceContainer, Qt.alpha(root.palette.m3onSurface, 0.16))
+        // Light catching the top edge of a card, for depth without shadows.
+        readonly property color edgeLight: Qt.alpha(root.palette.m3onSurface, 0.09)
+        readonly property list<color> tints: [root.palette.m3primary, root.palette.m3tertiary, root.palette.m3secondary, root.palette.m3error]
+
+        function tint(index: int): color {
+            return tints[Math.abs(index) % tints.length];
+        }
+    }
+
     readonly property QtObject tPalette: QtObject {
         readonly property color m3surfaceContainer: root.layer(root.palette.m3surfaceContainer, 1)
     }
@@ -217,6 +247,23 @@ Singleton {
     // no-op (`return c`) — the bar's surfaces all rendered at the exact
     // same flat tone as the raw wallust background, which is why they
     // barely stood out from the desktop behind them on some wallpapers.
+    // Resource posture (services/ResourcePosture.qml) as a palette
+    // role, so every surface that shows it agrees and the wallpaper
+    // palette stays in charge of the hue. Pressure borrows the tertiary
+    // accent -- noticed, not wrong; contention and a pending negotiation
+    // use error. Anything else keeps the caller's own colour.
+    function posture(level: string, rest: color): color {
+        switch (level) {
+        case "pressure":
+            return root.palette.m3tertiary;
+        case "contention":
+        case "negotiating":
+            return root.palette.m3error;
+        default:
+            return rest;
+        }
+    }
+
     function layer(c: color, layerIndex: var): color {
         const amount = Math.min(0.16, (layerIndex ?? 1) * 0.05);
         return Qt.tint(c, Qt.alpha(palette.m3primary, amount));
