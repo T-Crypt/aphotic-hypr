@@ -24,12 +24,22 @@ ColumnLayout {
 
         StyledText {
             Layout.fillWidth: true
-            text: qsTr("Wi-Fi")
+            text: Settings.barSignal ? qsTr("Wi-Fi").toUpperCase() : qsTr("Wi-Fi")
+            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.body.small
         }
 
         Item {
             implicitWidth: 44
             implicitHeight: 24
+
+            Rectangle {
+                visible: Settings.barSignal
+                anchors.fill: parent
+                radius: Tokens.rounding.full
+                color: Nmcli.wifiEnabled ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
+                border.width: 1
+                border.color: Nmcli.wifiEnabled ? Colours.palette.m3primary : Colours.signalStyle.hairline
+            }
 
             StateLayer {
                 radius: Tokens.rounding.full
@@ -70,7 +80,9 @@ ColumnLayout {
             implicitHeight: netLabel.implicitHeight + Tokens.padding.small * 2
 
             StateLayer {
-                radius: Tokens.rounding.small
+                radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.small
+                color: Settings.barSignal ? (netRow.modelData.active ? Colours.palette.m3primary : Colours.signalStyle.hover) : Colours.palette.m3onSurface
+                stateOpacity: Settings.barSignal ? (netRow.modelData.active ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0)) : (containsMouse ? 0.08 : 0)
                 onClicked: {
                     if (netRow.modelData.active)
                         return;
@@ -79,6 +91,16 @@ ColumnLayout {
                             Toaster.toast(qsTr("Password required"), qsTr("%1 needs a password to connect").arg(netRow.modelData.ssid), "lock");
                     });
                 }
+            }
+
+            Rectangle {
+                visible: Settings.barSignal && netRow.modelData.active
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 2
+                height: parent.height - Tokens.padding.small * 2
+                radius: Tokens.rounding.full
+                color: Colours.signalStyle.accentLine
             }
 
             RowLayout {
@@ -96,7 +118,7 @@ ColumnLayout {
                     id: netLabel
                     Layout.fillWidth: true
                     text: netRow.modelData.ssid
-                    color: netRow.modelData.active ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                    color: Settings.barSignal ? (netRow.modelData.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (netRow.modelData.active ? Colours.palette.m3primary : Colours.palette.m3onSurface)
                     elide: Text.ElideRight
                 }
 

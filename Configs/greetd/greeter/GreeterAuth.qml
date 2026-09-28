@@ -24,23 +24,35 @@ Item {
     property bool maskInput: false
     property bool waiting: false
     property string errorText: ""
+    // greetd ends a conversation itself when authentication fails; cancelling
+    // it again would fail on the closed socket and bury the real message.
+    property bool _sessionOpen: false
+    // Consecutive automatic reopens. greetd rejecting the session over and
+    // over used to shake the card on a 1.2s loop forever; after this many
+    // the greeter stops and waits to be driven by hand again.
+    property int _autoRetries: 0
+    readonly property int _maxAutoRetries: 3
 
     signal shake
 
     function handleKey(event: var): void {
-        if (root.waiting)
-            return;
-
+        // Typing is kept while greetd is busy; only submitting waits.
         if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-            root._submit();
+            if (!root.waiting)
+                root._submit();
         } else if (event.key === Qt.Key_Escape) {
             root._reset();
+            root._autoRetries = 0;
         } else if (event.key === Qt.Key_Backspace) {
             if (event.modifiers & Qt.ControlModifier)
                 root.buffer = "";
             else
                 root.buffer = root.buffer.slice(0, -1);
         } else if (/^[^\x00-\x1F\x7F-\x9F]+$/.test(event.text)) {
+            // A keypress means someone is at the keyboard, so the automatic
+            // reopening budget starts over.
+            root._autoRetries = 0;
+            root.errorText = "";
             root.buffer += event.text;
         }
     }
@@ -59,6 +71,7 @@ Item {
             root.buffer = "";
             root.waiting = true;
             root.errorText = "";
+            root._sessionOpen = true;
             Greetd.createSession(root.username);
         } else if (root.phase === GreeterAuth.Phase.Authenticating) {
             root.waiting = true;
@@ -68,8 +81,9 @@ Item {
     }
 
     function _reset(): void {
-        if (Greetd.available)
+        if (Greetd.available && root._sessionOpen)
             Greetd.cancelSession();
+        root._sessionOpen = false;
         root.phase = GreeterAuth.Phase.Username;
         root.prompt = qsTr("Username");
         root.maskInput = false;
@@ -85,7 +99,6 @@ Item {
             root.prompt = message || qsTr("Password");
             root.maskInput = !echoResponse;
             root.waiting = !responseRequired;
-            root.buffer = "";
             if (error) {
                 root.errorText = message;
                 root.shake();
@@ -93,12 +106,18 @@ Item {
         }
 
         function onAuthFailure(message: string): void {
-            root.errorText = message || qsTr("Authentication failed");
+            root._sessionOpen = false;
+            root.errorText = qsTr("Incorrect password");
             root.shake();
             retryTimer.restart();
         }
 
         function onError(message: string): void {
+            // A failed authentication is followed by a transport error from the
+            // closed conversation; the failure message is the one that matters.
+            if (retryTimer.running)
+                return;
+            root._sessionOpen = false;
             root.errorText = message;
             root.shake();
             retryTimer.restart();
@@ -109,20 +128,39 @@ Item {
             root.waiting = true;
             // `quit: true` hands the actual process teardown to Quickshell's
             // own greetd binding -- the wrapping throwaway Hyprland instance
-            // (see Configs/greetd/hyprland-greeter.conf) exits right behind
+            // (see Configs/greetd/hyprland-greeter.lua) exits right behind
             // it once this process exits, releasing the VT/DRM device
             // before greetd starts the real session's Hyprland fresh.
             Greetd.launch(["start-hyprland"], [], true);
         }
     }
 
-    // Same 2.5s-then-retry shape as Pam.qml's stateReset, except a failure
-    // here must also start a brand-new session (cancelSession + a fresh
-    // createSession on next submit) -- greetd does not let a failed
-    // conversation be resumed.
+    // After a failure greetd needs a brand-new conversation; this reopens
+    // one for the same user once the error has had a moment on screen.
     Timer {
         id: retryTimer
-        interval: 2500
-        onTriggered: root._reset()
+        interval: 1200
+        onTriggered: {
+            if (root._autoRetries >= root._maxAutoRetries) {
+                // greetd is refusing the session outright rather than asking
+                // for another password. Stop reopening and let Enter drive it.
+                root._reset();
+                root.errorText = qsTr("The login was refused. Press Enter to try again.");
+                return;
+            }
+            // Keep the name that was entered and open a fresh conversation,
+            // so a mistyped password only needs the password again.
+            const name = root.username;
+            const typedAhead = root.buffer;
+            root._reset();
+            root.buffer = typedAhead;
+            if (name.length > 0 && Greetd.available) {
+                root._autoRetries += 1;
+                root.username = name;
+                root.waiting = true;
+                root._sessionOpen = true;
+                Greetd.createSession(name);
+            }
+        }
     }
 }

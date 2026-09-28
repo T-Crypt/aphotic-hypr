@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import Quickshell
 import qs.config
 import qs.components
 import qs.components.effects
@@ -55,7 +56,7 @@ StyledRect {
     property real centerAlong
 
     visible: opacity > 0
-    opacity: hoveredEntry ? strength : 0
+    opacity: hoveredEntry && !Settings.barSignal ? strength : 0
     implicitWidth: diameter
     implicitHeight: diameter
     radius: diameter / 2
@@ -67,6 +68,26 @@ StyledRect {
     // A plain binding would snap `centerAlong` back to 0 the moment the
     // pointer leaves, dragging the pill to the start of the row on its way
     // out. Holding the last centre while it fades keeps the exit clean.
+    function publishSignal(): void {
+        const win = QsWindow.window;
+        if (!Settings.barSignal || !root.Window.window || !win || win.signalHoverStart === undefined)
+            return;
+        if (!hoveredEntry) {
+            if (win.signalHoverOwner === root)
+                win.signalHoverOwner = null;
+            return;
+        }
+        const p = QsWindow.itemPosition(root);
+        const along = Settings.barHorizontal ? p.x : p.y;
+        win.signalHoverStart = along - diameter * 0.2;
+        win.signalHoverLength = diameter * 1.4;
+        win.signalHoverOwner = root;
+    }
+
+    onHoveredEntryChanged: publishSignal()
+    onXChanged: publishSignal()
+    onYChanged: publishSignal()
+
     Binding {
         target: root
         property: "centerAlong"

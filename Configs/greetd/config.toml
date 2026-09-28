@@ -9,5 +9,5 @@
 vt = "next"
 
 [default_session]
-command = "Hyprland --config /etc/greetd/aphotic/hyprland-greeter.conf"
+command = "start-hyprland -- --config /etc/greetd/aphotic/hyprland-greeter.lua"
 user = "greeter"

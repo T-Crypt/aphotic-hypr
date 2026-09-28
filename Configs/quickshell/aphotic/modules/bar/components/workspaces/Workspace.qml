@@ -27,7 +27,7 @@ GridLayout {
 
     readonly property int ws: groupOffset + index + 1
     readonly property bool isOccupied: occupied[ws] ?? false
-    readonly property bool hasWindows: isOccupied && Config.bar.workspaces.showWindows && maxIcons > 0
+    readonly property bool hasWindows: isOccupied && Config.bar.workspaces.showWindows && maxIcons > 0 && !Settings.barSignal
 
     flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
     Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
@@ -42,27 +42,55 @@ GridLayout {
 
         Layout.alignment: Settings.barHorizontal ? (Qt.AlignVCenter | Qt.AlignLeft) : (Qt.AlignHCenter | Qt.AlignTop)
         Layout.preferredHeight: Settings.barHorizontal ? -1 : (Settings.barInnerWidth - Tokens.padding.small)
-        Layout.preferredWidth: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small) : -1
+        Layout.preferredWidth: Settings.barHorizontal ? (Settings.barSignal ? root.signalCell : Settings.barInnerWidth - Tokens.padding.small) : -1
 
         animate: true
-        text: {
-            const ws = Hypr.workspaces.values.find(w => w.id === root.ws);
-            const wsName = !ws || ws.name == root.ws ? root.ws : ws.name[0];
-            let displayName = wsName.toString();
-            if (Config.bar.workspaces.capitalisation.toLowerCase() === "upper") {
-                displayName = displayName.toUpperCase();
-            } else if (Config.bar.workspaces.capitalisation.toLowerCase() === "lower") {
-                displayName = displayName.toLowerCase();
-            }
-            const label = Config.bar.workspaces.label || displayName;
-            const occupiedLabel = Config.bar.workspaces.occupiedLabel || label;
-            const activeLabel = Config.bar.workspaces.activeLabel || (root.isOccupied ? occupiedLabel : label);
-            return root.activeWsId === root.ws ? activeLabel : root.isOccupied ? occupiedLabel : label;
-        }
+        text: Settings.barSignal ? "" : root.label
         color: Config.bar.workspaces.occupiedBg || root.isOccupied || root.activeWsId === root.ws ? Colours.palette.m3onSurface : Colours.layer(Colours.palette.m3outlineVariant, 2)
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
         font.family: Tokens.font.workspaces
+
+        Rectangle {
+            anchors.centerIn: parent
+            visible: Settings.barSignal
+            implicitWidth: root.signalDot
+            implicitHeight: root.signalDot
+            radius: root.signalDot / 2
+            color: Qt.alpha(Colours.palette.m3onSurface, root.isOccupied ? 0.7 : 0.25)
+            opacity: root.activeWsId === root.ws ? 0 : 1
+
+            Behavior on opacity {
+                Anim {
+                    type: Anim.FastEffects
+                }
+            }
+        }
+
+        Behavior on Layout.preferredWidth {
+            enabled: Settings.barSignal
+
+            Anim {
+                type: Anim.FastSpatial
+            }
+        }
+    }
+
+    readonly property real signalDot: Math.round(Settings.barInnerWidth * 0.2)
+    readonly property real signalCell: activeWsId === ws ? Settings.barInnerWidth * 0.95 : Settings.barInnerWidth * 0.5
+    readonly property string label: {
+        const ws = Hypr.workspaces.values.find(w => w.id === root.ws);
+        const wsName = !ws || ws.name == root.ws ? root.ws : ws.name[0];
+        let displayName = wsName.toString();
+        if (Config.bar.workspaces.capitalisation.toLowerCase() === "upper") {
+            displayName = displayName.toUpperCase();
+        } else if (Config.bar.workspaces.capitalisation.toLowerCase() === "lower") {
+            displayName = displayName.toLowerCase();
+        }
+        const label = Config.bar.workspaces.label || displayName;
+        const occupiedLabel = Config.bar.workspaces.occupiedLabel || label;
+        const activeLabel = Config.bar.workspaces.activeLabel || (root.isOccupied ? occupiedLabel : label);
+        return root.activeWsId === root.ws ? activeLabel : root.isOccupied ? occupiedLabel : label;
     }
 
     Loader {

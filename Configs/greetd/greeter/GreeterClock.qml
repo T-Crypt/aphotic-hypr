@@ -3,7 +3,7 @@ import QtQuick
 Column {
     id: root
 
-    spacing: 4
+    spacing: 6
 
     property string _time: Qt.formatTime(new Date(), "hh:mm")
     property string _date: Qt.formatDate(new Date(), "dddd, MMMM d")
@@ -22,15 +22,18 @@ Column {
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
         text: root._time
-        font.pixelSize: 64
-        font.weight: Font.Light
+        font.pixelSize: 112
+        font.weight: Font.DemiBold
+        font.letterSpacing: -2
         color: Colours.textColor
     }
 
     Text {
         anchors.horizontalCenter: parent.horizontalCenter
-        text: root._date
-        font.pixelSize: 18
+        text: root._date.toUpperCase()
+        font.pixelSize: 14
+        font.weight: Font.DemiBold
+        font.letterSpacing: 3
         color: Colours.mutedTextColor
     }
 }

@@ -2,6 +2,9 @@
 # lib/install/config_deploy.sh
 set -euo pipefail
 
+# shellcheck source=lib/install/display_manager.sh
+source "$(dirname "${BASH_SOURCE[0]}")/display_manager.sh"
+
 # Compiles the shell's fragment shaders to the .qsb form Qt6's
 # ShaderEffect actually loads. Built here rather than committed, because a
 # .qsb is versioned against the Qt that produced it -- a prebuilt one from
@@ -280,7 +283,7 @@ deploy_user_configs() {
     # Checks GREETD_PREVIEW too, not just the directory, because this runs
     # *before* setup_greetd_greeter() on a fresh --with-greetd-preview
     # install -- the directory itself doesn't exist yet on that first pass.
-    if [[ -d /etc/aphotic/greeter || "${GREETD_PREVIEW:-0}" == "1" ]]; then
+    if [[ -d /etc/aphotic/greeter ]] || { [[ "${GREETD_PREVIEW:-0}" == "1" ]] && command -v greetd &>/dev/null; }; then
       echo -e "$CNT - Enabling the greetd greeter sync timer..."
       systemctl --user enable --now aphotic-greeter-sync.timer &>> "$INSTLOG" || echo -e "$CWR - Could not enable aphotic-greeter-sync.timer; enable manually with 'systemctl --user enable --now aphotic-greeter-sync.timer'."
     else
@@ -352,27 +355,23 @@ setup_login_manager_theme() {
   sudo cp "$ROOT_DIR/src/hyprland.desktop" /usr/share/wayland-sessions/
 }
 
-# Deploys the greetd/Quickshell greeter scaffold: package, compositor
-# config, greeter QML, and the world-readable palette/wallpaper snapshot
-# directory -- but deliberately does NOT write /etc/greetd/config.toml and
-# does NOT enable/start greetd.service, so sddm stays the active display
-# manager exactly as it was. Flipping which one is actually active is
-# `aphotic displaymanager switch greetd`'s job alone (see
-# commands/cmd_displaymanager.sh) -- this function only makes that switch
-# possible to validate, per docs/archive/BACKLOG.md's DM-02 entry.
+# Deploys the greetd/Quickshell greeter: compositor config, greeter QML,
+# and the world-readable palette/wallpaper snapshot directory.
+# activate_greetd (display_manager.sh) decides whether it becomes the
+# login screen.
 setup_greetd_greeter() {
   if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
     echo -e "$CNT - Container mode: skipping greeter setup."
     return 0
   fi
-  echo -e "$CNT - Deploying the greetd greeter preview (inert -- sddm stays active)..."
+  echo -e "$CNT - Deploying the Aphotic greeter..."
 
   sudo mkdir -p /etc/xdg/quickshell/aphotic-greeter
   sudo cp -R "$ROOT_DIR/Configs/greetd/greeter/"* /etc/xdg/quickshell/aphotic-greeter/
   sudo chown -R root:root /etc/xdg/quickshell/aphotic-greeter
 
   sudo mkdir -p /etc/greetd/aphotic
-  sudo cp "$ROOT_DIR/Configs/greetd/hyprland-greeter.conf" /etc/greetd/aphotic/hyprland-greeter.conf
+  sudo cp "$ROOT_DIR/Configs/greetd/hyprland-greeter.lua" /etc/greetd/aphotic/hyprland-greeter.lua
 
   # Chowned to the installing user, same reasoning as the sddm theme dir
   # above -- so 'aphotic greeter sync' (cmd_greeter.sh) can write here
@@ -523,6 +522,8 @@ config_sync() {
 
   print_stage 2 "Syncing configs"
   deploy_user_configs
+
+  install_greeter
 
   print_stage 3 "Restarting the shell"
   restart_shell_if_enabled

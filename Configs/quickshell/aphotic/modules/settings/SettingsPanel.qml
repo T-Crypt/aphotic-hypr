@@ -67,8 +67,16 @@ RowLayout {
 
         Layout.fillHeight: true
         Layout.preferredWidth: 300
-        radius: Tokens.rounding.extraLarge
-        color: Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        color: Settings.barSignal ? Colours.signalStyle.base : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
+
+        Elevation {
+            visible: Settings.barSignal
+            target: parent
+            level: 2
+        }
 
         DepthLayer {
             anchors.fill: parent
@@ -77,6 +85,7 @@ RowLayout {
 
         DepthGradient {
             anchors.fill: parent
+            visible: !Settings.barSignal
             radius: rail.radius
             baseColour: rail.color
         }
@@ -97,9 +106,13 @@ RowLayout {
         Layout.fillHeight: true
         Layout.fillWidth: true
         Layout.leftMargin: Tokens.spacing.medium
-        radius: Tokens.rounding.extraLarge
-        color: Colours.tPalette.m3surfaceContainer
-        clip: true
+        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        color: Settings.barSignal ? Colours.signalStyle.surface : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
+        // The Flickable inside already clips the sliding content; the
+        // Signal skin needs the shadow to fall outside the pane.
+        clip: !Settings.barSignal
 
         property int _prevCategoryIndex: 0
 
@@ -116,8 +129,37 @@ RowLayout {
 
         DepthGradient {
             anchors.fill: parent
+            visible: !Settings.barSignal
             radius: paneSurface.radius
             baseColour: paneSurface.color
+        }
+
+        Elevation {
+            visible: Settings.barSignal
+            target: parent
+            level: 2
+        }
+
+        // Accent glow falling from the top of the pane, behind its header.
+        Rectangle {
+            visible: Settings.barSignal
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 1
+            height: 200
+            topLeftRadius: paneSurface.radius
+            topRightRadius: paneSurface.radius
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: Qt.alpha(Colours.palette.m3primary, 0.1)
+                }
+                GradientStop {
+                    position: 1
+                    color: Qt.alpha(Colours.palette.m3primary, 0)
+                }
+            }
         }
 
         Flickable {

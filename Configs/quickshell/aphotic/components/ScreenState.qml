@@ -8,6 +8,9 @@ PersistentProperties {
 
     // Drawer visibilities
     property bool bar
+    // Along-edge size of the notch where it joins the bar, so the bar's edge
+    // line can open around it.
+    property real notchSpan: 0
     property bool osd
     property bool session
     property bool launcher

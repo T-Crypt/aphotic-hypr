@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
@@ -12,6 +13,7 @@ Item {
     id: root
 
     required property ScreenState screenState
+    property SurfaceReveal reveal: null
 
     // Prefix sigils in the search box switch mode, matching the existing
     // convention of one script per Rofi mode (rofi-combi/-clipboard/-emoji/
@@ -185,19 +187,22 @@ Item {
     implicitWidth: Tokens.sizes.launcher.width
     implicitHeight: previewHeight + (useGrid ? grid.height : list.height) + Tokens.padding.large
 
-    visible: opacity > 0
-    opacity: screenState.launcher ? 1 : 0
-
-    Behavior on opacity {
-        Anim {}
+    Behavior on implicitHeight {
+        Anim { type: Anim.DefaultSpatial }
     }
 
-    onVisibleChanged: {
-        if (visible) {
-            search.text = root.screenState.launcherPrefill;
-            root.screenState.launcherPrefill = "";
-            search.forceActiveFocus();
-            refreshMode();
+    Connections {
+        target: root.screenState
+
+        function onLauncherChanged(): void {
+            if (!root.screenState.launcher)
+                return;
+            Qt.callLater(() => {
+                search.text = root.screenState.launcherPrefill;
+                root.screenState.launcherPrefill = "";
+                search.forceActiveFocus();
+                refreshMode();
+            });
         }
     }
 
@@ -210,12 +215,27 @@ Item {
             projectProc.exec(["sh", "-c", root.projectScanScript]);
     }
 
+    Elevation {
+        target: frame
+        level: 3
+        visible: !Settings.barSignal
+    }
+
     StyledClippingRect {
+        id: frame
+
         anchors.fill: parent
         radius: Tokens.rounding.extraLarge
-        color: Colours.palette.m3surfaceContainerHigh
-        border.width: Config.border.thickness
+        color: Settings.barSignal ? Colours.signalStyle.surface : Colours.palette.m3surfaceContainerHigh
+        border.width: Settings.barSignal ? 0 : Config.border.thickness
         border.color: Colours.palette.m3outlineVariant
+
+        // Signal: a sheet off the bottom edge -- square on the attached
+        // side, panel radius on top.
+        topLeftRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        topRightRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        bottomLeftRadius: Settings.barSignal ? 0 : Tokens.rounding.extraLarge
+        bottomRightRadius: Settings.barSignal ? 0 : Tokens.rounding.extraLarge
 
         Column {
             anchors.fill: parent
@@ -254,7 +274,9 @@ Item {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
-                        color: Colours.palette.m3surfaceContainerHigh
+                        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3surfaceContainerHigh
+                        border.width: Settings.barSignal ? 1 : 0
+                        border.color: Colours.signalStyle.hairline
 
                         Row {
                             anchors.fill: parent
@@ -441,10 +463,22 @@ Item {
                 onValuesChanged: list.currentIndex = 0
             }
 
-            highlight: StyledRect {
-                radius: Tokens.rounding.medium
-                color: Colours.palette.m3onSurface
-                opacity: 0.08
+            highlight: Item {
+                StyledRect {
+                    anchors.fill: parent
+                    radius: Settings.barSignal ? 0 : Tokens.rounding.medium
+                    color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                    opacity: Settings.barSignal ? 1 : 0.08
+                }
+                // Signal: no filled pill; a 2px accent edge marks the row.
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: 2
+                    color: Colours.signalStyle.accentLine
+                    visible: Settings.barSignal
+                }
             }
             highlightFollowsCurrentItem: true
 
@@ -453,6 +487,13 @@ Item {
 
                 required property var modelData
                 required property int index
+
+                readonly property real rowReveal: root.reveal ? root.reveal.staggered(index) : 1
+
+                opacity: rowReveal
+                transform: Translate {
+                    y: (1 - rowReveal) * Tokens.spacing.medium
+                }
 
                 width: ListView.view?.width ?? 0
                 height: Tokens.sizes.launcher.itemHeight
@@ -591,10 +632,22 @@ Item {
                 onValuesChanged: grid.currentIndex = 0
             }
 
-            highlight: StyledRect {
-                radius: Tokens.rounding.large
-                color: Colours.palette.m3onSurface
-                opacity: 0.08
+            highlight: Item {
+                StyledRect {
+                    anchors.fill: parent
+                    radius: Settings.barSignal ? 0 : Tokens.rounding.large
+                    color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                    opacity: Settings.barSignal ? 1 : 0.08
+                }
+                // Signal: no filled pill; a 2px accent edge marks the cell.
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    width: 2
+                    color: Colours.signalStyle.accentLine
+                    visible: Settings.barSignal
+                }
             }
             highlightFollowsCurrentItem: true
 
@@ -603,6 +656,50 @@ Item {
             }
         }
         }
+    }
+
+    // Signal: open outline around the sheet -- every side but the bottom
+    // edge it grows from.
+    Shape {
+        anchors.fill: parent
+        visible: Settings.barSignal
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: 1
+            strokeColor: Colours.signalStyle.hairline
+            fillColor: "transparent"
+
+            PathSvg {
+                path: {
+                    const w = root.width, h = root.height;
+                    const r = Math.min(Tokens.rounding.large, w / 2, h / 2);
+                    return `M0,${h} L0,${r} A${r},${r} 0 0 1 ${r},0 L${w - r},0 A${r},${r} 0 0 1 ${w},${r} L${w},${h}`;
+                }
+            }
+        }
+    }
+
+    // Siblings of the frame, not children: it clips, and the fillets sit
+    // just outside its bottom corners, flush with the screen edge.
+    ConcaveCorner {
+        visible: Settings.barSignal
+        corner: 2
+        radius: Tokens.rounding.large
+        color: frame.color
+        edgeColor: Colours.signalStyle.hairline
+        x: -radius
+        y: root.height - radius
+    }
+
+    ConcaveCorner {
+        visible: Settings.barSignal
+        corner: 3
+        radius: Tokens.rounding.large
+        color: frame.color
+        edgeColor: Colours.signalStyle.hairline
+        x: root.width
+        y: root.height - radius
     }
 
     Process {

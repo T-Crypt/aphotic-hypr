@@ -25,7 +25,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.wallpaperPicker && !Surfaces.suppressed
+    visible: reveal.active && root.screenState.wallpaperPicker && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 
@@ -106,14 +106,22 @@ PanelWindow {
             root.everOpened = false;
     }
 
-    Loader {
-        id: layoutLoader
+    SurfaceReveal {
+        id: reveal
 
         anchors.fill: parent
-        active: root.screenState.wallpaperPicker || root.everOpened
-        sourceComponent: root.layout === "grid" ? gridComp : root.layout === "dock" ? dockComp : coverflowComp
+        shown: root.screenState.wallpaperPicker
+        edge: "bottom"
 
-        onLoaded: Qt.callLater(() => layoutLoader.item?.focusActive())
+        Loader {
+            id: layoutLoader
+
+            anchors.fill: parent
+            active: root.screenState.wallpaperPicker || root.everOpened
+            sourceComponent: root.layout === "grid" ? gridComp : root.layout === "dock" ? dockComp : coverflowComp
+
+            onLoaded: Qt.callLater(() => layoutLoader.item?.focusActive())
+        }
     }
 
     Component {

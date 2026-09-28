@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Services.Notifications
 import qs.config
 import qs.components
 import qs.services
@@ -30,9 +31,31 @@ StyledRect {
         return Qt.formatDate(new Date(ms), "MMM d");
     }
 
-    color: Colours.tPalette.m3surfaceContainer
-    radius: Tokens.rounding.large
+    color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+    border.width: Settings.barSignal ? 1 : 0
+    border.color: Colours.signalStyle.hairline
+    radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
     implicitHeight: inner.implicitHeight + Tokens.padding.medium * 2
+
+    Rectangle {
+        visible: Settings.barSignal
+        x: root.radius
+        width: root.width - root.radius * 2
+        height: 1
+        color: Colours.signalStyle.edgeLight
+    }
+
+    // Signal: critical reads as an edge line, not a red-filled card.
+    Rectangle {
+        visible: Settings.barSignal && root.modelData.urgency === NotificationUrgency.Critical
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.topMargin: root.radius
+        anchors.bottomMargin: root.radius
+        width: 2
+        color: Colours.palette.m3error
+    }
 
     RowLayout {
         id: inner
@@ -52,17 +75,24 @@ StyledRect {
             color: Colours.palette.m3primary
         }
 
-        AppIcon {
-            Layout.alignment: Qt.AlignVCenter
-            Layout.preferredWidth: Tokens.sizes.notifs.image
-            Layout.preferredHeight: Tokens.sizes.notifs.image
+        Rectangle {
+            id: iconChip
 
-            name: root.modelData.appIcon
-            appClass: root.modelData.appName ?? ""
-            fallbackGlyph: Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
-            size: Tokens.sizes.notifs.image
-            fontStyle: Tokens.font.icon.medium
-            colour: Colours.palette.m3primary
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: Settings.barSignal ? 32 : Tokens.sizes.notifs.image
+            Layout.preferredHeight: Settings.barSignal ? 32 : Tokens.sizes.notifs.image
+            radius: Settings.barSignal ? Tokens.rounding.full : 0
+            color: Settings.barSignal ? Qt.alpha(Colours.palette.m3primary, 0.14) : "transparent"
+
+            AppIcon {
+                anchors.centerIn: parent
+                name: root.modelData.appIcon
+                appClass: root.modelData.appName ?? ""
+                fallbackGlyph: Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
+                size: Settings.barSignal ? 20 : Tokens.sizes.notifs.image
+                fontStyle: Tokens.font.icon.medium
+                colour: Colours.palette.m3primary
+            }
         }
 
         ColumnLayout {
@@ -72,18 +102,40 @@ StyledRect {
 
             StyledText {
                 Layout.fillWidth: true
-                text: root.modelData.appName || root.modelData.summary
-                font: Tokens.font.body.medium
-                color: Colours.palette.m3onSurface
+                text: Settings.barSignal ? (root.modelData.appName || root.modelData.summary).toUpperCase() : (root.modelData.appName || root.modelData.summary)
+                font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.body.medium
+                color: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
                 elide: Text.ElideRight
             }
 
             StyledText {
                 Layout.fillWidth: true
+                visible: !Settings.barSignal
                 text: `${root.modelData.summary} · ${root.relativeTime(root.modelData.timestamp)}`
                 font: Tokens.font.body.small
                 color: Colours.palette.m3onSurfaceVariant
                 elide: Text.ElideRight
+            }
+
+            // Signal: summary leads the line DemiBold, time sits muted at the right.
+            RowLayout {
+                Layout.fillWidth: true
+                visible: Settings.barSignal
+                spacing: Tokens.spacing.small
+
+                StyledText {
+                    Layout.fillWidth: true
+                    text: root.modelData.summary
+                    font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
+                    color: Colours.palette.m3onSurface
+                    elide: Text.ElideRight
+                }
+
+                StyledText {
+                    text: root.relativeTime(root.modelData.timestamp)
+                    font: Tokens.font.label.small
+                    color: Colours.palette.m3onSurfaceVariant
+                }
             }
 
             StyledText {

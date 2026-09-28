@@ -35,7 +35,7 @@ ColumnLayout {
             horizontalAlignment: Text.AlignRight
             text: `${formatted.value.toFixed(1)} ${formatted.unit}`
             color: Colours.palette.m3onSurface
-            font: Tokens.font.body.medium
+            font: Settings.barSignal ? Tokens.font.body.builders.medium.weight(Font.DemiBold).build() : Tokens.font.body.medium
         }
 
         Row {

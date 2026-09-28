@@ -24,11 +24,39 @@ StyledRect {
     readonly property int bodyTextFormat: /[<*_`#\[\]]/.test(modelData?.body ?? "") ? Text.MarkdownText : Text.PlainText
     readonly property bool critical: modelData?.urgency === NotificationUrgency.Critical
 
-    color: critical ? Colours.palette.m3error : Colours.tPalette.m3surfaceContainer
-    radius: Tokens.rounding.large
+    color: Settings.barSignal ? Colours.signalStyle.glass : (critical ? Colours.palette.m3error : Colours.tPalette.m3surfaceContainer)
+    border.width: Settings.barSignal ? 1 : 0
+    border.color: Colours.signalStyle.hairline
+    radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
 
     implicitWidth: Tokens.sizes.notifs.width
     implicitHeight: inner.implicitHeight + Tokens.padding.medium * 2
+
+    Elevation {
+        target: root
+        level: 2
+        visible: Settings.barSignal
+    }
+
+    Rectangle {
+        visible: Settings.barSignal
+        x: root.radius
+        width: root.width - root.radius * 2
+        height: 1
+        color: Colours.signalStyle.edgeLight
+    }
+
+    // Signal: critical reads as an edge line, not a red-filled card.
+    Rectangle {
+        visible: Settings.barSignal && root.critical
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.topMargin: root.radius
+        anchors.bottomMargin: root.radius
+        width: 2
+        color: Colours.palette.m3error
+    }
 
     // Bioluminescent flash-response on arrival, echoing the deep-sea cue
     // this whole treatment is named for -- decays to nothing rather than
