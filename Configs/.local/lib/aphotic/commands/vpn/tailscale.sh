@@ -34,7 +34,7 @@ _aphotic_vpn_tailscale_connect() {
         aphotic_err "Tailscale needs a login first -- run 'tailscale login' in a terminal"
         return 1
     fi
-    tailscale up && aphotic_ok "connected"
+    timeout 60 tailscale up && aphotic_ok "connected"
 }
 
 _aphotic_vpn_tailscale_disconnect() {
