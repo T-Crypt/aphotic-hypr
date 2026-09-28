@@ -101,6 +101,18 @@ Singleton {
         }
     }
 
+    Connections {
+        target: Nmcli
+
+        function onVpnActiveChanged(): void {
+            root.refresh();
+        }
+
+        function onVpnConnectionNameChanged(): void {
+            root.refresh();
+        }
+    }
+
     Process {
         id: listProc
 

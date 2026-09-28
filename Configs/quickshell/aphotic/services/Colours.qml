@@ -13,6 +13,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import "StatusColours.js" as StatusColours
 
 // Static file, NOT wallust-templated -- it used to be regenerated
 // wholesale on every theme apply (Task 8), which made a *tracked git
@@ -200,7 +201,7 @@ Singleton {
         readonly property color m3tertiary: root._role("tertiary", root._rawColor("color2", "#4B836F"))
         readonly property color m3onTertiary: root._role("onTertiary", root.contrastOn(m3tertiary))
         readonly property color m3tertiaryOnSurface: root.legibleAccent(m3tertiary, m3surfaceContainerHigh)
-        readonly property color m3error: root._role("error", root._rawColor("color1", "#BC7541"))
+        readonly property color m3error: root._role("error", root.status.error)
         readonly property color m3onError: root._role("onError", root.contrastOn(m3error))
         readonly property color m3onSurface: root._role("onSurface", root.contrastOn(m3surfaceContainer))
         readonly property color m3onSurfaceVariant: root._role("onSurfaceVariant", root.mutedOn(m3surfaceContainer, m3onSurface, 0.35))
@@ -214,6 +215,23 @@ Singleton {
         readonly property color m3surfaceContainer: root._raw?.surfaceContainer ?? "#000000"
         readonly property color m3surfaceContainerHigh: root._raw?.surfaceContainerHigh ?? "#1F1F1F"
         readonly property color m3shadow: "#000000"
+    }
+
+    // Error, warning and success with a guaranteed hue band and WCAG AA
+    // contrast against both surface containers. The ANSI slot only seeds
+    // the shade: wallust fills color1/2/3 from the wallpaper's pixels, so
+    // on a blue wallpaper "red" can come back blue. See StatusColours.js.
+    function _status(kind: string, seed: string): color {
+        return StatusColours.derive(kind, seed, [String(root.palette.m3surfaceContainer), String(root.palette.m3surfaceContainerHigh)]);
+    }
+
+    readonly property QtObject status: QtObject {
+        readonly property color error: root._status("error", root.engine === "matugen" ? String(root._raw?.roles?.error ?? "") : String(root._rawColor("color1", "#BC7541")))
+        readonly property color onError: root.contrastOn(error)
+        readonly property color warning: root._status("warning", root.engine === "matugen" ? "" : String(root._rawColor("color3", "#E0A030")))
+        readonly property color onWarning: root.contrastOn(warning)
+        readonly property color success: root._status("success", root.engine === "matugen" ? String(root._raw?.roles?.tertiary ?? "") : String(root._rawColor("color2", "#4B836F")))
+        readonly property color onSuccess: root.contrastOn(success)
     }
 
     // Signal style tones: lifted a little off the base surface (often pure
