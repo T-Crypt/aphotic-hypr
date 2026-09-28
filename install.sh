@@ -113,7 +113,7 @@ Usage: ./install.sh [options]
 
   --channel <stable|edge>      stable installs the newest release tag
                                 (default), edge keeps the development
-                                branch (main)
+                                branch (dev)
   --profile <minimal|full>     Select base profile (skips wizard prompt)
   --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai,exploit
                                 ("exploit" is a convenience bundle of
