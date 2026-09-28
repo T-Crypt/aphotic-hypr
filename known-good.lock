@@ -1,4 +1,4 @@
-# canary 2026-09-27
+# canary 2026-09-28
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -45,7 +45,7 @@ cava 1.0.0-1
 cfitsio 1:4.7.0-1
 cliphist 1:0.7.0-2
 colord 1.4.8-1
-coreutils 9.11-2
+coreutils 9.12-2
 cpio 2.15-3
 cpptrace 1.0.4-2
 cryptsetup 2.8.8-1
@@ -109,7 +109,7 @@ git 2.55.0-1
 github-cli 2.101.0-1
 glib-networking 1:2.80.1-1
 glib2 2.88.3-1
-glibc 2.44+r24+g16be1518495f-1
+glibc 2.44+r50+g1848099f063e-1
 glibmm-2.68 2.88.1-1
 glslang 1:1.4.357.0-1
 glu 9.0.3-3
@@ -204,7 +204,7 @@ lib32-curl 8.22.0-1
 lib32-e2fsprogs 1.47.4-1
 lib32-expat 2.8.5-1
 lib32-gcc-libs 16.2.1+r23+gd564253eb6c8-1
-lib32-glibc 2.44+r24+g16be1518495f-1
+lib32-glibc 2.44+r50+g1848099f063e-1
 lib32-gmp 6.3.0-2
 lib32-gnutls 3.8.13-3
 lib32-icu 78.3-1
@@ -415,7 +415,7 @@ libusb 1.0.30-1
 libva 2.24.1-1
 libvdpau 1.5-4
 libverto 0.3.2-6
-libvips 8.18.6-2
+libvips 8.18.7-1
 libvorbis 1.3.7-4
 libvpl 2.17.0-1
 libvpx 1.17.0-1
@@ -500,7 +500,7 @@ nvidia-open-dkms 615.71.09-1
 nvidia-utils 615.71.09-1
 nwg-look 1.1.1-3
 ocl-icd 2.3.5-1
-oh-my-zsh-git r7952.74965c960-1
+oh-my-zsh-git r7963.83a0ec79e-1
 onetbb 2023.1.0-1
 oniguruma 6.9.10-1
 openal 1.25.2-2
