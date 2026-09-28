@@ -9,14 +9,13 @@ established so the project stays uniform as more hands touch it.
 
 ## Before you start
 
-- **Branch model:** all work happens on a short-lived feature branch off
-  `main` (e.g. `fix/<short-description>`), merged back via PR. `main` is
-  protected — direct pushes are rejected for everyone, including repo
-  admins; a PR with CI green (`test`, `shellcheck`, `bash-syntax`,
-  `CodeQL`) is required to merge. There is no separate `test`/staging
-  branch — an earlier two-branch (`test` -> `main`) model was retired
-  2026-08-29 once `main` itself became the PR-gated, CI-enforced line;
-  base your work off `main`.
+- **Branch model:** work happens on a short-lived branch off `dev`
+  (e.g. `fix/<short-description>`), merged back into `dev` via PR. `dev`
+  collects the next release; a release is one `dev` -> `main` PR, then a
+  tag on `main`. Both branches are protected: direct pushes are rejected
+  for everyone, and a PR needs CI green (`test`, `shellcheck`,
+  `bash-syntax`, `CodeQL`) to merge. `--channel edge` installs follow
+  `dev`; the default stable channel installs the newest tag.
 - **Installer-affecting changes need dev-VM validation too.** If your
   change touches `install.sh` or adds/changes a systemd unit file, it
   needs a real run on the project's dev VM (a clean-ish Arch box, not
@@ -37,7 +36,7 @@ established so the project stays uniform as more hands touch it.
 - **Check for drift before extending CLI/script behavior.** State
   contracts (theme/wallpaper, settings) have changed shape before. If
   you're not sure the local checkout reflects the latest agreed model,
-  diff against `origin/main` before building on top of it.
+  diff against `origin/dev` before building on top of it.
 
 ## Module conventions (QML)
 
@@ -147,8 +146,8 @@ installer or the canary, without filing issues.
 
 ## Opening a PR
 
-- Target `main` — it's PR-gated and CI-enforced (see "Branch model"
-  above), so there's no separate staging branch to target first.
+- Target `dev` (see "Branch model" above). Only release PRs target
+  `main`.
 - Reference the relevant `README.md` Roadmap item if your change maps to
   one.
 - If your change closes, resolves, or explicitly defers a roadmap item,
