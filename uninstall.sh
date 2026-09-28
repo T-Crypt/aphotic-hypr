@@ -107,15 +107,24 @@ if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml || -f /etc/greetd/aphotic
     GREETD_ACTIVE=1
   fi
 
+  if [[ "$GREETD_ACTIVE" == "1" ]] && pacman -Qq sddm &>/dev/null; then
+    echo "Putting sddm back as the login screen..."
+    sudo systemctl disable greetd.service &>/dev/null || true
+    if [[ -f /etc/greetd/config.toml.aphotic-backup ]]; then
+      sudo mv /etc/greetd/config.toml.aphotic-backup /etc/greetd/config.toml
+    fi
+    sudo systemctl enable sddm.service &>/dev/null && GREETD_ACTIVE=0
+  fi
+
   if [[ "$GREETD_ACTIVE" == "1" ]]; then
     echo "greetd is currently enabled/active as the display manager -- not touching the greeter scaffold."
     echo "Run 'aphotic displaymanager switch sddm --confirm-tested' first to restore sddm, then re-run uninstall.sh to remove the scaffold."
   else
-    read -rep $'Remove the greetd greeter preview scaffold (/etc/xdg/quickshell/aphotic-greeter, /etc/greetd/aphotic, /etc/aphotic/greeter)? sddm is unaffected either way. (y,n) ' GREETER_CONFIRM
+    read -rep $'Remove the Aphotic greeter (/etc/xdg/quickshell/aphotic-greeter, /etc/greetd/aphotic, /etc/aphotic/greeter)? sddm is unaffected either way. (y,n) ' GREETER_CONFIRM
     if [[ "$GREETER_CONFIRM" == "y" || "$GREETER_CONFIRM" == "Y" ]]; then
       sudo rm -rf /etc/xdg/quickshell/aphotic-greeter /etc/greetd/aphotic /etc/aphotic/greeter
       systemctl --user disable --now aphotic-greeter-sync.timer &>/dev/null || true
-      echo "Removed the greetd greeter preview scaffold."
+      echo "Removed the Aphotic greeter."
     fi
   fi
 fi

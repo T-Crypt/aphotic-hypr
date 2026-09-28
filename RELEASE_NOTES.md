@@ -14,7 +14,7 @@ maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
 ## 2.0.7
 
-The Signal line skin brings one new look and one motion to every surface, from the bar to the login screen.
+The Signal line skin brings one new look and one motion to every surface, and the Aphotic greeter becomes your login screen.
 
 ## 2.0.6
 

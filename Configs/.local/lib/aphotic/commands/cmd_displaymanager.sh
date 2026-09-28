@@ -19,6 +19,8 @@ APHOTIC_GREETD_CONFIG="/etc/greetd/config.toml"
 APHOTIC_GREETD_BACKUP="/etc/greetd/config.toml.aphotic-backup"
 APHOTIC_GREETER_QML="/etc/xdg/quickshell/aphotic-greeter/shell.qml"
 APHOTIC_GREETER_HYPR_CONF="/etc/greetd/aphotic/hyprland-greeter.lua"
+# install.sh reads this so an update never undoes your choice.
+APHOTIC_DM_CHOICE_FILE="${XDG_STATE_HOME:-$HOME/.local/state}/aphotic/displaymanager"
 
 _aphotic_dm_unit_state() {
     local unit="$1" enabled active
@@ -48,17 +50,7 @@ _aphotic_dm_status() {
     if [[ -f "$APHOTIC_GREETER_QML" ]]; then
         printf '  [ok]   %s\n' "$APHOTIC_GREETER_QML"
     else
-        # --config-only can't deploy this itself: setup_greetd_greeter()
-        # needs sudo, and --config-only's whole point (config_sync(),
-        # install.sh) is a passwordless resync -- it exits before ever
-        # reaching Stage 6, where --with-greetd-preview is checked. Found
-        # live testing this on the dev VM: `install.sh --config-only
-        # --with-greetd-preview` silently deployed nothing, which is what
-        # this message used to (wrongly) imply would work. Once deployed
-        # by a real install.sh run, a later --config-only DOES keep the
-        # sync timer enabled (deploy_user_configs() checks for this
-        # directory) -- it just can't do the first deploy.
-        printf '  [MISS] %s (run install.sh with --with-greetd-preview -- a full run, not --config-only)\n' "$APHOTIC_GREETER_QML"
+        printf '  [MISS] %s (run 'aphotic sync' from a terminal)\n' "$APHOTIC_GREETER_QML"
     fi
     if [[ -f "$APHOTIC_GREETER_HYPR_CONF" ]]; then
         printf '  [ok]   %s\n' "$APHOTIC_GREETER_HYPR_CONF"
@@ -81,7 +73,7 @@ display manager:
        sudo passwd greeter
   2. Switch to a spare, unused VT (e.g. Ctrl+Alt+F3) and log in as 'greeter'.
   3. Run the exact command greetd would run:
-       Hyprland --config ${APHOTIC_GREETER_HYPR_CONF}
+       start-hyprland -- --config ${APHOTIC_GREETER_HYPR_CONF}
   4. Confirm the Aphotic greeter renders, accepts a real username/password,
      and hands off to your real Hyprland session on success.
   5. Ctrl+Alt+F<N> back to your normal session, then remove the password
@@ -116,6 +108,7 @@ _aphotic_dm_switch_to_greetd() {
     aphotic_log "Enabling greetd for next boot (not starting it now, to avoid switching VT out from under this session)..."
     sudo systemctl enable greetd.service
 
+    mkdir -p "$(dirname "$APHOTIC_DM_CHOICE_FILE")" && echo greetd > "$APHOTIC_DM_CHOICE_FILE"
     aphotic_ok "greetd will take over the login screen on next reboot."
     aphotic_log "To go back at any time: aphotic displaymanager switch sddm --confirm-tested"
 }
@@ -132,6 +125,7 @@ _aphotic_dm_switch_to_sddm() {
     aphotic_log "Re-enabling sddm..."
     sudo systemctl enable --now sddm.service
 
+    mkdir -p "$(dirname "$APHOTIC_DM_CHOICE_FILE")" && echo sddm > "$APHOTIC_DM_CHOICE_FILE"
     aphotic_ok "sddm is the active display manager again."
 }
 

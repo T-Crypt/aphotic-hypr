@@ -112,6 +112,10 @@ cd Aphotic-Hypr
 ./install.sh
 ```
 
+The installer makes the Aphotic greeter your login screen and keeps sddm
+installed as the way back. Pass `--keep-sddm` to stay on sddm. Omarchy keeps
+its own login.
+
 Add `--dry-run` to see every change first; it runs before any `sudo` prompt
 or write. Update with `aphotic update`, remove with `./uninstall.sh`.
 
