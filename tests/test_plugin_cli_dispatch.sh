@@ -153,9 +153,25 @@ out="$("$APHOTIC" -s 2>&1)"
 
 # --- core no longer carries the moved command -------------------------
 
-grep -q "llmfit" "$ROOT/Configs/.local/lib/aphotic/commands/cmd_ai.sh" \
+code_grep() {
+    local pattern="$1" f
+    shift
+    while IFS= read -r f; do
+        sed -E -e 's/^[[:space:]]*#.*$//' -e 's/[[:space:]]#.*$//' "$f" \
+            | grep -qi -- "$pattern" && { echo "$f"; return 0; }
+    done < <(grep -rlIi -- "$pattern" "$@")
+    return 1
+}
+
+code_grep "llmfit" "$ROOT/Configs/.local/lib/aphotic/commands/cmd_ai.sh" >/dev/null \
     && fail "cmd_ai.sh still references llmfit -- 'ai fit' should live in its plugin now"
-grep -rqi "llm-fit" "$ROOT/Configs/.local/" \
-    && fail "a core CLI file names a plugin id, which the layer model forbids"
+hit="$(code_grep "llm-fit" "$ROOT/Configs/.local/")" \
+    && fail "a core CLI file names a plugin id, which the layer model forbids: $hit"
+
+probe="$TESTHOME/comment-probe.sh"
+printf '#!/usr/bin/env bash\n# moved to the llm-fit plugin\necho ok  # llm-fit\n' > "$probe"
+code_grep "llm-fit" "$probe" >/dev/null && fail "code_grep should skip comments"
+printf 'run llm-fit\n' >> "$probe"
+code_grep "llm-fit" "$probe" >/dev/null || fail "code_grep should still catch code"
 
 echo "PASS: plugin CLI dispatch (resolution, subcommand + top-level, disabled, failure vs missing, collision, help/discovery, core cleanup)"
