@@ -9,7 +9,7 @@ StyledRect {
     implicitWidth: Settings.barInnerWidth
     implicitHeight: Settings.barInnerWidth
 
-    color: Colours.palette.m3surfaceContainerHigh
+    color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 
     AphoticMark {

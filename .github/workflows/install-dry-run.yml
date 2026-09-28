@@ -2,7 +2,7 @@ name: Install dry run
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - install.sh
       - lib/**

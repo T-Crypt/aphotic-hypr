@@ -9,6 +9,14 @@ import qs.services
 ColumnLayout {
     id: root
 
+    property var screenState: null
+
+    // The Processes tile is where the notch talks about resources, so it
+    // is where the posture gets words: which resource, who holds it, and
+    // a way into Flow. Only while the posture is surfaced under the
+    // current runtime context.
+    readonly property bool posture: ResourcePosture.surfaced && ResourcePosture.resource !== null
+
     readonly property bool byMem: ProcessUsage.sortBy === "mem"
     readonly property bool byGpu: ProcessUsage.sortBy === "gpu"
     readonly property color metricColour: root.byGpu ? Colours.palette.m3secondary : root.byMem ? Colours.palette.m3tertiary : Colours.palette.m3primary
@@ -91,6 +99,60 @@ ColumnLayout {
             text: sortChip.label
             color: sortChip.active ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurfaceVariant
             font: Tokens.font.label.builders.small.weight(Font.Medium).build()
+        }
+    }
+
+    StyledRect {
+        Layout.fillWidth: true
+        Layout.bottomMargin: Tokens.spacing.extraSmall
+        visible: root.posture
+        implicitHeight: postureRow.implicitHeight + Tokens.padding.small * 2
+        radius: Tokens.rounding.small
+        color: Qt.alpha(Colours.posture(ResourcePosture.level, Colours.palette.m3primary), 0.14)
+
+        RowLayout {
+            id: postureRow
+
+            anchors.fill: parent
+            anchors.margins: Tokens.padding.small
+            spacing: Tokens.spacing.small
+
+            MaterialIcon {
+                text: "hub"
+                color: Colours.posture(ResourcePosture.level, Colours.palette.m3primary)
+                fontStyle: Tokens.font.icon.small
+                fill: 1
+            }
+
+            StyledText {
+                Layout.fillWidth: true
+                text: ResourcePosture.headline
+                elide: Text.ElideRight
+                font: Tokens.font.label.medium
+            }
+
+            StyledRect {
+                implicitWidth: flowLabel.implicitWidth + Tokens.padding.small * 2
+                implicitHeight: 20
+                radius: Tokens.rounding.full
+                color: Colours.palette.m3secondaryContainer
+
+                StateLayer {
+                    radius: parent.radius
+                    onClicked: Actions.invoke("resources.inspect", {
+                        screenState: root.screenState
+                    })
+                }
+
+                StyledText {
+                    id: flowLabel
+
+                    anchors.centerIn: parent
+                    text: qsTr("Flow")
+                    color: Colours.palette.m3onSecondaryContainer
+                    font: Tokens.font.label.builders.small.weight(Font.Medium).build()
+                }
+            }
         }
     }
 

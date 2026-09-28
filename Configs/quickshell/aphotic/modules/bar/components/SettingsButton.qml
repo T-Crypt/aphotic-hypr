@@ -6,7 +6,7 @@ import qs.services
 StyledRect {
     id: root
 
-    color: Colours.palette.m3surfaceContainerHigh
+    color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 
     implicitWidth: Settings.barHorizontal ? icon.implicitHeight + Tokens.padding.small * 2 : Settings.barInnerWidth

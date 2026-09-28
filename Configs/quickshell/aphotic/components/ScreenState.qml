@@ -1,10 +1,16 @@
 import Quickshell
+import qs.services
 
 PersistentProperties {
+    id: root
+
     required property ShellScreen modelData
 
     // Drawer visibilities
     property bool bar
+    // Along-edge size of the notch where it joins the bar, so the bar's edge
+    // line can open around it.
+    property real notchSpan: 0
     property bool osd
     property bool session
     property bool launcher
@@ -33,4 +39,33 @@ PersistentProperties {
     // SettingsWindow itself once consumed -- same one-shot handoff shape
     // as launcherPrefill above.
     property string settingsCategory: ""
+
+    // Dashboard: tab id to show the next time it opens (e.g. "flow" from
+    // the resources.inspect action). Cleared by DashboardContent once
+    // consumed, same one-shot shape as settingsCategory.
+    property string dashboardTabRequest: ""
+
+    // Every flag above that is a surface reports its changes to
+    // Surfaces, which decides what the change does to the rest of this
+    // screen (services/SurfacePolicy.js). The flags stay the one way to
+    // open or close anything; this is what makes them agree.
+    property var surfaceStack: []
+
+    // focusOwner / mode / blocking for this screen, recomputed only when
+    // the stack or a blocking hold changes. The shape the visual layer
+    // styles against rather than reading a dozen flags.
+    readonly property var surface: Surfaces.describe(root.surfaceStack)
+    readonly property bool engaged: Surfaces.engaged(root.surfaceStack)
+
+    onSessionChanged: Surfaces.track(root, "session", root.session)
+    onLauncherChanged: Surfaces.track(root, "launcher", root.launcher)
+    onDashboardChanged: Surfaces.track(root, "dashboard", root.dashboard)
+    onWorkspaceChanged: Surfaces.track(root, "workspace", root.workspace)
+    onSettingsChanged: Surfaces.track(root, "settings", root.settings)
+    onAgentPanelChanged: Surfaces.track(root, "agentPanel", root.agentPanel)
+    onIntelligenceChanged: Surfaces.track(root, "intelligence", root.intelligence)
+    onNotificationCenterChanged: Surfaces.track(root, "notificationCenter", root.notificationCenter)
+    onPkgInstallChanged: Surfaces.track(root, "pkgInstall", root.pkgInstall)
+    onWallpaperPickerChanged: Surfaces.track(root, "wallpaperPicker", root.wallpaperPicker)
+    onKeybindsCheatsheetChanged: Surfaces.track(root, "keybindsCheatsheet", root.keybindsCheatsheet)
 }

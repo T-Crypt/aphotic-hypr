@@ -14,7 +14,7 @@ Item {
 
     required property ScreenState screenState
 
-    property color colour: Colours.palette.m3secondaryOnSurface
+    property color colour: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3secondaryOnSurface
 
     readonly property int spacing: Tokens.spacing.medium / 2
     // Real gap BETWEEN pills -- previously a single 1px divider line
@@ -151,7 +151,7 @@ Item {
                 readonly property alias icons: pillIcons
                 property Item hoveredEntry: null
 
-                color: Colours.palette.m3surfaceContainerHigh
+                color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
                 radius: Tokens.rounding.full
                 clip: true
 

@@ -321,6 +321,21 @@ ShellRoot {
             });
         }
 
+        // Closes whatever owns the keyboard on the focused screen -- the
+        // one Escape every surface agrees on (services/Surfaces.qml).
+        // Returns the surface it closed, empty when there was nothing it
+        // may close; a pending negotiation is never backed out of.
+        function back(): string {
+            return Surfaces.back(root.focusedScreenState());
+        }
+
+        // The shell's runtime state in one read: each screen's surfaces,
+        // the runtime context and the resource posture. What `aphotic
+        // runtime` prints; stable keys for scripts and the visual layer.
+        function runtime(): string {
+            return JSON.stringify(root.runtimeState(), null, 2);
+        }
+
         // What `aphotic whatsnew` calls when this shell is up. The banner
         // it falls back to, `hyprctl notify`, is a line of text with
         // nowhere to go: Hyprland's own notifications carry no action and
@@ -341,6 +356,91 @@ ShellRoot {
                     })
                 }
             ]);
+        }
+    }
+
+    function runtimeState(): var {
+        const screens = [];
+        for (let i = 0; i < screenStates.instances.length; i++) {
+            const s = screenStates.instances[i];
+            screens.push(Object.assign({
+                screen: s.modelData?.name ?? ""
+            }, s.surface));
+        }
+        return {
+            focusedScreen: Hypr.focusedMonitor?.name ?? "",
+            screens: screens,
+            context: {
+                current: RuntimeContext.current,
+                previous: RuntimeContext.previous,
+                policy: RuntimeContext.policy
+            },
+            resources: {
+                level: ResourcePosture.level,
+                surfaced: ResourcePosture.surfaced,
+                headline: ResourcePosture.headline,
+                resource: ResourcePosture.resource,
+                negotiation: ResourcePosture.state.negotiation,
+                history: ResourcePosture.history,
+                dormant: ResourceEngine.dormant
+            },
+            render: {
+                decorative: RenderGate.decorative,
+                covered: RenderGate.covered
+            },
+            activity: Activity.snapshot(),
+            plugins: {
+                enabled: PluginRegistry.enabledPlugins,
+                safeMode: SafeMode.active,
+                apiVersion: PluginApi.version
+            }
+        };
+    }
+
+    // Contention nobody will be asked about -- over budget, nothing on the
+    // resource can be suspended -- has no prompt, and a fullscreen game
+    // hides the bar and notch that show it. One notification per episode
+    // puts it in history (and on screen, if the context's popup floor
+    // allows) with a way into Flow. Negotiations need none: they open
+    // their own prompt.
+    Connections {
+        target: ResourcePosture
+
+        function onContentionStarted(resource: var): void {
+            const owners = (resource.owners ?? []).slice(0, 3).map(o => o.owner).join(", ");
+            Notifs.notify(qsTr("%1 over budget").arg(resource.label), owners ? qsTr("Held by %1. Nothing on it can be suspended, so there is nothing to decide.").arg(owners) : qsTr("Nothing on it can be suspended, so there is nothing to decide."), [
+                {
+                    identifier: "inspect",
+                    text: qsTr("Inspect in Flow"),
+                    icon: "hub",
+                    invoke: () => Actions.invoke("resources.inspect", {
+                        screenState: root.focusedScreenState()
+                    })
+                }
+            ]);
+        }
+    }
+
+    // Manual only: nothing in the shell switches context on its own.
+    // `aphotic context` is the CLI over these.
+    IpcHandler {
+        target: "context"
+
+        function list(): string {
+            return RuntimeContext.contexts.map(c => `${c.id === RuntimeContext.current ? "*" : " "} ${c.id}\t${c.description}`).join("\n");
+        }
+
+        function current(): string {
+            return RuntimeContext.current;
+        }
+
+        function set(name: string): string {
+            return RuntimeContext.set(name) ? RuntimeContext.current : `unknown context '${name}'`;
+        }
+
+        function revert(): string {
+            RuntimeContext.revert();
+            return RuntimeContext.current;
         }
     }
 
@@ -397,8 +497,10 @@ ShellRoot {
     // per screen. Nested rather than flattened because the two models are
     // independent: surfaces come and go as plugins are enabled, screens as
     // monitors are plugged, and neither should rebuild the other's windows.
+    // A runtime context that hides overlays (game, present) empties the
+    // model, so the windows are destroyed for as long as it lasts.
     Instantiator {
-        model: PluginRegistry.surfacesFor("overlay")
+        model: RuntimeContext.hidesOverlays ? [] : PluginRegistry.surfacesFor("overlay")
 
         delegate: Item {
             id: overlayHost
@@ -510,12 +612,13 @@ ShellRoot {
     // already ships a toggle and an interval picker for; DevDrift watches
     // DevProfile for a stale lockfile; SafeMode raises the toast that is
     // the only reason a user in safe mode knows why their plugins are
-    // gone; Switcher holds the IpcHandler every ALT+Tab keybind
+    // gone; ResourcePosture keeps the history of answered negotiations
+    // whether or not a bar style that reads it is showing; Switcher holds the IpcHandler every ALT+Tab keybind
     // calls, and no window names it until it is already open. Listing them here is what makes them exist. Anything added to
     // services/ that runs on its own rather than answering a reader
     // belongs in this list, and tests/test_singleton_reachability.py
     // fails the build if it does not.
-    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, Switcher, InferenceMode]
+    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, Switcher, InferenceMode, ResourcePosture]
 
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than

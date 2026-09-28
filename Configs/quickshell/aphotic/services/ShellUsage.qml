@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // What Aphotic itself is costing, measured from its own process.
 //
@@ -95,6 +96,8 @@ Singleton {
     }
 
     Timer {
+        id: shellSample
+
         running: root._holders > 0
         interval: 2000
         repeat: true
@@ -103,5 +106,11 @@ Singleton {
             root._stat.reload();
             root._status.reload();
         }
+    }
+
+    ActivityProbe {
+        name: "shell.usage"
+        kind: "file"
+        timer: shellSample
     }
 }

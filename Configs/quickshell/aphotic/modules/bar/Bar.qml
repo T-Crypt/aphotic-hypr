@@ -375,7 +375,9 @@ Item {
                 popouts.hasCurrent = false;
                 tray.expanded = true;
             }
-        } else if (id === "activeWindow" && Config.bar.popouts.activeWindow && Config.bar.activeWindow.showOnHover) {
+        } else if (id === "activeWindow" && Config.bar.popouts.activeWindow && Config.bar.activeWindow.showOnHover && !Settings.barSignal) {
+            // Not under Signal: the notch hangs below the centre of the bar,
+            // where this popout would open behind it.
             popouts.currentName = id.toLowerCase();
             popouts.currentCenter = root.centerAlong(ch.item as Item) ?? 0;
             popouts.hasCurrent = true;

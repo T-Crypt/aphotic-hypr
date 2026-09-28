@@ -12,11 +12,15 @@ RowLayout {
     required property string currentTab
     required property var tabs // [{ id, icon, label }]
 
+    readonly property Item activeTab: tabRepeater.count > 0 ? tabRepeater.itemAt(root.tabs.findIndex(t => t.id === root.currentTab)) : null
+
     signal tabSelected(id: string)
 
     spacing: Tokens.spacing.small
 
     Repeater {
+        id: tabRepeater
+
         model: root.tabs
 
         StyledRect {
@@ -28,7 +32,8 @@ RowLayout {
             Layout.preferredHeight: 40
             Layout.preferredWidth: label.implicitWidth + icon.implicitWidth + Tokens.padding.large * 2 + Tokens.spacing.small
             radius: Tokens.rounding.full
-            color: tabButton.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+            // Signal: no pill fill; the accent underline marks the active tab.
+            color: Settings.barSignal ? "transparent" : (tabButton.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer)
 
             Behavior on color {
                 CAnim {}
@@ -41,7 +46,7 @@ RowLayout {
                 MaterialIcon {
                     id: icon
                     text: tabButton.modelData.icon
-                    color: tabButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                    color: Settings.barSignal ? (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (tabButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant)
                     fontStyle: Tokens.font.icon.small
                     fill: tabButton.active ? 1 : 0
                 }
@@ -49,7 +54,7 @@ RowLayout {
                 StyledText {
                     id: label
                     text: tabButton.modelData.label
-                    color: tabButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                    color: Settings.barSignal ? (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (tabButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant)
                     font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
                 }
             }
@@ -57,6 +62,10 @@ RowLayout {
             StateLayer {
                 anchors.fill: parent
                 radius: parent.radius
+                // Signal: the hover tone lands at full strength; the active
+                // tab carries the underline instead of a hover fill.
+                stateOpacity: Settings.barSignal ? (containsMouse && !tabButton.active ? 1 : 0) : (containsMouse ? 0.08 : 0)
+                color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
                 onClicked: root.tabSelected(tabButton.modelData.id)
             }
         }

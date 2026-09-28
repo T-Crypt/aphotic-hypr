@@ -53,7 +53,8 @@ PROFILE=""
 LAYERS=""
 THEME=""
 ASSISTANT=""
-GREETD_PREVIEW=0
+GREETD_PREVIEW=1
+KEEP_SDDM=0
 ACCEPT_EXPLOIT_DISCLAIMER=0
 NVIDIA_DRIVER_ACTION=""
 OPT_IN=0
@@ -113,7 +114,7 @@ Usage: ./install.sh [options]
 
   --channel <stable|edge>      stable installs the newest release tag
                                 (default), edge keeps the development
-                                branch (main)
+                                branch (dev)
   --profile <minimal|full>     Select base profile (skips wizard prompt)
   --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai,exploit
                                 ("exploit" is a convenience bundle of
@@ -141,14 +142,9 @@ Usage: ./install.sh [options]
   --with-assistant               Install the Aphotic Assistant (local chatbot,
                                 needs an NVIDIA GPU; implies the ai layer)
   --no-assistant                 Skip the Aphotic Assistant, don't ask
-  --with-greetd-preview          Deploy the greetd/Quickshell greeter scaffold
-                                (package, compositor config, greeter QML) as
-                                an inert preview -- does NOT enable greetd or
-                                touch sddm. Nothing about the active login
-                                screen changes until you separately run
-                                'aphotic displaymanager switch greetd' after
-                                validating it (see that command's own
-                                --confirm-tested gate).
+  --keep-sddm                    Keep sddm as the login screen instead of
+                                switching to the Aphotic greeter (greetd).
+                                Omarchy always keeps its own login.
   --nvidia-driver <keep|reinstall>
                                 Only relevant if an NVIDIA driver is already
                                 installed: 'keep' leaves it alone (don't
@@ -197,7 +193,8 @@ while [[ $# -gt 0 ]]; do
     --theme) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; THEME="$2"; shift 2 ;;
     --with-assistant) ASSISTANT="true"; shift ;;
     --no-assistant) ASSISTANT="false"; shift ;;
-    --with-greetd-preview) GREETD_PREVIEW=1; shift ;;
+    --with-greetd-preview) shift ;;
+    --keep-sddm) KEEP_SDDM=1; shift ;;
     --accept-exploit-disclaimer) ACCEPT_EXPLOIT_DISCLAIMER=1; shift ;;
     --nvidia-driver) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1 (keep|reinstall)"; exit 1; }; NVIDIA_DRIVER_ACTION="$2"; shift 2 ;;
     --config-only) CONFIG_ONLY=1; shift ;;
@@ -374,7 +371,7 @@ main() {
       echo "  ollama acceleration: ${dry_accel:-none (no NVIDIA/AMD GPU -- CPU inference)}"
     fi
     echo "  assistant: $ASSISTANT"
-    echo "  greetd preview: $([[ "$GREETD_PREVIEW" == "1" ]] && echo "yes (scaffold only, not enabled)" || echo no)"
+    echo "  login screen:   $([[ "$KEEP_SDDM" == "1" ]] && echo "keep sddm" || echo "Aphotic greeter (greetd)")"
     if [[ "$ASSISTANT" == "true" ]]; then
       local dry_model
       dry_model=$(resolve_assistant_model_via_llmfit || true)
@@ -544,9 +541,7 @@ main() {
     CFG_COPIED=1
     deploy_user_configs
     setup_login_manager_theme
-    if [[ "$GREETD_PREVIEW" == "1" ]]; then
-      setup_greetd_greeter || echo -e "$CWR - greetd preview scaffold did not finish; see $INSTLOG. sddm is untouched either way."
-    fi
+    install_greeter
     install_vscode_extensions
 
     initialize_graphical_session
@@ -564,7 +559,10 @@ main() {
   echo -e "  Nvidia:        $ISNVIDIA"
   echo -e "  AMD:           $ISAMD"
   echo -e "  Assistant:     $ASSISTANT"
-  echo -e "  Greetd preview: $([[ "$GREETD_PREVIEW" == "1" ]] && echo "deployed (run 'aphotic displaymanager status')" || echo no)"
+  local login_screen="none enabled"
+  systemctl is-enabled sddm.service &>/dev/null && login_screen="sddm"
+  systemctl is-enabled greetd.service &>/dev/null && login_screen="Aphotic greeter (greetd)"
+  echo -e "  Login screen:  $login_screen"
   echo -e "  Configs copied: $([[ "$CFG_COPIED" == "1" ]] && echo yes || echo no)"
   echo -e "  Config saved:  $APHOTIC_TOML"
   if ((${#FAILED_OPTIONAL_PACKAGES[@]} > 0)); then

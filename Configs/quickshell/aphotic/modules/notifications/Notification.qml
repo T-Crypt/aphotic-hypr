@@ -20,15 +20,43 @@ StyledRect {
     // when the sender provided one, since it's the more specific/richer
     // of the two when both exist. Falls back to appIcon, then the
     // generic keyword-matched glyph.
-    readonly property bool hasImage: modelData.image.length > 0
-    readonly property int bodyTextFormat: /[<*_`#\[\]]/.test(modelData.body) ? Text.MarkdownText : Text.PlainText
-    readonly property bool critical: modelData.urgency === NotificationUrgency.Critical
+    readonly property bool hasImage: (modelData?.image?.length ?? 0) > 0
+    readonly property int bodyTextFormat: /[<*_`#\[\]]/.test(modelData?.body ?? "") ? Text.MarkdownText : Text.PlainText
+    readonly property bool critical: modelData?.urgency === NotificationUrgency.Critical
 
-    color: critical ? Colours.palette.m3error : Colours.tPalette.m3surfaceContainer
-    radius: Tokens.rounding.large
+    color: Settings.barSignal ? Colours.signalStyle.glass : (critical ? Colours.palette.m3error : Colours.tPalette.m3surfaceContainer)
+    border.width: Settings.barSignal ? 1 : 0
+    border.color: Colours.signalStyle.hairline
+    radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
 
     implicitWidth: Tokens.sizes.notifs.width
     implicitHeight: inner.implicitHeight + Tokens.padding.medium * 2
+
+    Elevation {
+        target: root
+        level: 2
+        visible: Settings.barSignal
+    }
+
+    Rectangle {
+        visible: Settings.barSignal
+        x: root.radius
+        width: root.width - root.radius * 2
+        height: 1
+        color: Colours.signalStyle.edgeLight
+    }
+
+    // Signal: critical reads as an edge line, not a red-filled card.
+    Rectangle {
+        visible: Settings.barSignal && root.critical
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.topMargin: root.radius
+        anchors.bottomMargin: root.radius
+        width: 2
+        color: Colours.palette.m3error
+    }
 
     // Bioluminescent flash-response on arrival, echoing the deep-sea cue
     // this whole treatment is named for -- decays to nothing rather than
@@ -94,7 +122,7 @@ StyledRect {
                     width: parent.width - icon.width - parent.spacing - closeBtn.width - Tokens.spacing.medium
 
                     StyledText {
-                        text: root.modelData.appName || root.modelData.summary
+                        text: root.modelData?.appName || root.modelData?.summary || ""
                         font: Tokens.font.body.medium
                         color: Colours.palette.m3onSurface
                         elide: Text.ElideRight
@@ -102,7 +130,7 @@ StyledRect {
                     }
 
                     StyledText {
-                        text: root.modelData.appName ? root.modelData.summary : ""
+                        text: root.modelData?.appName ? (root.modelData?.summary ?? "") : ""
                         visible: text.length > 0
                         font: Tokens.font.body.small
                         color: Colours.palette.m3onSurfaceVariant
@@ -134,7 +162,7 @@ StyledRect {
             }
 
             StyledText {
-                text: root.modelData.body
+                text: root.modelData?.body ?? ""
                 textFormat: root.bodyTextFormat
                 visible: text.length > 0
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
@@ -166,10 +194,10 @@ StyledRect {
                 id: actionRow
 
                 spacing: Tokens.spacing.small
-                visible: root.modelData.actions.length > 0
+                visible: (root.modelData?.actions?.length ?? 0) > 0
 
                 Repeater {
-                    model: root.modelData.actions
+                    model: root.modelData?.actions ?? []
 
                     StyledRect {
                         id: actionBtn
@@ -221,7 +249,7 @@ StyledRect {
         id: notifImage
 
         IconImage {
-            source: root.modelData.image
+            source: root.modelData?.image ?? ""
             implicitSize: Tokens.sizes.notifs.image
         }
     }
@@ -230,9 +258,9 @@ StyledRect {
         id: notifAppIcon
 
         AppIcon {
-            name: root.modelData.appIcon
-            appClass: root.modelData.appName
-            fallbackGlyph: Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
+            name: root.modelData?.appIcon ?? ""
+            appClass: root.modelData?.appName ?? ""
+            fallbackGlyph: Icons.getNotifIcon(root.modelData?.summary ?? "", root.modelData?.urgency)
             size: Tokens.sizes.notifs.image
             fontStyle: Tokens.font.icon.medium
             colour: root.critical ? Colours.palette.m3onSurface : Colours.palette.m3primary

@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import qs.config
@@ -24,6 +23,11 @@ Item {
     implicitWidth: root.cardWidth
     width: root.implicitWidth
 
+    Elevation {
+        target: card
+        level: Settings.barSignal ? 2 : 3
+    }
+
     StyledRect {
         id: card
 
@@ -41,7 +45,9 @@ Item {
         scale: root.open ? 1 : 0.96
         transformOrigin: Item.Right
         radius: Tokens.rounding.large
-        color: Colours.palette.m3surfaceContainer
+        color: Settings.barSignal ? Colours.signalStyle.glass : Colours.palette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
 
         Behavior on x {
             Anim {
@@ -59,20 +65,14 @@ Item {
             }
         }
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Colours.palette.m3shadow
-            shadowOpacity: 0.5
-            shadowBlur: 0.5
-            shadowVerticalOffset: 2
-        }
-
         // No DepthLayer here -- this card's own content (a dense
         // notification list) is already visually busy, per Aphotic
         // Depth's per-surface intensity guidance.
+        // The glass tone relies on the compositor blur behind it; the
+        // depth gradient only reads on the opaque skins.
         DepthGradient {
             anchors.fill: parent
+            visible: !Settings.barSignal
             radius: card.radius
             baseColour: card.color
         }
@@ -92,7 +92,7 @@ Item {
 
                 MaterialIcon {
                     text: "notifications"
-                    color: Colours.palette.m3primary
+                    color: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3primary
                     fontStyle: Tokens.font.icon.medium
                 }
 
@@ -100,13 +100,15 @@ Item {
                     Layout.fillWidth: true
                     text: qsTr("Notifications")
                     color: Colours.palette.m3onSurface
-                    font: Tokens.font.title.small
+                    font: Settings.barSignal ? Tokens.font.title.builders.large.weight(Font.DemiBold).build() : Tokens.font.title.small
                 }
 
                 StyledRect {
                     visible: NotificationHistory.unreadCount > 0
                     radius: Tokens.rounding.full
                     color: "transparent"
+                    border.width: Settings.barSignal ? 1 : 0
+                    border.color: Colours.signalStyle.hairline
                     implicitWidth: markAllRow.implicitWidth + Tokens.padding.small * 2
                     implicitHeight: markAllRow.implicitHeight + Tokens.padding.extraSmall * 2
 
@@ -119,19 +121,23 @@ Item {
                         MaterialIcon {
                             text: "done_all"
                             color: Colours.palette.m3primary
+                            visible: !Settings.barSignal
                             fontStyle: Tokens.font.icon.small
                         }
 
+                        // Signal: the pill reads as the small-caps count label.
                         StyledText {
-                            text: qsTr("Mark all read")
-                            color: Colours.palette.m3primary
-                            font: Tokens.font.label.medium
+                            text: Settings.barSignal ? `${NotificationHistory.unreadCount} NEW` : qsTr("Mark all read")
+                            color: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3primary
+                            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
                         }
                     }
 
                     StateLayer {
                         anchors.fill: parent
                         radius: parent.radius
+                        stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
+                        color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
                         onClicked: NotificationHistory.markAllRead()
                     }
                 }
@@ -168,9 +174,19 @@ Item {
                         }
                     }
 
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Tokens.rounding.full
+                        border.width: 1
+                        border.color: Colours.signalStyle.hairline
+                        visible: Settings.barSignal
+                    }
+
                     StateLayer {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
+                        stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
+                        color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
                         onClicked: {
                             if (clearAll.armed) {
                                 NotificationHistory.clearAll();
@@ -198,9 +214,19 @@ Item {
                     implicitWidth: dndIcon.implicitHeight + Tokens.padding.extraSmall * 2
                     implicitHeight: dndIcon.implicitHeight + Tokens.padding.extraSmall * 2
 
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Tokens.rounding.full
+                        border.width: 1
+                        border.color: Colours.signalStyle.hairline
+                        visible: Settings.barSignal
+                    }
+
                     StateLayer {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
+                        stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
+                        color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
                         onClicked: DoNotDisturb.toggle()
                     }
 
@@ -219,9 +245,19 @@ Item {
                     implicitWidth: closeIcon.implicitHeight + Tokens.padding.extraSmall * 2
                     implicitHeight: closeIcon.implicitHeight + Tokens.padding.extraSmall * 2
 
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Tokens.rounding.full
+                        border.width: 1
+                        border.color: Colours.signalStyle.hairline
+                        visible: Settings.barSignal
+                    }
+
                     StateLayer {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
+                        stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
+                        color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
                         onClicked: root.screenState.notificationCenter = false
                     }
 
@@ -241,7 +277,9 @@ Item {
                 Layout.preferredHeight: weatherRow.implicitHeight + Tokens.padding.medium * 2
                 visible: Weather.hasData
                 radius: Tokens.rounding.medium
-                color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                color: Settings.barSignal ? Colours.signalStyle.raised : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                border.width: Settings.barSignal ? 1 : 0
+                border.color: Colours.signalStyle.hairline
 
                 RowLayout {
                     id: weatherRow
@@ -305,6 +343,21 @@ Item {
                     Anim {
                         type: Anim.Emphasized
                         properties: "x,y"
+                    }
+                }
+
+                // Removed rows fade while sliding out toward the screen
+                // edge the card is docked to.
+                remove: Transition {
+                    Anim {
+                        type: Anim.FastEffects
+                        property: "x"
+                        to: Tokens.spacing.largeIncreased
+                    }
+                    Anim {
+                        type: Anim.FastEffects
+                        property: "opacity"
+                        to: 0
                     }
                 }
 

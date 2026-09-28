@@ -3,7 +3,10 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.config
+import qs.services
 import qs.components
+import qs.services
 
 PanelWindow {
     id: root
@@ -24,7 +27,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.launcher
+    visible: reveal.active && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 
@@ -33,8 +36,20 @@ PanelWindow {
         onClicked: root.screenState.launcher = false
     }
 
-    Launcher {
-        anchors.centerIn: parent
-        screenState: root.screenState
+    SurfaceReveal {
+        id: reveal
+
+        // Signal: a sheet growing out of the bottom screen edge.
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: Settings.barSignal ? undefined : parent.verticalCenter
+        anchors.bottom: Settings.barSignal ? parent.bottom : undefined
+        shown: root.screenState.launcher
+        edge: "bottom"
+        hiddenScale: 0.96
+
+        Launcher {
+            screenState: root.screenState
+            reveal: reveal
+        }
     }
 }

@@ -53,13 +53,16 @@ Item {
             color: Colours.palette.m3onSurfaceVariant
 
             Behavior on rotation {
-                Anim {}
+                Anim {
+                    type: Anim.DefaultSpatial
+                }
             }
 
             StateLayer {
                 anchors.fill: parent
                 anchors.margins: -Tokens.padding.extraSmall
                 radius: Tokens.rounding.full
+                showHoverBackground: false
                 onClicked: root.expanded = !root.expanded
             }
         }

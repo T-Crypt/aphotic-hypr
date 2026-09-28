@@ -30,12 +30,15 @@ Item {
         active: root.presented
         sourceComponent: FlowScene {
             id: scene
-            background: Colours.palette.m3surfaceContainer
-            surface: Colours.palette.m3surfaceContainerHigh
+            background: Settings.barSignal ? Colours.signalStyle.surface : Colours.palette.m3surfaceContainer
+            surface: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3surfaceContainerHigh
             accent: Colours.palette.m3primary
             secondary: Colours.palette.m3tertiary
             ink: Colours.palette.m3onSurface
             muted: Colours.palette.m3onSurfaceVariant
+            signalSkin: Settings.barSignal
+            hairline: Colours.signalStyle.hairline
+            edgeLight: Colours.signalStyle.edgeLight
             motion: root.motion
             onMotionChanged: root.motion = motion
             flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles, root.layers, WorkloadPassports.live, ActionReceipts.all, ({
@@ -91,10 +94,18 @@ Item {
             // view. Passport staleness only matters to something looking
             // at it.
             Timer {
+                id: passportTick
+
                 running: WorkloadPassports.liveCount > 0
                 interval: 15000
                 repeat: true
                 onTriggered: WorkloadPassports.refresh()
+            }
+
+            ActivityProbe {
+                name: "flow.passports"
+                kind: "poll"
+                timer: passportTick
             }
             // Aphotic only measures itself while the layer is on and the
             // view is up. Off by default, and torn down with the loader.

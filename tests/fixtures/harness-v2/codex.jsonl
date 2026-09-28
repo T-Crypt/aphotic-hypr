@@ -1,0 +1,13 @@
+{"v":2,"harness":"codex","sessionId":"x1","event":"session_start","status":"running","t":1788022637252,"ts":"2026-09-23T10:00:00Z","model":"gpt-5.2","provider":"openai","cwd":"/home/t/Aphotic-Hypr"}
+{"v":2,"harness":"codex","sessionId":"x1","event":"turn","status":"running","t":1788022638000,"ts":"2026-09-23T10:00:01Z"}
+{"v":2,"harness":"codex","sessionId":"x1","event":"tool_call","status":"running","t":1788022639000,"ts":"2026-09-23T10:00:02Z","tool":"shell","toolId":"tc1","toolStatus":"running","agentId":"a1","agentType":"subagent"}
+{"v":2,"harness":"codex","sessionId":"x1","event":"tool_call","status":"running","t":1788022640000,"tool":"shell","toolId":"tc1","toolStatus":"completed","durationMs":80,"spawnedAgentId":"a1"}
+{"v":2,"harness":"codex","sessionId":"x1","event":"tool_call","status":"running","t":1788022641000,"ts":"2026-09-23T10:00:04Z","tool":"apply_patch","toolId":"tc2","toolStatus":"errored"}
+{"v":2,"harness":"codex","sessionId":"x1","event":"usage","status":"running","t":1788022650000,"ts":"2026-09-23T10:00:50Z","inputTokens":300,"outputTokens":900}
+{"v":2,"harness":"codex","sessionId":"x1","event":"quota","status":"running","t":1788022660000,"quota":{"context":{"usedPercent":12.4,"resetsAt":0}}}
+{"v":2,"harness":"codex","sessionId":"x1","event":"error","status":"idle","t":1788022670000,"ts":"2026-09-23T10:01:10Z","error":{"kind":"timeout","message":"tool call timed out"}}
+{"v":2,"harness":"codex","sessionId":"x1","event":"turn","status":"waiting","t":1788022680000,"ts":"2026-09-23T10:01:20Z"}
+{"v":2,"harness":"codex","sessionId":"x1","event":"session_end","status":"ended","t":1788024999000,"ts":"2026-09-23T10:39:59Z","endReason":"exit"}
+{not valid json at all
+{"v":1,"sessionId":"x1","event":"post_tool_use","status":"running","timestamp":"2026-09-23T10:00:03Z","t":1788022640000,"tool":"shell"}
+{"v":2,"harness":"codex","sessionId":"x1","event":"tool_call","status":"running","t":1788022691000,"tool":"shell","toolId":"tc3","toolStatus":"running","vendorExtra":{"beta":true}}

@@ -39,7 +39,7 @@ StyledRect {
     Layout.preferredHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
     implicitHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
 
-    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+    color: Settings.barSignal ? "transparent" : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
     topLeftRadius: root.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
     topRightRadius: root.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
     bottomLeftRadius: root.last ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
@@ -84,7 +84,7 @@ StyledRect {
             Layout.preferredWidth: 36
             Layout.preferredHeight: 36
             radius: Tokens.rounding.medium
-            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+            color: Settings.barSignal ? "transparent" : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
 
             Loader {
                 anchors.centerIn: parent

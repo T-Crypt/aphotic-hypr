@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.config
 import qs.components
+import qs.services
 
 PanelWindow {
     id: root
@@ -57,7 +58,7 @@ PanelWindow {
         onTriggered: root.showContent = false
     }
 
-    visible: root.showContent
+    visible: root.showContent && !Surfaces.suppressed
 
     MouseArea {
         anchors.fill: parent

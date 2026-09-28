@@ -30,5 +30,7 @@ Singleton {
         return mons.every(m => m.activeWorkspace?.lastIpcObject?.hasfullscreen === true);
     }
 
-    readonly property bool decorative: !root.covered
+    // A runtime context that asks for reduced motion (focus, game,
+    // present -- services/ContextPolicy.js) closes the gate as well.
+    readonly property bool decorative: !root.covered && !RuntimeContext.reducesMotion
 }

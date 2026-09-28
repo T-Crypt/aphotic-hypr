@@ -2,13 +2,16 @@ name: Lint
 
 on:
   push:
-    branches: [main, test]
+    branches: [main, dev, test]
   pull_request:
-    branches: [main, test]
+    branches: [main, dev, test]
 
 concurrency:
   group: lint-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   shellcheck:

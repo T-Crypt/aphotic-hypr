@@ -11,7 +11,7 @@ StyledRect {
 
     readonly property color colour: Colours.palette.m3tertiaryOnSurface
 
-    color: Colours.palette.m3surfaceContainerHigh
+    color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 
     readonly property bool active: Players.active !== null

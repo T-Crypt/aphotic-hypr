@@ -44,9 +44,14 @@ HELP
 
     case "$channel" in
         edge)
-            # A stable install leaves the checkout detached at a tag.
-            if ! git -C "$APHOTIC_DOTS_DIR" symbolic-ref -q HEAD >/dev/null; then
-                git -C "$APHOTIC_DOTS_DIR" checkout --quiet main || return 1
+            # Edge follows dev, where work lands before a release. A stable
+            # install sits detached at a tag, and an older edge install sits
+            # on main.
+            if [[ "$(git -C "$APHOTIC_DOTS_DIR" symbolic-ref -q --short HEAD)" != "dev" ]]; then
+                git -C "$APHOTIC_DOTS_DIR" fetch --quiet origin dev || return 1
+                git -C "$APHOTIC_DOTS_DIR" checkout --quiet dev 2>/dev/null \
+                    || git -C "$APHOTIC_DOTS_DIR" checkout --quiet -b dev --track origin/dev \
+                    || return 1
             fi
             aphotic_log "pulling ${APHOTIC_DOTS_DIR} (channel edge)..."
             git -C "$APHOTIC_DOTS_DIR" pull --ff-only

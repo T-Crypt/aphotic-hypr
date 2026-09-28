@@ -26,7 +26,8 @@ Item {
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: Pomodoro.formatTime(Pomodoro.remaining)
-            color: Colours.palette.m3secondary
+            // Signal: the accent only while a pomodoro is actually running.
+            color: Settings.barSignal ? (Pomodoro.running ? Colours.palette.m3primary : Colours.palette.m3onSurface) : Colours.palette.m3secondary
             font: Tokens.font.headline.builders.large.scale(1.3).weight(Font.DemiBold).build()
         }
 
