@@ -3,3 +3,4 @@
 {"v":1,"id":["01M3N1P94KSWNDMB7EPHA078N9","01M3N1P94JV1E5KNS8DKVCNG55"],"add.issue.tag":{"id":"01M3N1P94EBPBXW2T57BVR9P87","tag":"01M38RVW0SC0FW765GD030EWWZ"}}
 {"v":1,"id":["01M3N1P94MZPF1ZGFYDK87PM0B","01M3N1P94KSWNDMB7EPHA078N9"],"add.issue.assignee":{"id":"01M3N1P94EBPBXW2T57BVR9P87","assignee":"97BMGFNTHBJXWPYQG5ANC04QQC"}}
 {"v":1,"id":["01M3N1QRXA1W0TR2YFMCTMBJ78","01M3N1P94MZPF1ZGFYDK87PM0B"],"move.node":{"id":"01M3N1P94EBPBXW2T57BVR9P87","parent":"01M1YMMK00TGCW3ZYJA195WH5R","rank":"ffffefffffffffffffffffff"}}
+{"v":1,"id":["01M3N21YBFNA4W13GYM3MSYK59","01M3N2093S3RC5W0YR4WN5XAFR"],"add.issue.comment":{"id":"01M3N21YBEDH7FCXSP1NW5ZHTV","issue":"01M3N1P94EBPBXW2T57BVR9P87","md":"Work paused at the operator's request. Initial policy and plugin contract changes remain uncommitted. Remaining implementation steps and verification evidence are recorded for resumption. No feature PR opened.","author":"97BMGFNTHBJXWPYQG5ANC04QQC"}}
