@@ -19,6 +19,11 @@ Item {
 
     property real entrance: 0
     property bool unlocking: false
+    // greetd's IPC socket is not necessarily connected on the first frame, so
+    // the "not running under greetd" banner waits to see whether it settles.
+    // Without the delay it appears at startup and then vanishes, which reads
+    // as a flash of an error on a correctly launched greeter.
+    property bool _greetdChecked: false
 
     implicitWidth: 440
     implicitHeight: layout.implicitHeight
@@ -36,6 +41,11 @@ Item {
     // Entrance progress for the i-th block, so clock, card and hint rise in turn.
     function stagger(i: int): real {
         return Math.max(0, Math.min(1, (root.entrance - i * 0.12) / (1 - 3 * 0.12)));
+    }
+
+    Timer {
+        interval: 1500
+        onTriggered: root._greetdChecked = true
     }
 
     Connections {
@@ -280,7 +290,7 @@ Item {
 
                 Text {
                     Layout.fillWidth: true
-                    visible: !Greetd.available
+                    visible: root._greetdChecked && !Greetd.available
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
                     text: qsTr("greetd session not detected — this screen only functions when launched by greetd.")

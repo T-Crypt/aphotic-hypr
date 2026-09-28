@@ -11,6 +11,7 @@ Item {
 
     readonly property string _path: "/etc/aphotic/greeter/wallpaper.png"
     property int _generation: 0
+    property string _stamp: ""
 
     Image {
         id: img
@@ -37,7 +38,19 @@ Item {
         path: root._path
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: root._generation += 1
+        // Only a real change to the file advances the generation. The poll
+        // below re-reads this same path every second, and treating every one
+        // of those reloads as a change re-decoded the full-screen image once
+        // a second, which reads as the login screen blinking.
+        onLoaded: {
+            const bytes = new Uint8Array(watcher.data());
+            const mid = bytes.length >> 1;
+            const stamp = bytes.length + ":" + Array.prototype.join.call(bytes.subarray(mid, mid + 32), ",");
+            if (stamp !== root._stamp) {
+                root._stamp = stamp;
+                root._generation += 1;
+            }
+        }
     }
 
     // watchChanges/onFileChanged alone was observed unreliable for this

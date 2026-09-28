@@ -27,6 +27,11 @@ Item {
     // greetd ends a conversation itself when authentication fails; cancelling
     // it again would fail on the closed socket and bury the real message.
     property bool _sessionOpen: false
+    // Consecutive automatic reopens. greetd rejecting the session over and
+    // over used to shake the card on a 1.2s loop forever; after this many
+    // the greeter stops and waits to be driven by hand again.
+    property int _autoRetries: 0
+    readonly property int _maxAutoRetries: 3
 
     signal shake
 
@@ -37,12 +42,16 @@ Item {
                 root._submit();
         } else if (event.key === Qt.Key_Escape) {
             root._reset();
+            root._autoRetries = 0;
         } else if (event.key === Qt.Key_Backspace) {
             if (event.modifiers & Qt.ControlModifier)
                 root.buffer = "";
             else
                 root.buffer = root.buffer.slice(0, -1);
         } else if (/^[^\x00-\x1F\x7F-\x9F]+$/.test(event.text)) {
+            // A keypress means someone is at the keyboard, so the automatic
+            // reopening budget starts over.
+            root._autoRetries = 0;
             root.errorText = "";
             root.buffer += event.text;
         }
@@ -132,6 +141,13 @@ Item {
         id: retryTimer
         interval: 1200
         onTriggered: {
+            if (root._autoRetries >= root._maxAutoRetries) {
+                // greetd is refusing the session outright rather than asking
+                // for another password. Stop reopening and let Enter drive it.
+                root._reset();
+                root.errorText = qsTr("The login was refused. Press Enter to try again.");
+                return;
+            }
             // Keep the name that was entered and open a fresh conversation,
             // so a mistyped password only needs the password again.
             const name = root.username;
@@ -139,6 +155,7 @@ Item {
             root._reset();
             root.buffer = typedAhead;
             if (name.length > 0 && Greetd.available) {
+                root._autoRetries += 1;
                 root.username = name;
                 root.waiting = true;
                 root._sessionOpen = true;
