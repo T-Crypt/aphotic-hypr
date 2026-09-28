@@ -48,14 +48,14 @@ Item {
             width: parent.width - icon.width - parent.spacing
 
             StyledText {
-                text: root.modelData.name
+                text: root.modelData?.name ?? ""
                 font: Tokens.font.body.medium
                 elide: Text.ElideRight
                 width: parent.width
             }
 
             StyledText {
-                text: root.modelData.comment || root.modelData.genericName || ""
+                text: root.modelData?.comment || root.modelData?.genericName || ""
                 font: Tokens.font.body.small
                 color: Colours.palette.m3onSurfaceVariant
                 elide: Text.ElideRight
