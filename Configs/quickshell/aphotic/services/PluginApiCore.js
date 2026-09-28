@@ -3,9 +3,9 @@
 // must match APHOTIC_PLUGIN_API_USES in cmd_plugin.sh, and
 // tests/test_plugin_api.sh holds the two equal.
 
-var VERSION = 1;
+var VERSION = 2;
 
-var USES = ['context.observe', 'context.request', 'resource.observe', 'surface.declare', 'notifications.publish'];
+var USES = ['context.observe', 'context.request', 'resource.observe', 'surface.declare', 'notifications.publish', 'sonar.register'];
 
 // Minimum time between one plugin's context suggestions. A suggestion is
 // a notification the user has to look at; a plugin re-suggesting on
@@ -17,10 +17,10 @@ var REQUEST_INTERVAL_MS = 60000;
 // a newer version, or is not enabled. Install refuses a newer version;
 // this is the same answer for a registry written by a newer CLI.
 function grants(api, enabled) {
-    if (!enabled || !api || typeof api.version !== 'number' || api.version < 1 || api.version > VERSION)
+    if (!enabled || !api || typeof api.version !== 'number' || api.version % 1 !== 0 || api.version < 1 || api.version > VERSION)
         return [];
     var uses = Array.isArray(api.uses) ? api.uses : [];
-    return USES.filter(function (u) { return uses.indexOf(u) >= 0; });
+    return USES.filter(function (u) { return uses.indexOf(u) >= 0 && (u !== 'sonar.register' || api.version >= 2); });
 }
 
 // Plugin surfaces live in one namespace with core surface names, so a

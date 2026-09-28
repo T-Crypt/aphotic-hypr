@@ -74,8 +74,8 @@ APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace
 # the same commit as services/PluginApiCore.js; the test holds them
 # equal.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_API_VERSION=1
-APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish"
+APHOTIC_PLUGIN_API_VERSION=2
+APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish sonar.register"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
 # counts `-` as a word boundary, so `-w profile` matches "profile-hook"
@@ -1150,6 +1150,15 @@ _aphotic_plugin_install() {
         aphotic_log "its first call into the shell would fail, so this is a refusal rather than a warning -- 'aphotic update' first"
         return 1
     fi
+    if [[ "$wants_api" -lt 2 ]]; then
+        while IFS= read -r use; do
+            if [[ "$use" == "sonar.register" ]]; then
+                aphotic_err "'${name}': sonar.register requires plugin API v2, this manifest declares v${wants_api}"
+                aphotic_log "the runtime would silently deny the grant; declare [api] version = 2 instead"
+                return 1
+            fi
+        done < <(aphotic_toml_get_array "${src}/plugin.toml" api uses)
+    fi
 
     case "$verdict" in
         inert:*)
@@ -1325,6 +1334,7 @@ _aphotic_plugin_remove() {
 # describes; PluginApiCore.js carries the same ids.
 _aphotic_plugin_api_describe() {
     case "$1" in
+        sonar.register) echo "register bounded Sonar targets for this plugin (API v2)" ;;
         context.observe) echo "read the runtime context and its policy (reactive)" ;;
         context.request) echo "suggest a context switch; the user confirms from a notification" ;;
         resource.observe) echo "read the resource posture: level, resource, headline, surfaced (reactive)" ;;
@@ -1447,6 +1457,10 @@ _aphotic_plugin_validate() {
     fi
     while IFS= read -r use; do
         [[ -n "$use" ]] || continue
+        if [[ "$use" == "sonar.register" && "$api_version" =~ ^[0-9]+$ && "$api_version" -lt 2 ]]; then
+            aphotic_err "${name}: sonar.register requires plugin API v2"
+            fails=$((fails + 1))
+        fi
         _aphotic_plugin_in_list "$use" "$APHOTIC_PLUGIN_API_USES" || {
             aphotic_warn "${name}: [api].uses '${use}' isn't part of plugin API v${APHOTIC_PLUGIN_API_VERSION} (see 'aphotic plugin api') -- the handle won't carry it"
             warns=$((warns + 1))

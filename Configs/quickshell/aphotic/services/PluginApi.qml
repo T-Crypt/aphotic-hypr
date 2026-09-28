@@ -99,6 +99,13 @@ Singleton {
                 }
             };
 
+        if (grants.includes("sonar.register"))
+            h.sonar = {
+                register: (local, descriptor) => live("sonar.register") && EchoRegistry.register(plugin, local, descriptor),
+                update: (local, descriptor) => live("sonar.register") && EchoRegistry.update(plugin, local, descriptor),
+                unregister: local => { if (live("sonar.register")) EchoRegistry.unregister(plugin, local); }
+            };
+
         if (grants.includes("notifications.publish"))
             h.notify = (summary, body) => {
                 if (live("notifications.publish"))
@@ -110,6 +117,13 @@ Singleton {
 
     function _owns(plugin: string, name: string): bool {
         return (root._surfaces[plugin] ?? []).includes(name);
+    }
+
+    // Whether a plugin declared this namespaced surface. EchoRegistry
+    // checks a sonar target's action against it, so a target can only
+    // open a surface its own plugin actually owns.
+    function ownsSurface(plugin: string, name: string): bool {
+        return root._owns(plugin, name);
     }
 
     function _declare(plugin: string, local: string, role: string): bool {
@@ -159,6 +173,7 @@ Singleton {
     // with it, the same tick. Its handle stays in the plugin's hands but
     // every call on it now refuses.
     function _revoke(plugin: string): void {
+        EchoRegistry.removePlugin(plugin);
         for (const name of root._surfaces[plugin] ?? [])
             Surfaces.undeclare(name);
         const surfaces = Object.assign({}, root._surfaces);
