@@ -62,6 +62,34 @@ _aphotic_doctor_layer_plugins() {
 # that checkout is behind origin/main. Formats _aphotic_state_version_drift
 # (lib/aphotic/state.sh), shared with `aphotic status`/`aphotic diff` so
 # all three agree on what "behind" means.
+# Live configs are symlinks into the checkout install.sh ran from. Deleting
+# that checkout (a throwaway worktree, say) breaks them, and Hyprland drops
+# into emergency mode on its next reload.
+_aphotic_doctor_config_links() {
+    local dots link target bad=0
+    dots="$(readlink -f "${APHOTIC_DOTS_DIR}")"
+    while IFS= read -r link; do
+        target="$(readlink "$link")"
+        case "$target" in
+            */Configs/*) ;;
+            *) continue ;;
+        esac
+        if [[ ! -e "$link" ]]; then
+            printf '  [BROKEN] %s -> %s\n' "${link/#$HOME/\~}" "$target"
+            bad=1
+        elif [[ "$(readlink -f "$link")" != "$dots"/* ]]; then
+            printf '  [warn] %s points outside %s: %s\n' "${link/#$HOME/\~}" "${APHOTIC_DOTS_DIR/#$HOME/\~}" "$target"
+            bad=1
+        fi
+    done < <(find "$HOME/.config/hypr" "$HOME/.config/quickshell" "$HOME/.config/systemd/user" \
+        "$HOME/.local/bin" -maxdepth 2 -type l 2>/dev/null)
+    if [[ "$bad" == "1" ]]; then
+        echo "  Fix: run 'aphotic sync' to relink them to ${APHOTIC_DOTS_DIR/#$HOME/\~}."
+    else
+        echo "  [ok]   every config link resolves inside ${APHOTIC_DOTS_DIR/#$HOME/\~}"
+    fi
+}
+
 _aphotic_doctor_version_drift() {
     source "${LIB_DIR}/state.sh"
 
@@ -196,6 +224,10 @@ aphotic_cmd_doctor() {
     if [[ "$shellunit_state" != "enabled" ]]; then
         printf '  [warn] aphotic-shell.service: %s -- %s\n' "$shellunit_state" "$shellunit_detail"
     fi
+
+    echo
+    echo "Config links:"
+    _aphotic_doctor_config_links
 
     echo
     echo "Version:"

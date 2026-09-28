@@ -91,6 +91,10 @@ build_wallpaper_thumbs() {
 }
 
 deploy_user_configs() {
+  if [[ "$(git -C "$ROOT_DIR" rev-parse --git-dir 2>/dev/null)" != "$(git -C "$ROOT_DIR" rev-parse --git-common-dir 2>/dev/null)" ]]; then
+    echo -e "$CWR - $ROOT_DIR is a git worktree. Your live configs will link into it, and removing"
+    echo -e "$CWR   it breaks Hyprland. Run 'aphotic sync' from your main checkout before you remove it."
+  fi
   echo -e "$CNT - Copying config files..."
   CUSTOM_LUA="$HOME/.config/hypr/custom.lua"
   CUSTOM_LUA_BACKUP=""
