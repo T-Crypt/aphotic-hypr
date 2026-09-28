@@ -25,8 +25,9 @@ import "VpnCore.js" as Core
 //
 // Every VPN type is an adapter behind one contract in cmd_vpn.sh; this
 // singleton reads `aphotic vpn list --json` and aggregates it. The list is
-// re-read on the marker changing, after an action and on refresh() from a
-// surface that opens, never on a timer.
+// re-read on the marker changing, on Nmcli's `nmcli monitor` reporting a
+// VPN change, after an action and on refresh() from a surface that opens,
+// never on a timer.
 Singleton {
     id: root
 
@@ -117,6 +118,18 @@ Singleton {
         }
         onLoadFailed: {
             root.connected = false;
+            root.refresh();
+        }
+    }
+
+    Connections {
+        target: Nmcli
+
+        function onVpnActiveChanged(): void {
+            root.refresh();
+        }
+
+        function onVpnConnectionNameChanged(): void {
             root.refresh();
         }
     }
