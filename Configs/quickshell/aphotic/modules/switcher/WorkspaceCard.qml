@@ -17,16 +17,31 @@ StyledClippingRect {
     required property var card
     required property real cardHeight
     required property bool active
+    property real reveal: 1
+    property int tintIndex: 0
 
     readonly property real scale: root.cardHeight / root.card.rect.height
 
     implicitHeight: root.cardHeight
     implicitWidth: Math.round(root.card.rect.width * root.scale)
 
+    opacity: root.reveal
+    transform: Translate {
+        y: (1 - root.reveal) * Tokens.spacing.large
+    }
+
     radius: Tokens.rounding.large
-    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 1)
-    border.width: root.active ? 2 : Config.border.thickness
-    border.color: root.active ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
+    color: Settings.barSignal ? (root.active ? Qt.alpha(Colours.palette.m3primary, 0.08) : Colours.signalStyle.raised) : Colours.layer(Colours.tPalette.m3surfaceContainer, 1)
+    border.width: Settings.barSignal ? 1 : (root.active ? 2 : Config.border.thickness)
+    border.color: Settings.barSignal ? (root.active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline) : (root.active ? Colours.palette.m3primary : Colours.palette.m3outlineVariant)
+
+    Rectangle {
+        visible: Settings.barSignal
+        x: root.radius
+        width: root.width - root.radius * 2
+        height: 1
+        color: Colours.signalStyle.edgeLight
+    }
 
     Repeater {
         model: root.card.windows
@@ -71,6 +86,27 @@ StyledClippingRect {
         text: qsTr("empty")
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.label.medium
+    }
+
+    Row {
+        visible: Settings.barSignal
+        x: Tokens.padding.small
+        y: Tokens.padding.extraSmall
+        spacing: Tokens.spacing.extraSmall
+
+        Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 6
+            height: 6
+            radius: 3
+            color: Colours.signalStyle.tint(root.tintIndex)
+        }
+
+        StyledText {
+            text: qsTr("WORKSPACE %1").arg(root.card.id)
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+        }
     }
 
     // Selecting the card itself is what picks an empty desktop; on a

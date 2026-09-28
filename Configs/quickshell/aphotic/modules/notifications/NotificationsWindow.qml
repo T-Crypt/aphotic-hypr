@@ -25,7 +25,21 @@ PanelWindow {
     implicitWidth: Tokens.sizes.notifs.width + Tokens.padding.large * 2
     implicitHeight: screen.height
 
-    visible: Notifs.popups.length > 0
+    // Stays mapped while the last card plays out its remove transition
+    // instead of unmounting the frame mid-fade.
+    readonly property int popupCount: Notifs.popups.length
+
+    visible: root.popupCount > 0 || lingerTimer.running
+
+    onPopupCountChanged: {
+        if (root.popupCount === 0)
+            lingerTimer.start();
+    }
+
+    Timer {
+        id: lingerTimer
+        interval: Tokens.anim.durations.expressiveDefaultEffects
+    }
 
     ListView {
         id: list

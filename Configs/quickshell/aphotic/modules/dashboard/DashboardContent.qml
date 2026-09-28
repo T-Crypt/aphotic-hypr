@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import qs.config
 import qs.components
 import qs.services
@@ -50,6 +49,13 @@ ColumnLayout {
         }
     }
 
+    function stepTab(delta: int): void {
+        const i = root.tabs.findIndex(t => t.id === root.currentTab);
+        const next = Math.max(0, Math.min(root.tabs.length - 1, i + delta));
+        if (next !== i)
+            root.currentTab = root.tabs[next].id;
+    }
+
     // Installed, enabled, and its own declared gate satisfied -- all three
     // decided by PluginRegistry off the plugin's manifest. This file knows
     // that dashboard tabs exist; it does not know that any particular
@@ -78,11 +84,48 @@ ColumnLayout {
 
     spacing: Tokens.spacing.medium
 
-    CommandCenterTabBar {
+    // Signal: the tabs sit on their own glass capsule.
+    Item {
         Layout.alignment: Qt.AlignHCenter
-        currentTab: root.currentTab
-        tabs: root.tabs
-        onTabSelected: id => root.currentTab = id
+        readonly property real pad: Settings.barSignal ? Tokens.padding.small : 0
+        implicitWidth: tabBar.implicitWidth + pad * 2
+        implicitHeight: tabBar.implicitHeight + pad * 2
+
+        StyledRect {
+            visible: Settings.barSignal
+            anchors.fill: parent
+            radius: Tokens.rounding.full
+            color: Colours.signalStyle.glass
+            border.width: 1
+            border.color: Colours.signalStyle.hairline
+        }
+
+        CommandCenterTabBar {
+            id: tabBar
+
+            anchors.centerIn: parent
+            currentTab: root.currentTab
+            tabs: root.tabs
+            onTabSelected: id => root.currentTab = id
+        }
+
+        // One accent bar that glides to whichever tab is active.
+        StyledRect {
+            visible: Settings.barSignal && tabBar.activeTab !== null
+            x: tabBar.x + (tabBar.activeTab?.x ?? 0) + Tokens.padding.large
+            y: tabBar.y + tabBar.height - height - 2
+            width: Math.max(0, (tabBar.activeTab?.width ?? 0) - Tokens.padding.large * 2)
+            height: 2
+            radius: Tokens.rounding.full
+            color: Colours.signalStyle.accentLine
+
+            Behavior on x {
+                Anim { type: Anim.Emphasized }
+            }
+            Behavior on width {
+                Anim { type: Anim.Emphasized }
+            }
+        }
     }
 
     // Widget-card frame around whichever tab is active -- previously each
@@ -95,6 +138,11 @@ ColumnLayout {
     // each tab needing to build its own outer frame.
     StyledRect {
         id: tabFrame
+
+        Elevation {
+            target: tabFrame
+            level: Settings.barSignal ? 2 : 3
+        }
 
         Layout.alignment: Qt.AlignHCenter
         // Both the outgoing and incoming loader report 0 while one unloads
@@ -118,21 +166,45 @@ ColumnLayout {
         onTabWidthChanged: if (tabFrame.tabWidth > 0) tabFrame.heldWidth = tabFrame.tabWidth
         onTabHeightChanged: if (tabFrame.tabHeight > 0) tabFrame.heldHeight = tabFrame.tabHeight
 
-        Layout.preferredWidth: (tabFrame.tabWidth > 0 ? tabFrame.tabWidth : tabFrame.heldWidth) + Tokens.padding.extraLarge * 2
-        Layout.preferredHeight: (tabFrame.tabHeight > 0 ? tabFrame.tabHeight : tabFrame.heldHeight) + Tokens.padding.extraLarge * 2
-        radius: Tokens.rounding.extraLarge
-        color: Qt.alpha(Colours.tPalette.m3surfaceContainer, 0.85)
-        border.width: 1
-        border.color: Colours.palette.m3outlineVariant
+        // Signal: hold the largest size any tab has needed, so switching tabs
+        // never makes the frame jump; growth glides instead.
+        property real maxWidth: 0
+        property real maxHeight: 0
+        readonly property real shownWidth: tabFrame.tabWidth > 0 ? tabFrame.tabWidth : tabFrame.heldWidth
+        readonly property real shownHeight: tabFrame.tabHeight > 0 ? tabFrame.tabHeight : tabFrame.heldHeight
+        onShownWidthChanged: tabFrame.maxWidth = Math.max(tabFrame.maxWidth, tabFrame.shownWidth)
+        onShownHeightChanged: tabFrame.maxHeight = Math.max(tabFrame.maxHeight, tabFrame.shownHeight)
 
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: Colours.palette.m3shadow
-            shadowOpacity: 0.5
-            shadowBlur: 0.5
-            shadowVerticalOffset: 2
+        Connections {
+            target: root.screenState
+
+            // Start each opening from the real content size, so a size held
+            // from an earlier session or a startup layout never lingers.
+            function onDashboardChanged(): void {
+                if (root.screenState.dashboard) {
+                    tabFrame.maxWidth = tabFrame.shownWidth;
+                    tabFrame.maxHeight = tabFrame.shownHeight;
+                }
+            }
         }
+
+        Layout.preferredWidth: (Settings.barSignal ? Math.max(tabFrame.maxWidth, tabFrame.shownWidth) : tabFrame.shownWidth) + Tokens.padding.extraLarge * 2
+        Layout.preferredHeight: (Settings.barSignal ? Math.max(tabFrame.maxHeight, tabFrame.shownHeight) : tabFrame.shownHeight) + Tokens.padding.extraLarge * 2
+
+        Behavior on Layout.preferredWidth {
+            enabled: Settings.barSignal
+
+            Anim { type: Anim.Emphasized }
+        }
+        Behavior on Layout.preferredHeight {
+            enabled: Settings.barSignal
+
+            Anim { type: Anim.Emphasized }
+        }
+        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+        color: Settings.barSignal ? Colours.signalStyle.glass : Qt.alpha(Colours.tPalette.m3surfaceContainer, 0.85)
+        border.width: 1
+        border.color: Settings.barSignal ? Colours.signalStyle.hairline : Colours.palette.m3outlineVariant
 
         DepthLayer {
             anchors.fill: parent
@@ -141,6 +213,7 @@ ColumnLayout {
 
         DepthGradient {
             anchors.fill: parent
+            visible: !Settings.barSignal
             radius: parent.radius
             baseColour: Colours.tPalette.m3surfaceContainer
         }

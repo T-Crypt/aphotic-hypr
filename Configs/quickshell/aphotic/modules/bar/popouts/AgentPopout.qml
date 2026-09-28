@@ -17,8 +17,9 @@ ColumnLayout {
 
         StyledText {
             Layout.fillWidth: true
-            text: qsTr("Agents")
-            font: Tokens.font.title.medium
+            text: Settings.barSignal ? qsTr("Agents").toUpperCase() : qsTr("Agents")
+            color: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
+            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.title.medium
         }
 
         MaterialIcon {
@@ -51,11 +52,25 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitWidth: tabRow.implicitWidth + Tokens.padding.small * 2
                 implicitHeight: tabRow.implicitHeight + Tokens.padding.small * 2
-                radius: Tokens.rounding.normal
-                color: isSelected ? Colours.palette.m3secondaryContainer : "transparent"
+                radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.normal
+                color: Settings.barSignal ? "transparent" : (isSelected ? Colours.palette.m3secondaryContainer : "transparent")
+
+                Rectangle {
+                    visible: Settings.barSignal && tabRect.isSelected
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.leftMargin: Tokens.rounding.medium
+                    anchors.rightMargin: Tokens.rounding.medium
+                    height: 2
+                    radius: Tokens.rounding.full
+                    color: Colours.signalStyle.accentLine
+                }
 
                 StateLayer {
                     anchors.fill: parent
+                    color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                    stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
                     onClicked: Settings.agentSelectedProvider = tabRect.modelData.id
                 }
 
@@ -67,14 +82,14 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: tabRect.modelData.icon
-                        color: tabRect.isSelected ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurfaceVariant
+                        color: Settings.barSignal ? (tabRect.isSelected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (tabRect.isSelected ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurfaceVariant)
                         fontStyle: Tokens.font.icon.small
                         fill: tabRect.isSelected ? 1 : 0
                     }
 
                     StyledText {
                         text: tabRect.modelData.label
-                        color: tabRect.isSelected ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurfaceVariant
+                        color: Settings.barSignal ? (tabRect.isSelected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (tabRect.isSelected ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurfaceVariant)
                         font: Tokens.font.label.medium
                     }
                 }
@@ -93,7 +108,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("%1 session(s) running").arg(detail.stat.sessionCount ?? 0)
-            font: Tokens.font.title.medium
+            font: Settings.barSignal ? Tokens.font.title.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.medium
         }
 
         // Live per-session activity, sourced from AgentProviders'

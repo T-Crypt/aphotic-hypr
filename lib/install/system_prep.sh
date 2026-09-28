@@ -25,8 +25,10 @@ enable_core_services() {
   else
     echo -e "$CNT - Enabling bluetooth service..."
     sudo systemctl enable --now bluetooth.service &>> "$INSTLOG"
-    echo -e "$CNT - Enabling display manager (sddm)..."
-    sudo systemctl enable sddm &>> "$INSTLOG"
+    if pacman -Qq sddm &>/dev/null; then
+      echo -e "$CNT - Enabling display manager (sddm)..."
+      sudo systemctl enable sddm &>> "$INSTLOG"
+    fi
   fi
   # pacman, not "$AUR_HELPER": a removal never needs an AUR helper, and an
   # empty one (failed yay bootstrap) would just run as the empty command.

@@ -25,7 +25,7 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.session && !Surfaces.suppressed
+    visible: reveal.active && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
 
@@ -34,10 +34,24 @@ PanelWindow {
         onClicked: root.screenState.session = false
     }
 
-    SessionContent {
-        anchors.centerIn: parent
-        screenState: root.screenState
+    Rectangle {
+        anchors.fill: parent
+        color: Colours.palette.m3shadow
+        opacity: reveal.visibleProgress * 0.45
+    }
 
-        Keys.onEscapePressed: root.screenState.session = false
+    SurfaceReveal {
+        id: reveal
+
+        anchors.centerIn: parent
+        shown: root.screenState.session
+        hiddenScale: 0.92
+
+        SessionContent {
+            screenState: root.screenState
+            reveal: reveal
+
+            Keys.onEscapePressed: root.screenState.session = false
+        }
     }
 }

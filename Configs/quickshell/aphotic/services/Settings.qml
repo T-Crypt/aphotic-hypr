@@ -361,7 +361,8 @@ Singleton {
     property string vpnConfigPath: ""
     property bool vpnAutoConnect: false
 
-    readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1)
+    readonly property bool barSignal: barSkin === "signal"
+    readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1) * (barSignal ? 0.78 : 1)
 
     property bool _loaded: false
     property bool _writePending: false
@@ -659,7 +660,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onBarHorizontalChanged: root._saveState()
     onBarPositionBottomChanged: root._saveState()
     onBarSkinChanged: {
-        if (root.barSkin === "pill" || root.barSkin === "square")
+        if (root.barSkin === "pill" || root.barSkin === "square" || root.barSkin === "signal")
             root.lastFullSkin = root.barSkin;
         root._saveState();
     }
@@ -1037,6 +1038,11 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
 
         function cycleStyle(): void {
             root.cycleBarStyle();
+        }
+
+        function setSkin(name: string): void {
+            if (["pill", "square", "signal"].includes(name))
+                root.barSkin = name;
         }
 
         target: "bar"

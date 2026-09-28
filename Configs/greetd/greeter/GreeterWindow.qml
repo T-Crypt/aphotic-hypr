@@ -1,15 +1,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 
-// The whole point of this being a *separate* qs config from the live
-// desktop shell: this runs inside a throwaway Hyprland instance greetd
-// spins up just to host this one client (see
-// Configs/greetd/hyprland-greeter.conf) -- there is no real desktop
-// session, no D-Bus, no other windows to layer against. A plain
-// fullscreen, keyboard-exclusive overlay layer is all this needs.
 PanelWindow {
     id: root
 
@@ -27,18 +22,120 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
+    readonly property color hairline: Qt.alpha(Colours.mutedTextColor, 0.22)
+
     Wallpaper {
+        id: wallpaper
+
         anchors.fill: parent
+    }
+
+    ShaderEffectSource {
+        id: wallpaperTexture
+
+        anchors.fill: parent
+        sourceItem: wallpaper
+        hideSource: true
+        visible: false
+    }
+
+    // The wallpaper, softly blurred once; nothing here animates, so the blur
+    // renders a single time rather than every frame.
+    MultiEffect {
+        anchors.fill: parent
+        source: wallpaperTexture
+        blurEnabled: true
+        blur: 0.55
+        blurMax: 48
+        saturation: -0.1
     }
 
     Rectangle {
         anchors.fill: parent
-        color: Qt.alpha(Colours.background, 0.55)
+        gradient: Gradient {
+            GradientStop {
+                position: 0
+                color: Qt.alpha(Colours.background, 0.35)
+            }
+            GradientStop {
+                position: 1
+                color: Qt.alpha(Colours.background, 0.8)
+            }
+        }
     }
 
     GreeterContent {
+        id: content
+
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: -40
         auth: auth
+    }
+
+    // Signal line along the bottom, lit under the login card.
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 56
+        height: 1
+        color: root.hairline
+
+        Rectangle {
+            x: content.x
+            width: content.width
+            height: 2
+            y: -1
+            radius: 1
+            color: Colours.primary
+        }
+    }
+
+    Row {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 16
+        spacing: 8
+
+        Repeater {
+            model: [
+                { label: qsTr("RESTART"), command: ["systemctl", "reboot"] },
+                { label: qsTr("SHUT DOWN"), command: ["systemctl", "poweroff"] }
+            ]
+
+            Rectangle {
+                id: powerButton
+
+                required property var modelData
+
+                width: powerLabel.implicitWidth + 28
+                height: 30
+                radius: height / 2
+                color: powerMouse.containsMouse ? Qt.alpha(Colours.textColor, 0.08) : "transparent"
+                border.width: 1
+                border.color: root.hairline
+
+                Text {
+                    id: powerLabel
+
+                    anchors.centerIn: parent
+                    text: powerButton.modelData.label
+                    font.pixelSize: 11
+                    font.weight: Font.DemiBold
+                    font.letterSpacing: 1.4
+                    color: Colours.mutedTextColor
+                }
+
+                MouseArea {
+                    id: powerMouse
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Quickshell.execDetached(powerButton.modelData.command)
+                }
+            }
+        }
     }
 
     GreeterAuth {

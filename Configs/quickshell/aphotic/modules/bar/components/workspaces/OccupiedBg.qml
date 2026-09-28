@@ -76,11 +76,14 @@ Item {
             implicitWidth: Settings.barHorizontal ? (start && end ? end.x + end.size - start.x + 2 : 0) : (Settings.barInnerWidth - Tokens.padding.small + 2)
             implicitHeight: Settings.barHorizontal ? (Settings.barInnerWidth - Tokens.padding.small + 2) : (start && end ? end.y + end.size - start.y + 2 : 0)
 
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Settings.barSignal ? "transparent" : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
             radius: Tokens.rounding.full
 
-            scale: 0
-            Component.onCompleted: scale = 1
+            property bool shown: false
+            opacity: shown ? 1 : 0
+            scale: shown ? 1 : 0.8
+
+            Component.onCompleted: shown = true
 
             states: State {
                 name: "vertical"
@@ -93,9 +96,15 @@ Item {
                 }
             }
 
+            Behavior on opacity {
+                Anim {
+                    type: Anim.FastEffects
+                }
+            }
+
             Behavior on scale {
                 Anim {
-                    easing: Tokens.anim.standardDecel
+                    type: Anim.FastSpatial
                 }
             }
 

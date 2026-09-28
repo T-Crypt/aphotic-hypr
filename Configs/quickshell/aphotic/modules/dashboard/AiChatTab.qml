@@ -31,6 +31,15 @@ ColumnLayout {
         AiProviders.sendMessage("dashboard", AiConfig.activeProvider, AiConfig.ollamaModel, text);
     }
 
+    // Bubbles carry only role and text, so the assistant side resolves the
+    // current provider's label instead of a stored name.
+    function _senderLabel(role) {
+        if (role === "user")
+            return qsTr("You");
+        const provider = AiProviders.providers.find(p => p.id === AiConfig.activeProvider);
+        return provider ? provider.label : qsTr("Assistant");
+    }
+
     Connections {
         target: AiProviders
         function onResponseReceived(requestId, text) {
@@ -103,24 +112,42 @@ ColumnLayout {
                 width: pillLabel.implicitWidth + Tokens.padding.large * 2
                 radius: Tokens.rounding.full
                 opacity: providerPill.available ? 1 : 0.4
-                color: providerPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+                // Signal: quiet hairline capsule; the accent border is the
+                // only thing that marks the active provider.
+                color: Settings.barSignal ? "transparent"
+                       : (providerPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer)
+                border.width: Settings.barSignal ? (providerPill.active ? 2 : 1) : 0
+                border.color: Settings.barSignal ? (providerPill.active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline)
+                                : "transparent"
 
                 Behavior on color {
+                    CAnim {}
+                }
+
+                Behavior on border.color {
                     CAnim {}
                 }
 
                 StyledText {
                     id: pillLabel
                     anchors.centerIn: parent
-                    text: providerPill.modelData.label
-                    color: providerPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
-                    font: Tokens.font.label.small
+                    text: Settings.barSignal ? providerPill.modelData.label.toUpperCase() : providerPill.modelData.label
+                    color: Settings.barSignal
+                           ? (providerPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                           : (providerPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant)
+                    font: Settings.barSignal
+                          ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                          : Tokens.font.label.small
                 }
 
                 StateLayer {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: providerPill.available
+                    stateOpacity: Settings.barSignal
+                                  ? (containsMouse && !providerPill.active ? 1 : 0)
+                                  : (containsMouse ? 0.08 : 0)
+                    color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
                 }
 
                 // A StateLayer's own MouseArea goes `enabled: false` when
@@ -150,19 +177,30 @@ ColumnLayout {
             height: 32
             width: modelLabel.implicitWidth + Tokens.padding.large * 2
             radius: Tokens.rounding.full
-            color: Colours.tPalette.m3surfaceContainer
+            color: Settings.barSignal ? "transparent" : Colours.tPalette.m3surfaceContainer
+            border.width: Settings.barSignal ? 1 : 0
+            border.color: Colours.signalStyle.hairline
 
             StyledText {
                 id: modelLabel
                 anchors.centerIn: parent
-                text: AiConfig.ollamaHostConfigured ? (AiConfig.ollamaModel || qsTr("Select model")) : qsTr("Set host…")
+                text: {
+                    const t = AiConfig.ollamaHostConfigured
+                              ? (AiConfig.ollamaModel || qsTr("Select model"))
+                              : qsTr("Set host…");
+                    return Settings.barSignal ? t.toUpperCase() : t;
+                }
                 color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.label.small
+                font: Settings.barSignal
+                      ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                      : Tokens.font.label.small
             }
 
             StateLayer {
                 anchors.fill: parent
                 radius: parent.radius
+                stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
+                color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
             }
 
             MouseArea {
@@ -282,12 +320,30 @@ ColumnLayout {
     }
 
     StyledRect {
+        id: chatPanel
+
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.preferredWidth: 480
         Layout.preferredHeight: 300
         radius: Tokens.rounding.large
-        color: Colours.tPalette.m3surfaceContainer
+        color: Settings.barSignal ? Colours.signalStyle.surface : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
+
+        Elevation {
+            visible: Settings.barSignal
+            target: chatPanel
+            level: 1
+        }
+
+        Rectangle {
+            visible: Settings.barSignal
+            x: chatPanel.radius
+            width: chatPanel.width - chatPanel.radius * 2
+            height: 1
+            color: Colours.signalStyle.edgeLight
+        }
 
         ListView {
             id: list
@@ -302,45 +358,128 @@ ColumnLayout {
                 values: []
             }
 
-            delegate: StyledRect {
+            delegate: Item {
                 id: bubble
 
                 required property var modelData
                 readonly property bool fromUser: bubble.modelData.role === "user"
 
                 width: list.width
-                implicitHeight: bubbleText.implicitHeight + Tokens.padding.medium * 2
-                radius: Tokens.rounding.medium
-                color: bubble.fromUser ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
+                implicitHeight: Settings.barSignal
+                               ? senderLabel.implicitHeight + Tokens.spacing.extraSmall + bubbleBody.implicitHeight
+                               : bubbleBody.implicitHeight
 
-                StyledText {
-                    id: bubbleText
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.margins: Tokens.padding.medium
-                    anchors.verticalCenter: parent.verticalCenter
-                    wrapMode: Text.Wrap
-                    text: bubble.modelData.text
-                    color: bubble.fromUser ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface
-                    font: Tokens.font.body.medium
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: Settings.barSignal ? Tokens.spacing.extraSmall : 0
+
+                    StyledText {
+                        id: senderLabel
+
+                        visible: Settings.barSignal
+                        Layout.alignment: bubble.fromUser ? Qt.AlignRight : Qt.AlignLeft
+                        Layout.maximumWidth: bubbleBody.implicitWidth
+                        elide: Text.ElideRight
+                        text: root._senderLabel(bubble.modelData.role).toUpperCase()
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                    }
+
+                    StyledRect {
+                        id: bubbleBody
+
+                        // Bubbles hug their text up to 80% of the list.
+                        readonly property real maxBubbleWidth: list.width * 0.8
+
+                        Layout.fillWidth: !Settings.barSignal
+                        Layout.alignment: Settings.barSignal ? (bubble.fromUser ? Qt.AlignRight : Qt.AlignLeft) : Qt.AlignLeft
+                        Layout.maximumWidth: Settings.barSignal ? bubbleBody.maxBubbleWidth : -1
+                        implicitWidth: bubbleText.implicitWidth + Tokens.padding.medium * 2
+                        implicitHeight: bubbleText.implicitHeight + Tokens.padding.medium * 2
+                        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.medium
+                        bottomRightRadius: Settings.barSignal && bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
+                        bottomLeftRadius: Settings.barSignal && !bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
+                        color: Settings.barSignal
+                               ? (bubble.fromUser ? Qt.alpha(Colours.palette.m3primary, 0.14) : Colours.signalStyle.raised)
+                               : (bubble.fromUser ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh)
+                        border.width: Settings.barSignal ? 1 : 0
+                        border.color: Settings.barSignal
+                                      ? (bubble.fromUser ? Qt.alpha(Colours.palette.m3primary, 0.4) : Colours.signalStyle.hairline)
+                                      : "transparent"
+
+                        Rectangle {
+                            visible: Settings.barSignal && !bubble.fromUser
+                            x: Math.min(bubbleBody.radius, bubbleBody.width / 2)
+                            width: Math.max(bubbleBody.width - Math.min(bubbleBody.radius, bubbleBody.width / 2) * 2, 0)
+                            height: 1
+                            color: Colours.signalStyle.edgeLight
+                        }
+
+                        StyledText {
+                            id: bubbleText
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.margins: Tokens.padding.medium
+                            anchors.verticalCenter: parent.verticalCenter
+                            wrapMode: Text.Wrap
+                            text: bubble.modelData.text
+                            color: Settings.barSignal
+                                   ? Colours.palette.m3onSurface
+                                   : (bubble.fromUser ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface)
+                            font: Tokens.font.body.medium
+                        }
+                    }
                 }
             }
 
-            StyledText {
+            ColumnLayout {
                 visible: list.count === 0
                 anchors.centerIn: parent
-                text: qsTr("Ask anything")
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.body.medium
+                spacing: Settings.barSignal ? Tokens.spacing.small : 0
+
+                MaterialIcon {
+                    visible: Settings.barSignal
+                    Layout.alignment: Qt.AlignHCenter
+                    text: "smart_toy"
+                    color: Colours.palette.m3onSurfaceVariant
+                    fontStyle: Tokens.font.icon.large
+                }
+
+                StyledText {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: qsTr("Ask anything")
+                    color: Settings.barSignal ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
+                    font: Settings.barSignal
+                          ? Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
+                          : Tokens.font.body.medium
+                }
+
+                StyledText {
+                    visible: Settings.barSignal
+                    Layout.alignment: Qt.AlignHCenter
+                    text: qsTr("Type below to start a conversation")
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                }
             }
         }
     }
 
     StyledRect {
+        id: inputBar
+
         Layout.fillWidth: true
         Layout.preferredHeight: 48
         radius: Tokens.rounding.full
-        color: Colours.palette.m3surfaceContainerHigh
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3surfaceContainerHigh
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Settings.barSignal && (input.activeFocus || input.text.length > 0)
+                     ? Qt.alpha(Colours.palette.m3primary, 0.7)
+                     : Colours.signalStyle.hairline
+
+        Behavior on border.color {
+            CAnim {}
+        }
 
         RowLayout {
             anchors.fill: parent
@@ -373,13 +512,18 @@ ColumnLayout {
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
                 radius: Tokens.rounding.full
-                color: Colours.palette.m3primary
+                // Tinted at rest, solid only while a reply streams.
+                color: AiProviders.busy || !Settings.barSignal
+                       ? Colours.palette.m3primary
+                       : Qt.alpha(Colours.palette.m3primary, 0.18)
                 opacity: AiProviders.busy ? 0.5 : 1
 
                 MaterialIcon {
                     anchors.centerIn: parent
                     text: "send"
-                    color: Colours.contrastOn(Colours.palette.m3primary)
+                    color: AiProviders.busy || !Settings.barSignal
+                           ? Colours.contrastOn(Colours.palette.m3primary)
+                           : Colours.palette.m3primaryOnSurface
                     fontStyle: Tokens.font.icon.small
                 }
 

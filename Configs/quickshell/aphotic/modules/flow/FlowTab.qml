@@ -30,12 +30,15 @@ Item {
         active: root.presented
         sourceComponent: FlowScene {
             id: scene
-            background: Colours.palette.m3surfaceContainer
-            surface: Colours.palette.m3surfaceContainerHigh
+            background: Settings.barSignal ? Colours.signalStyle.surface : Colours.palette.m3surfaceContainer
+            surface: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3surfaceContainerHigh
             accent: Colours.palette.m3primary
             secondary: Colours.palette.m3tertiary
             ink: Colours.palette.m3onSurface
             muted: Colours.palette.m3onSurfaceVariant
+            signalSkin: Settings.barSignal
+            hairline: Colours.signalStyle.hairline
+            edgeLight: Colours.signalStyle.edgeLight
             motion: root.motion
             onMotionChanged: root.motion = motion
             flow: Model.build(ResourceEngine.claims, ResourceEngine.resources, ProfileEngine.states, ProfileEngine.profiles, root.layers, WorkloadPassports.live, ActionReceipts.all, ({

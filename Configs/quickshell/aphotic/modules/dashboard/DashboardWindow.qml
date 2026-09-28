@@ -25,9 +25,18 @@ PanelWindow {
     anchors.left: true
     anchors.right: true
 
-    visible: screenState.dashboard && !Surfaces.suppressed
+    visible: reveal.active && !Surfaces.suppressed
     implicitWidth: screen.width
     implicitHeight: screen.height
+
+    // Signal: dim and (through the compositor's layer rule) frost the
+    // desktop behind the dashboard.
+    Rectangle {
+        anchors.fill: parent
+        visible: Settings.barSignal
+        color: Colours.palette.m3shadow
+        opacity: reveal.visibleProgress * 0.35
+    }
 
     MouseArea {
         anchors.fill: parent
@@ -48,13 +57,32 @@ PanelWindow {
         width: content.width
         height: content.height
         acceptedButtons: Qt.AllButtons
+
+        // Signal: the wheel steps through tabs wherever the content under
+        // the pointer does not scroll itself. One step per notch.
+        property real wheelAccum: 0
+        onWheel: wheel => {
+            if (!Settings.barSignal)
+                return;
+            wheelAccum += wheel.angleDelta.y;
+            while (Math.abs(wheelAccum) >= 120) {
+                content.stepTab(wheelAccum > 0 ? -1 : 1);
+                wheelAccum -= wheelAccum > 0 ? 120 : -120;
+            }
+        }
     }
 
-    DashboardContent {
-        id: content
+    SurfaceReveal {
+        id: reveal
 
         anchors.centerIn: parent
-        screenState: root.screenState
+        shown: root.screenState.dashboard
+
+        DashboardContent {
+            id: content
+
+            screenState: root.screenState
+        }
     }
 
     // Gated on the state rather than this window's own `visible`: the

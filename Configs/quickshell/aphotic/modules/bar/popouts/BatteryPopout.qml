@@ -34,7 +34,7 @@ ColumnLayout {
 
         StyledText {
             text: `${Math.round(UPower.displayDevice.percentage * 100)}%`
-            font: Tokens.font.title.medium
+            font: Settings.barSignal ? Tokens.font.title.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.medium
         }
 
         StyledText {
@@ -61,9 +61,9 @@ ColumnLayout {
     }
 
     StyledText {
-        text: qsTr("Power profile")
+        text: Settings.barSignal ? qsTr("Power profile").toUpperCase() : qsTr("Power profile")
         color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.label.medium
+        font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
     }
 
     RowLayout {
@@ -97,9 +97,19 @@ ColumnLayout {
                 Layout.preferredWidth: profileCol.implicitWidth + Tokens.padding.medium * 2
                 Layout.preferredHeight: profileCol.implicitHeight + Tokens.padding.small * 2
 
+                Rectangle {
+                    visible: Settings.barSignal
+                    anchors.fill: parent
+                    radius: Tokens.rounding.medium
+                    color: PowerProfiles.profile === profileBtn.modelData.profile ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
+                    border.width: 1
+                    border.color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                }
+
                 StateLayer {
-                    radius: Tokens.rounding.small
-                    color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primary : "transparent"
+                    radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.small
+                    color: Settings.barSignal ? Colours.signalStyle.hover : (PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primary : "transparent")
+                    stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
                     disabled: profileBtn.modelData.profile === PowerProfile.Performance && !PowerProfiles.hasPerformanceProfile
                     onClicked: PowerProfiles.profile = profileBtn.modelData.profile
                 }
@@ -112,13 +122,13 @@ ColumnLayout {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.icon
-                        color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: PowerProfiles.profile === profileBtn.modelData.profile ? (Settings.barSignal ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onPrimary) : Colours.palette.m3onSurfaceVariant
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.label
-                        color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: PowerProfiles.profile === profileBtn.modelData.profile ? (Settings.barSignal ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onPrimary) : Colours.palette.m3onSurfaceVariant
                         font: Tokens.font.label.medium
                     }
                 }

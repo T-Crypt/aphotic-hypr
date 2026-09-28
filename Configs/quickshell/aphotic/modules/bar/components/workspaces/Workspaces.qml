@@ -139,7 +139,7 @@ StyledClippingRect {
     implicitWidth: Settings.barHorizontal ? layout.implicitWidth + Tokens.padding.small : Settings.barInnerWidth
     implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : layout.implicitHeight + Tokens.padding.small
 
-    color: Colours.palette.m3surfaceContainerHigh
+    color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 
     Item {

@@ -37,7 +37,7 @@ PanelWindow {
     implicitWidth: Tokens.sizes.osd.sliderWidth + Tokens.padding.large * 2
     implicitHeight: screen.height
 
-    visible: shown
+    visible: reveal.active
 
     Timer {
         id: hideTimer
@@ -70,41 +70,54 @@ PanelWindow {
         }
     }
 
-    Column {
+    SurfaceReveal {
+        id: reveal
+
         anchors.centerIn: parent
-        spacing: Tokens.spacing.medium
+        shown: root.shown
+        edge: "right"
 
-        OsdSlider {
-            icon: Icons.getVolumeIcon(Audio.volume, Audio.muted)
-            value: Audio.volume
-            to: GlobalConfig.services.maxVolume
-            onMoved: value => Audio.setVolume(value)
-            onWheelUp: Audio.incrementVolume()
-            onWheelDown: Audio.decrementVolume()
-        }
+        Column {
+            spacing: Tokens.spacing.medium
 
-        OsdSlider {
-            visible: Settings.osdEnableMicrophone
-            height: visible ? implicitHeight : 0
+            OsdSlider {
+                reveal: reveal.staggered(0)
 
-            icon: Icons.getMicVolumeIcon(Audio.sourceVolume, Audio.sourceMuted)
-            value: Audio.sourceVolume
-            to: GlobalConfig.services.maxVolume
-            onMoved: value => Audio.setSourceVolume(value)
-            onWheelUp: Audio.incrementSourceVolume()
-            onWheelDown: Audio.decrementSourceVolume()
-        }
+                icon: Icons.getVolumeIcon(Audio.volume, Audio.muted)
+                value: Audio.volume
+                to: GlobalConfig.services.maxVolume
+                onMoved: value => Audio.setVolume(value)
+                onWheelUp: Audio.incrementVolume()
+                onWheelDown: Audio.decrementVolume()
+            }
 
-        OsdSlider {
-            visible: Settings.osdEnableBrightness
-            height: visible ? implicitHeight : 0
+            OsdSlider {
+                reveal: reveal.staggered(1)
 
-            icon: `brightness_${Math.round((root.monitor?.brightness ?? 0) * 6) + 1}`
-            value: root.monitor?.brightness ?? 0
-            to: 1
-            onMoved: value => root.monitor?.setBrightness(value)
-            onWheelUp: root.monitor?.setBrightness((root.monitor?.brightness ?? 0) + GlobalConfig.services.brightnessIncrement)
-            onWheelDown: root.monitor?.setBrightness((root.monitor?.brightness ?? 0) - GlobalConfig.services.brightnessIncrement)
+                visible: Settings.osdEnableMicrophone
+                height: visible ? implicitHeight : 0
+
+                icon: Icons.getMicVolumeIcon(Audio.sourceVolume, Audio.sourceMuted)
+                value: Audio.sourceVolume
+                to: GlobalConfig.services.maxVolume
+                onMoved: value => Audio.setSourceVolume(value)
+                onWheelUp: Audio.incrementSourceVolume()
+                onWheelDown: Audio.decrementSourceVolume()
+            }
+
+            OsdSlider {
+                reveal: reveal.staggered(2)
+
+                visible: Settings.osdEnableBrightness
+                height: visible ? implicitHeight : 0
+
+                icon: `brightness_${Math.round((root.monitor?.brightness ?? 0) * 6) + 1}`
+                value: root.monitor?.brightness ?? 0
+                to: 1
+                onMoved: value => root.monitor?.setBrightness(value)
+                onWheelUp: root.monitor?.setBrightness((root.monitor?.brightness ?? 0) + GlobalConfig.services.brightnessIncrement)
+                onWheelDown: root.monitor?.setBrightness((root.monitor?.brightness ?? 0) - GlobalConfig.services.brightnessIncrement)
+            }
         }
     }
 }

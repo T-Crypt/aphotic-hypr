@@ -235,20 +235,14 @@ Item {
 
         Behavior on width {
             enabled: Settings.capsuleAnimations
-            SpringAnimation {
-                spring: 4
-                damping: 0.62
-                mass: 0.9
-                epsilon: 0.25
+            Anim {
+                type: Anim.DefaultSpatial
             }
         }
         Behavior on height {
             enabled: Settings.capsuleAnimations
-            SpringAnimation {
-                spring: 4
-                damping: 0.62
-                mass: 0.9
-                epsilon: 0.25
+            Anim {
+                type: Anim.DefaultSpatial
             }
         }
 

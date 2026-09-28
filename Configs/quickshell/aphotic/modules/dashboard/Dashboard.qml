@@ -152,8 +152,10 @@ Item {
         anchors.centerIn: parent
         width: 400
         height: 350
-        radius: Tokens.rounding.large
-        color: Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         visible: !Config.dashboard.performance.showCpu &&
                  !(Config.dashboard.performance.showGpu && SystemUsage.gpuDetected) &&
                  !Config.dashboard.performance.showMemory &&
@@ -214,8 +216,10 @@ Item {
         property color accentColor: Colours.palette.m3primary
         property real animatedPercentage: 0
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         Component.onCompleted: animatedPercentage = percentage
         onPercentageChanged: animatedPercentage = percentage
 
@@ -442,8 +446,10 @@ Item {
         property real animatedUsage: 0
         property real animatedTemp: 0
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         Component.onCompleted: {
             animatedUsage = usage;
             animatedTemp = tempProgress;
@@ -570,8 +576,10 @@ Item {
         readonly property real arcSweep: 1.5 * Math.PI
         property real animatedPercentage: 0
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         clip: true
         Component.onCompleted: animatedPercentage = percentage
         onPercentageChanged: animatedPercentage = percentage
@@ -676,8 +684,10 @@ Item {
         property real animatedPercentage: 0
         property color accentColor: Colours.palette.m3secondary
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         clip: true
         Component.onCompleted: {
             diskCount = SystemUsage.disks.length;
@@ -837,8 +847,10 @@ Item {
 
         property color accentColor: Colours.palette.m3primary
 
-        color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.large
+        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+        border.width: Settings.barSignal ? 1 : 0
+        border.color: Colours.signalStyle.hairline
         clip: true
 
         NetworkUsageWatch {}
