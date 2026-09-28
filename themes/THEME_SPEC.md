@@ -344,6 +344,20 @@ Quickshell-side visual tweaks (icon weight, desktop clock inversion)
 independently and would need its own theme.toml-driven wiring to
 actually flip for Latte.
 
+### Status colours
+
+ANSI slots carry no guaranteed hue: wallust fills `color1`–`color3` from
+the wallpaper's pixels, so "red" can come back blue. The shell does not use
+them as status colours directly. `Colours.status.error`, `.warning` and
+`.success` (and `m3error` under wallust) are derived in
+`Configs/quickshell/aphotic/services/StatusColours.js`. The slot
+(`color1`, `color3`, `color2`, or matugen's `error`/`tertiary` role) seeds
+the shade. Its hue is clamped into a fixed band (error 346°–14°, warning
+30°–54°, success 100°–160°), its saturation gets a floor, and its lightness
+moves until it reaches 4.5:1 against both surface containers. A seed that
+already meets all three passes through unchanged. Terminal consumers of
+the ANSI slots (kitty, cava) are not affected.
+
 ### Shipping a palette with a downloadable theme
 
 `[engine].colorscheme` and `[palette].anchor` both name a file under
