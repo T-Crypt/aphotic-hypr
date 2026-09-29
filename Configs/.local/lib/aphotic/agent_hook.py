@@ -31,6 +31,14 @@ V2_KIND = {
     "Stop": "turn",
     "SubagentStop": "turn",
 }
+# The contract's event kinds (docs/HARNESS_HOOKS_V2.md). A payload that
+# already speaks them is written through as-is, so adapters other than
+# Claude's hook (codex, opencode, ...) cost a translator and nothing else.
+# V2_KIND only covers the kinds Claude's v1 vocabulary maps onto; usage,
+# quota and error exist only as v2-native kinds.
+V2_EVENTS = frozenset({
+    "session_start", "session_end", "turn", "tool_call", "usage", "quota", "error",
+})
 V2_STATUS = {
     "SessionStart": "running",
     "SessionEnd": "ended",
@@ -54,6 +62,35 @@ TOOL_STATUS = {
 PROVIDER_BY_HARNESS = {"claude": "anthropic"}
 CACHE_READ_KEYS = ("cache_read_input_tokens", "cache_read_tokens")
 CACHE_WRITE_KEYS = ("cache_creation_input_tokens", "cache_write_tokens")
+
+# A passthrough record is written as-is, but the fields readers index by
+# still have to be the type the contract declares: a non-numeric token
+# count or a dict where a string belongs would poison the session file
+# and every fold downstream. Off-type fields are dropped, not coerced.
+PASSTHROUGH_NUMERIC_FIELDS = ("inputTokens", "outputTokens", "reasoningTokens",
+                              "cacheReadTokens", "cacheWriteTokens", "durationMs")
+PASSTHROUGH_STRING_FIELDS = ("model", "provider", "cwd", "tool", "toolId",
+                             "agentId", "agentType", "spawnedAgentId", "endReason",
+                             "toolStatus")
+PASSTHROUGH_OBJECT_FIELDS = ("cost", "error", "quota")
+
+
+def sanitize_passthrough(record):
+    for field in PASSTHROUGH_NUMERIC_FIELDS:
+        if field in record:
+            value = record[field]
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                del record[field]
+    for field in PASSTHROUGH_STRING_FIELDS:
+        if field in record:
+            value = record[field]
+            if not isinstance(value, str) or not value:
+                del record[field]
+    for field in PASSTHROUGH_OBJECT_FIELDS:
+        if field in record:
+            value = record[field]
+            if not isinstance(value, dict):
+                del record[field]
 
 
 def atomic_write(path, text):
@@ -205,44 +242,78 @@ def main():
     session_id = payload.get("session_id") or ""
     raw_event = payload.get("hook_event_name") or ""
     event = V2_KIND.get(raw_event)
-    if not session_id or not event:
-        sys.exit(0)
 
-    now = time.time()
-    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+    if not event:
+        # Adapters hand over finished v2 records: v2 marker, the harness's
+        # own session id, and a contract event kind. Stamp the clock and
+        # write the record through as-is; only unknown-kind or missing-id
+        # v2 payloads are dropped, same silence as malformed v1 ones.
+        if payload.get("v") != 2:
+            sys.exit(0)
+        session_id = payload.get("sessionId")
+        event = payload.get("event")
+        if not isinstance(session_id, str) or not session_id:
+            sys.exit(0)
+        if not isinstance(event, str) or event not in V2_EVENTS:
+            sys.exit(0)
+        now = time.time()
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+        record = dict(payload)
+        sanitize_passthrough(record)
+        record["v"] = 2
+        record["sessionId"] = session_id
+        record["event"] = event
+        if not isinstance(record.get("t"), int) or isinstance(record.get("t"), bool) or record["t"] <= 0:
+            record["t"] = int(now * 1000)
+        if not record.get("ts"):
+            record["ts"] = stamp
+        if not isinstance(record.get("status"), str) or not record["status"]:
+            record["status"] = "idle"
+        harness = str(record.get("harness") or "claude")
+        record["harness"] = harness
+        provider = record.get("provider") or PROVIDER_BY_HARNESS.get(harness)
+        if provider:
+            record["provider"] = provider
+        raw_event = event
+    else:
+        if not session_id:
+            sys.exit(0)
 
-    record = {
-        "v": 2,
-        "sessionId": session_id,
-        "event": event,
-        "status": V2_STATUS.get(raw_event, "idle"),
-        "ts": stamp,
-        "t": int(now * 1000),
-    }
-    for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
-                       ("agent_id", "agentId"), ("agent_type", "agentType"),
-                       ("duration_ms", "durationMs"), ("notification_type", "notificationType"),
-                       ("source", "source"), ("end_reason", "endReason"),
-                       ("model", "model"), ("cwd", "cwd"), ("harness", "harness")):
-        value = payload.get(key)
-        if value not in (None, ""):
-            record[field] = value
+        now = time.time()
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
 
-    tool_status = TOOL_STATUS.get(raw_event)
-    if tool_status:
-        record["toolStatus"] = tool_status
+        record = {
+            "v": 2,
+            "sessionId": session_id,
+            "event": event,
+            "status": V2_STATUS.get(raw_event, "idle"),
+            "ts": stamp,
+            "t": int(now * 1000),
+        }
+        for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
+                           ("agent_id", "agentId"), ("agent_type", "agentType"),
+                           ("duration_ms", "durationMs"), ("notification_type", "notificationType"),
+                           ("source", "source"), ("end_reason", "endReason"),
+                           ("model", "model"), ("cwd", "cwd"), ("harness", "harness")):
+            value = payload.get(key)
+            if value not in (None, ""):
+                record[field] = value
 
-    harness = payload.get("harness") or "claude"
+        tool_status = TOOL_STATUS.get(raw_event)
+        if tool_status:
+            record["toolStatus"] = tool_status
 
-    # The default has to reach the record, not just the session file below.
-    # Claude Code sends no `harness` of its own (the adapters for other
-    # harnesses do), so without this every Claude event is untagged and a
-    # reader cannot tell "this is Claude" from "nobody said".
-    record["harness"] = harness
+        harness = payload.get("harness") or "claude"
 
-    provider = PROVIDER_BY_HARNESS.get(harness)
-    if provider:
-        record["provider"] = provider
+        # The default has to reach the record, not just the session file below.
+        # Claude Code sends no `harness` of its own (the adapters for other
+        # harnesses do), so without this every Claude event is untagged and a
+        # reader cannot tell "this is Claude" from "nobody said".
+        record["harness"] = harness
+
+        provider = PROVIDER_BY_HARNESS.get(harness)
+        if provider:
+            record["provider"] = provider
 
     session_file = os.path.join(SESSIONS, "%s.json" % session_id)
     known = cached_session(session_file)

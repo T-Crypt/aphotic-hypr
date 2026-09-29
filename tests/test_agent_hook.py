@@ -934,3 +934,122 @@ class TestNeverRaiseOnGarbageInput:
         # _drive already swallows SystemExit; the assertion is simply that
         # no other exception escapes main() for any of these payloads.
         _drive(tmp_path, raw, monkeypatch)
+
+
+class TestV2Passthrough:
+    """Adapters (codex, opencode, ...) hand over finished v2 records.
+
+    A payload carrying the contract markers (v 2, sessionId, a contract
+    event kind) is written through as-is; the writer only owns the clock
+    and the three sinks. Everything the Claude v1 path guarantees has to
+    keep working unchanged beside it."""
+
+    def test_v2_record_lands_in_all_three_sinks(self, tmp_path, monkeypatch):
+        payload = {
+            "v": 2, "harness": "opencode", "sessionId": "ses_1",
+            "event": "usage", "status": "running",
+            "inputTokens": 100, "outputTokens": 20, "reasoningTokens": 5,
+            "cacheReadTokens": 30, "cacheWriteTokens": 4,
+            "cost": {"amount": 0.014, "currency": "USD"},
+            "model": "z/glm", "provider": "z", "cwd": "/tmp/project",
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert len(records) == 1
+        record = records[0]
+        assert record["v"] == 2 and record["sessionId"] == "ses_1"
+        assert record["event"] == "usage"
+        assert record["cost"] == {"amount": 0.014, "currency": "USD"}
+        assert record["reasoningTokens"] == 5
+        assert record["harness"] == "opencode"
+        # The writer stamps the clock when the adapter left it out.
+        assert isinstance(record["t"], int) and record["t"] > 0
+        assert record["ts"].endswith("Z")
+
+        sessions = tmp_path / "state" / "agent-sessions"
+        session_file = json.loads((sessions / "ses_1.json").read_text())
+        assert session_file["harness"] == "opencode"
+        assert session_file["model"] == "z/glm"
+        assert (tmp_path / "state" / "agent-runs" / "ses_1.jsonl").exists()
+
+    def test_v2_record_keeps_unknown_fields(self, tmp_path, monkeypatch):
+        payload = {
+            "v": 2, "harness": "opencode", "sessionId": "ses_1",
+            "event": "turn", "status": "running", "futureField": {"a": 1},
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert records and records[0]["futureField"] == {"a": 1}
+
+    def test_v2_invalid_t_and_ts_are_stamped(self, tmp_path, monkeypatch):
+        payload = {
+            "v": 2, "harness": "opencode", "sessionId": "ses_1",
+            "event": "turn", "t": "yesterday",
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert records and isinstance(records[0]["t"], int) and records[0]["t"] > 0
+        assert records[0]["ts"].endswith("Z")
+        assert records[0]["status"] == "idle"
+
+    def test_v2_missing_status_defaults_to_idle(self, tmp_path, monkeypatch):
+        payload = {"v": 2, "harness": "codex", "sessionId": "s2", "event": "turn"}
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert records and records[0]["status"] == "idle"
+
+    def test_v2_harness_default_and_provider_mapping(self, tmp_path, monkeypatch):
+        bare = {"v": 2, "sessionId": "s3", "event": "turn", "status": "running"}
+        records = _drive(tmp_path, bare, monkeypatch)
+        assert records[0]["harness"] == "claude"
+        assert records[0]["provider"] == "anthropic"
+
+        # _drive appends to the same events file, so the carried record
+        # lands second.
+        carried = dict(bare, harness="opencode", provider="z")
+        records = _drive(tmp_path, carried, monkeypatch)
+        assert len(records) == 2
+        assert records[1]["provider"] == "z"
+
+    def test_v2_off_type_fields_are_dropped(self, tmp_path, monkeypatch):
+        payload = {
+            "v": 2, "harness": "opencode", "sessionId": "s4", "event": "usage",
+            "status": "running", "inputTokens": {"a": 1}, "outputTokens": True,
+            "cost": "free", "error": None, "model": {"id": 1}, "durationMs": "slow",
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        record = records[-1]
+        assert "inputTokens" not in record and "outputTokens" not in record
+        assert "cost" not in record and "error" not in record
+        assert "model" not in record and "durationMs" not in record
+
+    def test_v2_garbage_is_dropped_silently(self, tmp_path, monkeypatch):
+        payloads = [
+            {"v": 2},
+            {"v": 2, "sessionId": "x", "event": "not-a-kind"},
+            {"v": 2, "sessionId": "", "event": "turn"},
+            {"v": 1, "sessionId": "x", "event": "turn"},
+            "not json",
+            None,
+        ]
+        for payload in payloads:
+            records = _drive(tmp_path, payload, monkeypatch)
+            assert records == [], payload
+
+    def test_v1_payloads_still_map_through_v2_kind(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, {
+            "session_id": "c1", "hook_event_name": "PreToolUse",
+            "tool_name": "Bash", "harness": "claude",
+        }, monkeypatch)
+        assert len(records) == 1
+        assert records[0]["event"] == "tool_call"
+        assert records[0]["toolStatus"] == "running"
+        assert records[0]["tool"] == "Bash"
+
+    def test_fuzzed_v2_never_raises(self, tmp_path, monkeypatch):
+        nasty = [
+            {"v": 2, "sessionId": "s", "event": {"deep": ["x"]}},
+            {"v": 2, "sessionId": ["list"], "event": "turn"},
+            {"v": 2, "sessionId": "s", "event": "usage", "inputTokens": {"a": 1}, "cost": "free"},
+            {"v": 2, "sessionId": "s", "event": "error", "error": None, "status": ["running"]},
+            {"v": 2, "sessionId": "s" * 10000, "event": "turn", "t": -5},
+            {"v": 2, "sessionId": "s", "event": "quota", "quota": {"5h": None}},
+        ]
+        for payload in nasty:
+            _drive(tmp_path, payload, monkeypatch)
