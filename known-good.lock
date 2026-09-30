@@ -1,4 +1,4 @@
-# canary 2026-09-29
+# canary 2026-09-30
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -84,7 +84,7 @@ file 5.48-1
 file-roller 44.7-1
 filesystem 2025.10.12-1
 findutils 4.11.0-1
-firefox 156.0.1-1
+firefox 157.0-1
 flac 1.5.0-1
 flex 2.6.4-6
 fontconfig 2:2.18.3-2
@@ -106,7 +106,7 @@ gdk-pixbuf2 2.44.7-1
 gettext 1.0-2
 giflib 6.1.3-2
 git 2.55.0-1
-github-cli 2.101.0-1
+github-cli 2.102.0-1
 glib-networking 1:2.80.1-1
 glib2 2.88.3-1
 glibc 2.44+r50+g1848099f063e-1
@@ -371,7 +371,7 @@ libpciaccess 0.19-1
 libpgm 5.3.128-4
 libpipewire 1:1.6.9-1
 libplacebo 7.360.1-6
-libpng 1.6.58-2
+libpng 1.6.59-1
 libprocps 3.3.17-5
 libproxy 0.5.12-1
 libpsl 0.21.5-2
@@ -498,9 +498,9 @@ nss 3.130-1
 numactl 2.0.19-1
 nvidia-open-dkms 615.71.09-1
 nvidia-utils 615.71.09-1
-nwg-look 1.1.1-3
+nwg-look 1.1.2-1
 ocl-icd 2.3.5-1
-oh-my-zsh-git r7966.92bf53f1a-1
+oh-my-zsh-git r7967.4d4cfc287-1
 onetbb 2023.1.0-1
 oniguruma 6.9.10-1
 openal 1.25.2-2
@@ -521,7 +521,7 @@ pam 1.7.2-2
 pambase 20260616-1
 pamixer 1.6-4
 pango 1:1.58.2-1
-pangomm-2.48 2.56.2-1
+pangomm-2.48 2.58.0-1
 papirus-folders 1.14.0-1
 papirus-icon-theme 20260801-1
 parted 3.8-1
@@ -529,7 +529,7 @@ patch 2.8-1
 pavucontrol 1:6.2-1
 pciutils 3.15.0-1
 pcre 8.45-5
-pcre2 10.48-1
+pcre2 10.49-1
 pcsclite 2.5.2-1
 peg 0.1.19-1
 perl 5.42.2-2
