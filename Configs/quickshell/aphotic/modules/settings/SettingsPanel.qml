@@ -233,6 +233,8 @@ RowLayout {
                             return launcherComp;
                         case "displays":
                             return displaysComp;
+                        case "sonar":
+                            return sonarComp;
                         case "clock":
                             return clockComp;
                         case "osd":
@@ -406,6 +408,12 @@ RowLayout {
     Component {
         id: displaysComp
         DisplaysPane {}
+    }
+    Component {
+        id: sonarComp
+        SonarPane {
+            screenState: root.screenState
+        }
     }
     Component {
         id: clockComp

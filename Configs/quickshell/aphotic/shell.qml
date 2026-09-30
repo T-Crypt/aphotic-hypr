@@ -19,6 +19,7 @@ import qs.modules.switcher
 import qs.modules.background
 import qs.modules.areapicker
 import qs.modules.colorpicker
+import qs.modules.sonar
 import qs.modules.intelligence
 import qs.modules.notificationcenter
 import qs.modules.pkginstall
@@ -618,7 +619,7 @@ ShellRoot {
     // services/ that runs on its own rather than answering a reader
     // belongs in this list, and tests/test_singleton_reachability.py
     // fails the build if it does not.
-    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, Switcher, InferenceMode, ResourcePosture]
+    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, Switcher, InferenceMode, ResourcePosture, Sonar]
 
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than
@@ -830,5 +831,23 @@ ShellRoot {
 
     ColorPicker {
         id: colorPicker
+    }
+
+    SonarHost {}
+
+    // `qs -c aphotic ipc call sonar ping|dismiss`. The keybind routes
+    // through the same target. Both paths take the focused screen's
+    // state, since that is the output whose keyboard the ping owns; the
+    // enable and precedence gates live in services/Sonar.qml.
+    IpcHandler {
+        target: "sonar"
+
+        function ping(): void {
+            Sonar.ping(root.focusedScreenState());
+        }
+
+        function dismiss(): void {
+            Sonar.dismiss();
+        }
     }
 }

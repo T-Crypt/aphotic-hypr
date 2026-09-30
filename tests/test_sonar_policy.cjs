@@ -46,3 +46,39 @@ for(let j=0;j<15;j++){
 assert.equal(Object.keys(records).length,1024);
 assert.equal(p.put(records,p.normalize('another','overflow',{...valid,action:'plugin:another/show'})),null);
 assert.equal(Object.keys(p.removePlugin(records,'other-0')).length,960);
+
+// Session rules (services/Sonar.qml is the reactive wrapper).
+assert.ok(existsSync(dir + 'SonarPolicy.js'), 'sonar session rules must exist');
+vm.runInContext(readFileSync(dir + 'SonarPolicy.js', 'utf8'), p);
+assert.equal(p.canPing(true, '', false), true);
+assert.equal(p.canPing(false, '', false), false);
+assert.equal(p.canPing(true, 'negotiation', false), false);
+assert.equal(p.canPing(true, '', true), false);
+assert.deepEqual(plain(p.parseCursorPos('12, 345')), {x:12, y:345});
+assert.deepEqual(plain(p.parseCursorPos('-5,0')), {x:-5, y:0});
+assert.equal(p.parseCursorPos(''), null);
+assert.equal(p.parseCursorPos('cursor at 12, 345'), null);
+assert.deepEqual(plain(p.originFallback({x:100, y:200, width:3440, height:1440})), {x:1820, y:920});
+assert.deepEqual(plain(p.originFallback(null)), {x:0, y:0});
+assert.equal(p.radiusFraction(0.3, false), 0.5);
+assert.equal(p.radiusFraction(0.6, false), 1);
+assert.equal(p.radiusFraction(0.9, false), 1);
+assert.equal(p.radiusFraction(0, true), 1);
+assert.equal(p.opacityAt(0.5, false), 1);
+assert.equal(p.opacityAt(0.875, false), 0.5);
+assert.equal(p.opacityAt(1, false), 0);
+assert.equal(p.opacityAt(0.5, true), 1);
+assert.equal(p.reached({x:0, y:0}, {x:3, y:4, width:10, height:10}, 5), true);
+assert.equal(p.reached({x:0, y:0}, {x:3, y:4, width:10, height:10}, 4.9), false);
+assert.equal(p.reached({x:5, y:5}, {x:3, y:4, width:10, height:10}, 0), true);
+assert.equal(p.superBindConflict([{key:'grave', modmask:64, description:'someone else'}]), true);
+assert.equal(p.superBindConflict([{key:'grave', modmask:64, description:'Ping Sonar discovery'}]), false);
+assert.equal(p.superBindConflict([{key:'grave', modmask:65, description:'someone else'}]), false);
+assert.equal(p.superBindConflict([{key:'grave', modmask:64, mouse:true, description:'x'}]), false);
+assert.equal(p.superBindConflict([{key:'w', modmask:64, description:'x'}]), false);
+assert.equal(p.superBindConflict(null), false);
+
+assert.equal(p.dismissKey(96, true), false);
+assert.equal(p.dismissKey(96, false), true);
+assert.equal(p.dismissKey(65, true), true);
+assert.equal(p.dismissKey(65, false), true);

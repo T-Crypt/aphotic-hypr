@@ -56,3 +56,4 @@ CircularBuffer 1.0 CircularBuffer.qml
 CustomShortcut 1.0 CustomShortcut.qml
 singleton WallpaperThumbs 1.0 WallpaperThumbs.qml
 singleton EchoRegistry 1.0 EchoRegistry.qml
+singleton Sonar 1.0 Sonar.qml

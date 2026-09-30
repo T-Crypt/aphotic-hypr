@@ -167,6 +167,10 @@ Singleton {
         root.setBarStyle(order[(idx + 1) % order.length]);
     }
 
+    // Sonar and Shelves are discovery features, off until asked for.
+    property bool sonarEnabled: false
+    property bool sonarGhosts: false
+
     property string agentSelectedProvider: "claude"
     property bool agentGraphEnabled: true
     // Node budget and layout tick rate for the agent graph surface, never
@@ -384,6 +388,8 @@ Singleton {
             lastFullSkin: root.lastFullSkin,
             barStyleDefaultsApplied: root.barStyleDefaultsApplied,
             dockAutoHide: root.dockAutoHide,
+            sonarEnabled: root.sonarEnabled,
+            sonarGhosts: root.sonarGhosts,
             dockPinnedApps: root.dockPinnedApps,
             customAppIcons: root.customAppIcons,
             dockMagnification: root.dockMagnification,
@@ -652,6 +658,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     }
 
     onTwelveHourClockChanged: root._saveState()
+    onSonarEnabledChanged: root._saveState()
+    onSonarGhostsChanged: root._saveState()
     onShowClockDateChanged: root._saveState()
     onBarVisibilityChanged: root._saveState()
     onDesktopClockEnabledChanged: root._saveState()
@@ -835,6 +843,10 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.barStyleDefaultsApplied = data.barStyleDefaultsApplied;
                 if (typeof data.dockAutoHide === "boolean")
                     root.dockAutoHide = data.dockAutoHide;
+                if (typeof data.sonarEnabled === "boolean")
+                    root.sonarEnabled = data.sonarEnabled;
+                if (typeof data.sonarGhosts === "boolean")
+                    root.sonarGhosts = data.sonarGhosts;
                 if (Array.isArray(data.dockPinnedApps))
                     root.dockPinnedApps = data.dockPinnedApps;
                 if (Array.isArray(data.customAppIcons))

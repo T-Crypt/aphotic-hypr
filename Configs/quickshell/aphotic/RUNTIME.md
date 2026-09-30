@@ -44,15 +44,19 @@ the same flags.
 | workspace | `workspace` | transients, primaries, modals |
 | primary | launcher, dashboard, settings, intelligence, notificationCenter, pkgInstall, wallpaperPicker, keybindsCheatsheet | transients, other primaries, modals |
 | modal | `session` | transients, primaries |
+| sonar | `sonar` | nothing -- it displaces no role and closes when any ordinary surface opens |
 
 The workspace plane survives a primary: a launcher opens over it and
-closes back to it.
+closes back to it. Sonar leaves those surfaces open during its two-second
+ping and takes dismissal input. It yields to blocking prompts and new
+surface openings. The Sonar role adds no hold and does not set `engaged`,
+so it preserves the bar's popouts and notch.
 
 Per screen, `ScreenState` exposes:
 
 - `surfaceStack`: open surfaces, oldest first
 - `surface`: `{stack, focusOwner, mode, blocking}`, where `mode` is
-  `ambient | transient | workspace | primary | modal | blocked`
+  `ambient | transient | workspace | primary | modal | sonar | blocked`
 - `engaged`: something owns the keyboard. The bar's hover popouts and the
   notch's expanded tile settle when this goes true.
 

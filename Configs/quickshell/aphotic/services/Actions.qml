@@ -71,7 +71,7 @@ Singleton {
             label: qsTr("Inspect resources in Flow"),
             plugin: ""
         }
-    ].concat(root._workspaceActions, root._contextActions, root._settingsActions)
+    ].concat(root._workspaceActions, root._sonarActions, root._contextActions, root._settingsActions)
 
     // One per runtime context, derived from RuntimeContext's own list so a
     // context added there is an action here with no edit.
@@ -86,6 +86,13 @@ Singleton {
         id: "workspace.open",
         icon: "space_dashboard",
         label: qsTr("Open Workspace"),
+        plugin: ""
+    }] : []
+
+    readonly property var _sonarActions: Settings.sonarEnabled ? [{
+        id: "sonar.ping",
+        icon: "radar",
+        label: qsTr("Ping Sonar"),
         plugin: ""
     }] : []
 
@@ -154,6 +161,7 @@ Singleton {
     }
 
     readonly property var _coreHandlers: ({
+        "sonar.ping": context => Sonar.ping(context.screenState),
         "settings.open": context => root._openSettings(context, ""),
         "keybinds.cheatsheet": context => {
             if (context.screenState)
