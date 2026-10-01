@@ -8,6 +8,15 @@ import qs.services
 
 Item {
     id: root
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:capsule/capsuleclock"
+            label: qsTr("Command Center")
+            bindDescription: "Toggle Command Center"
+        }
+    }
 
     required property ScreenState screenState
 

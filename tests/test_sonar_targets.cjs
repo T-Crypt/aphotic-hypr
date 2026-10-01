@@ -1,0 +1,33 @@
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const p = vm.createContext({});
+vm.runInContext(fs.readFileSync(__dirname + '/../Configs/quickshell/aphotic/services/SonarTargets.js', 'utf8'), p);
+const plain = x => JSON.parse(JSON.stringify(x));
+const targets = Array.from({length: 20}, (_, i) => ({id: String(i), rect: {x: 290, y: 190, width: 10, height: 10}, labelWidth: 140, labelHeight: 50}));
+const out = p.placeLabels(targets, 320, 240, 8);
+assert.equal(out.labels.length + out.grouped.length, targets.length);
+assert.ok(out.grouped.length > 0);
+for (const r of out.labels) {
+    assert.ok(r.x >= 0 && r.y >= 0 && r.x + r.width <= 320 && r.y + r.height <= 240);
+    for (const other of out.labels) if (r.id !== other.id) assert.equal(p.overlaps(r, other, 8), false);
+}
+assert.deepEqual(plain(p.placeLabels(targets.slice().reverse(), 320, 240, 8)), plain(out));
+assert.equal(p.placeLabels(targets, 0, 0, 8).labels.length, 0);
+assert.deepEqual(plain(p.clipRect({x:-10,y:10,width:30,height:40}, {x:0,y:0,width:20,height:20})), {x:0,y:10,width:20,height:10});
+const surface = {surface:'dashboard', id:'panel', label:'Panel'};
+const entry = {capabilities:['ui-surface'], ui:{surfaces:[surface]}};
+assert.equal(p.discoveryDecision(entry, surface, {gate:true,disabled:true}).action, 'enable');
+assert.equal(p.discoveryDecision(entry, surface, {gate:true,disabled:false}).action, 'open');
+assert.equal(p.discoveryDecision(entry, surface, {gate:false,disabled:true}), null);
+assert.equal(p.discoveryDecision(entry, surface, {gate:true,disabled:true,safe:true}), null);
+assert.equal(p.discoveryDecision({...entry, requires_binaries:['unknown']}, surface, {gate:true,disabled:true}).action, 'settings');
+assert.equal(p.discoveryDecision({...entry, api:{version:2, uses:['surface.declare']}}, surface, {gate:true,disabled:true}).action, 'settings');
+assert.equal(p.discoveryDecision({...entry,api:{version:99}}, surface, {gate:true,disabled:true}), null);
+assert.equal(p.discoveryDecision(entry, {...surface,surface:'unknown'}, {gate:true,disabled:true}), null);
+assert.equal(p.shortcut([{combo:'SUPER+D',description:'Toggle dashboard'}], 'Toggle dashboard'), 'SUPER+D');
+assert.equal(p.shortcut([], 'Toggle dashboard'), 'Click');
+console.log('Sonar targets: passed');
+assert.equal(p.discoveryDecision(entry, {...surface,id:'../escape'}, {gate:true,disabled:true}), null);
+assert.equal(p.discoveryDecision(entry, {...surface,label:{}}, {gate:true,disabled:true}), null);
+assert.equal(p.discoveryDecision({...entry,capabilities:{}}, surface, {gate:true,disabled:true}), null);

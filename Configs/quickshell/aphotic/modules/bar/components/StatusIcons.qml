@@ -13,6 +13,7 @@ Item {
     id: root
 
     required property ScreenState screenState
+    readonly property var echoLabels: ({lockStatus:qsTr("Lock"),audio:qsTr("Audio"),microphone:qsTr("Microphone"),kbLayout:qsTr("Keyboard layout"),network:qsTr("Network"),bluetooth:qsTr("Bluetooth"),vpn:qsTr("VPN"),battery:qsTr("Battery"),resources:qsTr("Resources"),hostInfo:qsTr("Host information"),networkSpeed:qsTr("Network speed"),pomodoro:qsTr("Focus timer"),dnd:qsTr("Do not disturb"),notifCenter:qsTr("Notifications")})
 
     property color colour: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3secondaryOnSurface
 
@@ -375,6 +376,20 @@ Item {
     // without threading first/last-present indices through 13 delegate
     // call sites that would each need it.
     component EntryWrapper: Item {
+        id: statusEntry
+
+        property QtObject _sonarTarget: Loader {
+            active: Settings.sonarEnabled
+            sourceComponent: EchoTarget {
+                target: statusEntry.item
+                targetId: "core:status/" + statusEntry.modelData.id
+                label: root.echoLabels[statusEntry.modelData.id] || statusEntry.modelData.id
+                action: ""
+                bindDescription: ""
+                plugin: ""
+                eligible: true
+            }
+        }
         required property var modelData
         required property int index
         default property Item item

@@ -11,6 +11,8 @@ import qs.services
 import qs.services.ai
 import qs.services.profile
 import "PluginRegistryCore.js" as RegistryCore
+import "PluginPaths.js" as Paths
+import "SonarTargets.js" as Discovery
 
 // Read-only view of ~/.local/state/aphotic/plugins.json's "installed"
 // map (manifest v3 -- see docs/archive/PLUGIN_SYSTEM.md). The CLI
@@ -95,6 +97,32 @@ Singleton {
                 surfaces.push(surface);
         }
         return surfaces;
+    }
+
+    readonly property var discoverySurfaces: {
+        const result = [];
+        for (const name of Object.keys(root._installed)) {
+            if (!/^[a-z][a-z0-9-]*$/.test(name)) continue;
+            let surfaces;
+            try { surfaces = root._surfacesOf(name); } catch (error) { continue; }
+            for (const s of surfaces) {
+                const prefix = `file://${root.pluginsDir}/${name}/`;
+                const relative = s.componentUrl.slice(prefix.length);
+                if (!s.componentUrl.startsWith(prefix) || relative.includes("%")
+                    || relative.split("/").some(part => !part || part === "." || part === "..")) continue;
+                const decision = Discovery.discoveryDecision(root._installed[name], s, {
+                    gate: root._gateSatisfied(s), disabled: root._disabled.includes(name), safe: SafeMode.active,
+                    sheltered: root._sheltered && root._installed[name].shelter === "unload"
+                });
+                if (decision) result.push({plugin:name, surface:s.surface, id:s.id, label:s.label,
+                    action:decision.action, reason:decision.reason, anchor:s.anchor, width:s.width, height:s.height});
+            }
+        }
+        return result;
+    }
+
+    function discoveryOf(plugin: string, surface: string, id: string): var {
+        return root.discoverySurfaces.find(s => s.plugin === plugin && s.surface === surface && s.id === id) ?? null;
     }
 
     function surfacesFor(surface: string): var {
@@ -293,7 +321,7 @@ Singleton {
         if (!ui)
             return [];
         const declared = ui.surfaces ?? (ui.dashboard_tab ? [Object.assign({ surface: "dashboard" }, ui.dashboard_tab)] : []);
-        return declared.filter(s => s && s.surface && s.component).map(s => ({
+        return declared.filter(s => s && s.surface && s.component && (s.surface !== "edge_tab" || Paths.safeComponent(name,s.component))).map(s => ({
             plugin: name,
             surface: s.surface,
             id: s.id || name,
@@ -302,6 +330,13 @@ Singleton {
             requiresLayer: s.requires_layer ?? "",
             requiresData: s.requires_data ?? "",
             parent: s.parent || root._defaultParent(s),
+            // edge_tab only. Which shelf edges may carry the tab (both
+            // when omitted) and whether the plugin allows it in the notch.
+            // Read here rather than in the tab list so a caller reading a
+            // surface sees the declared placement rather than a second
+            // answer derived from it.
+            edges: s.edges === undefined ? ["left","right"] : Array.isArray(s.edges) ? s.edges : [],
+            notch: s.notch === true,
             // Overlay only. The host budgets its surface from these once
             // and never resizes it, so a manifest that omits them gets a
             // usable square rather than a zero-sized window that silently
@@ -315,7 +350,7 @@ Singleton {
             // closed on a token this build does not know, so the default
             // has to be a token it does.
             trigger: s.trigger || "idle",
-            componentUrl: `file://${root.pluginsDir}/${name}/${s.component}`
+            componentUrl: `file://${encodeURI(root.pluginsDir + "/" + name + "/" + s.component)}`
         }));
     }
 

@@ -9,6 +9,19 @@ import qs.services
 StyledRect {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:bar/media"
+            label: qsTr("Media")
+            action: ""
+            bindDescription: ""
+            plugin: ""
+            eligible: true
+        }
+    }
+
     readonly property color colour: Colours.palette.m3tertiaryOnSurface
 
     color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh

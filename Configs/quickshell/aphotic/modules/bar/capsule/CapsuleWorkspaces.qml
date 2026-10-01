@@ -9,6 +9,15 @@ import qs.services
 
 Item {
     id: root
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:capsule/capsuleworkspaces"
+            label: qsTr("Workspaces")
+            bindDescription: ""
+        }
+    }
 
     required property ShellScreen screen
 

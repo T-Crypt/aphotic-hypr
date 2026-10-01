@@ -7,6 +7,8 @@ PersistentProperties {
     required property ShellScreen modelData
 
     // Drawer visibilities
+    property bool sonar
+    property bool shelf
     property bool bar
     // Along-edge size of the notch where it joins the bar, so the bar's edge
     // line can open around it.
@@ -57,6 +59,8 @@ PersistentProperties {
     readonly property var surface: Surfaces.describe(root.surfaceStack)
     readonly property bool engaged: Surfaces.engaged(root.surfaceStack)
 
+    onSonarChanged: Surfaces.track(root, "sonar", root.sonar)
+    onShelfChanged: Surfaces.track(root, "shelf", root.shelf)
     onSessionChanged: Surfaces.track(root, "session", root.session)
     onLauncherChanged: Surfaces.track(root, "launcher", root.launcher)
     onDashboardChanged: Surfaces.track(root, "dashboard", root.dashboard)

@@ -9,6 +9,19 @@ import qs.services
 StyledRect {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:bar/clock"
+            label: qsTr("Command Center")
+            action: "dashboard"
+            bindDescription: "Toggle Command Center"
+            plugin: ""
+            eligible: true
+        }
+    }
+
     required property ScreenState screenState
 
     readonly property color colour: Colours.palette.m3tertiaryOnSurface

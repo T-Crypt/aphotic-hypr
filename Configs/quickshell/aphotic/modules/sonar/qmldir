@@ -1,0 +1,4 @@
+module qs.modules.sonar
+SonarHost 1.0 SonarHost.qml
+SonarOverlay 1.0 SonarOverlay.qml
+SonarWindow 1.0 SonarWindow.qml

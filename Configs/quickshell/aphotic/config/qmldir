@@ -4,3 +4,5 @@ singleton Config 1.0 Config.qml
 singleton GlobalConfig 1.0 GlobalConfig.qml
 singleton SettingsCategories 1.0 SettingsCategories.qml
 singleton PluginSurfaces 1.0 PluginSurfaces.qml
+
+singleton CommandCenterTabs 1.0 CommandCenterTabs.qml

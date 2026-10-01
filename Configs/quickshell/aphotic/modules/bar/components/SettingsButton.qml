@@ -6,6 +6,19 @@ import qs.services
 StyledRect {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:bar/settingsbutton"
+            label: qsTr("Settings")
+            action: "settings"
+            bindDescription: "Toggle Settings"
+            plugin: ""
+            eligible: true
+        }
+    }
+
     color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
     radius: Tokens.rounding.full
 

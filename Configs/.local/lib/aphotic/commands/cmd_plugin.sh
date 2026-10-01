@@ -53,7 +53,7 @@ _aphotic_plugin_root_value() {
 # is reported as unhosted, which is the safe direction to fail -- a
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action"
+APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action edge_tab"
 APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action"
 
 # ---------------------------------------------------------------------
@@ -74,8 +74,8 @@ APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace
 # the same commit as services/PluginApiCore.js; the test holds them
 # equal.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_API_VERSION=1
-APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish"
+APHOTIC_PLUGIN_API_VERSION=2
+APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish sonar.register"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
 # counts `-` as a word boundary, so `-w profile` matches "profile-hook"
@@ -238,6 +238,37 @@ _aphotic_plugin_surface_json() {
         '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height, trigger: $trigger}'
 }
 
+# [ui.edge_tab] (manifest v3.10) -- a tab a shelf edge can host. The base
+# fields come from the shared surface reader; this adds the placement
+# metadata that kind alone carries: `edges` (which of left/right, both when
+# omitted) and `notch` (the plugin also allows it in the notch). Placement
+# is data, checked by the host: an unknown edge token leaves the tab with no
+# edge rather than silently claiming both, and the shell never asks a
+# manifest anything executable.
+_aphotic_plugin_edge_tab_json() {
+    local manifest="$1" edges notch placement
+    placement="$(awk '
+        $0 == "[ui.edge_tab]" { inside=1; next }
+        /^\[/ { inside=0 }
+        inside && /^[[:space:]]*edges[[:space:]]*=/ {
+            sub(/^[^=]*=[[:space:]]*/, ""); print; found=1; exit
+        }
+        END { if (!found) print "omitted" }
+    ' "$manifest")"
+    if [[ "$placement" == "omitted" ]]; then
+        edges='["left","right"]'
+    elif [[ "$placement" == \[* ]]; then
+        edges="$(aphotic_toml_get_array "$manifest" ui.edge_tab edges | jq -R . | jq -s .)"
+    else
+        edges='[]'
+    fi
+    notch="$(aphotic_toml_get "$manifest" ui.edge_tab notch)"
+    [[ "$notch" == "true" ]] || notch="false"
+    _aphotic_plugin_surface_json "$manifest" ui.edge_tab edge_tab \
+        | jq --argjson edges "${edges:-[]}" --arg notch "$notch" \
+            '. + {edges: $edges, notch: ($notch == "true")}'
+}
+
 _aphotic_plugin_ui_json() {
     local manifest="$1" entries=() entry
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.dashboard_tab dashboard)"; then
@@ -276,6 +307,15 @@ _aphotic_plugin_ui_json() {
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.fullscreen-overlay fullscreen-overlay)"; then
         entries+=("$entry")
     fi
+    # manifest v3.10. The one hosted surface that takes placement metadata
+    # beyond a gate: `edges` says which shelf edges may carry the tab
+    # (both when omitted) and `notch` says the plugin also allows the tab
+    # in the notch. Both are data, checked by the host; an edge token this
+    # shell does not know leaves the tab with no edge rather than both.
+    if entry="$(_aphotic_plugin_edge_tab_json "$manifest")"; then
+        entries+=("$entry")
+    fi
+
     # manifest v3.8. Unlike [ui.overlay], this one takes no anchor or
     # width/height: BackgroundWindow is already a statically sized
     # full-screen surface, so there is no geometry for a manifest to
@@ -1150,6 +1190,15 @@ _aphotic_plugin_install() {
         aphotic_log "its first call into the shell would fail, so this is a refusal rather than a warning -- 'aphotic update' first"
         return 1
     fi
+    if [[ "$wants_api" -lt 2 ]]; then
+        while IFS= read -r use; do
+            if [[ "$use" == "sonar.register" ]]; then
+                aphotic_err "'${name}': sonar.register requires plugin API v2, this manifest declares v${wants_api}"
+                aphotic_log "the runtime would silently deny the grant; declare [api] version = 2 instead"
+                return 1
+            fi
+        done < <(aphotic_toml_get_array "${src}/plugin.toml" api uses)
+    fi
 
     case "$verdict" in
         inert:*)
@@ -1325,6 +1374,7 @@ _aphotic_plugin_remove() {
 # describes; PluginApiCore.js carries the same ids.
 _aphotic_plugin_api_describe() {
     case "$1" in
+        sonar.register) echo "register bounded Sonar targets for this plugin (API v2)" ;;
         context.observe) echo "read the runtime context and its policy (reactive)" ;;
         context.request) echo "suggest a context switch; the user confirms from a notification" ;;
         resource.observe) echo "read the resource posture: level, resource, headline, surfaced (reactive)" ;;
@@ -1447,6 +1497,10 @@ _aphotic_plugin_validate() {
     fi
     while IFS= read -r use; do
         [[ -n "$use" ]] || continue
+        if [[ "$use" == "sonar.register" && "$api_version" =~ ^[0-9]+$ && "$api_version" -lt 2 ]]; then
+            aphotic_err "${name}: sonar.register requires plugin API v2"
+            fails=$((fails + 1))
+        fi
         _aphotic_plugin_in_list "$use" "$APHOTIC_PLUGIN_API_USES" || {
             aphotic_warn "${name}: [api].uses '${use}' isn't part of plugin API v${APHOTIC_PLUGIN_API_VERSION} (see 'aphotic plugin api') -- the handle won't carry it"
             warns=$((warns + 1))
@@ -1478,7 +1532,7 @@ _aphotic_plugin_validate() {
     # happens.
     local -a path_checks=(
         "ui.dashboard_tab:component" "ui.notch_tile:component"
-        "ui.settings_pane:component" "ui.workspace:component"
+        "ui.settings_pane:component" "ui.workspace:component" "ui.edge_tab:component"
         "ui.overlay:component" "ui.fullscreen-overlay:component"
         "ui.pet_action:component" "ui.pet_action_2:component" "ui.pet_action_3:component"
         "profile:component"
@@ -1498,6 +1552,22 @@ _aphotic_plugin_validate() {
             aphotic_err "${name}: [${section}].${key} = '${value}' is not a safe relative path"
             fails=$((fails + 1))
             continue
+        fi
+        if [[ "$section" == "ui.edge_tab" ]]; then
+            if [[ "$value" == *%* || "$value" == *:* || "$value" == *\\* || "$value" == *\#* || "$value" == *\?* ]] || ! python3 - "$dir" "$value" <<'CHECK_PATH'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1]).resolve()
+try:
+    Path(root / sys.argv[2]).resolve().relative_to(root)
+except ValueError:
+    sys.exit(1)
+CHECK_PATH
+            then
+                aphotic_err "${name}: [ui.edge_tab].component is not a safe relative path"
+                fails=$((fails + 1))
+                continue
+            fi
         fi
         if [[ ! -f "${dir}/${value}" ]]; then
             aphotic_err "${name}: [${section}].${key} points at '${value}', which doesn't exist"
