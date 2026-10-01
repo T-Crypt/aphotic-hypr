@@ -6,6 +6,8 @@ import qs.services
 GridLayout {
     id: root
 
+    KeyboardStateWatch {}
+
     required property color colour
     required property int parentSpacing
 

@@ -7,13 +7,32 @@ source "$ROOT_DIR/lib/install/backup.sh"
 
 APHOTIC_TOML="$ROOT_DIR/aphotic.toml"
 PURGE_PACKAGES=0
+ASSUME_YES=0
+
+# One prompt helper so every question in here has the same answer to --yes.
+# --yes means yes to what the prompt itself offers: it restores the backup,
+# and it removes the assistant's model, the greeter scaffold and the profile's
+# packages if they are there. It never reaches past a guard that exists to
+# stop damage, so greetd stays refused while it is the active display manager.
+confirm() {
+  local prompt="$1" answer
+  if [[ "$ASSUME_YES" == "1" ]]; then
+    answer="y"
+  else
+    read -rep "$prompt" answer
+  fi
+  [[ "$answer" == "y" || "$answer" == "Y" ]]
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --purge-packages) PURGE_PACKAGES=1; shift ;;
+    --yes|-y) ASSUME_YES=1; shift ;;
     --aphotic-toml) APHOTIC_TOML="$2"; shift 2 ;;
     -h|--help)
-      echo "Usage: ./uninstall.sh [--purge-packages] [--aphotic-toml <path>]"
+      echo "Usage: ./uninstall.sh [--yes] [--purge-packages] [--aphotic-toml <path>]"
+      echo
+      echo "  --yes, -y          answer every prompt with yes, for a non-interactive run"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;
@@ -41,8 +60,7 @@ restore_latest_backup() {
   cp -R "$(backup_root)/$latest/." "$HOME/.config/"
 }
 
-read -rep $'Restore most recent backup? (y,n) ' CONFIRM
-if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+if ! confirm $'Restore most recent backup? (y,n) '; then
   echo "Aborted, no changes made."
   exit 0
 fi
@@ -73,8 +91,7 @@ except (FileNotFoundError, json.JSONDecodeError):
     data = {}
 print(data.get("assistantModel", "") if data.get("assistantEnabled") else "")' "$ASSISTANT_CONFIG")
   if [[ -n "$ASSISTANT_MODEL" ]]; then
-    read -rep $"Remove the Aphotic Assistant's pulled model ($ASSISTANT_MODEL)? Your other Ollama models are untouched. (y,n) " ASSISTANT_CONFIRM
-    if [[ "$ASSISTANT_CONFIRM" == "y" || "$ASSISTANT_CONFIRM" == "Y" ]]; then
+    if confirm $"Remove the Aphotic Assistant's pulled model ($ASSISTANT_MODEL)? Your other Ollama models are untouched. (y,n) "; then
       if command -v ollama >/dev/null 2>&1; then
         ollama rm "$ASSISTANT_MODEL" || echo "Could not remove $ASSISTANT_MODEL via 'ollama rm' -- it may already be gone, or Ollama may not be running."
       else
@@ -95,7 +112,17 @@ json.dump(data, open(path, "w"), indent=2)' "$ASSISTANT_CONFIG"
   fi
 fi
 
-if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml || -f /etc/greetd/aphotic/hyprland-greeter.lua ]]; then
+GREETER_DIRS=(/etc/xdg/quickshell/aphotic-greeter /etc/greetd/aphotic /etc/aphotic/greeter)
+
+# The scaffold is keyed off a shell.qml or hyprland-greeter.lua that really
+# exists, which is why the branch above never ran in CI: the runner has
+# neither. GREETER_PROBE_DIR lets the test point that check at a seeded tree
+# so the prompt and the guard it sits behind are covered everywhere, not only
+# on a box where Aphotic happens to be installed.
+GREETER_PROBE_DIR="${GREETER_PROBE_DIR:-/etc}"
+
+if [[ -f "$GREETER_PROBE_DIR/xdg/quickshell/aphotic-greeter/shell.qml" \
+   || -f "$GREETER_PROBE_DIR/greetd/aphotic/hyprland-greeter.lua" ]]; then
   # Refuse outright, before ever asking, if greetd is the active display
   # manager -- deleting /etc/greetd/aphotic/hyprland-greeter.lua out from
   # under a live greetd.service leaves its config.toml pointing at a
@@ -116,13 +143,16 @@ if [[ -f /etc/xdg/quickshell/aphotic-greeter/shell.qml || -f /etc/greetd/aphotic
     sudo systemctl enable sddm.service &>/dev/null && GREETD_ACTIVE=0
   fi
 
+  # The refusal above is a guard, not a prompt, so --yes does not reach it:
+  # confirm() is only ever called from this else, never in place of the check.
   if [[ "$GREETD_ACTIVE" == "1" ]]; then
     echo "greetd is currently enabled/active as the display manager -- not touching the greeter scaffold."
     echo "Run 'aphotic displaymanager switch sddm --confirm-tested' first to restore sddm, then re-run uninstall.sh to remove the scaffold."
   else
-    read -rep $'Remove the Aphotic greeter (/etc/xdg/quickshell/aphotic-greeter, /etc/greetd/aphotic, /etc/aphotic/greeter)? sddm is unaffected either way. (y,n) ' GREETER_CONFIRM
-    if [[ "$GREETER_CONFIRM" == "y" || "$GREETER_CONFIRM" == "Y" ]]; then
-      sudo rm -rf /etc/xdg/quickshell/aphotic-greeter /etc/greetd/aphotic /etc/aphotic/greeter
+    if confirm $'Remove the Aphotic greeter (/etc/xdg/quickshell/aphotic-greeter, /etc/greetd/aphotic, /etc/aphotic/greeter)? sddm is unaffected either way. (y,n) '; then
+      sudo rm -rf "$GREETER_PROBE_DIR/xdg/quickshell/aphotic-greeter" \
+                 "$GREETER_PROBE_DIR/greetd/aphotic" \
+                 "$GREETER_PROBE_DIR/aphotic/greeter"
       systemctl --user disable --now aphotic-greeter-sync.timer &>/dev/null || true
       echo "Removed the Aphotic greeter."
     fi
@@ -131,8 +161,7 @@ fi
 
 if [[ "$PURGE_PACKAGES" == "1" ]]; then
   AUR_HELPER=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["system"]["aur_helper"])' "$APHOTIC_TOML")
-  read -rep $"This will run $AUR_HELPER -R against every package this profile installed (including custom_apps.lst entries). Continue? (y,n) " PURGE_CONFIRM
-  if [[ "$PURGE_CONFIRM" == "y" || "$PURGE_CONFIRM" == "Y" ]]; then
+  if confirm $"This will run $AUR_HELPER -R against every package this profile installed (including custom_apps.lst entries). Continue? (y,n) "; then
     PROFILE=$("$PYTHON_BIN" -c 'import sys, tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["install"]["profile"])' "$APHOTIC_TOML")
     LAYERS=$("$PYTHON_BIN" -c 'import sys, tomllib; print(",".join(tomllib.load(open(sys.argv[1], "rb"))["install"]["layers"]))' "$APHOTIC_TOML")
     layer_args=""

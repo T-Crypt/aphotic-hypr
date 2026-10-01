@@ -87,6 +87,12 @@ Item {
     implicitWidth: Settings.barHorizontal ? groupLayout.implicitWidth : Math.max(Settings.barInnerWidth, groupLayout.implicitWidth)
     implicitHeight: Settings.barHorizontal ? Math.max(Settings.barInnerWidth, groupLayout.implicitHeight) : groupLayout.implicitHeight
 
+    // At the root, not inside the kbLayout delegate. EntryWrapper's default
+    // property is `Item item`, and this watch is a plain QtObject, so putting
+    // it there made the whole file fail to compile. Here it also does what it
+    // exists for: one subscription for the component rather than one that came
+    // and went with whichever entries the user's config happens to enable.
+    KeyboardStateWatch {}
 
     GridLayout {
         id: groupLayout

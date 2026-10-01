@@ -5,6 +5,10 @@ import qs.services
 MaterialIcon {
     required property color colour
 
+    SystemUsageWatch {
+        detailed: false
+    }
+
     readonly property real highLoad: Math.max(SystemUsage.cpuPerc, SystemUsage.memPerc)
     readonly property bool posture: ResourcePosture.surfaced && ResourcePosture.level !== "settling"
 

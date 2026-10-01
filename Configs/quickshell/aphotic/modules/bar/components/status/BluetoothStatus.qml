@@ -66,9 +66,12 @@ Item {
                 fill: 1
 
                 SequentialAnimation on opacity {
-                    running: RenderGate.decorative && device.modelData?.state !== BluetoothDeviceState.Connected // qmllint disable unresolved-type
-                    alwaysRunToEnd: true
-                    loops: Animation.Infinite
+                    // Only while pairing, and for a bounded number of cycles.
+                    // Animating for as long as a device stays connected is a
+                    // repaint loop on a connected device, which is the whole
+                    // state the bar spends its life in.
+                    running: RenderGate.decorative && device.modelData?.state === BluetoothDeviceState.Connecting // qmllint disable unresolved-type
+                    loops: 3
 
                     Anim {
                         from: 1
