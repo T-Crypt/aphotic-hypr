@@ -57,6 +57,11 @@ Singleton {
 
     property bool _checked: false
     property bool _conflict: false
+    property bool _checking: false
+    property bool _checkAgain: false
+    property bool _checkExited: false
+    property bool _checkCollected: false
+    property int _checkCode: -1
     property string _applied: ""
     property var _sessionScreen: null
 
@@ -172,6 +177,53 @@ Singleton {
         return Policy.originFallback(focused);
     }
 
+    function refreshShortcut(): void {
+        if (!root.enabled) return;
+        if (root._checking) { root._checkAgain = true; return; }
+        root._checking = true;
+        root._checkAgain = false;
+        root._checkExited = false;
+        root._checkCollected = false;
+        root._checkCode = -1;
+        bindsCheck.running = true;
+    }
+
+    function _finishShortcutCheck(): void {
+        if (!root._checkExited || !root._checkCollected) return;
+        root._checking = false;
+        if (root._checkAgain) {
+            root._checkAgain = false;
+            Qt.callLater(root.refreshShortcut);
+            return;
+        }
+        if (root._checkCode !== 0) {
+            root._checked = false;
+            root._conflict = false;
+            return;
+        }
+        try {
+            const binds = JSON.parse(bindsOut.text);
+            if (!Array.isArray(binds)) throw new Error("Invalid bind table");
+            root._conflict = Policy.superBindConflict(binds);
+        } catch (e) {
+            root._checked = false;
+            root._conflict = false;
+            return;
+        }
+        root._checked = true;
+    }
+
+    Connections {
+        target: Hypr
+        function onConfigReloaded(): void {
+            // A reload discards runtime binds; forget ownership before rechecking.
+            root._applied = "";
+            root._checked = false;
+            root._conflict = false;
+            root.refreshShortcut();
+        }
+    }
+
     onEnabledChanged: {
         root.dismiss();
         // Fresh conflict reading per enable; never assert the bind while
@@ -179,8 +231,7 @@ Singleton {
         root._checked = false;
         root._conflict = false;
         root._sync();
-        if (root.enabled)
-            bindsCheck.running = true;
+        root.refreshShortcut();
     }
 
     // Cancellation precedence: lock, blocking prompt, disable. The
@@ -286,8 +337,7 @@ Singleton {
 
     Component.onCompleted: {
         root._sync();
-        if (root.enabled)
-            bindsCheck.running = true;
+        root.refreshShortcut();
     }
 
     Component.onDestruction: {
@@ -306,22 +356,16 @@ Singleton {
         command: ["hyprctl", "-j", "binds"]
         stdout: StdioCollector {
             id: bindsOut
+            onStreamFinished: {
+                root._checkCollected = true;
+                root._finishShortcutCheck();
+            }
         }
 
         onExited: (code, status) => {
-            if (code !== 0) {
-                console.warn("Sonar: could not read hyprctl binds; leaving SUPER + grave unbound");
-                root._checked = false;
-                root._conflict = false;
-                return;
-            }
-            try {
-                root._conflict = Policy.superBindConflict(JSON.parse(bindsOut.text || "[]"));
-            } catch (e) {
-                console.warn("Sonar: could not parse hyprctl binds; leaving SUPER + grave unbound");
-                root._conflict = true;
-            }
-            root._checked = true;
+            root._checkCode = code;
+            root._checkExited = true;
+            root._finishShortcutCheck();
         }
     }
 }
