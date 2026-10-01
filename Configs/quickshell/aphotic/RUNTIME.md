@@ -40,10 +40,11 @@ the same flags.
 
 | Role | Surfaces | Opening it closes |
 | :-- | :-- | :-- |
-| transient | `agentPanel` | other transients |
-| workspace | `workspace` | transients, primaries, modals |
-| primary | launcher, dashboard, settings, intelligence, notificationCenter, pkgInstall, wallpaperPicker, keybindsCheatsheet | transients, other primaries, modals |
-| modal | `session` | transients, primaries |
+| transient | `agentPanel` | other transients, shelves, Sonar |
+| shelf | declared `shelf:<output>:<edge>` | transients, Sonar; other shelves stay open |
+| workspace | `workspace` | transients, shelves, primaries, modals, Sonar |
+| primary | launcher, dashboard, settings, intelligence, notificationCenter, pkgInstall, wallpaperPicker, keybindsCheatsheet | transients, shelves, other primaries, modals, Sonar |
+| modal | `session` | transients, shelves, primaries, Sonar |
 | sonar | `sonar` | nothing -- it displaces no role and closes when any ordinary surface opens |
 
 The workspace plane survives a primary: a launcher opens over it and
@@ -277,3 +278,44 @@ number depends on the bar style and plugins a machine runs.
   at rest. Gate new periodic work on whatever reads it.
 - Every repeating `Timer` must have an `ActivityProbe`.
 - Probe names must be well-formed and unique.
+
+## Sonar and shelves
+
+Settings → Sonar & Shelves keeps these features off by default. Sonar snapshots
+live control bounds once per two-second ping. Core adapters revoke hidden targets;
+plugin descriptors require API v2 and the `sonar.register` grant. Disabled-feature
+ghosts read installed metadata and recheck eligibility before Open/Enable/Settings.
+They do not construct disabled QML. Sonar dismisses before opening the destination.
+
+Shelves persist configuration by connector name, with independent left/right
+flags, pins, tabs and handles. New outputs start disabled. Output removal closes
+live surfaces while retaining saved configuration. WindowList shares its grouping
+with the released dock and uses existing toplevel monitor metadata for output scope.
+
+A full-output PanelWindow gives each output a fixed window budget. The content
+reveals and closes inside it; app count and magnification never resize the window.
+Tab panels have a bounded width and scroll overflow. Closing destroys each edge's
+content after SurfaceReveal ends; without visible handles the host unmounts too.
+Handle-only input masks cover the visible handles. Closed handles do not take
+keyboard focus. No pointer-leave dismissal, hidden sensor or polling runs.
+
+The bracket shortcuts check ownership before registration/removal; conflict and
+failure text appears in Settings. IPC provides focused-output `toggle`, `close`
+and `openTab`, plus explicit-output `toggleOn`, `closeOn` and `openTabOn` methods.
+Runtime JSON reports `shelves.open` and `shelves.mountedHosts`.
+
+ShelfTabs resolves core media/agents/quick controls and eligible plugin edge tabs.
+Plugin content receives output/screen connector strings, edge and active before
+construction. Registry revocation destroys shown content. Notch hosting requires
+plugin compatibility and the user's separate opt-in. Agent views hold the shared
+feed with one owner per output/edge and release it on destruction.
+
+Launch echo and tab acknowledgement each default off. Launch requests match new
+window events on the requesting edge; expiry checks need no repeating timer.
+Acknowledgement fires after the selected panel loads. Motion is finite; reduced
+motion holds a static outline. Neither effect keeps hidden content mounted.
+
+The public [Sonar and Shelves](https://github.com/T-Crypt/aphotic-hypr/wiki/Sonar-and-Shelves)
+page documents controls. [Plugin System](https://github.com/T-Crypt/aphotic-hypr/wiki/Plugin-System#shelf-tabs-and-sonar)
+documents `[ui.edge_tab]`, placement/gates, required host properties and API v2
+registration. V1 plugin behavior remains compatible.
