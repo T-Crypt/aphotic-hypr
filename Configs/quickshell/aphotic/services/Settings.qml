@@ -170,6 +170,7 @@ Singleton {
     // Sonar and Shelves are discovery features, off until asked for.
     property bool sonarEnabled: false
     property bool sonarGhosts: false
+    property var shelfOutputs: ({})
 
     property string agentSelectedProvider: "claude"
     property bool agentGraphEnabled: true
@@ -390,6 +391,7 @@ Singleton {
             dockAutoHide: root.dockAutoHide,
             sonarEnabled: root.sonarEnabled,
             sonarGhosts: root.sonarGhosts,
+            shelfOutputs: root.shelfOutputs,
             dockPinnedApps: root.dockPinnedApps,
             customAppIcons: root.customAppIcons,
             dockMagnification: root.dockMagnification,
@@ -660,6 +662,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onTwelveHourClockChanged: root._saveState()
     onSonarEnabledChanged: root._saveState()
     onSonarGhostsChanged: root._saveState()
+    onShelfOutputsChanged: root._saveState()
     onShowClockDateChanged: root._saveState()
     onBarVisibilityChanged: root._saveState()
     onDesktopClockEnabledChanged: root._saveState()
@@ -847,6 +850,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.sonarEnabled = data.sonarEnabled;
                 if (typeof data.sonarGhosts === "boolean")
                     root.sonarGhosts = data.sonarGhosts;
+                if (data.shelfOutputs && typeof data.shelfOutputs === "object" && !Array.isArray(data.shelfOutputs))
+                    root.shelfOutputs = data.shelfOutputs;
                 if (Array.isArray(data.dockPinnedApps))
                     root.dockPinnedApps = data.dockPinnedApps;
                 if (Array.isArray(data.customAppIcons))

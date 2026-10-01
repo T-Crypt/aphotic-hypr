@@ -15,6 +15,7 @@ Item {
     // falloff needs every icon's position relative to ONE shared cursor
     // position at once.
     property real magnifyScale: 1
+    property bool animateScale: true
     // Which edge a magnified icon should grow away from -- Item.Bottom
     // for a bottom-anchored dock (icons grow upward, matching macOS),
     // Item.Top for top-anchored, Item.Center for a side placement.
@@ -33,6 +34,7 @@ Item {
     z: Math.round(magnifyScale * 100)
 
     Behavior on scale {
+        enabled: root.animateScale
         Anim { type: Anim.StandardSmall }
     }
 

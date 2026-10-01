@@ -15,7 +15,12 @@ Singleton {
         let w = Math.min(output.width - 32, surface === "workspace" ? output.width - 32 : 900);
         let h = Math.min(output.height - 64, surface === "workspace" ? output.height - 64 : 620);
         let x = (output.width-w)/2, y = (output.height-h)/2;
-        if (surface === "bar" || surface === "notch") {
+        if (surface === "shelf") {
+            w = Math.min(output.width, Settings.barInnerWidth + Tokens.padding.medium * 2);
+            h = Math.max(1,Math.min(640,output.height - Tokens.padding.large * 2));
+            x = metadata?.edge === "right" ? output.width-w-Tokens.padding.small : Tokens.padding.small;
+            y = (output.height-h)/2;
+        } else if (surface === "bar" || surface === "notch") {
             w = surface === "notch" ? 240 : 160; h = surface === "notch" ? 48 : 32;
             if (Settings.barHorizontal) {
                 x = (output.width-w)/2; y = Settings.barPositionBottom ? output.height-h-8 : 8;
@@ -58,6 +63,14 @@ Singleton {
                 if (state[panel.id]) continue;
                 put(o,"core:"+panel.id,panel.label,panel.id,"core-open",{shortcut:Rules.shortcut(HyprKeybinds.entries,panel.bind)});
             }
+            for (const edge of ["left","right"]) {
+                if (Shelves.isOpen(o.name,edge)) continue;
+                const enabled = Shelves.config(o.name)[edge].enabled;
+                if (!enabled && !Settings.sonarGhosts) continue;
+                put(o,"core:shelf/"+edge,edge === "left" ? qsTr("Left shelf") : qsTr("Right shelf"),"shelf",
+                    enabled ? "shelf-open" : "shelf-enable",{edge:edge,disabled:!enabled,
+                    rect:root.bounds(o,"shelf",{edge:edge}),shortcut:edge === "left" ? "Super + [" : "Super + ]"});
+            }
             if (!state.dashboard) {
                 const panel = root.bounds(o,"dashboard");
                 const tabs = CommandCenterTabs.list.filter(t => t.id !== "aiChat" || InstallProfile.aiEnabled);
@@ -84,6 +97,10 @@ Singleton {
 
     function current(target: var): bool {
         if (!target || !root.stateFor(target.output)) return false;
+        if (target.surface === "shelf") {
+            const enabled = Shelves.config(target.output)[target.edge]?.enabled === true;
+            return !Shelves.isOpen(target.output,target.edge) && (target.route === "shelf-open" ? enabled : !enabled && Settings.sonarGhosts);
+        }
         if (target.plugin) {
             const now = PluginRegistry.discoveryOf(target.plugin,target.surface,target.local);
             if (!now || (now.action !== "open" && !Settings.sonarGhosts)) return false;
@@ -98,6 +115,11 @@ Singleton {
 
     function activate(target: var, state: var): bool {
         if (!state) return false;
+        if (target.surface === "shelf") {
+            if (!root.current(target)) return false;
+            if (target.route === "shelf-enable" && !Shelves.update(target.output,target.edge,{enabled:true})) return false;
+            return Shelves.toggle(target.output,target.edge);
+        }
         if (target.plugin) {
             const now = PluginRegistry.discoveryOf(target.plugin,target.surface,target.local);
             if (!now || (target.route === "plugin-enable" && now.action !== "enable")) return false;

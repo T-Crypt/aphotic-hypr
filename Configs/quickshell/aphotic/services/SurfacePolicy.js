@@ -16,7 +16,7 @@
 // answer can't be taken by whichever window happened to have keyboard
 // focus, and everything comes back once the answer is in.
 
-var ROLES = ['transient', 'workspace', 'primary', 'modal', 'sonar'];
+var ROLES = ['transient', 'workspace', 'primary', 'modal', 'sonar', 'shelf'];
 
 var SURFACES = {
     sonar: {role: 'sonar'},
@@ -37,15 +37,16 @@ var SURFACES = {
 // Which existing roles an incoming role closes. Workspace survives a
 // primary on purpose: it is the plane a launcher opens over, not a rival.
 var DISPLACES = {
-    transient: ['transient', 'sonar'],
-    workspace: ['transient', 'primary', 'modal', 'sonar'],
-    primary: ['transient', 'primary', 'modal', 'sonar'],
-    modal: ['transient', 'primary', 'sonar'],
+    transient: ['transient', 'shelf', 'sonar'],
+    shelf: ['transient', 'sonar'],
+    workspace: ['transient', 'shelf', 'primary', 'modal', 'sonar'],
+    primary: ['transient', 'shelf', 'primary', 'modal', 'sonar'],
+    modal: ['transient', 'shelf', 'primary', 'sonar'],
     sonar: []
 };
 
 // Focus precedence when more than one surface is open at once.
-var RANK = {transient: 1, workspace: 2, primary: 3, modal: 4, sonar: 5};
+var RANK = {transient: 1, shelf: 1, workspace: 2, primary: 3, modal: 4, sonar: 5};
 
 function roleOf(name, extra) {
     var entry = (extra && extra[name]) || SURFACES[name];

@@ -16,54 +16,7 @@ Item {
     required property ShellScreen screen
     required property ScreenState screenState
 
-    readonly property var dockItems: {
-        const pinnedIds = Settings.dockPinnedApps;
-        const grouped = WindowList.grouped();
-        const items = [];
-        const seenClasses = new Set();
-
-        for (const id of pinnedIds) {
-            const entry = DesktopEntries.applications.values.find(a => a.id === id);
-            if (!entry)
-                continue;
-            // filter, not find -- an app can spawn windows under more
-            // than one distinct wmClass (multi-process/Electron apps are
-            // a common real case for DesktopEntries.heuristicLookup's
-            // fuzzy matching), so more than one group can resolve to the
-            // same pinned id. Merging all of them (and marking all as
-            // seen below) avoids the same logical app showing up as two
-            // separate dock icons, one per group.
-            const matches = grouped.filter(g => (DesktopEntries.heuristicLookup(g.appClass)?.id ?? "") === id);
-            items.push({
-                key: id,
-                name: entry.name,
-                iconName: entry.icon,
-                iconKeys: [id, entry.name],
-                running: matches.length > 0,
-                windows: matches.flatMap(g => g.windows),
-                entry
-            });
-            for (const m of matches)
-                seenClasses.add(m.appClass);
-        }
-
-        for (const g of grouped) {
-            if (seenClasses.has(g.appClass))
-                continue;
-            const entry = DesktopEntries.heuristicLookup(g.appClass);
-            items.push({
-                key: g.appClass,
-                name: entry?.name ?? g.appClass,
-                iconName: entry?.icon ?? "",
-                iconKeys: g.appClass,
-                running: true,
-                windows: g.windows,
-                entry: entry ?? null
-            });
-        }
-
-        return items;
-    }
+    readonly property var dockItems: WindowList.dockItems(Settings.dockPinnedApps,"",true)
 
     // Icon-proximity magnification falloff (macOS-style), quadratic so it
     // reads as a smooth "wave" rather than a hard-edged linear ramp.

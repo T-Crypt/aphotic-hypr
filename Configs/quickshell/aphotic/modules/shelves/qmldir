@@ -1,0 +1,4 @@
+module qs.modules.shelves
+ShelfHost 1.0 ShelfHost.qml
+ShelfWindow 1.0 ShelfWindow.qml
+ShelfContent 1.0 ShelfContent.qml
