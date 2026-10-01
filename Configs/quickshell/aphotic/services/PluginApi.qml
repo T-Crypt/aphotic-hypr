@@ -30,6 +30,12 @@ import "PluginApiCore.js" as Core
 // releases; this is, and it is versioned (`aphotic plugin api`).
 Singleton {
     id: root
+    readonly property var _surfaceOwners: PluginRegistry.enabledPlugins.filter(p => Core.grants(PluginRegistry.apiOf(p), true).includes("surface.declare"))
+    on_SurfaceOwnersChanged: {
+        for (const p of [...new Set(Object.keys(root._surfaces).concat(Object.keys(root._closeHandlers)))])
+            if (!root._surfaceOwners.includes(p)) root._revokeSurfaces(p);
+    }
+
 
     readonly property int version: Core.VERSION
     readonly property var uses: Core.USES
@@ -174,6 +180,10 @@ Singleton {
     // every call on it now refuses.
     function _revoke(plugin: string): void {
         EchoRegistry.removePlugin(plugin);
+        root._revokeSurfaces(plugin);
+    }
+
+    function _revokeSurfaces(plugin: string): void {
         for (const name of root._surfaces[plugin] ?? [])
             Surfaces.undeclare(name);
         const surfaces = Object.assign({}, root._surfaces);

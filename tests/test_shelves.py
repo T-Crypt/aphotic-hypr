@@ -406,3 +406,118 @@ else: print('ok')
     assert any(c[:2] == ['keyword','bindd'] and 'bracketright' in c[2] for c in calls),calls
     assert any(c[:2] == ['keyword','unbind'] and 'bracketright' in c[2] for c in calls),calls
     assert not any(c[0] != '-j' and 'bracketleft' in ' '.join(c) for c in calls),calls
+
+CONTENT_GATES = '''import QtQuick
+import Quickshell
+import qs.components
+import qs.services
+import qs.services.ai
+import qs.modules.shelves
+ShellRoot {
+    id: root
+    property int phase:0
+    property var result:({})
+    property var notchObject:null
+    property var first:null
+    property var second:null
+    QtObject { id:state; property var modelData:({name:"DP-1"}) }
+    FloatingWindow { id:window; visible:true; implicitWidth:700; implicitHeight:700 }
+    Component { id:agents; ShelfAgentsTab {} }
+    function find(item,name) {
+        if (!item) return null;
+        if(item.objectName === name) return item;
+        for(const c of item.children ?? []) { const got=root.find(c,name); if(got) return got; }
+        return null;
+    }
+    Component.onCompleted: Settings.shelfNotchTabs=true
+    Timer {
+        interval:150; repeat:true; running:true
+        onTriggered: {
+            if(root.phase === 0) {
+                if(ShelfTabs.notchTabs.length === 0) return;
+                const tab=ShelfTabs.notchTabs[0], tile={id:"shelf:"+tab.id,label:tab.label,icon:tab.icon,tab:tab};
+                const c=Qt.createComponent("modules/notch/NotchBody.qml");
+                root.notchObject=c.createObject(window.contentItem,{width:360,tiles:[tile],pluginTiles:[],shelfTiles:Qt.binding(() => ShelfTabs.notchTabs.map(t => ({id:"shelf:"+t.id,label:t.label,icon:t.icon,tab:t}))),
+                    screenState:state,switchable:true,expanded:true,shownTileId:tile.id,activeTile:tile});
+                root.result.notchConstructed=root.notchObject !== null;
+                c.destroy();
+                root.first=agents.createObject(window.contentItem,{owner:"shelf-agents:DP-1:left"});
+                root.second=agents.createObject(window.contentItem,{owner:"shelf-agents:DP-2:right"});
+                root.result.twoHolds=Object.keys(AgentEvents._holders).filter(k => k.startsWith("shelf-agents:")).length === 2;
+                root.first.destroy(); root.phase++;
+            } else if(root.phase === 1) {
+                root.result.remainingHold=AgentEvents._holders["shelf-agents:DP-2:right"] !== undefined && AgentEvents._holders["shelf-agents:DP-1:left"] === undefined;
+                const plugin=root.find(root.notchObject,"edge-tab-content");
+                root.result.notchPlugin=plugin !== null && plugin.edge === "notch" && plugin.screen === "DP-1" && plugin.active;
+                SafeMode.active=true; root.second.destroy(); root.phase++;
+            } else {
+                root.result.revoked=root.find(root.notchObject,"edge-tab-content") === null;
+                root.result.released=Object.keys(AgentEvents._holders).filter(k => k.startsWith("shelf-agents:")).length === 0;
+                console.log("SONAR_SESSION " + JSON.stringify(root.result)); Qt.quit();
+            }
+        }
+    }
+    Timer { interval:6000; running:true; onTriggered: { console.log("SONAR_SESSION " + JSON.stringify({timeout:true})); Qt.quit(); } }
+}'''
+
+@pytest.mark.skipif(shutil.which('qs') is None,reason='needs Quickshell')
+def test_notch_tab_revocation_and_independent_agent_feed_holds(tmp_path):
+    home=_registry(tmp_path,notch=True)
+    out=run_probe(tmp_path,CONTENT_GATES,{'HOME':str(home)})
+    assert len(out) == 6 and all(v is True for v in out.values()),out
+
+API_BOUNDARIES = '''import QtQuick
+import Quickshell
+import qs.services
+ShellRoot {
+    id: root
+    property int phase:0
+    property var result:({})
+    property var held:null
+    property int callbacks:0
+    QtObject { id:state; property var surfaceStack:[] }
+    Timer {
+        interval:100; repeat:true; running:true
+        onTriggered: {
+            if(root.phase === 0) {
+                if(!PluginRegistry.isInstalled("edge-demo")) return;
+                EchoRegistry.screens=[{name:"DP-1"}];
+                const h=PluginApi.handle("edge-demo");
+                root.result.declared=h.surfaces.declare("panel","primary");
+                h.surfaces.onCloseRequested(() => root.callbacks++);
+                h.surfaces.track(state,"panel",true);
+                const descriptor={label:"Panel",output:"DP-1",rect:{x:1,y:1,width:20,height:20}};
+                root.result.unknownRejected=!h.sonar.register("unknown",Object.assign({},descriptor,{output:"DP-999"}));
+                root.result.knownAccepted=h.sonar.register("known",descriptor);
+                root.held=EchoRegistry.snapshot().find(t => t.id === "plugin:edge-demo/known");
+                EchoRegistry.screens=[];
+                root.result.removedOutput=!EchoRegistry.isCurrent(root.held) && !EchoRegistry.snapshot().some(t => t.plugin === "edge-demo");
+                const data=JSON.parse(JSON.stringify(PluginRegistry._data));
+                data.installed["edge-demo"].api.uses=["sonar.register"];
+                PluginRegistry._data=data;
+                root.phase++;
+            } else {
+                root.result.undeclared=Surfaces.declared["plugin:edge-demo/panel"] === undefined && state.surfaceStack.length === 0;
+                Surfaces.closeRequested(state,"plugin:edge-demo/panel");
+                root.result.handlerRevoked=root.callbacks === 0;
+                root.result.handleRevoked=!PluginApi.handle("edge-demo").has("surface.declare");
+                const data=JSON.parse(JSON.stringify(PluginRegistry._data));
+                data.installed["edge-demo"].ui.surfaces[0].component="qml/%2e%2e/Outside.qml";
+                PluginRegistry._data=data;
+                root.result.pathRejected=ShelfTabs.find("edge-demo:panel","left") === null;
+                console.log("SONAR_SESSION " + JSON.stringify(root.result)); Qt.quit();
+            }
+        }
+    }
+    Timer { interval:5000; running:true; onTriggered: { console.log("SONAR_SESSION " + JSON.stringify({timeout:true})); Qt.quit(); } }
+}'''
+
+@pytest.mark.skipif(shutil.which('qs') is None,reason='needs Quickshell')
+def test_runtime_grant_output_and_component_boundaries(tmp_path):
+    home=_registry(tmp_path)
+    file=home/'.local/state/aphotic/plugins.json'
+    data=json.loads(file.read_text())
+    data['installed']['edge-demo']['api']={'version':2,'uses':['surface.declare','sonar.register']}
+    file.write_text(json.dumps(data))
+    out=run_probe(tmp_path,API_BOUNDARIES,{'HOME':str(home)})
+    assert len(out) == 8 and all(v is True for v in out.values()),out

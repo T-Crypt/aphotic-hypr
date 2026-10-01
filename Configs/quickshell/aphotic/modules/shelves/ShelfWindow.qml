@@ -36,7 +36,6 @@ PanelWindow {
         Region { x: rightHandle.x; y: rightHandle.y; width: rightHandle.visible ? rightHandle.width : 0; height: rightHandle.visible ? rightHandle.height : 0 }
     }
     MouseArea {
-        enabled: root.revealing
         objectName: "shelf-click-away"
         anchors.fill: parent
         enabled: root.revealing

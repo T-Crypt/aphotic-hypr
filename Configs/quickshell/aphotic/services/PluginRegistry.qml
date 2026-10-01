@@ -11,6 +11,7 @@ import qs.services
 import qs.services.ai
 import qs.services.profile
 import "PluginRegistryCore.js" as RegistryCore
+import "PluginPaths.js" as Paths
 import "SonarTargets.js" as Discovery
 
 // Read-only view of ~/.local/state/aphotic/plugins.json's "installed"
@@ -320,7 +321,7 @@ Singleton {
         if (!ui)
             return [];
         const declared = ui.surfaces ?? (ui.dashboard_tab ? [Object.assign({ surface: "dashboard" }, ui.dashboard_tab)] : []);
-        return declared.filter(s => s && s.surface && s.component).map(s => ({
+        return declared.filter(s => s && s.surface && s.component && (s.surface !== "edge_tab" || Paths.safeComponent(name,s.component))).map(s => ({
             plugin: name,
             surface: s.surface,
             id: s.id || name,
@@ -349,7 +350,7 @@ Singleton {
             // closed on a token this build does not know, so the default
             // has to be a token it does.
             trigger: s.trigger || "idle",
-            componentUrl: `file://${root.pluginsDir}/${name}/${s.component}`
+            componentUrl: `file://${encodeURI(root.pluginsDir + "/" + name + "/" + s.component)}`
         }));
     }
 

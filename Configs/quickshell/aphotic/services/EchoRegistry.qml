@@ -7,6 +7,9 @@ import "PluginApiCore.js" as Api
 
 Singleton {
     id: root
+    property var screens: Quickshell.screens
+    readonly property var outputNames: root.screens.map(s => s.name)
+    onOutputNamesChanged: root.records = Object.fromEntries(Object.entries(root.records).filter(pair => root.outputNames.includes(pair[1].output)))
     property var records: ({})
     property var anchors: []
     readonly property var eligiblePlugins: PluginRegistry.enabledPlugins.filter(p => Api.grants(PluginRegistry.apiOf(p), true).includes("sonar.register"))
@@ -15,7 +18,7 @@ Singleton {
         if (!root.eligiblePlugins.includes(plugin))
             return false;
         const value = Policy.normalize(plugin, local, descriptor);
-        if (!value)
+        if (!value || !root.outputNames.includes(value.output))
             return false;
         // "Resolves action ownership": a target's action must name a
         // surface this plugin actually declared, not an id it invented.
@@ -55,13 +58,13 @@ Singleton {
         if (!target) return false;
         if (target.anchor)
             return root.anchors.includes(target.anchor) && (typeof target.anchor.usable !== "function" || target.anchor.usable());
-        return !!root.records[target.id] && root.eligiblePlugins.includes(target.plugin)
+        return root.outputNames.includes(target.output) && !!root.records[target.id] && root.eligiblePlugins.includes(target.plugin)
             && (!target.action || PluginApi.ownsSurface(target.plugin, target.action));
     }
 
     function snapshot(): var {
         const targets = Object.values(root.records).filter(r =>
-            root.eligiblePlugins.includes(r.plugin)
+            root.eligiblePlugins.includes(r.plugin) && root.outputNames.includes(r.output)
             // A surface undeclared between registration and this ping
             // leaves its target without an owner; drop it here too.
             && (!r.action || PluginApi.ownsSurface(r.plugin, r.action)));

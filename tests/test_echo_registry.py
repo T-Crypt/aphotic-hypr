@@ -54,6 +54,7 @@ ShellRoot {
         if (!root.ready || root.phase !== 0)
             return;
         root.phase = 1;
+        EchoRegistry.screens = [{name:"DP-2"}];
         const api = PluginApi.handle("sample");
         const results = {
             declare: api.surfaces.declare("panel", "transient"),

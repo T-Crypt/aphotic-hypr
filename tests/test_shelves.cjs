@@ -86,3 +86,10 @@ console.log('Shelves policy and dock parity: passed');
 
 assert.deepEqual(plain(p.newWindows(['old'],[{address:'old'},{address:'new'}])),[{address:'new'}]);
 assert.equal(p.answerable({'DP-1:left/app':1000},'DP-2:left/app',1200,6000),false);
+
+vm.runInContext(fs.readFileSync(dir+'PluginPaths.js','utf8'),p);
+for(const bad of ['../other/Q.qml','/tmp/Q.qml','qml/%2e%2e/Q.qml','qml/%252e%252e/Q.qml','qml/Q.qml?x','qml/Q.qml#x','file:Q.qml']) assert.equal(p.safeComponent('sample',bad),false,bad);
+assert.equal(p.safeComponent('sample','qml/Panel.qml'),true);
+
+assert.deepEqual(plain(p.edgesOf({edges:['left',17]})),[]);
+assert.deepEqual(plain(p.edgesOf({edges:['right','sideways']})),[]);

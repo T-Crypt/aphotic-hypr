@@ -25,9 +25,10 @@ function edgesOf(entry) {
     if (!Array.isArray(raw))
         return [];
     var out = [];
-    for (var i = 0; i < raw.length; i++)
-        if (VALID_EDGES.indexOf(raw[i]) >= 0 && out.indexOf(raw[i]) < 0)
-            out.push(raw[i]);
+    for (var i = 0; i < raw.length; i++) {
+        if (VALID_EDGES.indexOf(raw[i]) < 0) return [];
+        if (out.indexOf(raw[i]) < 0) out.push(raw[i]);
+    }
     return out;
 }
 

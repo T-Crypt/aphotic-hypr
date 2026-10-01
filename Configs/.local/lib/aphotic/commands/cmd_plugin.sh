@@ -247,9 +247,21 @@ _aphotic_plugin_surface_json() {
 # manifest anything executable.
 _aphotic_plugin_edge_tab_json() {
     local manifest="$1" edges notch placement
-    placement="$(aphotic_toml_get "$manifest" ui.edge_tab edges)"
-    edges="$(aphotic_toml_get_array "$manifest" ui.edge_tab edges | jq -R . | jq -s .)"
-    [[ -n "$placement" ]] || edges='["left","right"]'
+    placement="$(awk '
+        $0 == "[ui.edge_tab]" { inside=1; next }
+        /^\[/ { inside=0 }
+        inside && /^[[:space:]]*edges[[:space:]]*=/ {
+            sub(/^[^=]*=[[:space:]]*/, ""); print; found=1; exit
+        }
+        END { if (!found) print "omitted" }
+    ' "$manifest")"
+    if [[ "$placement" == "omitted" ]]; then
+        edges='["left","right"]'
+    elif [[ "$placement" == \[* ]]; then
+        edges="$(aphotic_toml_get_array "$manifest" ui.edge_tab edges | jq -R . | jq -s .)"
+    else
+        edges='[]'
+    fi
     notch="$(aphotic_toml_get "$manifest" ui.edge_tab notch)"
     [[ "$notch" == "true" ]] || notch="false"
     _aphotic_plugin_surface_json "$manifest" ui.edge_tab edge_tab \
@@ -1520,7 +1532,7 @@ _aphotic_plugin_validate() {
     # happens.
     local -a path_checks=(
         "ui.dashboard_tab:component" "ui.notch_tile:component"
-        "ui.settings_pane:component" "ui.workspace:component"
+        "ui.settings_pane:component" "ui.workspace:component" "ui.edge_tab:component"
         "ui.overlay:component" "ui.fullscreen-overlay:component"
         "ui.pet_action:component" "ui.pet_action_2:component" "ui.pet_action_3:component"
         "profile:component"
@@ -1540,6 +1552,22 @@ _aphotic_plugin_validate() {
             aphotic_err "${name}: [${section}].${key} = '${value}' is not a safe relative path"
             fails=$((fails + 1))
             continue
+        fi
+        if [[ "$section" == "ui.edge_tab" ]]; then
+            if [[ "$value" == *%* || "$value" == *:* || "$value" == *\\* || "$value" == *\#* || "$value" == *\?* ]] || ! python3 - "$dir" "$value" <<'CHECK_PATH'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1]).resolve()
+try:
+    Path(root / sys.argv[2]).resolve().relative_to(root)
+except ValueError:
+    sys.exit(1)
+CHECK_PATH
+            then
+                aphotic_err "${name}: [ui.edge_tab].component is not a safe relative path"
+                fails=$((fails + 1))
+                continue
+            fi
         fi
         if [[ ! -f "${dir}/${value}" ]]; then
             aphotic_err "${name}: [${section}].${key} points at '${value}', which doesn't exist"
