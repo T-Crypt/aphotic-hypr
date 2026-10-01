@@ -53,7 +53,7 @@ _aphotic_plugin_root_value() {
 # is reported as unhosted, which is the safe direction to fail -- a
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action"
+APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action edge_tab"
 APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action"
 
 # ---------------------------------------------------------------------
@@ -238,6 +238,25 @@ _aphotic_plugin_surface_json() {
         '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height, trigger: $trigger}'
 }
 
+# [ui.edge_tab] (manifest v3.10) -- a tab a shelf edge can host. The base
+# fields come from the shared surface reader; this adds the placement
+# metadata that kind alone carries: `edges` (which of left/right, both when
+# omitted) and `notch` (the plugin also allows it in the notch). Placement
+# is data, checked by the host: an unknown edge token leaves the tab with no
+# edge rather than silently claiming both, and the shell never asks a
+# manifest anything executable.
+_aphotic_plugin_edge_tab_json() {
+    local manifest="$1" edges notch placement
+    placement="$(aphotic_toml_get "$manifest" ui.edge_tab edges)"
+    edges="$(aphotic_toml_get_array "$manifest" ui.edge_tab edges | jq -R . | jq -s .)"
+    [[ -n "$placement" ]] || edges='["left","right"]'
+    notch="$(aphotic_toml_get "$manifest" ui.edge_tab notch)"
+    [[ "$notch" == "true" ]] || notch="false"
+    _aphotic_plugin_surface_json "$manifest" ui.edge_tab edge_tab \
+        | jq --argjson edges "${edges:-[]}" --arg notch "$notch" \
+            '. + {edges: $edges, notch: ($notch == "true")}'
+}
+
 _aphotic_plugin_ui_json() {
     local manifest="$1" entries=() entry
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.dashboard_tab dashboard)"; then
@@ -276,6 +295,15 @@ _aphotic_plugin_ui_json() {
     if entry="$(_aphotic_plugin_surface_json "$manifest" ui.fullscreen-overlay fullscreen-overlay)"; then
         entries+=("$entry")
     fi
+    # manifest v3.10. The one hosted surface that takes placement metadata
+    # beyond a gate: `edges` says which shelf edges may carry the tab
+    # (both when omitted) and `notch` says the plugin also allows the tab
+    # in the notch. Both are data, checked by the host; an edge token this
+    # shell does not know leaves the tab with no edge rather than both.
+    if entry="$(_aphotic_plugin_edge_tab_json "$manifest")"; then
+        entries+=("$entry")
+    fi
+
     # manifest v3.8. Unlike [ui.overlay], this one takes no anchor or
     # width/height: BackgroundWindow is already a statically sized
     # full-screen surface, so there is no geometry for a manifest to

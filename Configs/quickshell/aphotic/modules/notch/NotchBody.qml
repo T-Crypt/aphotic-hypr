@@ -5,12 +5,14 @@ import QtQuick.Layouts
 import qs.config
 import qs.components
 import qs.services
+import qs.modules.shelves
 
 ColumnLayout {
     id: root
 
     required property var tiles
     required property var pluginTiles
+    required property var shelfTiles
     required property var screenState
     required property bool switchable
     required property bool expanded
@@ -157,9 +159,12 @@ ColumnLayout {
                 return paletteTileLoader;
             const count = pluginRepeater.count;
             const i = root.pluginTiles.findIndex(t => t.id === root.shownTileId);
-            if (i < 0 || i >= count)
-                return null;
-            return pluginRepeater.itemAt(i);
+            if (i >= 0 && i < count)
+                return pluginRepeater.itemAt(i);
+            const j = root.shelfTiles.findIndex(t => t.id === root.shownTileId);
+            if (j >= 0 && j < shelfRepeater.count)
+                return shelfRepeater.itemAt(j);
+            return null;
         }
 
         Loader {
@@ -220,6 +225,34 @@ ColumnLayout {
                 active: root.shownTileId === pluginTileLoader.modelData.id
                 visible: root.shownTileId === pluginTileLoader.modelData.id
                 source: pluginTileLoader.modelData.componentUrl
+            }
+        }
+
+        // Shelf tabs the notch is showing. Mounted only while shown, like
+        // every other tile here, and through ShelfTabView so the content
+        // is the same object a shelf edge would have built.
+        Repeater {
+            id: shelfRepeater
+
+            model: root.shelfTiles
+
+            Loader {
+                id: shelfTileLoader
+
+                required property var modelData
+
+                width: tileHost.width
+                y: (1 - tileHost.enterT) * Tokens.spacing.medium
+                asynchronous: true
+                active: root.shownTileId === shelfTileLoader.modelData.id
+                visible: root.shownTileId === shelfTileLoader.modelData.id
+                sourceComponent: Component {
+                    ShelfNotchTab {
+                        tab: shelfTileLoader.modelData.tab
+                        screen: root.screenState.modelData.name
+                        active: root.shownTileId === shelfTileLoader.modelData.id
+                    }
+                }
             }
         }
     }

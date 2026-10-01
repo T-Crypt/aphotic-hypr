@@ -329,6 +329,13 @@ Singleton {
             requiresLayer: s.requires_layer ?? "",
             requiresData: s.requires_data ?? "",
             parent: s.parent || root._defaultParent(s),
+            // edge_tab only. Which shelf edges may carry the tab (both
+            // when omitted) and whether the plugin allows it in the notch.
+            // Read here rather than in the tab list so a caller reading a
+            // surface sees the declared placement rather than a second
+            // answer derived from it.
+            edges: s.edges === undefined ? ["left","right"] : Array.isArray(s.edges) ? s.edges : [],
+            notch: s.notch === true,
             // Overlay only. The host budgets its surface from these once
             // and never resizes it, so a manifest that omits them gets a
             // usable square rather than a zero-sized window that silently

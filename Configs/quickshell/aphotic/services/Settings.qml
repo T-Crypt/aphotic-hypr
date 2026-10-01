@@ -172,6 +172,14 @@ Singleton {
     property bool sonarGhosts: false
     property var shelfOutputs: ({})
 
+    // Two optional touches, both off. They add an outline response and a
+    // one-shot trace to existing events; neither owns motion of its own.
+    property bool shelfLaunchEcho: false
+    property bool shelfTabAcknowledge: false
+    // Notch exposure of registered shelf tabs. Off means the notch's tile
+    // list is unchanged whatever is installed.
+    property bool shelfNotchTabs: false
+
     property string agentSelectedProvider: "claude"
     property bool agentGraphEnabled: true
     // Node budget and layout tick rate for the agent graph surface, never
@@ -392,6 +400,9 @@ Singleton {
             sonarEnabled: root.sonarEnabled,
             sonarGhosts: root.sonarGhosts,
             shelfOutputs: root.shelfOutputs,
+            shelfLaunchEcho: root.shelfLaunchEcho,
+            shelfTabAcknowledge: root.shelfTabAcknowledge,
+            shelfNotchTabs: root.shelfNotchTabs,
             dockPinnedApps: root.dockPinnedApps,
             customAppIcons: root.customAppIcons,
             dockMagnification: root.dockMagnification,
@@ -663,6 +674,9 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onSonarEnabledChanged: root._saveState()
     onSonarGhostsChanged: root._saveState()
     onShelfOutputsChanged: root._saveState()
+    onShelfLaunchEchoChanged: root._saveState()
+    onShelfTabAcknowledgeChanged: root._saveState()
+    onShelfNotchTabsChanged: root._saveState()
     onShowClockDateChanged: root._saveState()
     onBarVisibilityChanged: root._saveState()
     onDesktopClockEnabledChanged: root._saveState()
@@ -852,6 +866,12 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.sonarGhosts = data.sonarGhosts;
                 if (data.shelfOutputs && typeof data.shelfOutputs === "object" && !Array.isArray(data.shelfOutputs))
                     root.shelfOutputs = data.shelfOutputs;
+                if (typeof data.shelfLaunchEcho === "boolean")
+                    root.shelfLaunchEcho = data.shelfLaunchEcho;
+                if (typeof data.shelfTabAcknowledge === "boolean")
+                    root.shelfTabAcknowledge = data.shelfTabAcknowledge;
+                if (typeof data.shelfNotchTabs === "boolean")
+                    root.shelfNotchTabs = data.shelfNotchTabs;
                 if (Array.isArray(data.dockPinnedApps))
                     root.dockPinnedApps = data.dockPinnedApps;
                 if (Array.isArray(data.customAppIcons))

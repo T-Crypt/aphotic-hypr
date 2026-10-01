@@ -20,6 +20,12 @@ Item {
     // for a bottom-anchored dock (icons grow upward, matching macOS),
     // Item.Top for top-anchored, Item.Center for a side placement.
     property int growOrigin: Item.Center
+
+    // Emitted when this icon actually launched something, so a host can
+    // answer the request. Deliberately not emitted when the click cycled
+    // an already-running app: nothing was launched then, and a host that
+    // acknowledged a cycle would be answering an event that did not happen.
+    signal launchRequested(string key)
     // Off when the dock row is showing its shared gliding HoverPill
     // instead: that pill is the same circle at the same opacity as this
     // icon's own hover layer, so leaving both on would double the tint
@@ -43,10 +49,12 @@ Item {
         radius: Tokens.rounding.full
         stateOpacity: root.showHover && containsMouse ? 0.08 : 0
         onClicked: {
-            if (root.item.windows.length > 0)
+            if (root.item.windows.length > 0) {
                 WindowList.cycleWindows(root.item.windows);
-            else
+            } else {
+                root.launchRequested(root.item.key);
                 root.item.entry?.execute();
+            }
         }
     }
 

@@ -16,9 +16,11 @@ Singleton {
         let h = Math.min(output.height - 64, surface === "workspace" ? output.height - 64 : 620);
         let x = (output.width-w)/2, y = (output.height-h)/2;
         if (surface === "shelf") {
-            w = Math.min(output.width, Settings.barInnerWidth + Tokens.padding.medium * 2);
+            w = Math.min(output.width - Tokens.padding.large * 2, Shelves.tabFor(output.name,metadata?.edge ?? "left") !== null ? 360 : Settings.barInnerWidth + Tokens.padding.medium * 2);
             h = Math.max(1,Math.min(640,output.height - Tokens.padding.large * 2));
-            x = metadata?.edge === "right" ? output.width-w-Tokens.padding.small : Tokens.padding.small;
+            const right = metadata?.edge === "right";
+            const margin = Tokens.padding.small + (!Settings.barHorizontal && Settings.barPositionRight === right ? Settings.barInnerWidth + Tokens.padding.medium * 2 : 0);
+            x = right ? output.width-w-margin : margin;
             y = (output.height-h)/2;
         } else if (surface === "bar" || surface === "notch") {
             w = surface === "notch" ? 240 : 160; h = surface === "notch" ? 48 : 32;

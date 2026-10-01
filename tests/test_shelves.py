@@ -1,4 +1,5 @@
 """Shelf state/content probes use disposable state; the PanelWindow probe needs Wayland."""
+import json
 import os
 import shutil
 import subprocess
@@ -161,6 +162,184 @@ ShellRoot {
 @pytest.mark.skipif(shutil.which('qs') is None or os.environ.get('SONAR_TEST_PLATFORM') != 'wayland',reason='needs explicit disposable Wayland backend')
 def test_shelf_hosts_unmount_between_repeated_reveals(tmp_path):
     out=run_probe(tmp_path,HOST,{'QT_QPA_PLATFORM':'wayland'})
+    assert out and 'timeout' not in out and all(out.values()),out
+
+# A real plugin, installed into the probe's disposable HOME, so the tab
+# path is exercised against a registry entry rather than a stubbed list.
+PLUGIN = 'qml/EdgePanel.qml'
+PLUGIN_QML = '''import QtQuick
+Item {
+    required property string edge
+    required property string output
+    required property string screen
+    required property bool active
+    objectName: "edge-tab-content"
+    property int builds: builds.counter
+    QtObject { id: builds; property int counter: 0; Component.onCompleted: counter++ }
+    Rectangle { anchors.fill: parent; color: "transparent" }
+}'''
+
+def _registry(tmp_path, edges=("left", "right"), notch=False, enabled=True):
+    """Write a plugins.json with one edge_tab plugin and return its dir."""
+    home=tmp_path/'home'
+    plug=home/'.local/share/aphotic/plugins/edge-demo/qml'
+    plug.mkdir(parents=True,exist_ok=True)
+    (plug/'EdgePanel.qml').write_text(PLUGIN_QML)
+    state=home/'.local/state/aphotic'
+    state.mkdir(parents=True,exist_ok=True)
+    surface={"surface":"edge_tab","id":"panel","label":"Panel","icon":"dock_to_left",
+        "component":"qml/EdgePanel.qml","edges":list(edges),"notch":notch}
+    registry={"installed":{"edge-demo":{
+        "name":"edge-demo","display_name":"Edge Demo","version":"1.0.0","capabilities":["ui-surface"],
+        "ui":{"surfaces":[surface]},
+        "disabled":[] if enabled else ["edge-demo"]}}}
+    (state/'plugins.json').write_text(json.dumps(registry))
+    return home
+
+TABS='''import QtQuick
+import Quickshell
+import qs.config
+import qs.components
+import qs.services
+import qs.modules.shelves
+ShellRoot {
+    id: root
+    property int phase:0
+    property var result:({})
+    property string output: "DP-1"
+    property var screens: [{name:root.output,description:"Probe"}]
+    QtObject { id:state; property var modelData: ({name:"DP-1"}); property var surfaceStack: [] }
+
+    function find(item,name) {
+        if (item === null || item === undefined) return null;
+        if (item.objectName === name) return item;
+        for (const c of item.children ?? []) { const found=root.find(c,name); if(found) return found; }
+        return null;
+    }
+    function countBuilds(item) {
+        if (item === null || item === undefined) return 0;
+        let total = item.objectName === "edge-tab-content" && item.builds > 0 ? 1 : 0;
+        for (const c of item.children ?? []) total += root.countBuilds(c);
+        return total;
+    }
+    Component.onCompleted: {
+        Shelves.screenStates=[state];
+        Shelves.screens=root.screens;
+        Shelves.update(root.output,"left",{enabled:true});
+    }
+    FloatingWindow { visible:true; implicitWidth:240; implicitHeight:640
+        ShelfContent { id: content; anchors.fill:parent; output:root.output; edge:"left"; screen:root.output }
+    }
+    Timer {
+        interval:150; running:true; repeat:true
+        onTriggered: {
+            if (root.phase === 0) {
+                // Core tabs resolve for either edge; a plugin tab resolves
+                // only where its manifest allowed it.
+                root.result.core=ShelfTabs.find("media","left") !== null && ShelfTabs.find("media","right") !== null;
+                root.result.pluginLeft=ShelfTabs.find("edge-demo:panel","left") !== null;
+                root.result.pluginRight=ShelfTabs.find("edge-demo:panel","right") !== null;
+                root.result.bogus=ShelfTabs.find("nope","left") === null;
+                root.result.namespaced=ShelfTabs.find("panel","left") === null;
+                root.phase++;
+            } else if (root.phase === 1) {
+                // Opening through IPC refuses what the registry cannot
+                // resolve, and an unknown id leaves the shelf as it was.
+                root.result.unknownRefused=!Shelves.openTab(root.output,"left","nope");
+                root.result.badEdgeRefused=!Shelves.openTab(root.output,"middle","media");
+                root.result.emptyRefused=!Shelves.openTab(root.output,"left","");
+                root.result.stillClosed=Shelves.openEdges.length === 0 && content.tabOpen === false;
+                root.phase++;
+            } else if (root.phase === 2) {
+                root.result.opened=Shelves.openTab(root.output,"left","edge-demo:panel");
+                root.phase++;
+            } else if (root.phase === 3) {
+                root.result.panelOpen=content.tabOpen && root.find(content,"edge-tab-content") !== null;
+                root.result.saved=Shelves.config(root.output).left.tabs.length === 1;
+                // Core content mounts too, in the same budget.
+                Shelves.openTab(root.output,"left","media");
+                root.phase++;
+            } else if (root.phase === 4) {
+                root.result.mediaOpen=Shelves.tabFor(root.output,"left")?.id === "media";
+                root.result.onePanel=root.countBuilds(content) === 0;
+                Shelves.closeTab(root.output,"left");
+                root.phase++;
+            } else if (root.phase === 5) {
+                // Closing a tab leaves the shelf on its dock and unmounts
+                // the plugin content with it.
+                root.result.tabClosed=!content.tabOpen && root.countBuilds(content) === 0;
+                root.result.dockBack=Shelves.isOpen(root.output,"left");
+                root.phase++;
+            } else if (root.phase === 6) {
+                // Disabling the plugin revokes its registration: the tab
+                // stops existing and the stored selection stops resolving.
+                Shelves.openTab(root.output,"left","edge-demo:panel");
+                SafeMode.active=true;
+                root.phase++;
+            } else if (root.phase === 7) {
+                root.result.revoked=ShelfTabs.find("edge-demo:panel","left") === null;
+                root.result.revokedRefused=!Shelves.openTab(root.output,"left","edge-demo:panel");
+                root.result.panelGone=root.countBuilds(content) === 0;
+                SafeMode.active=false;
+                root.phase++;
+            } else if (root.phase === 8) {
+                // Notch exposure is opt-in and declaration-gated.
+                root.result.notchOff=ShelfTabs.notchTabs.length === 0;
+                Settings.shelfNotchTabs=true;
+                root.phase++;
+            } else if (root.phase === 9) {
+                root.result.notchOn=ShelfTabs.notchTabs.length === 1;
+                Settings.shelfNotchTabs=false;
+                // Acknowledgement is off by default and never loops.
+                ShelfTabs.notchTabs.length;
+                Shelves.acknowledge(root.output,"left");
+                root.result.ackOff=Shelves.ackCount(root.output,"left") === 0;
+                Settings.shelfTabAcknowledge=true;
+                Shelves.openTab(root.output,"left","quick");
+                root.phase++;
+            } else {
+                root.result.ackOn=Shelves.ackCount(root.output,"left") === 1;
+                const chip=root.find(content,"shelf-tab-quick");
+                root.result.ackVisual=chip !== null && root.find(chip,"shelf-tab-trace").opacity > 0;
+                console.log("SONAR_SESSION " + JSON.stringify(root.result)); Qt.quit();
+            }
+        }
+    }
+    Timer { interval:15000; running:true; onTriggered: { console.log("SONAR_SESSION " + JSON.stringify({timeout:true})); Qt.quit(); } }
+}'''
+
+@pytest.mark.skipif(shutil.which('qs') is None,reason='needs Quickshell')
+def test_shelf_tabs_resolve_through_the_registry_and_mount_while_shown(tmp_path):
+    home=_registry(tmp_path,notch=True)
+    out=run_probe(tmp_path,TABS,{'HOME':str(home)})
+    assert out and 'timeout' not in out and all(out.values()),out
+
+RIGHT_ONLY='''import QtQuick
+import Quickshell
+import qs.config
+import qs.components
+import qs.services
+import qs.modules.shelves
+ShellRoot {
+    id: root
+    property string output: Quickshell.screens[0].name
+    property var result:({})
+    FloatingWindow { visible:true; implicitWidth:240; implicitHeight:640
+        ShelfContent { anchors.fill:parent; output:root.output; edge:"right"; screen:root.output }
+    }
+    Timer { interval:200; running:true; onTriggered: {
+        root.result.absentLeft=ShelfTabs.find("edge-demo:panel","left") === null;
+        root.result.presentRight=ShelfTabs.find("edge-demo:panel","right") !== null;
+        root.result.stripHiddenLeft=ShelfTabs.forEdge("left").every(t => t.core);
+        console.log("SONAR_SESSION " + JSON.stringify(root.result)); Qt.quit();
+    }}
+    Timer { interval:10000; running:true; onTriggered: { console.log("SONAR_SESSION " + JSON.stringify({timeout:true})); Qt.quit(); } }
+}'''
+
+@pytest.mark.skipif(shutil.which('qs') is None,reason='needs Quickshell')
+def test_shelf_tab_placement_limits_which_edges_offer_it(tmp_path):
+    home=_registry(tmp_path,edges=("right",),notch=True)
+    out=run_probe(tmp_path,RIGHT_ONLY,{'HOME':str(home)})
     assert out and 'timeout' not in out and all(out.values()),out
 
 SHORTCUT = '''import QtQuick

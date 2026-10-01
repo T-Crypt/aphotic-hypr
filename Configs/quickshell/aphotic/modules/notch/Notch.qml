@@ -42,6 +42,20 @@ StyledRect {
     // with no edit here. See docs/PLUGIN_LAYER_MODEL.md.
     readonly property var pluginTiles: PluginRegistry.surfacesFor("notch")
 
+    // Shelf tabs the user opted to expose here, and only the ones whose
+    // manifest declared notch compatibility. Same registered content the
+    // shelf edge mounts, through the same ShelfTabView, and no tile of its
+    // own: the notch keeps its resting shape and its switcher count grows
+    // only because a plugin asked to be here.
+    readonly property var shelfTiles: ShelfTabs.notchTabs.map(t => ({
+        plugin: t.plugin,
+        id: "shelf-tab:" + t.id,
+        label: t.label,
+        icon: t.icon,
+        componentUrl: "",
+        tab: t
+    }))
+
     // The base shell's own tiles. Both are core: the notch ships with the
     // base layer and every install has them, which is what makes the
     // palette a settings question (which actions are in it) rather than an
@@ -61,7 +75,7 @@ StyledRect {
             label: qsTr("Commands"),
             componentUrl: ""
         }
-    ].concat(root.pluginTiles)
+    ].concat(root.pluginTiles).concat(root.shelfTiles)
 
     // Kept as a condition rather than assumed: core ships two tiles
     // today, but a build with the palette or Processes taken out has one
@@ -316,6 +330,7 @@ StyledRect {
 
             tiles: root.tiles
             pluginTiles: root.pluginTiles
+            shelfTiles: root.shelfTiles
             screenState: root.screenState
             switchable: root.switchable
             expanded: root.expanded

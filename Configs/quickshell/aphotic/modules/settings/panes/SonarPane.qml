@@ -142,11 +142,90 @@ ColumnLayout {
                         }
                     }
                 }
+                SettingsToggleRow {
+                    icon: "touch_app"; label: qsTr("Visible handle")
+                    checked: edgeGroup.config.handles
+                    onToggled: state => Shelves.update(root.output,edgeGroup.modelData,{handles:state})
+                }
                 SettingsRow {
                     icon: "play_arrow"; label: qsTr("Toggle shelf"); activatable: edgeGroup.config.enabled
                     onActivated: Shelves.toggle(root.output,edgeGroup.modelData)
                 }
             }
+
+            SettingsGroup {
+                Layout.fillWidth: true
+
+                StyledText {
+                    Layout.leftMargin: Tokens.padding.small
+                    text: qsTr("Tabs")
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.label.medium
+                }
+
+                Repeater {
+                    model: ShelfTabs.forEdge(edgeGroup.modelData).map(t => Object.assign({edge: edgeGroup.modelData},t))
+                    delegate: SettingsRow {
+                        required property var modelData
+                        icon: modelData.icon
+                        label: modelData.label
+                        description: modelData.core ? qsTr("Built in")
+                            : qsTr("From %1").arg(modelData.plugin)
+                        activatable: edgeGroup.config.enabled
+                        onActivated: Shelves.openTab(root.output,modelData.edge,modelData.id)
+                    }
+                }
+
+                StyledText {
+                    visible: ShelfTabs.forEdge(edgeGroup.modelData).length === 0
+                    Layout.leftMargin: Tokens.padding.small
+                    Layout.rightMargin: Tokens.padding.small
+                    text: qsTr("No tabs for this edge.")
+                    color: Colours.palette.m3onSurfaceVariant
+                    font: Tokens.font.body.small
+                    wrapMode: Text.WordWrap
+                }
+            }
+            }
+        }
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Shelf effects")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsToggleRow {
+            icon: "bolt"
+            label: qsTr("Launch echo")
+            description: qsTr("Outline a dock icon when its launch opens a window")
+            checked: Settings.shelfLaunchEcho
+            onToggled: state => Settings.shelfLaunchEcho = state
+        }
+
+        SettingsToggleRow {
+            icon: "touch_app"
+            label: qsTr("Tab acknowledgement")
+            description: qsTr("Trace the selected tab handle when its panel opens")
+            checked: Settings.shelfTabAcknowledge
+            onToggled: state => Settings.shelfTabAcknowledge = state
+        }
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+
+        SettingsToggleRow {
+            icon: "expand_more"
+            label: qsTr("Show registered shelf tabs in the notch")
+            description: qsTr("Adds a notch tile per plugin tab that allows it")
+            checked: Settings.shelfNotchTabs
+            onToggled: state => Settings.shelfNotchTabs = state
         }
     }
 
