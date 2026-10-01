@@ -833,6 +833,12 @@ ShellRoot {
         id: colorPicker
     }
 
+    Binding {
+        target: Sonar
+        property: "screenStates"
+        value: screenStates.instances
+    }
+
     SonarHost {}
 
     // `qs -c aphotic ipc call sonar ping|dismiss`. The keybind routes

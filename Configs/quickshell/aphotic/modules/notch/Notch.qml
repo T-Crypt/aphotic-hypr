@@ -11,6 +11,19 @@ import qs.services
 StyledRect {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:notch"
+            label: qsTr("Command notch")
+            action: ""
+            bindDescription: ""
+            plugin: ""
+            eligible: true
+        }
+    }
+
     // Which edge the bar is docked to, and which way this has to open to
     // get away from it. Supplied by NotchWindow, which anchors the layer
     // surface to the same edge.

@@ -4,6 +4,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.components
 import Quickshell
 import Quickshell.Wayland
 import qs.services
@@ -42,6 +43,19 @@ import qs.services
 // is not free to composite.
 PanelWindow {
     id: root
+
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: content.item?.maskItem ?? content.item ?? root.contentItem
+            targetId: "plugin:" + root.surface.plugin + "/overlay-" + root.surface.id
+            label: root.surface.label
+            action: ""
+            bindDescription: ""
+            plugin: root.surface.plugin
+            eligible: true
+        }
+    }
 
     required property var modelData
     required property var surface

@@ -48,6 +48,19 @@ ColumnLayout {
         StyledRect {
             id: actionRow
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: actionRow
+            targetId: "core:palette/" + actionRow.modelData.id
+            label: actionRow.modelData.label
+            action: actionRow.modelData.id
+            bindDescription: ""
+            plugin: ""
+            eligible: true
+        }
+    }
+
             required property var modelData
 
             Layout.fillWidth: true

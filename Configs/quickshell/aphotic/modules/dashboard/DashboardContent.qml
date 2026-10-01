@@ -68,14 +68,7 @@ ColumnLayout {
     // locally-hosted backends, and AiProviders drops those pills on its own
     // -- so this tab stays, with a shorter provider list. The plugin tabs
     // appended below are the genuinely layered ones, and stay gated.
-    readonly property var tabs: [
-        { id: "dashboard", icon: "dashboard", label: qsTr("Dashboard") },
-        { id: "flow", icon: "hub", label: qsTr("Flow") },
-        { id: "performance", icon: "monitoring", label: qsTr("Performance") },
-        { id: "workspaces", icon: "grid_view", label: qsTr("Workspaces") },
-        { id: "wallpapers", icon: "wallpaper", label: qsTr("Wallpapers") },
-        { id: "aiChat", icon: "smart_toy", label: qsTr("AI Chat") }
-    ].concat(root.pluginTabs.map(t => ({ id: t.id, icon: t.icon, label: t.label })))
+    readonly property var tabs: CommandCenterTabs.list.concat(root.pluginTabs.map(t => ({id:t.id,icon:t.icon,label:t.label})))
 
     onTabsChanged: {
         if (!root.tabs.some(t => t.id === root.currentTab))

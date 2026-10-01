@@ -219,6 +219,14 @@ Item {
 
                         DockAppIcon {
                             id: dockIcon
+                            property QtObject _sonarTarget: Loader {
+                                active: Settings.sonarEnabled
+                                sourceComponent: EchoTarget {
+                                    target: dockIcon
+                                    targetId: "core:dock/" + dockIcon.modelData.key
+                                    label: dockIcon.modelData.name
+                                }
+                            }
                             required property var modelData
                             item: modelData
                             growOrigin: !Settings.barHorizontal ? Item.Center : (Settings.barPositionBottom ? Item.Bottom : Item.Top)

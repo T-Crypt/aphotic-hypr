@@ -8,6 +8,15 @@ import qs.services
 
 Item {
     id: root
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:capsule/capsulemediachip"
+            label: qsTr("Media")
+            bindDescription: ""
+        }
+    }
 
     property bool active: false
     signal toggled

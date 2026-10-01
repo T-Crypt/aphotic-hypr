@@ -7,6 +7,19 @@ import qs.services
 Item {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:bar/agentindicator"
+            label: qsTr("Agent sessions")
+            action: "agentPanel"
+            bindDescription: ""
+            plugin: ""
+            eligible: true
+        }
+    }
+
     required property ScreenState screenState
     property color colour: Colours.palette.m3secondaryOnSurface
     // Full/Taskbar want the same background-chip treatment every other

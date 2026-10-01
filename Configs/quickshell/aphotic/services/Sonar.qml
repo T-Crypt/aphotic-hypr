@@ -32,6 +32,10 @@ Singleton {
     property var origin: null
     property var outputs: []
     property var targets: []
+    property var screenStates: []
+    readonly property var sessionScreen: root._sessionScreen
+    property var lastTargets: []
+    readonly property var visibleTargets: root.targets.filter(t => t.ghost ? SonarDiscovery.current(t) : EchoRegistry.isCurrent(t))
     property real maxRadius: 1
     property string focusOutput: ""
     property int generation: 0
@@ -76,12 +80,29 @@ Singleton {
         root.dismiss();
         root.generation += 1;
         root.outputs = outs;
-        root.targets = EchoRegistry.snapshot();
         root.focusOutput = root._focusedOutputName();
         root._sessionScreen = screenState;
+        HyprKeybinds.refresh();
+        const live = EchoRegistry.snapshot();
+        root.targets = live.concat(SonarDiscovery.snapshot(outs, live));
+        root.lastTargets = root.targets.map(t => ({id:t.id,output:t.output,label:t.label,shortcut:t.shortcut,reason:t.reason || ""}));
         cursorQuery.generation = root.generation;
         cursorQuery.running = false;
         cursorQuery.running = true;
+    }
+
+    function activateGhost(target: var): bool {
+        if (!root.active || !target) return false;
+        const owned = root.visibleTargets.find(t => t.id === target.id && t.output === target.output && t.ghost);
+        if (!owned) return false;
+        const state = SonarDiscovery.stateFor(owned.output);
+        const eligible = SonarDiscovery.current(owned);
+        // Capture the destination before teardown clears the session screen.
+        // Activation rechecks registry eligibility after dismissal as well.
+        root.dismiss();
+        const result = eligible && SonarDiscovery.activate(owned, state);
+        if (!result) Notifs.notify(qsTr("Feature unavailable"), qsTr("Review the feature in Settings."), [], "Aphotic");
+        return result;
     }
 
     function dismiss(): void {
@@ -184,7 +205,7 @@ Singleton {
         }
 
         function onChanged(screenState: var, name: string, open: bool): void {
-            if (open && name !== "sonar" && root.active && screenState === root._sessionScreen)
+            if (open && name !== "sonar" && root.active && (screenState === root._sessionScreen || Array.from(root.screenStates).includes(screenState)))
                 root.dismiss();
         }
     }

@@ -73,6 +73,14 @@ ColumnLayout {
 
     component SortChip: StyledRect {
         id: sortChip
+        property QtObject _sonarTarget: Loader {
+            active: Settings.sonarEnabled
+            sourceComponent: EchoTarget {
+                target: sortChip
+                targetId: "core:notch/sort-" + sortChip.key
+                label: sortChip.label
+            }
+        }
 
         required property string key
         required property string label
@@ -132,6 +140,16 @@ ColumnLayout {
             }
 
             StyledRect {
+                id: flowChip
+                property QtObject _sonarTarget: Loader {
+                    active: Settings.sonarEnabled
+                    sourceComponent: EchoTarget {
+                        target: flowChip
+                        targetId: "core:notch/flow"
+                        label: qsTr("Inspect resources in Flow")
+                        action: "resources.inspect"
+                    }
+                }
                 implicitWidth: flowLabel.implicitWidth + Tokens.padding.small * 2
                 implicitHeight: 20
                 radius: Tokens.rounding.full

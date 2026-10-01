@@ -11,6 +11,7 @@ import qs.services
 import qs.services.ai
 import qs.services.profile
 import "PluginRegistryCore.js" as RegistryCore
+import "SonarTargets.js" as Discovery
 
 // Read-only view of ~/.local/state/aphotic/plugins.json's "installed"
 // map (manifest v3 -- see docs/archive/PLUGIN_SYSTEM.md). The CLI
@@ -95,6 +96,32 @@ Singleton {
                 surfaces.push(surface);
         }
         return surfaces;
+    }
+
+    readonly property var discoverySurfaces: {
+        const result = [];
+        for (const name of Object.keys(root._installed)) {
+            if (!/^[a-z][a-z0-9-]*$/.test(name)) continue;
+            let surfaces;
+            try { surfaces = root._surfacesOf(name); } catch (error) { continue; }
+            for (const s of surfaces) {
+                const prefix = `file://${root.pluginsDir}/${name}/`;
+                const relative = s.componentUrl.slice(prefix.length);
+                if (!s.componentUrl.startsWith(prefix) || relative.includes("%")
+                    || relative.split("/").some(part => !part || part === "." || part === "..")) continue;
+                const decision = Discovery.discoveryDecision(root._installed[name], s, {
+                    gate: root._gateSatisfied(s), disabled: root._disabled.includes(name), safe: SafeMode.active,
+                    sheltered: root._sheltered && root._installed[name].shelter === "unload"
+                });
+                if (decision) result.push({plugin:name, surface:s.surface, id:s.id, label:s.label,
+                    action:decision.action, reason:decision.reason, anchor:s.anchor, width:s.width, height:s.height});
+            }
+        }
+        return result;
+    }
+
+    function discoveryOf(plugin: string, surface: string, id: string): var {
+        return root.discoverySurfaces.find(s => s.plugin === plugin && s.surface === surface && s.id === id) ?? null;
     }
 
     function surfacesFor(surface: string): var {

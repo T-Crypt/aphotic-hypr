@@ -196,6 +196,14 @@ Item {
 
     component TaskItem: StyledRect {
         id: item
+        property QtObject _sonarTarget: Loader {
+            active: Settings.sonarEnabled
+            sourceComponent: EchoTarget {
+                target: item
+                targetId: "core:taskbar/" + item.group.appClass
+                label: item.group.appClass
+            }
+        }
 
         required property var group
         required property Item taskbarRoot

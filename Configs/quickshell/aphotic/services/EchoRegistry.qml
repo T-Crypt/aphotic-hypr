@@ -51,6 +51,14 @@ Singleton {
         root.anchors = root.anchors.filter(a => a !== anchor);
     }
 
+    function isCurrent(target: var): bool {
+        if (!target) return false;
+        if (target.anchor)
+            return root.anchors.includes(target.anchor) && (typeof target.anchor.usable !== "function" || target.anchor.usable());
+        return !!root.records[target.id] && root.eligiblePlugins.includes(target.plugin)
+            && (!target.action || PluginApi.ownsSurface(target.plugin, target.action));
+    }
+
     function snapshot(): var {
         const targets = Object.values(root.records).filter(r =>
             root.eligiblePlugins.includes(r.plugin)
@@ -60,7 +68,7 @@ Singleton {
         for (const anchor of root.anchors) {
             const target = anchor.snapshot();
             if (target)
-                targets.push(target);
+                targets.push(Object.assign({},target,{anchor:anchor}));
         }
         return targets;
     }

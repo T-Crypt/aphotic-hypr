@@ -8,6 +8,7 @@ ColumnLayout {
     id: root
 
     required property var screenState
+    property bool showLabels: false
 
     spacing: Tokens.spacing.largeIncreased
 
@@ -57,6 +58,24 @@ ColumnLayout {
                 label: qsTr("Preview ping")
                 activatable: true
                 onActivated: Sonar.ping(root.screenState)
+            }
+        }
+    }
+
+    SettingsGroup {
+        Layout.fillWidth: true
+        SettingsRow {
+            icon: "label"
+            label: qsTr("Labels from the last ping")
+            activatable: true
+            onActivated: root.showLabels = !root.showLabels
+        }
+        Repeater {
+            model: root.showLabels ? Sonar.lastTargets : []
+            SettingsRow {
+                required property var modelData
+                label: modelData.label
+                description: modelData.output + " · " + modelData.shortcut + (modelData.reason ? " · " + modelData.reason : "")
             }
         }
     }

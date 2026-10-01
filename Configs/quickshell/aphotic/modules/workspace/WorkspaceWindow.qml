@@ -9,6 +9,19 @@ import qs.services
 PanelWindow {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root.contentItem
+            targetId: "core:workspace"
+            label: qsTr("Workspace")
+            action: "workspace"
+            bindDescription: "Toggle plugin workspace"
+            plugin: ""
+            eligible: true
+        }
+    }
+
     required property var modelData
     required property ScreenState screenState
     screen: modelData

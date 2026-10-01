@@ -141,7 +141,7 @@ ShellRoot {
 """
 
 
-def run_probe(tmp_path: Path) -> dict:
+def run_probe(tmp_path: Path, probe_text=PROBE, extra_env=None) -> dict:
     home = tmp_path / "home"
     (home / "runtime").mkdir(mode=0o700, parents=True)
     probe = tempfile.NamedTemporaryFile(
@@ -149,7 +149,7 @@ def run_probe(tmp_path: Path) -> dict:
         dir=QML_ROOT, delete=False,
     )
     try:
-        probe.write(PROBE)
+        probe.write(probe_text)
         probe.close()
         env = os.environ.copy()
         # Never touch the live session: no compositor keyword writes, no
@@ -160,6 +160,8 @@ def run_probe(tmp_path: Path) -> dict:
         env["XDG_DATA_HOME"] = str(home / ".local/share")
         env["XDG_RUNTIME_DIR"] = str(home / "runtime")
         env["QT_QPA_PLATFORM"] = "offscreen"
+        env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=" + str(home / "runtime/unused.sock")
+        env.update(extra_env or {})
         result = subprocess.run(
             ["timeout", "20", "qs", "-p", Path(probe.name).name],
             cwd=QML_ROOT, env=env, capture_output=True, text=True, check=False,
@@ -267,7 +269,7 @@ ShellRoot {
                 root.results.hostLoaded = hostLoader.item !== null;
                 root.results.windows = hostLoader.item?.windows?.length ?? 0;
                 const window = hostLoader.item?.windows?.[0];
-                root.results.targetAnswered = window?.contentItem.children[0].answered.length === 1;
+                root.results.targetAnswered = window?.contentItem.children[0].answered.some(t => t.id === "core:probe") === true;
                 root.results.contentSized = window && window.contentItem.children[0].width === window.width
                     && window.contentItem.children[0].height === window.height;
                 root.results.active = Sonar.active;

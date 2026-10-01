@@ -46,6 +46,16 @@ ColumnLayout {
         spacing: Tokens.spacing.small
 
         StyledRect {
+            id: cycleHeader
+            property QtObject _sonarTarget: Loader {
+                active: Settings.sonarEnabled
+                sourceComponent: EchoTarget {
+                    target: cycleHeader
+                    targetId: "core:notch/cycle"
+                    label: qsTr("Next notch tile")
+                    eligible: root.expanded && root.switchable
+                }
+            }
             Layout.fillWidth: true
             implicitHeight: 34
             radius: Tokens.rounding.medium
@@ -87,6 +97,16 @@ ColumnLayout {
         // "close", not an arrow: the hub opens from whichever edge the bar
         // is docked to, so there is no one direction a collapse points in.
         StyledRect {
+            id: closeHeader
+            property QtObject _sonarTarget: Loader {
+                active: Settings.sonarEnabled
+                sourceComponent: EchoTarget {
+                    target: closeHeader
+                    targetId: "core:notch/close"
+                    label: qsTr("Close notch")
+                    eligible: root.expanded
+                }
+            }
             implicitWidth: 28
             implicitHeight: 28
             radius: Tokens.rounding.full
@@ -178,6 +198,19 @@ ColumnLayout {
 
             Loader {
                 id: pluginTileLoader
+
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: pluginTileLoader.item
+            targetId: "plugin:" + pluginTileLoader.modelData.plugin + "/notch-" + pluginTileLoader.modelData.id
+            label: pluginTileLoader.modelData.label
+            action: ""
+            bindDescription: ""
+            plugin: pluginTileLoader.modelData.plugin
+            eligible: true
+        }
+    }
 
                 required property var modelData
 

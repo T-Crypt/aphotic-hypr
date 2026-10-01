@@ -30,3 +30,5 @@ StyledText 1.0 StyledText.qml
 SystemUsageWatch 1.0 SystemUsageWatch.qml
 FlickScrollBar 1.0 FlickScrollBar.qml
 SurfaceReveal 1.0 SurfaceReveal.qml
+
+EchoTarget 1.0 EchoTarget.qml
