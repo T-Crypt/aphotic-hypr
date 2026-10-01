@@ -1,4 +1,4 @@
-# canary 2026-09-30
+# canary 2026-10-01
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -99,13 +99,13 @@ gc 8.2.12-1
 gcc 16.2.1+r23+gd564253eb6c8-1
 gcc-libs 16.2.1+r23+gd564253eb6c8-1
 gcr-4 4.4.1-1
-gdb 17.2-1
-gdb-common 17.2-1
+gdb 18.1-1
+gdb-common 18.1-1
 gdbm 1.26-2
 gdk-pixbuf2 2.44.7-1
 gettext 1.0-2
 giflib 6.1.3-2
-git 2.55.0-1
+git 2.56.0-1
 github-cli 2.102.0-1
 glib-networking 1:2.80.1-1
 glib2 2.88.3-1
@@ -237,18 +237,18 @@ lib32-libxext 1.3.7-1
 lib32-libxml2 2.15.4-1
 lib32-libxshmfence 1.3.3-1
 lib32-libxxf86vm 1.1.7-1
-lib32-llvm-libs 1:22.1.8-1
+lib32-llvm-libs 1:23.1.1-1
 lib32-lm_sensors 1:3.6.2-2
-lib32-mesa 1:26.2.3-1
+lib32-mesa 1:26.2.3-2
 lib32-ncurses 6.6-2
 lib32-nettle 4.0-2
-lib32-openssl 1:3.6.4-1
+lib32-openssl 1:3.6.5-1
 lib32-p11-kit 0.26.5-1
 lib32-spirv-tools 1:1.4.357.0-1
 lib32-systemd 262-1
 lib32-vulkan-icd-loader 1.4.357.0-1
-lib32-vulkan-mesa-implicit-layers 1:26.2.3-1
-lib32-vulkan-radeon 1:26.2.3-1
+lib32-vulkan-mesa-implicit-layers 1:26.2.3-2
+lib32-vulkan-radeon 1:26.2.3-2
 lib32-wayland 1.26.0-1
 lib32-xcb-util-keysyms 0.4.1-2
 lib32-xz 5.8.4-1
@@ -421,7 +421,7 @@ libvpl 2.17.0-1
 libvpx 1.17.0-1
 libwacom 2.20.0-1
 libwebp 1.6.0-2
-libwireplumber 0.5.17-2
+libwireplumber 0.5.18-1
 libx11 1.8.13-1
 libxau 1.0.12-1
 libxcb 1.17.0-1
@@ -460,7 +460,7 @@ libzip 1.11.4-1
 licenses 20240728-1
 linux-api-headers 7.2-1
 llhttp 9.3.1-1
-llvm-libs 22.1.8-2
+llvm-libs 23.1.1-1
 lm_sensors 1:3.6.2-1
 lmdb 0.9.35-1
 lsof 4.99.7-1
@@ -476,7 +476,7 @@ make 4.4.1-3
 matugen 4.2.0-1
 md4c 0.5.3-1
 mdadm 4.6-2
-mesa 1:26.2.3-1
+mesa 1:26.2.3-2
 mobile-broadband-provider-info 20251101-1
 mpdecimal 4.0.1-3
 mpfr 4.2.2-1
@@ -509,7 +509,7 @@ openexr 3.5.1-1
 openjpeg2 2.5.4-1
 openjph 0.32.0-1
 openssh 10.5p1-1
-openssl 3.6.4-1
+openssl 3.6.5-1
 openvpn 2.7.7-1
 opus 1.6.1-1
 orc 0.4.44-1
@@ -517,7 +517,7 @@ p11-kit 0.26.5-1
 pacman 7.1.0.r9.g54d9411-2
 pacman-contrib 1.13.1-1
 pacman-mirrorlist 20260610-1
-pam 1.7.2-2
+pam 1.7.3-1
 pambase 20260616-1
 pamixer 1.6-4
 pango 1:1.58.2-1
@@ -634,7 +634,7 @@ tslib 1.24-1
 ttf-jetbrains-mono-nerd 3.5.1-2
 ttf-material-symbols-variable 2.874-1
 tumbler 4.20.2-2
-tzdata 2026d-1
+tzdata 2026e-1
 uchardet 0.0.8-4
 udisks2 2.11.2-1
 util-linux 2.42.4-1
@@ -642,17 +642,17 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 79-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.139.1-1
+visual-studio-code-bin 1.140.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.357.0-1
-vulkan-mesa-implicit-layers 1:26.2.3-1
-vulkan-radeon 1:26.2.3-1
+vulkan-mesa-implicit-layers 1:26.2.3-2
+vulkan-radeon 1:26.2.3-2
 wayland 1.26.0-1
 wayland-protocols 1.49-1
 webp-pixbuf-loader 0.2.7-2
 which 2.25-1
-wireplumber 0.5.17-2
+wireplumber 0.5.18-1
 wl-clipboard 1:2.3.0-1
 wpa_supplicant 2:2.12-1
 x264 3:0.165.r3222.b35605a-2
