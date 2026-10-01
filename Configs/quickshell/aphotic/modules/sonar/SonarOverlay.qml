@@ -18,6 +18,7 @@ Item {
     required property ShellScreen screen
     property bool focused: false
     focus: root.focused
+    clip: true
 
     // Global logical origin, mapped into this window.
     readonly property var localOrigin: Sonar.origin ? ({
@@ -25,8 +26,9 @@ Item {
         y: Sonar.origin.y - screen.y
     }) : null
 
+    readonly property real sweep: Policy.radiusFraction(Sonar.progress, false)
     readonly property real radius: Sonar.origin
-        ? (Sonar.reduced ? Tokens.spacing.large * 2 : Policy.radiusFraction(Sonar.progress, false) * Sonar.maxRadius) : 0
+        ? (Sonar.reduced ? Tokens.spacing.large * 2 : root.sweep * root.sweep * (3 - 2 * root.sweep) * Sonar.maxRadius) : 0
 
     opacity: Policy.opacityAt(Sonar.progress, Sonar.reduced)
 
@@ -63,44 +65,24 @@ Item {
             Sonar.dismiss();
     }
 
-    Canvas {
-        id: ring
-
-        anchors.fill: parent
-
-        onPaint: {
-            const ctx = getContext("2d");
-            ctx.reset();
-            if (!root.localOrigin)
-                return;
-            // Surface-colored under-stroke keeps the accent readable on
-            // dark and light wallpaper alike. Palette roles only; the
-            // released appearance keeps its tokens.
-            ctx.strokeStyle = Colours.palette.m3surfaceContainer;
-            ctx.lineWidth = 10;
-            ctx.globalAlpha = 0.85;
-            ctx.beginPath();
-            ctx.arc(root.localOrigin.x, root.localOrigin.y, root.radius + 3, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = Colours.palette.m3primary;
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(root.localOrigin.x, root.localOrigin.y, root.radius, 0, Math.PI * 2);
-            ctx.stroke();
+    Repeater {
+        model: Sonar.reduced ? 1 : 3
+        delegate: Rectangle {
+            required property int index
+            readonly property real waveRadius: Math.max(0, root.radius - index * Tokens.spacing.extraLarge * 2)
+            x: (root.localOrigin?.x ?? 0) - waveRadius
+            y: (root.localOrigin?.y ?? 0) - waveRadius
+            width: waveRadius * 2
+            height: width
+            radius: width / 2
+            color: "transparent"
+            border.width: index === 0 ? 1.5 : 1
+            border.color: Colours.palette.m3primary
+            opacity: (index === 0 ? 0.5 : index === 1 ? 0.16 : 0.07)
+                * Math.min(1, waveRadius / Tokens.spacing.extraLarge)
+            visible: root.localOrigin !== null && waveRadius > 0
+            antialiasing: true
         }
-
-        Connections {
-            target: root
-            function onRadiusChanged(): void {
-                ring.requestPaint();
-            }
-            function onLocalOriginChanged(): void {
-                ring.requestPaint();
-            }
-        }
-
-        Component.onCompleted: ring.requestPaint()
     }
 
     Repeater {
@@ -109,28 +91,42 @@ Item {
             id: outline
             required property var modelData
             readonly property var plate: root.labelLayout.labels.find(p => p.id === modelData.id) ?? null
-            readonly property real distance: {
-                if (!Sonar.origin) return 0;
-                const r = modelData.rect;
-                const x = root.screen.x + r.x, y = root.screen.y + r.y;
-                const dx = Math.max(x - Sonar.origin.x, 0, Sonar.origin.x - x - r.width);
-                const dy = Math.max(y - Sonar.origin.y, 0, Sonar.origin.y - y - r.height);
-                return Math.hypot(dx, dy);
+            readonly property bool shelf: (modelData.id ?? "").startsWith("core:shelf/")
+            property real reveal: root.reached(modelData) ? 1 : 0
+            opacity: reveal
+            visible: reveal > 0
+            Behavior on reveal {
+                enabled: !Sonar.reduced
+                NumberAnimation { duration: 320; easing.type: Easing.OutCubic }
             }
-            opacity: Sonar.reduced ? 1 : Math.max(0, Math.min(1, (root.radius - distance) / (Tokens.spacing.large * 2)))
-            visible: root.reached(modelData)
             x: modelData.rect.x
             y: modelData.rect.y
             width: modelData.rect.width
             height: modelData.rect.height
 
+            Repeater {
+                model: Sonar.reduced ? 0 : outline.shelf ? 2 : 1
+                delegate: Rectangle {
+                    required property int index
+                    readonly property real bloom: Math.min(1, outline.reveal * (index === 0 ? 1.3 : 1))
+                    anchors.fill: parent
+                    anchors.margins: -Tokens.spacing.extraSmall - Tokens.spacing.medium * bloom
+                    radius: Tokens.rounding.large + Tokens.spacing.medium * bloom
+                    color: Qt.alpha(Colours.palette.m3primary, 0.035 * (1 - bloom))
+                    border.width: 1
+                    border.color: Colours.palette.m3primary
+                    opacity: (outline.shelf ? 0.3 : 0.2) * (1 - bloom)
+                    antialiasing: true
+                }
+            }
             Rectangle {
                 anchors.fill: parent
-                visible: !outline.modelData.disabled
-                color: "transparent"
-                radius: Tokens.rounding.small
-                border.width: 2
-                border.color: Colours.palette.m3primary
+                anchors.margins: -Tokens.spacing.extraSmall / 2
+                color: Qt.alpha(Colours.palette.m3primary, outline.modelData.disabled ? 0.035 : 0.07)
+                radius: Tokens.rounding.large
+                border.width: outline.modelData.disabled ? 0 : 1
+                border.color: Qt.alpha(Colours.palette.m3primary, 0.55)
+                antialiasing: true
             }
             Canvas {
                 id: dashed
@@ -141,9 +137,17 @@ Item {
                     const ctx = getContext("2d");
                     ctx.reset();
                     ctx.strokeStyle = Colours.palette.m3primary;
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([6,4]);
-                    ctx.strokeRect(1,1,width-2,height-2);
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4,5]);
+                    ctx.beginPath();
+                    const r = Math.max(0, Math.min(Tokens.rounding.large, (width-2)/2, (height-2)/2));
+                    ctx.moveTo(1+r,1);
+                    ctx.arcTo(width-1,1,width-1,height-1,r);
+                    ctx.arcTo(width-1,height-1,1,height-1,r);
+                    ctx.arcTo(1,height-1,1,1,r);
+                    ctx.arcTo(1,1,width-1,1,r);
+                    ctx.closePath();
+                    ctx.stroke();
                 }
                 Component.onCompleted: requestPaint()
                 onWidthChanged: requestPaint()
@@ -155,21 +159,36 @@ Item {
                 y: (outline.plate?.y ?? 0) - outline.y
                 width: outline.plate?.width ?? 0
                 height: outline.plate?.height ?? 0
-                radius: Tokens.rounding.small
-                color: Colours.palette.m3surfaceContainer
+                radius: Tokens.rounding.medium
+                color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.97)
+                border.width: 1
+                border.color: Qt.alpha(Colours.palette.m3onSurface, 0.1)
+                antialiasing: true
 
+                Rectangle {
+                    x: Tokens.padding.small; y: 15
+                    width: 4; height: 4; radius: 2
+                    color: Colours.palette.m3primary
+                    opacity: outline.modelData.disabled ? 0.5 : 1
+                }
                 StyledText {
-                    x: Tokens.padding.small; y: Tokens.spacing.small
-                    width: parent.width - Tokens.padding.small * 2
-                    text: outline.modelData.label + "\n" + outline.modelData.shortcut
-                    maximumLineCount: 2
-                    wrapMode: Text.Wrap
+                    x: Tokens.padding.large; y: Tokens.spacing.small
+                    width: parent.width - Tokens.padding.large - Tokens.padding.small
+                    text: outline.modelData.label
                     elide: Text.ElideRight
                     font: Tokens.font.label.medium
                 }
                 StyledText {
+                    x: Tokens.padding.large; y: 29
+                    width: parent.width - Tokens.padding.large - Tokens.padding.small
+                    text: outline.modelData.shortcut
+                    color: Colours.palette.m3onSurfaceVariant
+                    elide: Text.ElideRight
+                    font: Tokens.font.label.small
+                }
+                StyledText {
                     visible: !!outline.modelData.reason
-                    x: Tokens.padding.small; y: 44
+                    x: Tokens.padding.small; y: 48
                     width: parent.width - Tokens.padding.small * 2
                     text: outline.modelData.reason || ""
                     maximumLineCount: 2
