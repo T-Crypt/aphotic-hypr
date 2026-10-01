@@ -25,9 +25,7 @@ ALWAYS_ON: dict[str, str] = {
     "modules/lock/Lock.qml:Timer:5000": "5 s reconcile for lock paths the shell does not own (WlSessionLock change quirk)",
     "services/Colours.qml:Timer:5000": "5 s safety reload if an external palette write is missed by the file watch",
     "services/Themes.qml:Timer:5000": "5 s safety reload if an external theme-state write is missed by the file watch",
-    "services/Hypr.qml:Timer:2000": "lock-key state from keyboard LED sysfs; no event source for LED changes",
     "services/HostInfo.qml:Timer:300000": "5 min host facts refresh",
-    "services/SystemUsage.qml:Timer:Config.dashboard.resourceUpdateInterval": "the one shared CPU/memory base poll every bar and notch gauge reads",
     "services/Weather.qml:Timer:20 * 60 * 1000": "20 min forecast refresh; the singleton exists only while a weather widget references it",
 }
 

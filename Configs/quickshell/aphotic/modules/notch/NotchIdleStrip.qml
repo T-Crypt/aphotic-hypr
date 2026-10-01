@@ -19,6 +19,10 @@ import qs.services
 GridLayout {
     id: root
 
+    SystemUsageWatch {
+        detailed: false
+    }
+
     // Side-docked bars leave a strip only as wide as the bar is thick, so
     // the same content stacks down it instead of running off both ends
     // into dead, unclickable space.
