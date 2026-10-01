@@ -186,7 +186,6 @@ ColumnLayout {
                     wrapMode: Text.WordWrap
                 }
             }
-            }
         }
     }
 

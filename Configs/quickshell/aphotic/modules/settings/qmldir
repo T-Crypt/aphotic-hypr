@@ -19,6 +19,7 @@ PluginsPane 1.0 panes/PluginsPane.qml
 PowerSecurityPane 1.0 panes/PowerSecurityPane.qml
 SettingsPanel 1.0 SettingsPanel.qml
 SettingsWindow 1.0 SettingsWindow.qml
+SonarPane 1.0 panes/SonarPane.qml
 SystemPane 1.0 panes/SystemPane.qml
 ThemeCreatorPane 1.0 panes/ThemeCreatorPane.qml
 WallpaperPicker 1.0 panes/WallpaperPicker.qml

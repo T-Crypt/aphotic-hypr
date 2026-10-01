@@ -60,6 +60,7 @@ Scope {
     onWantedChanged: root.refresh()
     onFormChanged: root.refresh()
     Component.onCompleted: root.refresh()
+    Connections { target: Hypr; function onConfigReloaded(): void { root.refresh(); } }
     Connections { target: HyprKeybinds; function onEntriesChanged(): void { root.refresh(); } }
     Component.onDestruction: {
         // Inspect ownership again rather than unbinding a replacement user shortcut.

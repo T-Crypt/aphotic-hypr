@@ -346,3 +346,24 @@ def test_sonar_host_mounts_cleanly_during_a_ping(tmp_path):
         lowered = error_line.lower()
         if any(name in lowered for name in ("sonarhost", "sonarwindow", "sonaroverlay")):
             assert "error" not in lowered and "warn" not in lowered, error_line
+
+
+@pytest.mark.skipif(shutil.which("qs") is None, reason="Quickshell unavailable")
+def test_sonar_settings_page_instantiates(tmp_path):
+    out = run_probe(tmp_path, """import QtQuick
+import Quickshell
+import qs.components
+import qs.modules.settings
+ShellRoot {
+    function hasPane(item) {
+        if (String(item).startsWith("SonarPane_")) return true;
+        return Array.from(item.children ?? []).some(child => hasPane(child));
+    }
+    ScreenState { id: state; modelData: Quickshell.screens[0] }
+    SettingsPanel { id: panel; screenState: state; currentCategory: "sonar" }
+    Timer { interval: 300; running: true; onTriggered: {
+        console.log("SONAR_SESSION " + JSON.stringify({loaded: hasPane(panel)}));
+        Qt.quit();
+    }}
+}""")
+    assert out == {"loaded": True}
