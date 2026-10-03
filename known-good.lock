@@ -1,4 +1,4 @@
-# canary 2026-10-02
+# canary 2026-10-03
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -77,7 +77,7 @@ exo 4.20.0-2
 expat 2.8.5-1
 eza 0.23.5-2
 fakeroot 1:1.37.2-3
-ffmpeg 2:9.0.2-1
+ffmpeg 2:9.0.2-2
 ffmpegthumbnailer 2.3.1-1
 fftw 3.3.11-1
 file 5.48-1
@@ -111,7 +111,7 @@ glib-networking 1:2.80.1-1
 glib2 2.88.3-1
 glibc 2.44+r50+g1848099f063e-1
 glibmm-2.68 2.88.1-1
-glslang 1:1.4.357.0-1
+glslang 1:1.4.363.0-1
 glu 9.0.3-3
 glycin 2.1.5-2
 gmp 6.3.0-3
@@ -160,7 +160,7 @@ hwloc 2.14.0-1
 hyprcursor 0.1.13-7
 hyprgraphics 0.5.1-4
 hypridle 0.1.8-2
-hyprland 0.56.2-3
+hyprland 0.56.2-4
 hyprland-guiutils 0.2.2-4
 hyprlang 0.6.8-5
 hyprtoolkit 0.6.0-1
@@ -197,7 +197,7 @@ kwindowsystem 6.30.0-1
 l-smash 2.14.5-4
 lame 4.0-1
 lcms2 2.19.1-1
-leancrypto 1.9.0-1
+leancrypto 1.9.1-1
 lib32-brotli 1.2.0-2
 lib32-bzip2 1.0.8-4
 lib32-curl 8.22.0-1
@@ -239,16 +239,16 @@ lib32-libxshmfence 1.3.3-1
 lib32-libxxf86vm 1.1.7-1
 lib32-llvm-libs 1:23.1.1-1
 lib32-lm_sensors 1:3.6.2-2
-lib32-mesa 1:26.2.3-2
+lib32-mesa 1:26.2.4-1
 lib32-ncurses 6.6-2
 lib32-nettle 4.0-2
 lib32-openssl 1:3.6.5-1
 lib32-p11-kit 0.26.5-1
-lib32-spirv-tools 1:1.4.357.0-1
+lib32-spirv-tools 1:1.4.363.0-1
 lib32-systemd 262-1
-lib32-vulkan-icd-loader 1.4.357.0-1
-lib32-vulkan-mesa-implicit-layers 1:26.2.3-2
-lib32-vulkan-radeon 1:26.2.3-2
+lib32-vulkan-icd-loader 1.4.363.0-1
+lib32-vulkan-mesa-implicit-layers 1:26.2.4-1
+lib32-vulkan-radeon 1:26.2.4-1
 lib32-wayland 1.26.0-1
 lib32-xcb-util-keysyms 0.4.1-2
 lib32-xz 5.8.4-1
@@ -339,7 +339,7 @@ libldap 2.7.1-1
 liblsan 16.2.1+r23+gd564253eb6c8-1
 libmakepkg-dropins 20-2
 libmatio 1.5.30-1
-libmd 1.2.0-1
+libmd 1.3.0-1
 libmm-glib 1.24.2-1
 libmng 2.0.3-4
 libmnl 1.0.5-2
@@ -370,7 +370,7 @@ libpcap 1.11.0-1
 libpciaccess 0.19-1
 libpgm 5.3.128-4
 libpipewire 1:1.6.9-1
-libplacebo 7.360.1-6
+libplacebo 7.360.1-7
 libpng 1.6.59-1
 libprocps 3.3.17-5
 libproxy 0.5.12-1
@@ -474,9 +474,9 @@ m4 1.4.21-2
 mailcap 2.1.54-3
 make 4.4.1-3
 matugen 4.2.0-1
-md4c 0.5.3-1
+md4c 0.6.0-2
 mdadm 4.6-2
-mesa 1:26.2.3-2
+mesa 1:26.2.4-1
 mobile-broadband-provider-info 20251101-1
 mpdecimal 4.0.1-3
 mpfr 4.2.2-1
@@ -505,7 +505,7 @@ onetbb 2023.1.0-1
 oniguruma 6.9.10-1
 openal 1.25.2-2
 opencore-amr 0.1.6-2
-openexr 3.5.1-1
+openexr 3.5.2-1
 openjpeg2 2.5.4-1
 openjph 0.32.0-1
 openssh 10.5p1-1
@@ -566,7 +566,7 @@ python-pycparser 3.00-1
 python-pywalfox 2.9.0-1
 python-pywayland 0.4.19-1
 python-requests 2.34.2-1
-python-urllib3 2.7.0-1
+python-urllib3 2.8.0-1
 qt5-base 5.15.19+kde+r96-1
 qt5-declarative 5.15.19+kde+r23-1
 qt5-graphicaleffects 5.15.19-1
@@ -598,7 +598,7 @@ sdl2-compat 2.32.72-1
 sdl3 3.4.16-1
 seatd 0.9.3-1
 sed 4.10-2
-shaderc 2026.3-1
+shaderc 2026.4-1
 shadow 4.20.0.arch1-1
 shared-mime-info 2.5.1-2
 slang 2.3.3-4
@@ -609,7 +609,7 @@ sound-theme-freedesktop 0.8-6
 source-highlight 3.1.9-19
 speex 1.2.1-2
 speexdsp 1.2.1-2
-spirv-tools 1:1.4.357.0-1
+spirv-tools 1:1.4.363.0-1
 sqlite 3.53.4-1
 srt 1.5.7-1
 starship 1.26.0-1
@@ -646,8 +646,8 @@ visual-studio-code-bin 1.140.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.357.0-1
-vulkan-mesa-implicit-layers 1:26.2.3-2
-vulkan-radeon 1:26.2.3-2
+vulkan-mesa-implicit-layers 1:26.2.4-1
+vulkan-radeon 1:26.2.4-1
 wayland 1.26.0-1
 wayland-protocols 1.49-1
 webp-pixbuf-loader 0.2.7-2
