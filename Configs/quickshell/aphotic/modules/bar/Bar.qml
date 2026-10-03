@@ -670,6 +670,19 @@ Item {
     component EntryWrapper: Item {
         id: entry
 
+        property QtObject _sonarTarget: Loader {
+            active: Settings.sonarEnabled
+            sourceComponent: EchoTarget {
+                target: entry.item
+                targetId: "plugin:" + entry.modelData.plugin + "/bar-" + entry.modelData.id
+                label: entry.modelData.label || entry.modelData.id
+                action: ""
+                bindDescription: ""
+                plugin: entry.modelData.plugin
+                eligible: !!entry.modelData.plugin
+            }
+        }
+
         required property var modelData
         required property int index
         default property Item item

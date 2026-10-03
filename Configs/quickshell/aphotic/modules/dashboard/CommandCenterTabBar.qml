@@ -26,6 +26,19 @@ RowLayout {
         StyledRect {
             id: tabButton
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: tabButton
+            targetId: "core:dashboard/tab-" + tabButton.modelData.id
+            label: tabButton.modelData.label
+            action: ""
+            bindDescription: ""
+            plugin: ""
+            eligible: true
+        }
+    }
+
             required property var modelData
             readonly property bool active: tabButton.modelData.id === root.currentTab
 

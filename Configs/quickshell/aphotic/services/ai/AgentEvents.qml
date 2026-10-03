@@ -8,6 +8,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import "AgentEventsCore.js" as Core
 
 // The one reader of ~/.local/state/aphotic/agent-events.jsonl. Every
 // surface that wants harness session state -- the bar's agent indicator,
@@ -31,6 +32,10 @@ Singleton {
     id: root
 
     signal record(var event)
+    // A holder that joins a running tail missed the backlog `record`
+    // already delivered, so it gets the same events here instead. The
+    // first holder never sees this: the tail's own startup replays to it.
+    signal backlog(string owner, var events)
 
     readonly property var sessions: root._sessions
     readonly property var liveSessions: root._sessions.filter(s => s.status !== "ended")
@@ -58,16 +63,12 @@ Singleton {
     // repeatedly (every notch tile is) can re-assert the same hold any
     // number of times without a missed pairing leaking the tail open.
     function hold(owner: string, want: bool): void {
-        if (!owner)
+        const change = Core.hold(root._holders, owner, want, root.tailing);
+        if (!change)
             return;
-        if (want === Object.prototype.hasOwnProperty.call(root._holders, owner))
-            return;
-        const next = Object.assign({}, root._holders);
-        if (want)
-            next[owner] = true;
-        else
-            delete next[owner];
-        root._holders = next;
+        root._holders = change.holders;
+        if (change.replay)
+            root.backlog(owner, root._backlog.slice());
     }
 
     function sessionsOf(harness: string): var {
@@ -79,6 +80,7 @@ Singleton {
 
     property var _holders: ({})
     property var _sessions: []
+    property var _backlog: []
 
     readonly property bool _wanted: Object.keys(root._holders).length > 0
 
@@ -95,6 +97,7 @@ Singleton {
         event = root.normalize(event);
 
         root._sessions = root.applyTo(root._sessions, event);
+        root._backlog = Core.appendBacklog(root._backlog, event, root.historyLines);
         root.record(event);
     }
 
@@ -217,8 +220,10 @@ Singleton {
     // a state rebuilt from the tail's own backlog, not a snapshot frozen
     // at whatever moment the previous surface closed.
     onTailingChanged: {
-        if (!root.tailing)
+        if (!root.tailing) {
             root._sessions = [];
+            root._backlog = [];
+        }
     }
 
     Process {

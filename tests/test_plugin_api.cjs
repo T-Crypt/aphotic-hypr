@@ -11,7 +11,7 @@ const api = {version: 1, uses: ['resource.observe', 'context.observe', 'bogus.th
 assert.deepEqual(plain(A.grants(api, true)), ['context.observe', 'resource.observe']);
 assert.deepEqual(plain(A.grants(api, false)), []);
 assert.deepEqual(plain(A.grants(null, true)), []);
-assert.deepEqual(plain(A.grants({version: 2, uses: ['context.observe']}, true)), []);
+assert.deepEqual(plain(A.grants({version: 3, uses: ['context.observe']}, true)), []);
 assert.deepEqual(plain(A.grants({version: 0, uses: ['context.observe']}, true)), []);
 assert.deepEqual(plain(A.grants({version: '1', uses: ['context.observe']}, true)), []);
 assert.deepEqual(plain(A.grants({version: 1}, true)), []);
@@ -37,5 +37,9 @@ assert.equal(ctx.focusOwner(plain(t.stack), '', extra), 'plugin:pets/panel');
 assert.equal(A.mayRequest(0, 1000), true);
 assert.equal(A.mayRequest(1000, 1000 + A.REQUEST_INTERVAL_MS - 1), false);
 assert.equal(A.mayRequest(1000, 1000 + A.REQUEST_INTERVAL_MS), true);
+
+assert.deepEqual(plain(A.grants({version:1, uses:['sonar.register']}, true)), []);
+assert.deepEqual(plain(A.grants({version:2, uses:['sonar.register']}, true)), ['sonar.register']);
+assert.deepEqual(plain(A.grants({version:1.5, uses:['context.observe']}, true)), []);
 
 console.log('Plugin API core: passed');

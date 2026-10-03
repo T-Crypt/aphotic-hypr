@@ -9,7 +9,7 @@ ColumnLayout {
 
     spacing: Tokens.spacing.medium
 
-    Component.onCompleted: Nmcli.getVpnStatus(() => {})
+    Component.onCompleted: Vpn.refresh()
 
     RowLayout {
         Layout.fillWidth: true
@@ -17,8 +17,8 @@ ColumnLayout {
 
         MaterialIcon {
             text: "vpn_key"
-            color: Nmcli.vpnActive ? Colours.palette.m3primary : Colours.palette.m3onSurface
-            fill: Nmcli.vpnActive ? 1 : 0
+            color: Vpn.status.connected ? Colours.palette.m3primary : Colours.palette.m3onSurface
+            fill: Vpn.status.connected ? 1 : 0
         }
 
         StyledText {
@@ -28,23 +28,23 @@ ColumnLayout {
         }
 
         StyledText {
-            text: Nmcli.vpnActive ? qsTr("Connected") : qsTr("Not connected")
-            color: Settings.barSignal ? (Nmcli.vpnActive ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (Nmcli.vpnActive ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant)
+            text: Vpn.status.connected ? qsTr("Connected") : qsTr("Not connected")
+            color: Settings.barSignal ? (Vpn.status.connected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (Vpn.status.connected ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant)
             font: Tokens.font.label.medium
         }
     }
 
     StyledText {
-        visible: Nmcli.vpnActive && Nmcli.vpnConnectionName.length > 0
-        text: Nmcli.vpnConnectionName
+        visible: Vpn.status.connected && (Vpn.status.primary?.name ?? "").length > 0
+        text: Vpn.status.primary?.name ?? ""
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.label.medium
     }
 
     StyledText {
-        visible: !Nmcli.vpnActive
+        visible: !Vpn.status.connected
         Layout.preferredWidth: 220
-        text: qsTr("No active VPN connection. Connect via nmcli/NetworkManager to see it here.")
+        text: qsTr("No active VPN connection.")
         color: Colours.palette.m3onSurfaceVariant
         font: Tokens.font.label.small
         wrapMode: Text.Wrap

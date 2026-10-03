@@ -12,6 +12,19 @@ import qs.modules.bar.components
 StyledClippingRect {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:bar/workspaces"
+            label: qsTr("Workspaces")
+            action: ""
+            bindDescription: ""
+            plugin: ""
+            eligible: true
+        }
+    }
+
     required property ShellScreen screen
     required property bool fullscreen
 

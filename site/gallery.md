@@ -2,5 +2,30 @@
 layout: default
 title: Gallery
 description: Screenshots of existing Aphotic desktop surfaces.
+shots:
+  - file: signal
+    caption: The Signal line skin in Tokyo Night
+  - file: command-center
+    caption: Command Center
+  - file: flow
+    caption: Flow, every workload and what it holds
+  - file: agents-popout
+    caption: Agents popout
+  - file: processes-popout
+    caption: Processes popout
+  - file: settings-appearance
+    caption: Settings, themes and wallpapers
+  - file: settings-plugins
+    caption: Settings, plugins
+  - file: wallpaper-carousel
+    caption: Wallpaper picker
+  - file: workspace-plane
+    caption: Workspace plane replaying an agent run
+  - file: pet-lumen
+    caption: Lumen desktop pet
+  - file: pet-cipher
+    caption: Cipher desktop pet
+  - file: pet-kozumi
+    caption: Kozumi desktop pet
 ---
-<section class="page hero"><p class="eyebrow">Gallery</p><h1>The desktop, in use.</h1><p class="lede">Existing project screenshots showing real Aphotic surfaces and plugins. The two Flow captures are labelled illustrative fixtures, not live hardware readings.</p></section><section class="page gallery">{% assign shots = 'flow-contended:Flow, two workloads contending for VRAM, flow-calm:Flow, every plane monitoring, bar-minimal:Minimal bar, dashboard:Command Center, plugins:Plugin management, theme:Theme controls, pet-lumen:Lumen desktop pet, pet-cipher:Cipher desktop pet, pet-kozumi:Kozumi desktop pet' | split: ', ' %}{% for shot in shots %}{% assign parts = shot | split: ':' %}<figure><img src="{{ '/assets/gallery/' | append: parts[0] | append: '.png' | relative_url }}" alt="{{ parts[1] }}"><figcaption>{{ parts[1] }}</figcaption></figure>{% endfor %}</section>
+<section class="page hero"><p class="eyebrow">Gallery</p><h1>The desktop, in use.</h1><p class="lede">Screenshots from a live 2.0.7 desktop in the Signal line skin, plus the plugins that add to it.</p></section><section class="page gallery">{% for shot in page.shots %}<figure><img src="{{ '/assets/gallery/' | append: shot.file | append: '.png' | relative_url }}" alt="{{ shot.caption }}"><figcaption>{{ shot.caption }}</figcaption></figure>{% endfor %}</section>

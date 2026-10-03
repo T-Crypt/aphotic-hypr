@@ -16,9 +16,11 @@
 // answer can't be taken by whichever window happened to have keyboard
 // focus, and everything comes back once the answer is in.
 
-var ROLES = ['transient', 'workspace', 'primary', 'modal'];
+var ROLES = ['transient', 'workspace', 'primary', 'modal', 'sonar', 'shelf'];
 
 var SURFACES = {
+    sonar: {role: 'sonar'},
+    shelf: {role: 'transient'},
     agentPanel: {role: 'transient'},
     workspace: {role: 'workspace'},
     launcher: {role: 'primary'},
@@ -35,14 +37,16 @@ var SURFACES = {
 // Which existing roles an incoming role closes. Workspace survives a
 // primary on purpose: it is the plane a launcher opens over, not a rival.
 var DISPLACES = {
-    transient: ['transient'],
-    workspace: ['transient', 'primary', 'modal'],
-    primary: ['transient', 'primary', 'modal'],
-    modal: ['transient', 'primary']
+    transient: ['transient', 'shelf', 'sonar'],
+    shelf: ['transient', 'sonar'],
+    workspace: ['transient', 'shelf', 'primary', 'modal', 'sonar'],
+    primary: ['transient', 'shelf', 'primary', 'modal', 'sonar'],
+    modal: ['transient', 'shelf', 'primary', 'sonar'],
+    sonar: []
 };
 
 // Focus precedence when more than one surface is open at once.
-var RANK = {transient: 1, workspace: 2, primary: 3, modal: 4};
+var RANK = {transient: 1, shelf: 1, workspace: 2, primary: 3, modal: 4, sonar: 5};
 
 function roleOf(name, extra) {
     var entry = (extra && extra[name]) || SURFACES[name];
@@ -123,6 +127,6 @@ function back(stack, blocking, extra) {
 // whenever something takes the keyboard. They are not in the stack, so
 // this is the one question they ask.
 function engaged(stack, blocking, extra) {
-    var m = mode(stack, blocking, extra);
+    var m = mode((stack || []).filter(function (n) { return roleOf(n, extra) !== 'sonar'; }), blocking, extra);
     return m !== 'ambient' && m !== 'transient';
 }

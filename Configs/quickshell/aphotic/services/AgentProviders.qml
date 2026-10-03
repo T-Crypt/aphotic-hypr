@@ -119,13 +119,64 @@ Singleton {
     // indexing `stats` and getting a zero for the wrong reason.
     property var _usageById: ({})
 
+    // Transcript scans cover Claude and Codex. A harness the scan cannot
+    // read (OpenCode keeps no transcript to scan) reports usage as v2
+    // records on the event stream instead, so those are summed here and
+    // served by the same shape. In memory only: it rebuilds as sessions
+    // emit, and the scan file stays authoritative for whatever it covers.
+    property var _streamUsage: ({})
+    property string _streamUsageDay: ""
+
     function usageOf(providerId: string): var {
         const usage = root._usageById[providerId];
+        const stream = root._streamUsage[providerId];
+        if (!(usage?.availability === "available") && stream)
+            return {
+                availability: "available",
+                todayTokens: stream.todayTokens,
+                tokensByModel: stream.tokensByModel
+            };
         return {
             availability: usage?.availability ?? "unavailable",
             todayTokens: usage?.todayTokens ?? 0,
             tokensByModel: usage?.tokensByModel ?? []
         };
+    }
+
+    // One usage record = one step's token delta. Summed the same way the
+    // transcript scan sums its transcripts (input plus output, cache
+    // excluded) so a harness's number means the same thing whichever
+    // source answered.
+    function _noteStreamUsage(record: var): void {
+        const harness = record.harness || "";
+        if (!harness)
+            return;
+        const scanned = root._usageById[harness];
+        if (scanned?.availability === "available")
+            return;
+        const today = new Date().toDateString();
+        if (today !== root._streamUsageDay) {
+            root._streamUsageDay = today;
+            root._streamUsage = {};
+        }
+        const entry = Object.assign({}, root._streamUsage[harness] ?? { todayTokens: 0, tokensByModel: [] });
+        const delta = (record.inputTokens ?? 0) + (record.outputTokens ?? 0);
+        entry.todayTokens += delta;
+        if (record.model && delta > 0) {
+            const byModel = entry.tokensByModel.slice();
+            const at = byModel.findIndex((m) => m.model === record.model);
+            if (at === -1)
+                byModel.push({ model: record.model, tokens: delta });
+            else
+                byModel[at] = { model: byModel[at].model, tokens: byModel[at].tokens + delta };
+            entry.tokensByModel = byModel;
+        }
+        root._streamUsage = Object.assign({}, root._streamUsage, { [harness]: entry });
+        root._setStat(root._findIndex(harness), {
+            availability: "available",
+            todayTokens: entry.todayTokens,
+            tokensByModel: entry.tokensByModel
+        });
     }
 
     // Quota windows for one provider: `{ fiveHour, sevenDay, spendLimit,
@@ -165,6 +216,8 @@ Singleton {
     // that reaches here at least once, the pgrep poll below (AGF-07).
     function _ingestSessionRecord(record: var): void {
         const harness = record.harness || "claude";
+        if (record.event === "usage")
+            root._noteStreamUsage(record);
         if (!root._hasLiveEvents[harness])
             root._hasLiveEvents = Object.assign({}, root._hasLiveEvents, { [harness]: true });
 
@@ -284,6 +337,11 @@ Singleton {
                 for (const p of root.providers) {
                     const usage = data.providers?.[p.id];
                     if (!usage)
+                        continue;
+                    // A scan that says unavailable would stomp live stream
+                    // numbers with zeros every reload; the stream keeps
+                    // the stat until the scan has real data.
+                    if (root._streamUsage[p.id] && usage.availability !== "available")
                         continue;
                     root._setStat(root._findIndex(p.id), {
                         availability: usage.availability ?? "unavailable",

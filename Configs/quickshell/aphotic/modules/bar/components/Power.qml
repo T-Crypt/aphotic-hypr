@@ -6,6 +6,19 @@ import qs.services
 Item {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:bar/power"
+            label: qsTr("Power menu")
+            action: "session"
+            bindDescription: "Toggle session menu"
+            plugin: ""
+            eligible: true
+        }
+    }
+
     required property ScreenState screenState
 
     implicitWidth: Settings.barHorizontal ? icon.implicitHeight : icon.implicitHeight + Tokens.padding.small

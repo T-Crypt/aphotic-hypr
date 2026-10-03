@@ -1,0 +1,13 @@
+module qs.modules.shelves
+ShelfHost 1.0 ShelfHost.qml
+ShelfWindow 1.0 ShelfWindow.qml
+ShelfContent 1.0 ShelfContent.qml
+ShelfHandle 1.0 ShelfHandle.qml
+ShelfTabPanel 1.0 ShelfTabPanel.qml
+ShelfTabStrip 1.0 ShelfTabStrip.qml
+ShelfTabView 1.0 ShelfTabView.qml
+ShelfEchoRing 1.0 ShelfEchoRing.qml
+ShelfNotchTab 1.0 ShelfNotchTab.qml
+ShelfMediaTab 1.0 ShelfMediaTab.qml
+ShelfQuickTab 1.0 ShelfQuickTab.qml
+ShelfAgentsTab 1.0 ShelfAgentsTab.qml

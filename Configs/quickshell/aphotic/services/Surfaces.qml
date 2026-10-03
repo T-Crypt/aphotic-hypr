@@ -50,7 +50,7 @@ Singleton {
     }
 
     function declare(name: string, role: string): bool {
-        if (!name || Policy.ROLES.indexOf(role) < 0 || Policy.SURFACES[name])
+        if (role === "sonar" || !name || Policy.ROLES.indexOf(role) < 0 || Policy.SURFACES[name])
             return false;
         const next = Object.assign({}, root._declared);
         next[name] = {

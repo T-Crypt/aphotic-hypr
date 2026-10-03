@@ -120,6 +120,22 @@ can't accidentally kill anything else. Without passwordless sudo, both
 subcommands warn and no-op rather than blocking on a password prompt —
 run `sudo -v` first, or connect/disconnect manually.
 
+### VPN providers
+
+Every VPN type is an adapter file under `commands/vpn/` that registers
+itself in `APHOTIC_VPN_ADAPTERS` and implements the contract described at
+the top of `cmd_vpn.sh` (label, available, list, connect, disconnect).
+`aphotic vpn list --json` merges them into one shape, and
+`services/Vpn.qml` reads only that:
+
+```
+{"providers": [{"id": "openvpn", "label": "OpenVPN profile", "available": true,
+  "connections": [{"id": "profile", "name": "lab.ovpn", "active": false, "detail": ""}]}]}
+```
+
+`aphotic vpn connect --provider <id> <name>` and
+`aphotic vpn disconnect --provider <id> [name]` act through one adapter.
+
 ## Environment Variables
 
 The following variables are available:

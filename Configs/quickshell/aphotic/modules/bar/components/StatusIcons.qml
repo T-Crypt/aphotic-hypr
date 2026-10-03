@@ -13,6 +13,7 @@ Item {
     id: root
 
     required property ScreenState screenState
+    readonly property var echoLabels: ({lockStatus:qsTr("Lock"),audio:qsTr("Audio"),microphone:qsTr("Microphone"),kbLayout:qsTr("Keyboard layout"),network:qsTr("Network"),bluetooth:qsTr("Bluetooth"),vpn:qsTr("VPN"),battery:qsTr("Battery"),resources:qsTr("Resources"),hostInfo:qsTr("Host information"),networkSpeed:qsTr("Network speed"),pomodoro:qsTr("Focus timer"),dnd:qsTr("Do not disturb"),notifCenter:qsTr("Notifications")})
 
     property color colour: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3secondaryOnSurface
 
@@ -87,6 +88,12 @@ Item {
     implicitWidth: Settings.barHorizontal ? groupLayout.implicitWidth : Math.max(Settings.barInnerWidth, groupLayout.implicitWidth)
     implicitHeight: Settings.barHorizontal ? Math.max(Settings.barInnerWidth, groupLayout.implicitHeight) : groupLayout.implicitHeight
 
+    // At the root, not inside the kbLayout delegate. EntryWrapper's default
+    // property is `Item item`, and this watch is a plain QtObject, so putting
+    // it there made the whole file fail to compile. Here it also does what it
+    // exists for: one subscription for the component rather than one that came
+    // and went with whichever entries the user's config happens to enable.
+    KeyboardStateWatch {}
 
     GridLayout {
         id: groupLayout
@@ -369,6 +376,20 @@ Item {
     // without threading first/last-present indices through 13 delegate
     // call sites that would each need it.
     component EntryWrapper: Item {
+        id: statusEntry
+
+        property QtObject _sonarTarget: Loader {
+            active: Settings.sonarEnabled
+            sourceComponent: EchoTarget {
+                target: statusEntry.item
+                targetId: "core:status/" + statusEntry.modelData.id
+                label: root.echoLabels[statusEntry.modelData.id] || statusEntry.modelData.id
+                action: ""
+                bindDescription: ""
+                plugin: ""
+                eligible: true
+            }
+        }
         required property var modelData
         required property int index
         default property Item item

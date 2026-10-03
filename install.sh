@@ -23,6 +23,7 @@ source "$ROOT_DIR/lib/install/nvidia.sh"
 source "$ROOT_DIR/lib/install/amd.sh"
 source "$ROOT_DIR/lib/install/gpu_compute.sh"
 source "$ROOT_DIR/lib/install/wallust.sh"
+source "$ROOT_DIR/lib/install/fonts.sh"
 source "$ROOT_DIR/lib/install/report.sh"
 source "$ROOT_DIR/lib/install/snapshot.sh"
 source "$ROOT_DIR/lib/install/packages.sh"
@@ -511,6 +512,8 @@ main() {
   # Not in the package lists: no repo carries it and both AUR routes are
   # broken (see lib/install/wallust.sh). Never fatal.
   setup_wallust || true
+
+  refresh_font_cache
 
   if [[ "$ASSISTANT" == "true" ]]; then
     setup_assistant || echo -e "$CWR - Aphotic Assistant setup did not finish; see $INSTLOG. The rest of the install continues."

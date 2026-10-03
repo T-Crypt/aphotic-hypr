@@ -10,6 +10,7 @@ DepthGradient 1.0 DepthGradient.qml
 DepthLayer 1.0 DepthLayer.qml
 Elevation 1.0 Elevation.qml
 KbCodeField 1.0 KbCodeField.qml
+KeyboardStateWatch 1.0 KeyboardStateWatch.qml
 Logo 1.0 Logo.qml
 MaterialIcon 1.0 MaterialIcon.qml
 NetworkUsageWatch 1.0 NetworkUsageWatch.qml
@@ -29,3 +30,5 @@ StyledText 1.0 StyledText.qml
 SystemUsageWatch 1.0 SystemUsageWatch.qml
 FlickScrollBar 1.0 FlickScrollBar.qml
 SurfaceReveal 1.0 SurfaceReveal.qml
+
+EchoTarget 1.0 EchoTarget.qml

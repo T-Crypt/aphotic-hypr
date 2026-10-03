@@ -5,12 +5,14 @@ import QtQuick.Layouts
 import qs.config
 import qs.components
 import qs.services
+import qs.modules.shelves
 
 ColumnLayout {
     id: root
 
     required property var tiles
     required property var pluginTiles
+    required property var shelfTiles
     required property var screenState
     required property bool switchable
     required property bool expanded
@@ -46,6 +48,16 @@ ColumnLayout {
         spacing: Tokens.spacing.small
 
         StyledRect {
+            id: cycleHeader
+            property QtObject _sonarTarget: Loader {
+                active: Settings.sonarEnabled
+                sourceComponent: EchoTarget {
+                    target: cycleHeader
+                    targetId: "core:notch/cycle"
+                    label: qsTr("Next notch tile")
+                    eligible: root.expanded && root.switchable
+                }
+            }
             Layout.fillWidth: true
             implicitHeight: 34
             radius: Tokens.rounding.medium
@@ -87,6 +99,16 @@ ColumnLayout {
         // "close", not an arrow: the hub opens from whichever edge the bar
         // is docked to, so there is no one direction a collapse points in.
         StyledRect {
+            id: closeHeader
+            property QtObject _sonarTarget: Loader {
+                active: Settings.sonarEnabled
+                sourceComponent: EchoTarget {
+                    target: closeHeader
+                    targetId: "core:notch/close"
+                    label: qsTr("Close notch")
+                    eligible: root.expanded
+                }
+            }
             implicitWidth: 28
             implicitHeight: 28
             radius: Tokens.rounding.full
@@ -137,9 +159,12 @@ ColumnLayout {
                 return paletteTileLoader;
             const count = pluginRepeater.count;
             const i = root.pluginTiles.findIndex(t => t.id === root.shownTileId);
-            if (i < 0 || i >= count)
-                return null;
-            return pluginRepeater.itemAt(i);
+            if (i >= 0 && i < count)
+                return pluginRepeater.itemAt(i);
+            const j = root.shelfTiles.findIndex(t => t.id === root.shownTileId);
+            if (j >= 0 && j < shelfRepeater.count)
+                return shelfRepeater.itemAt(j);
+            return null;
         }
 
         Loader {
@@ -179,6 +204,19 @@ ColumnLayout {
             Loader {
                 id: pluginTileLoader
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: pluginTileLoader.item
+            targetId: "plugin:" + pluginTileLoader.modelData.plugin + "/notch-" + pluginTileLoader.modelData.id
+            label: pluginTileLoader.modelData.label
+            action: ""
+            bindDescription: ""
+            plugin: pluginTileLoader.modelData.plugin
+            eligible: true
+        }
+    }
+
                 required property var modelData
 
                 width: tileHost.width
@@ -187,6 +225,34 @@ ColumnLayout {
                 active: root.shownTileId === pluginTileLoader.modelData.id
                 visible: root.shownTileId === pluginTileLoader.modelData.id
                 source: pluginTileLoader.modelData.componentUrl
+            }
+        }
+
+        // Shelf tabs the notch is showing. Mounted only while shown, like
+        // every other tile here, and through ShelfTabView so the content
+        // is the same object a shelf edge would have built.
+        Repeater {
+            id: shelfRepeater
+
+            model: root.shelfTiles
+
+            Loader {
+                id: shelfTileLoader
+
+                required property var modelData
+
+                width: tileHost.width
+                y: (1 - tileHost.enterT) * Tokens.spacing.medium
+                asynchronous: true
+                active: root.shownTileId === shelfTileLoader.modelData.id
+                visible: root.shownTileId === shelfTileLoader.modelData.id
+                sourceComponent: Component {
+                    ShelfNotchTab {
+                        tab: shelfTileLoader.modelData.tab
+                        screen: root.screenState.modelData.name
+                        active: root.shownTileId === shelfTileLoader.modelData.id
+                    }
+                }
             }
         }
     }

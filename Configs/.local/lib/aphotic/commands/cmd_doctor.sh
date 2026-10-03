@@ -62,6 +62,49 @@ _aphotic_doctor_layer_plugins() {
 # that checkout is behind origin/main. Formats _aphotic_state_version_drift
 # (lib/aphotic/state.sh), shared with `aphotic status`/`aphotic diff` so
 # all three agree on what "behind" means.
+# Live configs are symlinks into the checkout install.sh ran from. Deleting
+# that checkout (a throwaway worktree, say) breaks them, and Hyprland drops
+# into emergency mode on its next reload.
+_aphotic_doctor_config_links() {
+    local dots link target bad=0
+    dots="$(readlink -f "${APHOTIC_DOTS_DIR}")"
+    while IFS= read -r link; do
+        target="$(readlink "$link")"
+        case "$target" in
+            */Configs/*) ;;
+            *) continue ;;
+        esac
+        if [[ ! -e "$link" ]]; then
+            printf '  [BROKEN] %s -> %s\n' "${link/#$HOME/\~}" "$target"
+            bad=1
+        elif [[ "$(readlink -f "$link")" != "$dots"/* ]]; then
+            printf '  [warn] %s points outside %s: %s\n' "${link/#$HOME/\~}" "${APHOTIC_DOTS_DIR/#$HOME/\~}" "$target"
+            bad=1
+        fi
+    done < <(find "$HOME/.config/hypr" "$HOME/.config/quickshell" "$HOME/.config/systemd/user" \
+        "$HOME/.local/bin" -maxdepth 2 -type l 2>/dev/null)
+    if [[ "$bad" == "1" ]]; then
+        echo "  Fix: run 'aphotic sync' to relink them to ${APHOTIC_DOTS_DIR/#$HOME/\~}."
+    else
+        echo "  [ok]   every config link resolves inside ${APHOTIC_DOTS_DIR/#$HOME/\~}"
+    fi
+}
+
+# Without this font every shell icon renders as its name. A stale font
+# cache hides it even when the package is installed.
+_aphotic_doctor_icon_font() {
+    local font="Material Symbols Rounded"
+    if fc-list : family 2>/dev/null | grep -qF "$font"; then
+        printf '  [ok]   %s\n' "$font"
+    elif pacman -Q ttf-material-symbols-variable &>/dev/null; then
+        printf '  [warn] %s is installed but missing from the font cache; the shell shows icon names instead of icons\n' "$font"
+        echo "  Fix: fc-cache -f && systemctl --user restart aphotic-shell.service"
+    else
+        printf '  [MISS] %s; the shell shows icon names instead of icons\n' "$font"
+        echo "  Fix: sudo pacman -S --needed ttf-material-symbols-variable && systemctl --user restart aphotic-shell.service"
+    fi
+}
+
 _aphotic_doctor_version_drift() {
     source "${LIB_DIR}/state.sh"
 
@@ -146,6 +189,10 @@ aphotic_cmd_doctor() {
     done
 
     echo
+    echo "Icon font:"
+    _aphotic_doctor_icon_font
+
+    echo
     echo "Paths:"
     for p in "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$QUICKSHELL_CONFIG_DIR" "$APHOTIC_DOTS_DIR"; do
         if [[ -e "$p" ]]; then
@@ -196,6 +243,10 @@ aphotic_cmd_doctor() {
     if [[ "$shellunit_state" != "enabled" ]]; then
         printf '  [warn] aphotic-shell.service: %s -- %s\n' "$shellunit_state" "$shellunit_detail"
     fi
+
+    echo
+    echo "Config links:"
+    _aphotic_doctor_config_links
 
     echo
     echo "Version:"

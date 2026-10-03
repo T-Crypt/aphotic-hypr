@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import qs.services
+import "DockItems.js" as Items
 
 Singleton {
     id: root
@@ -14,6 +15,7 @@ Singleton {
                 appClass: t.lastIpcObject?.class ?? "",
                 workspaceId: t.workspace?.id ?? 0,
                 workspaceName: t.workspace?.name ?? "",
+                output: t.monitor?.name ?? t.workspace?.monitor?.name ?? "",
                 focused: t.address === Hypr.activeToplevel?.address,
                 floating: !!t.lastIpcObject?.floating,
                 toplevel: t
@@ -24,16 +26,14 @@ Singleton {
     // need (one entry per app, with its member windows for a flyout/click
     // list) without either building its own grouping logic.
     function grouped(): var {
-        const order = [];
-        const groups = {};
-        for (const w of root.windows) {
-            if (!groups[w.appClass]) {
-                groups[w.appClass] = [];
-                order.push(w.appClass);
-            }
-            groups[w.appClass].push(w);
-        }
-        return order.map(appClass => ({ appClass, windows: groups[appClass] }));
+        return Items.group(root.windows);
+    }
+
+    function dockItems(pinned: var, output: string, allOutputs: bool): var {
+        const windows = allOutputs ? root.windows : root.windows.filter(w => w.output === output);
+        return Items.dockItems(pinned, Items.group(windows),
+            id => DesktopEntries.applications.values.find(a => a.id === id),
+            appClass => DesktopEntries.heuristicLookup(appClass));
     }
 
     function windowsForClass(appClass: string): var {

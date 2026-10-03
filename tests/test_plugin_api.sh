@@ -71,15 +71,19 @@ out="$(_aphotic_plugin_validate "$SRC/scratch-api" 2>&1)" || fail "valid api plu
 
 make_plugin "$SRC/typo-api" $'\n[api]\nversion = 1\nuses = ["context.observ"]'
 out="$(_aphotic_plugin_validate "$SRC/typo-api" 2>&1)" || fail "unknown use should warn, not fail: $out"
-grep -q "uses 'context.observ' isn't part of plugin API v1" <<<"$out" || fail "expected an unknown-use warning: $out"
+grep -q "uses 'context.observ' isn't part of plugin API v2" <<<"$out" || fail "expected an unknown-use warning: $out"
 
-make_plugin "$SRC/future-api" $'\n[api]\nversion = 2\nuses = ["context.observe"]'
-out="$(_aphotic_plugin_validate "$SRC/future-api" 2>&1)" && fail "API v2 should fail validate: $out"
+make_plugin "$SRC/future-api" $'\n[api]\nversion = 3\nuses = ["context.observe"]'
+out="$(_aphotic_plugin_validate "$SRC/future-api" 2>&1)" && fail "API v3 should fail validate: $out"
 grep -q "newer than this build's plugin API" <<<"$out" || fail "expected a version error: $out"
 
 make_plugin "$SRC/bad-version" $'\n[api]\nversion = "one"'
 out="$(_aphotic_plugin_validate "$SRC/bad-version" 2>&1)" && fail "non-numeric version should fail validate: $out"
 grep -q "is not a whole number" <<<"$out" || fail "expected a whole-number error: $out"
+
+make_plugin "$SRC/sonar-v1" $'\n[api]\nversion = 1\nuses = ["sonar.register"]'
+out="$(_aphotic_plugin_validate "$SRC/sonar-v1" 2>&1)" && fail "v1 + sonar.register should fail validate: $out"
+grep -q "sonar.register requires plugin API v2" <<<"$out" || fail "expected the grant version error: $out"
 
 # --- install gate, registry round-trip, drift --------------------------
 export APHOTIC_PLUGINS_REPO="$SRC"
@@ -87,9 +91,13 @@ export APHOTIC_PLUGINS_REPO="$SRC"
 # instead of cloning the real catalogue.
 git -C "$SRC" init -q 2>/dev/null || true
 mkdir -p "$APHOTIC_PLUGINS_DIR"
-out="$(aphotic_cmd_plugin install future-api 2>&1)" && fail "API v2 install should be refused: $out"
-grep -q "plugin API v2, this shell speaks v1" <<<"$out" || fail "expected the version refusal: $out"
+out="$(aphotic_cmd_plugin install future-api 2>&1)" && fail "API v3 install should be refused: $out"
+grep -q "plugin API v3, this shell speaks v2" <<<"$out" || fail "expected the version refusal: $out"
 [[ -e "$APHOTIC_PLUGINS_DIR/future-api" ]] && fail "refused install must not copy files"
+
+out="$(aphotic_cmd_plugin install sonar-v1 2>&1)" && fail "v1 + sonar.register install should be refused: $out"
+grep -q "sonar.register requires plugin API v2" <<<"$out" || fail "expected the grant refusal: $out"
+[[ -e "$APHOTIC_PLUGINS_DIR/sonar-v1" ]] && fail "refused install must not copy files"
 
 aphotic_cmd_plugin install scratch-api >/dev/null 2>&1 || fail "api plugin install failed"
 stored="$(jq -c '.installed["scratch-api"].api' "$APHOTIC_PLUGINS_STATE_FILE")"
@@ -107,12 +115,12 @@ aphotic_cmd_plugin install no-api >/dev/null 2>&1 || fail "no-api install failed
 
 # --- aphotic plugin api -------------------------------------------------
 out="$(aphotic_cmd_plugin api)"
-grep -q "^Plugin API v1" <<<"$out" || fail "api listing header missing: $out"
+grep -q "^Plugin API v2" <<<"$out" || fail "api listing header missing: $out"
 for use in $APHOTIC_PLUGIN_API_USES; do
     grep -q "  $use " <<<"$out" || fail "api listing missing $use"
 done
 json="$(aphotic_cmd_plugin api --json)"
-[[ "$(jq -r .version <<<"$json")" == "1" ]] || fail "api --json version: $json"
+[[ "$(jq -r .version <<<"$json")" == "2" ]] || fail "api --json version: $json"
 [[ "$(jq -r '[.uses[].id] | join(" ")' <<<"$json")" == "$APHOTIC_PLUGIN_API_USES" ]] || fail "api --json uses: $json"
 
 echo "PASS: plugin API manifest, gate, registry and listing"

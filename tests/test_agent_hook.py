@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "Configs" / ".local" / "lib" / "aphotic"))
 import agent_hook
 
@@ -254,22 +256,38 @@ class TestTrim:
 
 
 class TestEventMapping:
-    """Test event name mapping and record building."""
+    """Test v2 event kind mapping and record building."""
 
-    def test_event_names_maps_correctly(self):
-        """EVENT_NAMES maps hook event names to internal names."""
-        assert agent_hook.EVENT_NAMES["SessionStart"] == "session_start"
-        assert agent_hook.EVENT_NAMES["PreToolUse"] == "pre_tool_use"
-        assert agent_hook.EVENT_NAMES["PostToolUse"] == "post_tool_use"
-        assert agent_hook.EVENT_NAMES["SessionEnd"] == "session_end"
+    def test_v2_kind_maps_correctly(self):
+        """V2_KIND maps raw Claude hook names to v2 event kinds."""
+        assert agent_hook.V2_KIND["SessionStart"] == "session_start"
+        assert agent_hook.V2_KIND["PreToolUse"] == "tool_call"
+        assert agent_hook.V2_KIND["PostToolUse"] == "tool_call"
+        assert agent_hook.V2_KIND["PostToolUseFailure"] == "tool_call"
+        assert agent_hook.V2_KIND["UserPromptSubmit"] == "turn"
+        assert agent_hook.V2_KIND["Stop"] == "turn"
+        assert agent_hook.V2_KIND["Notification"] == "turn"
+        assert agent_hook.V2_KIND["PreCompact"] == "turn"
+        assert agent_hook.V2_KIND["PostCompact"] == "turn"
+        assert agent_hook.V2_KIND["SubagentStop"] == "turn"
+        assert agent_hook.V2_KIND["SessionEnd"] == "session_end"
 
-    def test_status_mapping_for_events(self):
-        """STATUS maps event types to execution statuses."""
-        assert agent_hook.STATUS["pre_tool_use"] == "running"
-        assert agent_hook.STATUS["post_tool_use"] == "completed"
-        assert agent_hook.STATUS["post_tool_use_failure"] == "errored"
-        # Events not in STATUS should default to "idle"
-        assert "session_start" not in agent_hook.STATUS
+    def test_v2_status_mapping_for_events(self):
+        """V2_STATUS maps raw hook names to the v2 session-level status."""
+        assert agent_hook.V2_STATUS["UserPromptSubmit"] == "running"
+        assert agent_hook.V2_STATUS["Stop"] == "idle"
+        assert agent_hook.V2_STATUS["Notification"] == "waiting"
+        assert agent_hook.V2_STATUS["PreCompact"] == "compacting"
+        assert agent_hook.V2_STATUS["PostCompact"] == "running"
+        assert agent_hook.V2_STATUS["SubagentStop"] == "idle"
+        assert agent_hook.V2_STATUS["SessionStart"] == "running"
+        assert agent_hook.V2_STATUS["SessionEnd"] == "ended"
+
+    def test_tool_status_mapping(self):
+        """TOOL_STATUS carries the explicit per-phase status a tool_call needs."""
+        assert agent_hook.TOOL_STATUS["PreToolUse"] == "running"
+        assert agent_hook.TOOL_STATUS["PostToolUse"] == "completed"
+        assert agent_hook.TOOL_STATUS["PostToolUseFailure"] == "errored"
 
 
 class TestPayloadProcessing:
@@ -286,18 +304,18 @@ class TestPayloadProcessing:
         stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
         
         record = {
-            "v": 1,
+            "v": 2,
             "sessionId": payload["session_id"],
-            "event": agent_hook.EVENT_NAMES[payload["hook_event_name"]],
-            "status": agent_hook.STATUS.get("session_start", "idle"),
-            "timestamp": stamp,
+            "event": agent_hook.V2_KIND[payload["hook_event_name"]],
+            "status": agent_hook.V2_STATUS.get(payload["hook_event_name"], "idle"),
+            "ts": stamp,
             "t": int(now * 1000),
         }
-        
-        assert record["v"] == 1
+
+        assert record["v"] == 2
         assert record["sessionId"] == "test-session"
         assert record["event"] == "session_start"
-        assert "timestamp" in record
+        assert "ts" in record
         assert "t" in record
         assert isinstance(record["t"], int)
 
@@ -412,7 +430,7 @@ class TestPayloadProcessing:
         for payload in invalid_payloads:
             session_id = payload.get("session_id") if isinstance(payload, dict) else None
             raw_event = payload.get("hook_event_name") if isinstance(payload, dict) else None
-            event = agent_hook.EVENT_NAMES.get(raw_event) if raw_event else None
+            event = agent_hook.V2_KIND.get(raw_event) if raw_event else None
             
             should_skip = not session_id or not event
             assert should_skip, f"Should skip payload: {payload}"
@@ -538,11 +556,11 @@ class TestIntegration:
         
         # Write start event
         line = json.dumps({
-            "v": 1,
+            "v": 2,
             "sessionId": start_event["session_id"],
-            "event": agent_hook.EVENT_NAMES[start_event["hook_event_name"]],
-            "status": agent_hook.STATUS.get("session_start", "idle"),
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "event": agent_hook.V2_KIND[start_event["hook_event_name"]],
+            "status": agent_hook.V2_STATUS.get(start_event["hook_event_name"], "idle"),
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "t": int(time.time() * 1000),
         }, separators=(",", ":")) + "\n"
         
@@ -764,3 +782,274 @@ class TestCachedSession:
         p = tmp_path / "arr.json"
         p.write_text("[1,2,3]")
         assert agent_hook.cached_session(str(p)) == {}
+
+
+def _drive(tmp_path, payload, monkeypatch):
+    """Run main() against an isolated state dir and return its raw events.
+
+    Shared by the usage-line and never-raise tests below; mirrors
+    TestHarnessAndModelIdentity._drive but lives at module scope since
+    neither test class needs the harness/model-identity fixtures.
+    """
+    state = tmp_path / "state"
+    sessions = state / "agent-sessions"
+    runs = state / "agent-runs"
+    events = state / "agent-events.jsonl"
+    sessions.mkdir(parents=True, exist_ok=True)
+    runs.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(agent_hook, "STATE", str(state))
+    monkeypatch.setattr(agent_hook, "SESSIONS", str(sessions))
+    monkeypatch.setattr(agent_hook, "RUNS", str(runs))
+    monkeypatch.setattr(agent_hook, "EVENTS", str(events))
+
+    import io
+    if isinstance(payload, str):
+        monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
+    else:
+        monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
+    try:
+        agent_hook.main()
+    except SystemExit:
+        pass
+
+    if not events.exists():
+        return []
+    lines = [l for l in events.read_text().splitlines() if l]
+    return [json.loads(l) for l in lines]
+
+
+class TestUsageLine:
+    """PostToolUse's tool_response can carry a usage block; when it does,
+    it becomes a second `usage` line on the same stream.
+    Every lookup is guarded, so a missing or malformed block writes nothing."""
+
+    def _post_tool_use(self, usage=None, tool_response=None):
+        payload = {
+            "session_id": "s1",
+            "hook_event_name": "PostToolUse",
+            "tool_name": "Bash",
+            "tool_use_id": "t1",
+        }
+        if tool_response is not None:
+            payload["tool_response"] = tool_response
+        elif usage is not None:
+            payload["tool_response"] = {"usage": usage}
+        return payload
+
+    def test_usage_line_emitted_with_full_usage_block(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, self._post_tool_use(usage={
+            "input_tokens": 425,
+            "output_tokens": 1180,
+            "cache_read_input_tokens": 900,
+            "cache_creation_input_tokens": 0,
+        }), monkeypatch)
+        usage = [r for r in records if r["event"] == "usage"]
+        assert len(usage) == 1
+        line = usage[0]
+        assert line["v"] == 2
+        assert line["sessionId"] == "s1"
+        assert line["harness"] == "claude"
+        assert line["inputTokens"] == 425
+        assert line["outputTokens"] == 1180
+        assert line["cacheReadTokens"] == 900
+        assert line["cacheWriteTokens"] == 0
+
+    def test_no_usage_line_when_tool_response_has_no_usage_block(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, self._post_tool_use(tool_response={"agentId": "a1"}), monkeypatch)
+        assert all(r["event"] != "usage" for r in records)
+
+    def test_no_usage_line_when_tool_response_is_absent(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, self._post_tool_use(), monkeypatch)
+        assert all(r["event"] != "usage" for r in records)
+
+    def test_no_usage_line_when_usage_block_has_no_known_fields(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, self._post_tool_use(usage={"unrelated": 1}), monkeypatch)
+        assert all(r["event"] != "usage" for r in records)
+
+    def test_no_usage_line_when_usage_is_not_a_dict(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, self._post_tool_use(tool_response={"usage": "nope"}), monkeypatch)
+        assert all(r["event"] != "usage" for r in records)
+
+    def test_partial_usage_block_only_carries_present_fields(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, self._post_tool_use(usage={"input_tokens": 10}), monkeypatch)
+        usage = [r for r in records if r["event"] == "usage"][0]
+        assert usage["inputTokens"] == 10
+        assert "outputTokens" not in usage
+        assert "cacheReadTokens" not in usage
+        assert "cacheWriteTokens" not in usage
+
+    def test_usage_is_not_emitted_for_pre_tool_use(self, tmp_path, monkeypatch):
+        """Only PostToolUse's tool_response is a real usage report."""
+        payload = {
+            "session_id": "s1",
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "tool_response": {"usage": {"input_tokens": 5}},
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert all(r["event"] != "usage" for r in records)
+
+    def test_tool_call_line_carries_tool_status(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, {
+            "session_id": "s1", "hook_event_name": "PostToolUse", "tool_name": "Bash",
+        }, monkeypatch)
+        tool_call = [r for r in records if r["event"] == "tool_call"][0]
+        assert tool_call["toolStatus"] == "completed"
+        assert tool_call["status"] == "running"
+
+    def test_subagent_stop_is_a_turn_with_agent_id(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, {
+            "session_id": "s1", "hook_event_name": "SubagentStop",
+            "agent_id": "agent-1", "agent_type": "general-purpose",
+        }, monkeypatch)
+        turn = records[-1]
+        assert turn["event"] == "turn"
+        assert turn["status"] == "idle"
+        assert turn["agentId"] == "agent-1"
+        assert turn["agentType"] == "general-purpose"
+
+
+class TestNeverRaiseOnGarbageInput:
+    """The hook worker's exit-0 contract has to hold for input no real
+    Claude Code build would send, not just for the shapes tests build by
+    hand."""
+
+    @pytest.mark.parametrize("raw", [
+        "",
+        "not json at all",
+        "{",
+        "null",
+        "42",
+        '"just a string"',
+        "[1, 2, 3]",
+        '{"session_id": 12345, "hook_event_name": true}',
+        '{"session_id": "s1", "hook_event_name": "PostToolUse", "tool_response": "not a dict"}',
+        '{"session_id": "s1", "hook_event_name": "PostToolUse", "tool_response": {"usage": [1,2,3]}}',
+        '{"session_id": "s1", "hook_event_name": "TotallyMadeUpEvent"}',
+        '{"session_id": "", "hook_event_name": "SessionStart"}',
+        "\x00\x01\x02garbage",
+    ])
+    def test_garbage_stdin_never_raises(self, tmp_path, raw, monkeypatch):
+        # _drive already swallows SystemExit; the assertion is simply that
+        # no other exception escapes main() for any of these payloads.
+        _drive(tmp_path, raw, monkeypatch)
+
+
+class TestV2Passthrough:
+    """Adapters (codex, opencode, ...) hand over finished v2 records.
+
+    A payload carrying the contract markers (v 2, sessionId, a contract
+    event kind) is written through as-is; the writer only owns the clock
+    and the three sinks. Everything the Claude v1 path guarantees has to
+    keep working unchanged beside it."""
+
+    def test_v2_record_lands_in_all_three_sinks(self, tmp_path, monkeypatch):
+        payload = {
+            "v": 2, "harness": "opencode", "sessionId": "ses_1",
+            "event": "usage", "status": "running",
+            "inputTokens": 100, "outputTokens": 20, "reasoningTokens": 5,
+            "cacheReadTokens": 30, "cacheWriteTokens": 4,
+            "cost": {"amount": 0.014, "currency": "USD"},
+            "model": "z/glm", "provider": "z", "cwd": "/tmp/project",
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert len(records) == 1
+        record = records[0]
+        assert record["v"] == 2 and record["sessionId"] == "ses_1"
+        assert record["event"] == "usage"
+        assert record["cost"] == {"amount": 0.014, "currency": "USD"}
+        assert record["reasoningTokens"] == 5
+        assert record["harness"] == "opencode"
+        # The writer stamps the clock when the adapter left it out.
+        assert isinstance(record["t"], int) and record["t"] > 0
+        assert record["ts"].endswith("Z")
+
+        sessions = tmp_path / "state" / "agent-sessions"
+        session_file = json.loads((sessions / "ses_1.json").read_text())
+        assert session_file["harness"] == "opencode"
+        assert session_file["model"] == "z/glm"
+        assert (tmp_path / "state" / "agent-runs" / "ses_1.jsonl").exists()
+
+    def test_v2_record_keeps_unknown_fields(self, tmp_path, monkeypatch):
+        payload = {
+            "v": 2, "harness": "opencode", "sessionId": "ses_1",
+            "event": "turn", "status": "running", "futureField": {"a": 1},
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert records and records[0]["futureField"] == {"a": 1}
+
+    def test_v2_invalid_t_and_ts_are_stamped(self, tmp_path, monkeypatch):
+        payload = {
+            "v": 2, "harness": "opencode", "sessionId": "ses_1",
+            "event": "turn", "t": "yesterday",
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert records and isinstance(records[0]["t"], int) and records[0]["t"] > 0
+        assert records[0]["ts"].endswith("Z")
+        assert records[0]["status"] == "idle"
+
+    def test_v2_missing_status_defaults_to_idle(self, tmp_path, monkeypatch):
+        payload = {"v": 2, "harness": "codex", "sessionId": "s2", "event": "turn"}
+        records = _drive(tmp_path, payload, monkeypatch)
+        assert records and records[0]["status"] == "idle"
+
+    def test_v2_harness_default_and_provider_mapping(self, tmp_path, monkeypatch):
+        bare = {"v": 2, "sessionId": "s3", "event": "turn", "status": "running"}
+        records = _drive(tmp_path, bare, monkeypatch)
+        assert records[0]["harness"] == "claude"
+        assert records[0]["provider"] == "anthropic"
+
+        # _drive appends to the same events file, so the carried record
+        # lands second.
+        carried = dict(bare, harness="opencode", provider="z")
+        records = _drive(tmp_path, carried, monkeypatch)
+        assert len(records) == 2
+        assert records[1]["provider"] == "z"
+
+    def test_v2_off_type_fields_are_dropped(self, tmp_path, monkeypatch):
+        payload = {
+            "v": 2, "harness": "opencode", "sessionId": "s4", "event": "usage",
+            "status": "running", "inputTokens": {"a": 1}, "outputTokens": True,
+            "cost": "free", "error": None, "model": {"id": 1}, "durationMs": "slow",
+        }
+        records = _drive(tmp_path, payload, monkeypatch)
+        record = records[-1]
+        assert "inputTokens" not in record and "outputTokens" not in record
+        assert "cost" not in record and "error" not in record
+        assert "model" not in record and "durationMs" not in record
+
+    def test_v2_garbage_is_dropped_silently(self, tmp_path, monkeypatch):
+        payloads = [
+            {"v": 2},
+            {"v": 2, "sessionId": "x", "event": "not-a-kind"},
+            {"v": 2, "sessionId": "", "event": "turn"},
+            {"v": 1, "sessionId": "x", "event": "turn"},
+            "not json",
+            None,
+        ]
+        for payload in payloads:
+            records = _drive(tmp_path, payload, monkeypatch)
+            assert records == [], payload
+
+    def test_v1_payloads_still_map_through_v2_kind(self, tmp_path, monkeypatch):
+        records = _drive(tmp_path, {
+            "session_id": "c1", "hook_event_name": "PreToolUse",
+            "tool_name": "Bash", "harness": "claude",
+        }, monkeypatch)
+        assert len(records) == 1
+        assert records[0]["event"] == "tool_call"
+        assert records[0]["toolStatus"] == "running"
+        assert records[0]["tool"] == "Bash"
+
+    def test_fuzzed_v2_never_raises(self, tmp_path, monkeypatch):
+        nasty = [
+            {"v": 2, "sessionId": "s", "event": {"deep": ["x"]}},
+            {"v": 2, "sessionId": ["list"], "event": "turn"},
+            {"v": 2, "sessionId": "s", "event": "usage", "inputTokens": {"a": 1}, "cost": "free"},
+            {"v": 2, "sessionId": "s", "event": "error", "error": None, "status": ["running"]},
+            {"v": 2, "sessionId": "s" * 10000, "event": "turn", "t": -5},
+            {"v": 2, "sessionId": "s", "event": "quota", "quota": {"5h": None}},
+        ]
+        for payload in nasty:
+            _drive(tmp_path, payload, monkeypatch)

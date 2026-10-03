@@ -73,6 +73,7 @@ QtObject {
         { id: "clock", icon: "schedule", label: qsTr("Clock / Date"), description: qsTr("Format, desktop clock"), group: qsTr("Desktop") },
         { id: "osd", icon: "notifications", label: qsTr("OSD / Notifications"), description: qsTr("Sliders, timeouts"), group: qsTr("Desktop") },
         { id: "displays", icon: "monitor", label: qsTr("Displays"), description: qsTr("Resolution, refresh rate"), group: qsTr("Desktop") },
+        { id: "sonar", icon: "radar", label: qsTr("Sonar & Shelves"), description: qsTr("Discovery ping, side docks"), group: qsTr("Desktop") },
         { id: "language", icon: "keyboard", label: qsTr("Language"), description: qsTr("Keyboard layouts, input"), group: qsTr("Input") },
         { id: "workspaceProfiles", icon: "workspaces", label: qsTr("Workspace Profiles"), description: qsTr("Named one-key launch groups"), group: qsTr("Input") },
         { id: "ai", icon: "smart_toy", label: qsTr("AI"), description: qsTr("Provider, API keys"), group: qsTr("Services") },

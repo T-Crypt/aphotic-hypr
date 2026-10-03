@@ -11,6 +11,19 @@ import qs.services
 StyledRect {
     id: root
 
+    property QtObject _sonarTarget: Loader {
+        active: Settings.sonarEnabled
+        sourceComponent: EchoTarget {
+            target: root
+            targetId: "core:notch"
+            label: qsTr("Command notch")
+            action: ""
+            bindDescription: ""
+            plugin: ""
+            eligible: true
+        }
+    }
+
     // Which edge the bar is docked to, and which way this has to open to
     // get away from it. Supplied by NotchWindow, which anchors the layer
     // surface to the same edge.
@@ -28,6 +41,20 @@ StyledRect {
     // empty. Adding, removing or rotating a tile is a plugin install,
     // with no edit here. See docs/PLUGIN_LAYER_MODEL.md.
     readonly property var pluginTiles: PluginRegistry.surfacesFor("notch")
+
+    // Shelf tabs the user opted to expose here, and only the ones whose
+    // manifest declared notch compatibility. Same registered content the
+    // shelf edge mounts, through the same ShelfTabView, and no tile of its
+    // own: the notch keeps its resting shape and its switcher count grows
+    // only because a plugin asked to be here.
+    readonly property var shelfTiles: ShelfTabs.notchTabs.map(t => ({
+        plugin: t.plugin,
+        id: "shelf-tab:" + t.id,
+        label: t.label,
+        icon: t.icon,
+        componentUrl: "",
+        tab: t
+    }))
 
     // The base shell's own tiles. Both are core: the notch ships with the
     // base layer and every install has them, which is what makes the
@@ -48,7 +75,7 @@ StyledRect {
             label: qsTr("Commands"),
             componentUrl: ""
         }
-    ].concat(root.pluginTiles)
+    ].concat(root.pluginTiles).concat(root.shelfTiles)
 
     // Kept as a condition rather than assumed: core ships two tiles
     // today, but a build with the palette or Processes taken out has one
@@ -303,6 +330,7 @@ StyledRect {
 
             tiles: root.tiles
             pluginTiles: root.pluginTiles
+            shelfTiles: root.shelfTiles
             screenState: root.screenState
             switchable: root.switchable
             expanded: root.expanded

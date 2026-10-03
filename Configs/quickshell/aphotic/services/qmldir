@@ -55,3 +55,13 @@ BeatTracker 1.0 BeatTracker.qml
 CircularBuffer 1.0 CircularBuffer.qml
 CustomShortcut 1.0 CustomShortcut.qml
 singleton WallpaperThumbs 1.0 WallpaperThumbs.qml
+singleton EchoRegistry 1.0 EchoRegistry.qml
+singleton Sonar 1.0 Sonar.qml
+
+singleton SonarDiscovery 1.0 SonarDiscovery.qml
+singleton Shelves 1.0 Shelves.qml
+singleton ShelfTabs 1.0 ShelfTabs.qml
+singleton ShelfLaunchEcho 1.0 ShelfLaunchEcho.qml
+singleton ShelfKeybinds 1.0 ShelfKeybinds.qml
+
+ShelfShortcut 1.0 ShelfShortcut.qml

@@ -73,12 +73,26 @@ def strip_comments(text, suffix):
     return "\n".join(line.split(marker)[0] for line in text.splitlines())
 
 
+# Directories that hold no Aphotic source of their own. A git worktree inside
+# the repo is a second checkout of it: every call site is already scanned at
+# its real path, and the copy under .claude/worktrees is an older or newer
+# revision of the same five files, so it fails the "deploy the stylesheet"
+# half for no reason other than which branch someone is parked on. That is
+# what this test did on a developer box with worktrees in it: it never failed
+# in CI and always failed locally.
+SKIP_DIRS = (".git", "docs", "tests", ".claude", "node_modules")
+
+
 def source_files():
     for path in ROOT.rglob("*"):
         if path.suffix not in SCANNED or not path.is_file():
             continue
         rel = path.relative_to(ROOT).as_posix()
-        if rel.startswith(("tests/", "docs/", ".git/")):
+        if rel.split("/")[0] in SKIP_DIRS:
+            continue
+        # A .git file marks a nested worktree or submodule root, and everything
+        # under it belongs to that checkout rather than to this one.
+        if any(part == ".git" for part in path.relative_to(ROOT).parts):
             continue
         yield rel, path
 

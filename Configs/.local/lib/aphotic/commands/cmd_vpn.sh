@@ -14,9 +14,11 @@
 # @cmd: vpn
 # @cmd.desc: Connect/disconnect an OpenVPN profile
 # @cmd.group: CONFIG
-# @cmd.opt: status              | Show whether the managed OpenVPN process is up
+# @cmd.opt: status              | Show every active VPN connection, across providers
+# @cmd.opt: list [--json]       | List VPN providers and their connections
 # @cmd.opt: connect [path]      | Connect, using the given .ovpn or the saved config path
-# @cmd.opt: disconnect          | Disconnect
+# @cmd.opt: connect --provider <id> [name] | Connect through one provider adapter
+# @cmd.opt: disconnect [--provider <id> [name]] | Disconnect
 # @cmd.opt: autostart           | Connect only if Settings.vpnAutoConnect is true (called from startup.lua)
 #
 # State (which .ovpn, auto-connect preference) lives in Settings.qml's
@@ -37,6 +39,20 @@ APHOTIC_VPN_DAEMON_TAG="aphotic-vpn"
 APHOTIC_VPN_MARKER_FILE="${APHOTIC_STATE_HOME}/vpn-connected"
 APHOTIC_VPN_HOOK="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/vpn-hook.sh"
 
+# Provider contract. Each file in APHOTIC_VPN_ADAPTER_DIR appends its id
+# to APHOTIC_VPN_ADAPTERS and defines, with the id's dashes as
+# underscores:
+#   _aphotic_vpn_<id>_label                 one-line display name
+#   _aphotic_vpn_<id>_available             exit 0 when usable here
+#   _aphotic_vpn_<id>_list                  one JSON object per line:
+#                                           {"id","name","active","detail"}
+#   _aphotic_vpn_<id>_connect <name>
+#   _aphotic_vpn_<id>_disconnect [name]
+# `list --json` is the one shape services/Vpn.qml reads.
+APHOTIC_VPN_ADAPTER_DIR="${APHOTIC_VPN_ADAPTER_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/vpn}"
+APHOTIC_VPN_ADAPTERS=()
+_APHOTIC_VPN_ADAPTERS_LOADED=0
+
 _aphotic_vpn_config_path() {
     [[ -f "$APHOTIC_VPN_SETTINGS_FILE" ]] || return 0
     jq -r '.vpnConfigPath // ""' "$APHOTIC_VPN_SETTINGS_FILE" 2>/dev/null
@@ -52,15 +68,6 @@ _aphotic_vpn_pid() {
     # `set -euo pipefail` -- would otherwise kill the whole CLI process
     # right here instead of just reporting "not connected".
     pgrep -f "$APHOTIC_VPN_DAEMON_TAG" 2>/dev/null | head -n1 || true
-}
-
-_aphotic_vpn_status() {
-    local pid; pid="$(_aphotic_vpn_pid)"
-    if [[ -n "$pid" ]]; then
-        aphotic_ok "connected (pid ${pid})"
-    else
-        aphotic_log "not connected"
-    fi
 }
 
 _aphotic_vpn_connect() {
@@ -122,6 +129,110 @@ _aphotic_vpn_disconnect() {
     sudo pkill -f "$APHOTIC_VPN_DAEMON_TAG" && aphotic_ok "disconnected"
 }
 
+_aphotic_vpn_load_adapters() {
+    [[ "$_APHOTIC_VPN_ADAPTERS_LOADED" -eq 1 ]] && return 0
+    _APHOTIC_VPN_ADAPTERS_LOADED=1
+    local f
+    for f in "$APHOTIC_VPN_ADAPTER_DIR"/*.sh; do
+        [[ -f "$f" ]] || continue
+        # shellcheck source=/dev/null
+        source "$f"
+    done
+}
+
+_aphotic_vpn_fn() {
+    printf '_aphotic_vpn_%s_%s' "${1//-/_}" "$2"
+}
+
+_aphotic_vpn_is_adapter() {
+    local id
+    for id in "${APHOTIC_VPN_ADAPTERS[@]}"; do
+        [[ "$id" == "$1" ]] && return 0
+    done
+    return 1
+}
+
+# One adapter's connections, normalised to the contract. A line that is
+# not a JSON object with a string id is dropped rather than failing the
+# whole list, so one broken adapter cannot blank every other provider.
+_aphotic_vpn_adapter_connections() {
+    local out
+    out="$("$(_aphotic_vpn_fn "$1" list)" 2>/dev/null)" || true
+    printf '%s\n' "$out" | jq -cR '
+        fromjson? | objects
+        | select((.id | type) == "string" and .id != "")
+        | {id,
+           name: ((.name // .id) | tostring),
+           active: (.active == true),
+           detail: ((.detail // "") | tostring)}' | jq -cs '.'
+}
+
+_aphotic_vpn_provider_json() {
+    local id="$1" label available=false connections='[]'
+    label="$("$(_aphotic_vpn_fn "$id" label)" 2>/dev/null)" || label="$id"
+    if "$(_aphotic_vpn_fn "$id" available)" >/dev/null 2>&1; then
+        available=true
+        connections="$(_aphotic_vpn_adapter_connections "$id")"
+    fi
+    jq -nc --arg id "$id" --arg label "${label:-$id}" --argjson available "$available" \
+        --argjson connections "${connections:-[]}" \
+        '{id: $id, label: $label, available: $available, connections: $connections}'
+}
+
+_aphotic_vpn_list_json() {
+    _aphotic_vpn_load_adapters
+    local id
+    for id in "${APHOTIC_VPN_ADAPTERS[@]}"; do
+        _aphotic_vpn_provider_json "$id"
+    done | jq -cs '{providers: .}'
+}
+
+_aphotic_vpn_list() {
+    local json
+    json="$(_aphotic_vpn_list_json)"
+    if [[ "${1:-}" == "--json" ]]; then
+        printf '%s\n' "$json"
+        return 0
+    fi
+    jq -r '.providers[]
+        | "\(.label) [\(.id)]\(if .available then "" else " (not available)" end)",
+          (.connections[] | "  \(if .active then "*" else "-" end) \(.name)\(if .detail != "" then " (\(.detail))" else "" end)")' \
+        <<<"$json"
+}
+
+_aphotic_vpn_status() {
+    local active
+    active="$(_aphotic_vpn_list_json | jq -r '.providers[] | select(.available) | .label as $l
+        | .connections[] | select(.active) | "\($l): \(.name)"')"
+    if [[ -z "$active" ]]; then
+        aphotic_log "not connected"
+        return 0
+    fi
+    local line
+    while IFS= read -r line; do
+        aphotic_ok "connected via ${line}"
+    done <<<"$active"
+}
+
+# connect|disconnect --provider <id> [name]
+_aphotic_vpn_provider_action() {
+    local action="$1" id="$2" name="${3:-}"
+    _aphotic_vpn_load_adapters
+    if [[ -z "$id" ]] || ! _aphotic_vpn_is_adapter "$id"; then
+        aphotic_err "unknown vpn provider '${id}' -- one of: ${APHOTIC_VPN_ADAPTERS[*]}"
+        return 1
+    fi
+    if ! "$(_aphotic_vpn_fn "$id" available)" >/dev/null 2>&1; then
+        aphotic_err "vpn provider '${id}' is not available on this machine"
+        return 1
+    fi
+    if [[ "$action" == "connect" && -z "$name" ]]; then
+        aphotic_err "usage: aphotic vpn connect --provider ${id} <name>"
+        return 1
+    fi
+    "$(_aphotic_vpn_fn "$id" "$action")" "$name"
+}
+
 _aphotic_vpn_autostart() {
     local auto; auto="$(_aphotic_vpn_auto_connect)"
     [[ "$auto" == "true" ]] || return 0
@@ -132,16 +243,29 @@ aphotic_cmd_vpn() {
     local sub="${1:-status}"; shift || true
     case "$sub" in
         status) _aphotic_vpn_status ;;
-        connect) _aphotic_vpn_connect "$@" ;;
-        disconnect) _aphotic_vpn_disconnect ;;
+        list) _aphotic_vpn_list "$@" ;;
+        connect|disconnect)
+            if [[ "${1:-}" == "--provider" || "${1:-}" == "-p" ]]; then
+                _aphotic_vpn_provider_action "$sub" "${2:-}" "${3:-}"
+            elif [[ "$sub" == "connect" ]]; then
+                _aphotic_vpn_connect "$@"
+            else
+                _aphotic_vpn_disconnect
+            fi
+            ;;
         autostart) _aphotic_vpn_autostart ;;
         ""|-h|--help)
             cat <<HELP
-Usage: aphotic vpn <status|connect [path]|disconnect>
+Usage: aphotic vpn <status|list|connect|disconnect> [args]
 
-  status           Show whether the managed OpenVPN process is up.
-  connect [path]   Connect, using [path] or Settings' saved vpnConfigPath.
-  disconnect       Disconnect.
+  status           Show every active VPN connection, across providers.
+  list [--json]    List VPN providers and their connections.
+  connect [path]   Connect the OpenVPN profile, using [path] or Settings'
+                   saved vpnConfigPath.
+  connect --provider <id> <name>
+                   Connect <name> through one provider (see 'list').
+  disconnect [--provider <id> [name]]
+                   Disconnect the OpenVPN profile, or one provider.
   autostart        Connect only if Settings.vpnAutoConnect is true (called
                    from startup.lua, not meant to be run by hand).
 HELP

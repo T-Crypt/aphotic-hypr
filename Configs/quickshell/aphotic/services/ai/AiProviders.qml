@@ -8,7 +8,7 @@ import qs.services
 import qs.services.ai
 import "BackendModels.js" as BackendModels
 
-// Uniform interface over the four AI Chat providers. Claude is the only
+// Uniform interface over the AI Chat providers. Claude is the only
 // claude-CLI-subprocess-based provider; Ollama/Gemini/ChatGPT are direct
 // HTTP clients via curl -- see docs/COMMAND_CENTER.md §4 for why (Ollama
 // has no Anthropic-Messages-API-shaped endpoint, verified live).
@@ -17,14 +17,7 @@ Singleton {
 
     readonly property var _baseProviders: [
         { id: "ollama", label: "Ollama", requiresApiKey: false },
-        // Claude is deliberately here despite being a harness: it is both,
-        // and AgentRoles.qml carries that as an explicit `chat` flag rather
-        // than this list quietly disagreeing with the role classifier.
-        // Codex used to sit alongside it and does not belong -- it is a
-        // harness with no plain conversational mode, so servesChat() filters
-        // it out below (APHOTIC_UNIFIED_VISION.md §4.1).
         { id: "claude", label: "Claude", requiresApiKey: false },
-        { id: "codex", label: "Codex", requiresApiKey: false },
         { id: "gemini", label: "Gemini", requiresApiKey: true },
         { id: "chatgpt", label: "ChatGPT", requiresApiKey: true }
     ]
@@ -32,7 +25,7 @@ Singleton {
     // installed -- there's no "not installed yet" pill to click; install.sh
     // is the only install path (NVIDIA-gated, opt-in), see AiConfig.qml.
     // Three independent filters, deliberately not merged:
-    //   - servesChat drops harnesses with no conversational mode (Codex).
+    //   - servesChat drops harnesses with no conversational mode.
     //   - isEnabled drops anything an [agents.*] table turned off, which is
     //     how the opt-in-only backends stay absent until asked for.
     //   - the layer check drops every locally-hosted backend, keyed off
@@ -140,9 +133,9 @@ Singleton {
     // official repos nor AUR under that exact name) and there was no
     // real binary to test the actual auth-status command/output shape
     // against, unlike claudeAvailable above, which WAS verified live.
-    // `codex login status` and the exec-mode invocation in sendMessage()
-    // below are both a good-faith best guess at OpenAI's real Codex CLI
-    // surface, not confirmed. Treat this the same way the rest of this
+    // `codex login status` is a good-faith best guess at the Codex CLI
+    // surface, not confirmed. Codex is a harness, not a chat provider, so
+    // this only feeds AgentRoles.hasConfiguredHarness. Treat this the same way the rest of this
     // session treats an unverified fix: real risk it's wrong, needs a
     // live check against the actual installed binary before trusting it
     // -- see docs/LEDGER.md.
@@ -749,7 +742,6 @@ Singleton {
         case "ollama": return root.ollamaAvailable;
         case "assistant": return root.assistantAvailable;
         case "claude": return root.claudeAvailable;
-        case "codex": return root.codexAvailable;
         case "gemini": return root.geminiAvailable;
         case "chatgpt": return root.chatgptAvailable;
         default: return false;
@@ -787,8 +779,6 @@ Singleton {
         switch (providerId) {
         case "claude":
             return !root.claudeCliPresent ? qsTr("The claude CLI isn't installed.") : qsTr("Not logged in to Claude. Run `claude login` in a terminal, then refresh.");
-        case "codex":
-            return !root.codexCliPresent ? qsTr("The codex CLI isn't installed.") : qsTr("Not logged in to Codex. Run `codex login` in a terminal, then refresh.");
         case "ollama":
         case "assistant":
             return qsTr("No Ollama host configured. Set it in the model pill, or set OLLAMA_BASE_URL, to enable.");
@@ -833,15 +823,6 @@ Singleton {
         case "claude":
             claudeProc.command = ["claude", "-p", text, "--disallowed-tools", "*"];
             claudeProc.running = true;
-            break;
-        case "codex":
-            // UNVERIFIED (see codexAvailable's comment): `codex exec` is a
-            // good-faith guess at the CLI's real non-interactive
-            // prompt-and-exit invocation, modeled on `claude -p`'s shape.
-            // Needs a live test against the real binary before this is
-            // trusted -- see docs/LEDGER.md.
-            codexProc.command = ["codex", "exec", text];
-            codexProc.running = true;
             break;
         case "gemini":
             geminiProc.command = ["curl", "-s", "-m", "30",
@@ -901,25 +882,6 @@ Singleton {
         stderr: StdioCollector {
             onStreamFinished: {
                 if (text.trim().length > 0 && claudeProc.exitCode !== 0)
-                    root.errorReceived(root.activeRequestId, text.trim());
-            }
-        }
-    }
-
-    // UNVERIFIED (see codexAvailable's comment): mirrors claudeProc's
-    // StdioCollector pattern exactly, on the assumption `codex exec` behaves
-    // like a plain prompt-and-exit CLI call the same way `claude -p` does.
-    Process {
-        id: codexProc
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.responseReceived(root.activeRequestId, text.trim());
-                root._finish();
-            }
-        }
-        stderr: StdioCollector {
-            onStreamFinished: {
-                if (text.trim().length > 0 && codexProc.exitCode !== 0)
                     root.errorReceived(root.activeRequestId, text.trim());
             }
         }

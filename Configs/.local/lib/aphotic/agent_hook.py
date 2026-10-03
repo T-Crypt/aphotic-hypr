@@ -16,27 +16,81 @@ MAX_RUNS = 25
 MAX_RUN_BYTES = 2 * 1024 * 1024
 MODEL_TAIL_BYTES = 64 * 1024
 
-EVENT_NAMES = {
+# Keyed by the raw Claude Code hook name, because several raw events
+# fold into the same kind ("turn") with different statuses.
+V2_KIND = {
     "SessionStart": "session_start",
-    "UserPromptSubmit": "user_prompt_submit",
-    "PreToolUse": "pre_tool_use",
-    "PostToolUse": "post_tool_use",
-    "PostToolUseFailure": "post_tool_use_failure",
-    "Notification": "notification",
-    "PreCompact": "pre_compact",
-    "PostCompact": "post_compact",
-    "Stop": "stop",
-    "SubagentStop": "subagent_stop",
     "SessionEnd": "session_end",
+    "UserPromptSubmit": "turn",
+    "PreToolUse": "tool_call",
+    "PostToolUse": "tool_call",
+    "PostToolUseFailure": "tool_call",
+    "Notification": "turn",
+    "PreCompact": "turn",
+    "PostCompact": "turn",
+    "Stop": "turn",
+    "SubagentStop": "turn",
 }
-STATUS = {
-    "user_prompt_submit": "running",
-    "pre_tool_use": "running",
-    "post_tool_use": "completed",
-    "post_tool_use_failure": "errored",
-    "pre_compact": "compacting",
-    "post_compact": "running",
+# The contract's event kinds (docs/HARNESS_HOOKS_V2.md). A payload that
+# already speaks them is written through as-is, so adapters other than
+# Claude's hook (codex, opencode, ...) cost a translator and nothing else.
+# V2_KIND only covers the kinds Claude's v1 vocabulary maps onto; usage,
+# quota and error exist only as v2-native kinds.
+V2_EVENTS = frozenset({
+    "session_start", "session_end", "turn", "tool_call", "usage", "quota", "error",
+})
+V2_STATUS = {
+    "SessionStart": "running",
+    "SessionEnd": "ended",
+    "UserPromptSubmit": "running",
+    "PreToolUse": "running",
+    "PostToolUse": "running",
+    "PostToolUseFailure": "running",
+    "Notification": "waiting",
+    "PreCompact": "compacting",
+    "PostCompact": "running",
+    "Stop": "idle",
+    "SubagentStop": "idle",
 }
+TOOL_STATUS = {
+    "PreToolUse": "running",
+    "PostToolUse": "completed",
+    "PostToolUseFailure": "errored",
+}
+# Only Claude Code runs through this script, but a harness override
+# can still name a harness this hook has no provider for.
+PROVIDER_BY_HARNESS = {"claude": "anthropic"}
+CACHE_READ_KEYS = ("cache_read_input_tokens", "cache_read_tokens")
+CACHE_WRITE_KEYS = ("cache_creation_input_tokens", "cache_write_tokens")
+
+# A passthrough record is written as-is, but the fields readers index by
+# still have to be the type the contract declares: a non-numeric token
+# count or a dict where a string belongs would poison the session file
+# and every fold downstream. Off-type fields are dropped, not coerced.
+PASSTHROUGH_NUMERIC_FIELDS = ("inputTokens", "outputTokens", "reasoningTokens",
+                              "cacheReadTokens", "cacheWriteTokens", "durationMs")
+PASSTHROUGH_STRING_FIELDS = ("model", "provider", "cwd", "tool", "toolId",
+                             "agentId", "agentType", "spawnedAgentId", "endReason",
+                             "toolStatus")
+PASSTHROUGH_OBJECT_FIELDS = ("cost", "error", "quota")
+
+
+def sanitize_passthrough(record):
+    for field in PASSTHROUGH_NUMERIC_FIELDS:
+        if field in record:
+            value = record[field]
+            if not isinstance(value, (int, float)) or isinstance(value, bool):
+                del record[field]
+    for field in PASSTHROUGH_STRING_FIELDS:
+        if field in record:
+            value = record[field]
+            if not isinstance(value, str) or not value:
+                del record[field]
+    for field in PASSTHROUGH_OBJECT_FIELDS:
+        if field in record:
+            value = record[field]
+            if not isinstance(value, dict):
+                del record[field]
 
 
 def atomic_write(path, text):
@@ -135,45 +189,131 @@ def cached_session(path):
     return data if isinstance(data, dict) else {}
 
 
+def first_present(mapping, keys):
+    """The first numeric value found under any of `keys`.
+
+    None if no key is present or every match is non-numeric.
+    """
+    for key in keys:
+        value = mapping.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return value
+    return None
+
+
+def usage_record_from_response(response, common):
+    """A `usage` line from a tool_response's usage block.
+
+    Every lookup is guarded, so a missing or malformed block yields no line.
+    """
+    if not isinstance(response, dict):
+        return None
+    usage = response.get("usage")
+    if not isinstance(usage, dict):
+        return None
+
+    record = dict(common)
+    record["event"] = "usage"
+    found = False
+    for src, field in (("input_tokens", "inputTokens"), ("output_tokens", "outputTokens")):
+        value = usage.get(src)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            record[field] = value
+            found = True
+    read = first_present(usage, CACHE_READ_KEYS)
+    if read is not None:
+        record["cacheReadTokens"] = read
+        found = True
+    written = first_present(usage, CACHE_WRITE_KEYS)
+    if written is not None:
+        record["cacheWriteTokens"] = written
+        found = True
+    return record if found else None
+
+
 def main():
     try:
         payload = json.load(sys.stdin)
     except Exception:
         sys.exit(0)
+    if not isinstance(payload, dict):
+        sys.exit(0)
 
     session_id = payload.get("session_id") or ""
     raw_event = payload.get("hook_event_name") or ""
-    event = EVENT_NAMES.get(raw_event)
-    if not session_id or not event:
-        sys.exit(0)
+    event = V2_KIND.get(raw_event)
 
-    now = time.time()
-    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+    if not event:
+        # Adapters hand over finished v2 records: v2 marker, the harness's
+        # own session id, and a contract event kind. Stamp the clock and
+        # write the record through as-is; only unknown-kind or missing-id
+        # v2 payloads are dropped, same silence as malformed v1 ones.
+        if payload.get("v") != 2:
+            sys.exit(0)
+        session_id = payload.get("sessionId")
+        event = payload.get("event")
+        if not isinstance(session_id, str) or not session_id:
+            sys.exit(0)
+        if not isinstance(event, str) or event not in V2_EVENTS:
+            sys.exit(0)
+        now = time.time()
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+        record = dict(payload)
+        sanitize_passthrough(record)
+        record["v"] = 2
+        record["sessionId"] = session_id
+        record["event"] = event
+        if not isinstance(record.get("t"), int) or isinstance(record.get("t"), bool) or record["t"] <= 0:
+            record["t"] = int(now * 1000)
+        if not record.get("ts"):
+            record["ts"] = stamp
+        if not isinstance(record.get("status"), str) or not record["status"]:
+            record["status"] = "idle"
+        harness = str(record.get("harness") or "claude")
+        record["harness"] = harness
+        provider = record.get("provider") or PROVIDER_BY_HARNESS.get(harness)
+        if provider:
+            record["provider"] = provider
+        raw_event = event
+    else:
+        if not session_id:
+            sys.exit(0)
 
-    record = {
-        "v": 1,
-        "sessionId": session_id,
-        "event": event,
-        "status": STATUS.get(event, "idle"),
-        "timestamp": stamp,
-        "t": int(now * 1000),
-    }
-    for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
-                       ("agent_id", "agentId"), ("agent_type", "agentType"),
-                       ("duration_ms", "durationMs"), ("notification_type", "notificationType"),
-                       ("source", "source"), ("end_reason", "endReason"),
-                       ("model", "model"), ("cwd", "cwd"), ("harness", "harness")):
-        value = payload.get(key)
-        if value not in (None, ""):
-            record[field] = value
+        now = time.time()
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
 
-    harness = payload.get("harness") or "claude"
+        record = {
+            "v": 2,
+            "sessionId": session_id,
+            "event": event,
+            "status": V2_STATUS.get(raw_event, "idle"),
+            "ts": stamp,
+            "t": int(now * 1000),
+        }
+        for key, field in (("tool_name", "tool"), ("tool_use_id", "toolId"),
+                           ("agent_id", "agentId"), ("agent_type", "agentType"),
+                           ("duration_ms", "durationMs"), ("notification_type", "notificationType"),
+                           ("source", "source"), ("end_reason", "endReason"),
+                           ("model", "model"), ("cwd", "cwd"), ("harness", "harness")):
+            value = payload.get(key)
+            if value not in (None, ""):
+                record[field] = value
 
-    # The default has to reach the record, not just the session file below.
-    # Claude Code sends no `harness` of its own (the adapters for other
-    # harnesses do), so without this every Claude event is untagged and a
-    # reader cannot tell "this is Claude" from "nobody said".
-    record["harness"] = harness
+        tool_status = TOOL_STATUS.get(raw_event)
+        if tool_status:
+            record["toolStatus"] = tool_status
+
+        harness = payload.get("harness") or "claude"
+
+        # The default has to reach the record, not just the session file below.
+        # Claude Code sends no `harness` of its own (the adapters for other
+        # harnesses do), so without this every Claude event is untagged and a
+        # reader cannot tell "this is Claude" from "nobody said".
+        record["harness"] = harness
+
+        provider = PROVIDER_BY_HARNESS.get(harness)
+        if provider:
+            record["provider"] = provider
 
     session_file = os.path.join(SESSIONS, "%s.json" % session_id)
     known = cached_session(session_file)
@@ -195,6 +335,7 @@ def main():
     # turns subagent parentage from a guess into an exact link: this record's
     # toolId is the parent of every later event carrying agent_id == spawnedAgentId.
     response = payload.get("tool_response")
+    usage_line = None
     if isinstance(response, dict):
         spawned = response.get("agentId")
         if spawned:
@@ -206,17 +347,33 @@ def main():
         if resolved:
             record["agentModel"] = resolved
 
+        if raw_event == "PostToolUse":
+            common = {
+                "v": 2,
+                "sessionId": session_id,
+                "status": record["status"],
+                "ts": stamp,
+                "t": record["t"],
+                "harness": harness,
+            }
+            if provider:
+                common["provider"] = provider
+            usage_line = usage_record_from_response(response, common)
+
     try:
         os.makedirs(SESSIONS, exist_ok=True)
         os.makedirs(RUNS, exist_ok=True)
     except OSError:
         sys.exit(0)
 
-    line = json.dumps(record, separators=(",", ":")) + "\n"
+    lines = [json.dumps(record, separators=(",", ":")) + "\n"]
+    if usage_line:
+        lines.append(json.dumps(usage_line, separators=(",", ":")) + "\n")
+    blob = "".join(lines)
 
     try:
         with open(EVENTS, "a") as fh:
-            fh.write(line)
+            fh.write(blob)
         trim()
     except OSError:
         pass
@@ -229,7 +386,7 @@ def main():
     try:
         if not os.path.exists(run_file) or os.path.getsize(run_file) < MAX_RUN_BYTES:
             with open(run_file, "a") as fh:
-                fh.write(line)
+                fh.write(blob)
         if event == "session_start":
             prune_runs()
     except OSError:

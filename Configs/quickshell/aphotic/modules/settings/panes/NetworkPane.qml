@@ -11,6 +11,10 @@ ColumnLayout {
 
     spacing: Tokens.spacing.largeIncreased
 
+    readonly property bool profileActive: Vpn.connectionOf("openvpn", "profile")?.active ?? false
+
+    Component.onCompleted: Vpn.refresh()
+
     StyledText {
         text: qsTr("Network")
         font: Tokens.font.title.large
@@ -84,7 +88,7 @@ ColumnLayout {
         SettingsRow {
             icon: "cable"
             label: qsTr("Status")
-            description: Vpn.connected ? qsTr("Connected") : qsTr("Not connected")
+            description: root.profileActive ? qsTr("Connected") : qsTr("Not connected")
 
             StyledRect {
                 id: actionButton
@@ -95,15 +99,15 @@ ColumnLayout {
                 color: Colours.tPalette.m3surfaceContainer
                 opacity: actionButton.enabled ? 1 : 0.5
 
-                readonly property bool enabled: !Vpn.busy && (Vpn.connected || Settings.vpnConfigPath.length > 0)
+                readonly property bool enabled: !Vpn.busy && (root.profileActive || Settings.vpnConfigPath.length > 0)
 
                 StyledText {
                     id: actionLabel
                     anchors.centerIn: parent
                     text: {
                         if (Vpn.busy)
-                            return Vpn.connected ? qsTr("Disconnecting…") : qsTr("Connecting…");
-                        return Vpn.connected ? qsTr("Disconnect") : qsTr("Connect");
+                            return root.profileActive ? qsTr("Disconnecting…") : qsTr("Connecting…");
+                        return root.profileActive ? qsTr("Disconnect") : qsTr("Connect");
                     }
                     color: Colours.palette.m3onSurfaceVariant
                     font: Tokens.font.label.small
@@ -118,7 +122,7 @@ ColumnLayout {
                 MouseArea {
                     anchors.fill: parent
                     enabled: actionButton.enabled
-                    onClicked: Vpn.connected ? Vpn.disconnectVpn() : Vpn.connectVpn(Settings.vpnConfigPath)
+                    onClicked: root.profileActive ? Vpn.disconnectProvider("openvpn", "profile") : Vpn.connectProvider("openvpn", "profile")
                 }
             }
         }
