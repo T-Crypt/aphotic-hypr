@@ -1,4 +1,4 @@
-# canary 2026-10-03
+# canary 2026-10-04
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -594,8 +594,8 @@ readline 8.3.6-1
 rubberband 4.0.0-2
 sdbus-cpp 2.3.1-1
 sddm 0.21.0-7
-sdl2-compat 2.32.72-1
-sdl3 3.4.16-1
+sdl2-compat 2.32.74-1
+sdl3 3.4.18-1
 seatd 0.9.3-1
 sed 4.10-2
 shaderc 2026.4-1
@@ -645,7 +645,7 @@ vid.stab 1.1.2-1
 visual-studio-code-bin 1.140.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
-vulkan-icd-loader 1.4.357.0-1
+vulkan-icd-loader 1.4.363.0-1
 vulkan-mesa-implicit-layers 1:26.2.4-1
 vulkan-radeon 1:26.2.4-1
 wayland 1.26.0-1
