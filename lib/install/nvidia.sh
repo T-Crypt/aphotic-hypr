@@ -10,6 +10,49 @@ detect_nvidia() {
   fi
 }
 
+# Hybrid means a non-NVIDIA GPU drives a connected display while an NVIDIA
+# card is present: a laptop panel on the iGPU, or a desktop monitor plugged
+# into the motherboard. Having both GPUs is not enough, since a desktop
+# with the iGPU enabled but every monitor on the NVIDIA card is not hybrid.
+detect_nvidia_hybrid() {
+  local drm="${APHOTIC_DRM_SYSFS:-/sys/class/drm}" status card vendor
+  [[ "$(detect_nvidia)" == "true" ]] || { echo "false"; return 0; }
+  for status in "$drm"/card*-*/status; do
+    [[ -r "$status" && "$(<"$status")" == "connected" ]] || continue
+    card="${status%/status}"
+    card="${card##*/}"
+    card="${card%%-*}"
+    vendor="$(cat "$drm/$card/device/vendor" 2>/dev/null)" || continue
+    if [[ "$vendor" == "0x8086" || "$vendor" == "0x1002" ]]; then
+      echo "true"
+      return 0
+    fi
+  done
+  echo "false"
+}
+
+# The integrated GPU's kernel module on a hybrid laptop (i915, xe or
+# amdgpu). lspci on an older kernel prints no "Kernel driver in use" line
+# for an Intel iGPU at all; the module is i915 on those, so that is the
+# fallback. Echoes nothing when there is no iGPU.
+igpu_kernel_module() {
+  lspci -k 2>/dev/null | awk '
+    /^[[:xdigit:]][[:xdigit:]]:[[:xdigit:]][[:xdigit:]]\.[0-9]+[[:space:]]/ {
+      block_igpu = 0; block_intel = 0
+      low = tolower($0)
+      if (low ~ /(vga compatible|3d|display) controller:/ && low !~ /nvidia/) {
+        if (low ~ /intel/) { block_igpu = 1; block_intel = 1; last_igpu_intel = 1 }
+        else if (low ~ /\[amd\/ati\]/) { block_igpu = 1; last_igpu_intel = 0 }
+      }
+      next
+    }
+    block_igpu && $1 == "Kernel" && $4 == "use:" { drv = $5; seen_driver = 1 }
+    END {
+      if (drv ~ /^(i915|xe|amdgpu)$/) print drv
+      else if (last_igpu_intel && !seen_driver) print "i915"
+    }'
+}
+
 # Every installed NVIDIA kernel driver, whatever its package is called.
 # Matching names missed legacy branches (nvidia-580xx-dkms), beta drivers
 # and distro kernel-module packages, so the keep/replace prompt never
@@ -61,6 +104,7 @@ install_nvidia_driver() {
       if ! pacman -Qq nvidia-utils &>/dev/null; then
         install_software nvidia-utils
       fi
+      install_nvidia_session_packages
       return 0
     fi
 
@@ -91,6 +135,22 @@ install_nvidia_driver() {
   # silently shows "N/A" forever, since the driver package alone doesn't
   # carry the userspace query tools.
   install_software nvidia-utils
+  install_nvidia_session_packages
+}
+
+# Userspace for GPU video decode and, on hybrid laptops, running apps on
+# the NVIDIA card. Optional, since the desktop itself runs without them.
+install_nvidia_session_packages() {
+  local pkg
+  if [[ "$(detect_nvidia_hybrid)" == "true" ]]; then
+    pkg="nvidia-prime"
+  else
+    # Configs/hypr/nvidia.lua sets LIBVA_DRIVER_NAME=nvidia, so without
+    # this driver video decode falls back to the software VA-API driver.
+    pkg="libva-nvidia-driver"
+  fi
+  pacman -Qq "$pkg" &>/dev/null && return 0
+  install_software "$pkg" optional
 }
 
 # Wires the driver into the initramfs/UKI -- MODULES=() in mkinitcpio.conf
@@ -107,6 +167,17 @@ configure_nvidia_modules() {
   fi
   echo -e "$CNT - Configuring Nvidia modules..."
   sudo sed -i 's/MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /etc/mkinitcpio.conf
+  # Hybrid laptops need the iGPU driver loaded before nvidia, or
+  # Electron/Chromium apps stall for minutes after boot.
+  if [[ "$(detect_nvidia_hybrid)" == "true" ]]; then
+    local igpu_module
+    igpu_module="$(igpu_kernel_module)"
+    if [[ -n "$igpu_module" ]] \
+      && sudo grep -qE "^MODULES=\(.*\bnvidia\b" /etc/mkinitcpio.conf 2>/dev/null \
+      && ! sudo grep -qE "^MODULES=\(.*\b${igpu_module}\b" /etc/mkinitcpio.conf 2>/dev/null; then
+      sudo sed -i -E "/^MODULES=\(/{/\b${igpu_module}\b/!s/^MODULES=\(/MODULES=(${igpu_module} /}" /etc/mkinitcpio.conf
+    fi
+  fi
   if ! sudo grep -qF "options nvidia-drm modeset=1" /etc/modprobe.d/nvidia.conf 2>/dev/null; then
     echo -e "options nvidia-drm modeset=1" | sudo tee -a /etc/modprobe.d/nvidia.conf &>> "$INSTLOG"
   fi

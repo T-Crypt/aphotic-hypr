@@ -16,6 +16,7 @@ DETECTED_APHOTIC_PROFILE=""
 DETECTED_APHOTIC_LAYERS=""
 DETECTED_DOTFILE_MANAGER=""
 DETECTED_NVIDIA_PRESENT="false"
+DETECTED_NVIDIA_HYBRID="false"
 DETECTED_NVIDIA_DRIVER=""
 DETECTED_AMD_PRESENT="false"
 DETECTED_AUR_HELPER=""
@@ -143,6 +144,10 @@ except Exception:
       echo -e "  $COK NVIDIA GPU detected, driver already installed: $DETECTED_NVIDIA_DRIVER"
     else
       echo -e "  $CNT NVIDIA GPU detected, no driver installed yet"
+    fi
+    DETECTED_NVIDIA_HYBRID="$(detect_nvidia_hybrid)"
+    if [[ "$DETECTED_NVIDIA_HYBRID" == "true" ]]; then
+      echo -e "  $COK Hybrid graphics: the integrated GPU drives the desktop, the NVIDIA card is available for apps (prime-run)"
     fi
   fi
 
