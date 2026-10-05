@@ -84,21 +84,24 @@ The project tracks work on a public epiq board in the `__epiq_state__` branch. B
 
 ## CI
 - Before every push, run `tools/ci/local.sh`. It runs the CI checks in a checkout shaped like
-  GitHub's and prints only what failed, with a `rerun:` command for each failure.
+  GitHub's and prints only what failed, with a `rerun:` command for each failure. It exits
+  non-zero on any failure; if you pipe its output, check the exit code too.
   Green there means green for `test` and `bash-syntax`.
 - One test: `tools/ci/local.sh --test tests/test_x.sh`. Fast loop in your own tree: `--here`.
   One suite: `--only syntax|sh|py`.
 - A red PR: run `tools/ci/triage.py <pr-number>`. It names the failing test and its error lines.
-  Fix that, run the `reproduce:` command it prints, then push. Don't read raw CI logs and
-  don't wait on CI in a loop.
+  Fix that, run the `reproduce:` command it prints, then push. Don't read raw CI logs, don't
+  audit the runner by hand, and don't wait on CI in a loop.
 - Required checks: `test`, `shellcheck`, `bash-syntax`, `Analyze (python)`, `Analyze (actions)`.
   A run named "Code scanning AI findings" never blocks a merge, so ignore it. shellcheck
   warnings are advisory.
-- CI runs on Ubuntu with Python 3.12. Your machine may run a newer Python, so avoid 3.13+
-  features. The checkout is shallow and detached, with no `origin/main`, no `docs/` and no
-  gitignored files. It has no `~/.config`, no desktop session, and no `qs`, `hyprctl` or
-  `nvidia-smi`. Network calls can time out. Code that needs any of these needs a fallback. A
-  test that passes on your machine and fails in CI hits one of these gaps.
+- What the runner lacks. Code that needs any of these needs a fallback, and a test that passes
+  on your machine but fails in CI hits one of them:
+  - Ubuntu with Python 3.12 (`local.sh` uses 3.12 when `uv` is installed). Avoid 3.13+ features.
+  - A shallow, detached checkout: no `origin/main`, no `docs/`, no gitignored files.
+  - No git identity: a test that commits must pass `-c user.name=... -c user.email=...`.
+  - No `~/.config`, no desktop session, no `qs`, `hyprctl` or `nvidia-smi`.
+  - Network calls can time out.
 - Changes to `install.sh`, `lib/` or `profiles/` also run `install-dry-run` in an Arch container.
 
 ## Verify before you claim

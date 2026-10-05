@@ -53,21 +53,27 @@ git -C "$REPO" add -A
 git -C "$REPO" -c user.name=t -c user.email=t@localhost commit -qm init
 git -C "$REPO" update-ref refs/remotes/origin/main HEAD
 
-out="$("$REPO/tools/ci/local.sh" --only sh 2>&1)" || fail "CI-shaped checkout is not CI-shaped: $out"
+# No git identity, as on the runner.
+run_local() {
+  env -u GIT_AUTHOR_NAME -u GIT_AUTHOR_EMAIL -u GIT_COMMITTER_NAME -u GIT_COMMITTER_EMAIL \
+    GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 "$REPO/tools/ci/local.sh" "$@"
+}
+
+out="$(run_local --only sh 2>&1)" || fail "CI-shaped checkout is not CI-shaped: $out"
 grep -q '^PASS  test: 1 bash test files$' <<<"$out" || fail "local.sh does not report the passing suite: $out"
 
 # local.sh: uncommitted, untracked tests are part of the run, and a failure
 # prints the test's own output plus a rerun command.
 printf '#!/usr/bin/env bash\necho "boom from the new test"\nexit 1\n' > "$REPO/tests/test_new.sh"
 status=0
-out="$("$REPO/tools/ci/local.sh" --only sh 2>&1)" || status=$?
+out="$(run_local --only sh 2>&1)" || status=$?
 [[ $status -eq 1 ]] || fail "local.sh exits $status on a failing test, want 1"
 grep -q '^FAIL  test: tests/test_new.sh$' <<<"$out" || fail "local.sh skips untracked tests: $out"
 grep -q 'boom from the new test' <<<"$out" || fail "local.sh hides the failing output"
 grep -q 'rerun: tools/ci/local.sh --test tests/test_new.sh' <<<"$out" || fail "local.sh gives no rerun command"
 grep -q 'PASS: shape' <<<"$out" && fail "local.sh prints passing tests"
 
-out="$("$REPO/tools/ci/local.sh" --test tests/test_shape.sh 2>&1)" || fail "--test fails on a passing test: $out"
+out="$(run_local --test tests/test_shape.sh 2>&1)" || fail "--test fails on a passing test: $out"
 [[ -z "$(git -C "$REPO" stash list)" ]] || fail "local.sh touched the stash"
 
 echo "PASS: CI tools (triage parsing, CI-shaped checkout, failure output)"

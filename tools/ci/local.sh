@@ -41,12 +41,20 @@ if ((here)); then
 else
   # Snapshot the working tree, including uncommitted and untracked
   # (non-ignored) files, without touching the real index or the stash.
+  # A failed snapshot must stop the run: fetching an empty sha falls back to
+  # the old HEAD and reports green for code that never ran.
   export GIT_INDEX_FILE="$WORK/index"
-  git -C "$ROOT" read-tree HEAD
-  git -C "$ROOT" add -A
-  tree="$(git -C "$ROOT" write-tree)"
+  sha=""
+  if git -C "$ROOT" read-tree HEAD 2>>"$LOG" && git -C "$ROOT" add -A 2>>"$LOG" \
+      && tree="$(git -C "$ROOT" write-tree 2>>"$LOG")"; then
+    sha="$(git -C "$ROOT" -c user.name=ci -c user.email=ci@localhost \
+      commit-tree "$tree" -p HEAD -m "ci-local snapshot" 2>>"$LOG")"
+  fi
   unset GIT_INDEX_FILE
-  sha="$(git -C "$ROOT" commit-tree "$tree" -p HEAD -m "ci-local snapshot")"
+  if [[ -z "$sha" ]]; then
+    echo "could not snapshot the working tree; see $LOG" >&2
+    exit 2
+  fi
 
   TREE="$WORK/checkout"
   git init -q "$TREE"
@@ -60,17 +68,15 @@ fi
 
 HOME_DIR="$WORK/home"
 mkdir -p "$HOME_DIR"
-# The runner has no desktop session and a clean HOME. git identity is set
-# because some tests commit inside fixtures. git network access is blocked:
+# The runner has no desktop session, a clean HOME and no git identity.
+# git network access is blocked:
 # a fetch on the runner can time out, so a test that only passes when one
 # succeeds fails there at random.
 in_ci() {
   (cd "$TREE" && env -i \
     PATH="/usr/local/sbin:/usr/local/bin:/usr/bin:/bin" \
     HOME="$HOME_DIR" LANG=C.UTF-8 CI=true GITHUB_ACTIONS=true \
-    GIT_ALLOW_PROTOCOL=file \
-    GIT_AUTHOR_NAME=ci GIT_AUTHOR_EMAIL=ci@localhost \
-    GIT_COMMITTER_NAME=ci GIT_COMMITTER_EMAIL=ci@localhost \
+    GIT_ALLOW_PROTOCOL=file GIT_CONFIG_NOSYSTEM=1 \
     ${GH_TOKEN:+GH_TOKEN="$GH_TOKEN"} \
     "$@")
 }
@@ -137,9 +143,29 @@ run_sh() {
   ((status)) || printf 'PASS  test: %d bash test files\n' "$count"
 }
 
+# CI runs pytest on Python 3.12. With uv, build a cached 3.12 venv once and
+# use it; without uv, fall back to the system python and say so.
+CI_PY="3.12"
+pick_python() {
+  local venv="${XDG_CACHE_HOME:-$HOME/.cache}/aphotic-ci/py$CI_PY"
+  if [[ -x "$venv/bin/python" ]] && "$venv/bin/python" -c 'import pytest' 2>/dev/null; then
+    echo "$venv/bin/python"; return
+  fi
+  if command -v uv >/dev/null \
+      && uv venv -q --python "$CI_PY" "$venv" >>"$LOG" 2>&1 \
+      && uv pip install -q --python "$venv/bin/python" pytest >>"$LOG" 2>&1; then
+    echo "$venv/bin/python"; return
+  fi
+  echo python3
+}
+
 run_py() {  # run_py [pytest target]
-  local out status=0
-  out="$(in_ci python3 -m pytest "${1:-tests/}" -q -rf --tb=short -p no:cacheprovider 2>&1)" || status=$?
+  local out status=0 py version
+  py="$(pick_python)"
+  version="$("$py" -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+  [[ "$version" == "$CI_PY" ]] \
+    || echo "NOTE  pytest runs on Python $version here; CI uses $CI_PY (install uv to match it)"
+  out="$(in_ci "$py" -m pytest "${1:-tests/}" -q -rf --tb=short -p no:cacheprovider 2>&1)" || status=$?
   printf '=== pytest %s (exit %d)\n%s\n' "${1:-tests/}" "$status" "$out" >>"$LOG"
   if ((status)); then
     report "test: pytest ${1:-tests/}" "$status"
