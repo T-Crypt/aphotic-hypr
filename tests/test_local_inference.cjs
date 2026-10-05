@@ -53,6 +53,14 @@ assert.deepEqual(Array.from(studio, model => `${model.name}:${model.embedding}:$
     'embed-model:true:ready',
 ]);
 
+// Only a resident model claims anything, and the memory figure is the
+// engine's own arena passed in -- never a host total the endpoints also
+// report, which is why nothing here can invent one.
+assert.deepEqual(Array.from(mapping.strataModels({ model: 'strata', loaded: true, api_key: true }, 6144),
+    model => `${model.name}:${model.embedding}:${model.state}:${model.ramMiB}`), ['strata:false:loaded:6144']);
+assert.equal(mapping.strataModels({ model: 'strata', loaded: false }, 6144).length, 0);
+assert.equal(mapping.strataModels({ model: 'strata', loaded: true }, 0)[0].ramMiB, 0);
+
 assert.equal(inference.eligibleClaims([
     { id: 'ollama-only', owner: 'ollama', resource: 'gpu-vram', amount: 4096 },
 ], { ollama: backends.ollama }).length, 1);

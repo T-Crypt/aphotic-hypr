@@ -17,10 +17,12 @@ Singleton {
     property string anthropicApiKey: ""
     property string geminiApiKey: ""
     property string openaiApiKey: ""
+    property string strataApiKey: ""
 
     readonly property bool hasAnthropicKey: root.anthropicApiKey.length > 0
     readonly property bool hasGeminiKey: root.geminiApiKey.length > 0
     readonly property bool hasOpenaiKey: root.openaiApiKey.length > 0
+    readonly property bool hasStrataKey: root.strataApiKey.length > 0
 
     property bool _loaded: false
 
@@ -30,7 +32,8 @@ Singleton {
         keysWriter.setText(JSON.stringify({
             anthropicApiKey: root.anthropicApiKey,
             geminiApiKey: root.geminiApiKey,
-            openaiApiKey: root.openaiApiKey
+            openaiApiKey: root.openaiApiKey,
+            strataApiKey: root.strataApiKey
         }, null, 2));
         chmodProc.running = true;
     }
@@ -38,6 +41,7 @@ Singleton {
     onAnthropicApiKeyChanged: root._save()
     onGeminiApiKeyChanged: root._save()
     onOpenaiApiKeyChanged: root._save()
+    onStrataApiKeyChanged: root._save()
 
     FileView {
         id: keysFile
@@ -53,6 +57,8 @@ Singleton {
                     root.geminiApiKey = data.geminiApiKey;
                 if (typeof data.openaiApiKey === "string")
                     root.openaiApiKey = data.openaiApiKey;
+                if (typeof data.strataApiKey === "string")
+                    root.strataApiKey = data.strataApiKey;
             } catch (e) {
                 // No keys file yet, or malformed -- keep blanks above.
             }

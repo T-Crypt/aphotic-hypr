@@ -444,6 +444,80 @@ ColumnLayout {
 
         StyledText {
             Layout.leftMargin: Tokens.padding.small
+            text: qsTr("Strata")
+            color: Colours.palette.m3onSurfaceVariant
+            font: Tokens.font.label.medium
+        }
+
+        SettingsGroup {
+            Layout.fillWidth: true
+
+            SettingsRow {
+                icon: "dns"
+                label: qsTr("Local host")
+                description: AiConfig.strataHost.length > 0 ? AiConfig.strataHost : qsTr("Set a loopback URL to attach a running engine")
+
+                StyledRect {
+                    Layout.preferredWidth: 200
+                    Layout.preferredHeight: 32
+                    radius: Tokens.rounding.full
+                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+
+                    TextInput {
+                        id: strataHostInput
+                        anchors.fill: parent
+                        anchors.leftMargin: Tokens.padding.medium
+                        anchors.rightMargin: Tokens.padding.medium
+                        verticalAlignment: TextInput.AlignVCenter
+                        clip: true
+                        font: Tokens.font.label.small
+                        color: Colours.palette.m3onSurface
+                        text: AiConfig.strataHost
+                        Keys.onReturnPressed: AiConfig.strataHost = strataHostInput.text.trim()
+
+                        StyledText {
+                            visible: strataHostInput.text.length === 0
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: qsTr("http://127.0.0.1:8080")
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.small
+                        }
+                    }
+                }
+            }
+
+            SettingsRow {
+                visible: AiConfig.strataHost.length > 0
+                icon: AiProviders.strataReachable ? "check_circle" : "error"
+                label: qsTr("Status")
+                description: {
+                    if (!AiConfig.strataHostConfigured)
+                        return qsTr("Use a localhost or 127.0.0.1 URL");
+                    if (!AiProviders.strataReachable)
+                        return qsTr("Not reachable");
+                    const running = AiProviders.strataRunningModels;
+                    return running.length > 0 ? qsTr("Loaded: %1").arg(running[0].name) : qsTr("Reachable, no model loaded");
+                }
+            }
+
+            ApiKeyRow {
+                icon: "key"
+                label: qsTr("API key")
+                hasKey: AiKeys.hasStrataKey
+                onKeySubmitted: value => AiKeys.strataApiKey = value
+                onKeyCleared: AiKeys.strataApiKey = ""
+            }
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.extraSmall
+        visible: InstallProfile.aiEnabled
+
+        StyledText {
+            Layout.leftMargin: Tokens.padding.small
             text: qsTr("LM Studio")
             color: Colours.palette.m3onSurfaceVariant
             font: Tokens.font.label.medium

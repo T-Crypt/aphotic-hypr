@@ -287,7 +287,9 @@ Singleton {
     // below. Hands the caller the response text on HTTP 200, "" otherwise
     // (connection failure, timeout, non-200), which callers treat the same
     // way the curl-based Process handlers treated a failed poll.
-    function _getJson(url: string, timeoutMs: int, onDone: var): void {
+    // A bearer token goes on the header, never on a command line, where `ps`
+    // and any shell log would show it. Callers that need none pass "".
+    function _getJson(url: string, timeoutMs: int, onDone: var, token: string): void {
         const xhr = new XMLHttpRequest();
         xhr.timeout = timeoutMs;
         xhr.onreadystatechange = () => {
@@ -296,6 +298,8 @@ Singleton {
             onDone(xhr.status === 200 ? xhr.responseText : "");
         };
         xhr.open("GET", url);
+        if (token.length > 0)
+            xhr.setRequestHeader("authorization", `Bearer ${token}`);
         xhr.send();
     }
 
@@ -329,7 +333,7 @@ Singleton {
                 // Host unreachable or unexpected response -- leave
                 // ollamaRunningModels as-is.
             }
-        });
+        }, "");
     }
 
     function _resetOllamaCapabilities(): void {
@@ -419,7 +423,7 @@ Singleton {
             } catch (e) {
                 // Unexpected response -- keep the last list.
             }
-        });
+        }, "");
     }
 
     function refreshLmStudioRunning(): void {
@@ -445,7 +449,119 @@ Singleton {
                 root.lmStudioReachable = false;
                 root.lmStudioRunningModels = [];
             }
+        }, "");
+    }
+
+    // Strata's report. /health answers without a key and says whether one is
+    // needed, so it is the poll; the engine's memory figure only comes from
+    // /metrics, which is key-gated, so that is read once per load rather
+    // than every poll. Both endpoints also report memory for the whole host
+    // -- that is the machine, not this backend, so nothing here reads it and
+    // the claim stays engine-specific or empty.
+    property var strataRunningModels: []
+    property bool strataReachable: false
+    property bool strataKeyRequired: false
+    property int strataArenaMiB: 0
+    property bool _strataInFlight: false
+    property var _strataHealth: ({})
+    property int _strataEpoch: 0
+
+    function _strataKey(): string {
+        return AiKeys.strataApiKey || Quickshell.env("STRATA_API_KEY") || "";
+    }
+
+    function _reportStrata(): void {
+        root.strataRunningModels = BackendModels.strataModels(root._strataHealth, root.strataArenaMiB);
+    }
+
+    function refreshStrataRunning(): void {
+        if (!InstallProfile.aiEnabled || !AiConfig.strataHostConfigured) {
+            root.strataRunningModels = [];
+            root.strataReachable = false;
+            root.strataKeyRequired = false;
+            root.strataArenaMiB = 0;
+            root._strataHealth = ({});
+            return;
+        }
+        if (root._strataInFlight)
+            return;
+        root._strataInFlight = true;
+        const requestHost = AiConfig.strataHost;
+        const requestEpoch = root._strataEpoch;
+        root._getJson(`${requestHost}/health`, 5000, text => {
+            // A reply from a host the user has already left is dropped, as
+            // the LM Studio poll above does.
+            if (requestEpoch !== root._strataEpoch || requestHost !== AiConfig.strataHost)
+                return;
+            root._strataInFlight = false;
+            if (!InstallProfile.aiEnabled) {
+                root.strataArenaMiB = 0;
+                root._strataHealth = ({});
+                root._reportStrata();
+                return;
+            }
+            if (text.length === 0) {
+                root.strataReachable = false;
+                root.strataArenaMiB = 0;
+                root._strataHealth = ({});
+                root._reportStrata();
+                return;
+            }
+            try {
+                const data = JSON.parse(text);
+                root.strataReachable = true;
+                root.strataKeyRequired = data.api_key === true;
+                // The arena only exists while a model is resident, so an
+                // unload clears the figure rather than leaving a stale claim.
+                if (!data.loaded || data.model !== root._strataHealth?.model)
+                    root.strataArenaMiB = 0;
+                root._strataHealth = data;
+                root._reportStrata();
+                if (data.loaded && root.strataArenaMiB === 0
+                        && (!root.strataKeyRequired || root._strataKey().length > 0))
+                    root._readStrataArena(requestHost, data.model, requestEpoch);
+            } catch (e) {
+                root.strataReachable = false;
+                root.strataArenaMiB = 0;
+                root._strataHealth = ({});
+                root._reportStrata();
+            }
         });
+    }
+
+    function _readStrataArena(host: string, model: string, epoch: int): void {
+        root._getJson(`${host}/metrics`, 5000, text => {
+            if (!InstallProfile.aiEnabled || epoch !== root._strataEpoch || host !== AiConfig.strataHost
+                    || model !== root._strataHealth?.model || !root._strataHealth?.loaded || text.length === 0)
+                return;
+            try {
+                const arena = Number(JSON.parse(text).engine?.arena_mib ?? 0);
+                if (arena > 0) {
+                    root.strataArenaMiB = arena;
+                    root._reportStrata();
+                }
+            } catch (e) {
+                // No figure the engine gave, so nothing to claim; the GPU
+                // claim stands on its own.
+            }
+        }, root._strataKey());
+    }
+
+    // The graceful stop Strata answers to. One model, so this is the engine
+    // giving the memory back rather than a per-model unload, and the claim is
+    // released by the next report rather than by this request. A name that is
+    // no longer the reported model is a claim already on its way out, so
+    // nothing is asked for.
+    function strataUnload(name: string): void {
+        if (!InstallProfile.aiEnabled || !AiConfig.strataHostConfigured || name !== (root._strataHealth?.model ?? ""))
+            return;
+        const xhr = new XMLHttpRequest();
+        xhr.timeout = 10000;
+        xhr.open("POST", `${AiConfig.strataHost}/unload`);
+        const token = root._strataKey();
+        if (token.length > 0)
+            xhr.setRequestHeader("authorization", `Bearer ${token}`);
+        xhr.send();
     }
 
     function deleteModel(name: string): void {
@@ -474,6 +590,22 @@ Singleton {
         }
         function onLmStudioHostChanged() {
             root.refreshLmStudioRunning();
+        }
+        function onStrataHostChanged() {
+            root._strataEpoch++;
+            root._strataInFlight = false;
+            root.strataReachable = false;
+            root.strataArenaMiB = 0;
+            root._strataHealth = ({});
+            root._reportStrata();
+            root.refreshStrataRunning();
+        }
+    }
+
+    Connections {
+        target: InstallProfile
+        function onAiEnabledChanged() {
+            root.refreshStrataRunning();
         }
     }
 
@@ -640,6 +772,26 @@ Singleton {
         name: "ai.lmstudio-ps"
         kind: "network"
         timer: lmStudioPoll
+    }
+
+    // Strata publishes no load/unload event, so /health is the only source,
+    // and it is gated the same way as the other backend polls: nothing runs
+    // while the AI layer is off or no host is set, and it backs off while
+    // the host is not answering.
+    Timer {
+        id: strataPoll
+
+        interval: root.strataReachable ? 5000 : 30000
+        repeat: true
+        triggeredOnStart: true
+        running: InstallProfile.aiEnabled && AiConfig.strataHostConfigured
+        onTriggered: root.refreshStrataRunning()
+    }
+
+    ActivityProbe {
+        name: "ai.strata-health"
+        kind: "network"
+        timer: strataPoll
     }
 
     // llama-swap pushes a modelStatus event the moment a model starts or

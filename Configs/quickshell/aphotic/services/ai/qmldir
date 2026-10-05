@@ -12,4 +12,5 @@ singleton LlamaSwapStats 1.0 LlamaSwapStats.qml
 OllamaClaims 1.0 OllamaClaims.qml
 LlamaSwapClaims 1.0 LlamaSwapClaims.qml
 LmStudioClaims 1.0 LmStudioClaims.qml
+StrataClaims 1.0 StrataClaims.qml
 BackendClaims 1.0 BackendClaims.qml

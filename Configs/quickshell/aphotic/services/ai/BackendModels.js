@@ -20,3 +20,18 @@ function lmStudioModels(response) {
         state: "ready"
     }));
 }
+
+// Strata serves one model, so its report is one entry, and only while that
+// model is resident. `arenaMiB` is the engine's own expert arena as the
+// engine reported it; a host total is never passed here, so a claim can
+// never be built from one.
+function strataModels(health, arenaMiB) {
+    if (!health?.model || health.loaded !== true)
+        return [];
+    return [{
+        name: String(health.model),
+        embedding: false,
+        state: "loaded",
+        ramMiB: Number(arenaMiB || 0)
+    }];
+}

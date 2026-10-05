@@ -26,6 +26,8 @@ Singleton {
     // port and nothing installs it, so an unset host means "not in use".
     property string llamaSwapHost: ""
     property string lmStudioHost: ""
+    // Only a loopback endpoint can own this machine's process claims.
+    property string strataHost: ""
     property string inferenceMode: "auto"
 
     // Set by install.sh's lib/install/assistant.sh (NVIDIA-gated, opt-in),
@@ -38,6 +40,7 @@ Singleton {
     readonly property bool ollamaHostConfigured: root.ollamaHost.length > 0
     readonly property bool llamaSwapHostConfigured: root.llamaSwapHost.length > 0
     readonly property bool lmStudioHostConfigured: root.lmStudioHost.length > 0
+    readonly property bool strataHostConfigured: /^https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(root.strataHost)
 
     property bool _loaded: false
 
@@ -50,6 +53,7 @@ Singleton {
             ollamaModel: root.ollamaModel,
             llamaSwapHost: root.llamaSwapHost,
             lmStudioHost: root.lmStudioHost,
+            strataHost: root.strataHost,
             inferenceMode: root.inferenceMode,
             assistantEnabled: root.assistantEnabled,
             assistantModel: root.assistantModel,
@@ -71,6 +75,7 @@ Singleton {
     onOllamaModelChanged: root._save()
     onLlamaSwapHostChanged: root._save()
     onLmStudioHostChanged: root._save()
+    onStrataHostChanged: root._save()
     onInferenceModeChanged: root._save()
     onAssistantEnabledChanged: root._save()
     onAssistantModelChanged: root._save()
@@ -94,6 +99,8 @@ Singleton {
                     root.llamaSwapHost = data.llamaSwapHost;
                 if (typeof data.lmStudioHost === "string")
                     root.lmStudioHost = data.lmStudioHost;
+                if (typeof data.strataHost === "string")
+                    root.strataHost = data.strataHost;
                 if (data.inferenceMode === "auto" || data.inferenceMode === "off")
                     root.inferenceMode = data.inferenceMode;
                 if (typeof data.assistantEnabled === "boolean")

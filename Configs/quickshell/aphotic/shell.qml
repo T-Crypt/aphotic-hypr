@@ -496,6 +496,15 @@ ShellRoot {
         enabled: InstallProfile.aiEnabled && AiConfig.llamaSwapHostConfigured
     }
 
+    // Mounted here for the same reason as llama-swap's: it adopts the engine
+    // PID into GpuVramSource, which is not a singleton. Its RAM claim is the
+    // engine's own arena from AiProviders, never a host total.
+    StrataClaims {
+        gpuVram: gpuVramSource
+        runningModels: AiProviders.strataRunningModels
+        enabled: InstallProfile.aiEnabled && AiConfig.strataHostConfigured
+    }
+
     // Every enabled plugin that registers an `overlay` surface, one window
     // per screen. Nested rather than flattened because the two models are
     // independent: surfaces come and go as plugins are enabled, screens as
