@@ -38,7 +38,16 @@ def generated_block(root: Path) -> str:
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
     except subprocess.TimeoutExpired:
         pass
-    log = run(["git", "log", "origin/main", "-15", "--oneline"], root).splitlines()
+    # A timed-out or failed fetch leaves no ref behind, and a shallow CI
+    # checkout never has one; fall back to the local history instead of
+    # crashing on the missing ref.
+    have_origin_main = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", "refs/remotes/origin/main"],
+        cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    ).returncode == 0
+    ref = "origin/main" if have_origin_main else "HEAD"
+    heading = "### Recent origin/main" if have_origin_main else "### Recent local history"
+    log = run(["git", "log", ref, "-15", "--oneline"], root).splitlines()
     lines = [START, "", "### Open pull requests", ""]
     if pulls:
         for pull in sorted(pulls, key=lambda item: item["number"]):
@@ -48,7 +57,7 @@ def generated_block(root: Path) -> str:
             )
     else:
         lines.append("- None.")
-    lines.extend(["", "### Recent origin/main", ""])
+    lines.extend(["", heading, ""])
     lines.extend(f"- `{entry}`" for entry in log)
     lines.extend(["", END])
     return "\n".join(lines)
