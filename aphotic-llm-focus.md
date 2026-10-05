@@ -104,6 +104,20 @@ Each row is an independently reviewable PR into `dev`, with an owner-neutral cor
 - CLI and installer: `Configs/.local/lib/aphotic/commands/`, layer manifests, setup wrapper, and user service. Any binary the shell invokes belongs in both base package manifests. Installer/systemd changes require the disposable dev VM gate.
 - Separate plugin repository: use profile/adapter manifests and shared host seams; do not put plugin IDs in Aphotic core or make gaming/security/dev depend on AI.
 
+## Agents and AI surfaces
+
+The **Agents** notch tile reports coding harness sessions. The **AI** notch tile reports inference engines and models. They must read separate registries. A harness using a local model appears in Agents for its session and in AI for its engine; the memory allocation has one owner.
+
+The current Agents tile reads the generic `AgentEvents` feed, but its main view picks one latest session and gives the remaining space to waiting sessions. The bar's `AgentProviders` metadata and process checks name Claude Code, Codex and OpenCode. The plugin repository has hook plugins for those three, but none for Pi, Oh-My-Pi or Dsh in this review. `AgentRoles.hasConfiguredHarness` checks Claude and Codex availability, so OpenCode alone cannot satisfy that gate. The AI notch tile belongs to the llama-swap plugin and reads its models; it cannot show an attached Strata or direct engine from `LocalInference`.
+
+Build this as three separate reviews into `dev` and the plugin repository's default branch:
+
+1. Add harness descriptors with an ID, display name, executable, hook capability and optional usage source. Derive bar choices from installed, enabled hook manifests. Let users choose visible harnesses, order and default in Settings; preserve right-click launch and middle-click cycle. An unknown harness may show a session if it sends valid events, with no invented usage or quota.
+2. Add Pi, Oh-My-Pi and Dsh hook adapters only after checking each installed harness's real event API. Keep one shared event feed and list concurrent sessions in the Agents tile with harness, workspace, state and a focus action. Test mixed Claude/Codex/Pi sessions, waiting states, end events and stale-session cleanup.
+3. Make the AI tile read the shared local inference registry. Show llama-swap as a router and direct engines as separate instances. Add load/unload controls only for adapters that declare them; Strata has `/load` and `/unload`, while the NInfer path needs a verified control API before it gets buttons. Confirm a control with a later health report before releasing its claim. A model routed through llama-swap keeps one physical memory owner.
+
+The release gate is a live desktop with concurrent harness sessions across workspaces and two engine routes. Both tiles must show the right subjects, preserve user selection, and go idle when their feature or surface is off.
+
 ## Headless mode choices
 
 **Required release path:** desktop attach first, managed engine second, session-preserving offload next. The existing GUI session must return. That rules out presenting Hyprland shutdown and a new graphical login as the first supported offload mode. Hyprland must remain alive for 6A; a true shell-free mode needs successful checkpoint and restore of the compositor and its clients on supported hardware before release. Stopping a Wayland compositor ordinarily breaks its clients' connection, so merely saving window metadata cannot satisfy this gate.
