@@ -31,12 +31,17 @@ SettingsRow {
                 Layout.preferredWidth: presetLabel.implicitWidth + Tokens.padding.medium * 2
                 radius: Tokens.rounding.full
                 opacity: presetPill.selectable ? 1 : 0.45
-                color: Settings.barSignal ? (presetPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Colours.signalStyle.raised) : (presetPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2))
-                border.width: Settings.barSignal ? 1 : 0
-                border.color: Settings.barSignal ? (presetPill.active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline) : "transparent"
+                color: Settings.barSignal ? (presetPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Qt.alpha(Colours.palette.m3onSurface, 0.04)) : (presetPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3))
 
                 Behavior on color {
                     CAnim {}
+                }
+
+                GradedOutline {
+                    radius: presetPill.radius
+                    level: 2
+                    accent: presetPill.active && Settings.barSignal
+                    hovered: pillState.containsMouse
                 }
 
                 StyledText {
@@ -48,6 +53,8 @@ SettingsRow {
                 }
 
                 StateLayer {
+                    id: pillState
+
                     anchors.fill: parent
                     radius: parent.radius
                     visible: presetPill.selectable

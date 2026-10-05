@@ -9,7 +9,9 @@ import QtQuick.Layouts
 ColumnLayout {
     id: root
 
-    spacing: 0
+    // A 2px seam between rows: each row keeps its own rim, so neighbours
+    // read as separate controls inside one card.
+    spacing: 2
 
     // visibleChildren rather than children: a row hidden by its own
     // `visible:` binding must not claim the last slot, or the group renders
