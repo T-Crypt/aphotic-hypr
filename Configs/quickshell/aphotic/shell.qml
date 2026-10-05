@@ -496,6 +496,11 @@ ShellRoot {
         enabled: InstallProfile.aiEnabled && AiConfig.llamaSwapHostConfigured
     }
 
+    LlamaCppClaims {
+        gpuVram: gpuVramSource
+        enabled: InstallProfile.aiEnabled
+    }
+
     // Every enabled plugin that registers an `overlay` surface, one window
     // per screen. Nested rather than flattened because the two models are
     // independent: surfaces come and go as plugins are enabled, screens as
