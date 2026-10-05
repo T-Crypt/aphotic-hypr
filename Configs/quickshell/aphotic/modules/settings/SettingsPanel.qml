@@ -69,8 +69,6 @@ RowLayout {
         Layout.preferredWidth: 300
         radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
         color: Settings.barSignal ? Colours.signalStyle.base : Colours.tPalette.m3surfaceContainer
-        border.width: Settings.barSignal ? 1 : 0
-        border.color: Colours.signalStyle.hairline
 
         Elevation {
             visible: Settings.barSignal
@@ -88,6 +86,11 @@ RowLayout {
             visible: !Settings.barSignal
             radius: rail.radius
             baseColour: rail.color
+        }
+
+        GradedOutline {
+            radius: rail.radius
+            level: 0
         }
 
         CategoryRail {
@@ -108,8 +111,6 @@ RowLayout {
         Layout.leftMargin: Tokens.spacing.medium
         radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
         color: Settings.barSignal ? Colours.signalStyle.surface : Colours.tPalette.m3surfaceContainer
-        border.width: Settings.barSignal ? 1 : 0
-        border.color: Colours.signalStyle.hairline
         // The Flickable inside already clips the sliding content; the
         // Signal skin needs the shadow to fall outside the pane.
         clip: !Settings.barSignal
@@ -138,6 +139,11 @@ RowLayout {
             visible: Settings.barSignal
             target: parent
             level: 2
+        }
+
+        GradedOutline {
+            radius: paneSurface.radius
+            level: 0
         }
 
         // Accent glow falling from the top of the pane, behind its header.
@@ -207,16 +213,14 @@ RowLayout {
                 Loader {
                     id: paneLoader
 
+                    // A ColumnLayout taller than its content spreads the
+                    // slack between its children, which scattered short
+                    // panes down the viewport. Only a pane that holds a
+                    // list sized to the viewport opts in with fillViewport.
+                    readonly property bool fills: paneLoader.item?.fillViewport ?? false
+
                     Layout.fillWidth: true
-                    // The only fillHeight child, so it takes whatever the
-                    // sections below leave -- About, Launcher and
-                    // Appearance distribute that slack with their own
-                    // fillHeight spacers. Stretching the pane to the whole
-                    // viewport instead would push the first section header
-                    // a screen down; giving it only its natural height
-                    // collapsed those panes' centring the moment a plugin
-                    // docked a section into their category.
-                    Layout.fillHeight: true
+                    Layout.fillHeight: paneLoader.fills
                     Layout.preferredHeight: paneLoader.item?.implicitHeight ?? 0
 
                     sourceComponent: {
@@ -267,7 +271,7 @@ RowLayout {
                     Layout.leftMargin: Tokens.padding.small
                     text: qsTr("Plugins")
                     color: Colours.palette.m3onSurfaceVariant
-                    font: Tokens.font.label.medium
+                    font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
                 }
 
                 Repeater {
@@ -300,6 +304,33 @@ RowLayout {
                         }
                     }
                 }
+
+                Item {
+                    Layout.fillHeight: !paneLoader.fills
+                }
+            }
+        }
+
+        // Shade under the top edge once content has scrolled beneath it.
+        Rectangle {
+            anchors.left: paneFlick.left
+            anchors.right: paneFlick.right
+            anchors.top: paneFlick.top
+            height: 14
+            opacity: paneFlick.contentY > 1 ? 1 : 0
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: Qt.alpha(Colours.palette.m3shadow, 0.35)
+                }
+                GradientStop {
+                    position: 1
+                    color: Qt.alpha(Colours.palette.m3shadow, 0)
+                }
+            }
+
+            Behavior on opacity {
+                Anim { type: Anim.DefaultEffects }
             }
         }
 

@@ -15,7 +15,7 @@ Item {
     required property string styleName
     required property string label
 
-    readonly property bool selected: Settings.barStyle === root.styleName
+    readonly property bool selected: root.styleName === "signal" ? Settings.barSkin === "signal" : Settings.barStyle === root.styleName && (root.styleName !== "full" || Settings.barSkin !== "signal")
     // Matches Tokens.sizes.bar.minimalInnerWidth vs innerWidth -- Minimal
     // is thinner than Full/Taskbar in the real bar, and the preview
     // needs to actually reflect that instead of rendering it at the same
@@ -127,7 +127,14 @@ Item {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: Settings.setBarStyle(root.styleName)
+            onClicked: {
+                if (root.styleName === "signal")
+                    Settings.barSkin = "signal";
+                else if (root.styleName === "full" && Settings.lastFullSkin === "signal")
+                    Settings.barSkin = "pill";
+                else
+                    Settings.setBarStyle(root.styleName);
+            }
         }
     }
 

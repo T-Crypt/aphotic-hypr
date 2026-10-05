@@ -15,6 +15,7 @@ Item {
 
     implicitWidth: loader.implicitWidth
     implicitHeight: loader.implicitHeight
+    readonly property bool fillViewport: true
 
     property bool showWallpaperPicker: false
     property bool showCommunityThemes: false

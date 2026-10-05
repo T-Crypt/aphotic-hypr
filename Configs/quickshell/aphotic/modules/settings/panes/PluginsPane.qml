@@ -30,6 +30,7 @@ ColumnLayout {
     id: root
 
     required property ScreenState screenState
+    readonly property bool fillViewport: true
 
     readonly property string repoUrl: "https://github.com/T-Crypt/aphotic-plugins"
 
