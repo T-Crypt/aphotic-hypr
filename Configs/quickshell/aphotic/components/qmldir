@@ -1,4 +1,5 @@
 module qs.components
+GradedOutline 1.0 GradedOutline.qml
 AphoticMark 1.0 AphoticMark.qml
 Anim 1.0 Anim.qml
 AppIcon 1.0 AppIcon.qml

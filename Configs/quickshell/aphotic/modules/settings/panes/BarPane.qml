@@ -40,6 +40,11 @@ ColumnLayout {
         }
         BarStylePreviewCard {
             Layout.fillWidth: true
+            styleName: "signal"
+            label: qsTr("Signal")
+        }
+        BarStylePreviewCard {
+            Layout.fillWidth: true
             styleName: "dock"
             label: qsTr("Dock")
         }
