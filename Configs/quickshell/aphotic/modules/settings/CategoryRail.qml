@@ -59,11 +59,25 @@ ColumnLayout {
     spacing: Tokens.spacing.medium
 
     StyledRect {
+        id: searchBox
+
         Layout.fillWidth: true
         Layout.preferredHeight: 36
         visible: root.showSearch
         radius: Tokens.rounding.full
         color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+
+        GradedOutline {
+            radius: searchBox.radius
+            level: 2
+            accent: searchInput.activeFocus
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.IBeamCursor
+            onClicked: searchInput.forceActiveFocus()
+        }
 
         RowLayout {
             anchors.fill: parent
@@ -86,6 +100,12 @@ ColumnLayout {
                 color: Colours.palette.m3onSurface
 
                 Keys.onEscapePressed: searchInput.text = ""
+                // Enter opens the top match, so search works without the mouse.
+                Keys.onReturnPressed: {
+                    const hit = root.filteredCategories[0];
+                    if (hit)
+                        root.categorySelected(hit.categoryId, hit.sectionId ?? "");
+                }
 
                 StyledText {
                     visible: searchInput.text.length === 0
@@ -94,6 +114,20 @@ ColumnLayout {
                     text: qsTr("Search settings…")
                     color: Colours.palette.m3onSurfaceVariant
                     font: Tokens.font.body.small
+                }
+            }
+
+            MaterialIcon {
+                visible: searchInput.text.length > 0
+                text: "close"
+                color: Colours.palette.m3onSurfaceVariant
+                fontStyle: Tokens.font.icon.small
+
+                StateLayer {
+                    anchors.fill: parent
+                    anchors.margins: -Tokens.padding.extraSmall
+                    radius: Tokens.rounding.full
+                    onClicked: searchInput.text = ""
                 }
             }
         }
@@ -118,7 +152,7 @@ ColumnLayout {
                 id: list
 
                 width: listFlick.width
-                spacing: 0
+                spacing: root.signalSkin ? 0 : 2
 
                 Repeater {
                     model: ScriptModel {
@@ -190,6 +224,17 @@ ColumnLayout {
                         }
                         Behavior on bottomRightRadius {
                             Anim { type: Anim.DefaultEffects }
+                        }
+
+                        GradedOutline {
+                            topLeftRadius: categoryButton.topLeftRadius
+                            topRightRadius: categoryButton.topRightRadius
+                            bottomLeftRadius: categoryButton.bottomLeftRadius
+                            bottomRightRadius: categoryButton.bottomRightRadius
+                            showRim: !root.signalSkin || categoryButton.active || stateLayer.containsMouse
+                            accent: categoryButton.active
+                            accentColour: root.signalSkin ? categoryButton.tint : Colours.palette.m3primary
+                            hovered: stateLayer.containsMouse
                         }
 
                         StyledText {

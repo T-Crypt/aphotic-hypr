@@ -12,6 +12,14 @@ ColumnLayout {
         font: Tokens.font.title.large
     }
 
+    StyledText {
+        Layout.bottomMargin: -Tokens.spacing.small
+        Layout.leftMargin: Tokens.padding.small
+        text: qsTr("Clock")
+        color: Colours.palette.m3onSurfaceVariant
+        font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
+    }
+
     SettingsGroup {
         Layout.fillWidth: true
 
@@ -39,9 +47,11 @@ ColumnLayout {
 
     StyledText {
         Layout.topMargin: Tokens.spacing.small
+        Layout.bottomMargin: -Tokens.spacing.small
+        Layout.leftMargin: Tokens.padding.small
         text: qsTr("Weather")
         color: Colours.palette.m3onSurfaceVariant
-        font: Tokens.font.label.medium
+        font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
     }
 
     SettingsGroup {

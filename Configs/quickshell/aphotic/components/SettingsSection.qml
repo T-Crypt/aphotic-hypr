@@ -43,8 +43,6 @@ ColumnLayout {
         implicitHeight: headerRow.implicitHeight + Tokens.padding.medium * 2
 
         color: Settings.barSignal ? (root.highlighted ? Qt.tint(Colours.signalStyle.raised, Colours.signalStyle.hover) : Colours.signalStyle.raised) : (root.highlighted ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : Colours.layer(Colours.tPalette.m3surfaceContainer, 2))
-        border.width: Settings.barSignal ? 1 : 0
-        border.color: Colours.signalStyle.hairline
         topLeftRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
         topRightRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
         bottomLeftRadius: root.expanded ? Tokens.rounding.extraSmall : (Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge)
@@ -66,17 +64,22 @@ ColumnLayout {
             level: 1
         }
 
-        // Light catching the top edge, so the card reads as raised.
-        Rectangle {
-            visible: Settings.barSignal
-            x: parent.topLeftRadius
-            width: parent.width - parent.topLeftRadius - parent.topRightRadius
-            height: 1
-            color: Colours.signalStyle.edgeLight
+        GradedOutline {
+            topLeftRadius: header.topLeftRadius
+            topRightRadius: header.topRightRadius
+            bottomLeftRadius: header.bottomLeftRadius
+            bottomRightRadius: header.bottomRightRadius
+            accent: root.highlighted
+            hovered: headerState.containsMouse
         }
 
         StateLayer {
-            radius: Tokens.rounding.extraLarge
+            id: headerState
+
+            topLeftRadius: header.topLeftRadius
+            topRightRadius: header.topRightRadius
+            bottomLeftRadius: header.bottomLeftRadius
+            bottomRightRadius: header.bottomRightRadius
             onClicked: root.expanded = !root.expanded
         }
 
@@ -146,6 +149,7 @@ ColumnLayout {
     // every frame of the transition.
     Item {
         Layout.fillWidth: true
+        Layout.topMargin: 2
         Layout.preferredHeight: root.expanded ? (bodyLoader.item?.implicitHeight ?? 0) + Tokens.padding.medium * 2 : 0
         clip: true
         visible: Layout.preferredHeight > 0
@@ -155,23 +159,21 @@ ColumnLayout {
         }
 
         StyledRect {
+            id: body
+
             anchors.fill: parent
             color: Settings.barSignal ? Colours.signalStyle.raised : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
-            border.width: Settings.barSignal ? 1 : 0
-            border.color: Colours.signalStyle.hairline
             topLeftRadius: Tokens.rounding.extraSmall
             topRightRadius: Tokens.rounding.extraSmall
             bottomLeftRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
             bottomRightRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
-        }
 
-        // Covers the body's top border so header and body meet on one line.
-        Rectangle {
-            visible: Settings.barSignal
-            x: 1
-            width: parent.width - 2
-            height: 1
-            color: Colours.signalStyle.raised
+            GradedOutline {
+                topLeftRadius: body.topLeftRadius
+                topRightRadius: body.topRightRadius
+                bottomLeftRadius: body.bottomLeftRadius
+                bottomRightRadius: body.bottomRightRadius
+            }
         }
 
         Loader {
