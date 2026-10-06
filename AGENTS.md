@@ -25,6 +25,7 @@ reading the tree to learn a subsystem:
 
 | Task | Page |
 |---|---|
+| Start contributing, or test in a VM | `Developer-SDK` (the hub), `Dev-VM`, `Contributor-Workflow` |
 | How the shell fits together | `Architecture`, `Design-Principles` |
 | Write or change a plugin | `Plugin-System`, `Build-a-Plugin`, and the plugin SDK guide: `https://raw.githubusercontent.com/T-Crypt/aphotic-plugins/main/WRITING-PLUGINS.md` |
 | The `aphotic` CLI | `CLI-Reference` |
