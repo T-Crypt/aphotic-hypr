@@ -23,13 +23,13 @@ ColumnLayout {
 
         StyledText {
             Layout.fillWidth: true
-            text: Settings.barSignal ? qsTr("VPN").toUpperCase() : qsTr("VPN")
-            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.body.small
+            text: qsTr("VPN").toUpperCase()
+            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
         }
 
         StyledText {
             text: Vpn.status.connected ? qsTr("Connected") : qsTr("Not connected")
-            color: Settings.barSignal ? (Vpn.status.connected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (Vpn.status.connected ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant)
+            color: Vpn.status.connected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
             font: Tokens.font.label.medium
         }
     }

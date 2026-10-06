@@ -42,11 +42,11 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: headerRow.implicitHeight + Tokens.padding.medium * 2
 
-        color: Settings.barSignal ? (root.highlighted ? Qt.tint(Colours.signalStyle.raised, Colours.signalStyle.hover) : Colours.signalStyle.raised) : (root.highlighted ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : Colours.layer(Colours.tPalette.m3surfaceContainer, 2))
-        topLeftRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
-        topRightRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
-        bottomLeftRadius: root.expanded ? Tokens.rounding.extraSmall : (Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge)
-        bottomRightRadius: root.expanded ? Tokens.rounding.extraSmall : (Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge)
+        color: (root.highlighted ? Qt.tint(Colours.signalStyle.raised, Colours.signalStyle.hover) : Colours.signalStyle.raised)
+        topLeftRadius: Tokens.rounding.large
+        topRightRadius: Tokens.rounding.large
+        bottomLeftRadius: root.expanded ? Tokens.rounding.extraSmall : Tokens.rounding.large
+        bottomRightRadius: root.expanded ? Tokens.rounding.extraSmall : Tokens.rounding.large
 
         Behavior on color {
             CAnim {}
@@ -59,7 +59,6 @@ ColumnLayout {
         }
 
         Elevation {
-            visible: Settings.barSignal
             target: parent
             level: 1
         }
@@ -96,7 +95,7 @@ ColumnLayout {
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
                 radius: Tokens.rounding.medium
-                color: Settings.barSignal ? Qt.alpha(Colours.palette.m3primary, root.expanded ? 0.22 : 0.12) : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                color: Qt.alpha(Colours.palette.m3primary, root.expanded ? 0.22 : 0.12)
 
                 Behavior on color {
                     CAnim {}
@@ -105,7 +104,7 @@ ColumnLayout {
                 MaterialIcon {
                     anchors.centerIn: parent
                     text: root.icon
-                    color: Settings.barSignal ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant
+                    color: Colours.palette.m3primaryOnSurface
                     fontStyle: Tokens.font.icon.small
                 }
             }
@@ -117,7 +116,7 @@ ColumnLayout {
                 StyledText {
                     Layout.fillWidth: true
                     text: root.label
-                    font: Settings.barSignal ? Tokens.font.body.builders.medium.weight(Font.DemiBold).build() : Tokens.font.body.medium
+                    font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
                     elide: Text.ElideRight
                 }
 
@@ -162,11 +161,11 @@ ColumnLayout {
             id: body
 
             anchors.fill: parent
-            color: Settings.barSignal ? Colours.signalStyle.raised : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+            color: Colours.signalStyle.raised
             topLeftRadius: Tokens.rounding.extraSmall
             topRightRadius: Tokens.rounding.extraSmall
-            bottomLeftRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
-            bottomRightRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
+            bottomLeftRadius: Tokens.rounding.large
+            bottomRightRadius: Tokens.rounding.large
 
             GradedOutline {
                 topLeftRadius: body.topLeftRadius

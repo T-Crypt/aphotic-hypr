@@ -34,7 +34,7 @@ ColumnLayout {
 
         StyledText {
             text: `${Math.round(UPower.displayDevice.percentage * 100)}%`
-            font: Settings.barSignal ? Tokens.font.title.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.medium
+            font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
         }
 
         StyledText {
@@ -61,9 +61,9 @@ ColumnLayout {
     }
 
     StyledText {
-        text: Settings.barSignal ? qsTr("Power profile").toUpperCase() : qsTr("Power profile")
+        text: qsTr("Power profile").toUpperCase()
         color: Colours.palette.m3onSurfaceVariant
-        font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
     RowLayout {
@@ -98,7 +98,6 @@ ColumnLayout {
                 Layout.preferredHeight: profileCol.implicitHeight + Tokens.padding.small * 2
 
                 Rectangle {
-                    visible: Settings.barSignal
                     anchors.fill: parent
                     radius: Tokens.rounding.medium
                     color: PowerProfiles.profile === profileBtn.modelData.profile ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
@@ -107,9 +106,9 @@ ColumnLayout {
                 }
 
                 StateLayer {
-                    radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.small
-                    color: Settings.barSignal ? Colours.signalStyle.hover : (PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primary : "transparent")
-                    stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
+                    radius: Tokens.rounding.medium
+                    color: Colours.signalStyle.hover
+                    stateOpacity: (containsMouse ? 1 : 0)
                     disabled: profileBtn.modelData.profile === PowerProfile.Performance && !PowerProfiles.hasPerformanceProfile
                     onClicked: PowerProfiles.profile = profileBtn.modelData.profile
                 }
@@ -122,13 +121,13 @@ ColumnLayout {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.icon
-                        color: PowerProfiles.profile === profileBtn.modelData.profile ? (Settings.barSignal ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onPrimary) : Colours.palette.m3onSurfaceVariant
+                        color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.label
-                        color: PowerProfiles.profile === profileBtn.modelData.profile ? (Settings.barSignal ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onPrimary) : Colours.palette.m3onSurfaceVariant
+                        color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant
                         font: Tokens.font.label.medium
                     }
                 }

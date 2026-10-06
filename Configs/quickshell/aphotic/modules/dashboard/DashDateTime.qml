@@ -19,14 +19,14 @@ Item {
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: Time.hourStr
-            color: Settings.barSignal ? Colours.palette.m3onSurface : Colours.palette.m3secondary
+            color: Colours.palette.m3onSurface
             font: Tokens.font.headline.builders.large.scale(1.3).weight(Font.DemiBold).build()
         }
 
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: Time.minuteStr
-            color: Settings.barSignal ? Colours.palette.m3onSurface : Colours.palette.m3secondary
+            color: Colours.palette.m3onSurface
             font: Tokens.font.headline.builders.large.scale(1.3).weight(Font.DemiBold).build()
         }
 

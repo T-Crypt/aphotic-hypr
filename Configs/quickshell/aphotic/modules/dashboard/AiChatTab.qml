@@ -114,11 +114,9 @@ ColumnLayout {
                 opacity: providerPill.available ? 1 : 0.4
                 // Signal: quiet hairline capsule; the accent border is the
                 // only thing that marks the active provider.
-                color: Settings.barSignal ? "transparent"
-                       : (providerPill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer)
-                border.width: Settings.barSignal ? (providerPill.active ? 2 : 1) : 0
-                border.color: Settings.barSignal ? (providerPill.active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline)
-                                : "transparent"
+                color: "transparent"
+                border.width: (providerPill.active ? 2 : 1)
+                border.color: (providerPill.active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline)
 
                 Behavior on color {
                     CAnim {}
@@ -131,23 +129,17 @@ ColumnLayout {
                 StyledText {
                     id: pillLabel
                     anchors.centerIn: parent
-                    text: Settings.barSignal ? providerPill.modelData.label.toUpperCase() : providerPill.modelData.label
-                    color: Settings.barSignal
-                           ? (providerPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
-                           : (providerPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant)
-                    font: Settings.barSignal
-                          ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                          : Tokens.font.label.small
+                    text: providerPill.modelData.label.toUpperCase()
+                    color: (providerPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                    font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                 }
 
                 StateLayer {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: providerPill.available
-                    stateOpacity: Settings.barSignal
-                                  ? (containsMouse && !providerPill.active ? 1 : 0)
-                                  : (containsMouse ? 0.08 : 0)
-                    color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                    stateOpacity: (containsMouse && !providerPill.active ? 1 : 0)
+                    color: Colours.signalStyle.hover
                 }
 
                 // A StateLayer's own MouseArea goes `enabled: false` when
@@ -177,8 +169,8 @@ ColumnLayout {
             height: 32
             width: modelLabel.implicitWidth + Tokens.padding.large * 2
             radius: Tokens.rounding.full
-            color: Settings.barSignal ? "transparent" : Colours.tPalette.m3surfaceContainer
-            border.width: Settings.barSignal ? 1 : 0
+            color: "transparent"
+            border.width: 1
             border.color: Colours.signalStyle.hairline
 
             StyledText {
@@ -188,19 +180,17 @@ ColumnLayout {
                     const t = AiConfig.ollamaHostConfigured
                               ? (AiConfig.ollamaModel || qsTr("Select model"))
                               : qsTr("Set host…");
-                    return Settings.barSignal ? t.toUpperCase() : t;
+                    return t.toUpperCase();
                 }
                 color: Colours.palette.m3onSurfaceVariant
-                font: Settings.barSignal
-                      ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                      : Tokens.font.label.small
+                font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
             }
 
             StateLayer {
                 anchors.fill: parent
                 radius: parent.radius
-                stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
-                color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                stateOpacity: (containsMouse ? 1 : 0)
+                color: Colours.signalStyle.hover
             }
 
             MouseArea {
@@ -327,18 +317,16 @@ ColumnLayout {
         Layout.preferredWidth: 480
         Layout.preferredHeight: 300
         radius: Tokens.rounding.large
-        color: Settings.barSignal ? Colours.signalStyle.surface : Colours.tPalette.m3surfaceContainer
-        border.width: Settings.barSignal ? 1 : 0
+        color: Colours.signalStyle.surface
+        border.width: 1
         border.color: Colours.signalStyle.hairline
 
         Elevation {
-            visible: Settings.barSignal
             target: chatPanel
             level: 1
         }
 
         Rectangle {
-            visible: Settings.barSignal
             x: chatPanel.radius
             width: chatPanel.width - chatPanel.radius * 2
             height: 1
@@ -365,18 +353,15 @@ ColumnLayout {
                 readonly property bool fromUser: bubble.modelData.role === "user"
 
                 width: list.width
-                implicitHeight: Settings.barSignal
-                               ? senderLabel.implicitHeight + Tokens.spacing.extraSmall + bubbleBody.implicitHeight
-                               : bubbleBody.implicitHeight
+                implicitHeight: senderLabel.implicitHeight + Tokens.spacing.extraSmall + bubbleBody.implicitHeight
 
                 ColumnLayout {
                     anchors.fill: parent
-                    spacing: Settings.barSignal ? Tokens.spacing.extraSmall : 0
+                    spacing: Tokens.spacing.extraSmall
 
                     StyledText {
                         id: senderLabel
 
-                        visible: Settings.barSignal
                         Layout.alignment: bubble.fromUser ? Qt.AlignRight : Qt.AlignLeft
                         Layout.maximumWidth: bubbleBody.implicitWidth
                         elide: Text.ElideRight
@@ -391,24 +376,20 @@ ColumnLayout {
                         // Bubbles hug their text up to 80% of the list.
                         readonly property real maxBubbleWidth: list.width * 0.8
 
-                        Layout.fillWidth: !Settings.barSignal
-                        Layout.alignment: Settings.barSignal ? (bubble.fromUser ? Qt.AlignRight : Qt.AlignLeft) : Qt.AlignLeft
-                        Layout.maximumWidth: Settings.barSignal ? bubbleBody.maxBubbleWidth : -1
+                        Layout.fillWidth: false
+                        Layout.alignment: (bubble.fromUser ? Qt.AlignRight : Qt.AlignLeft)
+                        Layout.maximumWidth: bubbleBody.maxBubbleWidth
                         implicitWidth: bubbleText.implicitWidth + Tokens.padding.medium * 2
                         implicitHeight: bubbleText.implicitHeight + Tokens.padding.medium * 2
-                        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.medium
-                        bottomRightRadius: Settings.barSignal && bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
-                        bottomLeftRadius: Settings.barSignal && !bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
-                        color: Settings.barSignal
-                               ? (bubble.fromUser ? Qt.alpha(Colours.palette.m3primary, 0.14) : Colours.signalStyle.raised)
-                               : (bubble.fromUser ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh)
-                        border.width: Settings.barSignal ? 1 : 0
-                        border.color: Settings.barSignal
-                                      ? (bubble.fromUser ? Qt.alpha(Colours.palette.m3primary, 0.4) : Colours.signalStyle.hairline)
-                                      : "transparent"
+                        radius: Tokens.rounding.large
+                        bottomRightRadius: bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
+                        bottomLeftRadius: !bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
+                        color: (bubble.fromUser ? Qt.alpha(Colours.palette.m3primary, 0.14) : Colours.signalStyle.raised)
+                        border.width: 1
+                        border.color: (bubble.fromUser ? Qt.alpha(Colours.palette.m3primary, 0.4) : Colours.signalStyle.hairline)
 
                         Rectangle {
-                            visible: Settings.barSignal && !bubble.fromUser
+                            visible: !bubble.fromUser
                             x: Math.min(bubbleBody.radius, bubbleBody.width / 2)
                             width: Math.max(bubbleBody.width - Math.min(bubbleBody.radius, bubbleBody.width / 2) * 2, 0)
                             height: 1
@@ -423,9 +404,7 @@ ColumnLayout {
                             anchors.verticalCenter: parent.verticalCenter
                             wrapMode: Text.Wrap
                             text: bubble.modelData.text
-                            color: Settings.barSignal
-                                   ? Colours.palette.m3onSurface
-                                   : (bubble.fromUser ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface)
+                            color: Colours.palette.m3onSurface
                             font: Tokens.font.body.medium
                         }
                     }
@@ -435,10 +414,9 @@ ColumnLayout {
             ColumnLayout {
                 visible: list.count === 0
                 anchors.centerIn: parent
-                spacing: Settings.barSignal ? Tokens.spacing.small : 0
+                spacing: Tokens.spacing.small
 
                 MaterialIcon {
-                    visible: Settings.barSignal
                     Layout.alignment: Qt.AlignHCenter
                     text: "smart_toy"
                     color: Colours.palette.m3onSurfaceVariant
@@ -448,14 +426,11 @@ ColumnLayout {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Ask anything")
-                    color: Settings.barSignal ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
-                    font: Settings.barSignal
-                          ? Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
-                          : Tokens.font.body.medium
+                    color: Colours.palette.m3onSurface
+                    font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
                 }
 
                 StyledText {
-                    visible: Settings.barSignal
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Type below to start a conversation")
                     color: Colours.palette.m3onSurfaceVariant
@@ -471,9 +446,9 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 48
         radius: Tokens.rounding.full
-        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3surfaceContainerHigh
-        border.width: Settings.barSignal ? 1 : 0
-        border.color: Settings.barSignal && (input.activeFocus || input.text.length > 0)
+        color: Colours.signalStyle.raised
+        border.width: 1
+        border.color: (input.activeFocus || input.text.length > 0)
                      ? Qt.alpha(Colours.palette.m3primary, 0.7)
                      : Colours.signalStyle.hairline
 
@@ -513,7 +488,7 @@ ColumnLayout {
                 Layout.preferredHeight: 36
                 radius: Tokens.rounding.full
                 // Tinted at rest, solid only while a reply streams.
-                color: AiProviders.busy || !Settings.barSignal
+                color: AiProviders.busy
                        ? Colours.palette.m3primary
                        : Qt.alpha(Colours.palette.m3primary, 0.18)
                 opacity: AiProviders.busy ? 0.5 : 1
@@ -521,7 +496,7 @@ ColumnLayout {
                 MaterialIcon {
                     anchors.centerIn: parent
                     text: "send"
-                    color: AiProviders.busy || !Settings.barSignal
+                    color: AiProviders.busy
                            ? Colours.contrastOn(Colours.palette.m3primary)
                            : Colours.palette.m3primaryOnSurface
                     fontStyle: Tokens.font.icon.small

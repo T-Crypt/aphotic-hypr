@@ -33,3 +33,5 @@ FlickScrollBar 1.0 FlickScrollBar.qml
 SurfaceReveal 1.0 SurfaceReveal.qml
 
 EchoTarget 1.0 EchoTarget.qml
+SignalLine 1.0 SignalLine.qml
+SignalSurface 1.0 SignalSurface.qml

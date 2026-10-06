@@ -25,7 +25,7 @@ Item {
 
     Elevation {
         target: card
-        level: Settings.barSignal ? 2 : 3
+        level: 2
     }
 
     StyledRect {
@@ -45,8 +45,8 @@ Item {
         scale: root.open ? 1 : 0.96
         transformOrigin: Item.Right
         radius: Tokens.rounding.large
-        color: Settings.barSignal ? Colours.signalStyle.glass : Colours.palette.m3surfaceContainer
-        border.width: Settings.barSignal ? 1 : 0
+        color: Colours.signalStyle.glass
+        border.width: 1
         border.color: Colours.signalStyle.hairline
 
         Behavior on x {
@@ -72,7 +72,7 @@ Item {
         // depth gradient only reads on the opaque skins.
         DepthGradient {
             anchors.fill: parent
-            visible: !Settings.barSignal
+            visible: false
             radius: card.radius
             baseColour: card.color
         }
@@ -92,7 +92,7 @@ Item {
 
                 MaterialIcon {
                     text: "notifications"
-                    color: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3primary
+                    color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.medium
                 }
 
@@ -100,14 +100,14 @@ Item {
                     Layout.fillWidth: true
                     text: qsTr("Notifications")
                     color: Colours.palette.m3onSurface
-                    font: Settings.barSignal ? Tokens.font.title.builders.large.weight(Font.DemiBold).build() : Tokens.font.title.small
+                    font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
                 }
 
                 StyledRect {
                     visible: NotificationHistory.unreadCount > 0
                     radius: Tokens.rounding.full
                     color: "transparent"
-                    border.width: Settings.barSignal ? 1 : 0
+                    border.width: 1
                     border.color: Colours.signalStyle.hairline
                     implicitWidth: markAllRow.implicitWidth + Tokens.padding.small * 2
                     implicitHeight: markAllRow.implicitHeight + Tokens.padding.extraSmall * 2
@@ -118,26 +118,19 @@ Item {
                         anchors.centerIn: parent
                         spacing: Tokens.spacing.extraSmall
 
-                        MaterialIcon {
-                            text: "done_all"
-                            color: Colours.palette.m3primary
-                            visible: !Settings.barSignal
-                            fontStyle: Tokens.font.icon.small
-                        }
-
-                        // Signal: the pill reads as the small-caps count label.
+                        // The pill reads as the small-caps count label.
                         StyledText {
-                            text: Settings.barSignal ? `${NotificationHistory.unreadCount} NEW` : qsTr("Mark all read")
-                            color: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3primary
-                            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+                            text: `${NotificationHistory.unreadCount} NEW`
+                            color: Colours.palette.m3onSurfaceVariant
+                            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                         }
                     }
 
                     StateLayer {
                         anchors.fill: parent
                         radius: parent.radius
-                        stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
-                        color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                        stateOpacity: (containsMouse ? 1 : 0)
+                        color: Colours.signalStyle.hover
                         onClicked: NotificationHistory.markAllRead()
                     }
                 }
@@ -179,14 +172,13 @@ Item {
                         radius: Tokens.rounding.full
                         border.width: 1
                         border.color: Colours.signalStyle.hairline
-                        visible: Settings.barSignal
                     }
 
                     StateLayer {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
-                        stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
-                        color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                        stateOpacity: (containsMouse ? 1 : 0)
+                        color: Colours.signalStyle.hover
                         onClicked: {
                             if (clearAll.armed) {
                                 NotificationHistory.clearAll();
@@ -219,14 +211,13 @@ Item {
                         radius: Tokens.rounding.full
                         border.width: 1
                         border.color: Colours.signalStyle.hairline
-                        visible: Settings.barSignal
                     }
 
                     StateLayer {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
-                        stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
-                        color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                        stateOpacity: (containsMouse ? 1 : 0)
+                        color: Colours.signalStyle.hover
                         onClicked: DoNotDisturb.toggle()
                     }
 
@@ -250,14 +241,13 @@ Item {
                         radius: Tokens.rounding.full
                         border.width: 1
                         border.color: Colours.signalStyle.hairline
-                        visible: Settings.barSignal
                     }
 
                     StateLayer {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
-                        stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
-                        color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                        stateOpacity: (containsMouse ? 1 : 0)
+                        color: Colours.signalStyle.hover
                         onClicked: root.screenState.notificationCenter = false
                     }
 
@@ -277,8 +267,8 @@ Item {
                 Layout.preferredHeight: weatherRow.implicitHeight + Tokens.padding.medium * 2
                 visible: Weather.hasData
                 radius: Tokens.rounding.medium
-                color: Settings.barSignal ? Colours.signalStyle.raised : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
-                border.width: Settings.barSignal ? 1 : 0
+                color: Colours.signalStyle.raised
+                border.width: 1
                 border.color: Colours.signalStyle.hairline
 
                 RowLayout {

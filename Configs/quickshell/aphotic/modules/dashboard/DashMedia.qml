@@ -21,9 +21,9 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: 140
             Layout.preferredHeight: 140
-            radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
-            color: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3surfaceContainerHigh
-            border.width: Settings.barSignal ? 1 : 0
+            radius: Tokens.rounding.medium
+            color: Colours.signalStyle.raised
+            border.width: 1
             border.color: Colours.signalStyle.hairline
             clip: true
 

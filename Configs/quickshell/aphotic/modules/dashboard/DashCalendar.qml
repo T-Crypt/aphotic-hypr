@@ -133,15 +133,15 @@ Item {
                             height: 28
                             radius: Tokens.rounding.full
                             // Signal: today is a 1px accent ring, not a filled disc.
-                            color: cell.isToday ? (Settings.barSignal ? "transparent" : Colours.palette.m3primary) : "transparent"
-                            border.width: Settings.barSignal && cell.isToday ? 1 : 0
+                            color: cell.isToday ? "transparent" : "transparent"
+                            border.width: cell.isToday ? 1 : 0
                             border.color: Colours.signalStyle.accentLine
                             visible: cell.modelData !== 0
 
                             StyledText {
                                 anchors.centerIn: parent
                                 text: cell.modelData
-                                color: cell.isToday ? (Settings.barSignal ? Colours.palette.m3onSurface : Colours.palette.m3onPrimary) : Colours.palette.m3onSurface
+                                color: cell.isToday ? Colours.palette.m3onSurface : Colours.palette.m3onSurface
                                 font: Tokens.font.body.small
                             }
                         }

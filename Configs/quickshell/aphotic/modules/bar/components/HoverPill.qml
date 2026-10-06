@@ -56,7 +56,10 @@ StyledRect {
     property real centerAlong
 
     visible: opacity > 0
-    opacity: hoveredEntry && !Settings.barSignal ? strength : 0
+    // The Material circle never paints under Signal (the edge line carries
+    // the hover instead); the component still publishes the line's hover
+    // segment from the same hover state.
+    opacity: 0
     implicitWidth: diameter
     implicitHeight: diameter
     radius: diameter / 2
@@ -70,7 +73,7 @@ StyledRect {
     // out. Holding the last centre while it fades keeps the exit clean.
     function publishSignal(): void {
         const win = QsWindow.window;
-        if (!Settings.barSignal || !root.Window.window || !win || win.signalHoverStart === undefined)
+        if (!root.Window.window || !win || win.signalHoverStart === undefined)
             return;
         if (!hoveredEntry) {
             if (win.signalHoverOwner === root)

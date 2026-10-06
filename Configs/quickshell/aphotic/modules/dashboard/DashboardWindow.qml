@@ -33,7 +33,6 @@ PanelWindow {
     // desktop behind the dashboard.
     Rectangle {
         anchors.fill: parent
-        visible: Settings.barSignal
         color: Colours.palette.m3shadow
         opacity: reveal.visibleProgress * 0.35
     }
@@ -58,12 +57,10 @@ PanelWindow {
         height: content.height
         acceptedButtons: Qt.AllButtons
 
-        // Signal: the wheel steps through tabs wherever the content under
-        // the pointer does not scroll itself. One step per notch.
+        // The wheel steps through tabs wherever the content under the
+        // pointer does not scroll itself. One step per notch.
         property real wheelAccum: 0
         onWheel: wheel => {
-            if (!Settings.barSignal)
-                return;
             wheelAccum += wheel.angleDelta.y;
             while (Math.abs(wheelAccum) >= 120) {
                 content.stepTab(wheelAccum > 0 ? -1 : 1);

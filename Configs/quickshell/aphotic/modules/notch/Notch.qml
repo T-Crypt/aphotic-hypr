@@ -206,7 +206,7 @@ StyledRect {
 
     // Signal skin: the notch hangs from the bar as one piece, so the corners
     // on the bar side go square and fillets carry the bar edge into its sides.
-    readonly property bool joined: Settings.barSignal
+    readonly property bool joined: true
     readonly property string barSide: root.dockHorizontal ? (root.growsPositive ? "top" : "bottom") : (root.growsPositive ? "left" : "right")
     readonly property real wing: Tokens.rounding.medium
 

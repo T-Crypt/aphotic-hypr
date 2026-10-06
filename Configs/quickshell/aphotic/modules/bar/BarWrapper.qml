@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "components"
 import QtQuick
 import Quickshell
 import qs.config
@@ -7,6 +8,7 @@ import qs.components
 import qs.services
 import qs.utils
 import qs.modules.bar.popouts as BarPopouts
+import "../../services/BarLayout.js" as BarLayout
 
 Item {
     id: root
@@ -37,23 +39,16 @@ Item {
     // bar; "autohide" still reserves the thin sliver so windows don't tile
     // into the space the reveal-on-hover strip occupies.
     //
-    // Settings._loaded gate: real, live-confirmed bug. Settings.barSkin's
-    // own QML default is "pill" (a full-bar skin) until its FileView loads
-    // the user's persisted value asynchronously -- so for anyone whose
-    // real config is "dock" (or "hidden"), hiddenMode is briefly FALSE at
-    // this window's very first layer-shell commit, and exclusiveZone briefly
-    // computes a real nonzero reservation before flipping back to 0 a
-    // moment later. That transient commit doesn't reliably shrink back down
-    // afterward (a known exclusive-zone-shrink quirk), leaving a real,
-    // permanent phantom reservation baked into hyprctl monitors' `.reserved`
-    // that no later value change corrects -- confirmed live via an
-    // isolation test forcing this property to a distinct constant and
-    // watching `.reserved` carry a fixed, un-shrinkable extra amount from
-    // the pre-load default. Treating "not loaded yet" the same as
-    // hiddenMode (0) is the safe direction: worst case a real bar very
+    // Settings._loaded gate: real, live-confirmed bug. Settings.barLayout's
+    // own QML default is "capsule" (a floating style, hiddenMode true)
+    // until its FileView loads the user's persisted value asynchronously,
+    // so the very first layer-shell commit cannot know whether this
+    // screen's bar is real yet. A transient exclusive-zone value at that
+    // first commit doesn't reliably correct itself afterward (a known
+    // exclusive-zone-shrink quirk), so treating "not loaded yet" the same
+    // as hiddenMode (0) is the safe direction: worst case a real bar very
     // briefly reserves nothing it should have, self-correcting once
-    // Settings._loaded flips true, instead of the reverse (a wrong
-    // reservation that sticks for the rest of the session).
+    // Settings._loaded flips true.
     readonly property int exclusiveZone: !Settings._loaded || disabled || hiddenMode ? 0 : (Settings.barVisibility === "always" || screenState.bar ? contentWidth : Config.border.thickness)
     // "hidden" never reveals via hover -- isHovered only feeds visibility
     // in "autohide" mode, where the always-present sliver is the hover
@@ -149,12 +144,11 @@ Item {
         x: !Settings.barHorizontal && Settings.barPositionRight ? root.width - width : 0
         y: Settings.barHorizontal && Settings.barPositionBottom ? root.height - height : 0
 
-        // Only the "full" style's own pill/square backdrop -- taskbar and
-        // minimal draw their own full-bleed background internally
-        // (TaskbarBar.qml/MinimalBar.qml), matching their own described
-        // look instead of inheriting Full's rounded-strip treatment.
-        radius: Settings.barSignal ? 0 : Settings.barSkin === "square" ? Tokens.rounding.small : Tokens.rounding.full
-        color: Settings.barSignal ? Colours.signalStyle.bar : Colours.tPalette.m3surfaceContainer
+        // Only the "full" layout's own backdrop -- taskbar and minimal
+        // draw their own full-bleed background internally (TaskbarBar.qml/
+        // MinimalBar.qml) instead of inheriting Full's strip treatment.
+        radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? height : width)
+        color: Colours.signalStyle.bar
         border.width: 0
         border.color: Colours.palette.m3outlineVariant
         visible: root.shouldBeVisible && Settings.barStyle === "full"
@@ -163,84 +157,26 @@ Item {
             Anim { type: Anim.DefaultEffects }
         }
 
-        DepthGradient {
-            anchors.fill: parent
-            visible: !Settings.barSignal
-            radius: parent.radius
-            baseColour: Colours.tPalette.m3surfaceContainer
-        }
-
-        Item {
+        // The strip's edge line. Start positions arrive in window
+        // coordinates (published by the bar's own entries), so shift them
+        // back by where this strip itself sits in the window; 0 until the
+        // window has committed its geometry.
+        SignalLine {
             id: signalLine
 
             readonly property var win: QsWindow.window
-            readonly property bool horizontal: Settings.barHorizontal
-            // Where this line starts along the bar, in window coordinates.
-            readonly property real origin: {
-                background.x + background.y;
-                if (!Settings.barSignal || !background.Window.window)
-                    return 0;
-                const p = QsWindow.itemPosition(background);
-                return horizontal ? p.x : p.y;
-            }
+            readonly property real origin: background.Window.window
+                ? (Settings.barHorizontal ? QsWindow.itemPosition(background).x : QsWindow.itemPosition(background).y)
+                : 0
 
-            visible: Settings.barSignal
-            x: horizontal ? 0 : (Settings.barPositionRight ? 0 : parent.width - 1)
-            y: horizontal ? (Settings.barPositionBottom ? 0 : parent.height - 1) : 0
-            width: horizontal ? parent.width : 1
-            height: horizontal ? 1 : parent.height
-
-            // Baseline in two halves that open around the notch where it
-            // hangs from the bar, so the line flows into the notch outline.
-            readonly property real gap: root.screenState?.notchSpan ?? 0
-            readonly property real along: horizontal ? width : height
-            readonly property real half: Math.max(0, (along - gap) / 2)
-
-            Rectangle {
-                width: signalLine.horizontal ? signalLine.half : 1
-                height: signalLine.horizontal ? 1 : signalLine.half
-                color: Colours.signalStyle.hairline
-            }
-
-            Rectangle {
-                x: signalLine.horizontal ? signalLine.along - signalLine.half : 0
-                y: signalLine.horizontal ? 0 : signalLine.along - signalLine.half
-                width: signalLine.horizontal ? signalLine.half : 1
-                height: signalLine.horizontal ? 1 : signalLine.half
-                color: Colours.signalStyle.hairline
-            }
-
-            Rectangle {
-                readonly property real start: (signalLine.win?.signalHoverStart ?? 0) - signalLine.origin
-                readonly property real length: signalLine.win?.signalHoverLength ?? 0
-
-                x: signalLine.horizontal ? start : 0
-                y: signalLine.horizontal ? 0 : start
-                width: signalLine.horizontal ? length : 1
-                height: signalLine.horizontal ? 1 : length
-                color: Colours.palette.m3onSurface
-                opacity: signalLine.win?.signalHoverOwner ? 0.45 : 0
-
-                Behavior on opacity {
-                    Anim {
-                        type: Anim.FastEffects
-                    }
-                }
-            }
-
-            Rectangle {
-                readonly property real start: (signalLine.win?.signalActiveStart ?? 0) - signalLine.origin
-                readonly property real length: signalLine.win?.signalActiveLength ?? 0
-                readonly property real thickness: 2
-
-                x: signalLine.horizontal ? start : (Settings.barPositionRight ? 0 : 1 - thickness)
-                y: signalLine.horizontal ? (Settings.barPositionBottom ? 0 : 1 - thickness) : start
-                width: signalLine.horizontal ? length : thickness
-                height: signalLine.horizontal ? thickness : length
-                radius: thickness / 2
-                color: Colours.signalStyle.accentLine
-                visible: length > 0
-            }
+            horizontal: Settings.barHorizontal
+            edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+            gapLength: root.screenState?.notchSpan ?? 0
+            activeStart: (signalLine.win?.signalActiveStart ?? 0) - signalLine.origin
+            activeLength: signalLine.win?.signalActiveLength ?? 0
+            hoverStart: (signalLine.win?.signalHoverStart ?? 0) - signalLine.origin
+            hoverLength: signalLine.win?.signalHoverLength ?? 0
+            hoverVisible: signalLine.win?.signalHoverOwner ? true : false
         }
     }
 

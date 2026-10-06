@@ -18,7 +18,7 @@ StyledRect {
     implicitWidth: grid.implicitWidth + Tokens.padding.large * 2
     implicitHeight: grid.implicitHeight + Tokens.padding.large * 2
     radius: Tokens.rounding.extraLarge
-    color: Settings.barSignal ? Colours.signalStyle.surface : Colours.tPalette.m3surfaceContainer
+    color: Colours.signalStyle.surface
 
     // The approved dashboard card, with an active state for the live workspace.
     component Card: StyledRect {
@@ -27,25 +27,19 @@ StyledRect {
         property string title: ""
         property int tintIndex: 0
         property bool selected: false
-        readonly property real headerHeight: card.title.length > 0 && Settings.barSignal ? cardTitle.implicitHeight + Tokens.padding.medium : 0
+        readonly property real headerHeight: card.title.length > 0 ? cardTitle.implicitHeight + Tokens.padding.medium : 0
 
-        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
-        color: Settings.barSignal
-            ? (card.selected ? Qt.alpha(Colours.palette.m3primary, 0.08) : Colours.signalStyle.raised)
-            : (card.selected ? Colours.layer(Colours.palette.m3surfaceContainerHigh, 2) : Colours.palette.m3surfaceContainerHigh)
-        border.width: Settings.barSignal ? 1 : (card.selected ? 2 : 0)
-        border.color: Settings.barSignal
-            ? (card.selected ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline)
-            : Colours.palette.m3primary
+        radius: Tokens.rounding.medium
+        color: card.selected ? Qt.alpha(Colours.palette.m3primary, 0.08) : Colours.signalStyle.raised
+        border.width: 1
+        border.color: card.selected ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline
 
         Elevation {
-            visible: Settings.barSignal
             target: card
             level: 1
         }
 
         Rectangle {
-            visible: Settings.barSignal
             x: card.radius
             width: card.width - card.radius * 2
             height: 1
@@ -111,20 +105,20 @@ StyledRect {
                     anchors.leftMargin: Tokens.padding.medium
                     anchors.rightMargin: Tokens.padding.medium
                     anchors.bottomMargin: Tokens.padding.medium
-                    anchors.topMargin: Settings.barSignal ? wsCard.headerHeight : Tokens.padding.medium
+                    anchors.topMargin: wsCard.headerHeight
                     spacing: Tokens.spacing.small
 
                     StyledText {
-                        visible: !Settings.barSignal
+                        visible: false
                         text: wsCard.modelData.id
-                        color: wsCard.active ? Colours.legibleAccent(Colours.palette.m3primary, Settings.barSignal ? Colours.signalStyle.surface : wsCard.color) : Colours.palette.m3onSurface
+                        color: wsCard.active ? Colours.legibleAccent(Colours.palette.m3primary, Colours.signalStyle.surface) : Colours.palette.m3onSurface
                         font: Tokens.font.title.builders.medium.weight(Font.Medium).build()
                     }
 
                     Flow {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        spacing: Settings.barSignal ? Tokens.spacing.small : Tokens.spacing.extraSmall
+                        spacing: Tokens.spacing.small
 
                         Repeater {
                             model: wsCard.windows.slice(0, 9)
@@ -134,12 +128,11 @@ StyledRect {
 
                                 required property var modelData
 
-                                implicitWidth: icon.implicitWidth + (Settings.barSignal ? Tokens.padding.small : 0)
-                                implicitHeight: icon.implicitHeight + (Settings.barSignal ? Tokens.padding.small : 0)
+                                implicitWidth: icon.implicitWidth + Tokens.padding.small
+                                implicitHeight: icon.implicitHeight + Tokens.padding.small
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    visible: Settings.barSignal
                                     radius: Tokens.rounding.small
                                     color: Colours.signalStyle.raised
                                     border.width: 1

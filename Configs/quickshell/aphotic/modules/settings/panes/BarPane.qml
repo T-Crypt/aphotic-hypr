@@ -24,7 +24,7 @@ ColumnLayout {
         font: Tokens.font.label.medium
     }
 
-    // A grid rather than one row: at five styles a single row squeezes
+    // A grid rather than one row: at five layouts a single row squeezes
     // every card below the width its scaled-down preview needs to read as
     // anything.
     GridLayout {
@@ -40,8 +40,8 @@ ColumnLayout {
         }
         BarStylePreviewCard {
             Layout.fillWidth: true
-            styleName: "signal"
-            label: qsTr("Signal")
+            styleName: "capsule"
+            label: qsTr("Capsule")
         }
         BarStylePreviewCard {
             Layout.fillWidth: true
@@ -57,11 +57,6 @@ ColumnLayout {
             Layout.fillWidth: true
             styleName: "minimal"
             label: qsTr("Minimal")
-        }
-        BarStylePreviewCard {
-            Layout.fillWidth: true
-            styleName: "capsule"
-            label: qsTr("Capsule")
         }
     }
 
@@ -194,16 +189,15 @@ ColumnLayout {
         }
 
         SettingsPresetRow {
-            visible: Settings.barStyle === "full"
-            icon: "style"
-            label: qsTr("Full style background")
+            icon: "rounded_corner"
+            label: qsTr("Corners")
             presets: [
-                { value: "pill", label: qsTr("Pill") },
-                { value: "square", label: qsTr("Square") },
-                { value: "signal", label: qsTr("Signal line") }
+                { value: "sharp", label: qsTr("Sharp") },
+                { value: "soft", label: qsTr("Soft") },
+                { value: "round", label: qsTr("Round") }
             ]
-            value: Settings.barSkin
-            onSelected: value => Settings.barSkin = value
+            value: Settings.barCorners
+            onSelected: value => Settings.barCorners = value
         }
     }
 

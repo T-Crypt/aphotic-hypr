@@ -31,7 +31,7 @@ StyledRect {
     implicitWidth: Settings.barHorizontal ? (hLayout.item?.implicitWidth ?? 0) + root.padding * 2 : Settings.barInnerWidth
     implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : (vLayout.item?.implicitHeight ?? 0) + root.padding * 2
 
-    color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
+    color: "transparent"
     radius: Tokens.rounding.full
 
     StateLayer {
@@ -46,11 +46,11 @@ StyledRect {
         active: Settings.barHorizontal
 
         sourceComponent: RowLayout {
-            spacing: Settings.barSignal ? Tokens.spacing.small : Tokens.spacing.extraSmall
+            spacing: Tokens.spacing.small
 
             Loader {
                 asynchronous: true
-                active: Config.bar.clock.showIcon && !Settings.barSignal
+                active: false
                 visible: active
 
                 sourceComponent: MaterialIcon {
@@ -60,7 +60,6 @@ StyledRect {
             }
 
             StyledText {
-                visible: Settings.barSignal
                 Layout.alignment: Qt.AlignVCenter
                 text: Time.format("ddd d")
                 font: Tokens.font.label.medium
@@ -93,8 +92,8 @@ StyledRect {
 
             StyledText {
                 text: `${Time.hourStr}:${Time.minuteStr}`
-                font: Settings.barSignal ? root.font.scale(1.15).weight(Font.DemiBold).build() : root.font.build()
-                color: Settings.barSignal ? Colours.palette.m3onSurface : root.colour
+                font: root.font.scale(1.15).weight(Font.DemiBold).build()
+                color: Colours.palette.m3onSurface
             }
 
             Loader {

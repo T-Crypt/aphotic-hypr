@@ -157,15 +157,15 @@ Item {
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.model.entries[grid.currentIndex]?.file ?? ""
-                font: Settings.barSignal ? Tokens.font.title.builders.large.weight(Font.DemiBold).build() : Tokens.font.title.large
+                font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
                 color: Colours.palette.m3onSurface
                 animate: true
             }
 
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Settings.barSignal ? (root.model.entries[grid.currentIndex]?.theme ?? "").toUpperCase() : (root.model.entries[grid.currentIndex]?.theme ?? "")
-                font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+                text: (root.model.entries[grid.currentIndex]?.theme ?? "").toUpperCase()
+                font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                 color: Colours.palette.m3onSurfaceVariant
                 animate: true
             }

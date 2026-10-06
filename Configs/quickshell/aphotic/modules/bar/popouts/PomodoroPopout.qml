@@ -11,15 +11,15 @@ ColumnLayout {
 
     StyledText {
         Layout.alignment: Qt.AlignHCenter
-        text: Settings.barSignal ? (Pomodoro.isBreak ? qsTr("Break") : qsTr("Focus")).toUpperCase() : (Pomodoro.isBreak ? qsTr("Break") : qsTr("Focus"))
+        text: (Pomodoro.isBreak ? qsTr("Break") : qsTr("Focus")).toUpperCase()
         color: Colours.palette.m3onSurfaceVariant
-        font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
     StyledText {
         Layout.alignment: Qt.AlignHCenter
         text: Pomodoro.formatTime(Pomodoro.remaining)
-        font: Settings.barSignal ? Tokens.font.headline.builders.large.scale(1.2).weight(Font.DemiBold).build() : Tokens.font.headline.builders.large.scale(1.2).build()
+        font: Tokens.font.headline.builders.large.scale(1.2).weight(Font.DemiBold).build()
     }
 
     RowLayout {

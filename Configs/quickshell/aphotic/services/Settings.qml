@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.config
+import "BarLayout.js" as BarLayout
 
 // Runtime user-toggleable settings, persisted to
 // ~/.local/state/aphotic/settings.json (a sibling of theme.json, same
@@ -27,53 +28,20 @@ Singleton {
     property bool desktopClockEnabled: Config.background.desktopClock.enabled
     property bool barPositionRight: false
     property bool barCompact: false
-    // true = full-width bar docked to top/bottom, entries flow left-to-right.
-    // false (default for the "full" style) = full-height bar docked to
-    // left/right, entries flow top-to-bottom. Was named `barVertical` with
-    // this exact meaning inverted (true meant horizontal) until the rename
-    // -- see settings.json load below for the migration of existing users'
-    // persisted state. Defaults to true here because barSkin's own default
-    // is "capsule", and setBarStyle()'s one-time first-selection default
-    // (below) only fires on an actual switch *to* capsule -- a fresh
-    // install that starts on capsule already needs the matching top/
-    // horizontal layout from the very first render, not the vertical/left
-    // layout the floating styles were never designed to support (Settings'
-    // own Bar Style picker already warns left/right placement may not
-    // render correctly for them).
+    // True = docked top/bottom (entries flow left-to-right), false =
+    // docked left/right; carries the old barVertical key's inverted meaning.
     property bool barHorizontal: true
     property bool barPositionBottom: false
-    // Expanded from a purely cosmetic "outer strip background" choice
-    // into the master bar-style switch. "pill"/"square" still just mean
-    // the existing Full-style bar with its rounded/sharp background
-    // treatment (BarWrapper.qml's `background` StyledRect) -- unchanged.
-    // "dock"/"taskbar" are new structural styles. "minimal" is
-    // REPURPOSED: it used to mean "Full-style bar, border-only outline,
-    // transparent fill" -- it now means the new Omarchy-inspired thin
-    // icon-only strip (a real layout change, not a background tweak).
-    // Anyone with a pre-existing `barSkin: "minimal"` in settings.json
-    // gets the new structural style on next load, not the old outline
-    // look -- a deliberate one-time behavior change, not a bug.
-    // Capsule is what a fresh install starts on: it is the style that
-    // shows Aphotic as its own thing rather than as a conventional bar,
-    // and its position defaults match the ones declared above, so a first
-    // render needs no correction pass.
-    property string barSkin: "capsule"
-    // Whichever of "pill"/"square" was last active, so cycling/switching
-    // back to the "full" style (from dock/taskbar/minimal) restores the
-    // user's own preference instead of hardcoding one.
-    property string lastFullSkin: "pill"
-    // Style names that have ever had their first-selection position
-    // default applied (dock -> bottom, minimal -> top) -- applied once
-    // ever per style, not every time it's re-selected, so a user's own
-    // later position override sticks.
-    // "capsule" pre-included: barSkin already defaults to it with the
-    // matching position defaults above applied directly, so it must not
-    // look like an unresolved first selection -- setBarStyle() would
-    // otherwise force-reset position the next time "capsule" is chosen,
-    // clobbering a user's own deliberate position change in the meantime.
+    // Structural shape of the bar; the corner treatment is barCorners.
+    // Capsule is the first-install layout; legacy skins migrate on load.
+    property string barLayout: "capsule"
+    // sharp | soft | round, resolved to a radius in BarLayout.cornerRadius().
+    property string barCorners: "sharp"
+    // Layouts whose one-time first-selection position default was
+    // applied, so re-selecting never clobbers a user's own position.
     property var barStyleDefaultsApplied: ["capsule"]
 
-    readonly property string barStyle: ["dock", "taskbar", "minimal", "capsule"].includes(barSkin) ? barSkin : "full"
+    readonly property string barStyle: barLayout
 
     // Which built-in bar widgets render, and in what order: an ordered
     // [{ id, enabled }] array, same shape as Config.qml's own defaults.
@@ -105,9 +73,8 @@ Singleton {
     // value like "terminal", which exists in both Material Symbols and the
     // icon theme, can be pinned to the one that was meant.
     property var customAppIcons: []
-    // macOS-style icon-proximity magnification on Dock's app row. Only
-    // engages in horizontal placement (Settings.barHorizontal) -- side
-    // placement has no real vertical-dock layout to magnify along.
+    // Icon-proximity magnification on Dock's app row. Only engages in
+    // horizontal placement; side placement has no dock layout to magnify along.
     property bool dockMagnification: true
     property bool taskbarGrouping: true
     property bool minimalShowDnd: true
@@ -126,20 +93,11 @@ Singleton {
     // a small periodic read while it is on.
     property bool flowShellActivity: false
 
-    // name: "full" | "dock" | "taskbar" | "minimal" -- the single entry
-    // point for changing bar style, shared by the Settings tab, the CLI
-    // (`aphotic bar style`), and the IPC handler below, so all three
-    // paths apply the exact same first-selection-position-default and
-    // lastFullSkin bookkeeping instead of three divergent copies.
+    // Single entry point for changing the bar layout, shared by the
+    // Settings tab, the CLI (`aphotic bar style`), and the IPC handler.
     function setBarStyle(name: string): void {
-        const valid = ["full", "dock", "taskbar", "minimal", "capsule"];
-        if (!valid.includes(name))
+        if (!BarLayout.LAYOUTS.includes(name))
             return;
-
-        if (name === "full") {
-            root.barSkin = root.lastFullSkin;
-            return;
-        }
 
         if (!root.barStyleDefaultsApplied.includes(name)) {
             root.barStyleDefaultsApplied = [...root.barStyleDefaultsApplied, name];
@@ -158,13 +116,11 @@ Singleton {
             }
         }
 
-        root.barSkin = name;
+        root.barLayout = name;
     }
 
     function cycleBarStyle(): void {
-        const order = ["full", "dock", "taskbar", "minimal", "capsule"];
-        const idx = order.indexOf(root.barStyle);
-        root.setBarStyle(order[(idx + 1) % order.length]);
+        root.setBarStyle(BarLayout.next(root.barStyle));
     }
 
     // Sonar and Shelves are discovery features, off until asked for.
@@ -374,8 +330,8 @@ Singleton {
     property string vpnConfigPath: ""
     property bool vpnAutoConnect: false
 
-    readonly property bool barSignal: barSkin === "signal"
-    readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1) * (barSignal ? 0.78 : 1)
+    // The full layout keeps the narrower Signal width it always had under Signal.
+    readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1) * (barStyle === "full" ? 0.78 : 1)
 
     property bool _loaded: false
     property bool _writePending: false
@@ -393,8 +349,8 @@ Singleton {
             barCompact: root.barCompact,
             barHorizontal: root.barHorizontal,
             barPositionBottom: root.barPositionBottom,
-            barSkin: root.barSkin,
-            lastFullSkin: root.lastFullSkin,
+            barLayout: root.barLayout,
+            barCorners: root.barCorners,
             barStyleDefaultsApplied: root.barStyleDefaultsApplied,
             dockAutoHide: root.dockAutoHide,
             sonarEnabled: root.sonarEnabled,
@@ -684,12 +640,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onBarCompactChanged: root._saveState()
     onBarHorizontalChanged: root._saveState()
     onBarPositionBottomChanged: root._saveState()
-    onBarSkinChanged: {
-        if (root.barSkin === "pill" || root.barSkin === "square" || root.barSkin === "signal")
-            root.lastFullSkin = root.barSkin;
-        root._saveState();
-    }
-    onLastFullSkinChanged: root._saveState()
+    onBarLayoutChanged: root._saveState()
+    onBarCornersChanged: root._saveState()
     onBarStyleDefaultsAppliedChanged: root._saveState()
     onDockAutoHideChanged: root._saveState()
     onDockPinnedAppsChanged: root._saveState()
@@ -852,10 +804,9 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.barHorizontal = data.barVertical;
                 if (typeof data.barPositionBottom === "boolean")
                     root.barPositionBottom = data.barPositionBottom;
-                if (typeof data.barSkin === "string")
-                    root.barSkin = data.barSkin;
-                if (typeof data.lastFullSkin === "string")
-                    root.lastFullSkin = data.lastFullSkin;
+                const bl = BarLayout.migrate(data);
+                root.barLayout = bl.layout;
+                root.barCorners = bl.corners;
                 if (Array.isArray(data.barStyleDefaultsApplied))
                     root.barStyleDefaultsApplied = data.barStyleDefaultsApplied;
                 if (typeof data.dockAutoHide === "boolean")
@@ -1064,10 +1015,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     }
 
     // `aphotic bar style <name>` and any future keybind/IPC quick-swap
-    // both go through this rather than writing settings.json directly --
-    // one source of truth (setBarStyle's own first-selection-default and
-    // lastFullSkin bookkeeping), matching the IPC-toggle pattern every
-    // other overlay/setting in this repo already uses.
+    // both go through this rather than writing settings.json directly.
     IpcHandler {
         function setStyle(name: string): void {
             root.setBarStyle(name);
@@ -1077,9 +1025,24 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
             root.cycleBarStyle();
         }
 
+        function setCorners(name: string): void {
+            if (BarLayout.CORNERS.includes(name))
+                root.barCorners = name;
+        }
+
+        // Compatibility alias for old callers: the legacy skins are the
+        // full layout wearing a specific corner treatment.
         function setSkin(name: string): void {
-            if (["pill", "square", "signal"].includes(name))
-                root.barSkin = name;
+            if (name === "signal") {
+                root.barLayout = "full";
+                root.barCorners = "sharp";
+            } else if (name === "square") {
+                root.barLayout = "full";
+                root.barCorners = "soft";
+            } else if (name === "pill") {
+                root.barLayout = "full";
+                root.barCorners = "round";
+            }
         }
 
         target: "bar"

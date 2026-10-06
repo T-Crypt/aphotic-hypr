@@ -79,7 +79,7 @@ PanelWindow {
 
         Elevation {
             target: panel
-            level: Settings.barSignal ? 2 : 3
+            level: 2
         }
 
         StyledClippingRect {
@@ -88,9 +88,9 @@ PanelWindow {
             width: root.panelWidth
             implicitHeight: content.implicitHeight + Tokens.padding.extraLarge * 2
             radius: Tokens.rounding.extraLarge
-            color: Settings.barSignal ? Colours.signalStyle.glass : Colours.tPalette.m3surfaceContainer
-            border.width: Settings.barSignal ? 1 : Config.border.thickness
-            border.color: Settings.barSignal ? Colours.signalStyle.hairline : Colours.palette.m3outlineVariant
+            color: Colours.signalStyle.glass
+            border.width: 1
+            border.color: Colours.signalStyle.hairline
 
             // Swallow clicks on the panel so they don't reach the
             // cancel-on-click-outside handler behind it.
@@ -100,7 +100,7 @@ PanelWindow {
 
             DepthGradient {
                 anchors.fill: parent
-                visible: !Settings.barSignal
+                visible: false
                 radius: panel.radius
                 baseColour: panel.color
             }

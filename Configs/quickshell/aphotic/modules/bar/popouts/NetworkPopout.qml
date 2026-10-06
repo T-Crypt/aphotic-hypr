@@ -24,8 +24,8 @@ ColumnLayout {
 
         StyledText {
             Layout.fillWidth: true
-            text: Settings.barSignal ? qsTr("Wi-Fi").toUpperCase() : qsTr("Wi-Fi")
-            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.body.small
+            text: qsTr("Wi-Fi").toUpperCase()
+            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
         }
 
         Item {
@@ -33,7 +33,6 @@ ColumnLayout {
             implicitHeight: 24
 
             Rectangle {
-                visible: Settings.barSignal
                 anchors.fill: parent
                 radius: Tokens.rounding.full
                 color: Nmcli.wifiEnabled ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
@@ -80,9 +79,9 @@ ColumnLayout {
             implicitHeight: netLabel.implicitHeight + Tokens.padding.small * 2
 
             StateLayer {
-                radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.small
-                color: Settings.barSignal ? (netRow.modelData.active ? Colours.palette.m3primary : Colours.signalStyle.hover) : Colours.palette.m3onSurface
-                stateOpacity: Settings.barSignal ? (netRow.modelData.active ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0)) : (containsMouse ? 0.08 : 0)
+                radius: Tokens.rounding.medium
+                color: (netRow.modelData.active ? Colours.palette.m3primary : Colours.signalStyle.hover)
+                stateOpacity: (netRow.modelData.active ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))
                 onClicked: {
                     if (netRow.modelData.active)
                         return;
@@ -94,7 +93,7 @@ ColumnLayout {
             }
 
             Rectangle {
-                visible: Settings.barSignal && netRow.modelData.active
+                visible: netRow.modelData.active
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: 2
@@ -118,7 +117,7 @@ ColumnLayout {
                     id: netLabel
                     Layout.fillWidth: true
                     text: netRow.modelData.ssid
-                    color: Settings.barSignal ? (netRow.modelData.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (netRow.modelData.active ? Colours.palette.m3primary : Colours.palette.m3onSurface)
+                    color: netRow.modelData.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
                     elide: Text.ElideRight
                 }
 

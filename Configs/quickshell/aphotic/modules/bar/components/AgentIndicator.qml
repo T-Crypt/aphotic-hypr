@@ -52,7 +52,7 @@ Item {
         visible: root.showBackground
         anchors.fill: parent
         radius: Tokens.rounding.full
-        color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
+        color: "transparent"
     }
 
     // Was targeting `background` (the full pill), declared BEFORE it in

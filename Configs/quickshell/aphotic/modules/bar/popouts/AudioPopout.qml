@@ -39,9 +39,9 @@ ColumnLayout {
     }
 
     StyledText {
-        text: Settings.barSignal ? qsTr("Output").toUpperCase() : qsTr("Output")
+        text: qsTr("Output").toUpperCase()
         color: Colours.palette.m3onSurfaceVariant
-        font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
     Repeater {
@@ -56,14 +56,14 @@ ColumnLayout {
             implicitHeight: sinkLabel.implicitHeight + Tokens.padding.small * 2
 
             StateLayer {
-                radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.small
-                color: Settings.barSignal ? (sinkRow.modelData === Audio.sink ? Colours.palette.m3primary : Colours.signalStyle.hover) : Colours.palette.m3onSurface
-                stateOpacity: Settings.barSignal ? (sinkRow.modelData === Audio.sink ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0)) : (containsMouse ? 0.08 : 0)
+                radius: Tokens.rounding.medium
+                color: (sinkRow.modelData === Audio.sink ? Colours.palette.m3primary : Colours.signalStyle.hover)
+                stateOpacity: (sinkRow.modelData === Audio.sink ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))
                 onClicked: Audio.setAudioSink(sinkRow.modelData)
             }
 
             Rectangle {
-                visible: Settings.barSignal && sinkRow.modelData === Audio.sink
+                visible: sinkRow.modelData === Audio.sink
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 width: 2

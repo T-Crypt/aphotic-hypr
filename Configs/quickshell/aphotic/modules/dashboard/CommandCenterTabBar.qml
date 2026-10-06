@@ -46,7 +46,7 @@ RowLayout {
             Layout.preferredWidth: label.implicitWidth + icon.implicitWidth + Tokens.padding.large * 2 + Tokens.spacing.small
             radius: Tokens.rounding.full
             // Signal: no pill fill; the accent underline marks the active tab.
-            color: Settings.barSignal ? "transparent" : (tabButton.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer)
+            color: "transparent"
 
             Behavior on color {
                 CAnim {}
@@ -59,7 +59,7 @@ RowLayout {
                 MaterialIcon {
                     id: icon
                     text: tabButton.modelData.icon
-                    color: Settings.barSignal ? (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (tabButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant)
+                    color: (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
                     fontStyle: Tokens.font.icon.small
                     fill: tabButton.active ? 1 : 0
                 }
@@ -67,7 +67,7 @@ RowLayout {
                 StyledText {
                     id: label
                     text: tabButton.modelData.label
-                    color: Settings.barSignal ? (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (tabButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant)
+                    color: (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
                     font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
                 }
             }
@@ -77,8 +77,8 @@ RowLayout {
                 radius: parent.radius
                 // Signal: the hover tone lands at full strength; the active
                 // tab carries the underline instead of a hover fill.
-                stateOpacity: Settings.barSignal ? (containsMouse && !tabButton.active ? 1 : 0) : (containsMouse ? 0.08 : 0)
-                color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
+                stateOpacity: (containsMouse && !tabButton.active ? 1 : 0)
+                color: Colours.signalStyle.hover
                 onClicked: root.tabSelected(tabButton.modelData.id)
             }
         }
