@@ -64,7 +64,7 @@ PanelWindow {
 
         Elevation {
             target: sheet
-            level: Settings.barSignal ? 2 : 3
+            level: 2
         }
 
         StyledClippingRect {
@@ -73,9 +73,9 @@ PanelWindow {
             width: 900
             height: 780
             radius: Tokens.rounding.extraLarge
-            color: Settings.barSignal ? Colours.signalStyle.glass : Colours.tPalette.m3surfaceContainer
-            border.width: Settings.barSignal ? 1 : Config.border.thickness
-            border.color: Settings.barSignal ? Colours.signalStyle.hairline : Colours.palette.m3outlineVariant
+            color: Colours.signalStyle.glass
+            border.width: 1
+            border.color: Colours.signalStyle.hairline
 
             // Swallow clicks on the sheet itself so they don't fall through
             // to the full-screen MouseArea behind it and close the sheet.
@@ -87,7 +87,7 @@ PanelWindow {
                 anchors.fill: parent
                 radius: sheet.radius
                 baseColour: sheet.color
-                visible: !Settings.barSignal
+                visible: false
             }
 
             ColumnLayout {
@@ -167,24 +167,21 @@ PanelWindow {
                                 required property var modelData
                                 required property int index
 
-                                readonly property bool signalSkin: Settings.barSignal
                                 readonly property color tint: Colours.signalStyle.tint(index)
 
                                 Layout.fillWidth: true
-                                implicitHeight: groupLayout.implicitHeight + (signalSkin ? Tokens.padding.medium * 2 : 0)
-                                radius: signalSkin ? Tokens.rounding.medium : 0
-                                color: signalSkin ? Colours.signalStyle.raised : "transparent"
-                                border.width: signalSkin ? 1 : 0
-                                border.color: signalSkin ? Colours.signalStyle.hairline : "transparent"
+                                implicitHeight: groupLayout.implicitHeight + Tokens.padding.medium * 2
+                                radius: Tokens.rounding.medium
+                                color: Colours.signalStyle.raised
+                                border.width: 1
+                                border.color: Colours.signalStyle.hairline
 
                                 Elevation {
-                                    visible: signalSkin
                                     target: group
                                     level: 1
                                 }
 
                                 Rectangle {
-                                    visible: signalSkin
                                     x: group.radius
                                     width: group.width - group.radius * 2
                                     height: 1
@@ -195,11 +192,10 @@ PanelWindow {
                                     id: groupLayout
 
                                     anchors.fill: parent
-                                    anchors.margins: group.signalSkin ? Tokens.padding.medium : 0
-                                    spacing: group.signalSkin ? Tokens.spacing.medium : Tokens.spacing.small
+                                    anchors.margins: Tokens.padding.medium
+                                    spacing: Tokens.spacing.medium
 
                                     RowLayout {
-                                        visible: group.signalSkin
                                         Layout.fillWidth: true
                                         spacing: Tokens.spacing.small
 
@@ -219,14 +215,14 @@ PanelWindow {
                                     }
 
                                     StyledText {
-                                        visible: !group.signalSkin
+                                        visible: false
                                         text: group.modelData.category
                                         color: Colours.palette.m3primary
                                         font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
                                     }
 
                                     StyledRect {
-                                        visible: !group.signalSkin
+                                        visible: false
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 1
                                         color: Colours.palette.m3outlineVariant
@@ -248,7 +244,6 @@ PanelWindow {
                                                 required property var modelData
                                                 required property int index
 
-                                                readonly property bool signalSkin: Settings.barSignal
                                                 readonly property real staggerIn: index < 8 ? reveal.staggered(index) : 1
 
                                                 Layout.fillWidth: true
@@ -261,16 +256,16 @@ PanelWindow {
                                                 StyledRect {
                                                     Layout.preferredWidth: comboText.implicitWidth + Tokens.padding.medium * 2
                                                     Layout.preferredHeight: comboText.implicitHeight + Tokens.padding.extraSmall * 2
-                                                    radius: bindRow.signalSkin ? Tokens.rounding.full : Tokens.rounding.small
-                                                    color: bindRow.signalSkin ? Colours.signalStyle.raisedHi : Colours.tPalette.m3surfaceContainer
-                                                    border.width: bindRow.signalSkin ? 1 : 0
-                                                    border.color: bindRow.signalSkin ? Colours.signalStyle.hairline : "transparent"
+                                                    radius: Tokens.rounding.full
+                                                    color: Colours.signalStyle.raisedHi
+                                                    border.width: 1
+                                                    border.color: Colours.signalStyle.hairline
 
                                                     StyledText {
                                                         id: comboText
                                                         anchors.centerIn: parent
                                                         text: bindRow.modelData.combo
-                                                        font: bindRow.signalSkin ? Tokens.font.mono.builders.small.weight(Font.DemiBold).build() : Tokens.font.mono.small
+                                                        font: Tokens.font.mono.builders.small.weight(Font.DemiBold).build()
                                                         color: Colours.palette.m3onSurfaceVariant
                                                     }
                                                 }
@@ -279,7 +274,7 @@ PanelWindow {
                                                     Layout.fillWidth: true
                                                     text: bindRow.modelData.description
                                                     font: Tokens.font.body.medium
-                                                    color: bindRow.signalSkin ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
+                                                    color: Colours.palette.m3onSurfaceVariant
                                                     elide: Text.ElideRight
                                                 }
                                             }

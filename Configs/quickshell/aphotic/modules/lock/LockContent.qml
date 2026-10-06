@@ -36,7 +36,7 @@ Item {
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: Time.format("hh:mm")
-            font: Settings.barSignal ? Tokens.font.headline.builders.large.scale(4).weight(Font.DemiBold).letterSpacing(-2).build() : Tokens.font.headline.builders.large.scale(2).build()
+            font: Tokens.font.headline.builders.large.scale(4).weight(Font.DemiBold).letterSpacing(-2).build()
             color: Colours.palette.m3onSurface
             opacity: reveal.staggered(0)
             transform: Translate {
@@ -46,8 +46,8 @@ Item {
 
         StyledText {
             Layout.alignment: Qt.AlignHCenter
-            text: Settings.barSignal ? Time.format("dddd, MMMM d").toUpperCase() : Time.format("dddd, MMMM d")
-            font: Settings.barSignal ? Tokens.font.label.builders.medium.weight(Font.DemiBold).letterSpacing(3).build() : Tokens.font.body.large
+            text: Time.format("dddd, MMMM d").toUpperCase()
+            font: Tokens.font.label.builders.medium.weight(Font.DemiBold).letterSpacing(3).build()
             color: Colours.palette.m3onSurfaceVariant
             opacity: reveal.staggered(1)
             transform: Translate {
@@ -59,8 +59,8 @@ Item {
             id: fieldContainer
 
             Layout.fillWidth: true
-            readonly property real cardPad: Settings.barSignal ? Tokens.padding.large : 0
-            readonly property real userRowHeight: Settings.barSignal ? 44 + Tokens.spacing.large : 0
+            readonly property real cardPad: Tokens.padding.large
+            readonly property real userRowHeight: 44 + Tokens.spacing.large
 
             Layout.preferredHeight: Tokens.sizes.lock.fieldHeight + userRowHeight + cardPad * 2
             Layout.topMargin: Tokens.spacing.large
@@ -84,7 +84,6 @@ Item {
             // Signal: the field sits in a glass card with the user above it,
             // the same card the login greeter shows.
             StyledRect {
-                visible: Settings.barSignal
                 anchors.fill: parent
                 radius: Tokens.rounding.large
                 color: Colours.signalStyle.glass
@@ -150,11 +149,11 @@ Item {
                 anchors.margins: fieldContainer.cardPad
                 height: Tokens.sizes.lock.fieldHeight
                 radius: Tokens.rounding.full
-                color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
+                color: Colours.signalStyle.raised
 
                 readonly property bool typing: root.pam.buffer.length > 0 && root.pam.state === Pam.None
-                border.width: typing ? 2 : Settings.barSignal ? 1 : 0
-                border.color: typing ? Qt.alpha(Colours.palette.m3primary, 0.6) : Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
+                border.width: typing ? 2 : 1
+                border.color: typing ? Qt.alpha(Colours.palette.m3primary, 0.6) : Colours.signalStyle.hairline
                 Behavior on border.color {
                     CAnim {}
                 }

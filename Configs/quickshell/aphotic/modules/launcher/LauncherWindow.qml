@@ -41,8 +41,8 @@ PanelWindow {
 
         // Signal: a sheet growing out of the bottom screen edge.
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: Settings.barSignal ? undefined : parent.verticalCenter
-        anchors.bottom: Settings.barSignal ? parent.bottom : undefined
+        anchors.verticalCenter: undefined
+        anchors.bottom: parent.bottom
         shown: root.screenState.launcher
         edge: "bottom"
         hiddenScale: 0.96

@@ -39,7 +39,7 @@ StyledRect {
     Layout.preferredHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
     implicitHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
 
-    color: Settings.barSignal ? Colours.signalStyle.raised : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+    color: Colours.signalStyle.raised
     topLeftRadius: root.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
     topRightRadius: root.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
     bottomLeftRadius: root.last ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
@@ -94,7 +94,7 @@ StyledRect {
             Layout.preferredWidth: 36
             Layout.preferredHeight: 36
             radius: Tokens.rounding.medium
-            color: Settings.barSignal ? Qt.alpha(Colours.palette.m3onSurface, 0.05) : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+            color: Qt.alpha(Colours.palette.m3onSurface, 0.05)
 
             Loader {
                 anchors.centerIn: parent

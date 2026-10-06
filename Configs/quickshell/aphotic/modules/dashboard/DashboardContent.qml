@@ -80,12 +80,11 @@ ColumnLayout {
     // Signal: the tabs sit on their own glass capsule.
     Item {
         Layout.alignment: Qt.AlignHCenter
-        readonly property real pad: Settings.barSignal ? Tokens.padding.small : 0
+        readonly property real pad: Tokens.padding.small
         implicitWidth: tabBar.implicitWidth + pad * 2
         implicitHeight: tabBar.implicitHeight + pad * 2
 
         StyledRect {
-            visible: Settings.barSignal
             anchors.fill: parent
             radius: Tokens.rounding.full
             color: Colours.signalStyle.glass
@@ -104,7 +103,7 @@ ColumnLayout {
 
         // One accent bar that glides to whichever tab is active.
         StyledRect {
-            visible: Settings.barSignal && tabBar.activeTab !== null
+            visible: tabBar.activeTab !== null
             x: tabBar.x + (tabBar.activeTab?.x ?? 0) + Tokens.padding.large
             y: tabBar.y + tabBar.height - height - 2
             width: Math.max(0, (tabBar.activeTab?.width ?? 0) - Tokens.padding.large * 2)
@@ -134,7 +133,7 @@ ColumnLayout {
 
         Elevation {
             target: tabFrame
-            level: Settings.barSignal ? 2 : 3
+            level: 2
         }
 
         Layout.alignment: Qt.AlignHCenter
@@ -181,23 +180,23 @@ ColumnLayout {
             }
         }
 
-        Layout.preferredWidth: (Settings.barSignal ? Math.max(tabFrame.maxWidth, tabFrame.shownWidth) : tabFrame.shownWidth) + Tokens.padding.extraLarge * 2
-        Layout.preferredHeight: (Settings.barSignal ? Math.max(tabFrame.maxHeight, tabFrame.shownHeight) : tabFrame.shownHeight) + Tokens.padding.extraLarge * 2
+        Layout.preferredWidth: Math.max(tabFrame.maxWidth, tabFrame.shownWidth) + Tokens.padding.extraLarge * 2
+        Layout.preferredHeight: Math.max(tabFrame.maxHeight, tabFrame.shownHeight) + Tokens.padding.extraLarge * 2
 
         Behavior on Layout.preferredWidth {
-            enabled: Settings.barSignal
+            enabled: true
 
             Anim { type: Anim.Emphasized }
         }
         Behavior on Layout.preferredHeight {
-            enabled: Settings.barSignal
+            enabled: true
 
             Anim { type: Anim.Emphasized }
         }
-        radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
-        color: Settings.barSignal ? Colours.signalStyle.glass : Qt.alpha(Colours.tPalette.m3surfaceContainer, 0.85)
+        radius: Tokens.rounding.large
+        color: Colours.signalStyle.glass
         border.width: 1
-        border.color: Settings.barSignal ? Colours.signalStyle.hairline : Colours.palette.m3outlineVariant
+        border.color: Colours.signalStyle.hairline
 
         DepthLayer {
             anchors.fill: parent
@@ -206,7 +205,7 @@ ColumnLayout {
 
         DepthGradient {
             anchors.fill: parent
-            visible: !Settings.barSignal
+            visible: false
             radius: parent.radius
             baseColour: Colours.tPalette.m3surfaceContainer
         }

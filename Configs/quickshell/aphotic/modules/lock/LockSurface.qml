@@ -17,7 +17,7 @@ WlSessionLockSurface {
 
     DepthLayer {
         anchors.fill: parent
-        visible: !Settings.barSignal
+        visible: false
     }
 
     // Signal: the wallpaper, blurred once into a static texture, under the
@@ -27,7 +27,7 @@ WlSessionLockSurface {
 
         anchors.fill: parent
         visible: false
-        source: Settings.barSignal ? Wallpapers.current : ""
+        source: Wallpapers.current
         sourceSize.width: 1920
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
@@ -45,7 +45,7 @@ WlSessionLockSurface {
 
     MultiEffect {
         anchors.fill: parent
-        visible: Settings.barSignal && wallpaper.status === Image.Ready
+        visible: wallpaper.status === Image.Ready
         source: wallpaperTexture
         blurEnabled: true
         blur: 0.55
@@ -55,7 +55,6 @@ WlSessionLockSurface {
 
     Rectangle {
         anchors.fill: parent
-        visible: Settings.barSignal
         gradient: Gradient {
             GradientStop {
                 position: 0

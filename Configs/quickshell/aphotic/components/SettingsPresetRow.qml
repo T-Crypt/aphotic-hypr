@@ -31,7 +31,7 @@ SettingsRow {
                 Layout.preferredWidth: presetLabel.implicitWidth + Tokens.padding.medium * 2
                 radius: Tokens.rounding.full
                 opacity: presetPill.selectable ? 1 : 0.45
-                color: Settings.barSignal ? (presetPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Qt.alpha(Colours.palette.m3onSurface, 0.04)) : (presetPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3))
+                color: (presetPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Qt.alpha(Colours.palette.m3onSurface, 0.04))
 
                 Behavior on color {
                     CAnim {}
@@ -40,7 +40,7 @@ SettingsRow {
                 GradedOutline {
                     radius: presetPill.radius
                     level: 2
-                    accent: presetPill.active && Settings.barSignal
+                    accent: presetPill.active
                     hovered: pillState.containsMouse
                 }
 
@@ -48,7 +48,7 @@ SettingsRow {
                     id: presetLabel
                     anchors.centerIn: parent
                     text: presetPill.modelData.label
-                    color: Settings.barSignal ? (presetPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (presetPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant)
+                    color: (presetPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
                     font: Tokens.font.label.small
                 }
 

@@ -31,12 +31,11 @@ StyledClippingRect {
     }
 
     radius: Tokens.rounding.large
-    color: Settings.barSignal ? (root.active ? Qt.alpha(Colours.palette.m3primary, 0.08) : Colours.signalStyle.raised) : Colours.layer(Colours.tPalette.m3surfaceContainer, 1)
-    border.width: Settings.barSignal ? 1 : (root.active ? 2 : Config.border.thickness)
-    border.color: Settings.barSignal ? (root.active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline) : (root.active ? Colours.palette.m3primary : Colours.palette.m3outlineVariant)
+    color: (root.active ? Qt.alpha(Colours.palette.m3primary, 0.08) : Colours.signalStyle.raised)
+    border.width: 1
+    border.color: (root.active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline)
 
     Rectangle {
-        visible: Settings.barSignal
         x: root.radius
         width: root.width - root.radius * 2
         height: 1
@@ -89,7 +88,6 @@ StyledClippingRect {
     }
 
     Row {
-        visible: Settings.barSignal
         x: Tokens.padding.small
         y: Tokens.padding.extraSmall
         spacing: Tokens.spacing.extraSmall

@@ -330,8 +330,6 @@ Singleton {
     property string vpnConfigPath: ""
     property bool vpnAutoConnect: false
 
-    // Removed once every surface reads Signal directly.
-    readonly property bool barSignal: true
     // The full layout keeps the narrower Signal width it always had under Signal.
     readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1) * (barStyle === "full" ? 0.78 : 1)
 

@@ -218,7 +218,7 @@ Item {
     Elevation {
         target: frame
         level: 3
-        visible: !Settings.barSignal
+        visible: false
     }
 
     StyledClippingRect {
@@ -226,16 +226,16 @@ Item {
 
         anchors.fill: parent
         radius: Tokens.rounding.extraLarge
-        color: Settings.barSignal ? Colours.signalStyle.surface : Colours.palette.m3surfaceContainerHigh
-        border.width: Settings.barSignal ? 0 : Config.border.thickness
+        color: Colours.signalStyle.surface
+        border.width: 0
         border.color: Colours.palette.m3outlineVariant
 
         // Signal: a sheet off the bottom edge -- square on the attached
         // side, panel radius on top.
-        topLeftRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
-        topRightRadius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
-        bottomLeftRadius: Settings.barSignal ? 0 : Tokens.rounding.extraLarge
-        bottomRightRadius: Settings.barSignal ? 0 : Tokens.rounding.extraLarge
+        topLeftRadius: Tokens.rounding.large
+        topRightRadius: Tokens.rounding.large
+        bottomLeftRadius: 0
+        bottomRightRadius: 0
 
         Column {
             anchors.fill: parent
@@ -274,8 +274,8 @@ Item {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
-                        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3surfaceContainerHigh
-                        border.width: Settings.barSignal ? 1 : 0
+                        color: Colours.signalStyle.raised
+                        border.width: 1
                         border.color: Colours.signalStyle.hairline
 
                         Row {
@@ -466,9 +466,9 @@ Item {
             highlight: Item {
                 StyledRect {
                     anchors.fill: parent
-                    radius: Settings.barSignal ? 0 : Tokens.rounding.medium
-                    color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
-                    opacity: Settings.barSignal ? 1 : 0.08
+                    radius: 0
+                    color: Colours.signalStyle.hover
+                    opacity: 1
                 }
                 // Signal: no filled pill; a 2px accent edge marks the row.
                 Rectangle {
@@ -477,7 +477,6 @@ Item {
                     anchors.bottom: parent.bottom
                     width: 2
                     color: Colours.signalStyle.accentLine
-                    visible: Settings.barSignal
                 }
             }
             highlightFollowsCurrentItem: true
@@ -635,9 +634,9 @@ Item {
             highlight: Item {
                 StyledRect {
                     anchors.fill: parent
-                    radius: Settings.barSignal ? 0 : Tokens.rounding.large
-                    color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
-                    opacity: Settings.barSignal ? 1 : 0.08
+                    radius: 0
+                    color: Colours.signalStyle.hover
+                    opacity: 1
                 }
                 // Signal: no filled pill; a 2px accent edge marks the cell.
                 Rectangle {
@@ -646,7 +645,6 @@ Item {
                     anchors.bottom: parent.bottom
                     width: 2
                     color: Colours.signalStyle.accentLine
-                    visible: Settings.barSignal
                 }
             }
             highlightFollowsCurrentItem: true
@@ -662,7 +660,6 @@ Item {
     // edge it grows from.
     Shape {
         anchors.fill: parent
-        visible: Settings.barSignal
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
@@ -683,7 +680,6 @@ Item {
     // Siblings of the frame, not children: it clips, and the fillets sit
     // just outside its bottom corners, flush with the screen edge.
     ConcaveCorner {
-        visible: Settings.barSignal
         corner: 2
         radius: Tokens.rounding.large
         color: frame.color
@@ -693,7 +689,6 @@ Item {
     }
 
     ConcaveCorner {
-        visible: Settings.barSignal
         corner: 3
         radius: Tokens.rounding.large
         color: frame.color

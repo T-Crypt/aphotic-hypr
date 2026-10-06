@@ -30,13 +30,12 @@ Item {
         active: root.presented
         sourceComponent: FlowScene {
             id: scene
-            background: Settings.barSignal ? Colours.signalStyle.surface : Colours.palette.m3surfaceContainer
-            surface: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3surfaceContainerHigh
+            background: Colours.signalStyle.surface
+            surface: Colours.signalStyle.raised
             accent: Colours.palette.m3primary
             secondary: Colours.palette.m3tertiary
             ink: Colours.palette.m3onSurface
             muted: Colours.palette.m3onSurfaceVariant
-            signalSkin: Settings.barSignal
             hairline: Colours.signalStyle.hairline
             edgeLight: Colours.signalStyle.edgeLight
             motion: root.motion

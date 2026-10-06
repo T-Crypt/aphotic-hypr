@@ -159,15 +159,15 @@ Item {
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.model.entries[strip.currentIndex]?.file ?? ""
-                font: Settings.barSignal ? Tokens.font.title.builders.large.weight(Font.DemiBold).build() : Tokens.font.title.large
+                font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
                 color: Colours.palette.m3onSurface
                 animate: true
             }
 
             StyledText {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Settings.barSignal ? (root.model.entries[strip.currentIndex]?.theme ?? "").toUpperCase() : (root.model.entries[strip.currentIndex]?.theme ?? "")
-                font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+                text: (root.model.entries[strip.currentIndex]?.theme ?? "").toUpperCase()
+                font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                 color: Colours.palette.m3onSurfaceVariant
                 animate: true
             }
@@ -185,9 +185,9 @@ Item {
             // Headroom for the tallest a magnified card can grow to, so a
             // card near the edge is never clipped by its own tray.
             implicitHeight: root.cellHeight * (1 + root.magnifyExtra) + Tokens.padding.large * 2
-            radius: Settings.barSignal ? Tokens.rounding.large : Tokens.rounding.extraLarge
-            color: Settings.barSignal ? Colours.signalStyle.glass : Qt.alpha(Colours.palette.m3surfaceContainer, 0.55)
-            border.width: Settings.barSignal ? 1 : 0
+            radius: Tokens.rounding.large
+            color: Colours.signalStyle.glass
+            border.width: 1
             border.color: Colours.signalStyle.hairline
 
             Behavior on radius {
