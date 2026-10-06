@@ -92,20 +92,15 @@ EOF
 
 cat > "$BIN/curl" <<'EOF'
 #!/usr/bin/env bash
-# Record every argument; image downloads yield a few bytes, directory
-# listings yield file names.
+# Record every argument; ISO downloads yield a few bytes.
 for a in "$@"; do
   printf '%s\n' "$a" >> "${FAKE_CURL_LOG:-/dev/null}"
 done
 for a in "$@"; do
   case "$a" in
-    *opencloud-qcow2-SSD.img)
+    *.iso)
       # invoked as: curl -fSL --show-error -o <file> <url>
       : > "$4" 2>/dev/null || true
-      exit 0 ;;
-    *releng/cloud*)
-      printf '<a href="archlinux-x86_64-2026.09.30-opencloud-qcow2-SSD.img">old</a>\n'
-      printf '<a href="archlinux-x86_64-2026.10.01-opencloud-qcow2-SSD.img">new</a>\n'
       exit 0 ;;
   esac
 done
@@ -176,25 +171,27 @@ for want in '-machine q35' '-bios ovmf' '-cpu host' '-cores 6' '-memory 12288' \
 done
 grep -q 'macaddr=02:' <<<"$create_line" || fail "create sets no MAC: $create_line"
 grep -q '^set 9001 -efidisk0 local-lvm:0,efitype=4m -scsi0' "$WORKDIR/qm.log" \
-  || fail "no EFI/cloud-init qm set: $(tr '\n' ' ' <"$WORKDIR/qm.log")"
-grep -q -- '--ipconfig0 ip=dhcp' "$WORKDIR/qm.log" \
-  || fail "default addressing is not DHCP: $(tr '\n' ' ' <"$WORKDIR/qm.log")"
+  || fail "no EFI/boot qm set: $(tr '\n' ' ' <"$WORKDIR/qm.log")"
+! grep -q 'cloudinit' "$WORKDIR/qm.log" \
+  || fail "ISO path should not set up cloud-init: $(tr '\n' ' ' <"$WORKDIR/qm.log")"
+grep -q '^resize 9001 scsi0 60' "$WORKDIR/qm.log" \
+  || fail "disk not resized to the configured size: $(tr '\n' ' ' <"$WORKDIR/qm.log")"
 grep -q '^start 9001' "$WORKDIR/qm.log" || fail "default create-vm does not start the VM"
-grep -qF 'archlinux-x86_64-2026.10.01-opencloud-qcow2-SSD.img' "$WORKDIR/curl.log" \
-  || fail "did not download the newest cloud image: $(tr '\n' ' ' <"$WORKDIR/curl.log")"
+grep -q 'archlinux-x86_64.iso' "$WORKDIR/curl.log" \
+  || fail "did not download the installer ISO: $(tr '\n' ' ' <"$WORKDIR/curl.log")"
 
 # --- create-vm: the advanced path ------------------------------------------------
 
 : > "$WORKDIR/qm.log"; : > "$WORKDIR/qm.state"
 TEST_VMID=9005 write_env
-out="$(run_devvm create-vm --ram 8192 --cores 4 --display std --ip 10.0.2.50/24 --no-start)" \
+out="$(run_devvm create-vm --ram 8192 --cores 4 --display std --iso-url https://example.com/custom.iso --no-start)" \
   || fail "advanced create-vm failed: $out"
 create_line="$(grep '^create 9005' "$WORKDIR/qm.log" | head -1)"
 grep -qF -- '-memory 8192' <<<"$create_line" || fail "advanced RAM ignored: $create_line"
 grep -qF -- '-cores 4' <<<"$create_line" || fail "advanced cores ignored: $create_line"
 grep -qF -- '-vga std' <<<"$create_line" || fail "advanced display ignored: $create_line"
-grep -qF -- 'ip=10.0.2.50/24 gw=10.0.2.1' "$WORKDIR/qm.log" \
-  || fail "static addressing lost: $(tr '\n' ' ' <"$WORKDIR/qm.log")"
+grep -q 'https://example.com/custom.iso' "$WORKDIR/curl.log" \
+  || fail "advanced ISO URL ignored: $(tr '\n' ' ' <"$WORKDIR/curl.log")"
 ! grep -q '^start 9005' "$WORKDIR/qm.log" || fail "--no-start still started the VM"
 
 # --- guards ----------------------------------------------------------------------
@@ -276,30 +273,4 @@ out="$(run_devvm install --enterprise 2>&1)" || true
 if [[ "$HOST_ID" == "debian" ]]; then
   grep -q 'enterprise' <<<"$out" || fail "advanced install does not name the enterprise repo: $out"
 fi
-
-# --- static addressing spec ------------------------------------------------------------
-
-spec_out="$(
-  export PVE_USER='' PVE_HOST=''
-  source "$SCRIPT"
-  DEVVM_IP_MODE=static DEVVM_STATIC_IP=10.0.2.15/24 ipconfig_spec
-)"
-[[ "$spec_out" == "ip=10.0.2.15/24 gw=10.0.2.1" ]] \
-  || fail "static /24 spec wrong: $spec_out"
-
-spec_out="$(
-  export PVE_USER='' PVE_HOST=''
-  source "$SCRIPT"
-  DEVVM_IP_MODE=static DEVVM_STATIC_IP=10.0.2.15 DEVVM_GATEWAY=10.0.2.1 DEVVM_DNS=1.1.1.1 ipconfig_spec
-)"
-[[ "$spec_out" == "ip=10.0.2.15 gw=10.0.2.1 dns=1.1.1.1" ]] \
-  || fail "static explicit spec wrong: $spec_out"
-
-spec_out="$(
-  export PVE_USER='' PVE_HOST=''
-  source "$SCRIPT"
-  DEVVM_IP_MODE=dhcp ipconfig_spec
-)"
-[[ "$spec_out" == "ip=dhcp" ]] || fail "dhcp spec wrong: $spec_out"
-
 echo "PASS: devvm"

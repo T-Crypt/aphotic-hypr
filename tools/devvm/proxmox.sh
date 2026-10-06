@@ -9,7 +9,7 @@
 #
 #   init        write a commented example ~/.config/aphotic/devvm.env
 #   install     install Proxmox VE on this bare Debian host
-#   create-vm   create the dev VM from the latest Arch opencloud image
+#   create-vm   create the dev VM from the latest Arch installer ISO
 #   reset       delete the dev VM and create it again
 #   destroy     stop and delete the dev VM
 #   status      VM state and address
@@ -22,8 +22,10 @@
 # points, as the interactive path uses them).
 #
 # The VM uses the machine that runs a real Hyprland session (q35, OVMF,
-# host CPU, VirtIO-GPU render node) so the desktop runs under KVM, and
-# cloud-init so a user and an SSH key can be seeded without a console.
+# host CPU, VirtIO-GPU render node) so the desktop runs under KVM. The
+# ISO is imported as the boot disk and starts the live environment, so
+# the base system is installed once in the guest console with
+# archinstall; the user and the SSH key go through that step.
 
 set -euo pipefail
 trap 'error_handler $LINENO "$BASH_COMMAND"' ERR
@@ -125,10 +127,7 @@ function arch_check() {
 : "${DEVVM_DISK:=60G}"
 : "${DEVVM_USER:=aphotic}"
 : "${DEVVM_SSH_KEY:=$HOME/.ssh/id_ed25519}"
-: "${DEVVM_IP_MODE:=dhcp}"
-: "${DEVVM_STATIC_IP:=}"
-: "${DEVVM_GATEWAY:=}"
-: "${DEVVM_DNS:=}"
+: "${DEVVM_ISO_URL:=https://geo.mirror.pkgbuild.com/iso/latest/archlinux-x86_64.iso}"
 : "${DEVVM_MAC:=}"
 : "${DEVVM_VLAN:=}"
 : "${DEVVM_MTU:=}"
@@ -280,38 +279,9 @@ function create_default_settings() {
   echo "RAM:        $DEVVM_RAM MiB"
   echo "Disk:       $DEVVM_DISK on storage '${PVE_STORAGE:-auto-detected}'"
   echo "Bridge:     $PVE_BRIDGE"
-  echo "Address:    $(ip_mode_text)"
-  echo "Cloud-init: user '$DEVVM_USER', key $DEVVM_SSH_KEY"
+  echo "Network:    DHCP on bridge $PVE_BRIDGE"
+  echo "Base system: archinstall in the guest console (user '$DEVVM_USER', key $DEVVM_SSH_KEY)"
   echo "Start:      $START_VM"
-}
-
-function ip_mode_text() {
-  if [[ "$DEVVM_IP_MODE" == "dhcp" ]]; then
-    echo "DHCP"
-  else
-    echo "static: $DEVVM_STATIC_IP${DEVVM_GATEWAY:+ via $DEVVM_GATEWAY}"
-  fi
-}
-
-# ipconfig_spec: the cloud-init line for the first NIC.
-function ipconfig_spec() {
-  if [[ "$DEVVM_IP_MODE" == "dhcp" ]]; then
-    printf 'ip=dhcp'
-  elif [[ "$DEVVM_IP_MODE" == "static" ]]; then
-    [[ -n "$DEVVM_STATIC_IP" ]] || { msg_error "DEVVM_IP_MODE is static but no static IP is set"; exit 1; }
-    local spec="ip=$DEVVM_STATIC_IP"
-    # A /24 suffix means the gateway is the .1 of that subnet.
-    if [[ "$DEVVM_STATIC_IP" == */24 && -z "$DEVVM_GATEWAY" ]]; then
-      local base="${DEVVM_STATIC_IP%%/24}"
-      spec+=" gw=${base%.*}.1"
-    fi
-    [[ -n "$DEVVM_GATEWAY" && "$DEVVM_STATIC_IP" != */* ]] && spec+=" gw=$DEVVM_GATEWAY"
-    [[ -n "$DEVVM_DNS" ]] && spec+=" dns=$DEVVM_DNS"
-    printf '%s' "$spec"
-  else
-    msg_error "DEVVM_IP_MODE must be dhcp or static, got: $DEVVM_IP_MODE"
-    exit 1
-  fi
 }
 
 function storage_pick() {
@@ -343,25 +313,22 @@ function storage_pick() {
   fi
 }
 
-function arch_image() {
-  # Latest Arch opencloud image, by the date in its file name. Progress
-  # goes to stderr: the caller captures stdout and treats it as the path.
-  local fname url
-  msg_info "finding the latest Arch opencloud image" >&2
-  fname="$(curl -fsSL https://archlinux.org/releng/cloud/ \
-    | grep -o 'archlinux-x86_64-[0-9][0-9.]*-opencloud-qcow2-SSD\.img' | sort -V | tail -n1)"
-  msg_ok >&2
-  [[ -n "$fname" ]] || { msg_error "could not find an image at https://archlinux.org/releng/cloud/"; exit 1; }
-  url="https://archlinux.org/releng/cloud/$fname"
-  msg_info "downloading $fname" >&2
-  curl -fSL --show-error -o "$TEMP_DIR/$fname" "$url"
+function arch_iso() {
+  # The latest Arch installer ISO (DEVVM_ISO_URL overrides the mirror
+  # default). The ISO is imported as the VM's disk, so no ISO storage
+  # pool is needed. Progress goes to stderr: the caller captures stdout
+  # and treats it as the path.
+  local fname
+  fname="$(basename "$DEVVM_ISO_URL")"
+  msg_info "downloading $DEVVM_ISO_URL" >&2
+  curl -fSL --show-error -o "$TEMP_DIR/$fname" "$DEVVM_ISO_URL"
   msg_ok >&2
   echo "$TEMP_DIR/$fname"
 }
 
 function create_vm() {
   # The machine that runs Hyprland under KVM: q35 + OVMF + host CPU +
-  # VirtIO-GPU (a render node), the guest agent, cloud-init.
+  # VirtIO-GPU (a render node), the guest agent, the ISO as boot disk.
   local machine_args=() cpu_args=() net_args="virtio,bridge=$PVE_BRIDGE"
   [[ "$DEVVM_MACHINE" == "q35" ]] && machine_args+=(-machine q35)
   [[ "$DEVVM_CPU" == "host" ]] && cpu_args+=(-cpu host)
@@ -370,7 +337,7 @@ function create_vm() {
   [[ -n "$DEVVM_MTU" ]] && net_args+=",mtu=$DEVVM_MTU"
 
   local image disk_ref
-  image="$(arch_image)"
+  image="$(arch_iso)"
 
   storage_pick
   local storage_type disk_ext="" disk_ref_prefix=""
@@ -408,16 +375,14 @@ function create_vm() {
   qm set "$DEVVM_VMID" \
     -efidisk0 "$PVE_STORAGE:0,efitype=4m" \
     -scsi0 "$disk_ref" \
-    -ide2 "$PVE_STORAGE:cloudinit" \
     -boot order=scsi0 \
     -serial0 socket >/dev/null
-  if [[ "$DEVVM_IP_MODE" == "static" ]]; then
-    qm set "$DEVVM_VMID" --ciuser "$DEVVM_USER" --sshkeys "$DEVVM_SSH_KEY.pub" \
-      --ipconfig0 "$(ipconfig_spec)"
-  else
-    qm set "$DEVVM_VMID" --ciuser "$DEVVM_USER" --sshkeys "$DEVVM_SSH_KEY.pub" \
-      --ipconfig0 ip=dhcp
-  fi
+  # The imported ISO is its own size; grow the disk to the configured
+  # size so archinstall can use all of it.
+  local disk_size="${DEVVM_DISK%[Gg]}"
+  [[ "$disk_size" =~ ^[0-9]+$ ]] || disk_size=60
+  qm resize "$DEVVM_VMID" scsi0 "$disk_size" >/dev/null
+  msg_ok "ready to install the base system"
 
   msg_ok "created VM $DEVVM_VMID ($VM_NAME)"
   if [[ "$START_VM" == "yes" ]]; then
@@ -425,7 +390,7 @@ function create_vm() {
     qm start "$DEVVM_VMID"
     msg_ok
   fi
-  msg "address appears in: $SCRIPT_NAME status"
+  msg "next: run archinstall in the guest console (user '$DEVVM_USER', key $DEVVM_SSH_KEY), reboot, then: tools/devvm/proxmox.sh status"
 }
 
 function cmd_create_vm() {
@@ -456,9 +421,7 @@ function cmd_create_vm() {
       --mtu) DEVVM_MTU="${2:?--mtu needs a value}"; advanced=1; shift 2 ;;
       --user) DEVVM_USER="${2:?--user needs a value}"; advanced=1; shift 2 ;;
       --ssh-key) DEVVM_SSH_KEY="${2:?--ssh-key needs a value}"; advanced=1; shift 2 ;;
-      --ip) DEVVM_IP_MODE="static"; DEVVM_STATIC_IP="${2:?--ip needs a value}"; advanced=1; shift 2 ;;
-      --gateway) DEVVM_GATEWAY="${2:?--gateway needs a value}"; advanced=1; shift 2 ;;
-      --dns) DEVVM_DNS="${2:?--dns needs a value}"; advanced=1; shift 2 ;;
+      --iso-url) DEVVM_ISO_URL="${2:?--iso-url needs a value}"; advanced=1; shift 2 ;;
       --no-start) START_VM_OVERRIDE="no"; advanced=1; shift ;;
       --help|-h) usage; return 0 ;;
       *) die_unknown "$1" ;;
@@ -547,7 +510,7 @@ function cmd_status() {
   if [[ "$state" == *"running"* ]]; then
     local ip
     ip="$(pvesh get "/nodes/$(hostname -s)/qemu/$vmid/status/current/ip" -getvalue 0 2>/dev/null || true)"
-    echo "address: ${ip:-pending (guest agent not up yet)}"
+    echo "address: ${ip:-pending (needs qemu-guest-agent in the guest, or the DHCP address has not arrived yet)}"
   fi
 }
 
@@ -584,17 +547,14 @@ PVE_STORAGE=
 PVE_BRIDGE=vmbr0
 
 # --- the guest ---------------------------------------------------------------
-# cloud-init user the desktop session runs as; a member of wheel, so the
-# in-guest work can use passwordless sudo.
+# The base system is installed in the guest console with archinstall;
+# these values are what to enter there.
+# User the desktop session runs as; give it sudo in the archinstall step.
 DEVVM_USER=aphotic
-# Private key whose public half is seeded into the guest.
+# Private key whose public half you paste into the archinstall step.
 DEVVM_SSH_KEY=$HOME/.ssh/id_ed25519
-# Addressing: dhcp, or static with DEVVM_STATIC_IP (a /24 suffix implies
-# the .1 gateway; otherwise set DEVVM_GATEWAY).
-DEVVM_IP_MODE=dhcp
-DEVVM_STATIC_IP=
-DEVVM_GATEWAY=
-DEVVM_DNS=
+# Installer ISO to boot; blank = the latest on the official mirror.
+DEVVM_ISO_URL=
 # Blank MAC: a generated address is used.
 DEVVM_MAC=
 # VLAN tag (1-4094) and interface MTU (576-65520), both optional.
@@ -619,7 +579,7 @@ Usage: tools/devvm/proxmox.sh <command> [options]
 Commands:
   init        Write a commented example ~/.config/aphotic/devvm.env
   install     Install Proxmox VE on this bare Debian host
-  create-vm   Create the dev VM from the latest Arch opencloud image
+  create-vm   Create the dev VM from the latest Arch installer ISO
   reset       Delete the dev VM and create it again
   destroy     Stop and delete the dev VM
   status      Show the VM state and address
@@ -645,11 +605,9 @@ create-vm / reset / destroy options (advanced):
   --mac MAC       fixed MAC address
   --vlan N        VLAN tag on the NIC
   --mtu N         interface MTU
-  --user USER     cloud-init user
-  --ssh-key PATH  private key seeded into the guest
-  --ip A.B.C.D/LEN  static address (switches the NIC to static)
-  --gateway IP    gateway for --ip
-  --dns IP        nameserver
+  --user USER     user to create in the archinstall step
+  --ssh-key PATH  private key to paste into the archinstall step
+  --iso-url URL   installer ISO to download (default: official mirror, latest)
   --no-start      do not start the VM when created
 
 Settings come from ~/.config/aphotic/devvm.env (DEVVM_ENV overrides the
