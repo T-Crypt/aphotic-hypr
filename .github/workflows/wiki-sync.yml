@@ -51,6 +51,21 @@ jobs:
           fi
           printf '%b' "$findings" > findings.md
 
+      - name: Check SDK docs drift
+        run: |
+          set -uo pipefail
+          out=$(python3 tools/ci/check_docs_drift.py wiki 2>&1) || true
+          if grep -q '^docs in sync' <<<"$out"; then
+            exit 0
+          fi
+          # The checker says the SDK pages (CLI reference region, commands,
+          # install flags, devvm subcommands) have drifted; fold its output
+          # into the report.
+          if [ "$(cat findings.md)" = "No mechanical drift found this run." ]; then
+            : > findings.md
+          fi
+          printf '### SDK docs drift\n\n%s\n\n' "$out" >> findings.md
+
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
