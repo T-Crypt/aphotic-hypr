@@ -4,9 +4,10 @@ Aphotic is a Linux desktop shell: Quickshell (QML) + Hyprland, a Bash installer,
 CLI, and plugins (separate repo `T-Crypt/aphotic-plugins`). Public repo. Read only what the
 task needs. `CONTRIBUTING.md` holds the full conventions.
 
-This file is the one tracked set of agent rules. If your tool reads a different file, copy this
-into it (`cp AGENTS.md CLAUDE.md`, `GEMINI.md`, and so on). Those copies are gitignored; never
-commit them. Change the rules here.
+This file is the one tracked set of agent rules. If your tool reads a different file and that
+file does not exist yet, copy this into it (`cp -n AGENTS.md CLAUDE.md`, `GEMINI.md`, and so
+on). Never overwrite one that exists: it may hold the machine owner's own rules, and those win
+on that machine. The copies are gitignored; never commit them. Change the rules here.
 
 ## Where things are
 - Shell: `Configs/quickshell/aphotic/` (`shell.qml`, `services/` singletons, `modules/` surfaces,
@@ -81,6 +82,13 @@ The project tracks work on a public epiq board in the `__epiq_state__` branch. B
 7. Static `PanelWindow` geometry; animate content, not window size.
 8. Match the surrounding code. Target Qt 6.11 and Quickshell 0.3.1. If `~/docs-local` exists,
    check APIs there first.
+
+## Structure over features
+Add a capability through the extension point that already exists: a plugin, a manifest block,
+a drop-in file under `~/.config/aphotic/`, or an `aphotic` subcommand. Never name an inference
+engine, agent harness, model or outside project in core code, and never add a second way to do
+something one way already does. If the task seems to need either, stop and propose the
+extension point instead.
 
 ## CI
 - Before every push, run `tools/ci/local.sh`. It runs the CI checks in a checkout shaped like
