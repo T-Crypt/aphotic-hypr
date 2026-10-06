@@ -8,6 +8,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.bar.popouts as BarPopouts
+import "../../services/BarLayout.js" as BarLayout
 
 Item {
     id: root
@@ -34,21 +35,20 @@ Item {
             Audio.decrementVolume();
     }
 
-    // Same dark neutral surface every other bar style's background uses
-    // (matches Taskbar's own m3surfaceContainer exactly) instead of a
-    // full-bleed solid accent block -- a bold single-color fill read as
-    // a genuine outlier against the rest of this repo's UI language,
-    // where accent is reserved for active/interactive state (the active
-    // workspace dot, a toggled indicator), never a whole background. The
-    // thin accent border keeps a nod to "accent strip" without the
-    // jarring full-color fill -- also a deliberate callback to the old
-    // (pre-repurposing) "minimal" skin's own outline-only treatment.
-    StyledRect {
+    // Translucent Signal surface, no border: at rest the bar IS its
+    // inner-edge line, so the idle hairline below carries the whole
+    // outline instead of a filled accent strip.
+    SignalSurface {
         anchors.fill: parent
-        color: Colours.tPalette.m3surfaceContainer
-        radius: 0
-        border.width: Config.border.thickness
-        border.color: Colours.palette.m3primary
+        tone: Qt.alpha(Colours.signalStyle.bar, 0.6)
+        radius: BarLayout.cornerRadius(Settings.barCorners, root.thickness)
+        border.width: 0
+    }
+
+    SignalLine {
+        horizontal: Settings.barHorizontal
+        edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+        level: "idle"
     }
 
     RowLayout {

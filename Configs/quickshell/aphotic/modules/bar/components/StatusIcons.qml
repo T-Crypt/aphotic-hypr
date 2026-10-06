@@ -15,7 +15,7 @@ Item {
     required property ScreenState screenState
     readonly property var echoLabels: ({lockStatus:qsTr("Lock"),audio:qsTr("Audio"),microphone:qsTr("Microphone"),kbLayout:qsTr("Keyboard layout"),network:qsTr("Network"),bluetooth:qsTr("Bluetooth"),vpn:qsTr("VPN"),battery:qsTr("Battery"),resources:qsTr("Resources"),hostInfo:qsTr("Host information"),networkSpeed:qsTr("Network speed"),pomodoro:qsTr("Focus timer"),dnd:qsTr("Do not disturb"),notifCenter:qsTr("Notifications")})
 
-    property color colour: Settings.barSignal ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3secondaryOnSurface
+    property color colour: Colours.palette.m3onSurfaceVariant
 
     readonly property int spacing: Tokens.spacing.medium / 2
     // Real gap BETWEEN pills -- previously a single 1px divider line
@@ -158,7 +158,7 @@ Item {
                 readonly property alias icons: pillIcons
                 property Item hoveredEntry: null
 
-                color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
+                color: "transparent"
                 radius: Tokens.rounding.full
                 clip: true
 

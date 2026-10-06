@@ -68,7 +68,7 @@ Item {
 
         anchors.fill: parent
         radius: Tokens.rounding.full
-        color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
+        color: "transparent"
     }
 
     Loader {

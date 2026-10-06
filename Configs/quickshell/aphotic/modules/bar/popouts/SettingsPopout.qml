@@ -123,8 +123,8 @@ Item {
         anchors.bottom: parent.bottom
         width: 4
         radius: Tokens.rounding.full
-        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.palette.m3onSurfaceVariant
-        border.width: Settings.barSignal ? 1 : 0
+        color: Colours.signalStyle.raised
+        border.width: 1
         border.color: Colours.signalStyle.hairline
         opacity: 0.35
 

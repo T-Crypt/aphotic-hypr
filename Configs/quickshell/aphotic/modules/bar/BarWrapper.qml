@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "components"
 import QtQuick
 import Quickshell
 import qs.config
@@ -147,7 +148,7 @@ Item {
         // draw their own full-bleed background internally (TaskbarBar.qml/
         // MinimalBar.qml) instead of inheriting Full's strip treatment.
         radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? height : width)
-        color: Settings.barSignal ? Colours.signalStyle.bar : Colours.tPalette.m3surfaceContainer
+        color: Colours.signalStyle.bar
         border.width: 0
         border.color: Colours.palette.m3outlineVariant
         visible: root.shouldBeVisible && Settings.barStyle === "full"
@@ -156,84 +157,26 @@ Item {
             Anim { type: Anim.DefaultEffects }
         }
 
-        DepthGradient {
-            anchors.fill: parent
-            visible: !Settings.barSignal
-            radius: parent.radius
-            baseColour: Colours.tPalette.m3surfaceContainer
-        }
-
-        Item {
+        // The strip's edge line. Start positions arrive in window
+        // coordinates (published by the bar's own entries), so shift them
+        // back by where this strip itself sits in the window; 0 until the
+        // window has committed its geometry.
+        SignalLine {
             id: signalLine
 
             readonly property var win: QsWindow.window
-            readonly property bool horizontal: Settings.barHorizontal
-            // Where this line starts along the bar, in window coordinates.
-            readonly property real origin: {
-                background.x + background.y;
-                if (!Settings.barSignal || !background.Window.window)
-                    return 0;
-                const p = QsWindow.itemPosition(background);
-                return horizontal ? p.x : p.y;
-            }
+            readonly property real origin: background.Window.window
+                ? (Settings.barHorizontal ? QsWindow.itemPosition(background).x : QsWindow.itemPosition(background).y)
+                : 0
 
-            visible: Settings.barSignal
-            x: horizontal ? 0 : (Settings.barPositionRight ? 0 : parent.width - 1)
-            y: horizontal ? (Settings.barPositionBottom ? 0 : parent.height - 1) : 0
-            width: horizontal ? parent.width : 1
-            height: horizontal ? 1 : parent.height
-
-            // Baseline in two halves that open around the notch where it
-            // hangs from the bar, so the line flows into the notch outline.
-            readonly property real gap: root.screenState?.notchSpan ?? 0
-            readonly property real along: horizontal ? width : height
-            readonly property real half: Math.max(0, (along - gap) / 2)
-
-            Rectangle {
-                width: signalLine.horizontal ? signalLine.half : 1
-                height: signalLine.horizontal ? 1 : signalLine.half
-                color: Colours.signalStyle.hairline
-            }
-
-            Rectangle {
-                x: signalLine.horizontal ? signalLine.along - signalLine.half : 0
-                y: signalLine.horizontal ? 0 : signalLine.along - signalLine.half
-                width: signalLine.horizontal ? signalLine.half : 1
-                height: signalLine.horizontal ? 1 : signalLine.half
-                color: Colours.signalStyle.hairline
-            }
-
-            Rectangle {
-                readonly property real start: (signalLine.win?.signalHoverStart ?? 0) - signalLine.origin
-                readonly property real length: signalLine.win?.signalHoverLength ?? 0
-
-                x: signalLine.horizontal ? start : 0
-                y: signalLine.horizontal ? 0 : start
-                width: signalLine.horizontal ? length : 1
-                height: signalLine.horizontal ? 1 : length
-                color: Colours.palette.m3onSurface
-                opacity: signalLine.win?.signalHoverOwner ? 0.45 : 0
-
-                Behavior on opacity {
-                    Anim {
-                        type: Anim.FastEffects
-                    }
-                }
-            }
-
-            Rectangle {
-                readonly property real start: (signalLine.win?.signalActiveStart ?? 0) - signalLine.origin
-                readonly property real length: signalLine.win?.signalActiveLength ?? 0
-                readonly property real thickness: 2
-
-                x: signalLine.horizontal ? start : (Settings.barPositionRight ? 0 : 1 - thickness)
-                y: signalLine.horizontal ? (Settings.barPositionBottom ? 0 : 1 - thickness) : start
-                width: signalLine.horizontal ? length : thickness
-                height: signalLine.horizontal ? thickness : length
-                radius: thickness / 2
-                color: Colours.signalStyle.accentLine
-                visible: length > 0
-            }
+            horizontal: Settings.barHorizontal
+            edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+            gapLength: root.screenState?.notchSpan ?? 0
+            activeStart: (signalLine.win?.signalActiveStart ?? 0) - signalLine.origin
+            activeLength: signalLine.win?.signalActiveLength ?? 0
+            hoverStart: (signalLine.win?.signalHoverStart ?? 0) - signalLine.origin
+            hoverLength: signalLine.win?.signalHoverLength ?? 0
+            hoverVisible: signalLine.win?.signalHoverOwner ? true : false
         }
     }
 

@@ -44,12 +44,12 @@ Item {
 
     // 0..1: how far the edges have separated, in workspace-size units.
     // Drives the cross-axis squash below so a stretching pill thins out.
-    readonly property real crossSize: Settings.barSignal ? Math.round(Settings.barInnerWidth * 0.34) : Settings.barInnerWidth - Tokens.padding.small
+    readonly property real crossSize: Math.round(Settings.barInnerWidth * 0.34)
     readonly property real stretch: currentSize > 0 ? Math.min(1, Math.abs(leading - trailing) / currentSize) : 0
 
     function publishSignal(): void {
         const win = QsWindow.window;
-        if (!Settings.barSignal || !root.Window.window || !win || win.signalActiveStart === undefined)
+        if (!root.Window.window || !win || win.signalActiveStart === undefined)
             return;
         const p = QsWindow.itemPosition(root);
         win.signalActiveStart = Settings.barHorizontal ? p.x : p.y;

@@ -41,8 +41,8 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: 4
         radius: Tokens.rounding.full
-        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
-        border.width: Settings.barSignal ? 1 : 0
+        color: Colours.signalStyle.raised
+        border.width: 1
         border.color: Colours.signalStyle.hairline
 
         StyledRect {
@@ -84,7 +84,7 @@ ColumnLayout {
 
                 StyledText {
                     text: `${Math.round(SystemUsage.cpuPerc * 100)}%`
-                    font: Settings.barSignal ? Tokens.font.title.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.medium
+                    font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
                 }
             }
 
@@ -129,7 +129,7 @@ ColumnLayout {
                 const totalFmt = SystemUsage.formatKib(SystemUsage.memTotal);
                 return qsTr("%1 / %2 %3 · %4%").arg(usedFmt.value.toFixed(1)).arg(totalFmt.value.toFixed(1)).arg(totalFmt.unit).arg(Math.round(SystemUsage.memPerc * 100));
             }
-            font: Settings.barSignal ? Tokens.font.title.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.medium
+            font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
         }
     }
 
@@ -144,9 +144,9 @@ ColumnLayout {
         visible: SystemUsage.disks.length > 0
 
         StyledText {
-            text: Settings.barSignal ? qsTr("Storage").toUpperCase() : qsTr("Storage")
+            text: qsTr("Storage").toUpperCase()
             color: Colours.palette.m3onSurfaceVariant
-            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
         }
 
         Repeater {

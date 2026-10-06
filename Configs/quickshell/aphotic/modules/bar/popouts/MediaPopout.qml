@@ -91,8 +91,8 @@ ColumnLayout {
         StyledRect {
             anchors.fill: parent
             radius: Tokens.rounding.full
-            color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
-            border.width: Settings.barSignal ? 1 : 0
+            color: Colours.signalStyle.raised
+            border.width: 1
             border.color: Colours.signalStyle.hairline
         }
 

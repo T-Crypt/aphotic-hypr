@@ -9,6 +9,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.bar.popouts as BarPopouts
+import "../../services/BarLayout.js" as BarLayout
 
 Item {
     id: root
@@ -21,6 +22,10 @@ Item {
 
     implicitWidth: thickness
     implicitHeight: layout.implicitHeight + Tokens.padding.small * 2
+
+    // The one task pill holding a focused window, if any -- the strip's
+    // Signal line puts its accent segment under it.
+    readonly property Item focusedTaskItem: layout.children.find(c => c.isTaskItem && c.focused) || null
 
     function closeTray(): void {
         tray.expanded = false;
@@ -129,10 +134,10 @@ Item {
             Audio.decrementVolume();
     }
 
-    StyledRect {
+    SignalSurface {
         anchors.fill: parent
-        color: Colours.tPalette.m3surfaceContainer
-        radius: 0
+        radius: BarLayout.cornerRadius(Settings.barCorners, root.thickness)
+        border.width: 0
     }
 
     RowLayout {
@@ -148,8 +153,8 @@ Item {
 
             Layout.preferredWidth: Settings.barInnerWidth
             Layout.preferredHeight: Settings.barInnerWidth
-            radius: Tokens.rounding.full
-            color: Colours.palette.m3surfaceContainerHigh
+            radius: 0
+            color: "transparent"
 
             AphoticMark {
                 anchors.centerIn: parent
@@ -194,6 +199,30 @@ Item {
         }
     }
 
+    // The strip's inner-edge line: the edge away from the screen edge the
+    // bar docks to, so the accent reads from the desktop side.
+    SignalLine {
+        readonly property Item task: root.focusedTaskItem
+
+        horizontal: Settings.barHorizontal
+        edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+        level: "active"
+        activeStart: {
+            // Read the task's x/y for the dependency: mapToItem alone
+            // would leave this binding stale after the row reflows.
+            if (!task)
+                return 0;
+            const x = task.x, y = task.y;
+            const p = task.mapToItem(root, 0, 0);
+            return Settings.barHorizontal ? p.x : p.y;
+        }
+        activeLength: {
+            if (!task)
+                return 0;
+            return Settings.barHorizontal ? task.width : task.height;
+        }
+    }
+
     component TaskItem: StyledRect {
         id: item
         property QtObject _sonarTarget: Loader {
@@ -208,12 +237,15 @@ Item {
         required property var group
         required property Item taskbarRoot
 
+        readonly property bool isTaskItem: true
         readonly property bool focused: item.group.windows.some(w => w.focused)
 
         Layout.preferredWidth: Settings.barInnerWidth
         Layout.preferredHeight: Settings.barInnerWidth
         radius: Tokens.rounding.full
-        color: item.focused ? Colours.palette.m3secondaryContainer : Colours.palette.m3surfaceContainerHigh
+        // No fill at all: the strip's Signal line marks the focused task
+        // with its accent segment (see the SignalLine below the row).
+        color: "transparent"
 
         AppIcon {
             anchors.centerIn: parent

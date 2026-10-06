@@ -27,7 +27,10 @@ GridLayout {
 
     readonly property int ws: groupOffset + index + 1
     readonly property bool isOccupied: occupied[ws] ?? false
-    readonly property bool hasWindows: isOccupied && Config.bar.workspaces.showWindows && maxIcons > 0 && !Settings.barSignal
+    // Window icon glyphs are off under Signal: the active workspace's
+    // extent is read from the signal line instead, so the per-workspace
+    // icon rows never show.
+    readonly property bool hasWindows: false
 
     flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
     Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
@@ -42,10 +45,10 @@ GridLayout {
 
         Layout.alignment: Settings.barHorizontal ? (Qt.AlignVCenter | Qt.AlignLeft) : (Qt.AlignHCenter | Qt.AlignTop)
         Layout.preferredHeight: Settings.barHorizontal ? -1 : (Settings.barInnerWidth - Tokens.padding.small)
-        Layout.preferredWidth: Settings.barHorizontal ? (Settings.barSignal ? root.signalCell : Settings.barInnerWidth - Tokens.padding.small) : -1
+        Layout.preferredWidth: Settings.barHorizontal ? root.signalCell : -1
 
         animate: true
-        text: Settings.barSignal ? "" : root.label
+        text: ""
         color: Config.bar.workspaces.occupiedBg || root.isOccupied || root.activeWsId === root.ws ? Colours.palette.m3onSurface : Colours.layer(Colours.palette.m3outlineVariant, 2)
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
@@ -53,7 +56,6 @@ GridLayout {
 
         Rectangle {
             anchors.centerIn: parent
-            visible: Settings.barSignal
             implicitWidth: root.signalDot
             implicitHeight: root.signalDot
             radius: root.signalDot / 2
@@ -68,8 +70,6 @@ GridLayout {
         }
 
         Behavior on Layout.preferredWidth {
-            enabled: Settings.barSignal
-
             Anim {
                 type: Anim.FastSpatial
             }
