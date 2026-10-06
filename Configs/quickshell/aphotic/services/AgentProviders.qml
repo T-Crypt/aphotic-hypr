@@ -179,6 +179,24 @@ Singleton {
         });
     }
 
+    // A `quota` record off the stream: the named windows the harness
+    // reported, keyed by harness id next to the file-backed ones. Both
+    // writers merge into the same map so a Claude statusLine reload keeps
+    // a live Codex session's windows and vice versa; one shared capture
+    // age covers both, the same approximation as before stream quotas.
+    function _noteStreamQuota(record: var): void {
+        const harness = record.harness || "";
+        const windows = record.quota;
+        if (!harness || !windows || typeof windows !== "object")
+            return;
+        root._quotaById = Object.assign({}, root._quotaById, {
+            [harness]: { windows: windows }
+        });
+        const at = record.t ? Math.floor(record.t / 1000) : 0;
+        if (at > root._quotaCapturedAt)
+            root._quotaCapturedAt = at;
+    }
+
     // Quota windows for one provider: `{ fiveHour, sevenDay, spendLimit,
     // context }`, each `{ usedPercent, resetsAt }`, and any of them
     // absent when the harness did not report it. Empty until a session
@@ -214,10 +232,14 @@ Singleton {
     // `stats[harness].{sessionCount, liveSessions}` out. Replaces both
     // the old `ls`+`cat` directory poll (AGF-08) and, for any harness
     // that reaches here at least once, the pgrep poll below (AGF-07).
+    // Harnesses without a statusLine slot (Codex, OpenCode) report their
+    // quota windows as `quota` records on the same feed instead.
     function _ingestSessionRecord(record: var): void {
         const harness = record.harness || "claude";
         if (record.event === "usage")
             root._noteStreamUsage(record);
+        else if (record.event === "quota")
+            root._noteStreamQuota(record);
         if (!root._hasLiveEvents[harness])
             root._hasLiveEvents = Object.assign({}, root._hasLiveEvents, { [harness]: true });
 
@@ -297,12 +319,13 @@ Singleton {
         timer: agentReconcile
     }
 
-    // Quota windows, written by the harness's own statusLine command
-    // (agent_statusline.py) rather than by the 15-minute usage timer.
-    // Different file because it is a different cadence and a different
-    // truth: the usage record counts tokens off transcripts, this one
-    // carries the share of an allowance the harness itself reports, and
-    // only while a session is live to report it.
+    // Quota windows from two writers into one map: the harness's own
+    // statusLine command (agent_statusline.py, Claude Code's slot) writes
+    // this file on its own cadence, and harnesses with no statusLine
+    // slot (Codex) report `quota` records on the event feed instead
+    // (_noteStreamQuota). Different cadence and different truth: the
+    // usage record counts tokens off transcripts, these carry the share
+    // of an allowance a live session itself reports.
     FileView {
         id: quotaFile
         path: `${Quickshell.env("HOME")}/.local/state/aphotic/agent-quota.json`
@@ -313,8 +336,10 @@ Singleton {
                 const data = JSON.parse(text());
                 if (data.schemaVersion !== 1)
                     return;
-                root._quotaById = data.providers ?? ({});
-                root._quotaCapturedAt = data.capturedAt ?? 0;
+                root._quotaById = Object.assign({}, root._quotaById, data.providers ?? ({}));
+                const at = data.capturedAt ?? 0;
+                if (at > root._quotaCapturedAt)
+                    root._quotaCapturedAt = at;
             } catch (e) {
                 // Same rule as the usage record: a torn or missing file
                 // leaves the last-known windows alone rather than
