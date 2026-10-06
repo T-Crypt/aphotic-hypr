@@ -7,6 +7,7 @@ import qs.components
 import qs.services
 import qs.utils
 import qs.modules.bar.popouts as BarPopouts
+import "../../services/BarLayout.js" as BarLayout
 
 Item {
     id: root
@@ -37,23 +38,16 @@ Item {
     // bar; "autohide" still reserves the thin sliver so windows don't tile
     // into the space the reveal-on-hover strip occupies.
     //
-    // Settings._loaded gate: real, live-confirmed bug. Settings.barSkin's
-    // own QML default is "pill" (a full-bar skin) until its FileView loads
-    // the user's persisted value asynchronously -- so for anyone whose
-    // real config is "dock" (or "hidden"), hiddenMode is briefly FALSE at
-    // this window's very first layer-shell commit, and exclusiveZone briefly
-    // computes a real nonzero reservation before flipping back to 0 a
-    // moment later. That transient commit doesn't reliably shrink back down
-    // afterward (a known exclusive-zone-shrink quirk), leaving a real,
-    // permanent phantom reservation baked into hyprctl monitors' `.reserved`
-    // that no later value change corrects -- confirmed live via an
-    // isolation test forcing this property to a distinct constant and
-    // watching `.reserved` carry a fixed, un-shrinkable extra amount from
-    // the pre-load default. Treating "not loaded yet" the same as
-    // hiddenMode (0) is the safe direction: worst case a real bar very
+    // Settings._loaded gate: real, live-confirmed bug. Settings.barLayout's
+    // own QML default is "capsule" (a floating style, hiddenMode true)
+    // until its FileView loads the user's persisted value asynchronously,
+    // so the very first layer-shell commit cannot know whether this
+    // screen's bar is real yet. A transient exclusive-zone value at that
+    // first commit doesn't reliably correct itself afterward (a known
+    // exclusive-zone-shrink quirk), so treating "not loaded yet" the same
+    // as hiddenMode (0) is the safe direction: worst case a real bar very
     // briefly reserves nothing it should have, self-correcting once
-    // Settings._loaded flips true, instead of the reverse (a wrong
-    // reservation that sticks for the rest of the session).
+    // Settings._loaded flips true.
     readonly property int exclusiveZone: !Settings._loaded || disabled || hiddenMode ? 0 : (Settings.barVisibility === "always" || screenState.bar ? contentWidth : Config.border.thickness)
     // "hidden" never reveals via hover -- isHovered only feeds visibility
     // in "autohide" mode, where the always-present sliver is the hover
@@ -149,11 +143,10 @@ Item {
         x: !Settings.barHorizontal && Settings.barPositionRight ? root.width - width : 0
         y: Settings.barHorizontal && Settings.barPositionBottom ? root.height - height : 0
 
-        // Only the "full" style's own pill/square backdrop -- taskbar and
-        // minimal draw their own full-bleed background internally
-        // (TaskbarBar.qml/MinimalBar.qml), matching their own described
-        // look instead of inheriting Full's rounded-strip treatment.
-        radius: Settings.barSignal ? 0 : Settings.barSkin === "square" ? Tokens.rounding.small : Tokens.rounding.full
+        // Only the "full" layout's own backdrop -- taskbar and minimal
+        // draw their own full-bleed background internally (TaskbarBar.qml/
+        // MinimalBar.qml) instead of inheriting Full's strip treatment.
+        radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? height : width)
         color: Settings.barSignal ? Colours.signalStyle.bar : Colours.tPalette.m3surfaceContainer
         border.width: 0
         border.color: Colours.palette.m3outlineVariant
