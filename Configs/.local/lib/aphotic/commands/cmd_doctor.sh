@@ -174,6 +174,10 @@ aphotic_cmd_doctor() {
     done
 
     echo
+    echo "Icon font:"
+    _aphotic_doctor_icon_font
+
+    echo
     echo "Paths:"
     for p in "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$QUICKSHELL_CONFIG_DIR" "$APHOTIC_DOTS_DIR"; do
         if [[ -e "$p" ]]; then
