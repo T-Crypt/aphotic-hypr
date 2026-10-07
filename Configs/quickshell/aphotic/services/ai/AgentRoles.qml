@@ -10,8 +10,8 @@ import Quickshell.Io
 import qs.services.ai
 
 // Single source of harness/provider role + locality for every AI CLI this
-// shell knows about. A harness (Claude Code, Codex, OpenCode, Gemini CLI)
-// runs a session and executes tool calls; a provider (Ollama, unsloth, LM
+// shell knows about. A harness (Claude Code, Codex, OpenCode, Gemini CLI,
+// Pi, Oh My Pi) runs a session and executes tool calls; a provider (Ollama,
 // Studio, huggingface-cli) only serves inference and never gets its own
 // Bar tab or Agent Graph node -- it's read as an annotation on whichever
 // harness is using it as a backend. Optional [agents.<id>] tables in
@@ -35,7 +35,7 @@ Singleton {
     // two roles are not mutually exclusive, and collapsing them into one
     // field would misrepresent Claude either way round.
     //
-    // Codex, OpenCode and Gemini CLI are harnesses only. They run sessions
+    // Codex, OpenCode, Gemini CLI, Pi and Oh My Pi are harnesses only.
     // and execute tool calls; there is no plain "talk to it" mode behind
     // them, so they must not be offered as chat providers (§4.1). Providers
     // serve inference by definition, so `chat` defaults true for them.
@@ -44,6 +44,8 @@ Singleton {
         { id: "codex", label: "Codex", role: "harness", chat: false, locality: null },
         { id: "opencode", label: "OpenCode", role: "harness", chat: false, locality: null },
         { id: "geminicli", label: "Gemini CLI", role: "harness", chat: false, locality: null },
+        { id: "omp", label: "Oh My Pi", role: "harness", chat: false, locality: null },
+        { id: "pi", label: "Pi", role: "harness", chat: false, locality: null },
         { id: "ollama", label: "Ollama", role: "provider", chat: true, locality: "local" },
         { id: "llama-swap", label: "llama-swap", role: "provider", chat: false, locality: "local" },
         // Off unless aphotic.toml opts in with `[agents.unsloth] enabled =
