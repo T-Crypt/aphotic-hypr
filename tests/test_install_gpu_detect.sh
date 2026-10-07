@@ -40,6 +40,28 @@ check() {
     [[ "$got_amd" == "$want_amd" ]] || fail "$name: amd expected $want_amd, got $got_amd"
 }
 
+# Fake /sys/class/drm: each argument is "<vendor>:<connected|disconnected>"
+# and becomes one card with one output.
+drm() {
+    local i=0 spec
+    rm -rf "$TESTHOME/drm"
+    for spec in "$@"; do
+        mkdir -p "$TESTHOME/drm/card$i/device" "$TESTHOME/drm/card$i-HDMI-A-1"
+        echo "${spec%%:*}" > "$TESTHOME/drm/card$i/device/vendor"
+        echo "${spec#*:}" > "$TESTHOME/drm/card$i-HDMI-A-1/status"
+        i=$((i + 1))
+    done
+}
+export APHOTIC_DRM_SYSFS="$TESTHOME/drm"
+
+hybrid_check() {
+    local name="$1" want_hybrid="$2" want_module="$3" got_hybrid got_module
+    got_hybrid="$(detect_nvidia_hybrid)"
+    got_module="$(igpu_kernel_module)"
+    [[ "$got_hybrid" == "$want_hybrid" ]] || fail "$name: hybrid expected $want_hybrid, got $got_hybrid"
+    [[ "$got_module" == "$want_module" ]] || fail "$name: iGPU module expected '$want_module', got '$got_module'"
+}
+
 # --- a real AMD card --------------------------------------------------
 
 fixture <<'EOF'
@@ -99,6 +121,67 @@ fixture <<'EOF'
 	Kernel driver in use: amdgpu
 EOF
 check "hybrid AMD + NVIDIA laptop" true true
+drm 0x10de:disconnected 0x1002:connected
+hybrid_check "hybrid AMD + NVIDIA laptop" true amdgpu
+
+# --- hybrid laptops: iGPU drives the panel, NVIDIA is for apps --------
+# The iGPU's module must load before nvidia in the initramfs, so the
+# installer needs the module name too, and it must survive lspci quirks:
+# older kernels print no "Kernel driver in use" line for the iGPU, and
+# the Lunar Lake generation uses xe instead of i915.
+
+fixture <<'EOF'
+00:02.0 VGA compatible controller: Intel Corporation TigerLake-H GT1 [UHD Graphics] (rev 01)
+	Subsystem: Dell Device 0a9f
+	Kernel driver in use: i915
+	Kernel modules: i915
+01:00.0 3D controller: NVIDIA Corporation TU117GLM [T500 Mobile] (rev a1)
+	Subsystem: Dell Device 0a9f
+	Kernel driver in use: nvidia
+	Kernel modules: nouveau, nvidia_drm, nvidia
+EOF
+check "hybrid Intel iGPU + NVIDIA laptop" true false
+drm 0x8086:connected 0x10de:disconnected
+hybrid_check "T500 laptop" true i915
+nvidia_needs_legacy_driver && fail "T500 is Turing, not pre-Turing"
+
+fixture <<'EOF'
+00:02.0 VGA compatible controller: Intel Corporation Meteor Lake-P VT [Intel Arc 140T] (rev 07)
+	Subsystem: Dell Device 0a9f
+	Kernel driver in use: xe
+	Kernel modules: xe
+01:00.0 3D controller: NVIDIA Corporation AD107 [GeForce RTX 4070 Laptop GPU] (rev a1)
+	Subsystem: Dell Device 0a9f
+	Kernel driver in use: nvidia
+	Kernel modules: nvidia_drm, nvidia
+EOF
+drm 0x8086:connected 0x10de:disconnected
+hybrid_check "Lunar Lake iGPU (xe) + NVIDIA laptop" true xe
+
+fixture <<'EOF'
+00:02.0 VGA compatible controller: Intel Corporation Alder Lake-P [Iris Xe Graphics] (rev c0)
+	Subsystem: Lenovo Device 2242
+01:00.0 3D controller: NVIDIA Corporation GA107 [GeForce RTX 3050 Laptop GPU] (rev a1)
+	Subsystem: Lenovo Device 2242
+	Kernel driver in use: nvidia
+	Kernel modules: nvidia_drm, nvidia
+EOF
+drm 0x8086:connected 0x10de:disconnected
+hybrid_check "Intel iGPU with no driver line" true i915
+
+# Both GPUs present but every monitor on the NVIDIA card: a desktop with
+# the iGPU left enabled, which must keep the NVIDIA session settings.
+drm 0x10de:connected 0x8086:disconnected
+[[ "$(detect_nvidia_hybrid)" == "false" ]] || fail "monitors on the NVIDIA card must not count as hybrid"
+
+fixture <<'EOF'
+01:00.0 VGA compatible controller: NVIDIA Corporation AD102 [GeForce RTX 4090] (rev a1)
+	Subsystem: NVIDIA Corporation Device 167c
+	Kernel driver in use: nvidia
+	Kernel modules: nvidia
+EOF
+drm 0x10de:connected
+hybrid_check "desktop NVIDIA only" false ""
 
 # --- pre-GCN cards run the `radeon` driver, not amdgpu ----------------
 
@@ -277,4 +360,4 @@ grep -q "would install AMD graphics userspace" <<<"$out" || fail "AMD userspace 
 
 rm -f "$ROOT/aphotic.toml"
 
-echo "PASS: GPU vendor detection (AMD CPU is not an AMD GPU, hybrid, legacy radeon), pre-Turing NVIDIA, NVIDIA-MODULE driver detection, and the Ollama runner choice"
+echo "PASS: GPU vendor detection (AMD CPU is not an AMD GPU, hybrid, legacy radeon), hybrid iGPU kernel module detection, pre-Turing NVIDIA, NVIDIA-MODULE driver detection, and the Ollama runner choice"

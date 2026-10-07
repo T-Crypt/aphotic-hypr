@@ -19,7 +19,7 @@ StyledRect {
         }
     }
 
-    color: Settings.barSignal ? "transparent" : Colours.palette.m3surfaceContainerHigh
+    color: "transparent"
     radius: Tokens.rounding.full
 
     implicitWidth: Settings.barHorizontal ? icon.implicitHeight + Tokens.padding.small * 2 : Settings.barInnerWidth

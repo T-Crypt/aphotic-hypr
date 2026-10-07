@@ -3,12 +3,12 @@ pragma ComponentBehavior: Bound
 import "components"
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import qs.config
 import qs.components
 import qs.services
+import "../../services/BarLayout.js" as BarLayout
 
 Item {
     id: root
@@ -68,15 +68,18 @@ Item {
         target: hoverTarget
     }
 
-    StyledRect {
+    // Which docked app's icon the Signal line's accent sits under: the one
+    // holding the focused window, if any.
+    readonly property int focusedDockIndex: root.dockItems.findIndex(d => d.windows && d.windows.some(w => w.focused))
+
+    SignalSurface {
         id: pill
 
         anchors.centerIn: parent
         implicitWidth: Settings.barHorizontal ? layout.implicitWidth + Tokens.padding.medium * 2 : Settings.barInnerWidth + Tokens.padding.small * 2
         implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth + Tokens.padding.small * 2 : layout.implicitHeight + Tokens.padding.medium * 2
 
-        radius: Tokens.rounding.full
-        color: Colours.tPalette.m3surfaceContainer
+        radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? pill.implicitHeight : pill.implicitWidth)
 
         opacity: root.shouldShow ? 1 : 0
         // Behaviors go on the Translate's own x/y, not on `transform`
@@ -104,14 +107,6 @@ Item {
 
         Behavior on opacity {
             Anim { type: Anim.Emphasized }
-        }
-
-        // Shadow from the shape, not from the content: see
-        // components/ShapeShadow.qml for what layering the content cost.
-        ShapeShadow {
-            anchors.fill: parent
-            radius: parent.radius
-            color: parent.color
         }
 
         GridLayout {
@@ -195,7 +190,7 @@ Item {
                 Layout.preferredHeight: Settings.barHorizontal ? 1 : 20
                 Layout.alignment: Qt.AlignCenter
                 visible: root.dockItems.length > 0
-                color: Colours.palette.m3outlineVariant
+                color: Colours.signalStyle.hairline
                 opacity: 0.6
             }
 
@@ -226,6 +221,38 @@ Item {
 
             Tray {
                 Layout.alignment: Qt.AlignCenter
+            }
+        }
+
+        // The screen-facing edge of the dock: the edge the window docks to
+        // is the pill's start edge (top or left) or end edge (bottom or
+        // right), so the line mirrors which one that is. The accent
+        // segments span the focused app's icon, read out of the grid (the
+        // Repeater keeps one child per dock item, in model order).
+        SignalLine {
+            id: dockSignalLine
+
+            readonly property int idx: root.focusedDockIndex
+            readonly property Item focusedIcon: idx >= 0 && idx < iconGrid.children.length ? iconGrid.children[idx] : null
+
+            horizontal: Settings.barHorizontal
+            edge: (Settings.barHorizontal ? !Settings.barPositionBottom : !Settings.barPositionRight) ? "start" : "end"
+            level: "active"
+            activeStart: {
+                // Read icon.x/icon.y for the dependency: mapToItem alone
+                // would leave this binding stale after a grid reflow.
+                const icon = dockSignalLine.focusedIcon;
+                if (!icon)
+                    return 0;
+                const x = icon.x, y = icon.y;
+                const p = icon.mapToItem(pill, 0, 0);
+                return Settings.barHorizontal ? p.x : p.y;
+            }
+            activeLength: {
+                const icon = dockSignalLine.focusedIcon;
+                if (!icon)
+                    return 0;
+                return Settings.barHorizontal ? icon.width : icon.height;
             }
         }
     }

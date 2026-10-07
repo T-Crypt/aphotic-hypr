@@ -4,11 +4,11 @@ import "capsule"
 import "components"
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import qs.config
 import qs.components
 import qs.services
+import "../../services/BarLayout.js" as BarLayout
 
 Item {
     id: root
@@ -106,7 +106,7 @@ Item {
         id: rootHover
     }
 
-    StyledRect {
+    SignalSurface {
         id: pill
 
         x: root.horizontal ? 0 : (root.growsAfter ? 0 : root.width - width)
@@ -114,8 +114,7 @@ Item {
         width: root.horizontal ? root.alongExtent : root.rowThickness
         height: root.horizontal ? root.rowThickness : root.alongExtent
 
-        radius: Tokens.rounding.extraLarge
-        color: Colours.tPalette.m3surfaceContainer
+        radius: BarLayout.cornerRadius(Settings.barCorners, root.rowThickness)
         // Hard guarantee, not decoration: this window masks input to the
         // bar's own bounds, so anything a child renders outside them is
         // both visually loose and completely dead to the pointer. Clipping
@@ -143,14 +142,6 @@ Item {
             }
         }
 
-        // Shadow from the shape, not from the content: see
-        // components/ShapeShadow.qml for what layering the content cost.
-        ShapeShadow {
-            anchors.fill: parent
-            radius: parent.radius
-            color: parent.color
-        }
-
         GridLayout {
             id: collapsedRow
 
@@ -174,7 +165,7 @@ Item {
                 Layout.alignment: Qt.AlignCenter
                 Layout.preferredWidth: root.horizontal ? 1 : 18
                 Layout.preferredHeight: root.horizontal ? 18 : 1
-                color: Colours.palette.m3outlineVariant
+                color: Colours.signalStyle.hairline
                 opacity: 0.5
             }
 
@@ -205,6 +196,20 @@ Item {
                 HoverHandler {
                     id: chipHover
                 }
+            }
+        }
+
+        // The screen-facing edge line, shortened by the corner radius at
+        // both ends so the hairline never runs off the rounded corners.
+        Item {
+            x: root.horizontal ? parent.radius : 0
+            y: root.horizontal ? 0 : parent.radius
+            width: root.horizontal ? parent.width - parent.radius * 2 : parent.width
+            height: root.horizontal ? parent.height : parent.height - parent.radius * 2
+
+            SignalLine {
+                horizontal: root.horizontal
+                edge: (root.horizontal ? !Settings.barPositionBottom : !Settings.barPositionRight) ? "start" : "end"
             }
         }
     }
@@ -250,7 +255,7 @@ Item {
             id: popoutHover
         }
 
-        StyledRect {
+        SignalSurface {
             id: popoutSurface
 
             // Pinned to the edge nearest the pill, so the reveal wipes out
@@ -260,16 +265,7 @@ Item {
             width: root.horizontal ? root.popoutAlong : root.popoutAcross
             height: root.horizontal ? root.popoutAcross : root.popoutAlong
 
-            radius: Tokens.rounding.extraLarge
-            color: Colours.tPalette.m3surfaceContainer
-
-            // Shadow from the shape, not from the content: see
-            // components/ShapeShadow.qml.
-            ShapeShadow {
-                anchors.fill: parent
-                radius: parent.radius
-                color: parent.color
-            }
+            radius: BarLayout.cornerRadius(Settings.barCorners, root.horizontal ? Config.bar.capsule.popoutHeight : Config.bar.capsule.stackedPopoutWidth)
 
             Loader {
                 anchors.fill: parent

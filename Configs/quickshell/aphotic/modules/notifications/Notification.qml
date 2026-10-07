@@ -24,10 +24,10 @@ StyledRect {
     readonly property int bodyTextFormat: /[<*_`#\[\]]/.test(modelData?.body ?? "") ? Text.MarkdownText : Text.PlainText
     readonly property bool critical: modelData?.urgency === NotificationUrgency.Critical
 
-    color: Settings.barSignal ? Colours.signalStyle.glass : (critical ? Colours.palette.m3error : Colours.tPalette.m3surfaceContainer)
-    border.width: Settings.barSignal ? 1 : 0
+    color: Colours.signalStyle.glass
+    border.width: 1
     border.color: Colours.signalStyle.hairline
-    radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.large
+    radius: Tokens.rounding.medium
 
     implicitWidth: Tokens.sizes.notifs.width
     implicitHeight: inner.implicitHeight + Tokens.padding.medium * 2
@@ -35,11 +35,9 @@ StyledRect {
     Elevation {
         target: root
         level: 2
-        visible: Settings.barSignal
     }
 
     Rectangle {
-        visible: Settings.barSignal
         x: root.radius
         width: root.width - root.radius * 2
         height: 1
@@ -48,7 +46,7 @@ StyledRect {
 
     // Signal: critical reads as an edge line, not a red-filled card.
     Rectangle {
-        visible: Settings.barSignal && root.critical
+        visible: root.critical
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom

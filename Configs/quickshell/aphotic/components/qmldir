@@ -1,4 +1,5 @@
 module qs.components
+GradedOutline 1.0 GradedOutline.qml
 AphoticMark 1.0 AphoticMark.qml
 Anim 1.0 Anim.qml
 AppIcon 1.0 AppIcon.qml
@@ -32,3 +33,5 @@ FlickScrollBar 1.0 FlickScrollBar.qml
 SurfaceReveal 1.0 SurfaceReveal.qml
 
 EchoTarget 1.0 EchoTarget.qml
+SignalLine 1.0 SignalLine.qml
+SignalSurface 1.0 SignalSurface.qml

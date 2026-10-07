@@ -292,6 +292,12 @@ main() {
   detect_environment
 
   if [[ "$CONFIG_ONLY" == "1" ]]; then
+    # detect_environment returned before its NVIDIA pass in this mode, so
+    # the sync has to detect the GPU itself: it recopies hyprland.lua and
+    # has to know whether to append require("nvidia") again, and every
+    # sync dropped that line without these two.
+    ISNVIDIA="$(detect_nvidia)"
+    ISNVIDIA_HYBRID="$(detect_nvidia_hybrid)"
     load_saved_config
     LAYERS=$(expand_layer_bundles "$LAYERS")
     echo -e "$CNT - Config-sync mode: reusing saved config (profile=${PROFILE:-unset}, layers=${LAYERS:-none}). No packages will be installed."
@@ -327,6 +333,7 @@ main() {
   fi
 
   ISNVIDIA="$DETECTED_NVIDIA_PRESENT"
+  ISNVIDIA_HYBRID="$DETECTED_NVIDIA_HYBRID"
   ISAMD="$DETECTED_AMD_PRESENT"
 
   # Step 4 has to run before resolve_assistant (which would otherwise ask

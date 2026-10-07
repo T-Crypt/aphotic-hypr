@@ -9,6 +9,10 @@ established so the project stays uniform as more hands touch it.
 
 ## Before you start
 
+- **Using a coding agent?** Point it at `AGENTS.md`. If your tool reads
+  a different file, copy `AGENTS.md` into it (`CLAUDE.md`, `GEMINI.md`).
+  Those copies stay local and gitignored; propose rule changes to
+  `AGENTS.md`.
 - **Branch model:** work happens on a short-lived branch off `dev`
   (e.g. `fix/<short-description>`), merged back into `dev` via PR. `dev`
   collects the next release; a release is one `dev` -> `main` PR, then a
@@ -109,6 +113,11 @@ subcommand.
   behavior change. The suite runs on every push/PR via
   `.github/workflows/tests.yml` — a PR that doesn't pass it won't be
   merged.
+- Run `tools/ci/local.sh` before you push. It runs the same checks in a
+  checkout shaped like CI's: shallow, no `origin/main`, no gitignored
+  files, no desktop session. A test that leans on your machine fails
+  there the same way it fails in CI. If a PR goes red, `tools/ci/triage.py <pr-number>`
+  prints the failing test and its error lines.
 
 ## Verification before opening a PR
 

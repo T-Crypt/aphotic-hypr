@@ -15,21 +15,19 @@ Item {
 
         property string title: ""
         property int tintIndex: 0
-        readonly property real headerHeight: card.title.length > 0 && Settings.barSignal ? cardTitle.implicitHeight + Tokens.padding.medium : 0
+        readonly property real headerHeight: card.title.length > 0 ? cardTitle.implicitHeight + Tokens.padding.medium : 0
 
-        radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.extraLarge
-        color: Settings.barSignal ? Colours.signalStyle.raised : Colours.tPalette.m3surfaceContainer
-        border.width: Settings.barSignal ? 1 : 0
+        radius: Tokens.rounding.medium
+        color: Colours.signalStyle.raised
+        border.width: 1
         border.color: Colours.signalStyle.hairline
 
         Elevation {
-            visible: Settings.barSignal
             target: card
             level: 1
         }
 
         Rectangle {
-            visible: Settings.barSignal
             x: card.radius
             width: card.width - card.radius * 2
             height: 1
@@ -63,7 +61,7 @@ Item {
     Loader {
         id: layout
 
-        sourceComponent: Settings.barSignal ? bento : row
+        sourceComponent: bento
     }
 
     // Signal: grouped bento. Today over Weather, Calendar, then Now playing

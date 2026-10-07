@@ -41,8 +41,8 @@ Item {
             StyledRect {
                 anchors.fill: parent
                 radius: Tokens.rounding.medium
-                color: Settings.barSignal ? (tile.active ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.surface) : tile.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
-                border.width: Settings.barSignal ? 1 : 0
+                color: (tile.active ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.surface)
+                border.width: 1
                 border.color: tile.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
 
                 Behavior on color {
@@ -64,7 +64,7 @@ Item {
                 MaterialIcon {
                     Layout.alignment: Qt.AlignHCenter
                     text: tile.icon
-                    color: Settings.barSignal ? (tile.active ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant) : tile.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                    color: (tile.active ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant)
                     fontStyle: Tokens.font.icon.medium
                     fill: tile.active ? 1 : 0
                 }
@@ -72,7 +72,7 @@ Item {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: tile.label
-                    color: Settings.barSignal ? (tile.active ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant) : tile.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                    color: (tile.active ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant)
                     font: Tokens.font.label.small
                 }
             }

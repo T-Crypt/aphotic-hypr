@@ -90,6 +90,7 @@ _aphotic_doctor_config_links() {
     fi
 }
 
+
 # Without this font every shell icon renders as its name. A stale font
 # cache hides it even when the package is installed.
 _aphotic_doctor_icon_font() {
@@ -104,7 +105,6 @@ _aphotic_doctor_icon_font() {
         echo "  Fix: sudo pacman -S --needed ttf-material-symbols-variable && systemctl --user restart aphotic-shell.service"
     fi
 }
-
 _aphotic_doctor_version_drift() {
     source "${LIB_DIR}/state.sh"
 

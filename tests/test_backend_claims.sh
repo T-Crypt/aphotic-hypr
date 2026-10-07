@@ -9,7 +9,8 @@ AI="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/Configs/quickshell/aphotic/
 
 grep -q '^BackendClaims 1.0 BackendClaims.qml$' "$AI/qmldir" || fail "BackendClaims is not registered"
 grep -q '^LmStudioClaims 1.0 LmStudioClaims.qml$' "$AI/qmldir" || fail "LmStudioClaims is not registered"
-for adapter in OllamaClaims LlamaSwapClaims LmStudioClaims; do
+grep -q '^LlamaCppClaims 1.0 LlamaCppClaims.qml$' "$AI/qmldir" || fail "LlamaCppClaims is not registered"
+for adapter in OllamaClaims LlamaSwapClaims LlamaCppClaims LmStudioClaims; do
     grep -q '^BackendClaims {' "$AI/$adapter.qml" || fail "$adapter is not a BackendClaims adapter"
     ! grep -q 'ResourceEngine.register\|WorkloadPassports.open' "$AI/$adapter.qml" \
         || fail "$adapter registers claims or passports itself"

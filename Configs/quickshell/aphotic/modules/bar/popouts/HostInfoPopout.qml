@@ -18,9 +18,9 @@ ColumnLayout {
     }
 
     StyledText {
-        text: Settings.barSignal ? qsTr("Host info").toUpperCase() : qsTr("Host info")
+        text: qsTr("Host info").toUpperCase()
         color: Colours.palette.m3onSurfaceVariant
-        font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
     Repeater {
@@ -35,13 +35,13 @@ ColumnLayout {
             Layout.fillWidth: true
             Layout.preferredHeight: row.implicitHeight + Tokens.padding.medium
             implicitWidth: row.implicitWidth + Tokens.padding.medium * 2
-            radius: Settings.barSignal ? Tokens.rounding.medium : Tokens.rounding.small
+            radius: Tokens.rounding.medium
             color: "transparent"
 
             StateLayer {
                 anchors.fill: parent
-                color: Settings.barSignal ? Colours.signalStyle.hover : Colours.palette.m3onSurface
-                stateOpacity: Settings.barSignal ? (containsMouse ? 1 : 0) : (containsMouse ? 0.08 : 0)
+                color: Colours.signalStyle.hover
+                stateOpacity: (containsMouse ? 1 : 0)
                 disabled: !modelData.value || modelData.value === qsTr("No connection")
                 onClicked: root.copy(modelData.label, modelData.value)
             }

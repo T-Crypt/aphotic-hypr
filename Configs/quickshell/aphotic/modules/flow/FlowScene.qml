@@ -17,7 +17,6 @@ Rectangle {
     property color muted: "#9bafad"
     property color warning: "#f4bd72"
     // Signal-skin tones; the scene stays self-coloured when signal is off.
-    property bool signalSkin: false
     property color hairline: "transparent"
     property color edgeLight: "transparent"
     property var flow: ({resources:[],workloads:[],edges:[],planes:[],claimCount:0,contentionCount:0})
@@ -82,9 +81,9 @@ Rectangle {
         }
         background: Rectangle {
             radius: 10
-            color: control.down ? Qt.alpha(root.accent,0.2) : root.signalSkin && control.chosen ? Qt.alpha(root.accent,0.12) : root.surface
+            color: control.down ? Qt.alpha(root.accent,0.2) : control.chosen ? Qt.alpha(root.accent,0.12) : root.surface
             border.width: 1
-            border.color: control.activeFocus || control.chosen ? root.accent : (root.signalSkin ? root.hairline : Qt.alpha(root.muted,0.22))
+            border.color: control.activeFocus || control.chosen ? root.accent : root.hairline
             opacity: control.enabled ? 1 : 0.5
         }
         implicitHeight: 34
@@ -111,7 +110,7 @@ Rectangle {
             Layout.fillWidth: true
             ColumnLayout {
                 spacing: 3
-                Copy { text: "A P H O T I C   /   F L O W"; color: root.signalSkin ? root.muted : root.accent; font.pixelSize: 11; font.letterSpacing: 2 }
+                Copy { text: "A P H O T I C   /   F L O W"; color: root.muted; font.pixelSize: 11; font.letterSpacing: 2 }
                 Copy { text: "Your system, in concert."; font.pixelSize: 26; font.weight: Font.DemiBold }
             }
             Item { Layout.fillWidth: true }
@@ -143,9 +142,8 @@ Rectangle {
                     opacity: plane.enabled ? 1 : 0.55
                     color: plane.chosen ? Qt.alpha(root.accent,0.12) : root.surface
                     border.width: 1
-                    border.color: plane.chosen ? root.accent : plane.modelData.active ? Qt.alpha(root.accent,0.7) : (root.signalSkin ? root.hairline : Qt.alpha(root.muted,0.15))
+                    border.color: plane.chosen ? root.accent : plane.modelData.active ? Qt.alpha(root.accent,0.7) : root.hairline
                     Rectangle {
-                        visible: root.signalSkin
                         x: parent.radius
                         width: parent.width - parent.radius * 2
                         height: 1
@@ -190,10 +188,9 @@ Rectangle {
                     implicitHeight: 56
                     radius: 12
                     color: Qt.alpha(root.surface,0.65)
-                    border.width: root.signalSkin ? 1 : 0
+                    border.width: 1
                     border.color: root.hairline
                     Rectangle {
-                        visible: root.signalSkin
                         x: metric.radius
                         width: metric.width - metric.radius * 2
                         height: 1
@@ -219,10 +216,9 @@ Rectangle {
                 Layout.fillHeight: true
                 color: Qt.alpha(root.surface,0.5)
                 radius: 18
-                border.width: root.signalSkin ? 1 : 0
+                border.width: 1
                 border.color: root.hairline
                 Rectangle {
-                    visible: root.signalSkin
                     x: mapPanel.radius
                     width: mapPanel.width - mapPanel.radius * 2
                     height: 1
@@ -334,10 +330,9 @@ Rectangle {
                 Layout.fillHeight: true
                 color: root.surface
                 radius: 18
-                border.width: root.signalSkin ? 1 : 0
+                border.width: 1
                 border.color: root.hairline
                 Rectangle {
-                    visible: root.signalSkin
                     x: lensPanel.radius
                     width: lensPanel.width - lensPanel.radius * 2
                     height: 1
@@ -350,7 +345,7 @@ Rectangle {
                     Column {
                         width: parent.width
                         spacing: 10
-                        Copy { text: "CLAIM LENS"; color: root.signalSkin ? root.muted : root.accent; font.pixelSize: 10; font.letterSpacing: 1.5 }
+                        Copy { text: "CLAIM LENS"; color: root.muted; font.pixelSize: 10; font.letterSpacing: 1.5 }
                         Copy { width: parent.width; text: root.selected ? root.selected.label : "Select a node"; font.pixelSize: 20 }
                         Copy { width: parent.width; text: root.selected ? root.selected.detail : "Inspect a resource or workload to see what it requests and why."; wrapMode: Text.WordWrap; color: root.muted }
                         Copy { width: parent.width; text: root.selected ? root.selected.summary : ""; wrapMode: Text.WordWrap; color: root.selected && root.selected.contended ? root.warning : root.selected && root.selected.shell ? root.secondary : root.accent }
@@ -373,7 +368,7 @@ Rectangle {
                             width: parent.width
                             visible: root.selectedWork.length > 0
                             text: "REPORTED WORK"
-                            color: root.signalSkin ? root.muted : root.accent; font.pixelSize: 10; font.letterSpacing: 1.5
+                            color: root.muted; font.pixelSize: 10; font.letterSpacing: 1.5
                         }
                         Repeater {
                             model: root.selectedWork.slice(0,16)
@@ -395,7 +390,7 @@ Rectangle {
                         Copy {
                             width: parent.width
                             text: "WHAT CHANGED"
-                            color: root.signalSkin ? root.muted : root.accent; font.pixelSize: 10; font.letterSpacing: 1.5
+                            color: root.muted; font.pixelSize: 10; font.letterSpacing: 1.5
                         }
                         Repeater {
                             model: root.selectedReceipts.slice(0,16)
@@ -437,10 +432,10 @@ Rectangle {
             implicitHeight: root.pending ? (root.projection ? 108 : 82) : 46
             radius: 14
             color: root.pending ? Qt.alpha(root.warning,0.09) : root.surface
-            border.width: root.signalSkin && !root.pending ? 1 : 0
-            border.color: root.pending ? Qt.alpha(root.warning,0.4) : (root.signalSkin ? root.hairline : "transparent")
+            border.width: !root.pending ? 1 : 0
+            border.color: root.pending ? Qt.alpha(root.warning,0.4) : root.hairline
             Rectangle {
-                visible: root.signalSkin && !root.pending
+                visible: !root.pending
                 x: statusBar.radius
                 width: statusBar.width - statusBar.radius * 2
                 height: 1

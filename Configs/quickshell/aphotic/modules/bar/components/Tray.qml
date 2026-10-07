@@ -47,7 +47,7 @@ StyledRect {
     implicitWidth: Settings.barHorizontal ? nonAnimWidth : Settings.barInnerWidth
     implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth : nonAnimHeight
 
-    color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, items.count > 0 && !Settings.barSignal ? 1 : 0)
+    color: "transparent"
     radius: Tokens.rounding.full
 
     Grid {

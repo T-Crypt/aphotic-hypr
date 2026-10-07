@@ -50,13 +50,35 @@ for style in full dock taskbar minimal capsule; do
     [[ -s "$ERR_LOG" ]] && fail "style '$style' unexpectedly wrote to aphotic_err: $(cat "$ERR_LOG")"
 done
 
+# 1b. Each valid corner style calls through to `qs ... setCorners <name>`
+#     and reports ok.
+for corners in sharp soft round; do
+    reset_logs
+    rc=0
+    aphotic_cmd_bar corners "$corners" || rc=$?
+    [[ "$rc" -eq 0 ]] || fail "corners '$corners' expected exit 0, got $rc"
+    [[ -f "$QS_CALL_LOG" ]] || fail "corners '$corners' did not invoke qs"
+    grep -q -- "-c aphotic ipc call bar setCorners $corners" "$QS_CALL_LOG" \
+        || fail "corners '$corners' called qs with unexpected args: $(cat "$QS_CALL_LOG")"
+    grep -q "$corners" "$OK_LOG" || fail "corners '$corners' did not report success via aphotic_ok"
+    [[ -s "$ERR_LOG" ]] && fail "corners '$corners' unexpectedly wrote to aphotic_err: $(cat "$ERR_LOG")"
+done
+
 # 2. Bogus style name -- fails loudly, never touches qs.
 reset_logs
 rc=0
 aphotic_cmd_bar style bogus || rc=$?
 [[ "$rc" -ne 0 ]] || fail "expected nonzero exit for bogus style"
 [[ -f "$QS_CALL_LOG" ]] && fail "bogus style must not invoke qs"
-grep -q "unknown style 'bogus'" "$ERR_LOG" || fail "expected an unknown-style error, got: $(cat "$ERR_LOG")"
+grep -q "unknown layout 'bogus'" "$ERR_LOG" || fail "expected an unknown-layout error, got: $(cat "$ERR_LOG")"
+
+# 2b. Bogus corner name -- fails loudly, never touches qs.
+reset_logs
+rc=0
+aphotic_cmd_bar corners bogus || rc=$?
+[[ "$rc" -ne 0 ]] || fail "expected nonzero exit for bogus corner style"
+[[ -f "$QS_CALL_LOG" ]] && fail "bogus corner style must not invoke qs"
+grep -q "unknown corner style 'bogus'" "$ERR_LOG" || fail "expected an unknown-corner error, got: $(cat "$ERR_LOG")"
 
 # 3. No argument -- usage error, nonzero exit, no qs call.
 reset_logs
@@ -65,6 +87,14 @@ aphotic_cmd_bar style || rc=$?
 [[ "$rc" -ne 0 ]] || fail "expected nonzero exit for missing style argument"
 [[ -f "$QS_CALL_LOG" ]] && fail "missing-argument case must not invoke qs"
 grep -q "usage: aphotic bar style" "$ERR_LOG" || fail "expected a usage error, got: $(cat "$ERR_LOG")"
+
+# 3b. No argument -- usage error, nonzero exit, no qs call.
+reset_logs
+rc=0
+aphotic_cmd_bar corners || rc=$?
+[[ "$rc" -ne 0 ]] || fail "expected nonzero exit for missing corners argument"
+[[ -f "$QS_CALL_LOG" ]] && fail "missing-argument case must not invoke qs"
+grep -q "usage: aphotic bar corners" "$ERR_LOG" || fail "expected a usage error, got: $(cat "$ERR_LOG")"
 
 # 4. cycle calls through to `qs ... cycleStyle`.
 reset_logs
@@ -95,13 +125,18 @@ PATH="$WORKDIR/emptybin" "$BASH_BIN" -c '
     [[ "$rc" -ne 0 ]] || exit 91
 
     rc=0
-    _aphotic_bar_cycle || rc=$?
+    _aphotic_bar_corners sharp || rc=$?
     [[ "$rc" -ne 0 ]] || exit 92
+
+    rc=0
+    _aphotic_bar_cycle || rc=$?
+    [[ "$rc" -ne 0 ]] || exit 93
 ' && style_cycle_rc=0 || style_cycle_rc=$?
 case "$style_cycle_rc" in
     0) ;;
     91) fail "_aphotic_bar_style expected nonzero exit when qs is missing from PATH" ;;
-    92) fail "_aphotic_bar_cycle expected nonzero exit when qs is missing from PATH" ;;
+    92) fail "_aphotic_bar_corners expected nonzero exit when qs is missing from PATH" ;;
+    93) fail "_aphotic_bar_cycle expected nonzero exit when qs is missing from PATH" ;;
     *) fail "unexpected error running the qs-missing subshell (exit $style_cycle_rc)" ;;
 esac
 [[ -f "$QS_CALL_LOG" ]] && fail "qs must never be invoked when aphotic_require qs fails"
@@ -109,4 +144,4 @@ grep -q "missing dependency: qs" "$ERR_LOG" || fail "expected an aphotic_require
 
 export PATH="$REAL_PATH"
 
-echo "PASS: bar CLI style/cycle dispatch, bogus/missing-arg rejection, and qs-missing guard"
+echo "PASS: bar CLI style/corners/cycle dispatch, bogus/missing-arg rejection, and qs-missing guard"

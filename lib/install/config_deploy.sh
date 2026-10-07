@@ -333,7 +333,9 @@ deploy_user_configs() {
     echo -e "$CWR - KvArcDark theme assets not found at $KVARCDARK_SVG (should ship with the kvantum package); Kvantum will fall back to its default style."
   fi
 
-  if [[ "$ISNVIDIA" == "true" ]]; then
+  # On hybrid laptops the iGPU drives the panel, and nvidia.lua's
+  # LIBVA_DRIVER_NAME=nvidia would point video decode at the wrong GPU.
+  if [[ "$ISNVIDIA" == "true" && "${ISNVIDIA_HYBRID:-false}" != "true" ]]; then
     echo -e '\nrequire("nvidia")' >> "$HOME/.config/hypr/hyprland.lua"
   fi
 }

@@ -17,7 +17,7 @@ class SiteContractTests(unittest.TestCase):
         self.assertIn('baseurl: "/aphotic-hypr"', (ROOT / "_config.yml").read_text())
 
     def test_primary_pages_exist(self):
-        for name in ("index.md", "documentation.md", "plugins.md", "gallery.md", "roadmap.md"):
+        for name in ("index.md", "documentation.md", "develop.md", "plugins.md", "gallery.md", "roadmap.md"):
             self.assertTrue((ROOT / name).exists(), name)
 
     def test_internal_design_files_are_not_public_site_sources(self):

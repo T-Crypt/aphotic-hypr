@@ -3,7 +3,6 @@ docs/
 !tools/docs/
 !tools/docs/**
 CLAUDE.md
-AGENTS.md
 .superpowers/
 .claude/
 
@@ -49,7 +48,8 @@ graphify-out/
 .gate/
 
 # === AI-AGENT-TOOLING-BLOCK (do not commit any AI tooling to this public repo) ===
-AGENTS.md
+# AGENTS.md is the exception: the one tracked set of agent rules. Copy it
+# into CLAUDE.md, GEMINI.md or whatever your tool reads; those stay local.
 CLAUDE.md
 GEMINI.md
 .cursorrules

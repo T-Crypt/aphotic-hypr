@@ -15,7 +15,7 @@ Item {
     required property string styleName
     required property string label
 
-    readonly property bool selected: Settings.barStyle === root.styleName
+    readonly property bool selected: Settings.barLayout === root.styleName
     // Matches Tokens.sizes.bar.minimalInnerWidth vs innerWidth -- Minimal
     // is thinner than Full/Taskbar in the real bar, and the preview
     // needs to actually reflect that instead of rendering it at the same

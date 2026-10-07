@@ -1,0 +1,10 @@
+test	Run python test suite	2026-10-05T22:00:30.0000000Z ============================= FAILURES =============================
+test	Run python test suite	2026-10-05T22:00:30.0000000Z _______________________ test_palette_clamp _______________________
+test	Run python test suite	2026-10-05T22:00:30.0000000Z tests/test_palette_clamp.py:12: in test_palette_clamp
+test	Run python test suite	2026-10-05T22:00:30.0000000Z     assert clamp(300) == 255
+test	Run python test suite	2026-10-05T22:00:30.0000000Z E   assert 300 == 255
+test	Run python test suite	2026-10-05T22:00:30.0000000Z =========================== short test summary info ============================
+test	Run python test suite	2026-10-05T22:00:30.0000000Z FAILED tests/test_palette_clamp.py::test_palette_clamp - assert 300 == 255
+test	Run python test suite	2026-10-05T22:00:30.0000000Z ========================= 1 failed, 237 passed in 30.12s =========================
+bash-syntax	bash -n every shell script	2026-10-05T22:00:31.0000000Z ./lib/install/broken.sh: line 4: syntax error near unexpected token `fi'
+bash-syntax	bash -n every shell script	2026-10-05T22:00:31.0000000Z SYNTAX ERROR: ./lib/install/broken.sh

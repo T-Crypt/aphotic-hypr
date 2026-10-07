@@ -125,7 +125,7 @@ hl.animation({ leaf = "borderangle", enabled = true, speed = 30, bezier = "liner
 hl.animation({ leaf = "fade",        enabled = true, speed = 10, bezier = "default" })
 hl.animation({ leaf = "workspaces",  enabled = true, speed = 5,  bezier = "wind" })
 
--- install.sh appends `require("nvidia")` below this line when an Nvidia GPU is detected.
+-- install.sh appends `require("nvidia")` below this line when an NVIDIA GPU drives the desktop (not on hybrid laptops, where the iGPU does).
 
 -- Keyboard layout as chosen in Settings → Language. pcall because the file
 -- only exists once that pane has written it.

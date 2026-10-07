@@ -11,5 +11,6 @@ singleton LocalInference 1.0 LocalInference.qml
 singleton LlamaSwapStats 1.0 LlamaSwapStats.qml
 OllamaClaims 1.0 OllamaClaims.qml
 LlamaSwapClaims 1.0 LlamaSwapClaims.qml
+LlamaCppClaims 1.0 LlamaCppClaims.qml
 LmStudioClaims 1.0 LmStudioClaims.qml
 BackendClaims 1.0 BackendClaims.qml

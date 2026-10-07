@@ -33,7 +33,7 @@ Item {
 
     Elevation {
         target: frame
-        level: Settings.barSignal ? 2 : 3
+        level: 2
     }
 
     StyledRect {
@@ -41,12 +41,12 @@ Item {
 
         anchors.fill: parent
         radius: Tokens.rounding.large
-        color: Settings.barSignal ? Colours.signalStyle.glass : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
-        border.width: Settings.barSignal ? 1 : 0
+        color: Colours.signalStyle.glass
+        border.width: 1
         border.color: Colours.signalStyle.hairline
 
         StyledRect {
-            visible: !Settings.barSignal
+            visible: false
             anchors.fill: parent
             anchors.margins: 1
             radius: Math.max(0, parent.radius - 1)
@@ -65,7 +65,7 @@ Item {
             width: Tokens.sizes.workspace.railWidth
             height: parent.height
             radius: Tokens.rounding.large
-            color: Settings.barSignal ? Colours.signalStyle.base : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Colours.signalStyle.base
             clip: true
 
             Column {
@@ -78,16 +78,16 @@ Item {
                     height: 58
 
                     StyledRect {
-                        width: Settings.barSignal ? 32 : 34
-                        height: Settings.barSignal ? 32 : 34
+                        width: 32
+                        height: 32
                         anchors.verticalCenter: parent.verticalCenter
                         radius: Tokens.rounding.medium
-                        color: Settings.barSignal ? Qt.alpha(Colours.signalStyle.tint(0), 0.3) : Colours.palette.m3primary
+                        color: Qt.alpha(Colours.signalStyle.tint(0), 0.3)
 
                         MaterialIcon {
                             anchors.centerIn: parent
                             text: "space_dashboard"
-                            color: Settings.barSignal ? Colours.legibleAccent(Colours.signalStyle.tint(0), Colours.signalStyle.base) : Colours.contrastOn(Colours.palette.m3primary)
+                            color: Colours.legibleAccent(Colours.signalStyle.tint(0), Colours.signalStyle.base)
                             fontStyle: Tokens.font.icon.medium
                             fill: 1
                         }
@@ -102,13 +102,13 @@ Item {
 
                         StyledText {
                             text: qsTr("Workspace")
-                            font: Settings.barSignal ? Tokens.font.headline.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.small
+                            font: Tokens.font.headline.builders.medium.weight(Font.DemiBold).build()
                             color: Colours.palette.m3onSurface
                         }
 
                         StyledText {
-                            text: Settings.barSignal ? qsTr("Plugin tools").toUpperCase() : qsTr("Plugin tools")
-                            font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.small
+                            text: qsTr("Plugin tools").toUpperCase()
+                            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                             color: Colours.palette.m3onSurfaceVariant
                         }
                     }
@@ -119,7 +119,7 @@ Item {
                     topPadding: Tokens.spacing.small
                     bottomPadding: Tokens.spacing.extraSmall
                     text: qsTr("AVAILABLE")
-                    font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.builders.small.weight(Font.Medium).build()
+                    font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                     color: Colours.palette.m3onSurfaceVariant
                 }
 
@@ -137,7 +137,7 @@ Item {
                         width: parent.width
                         height: Tokens.sizes.workspace.itemHeight
                         radius: Tokens.rounding.medium
-                        color: Settings.barSignal ? Qt.alpha(Colours.signalStyle.tint(navigationList.activeIndex), 0.13) : Qt.alpha(Colours.palette.m3primary, 0.14)
+                        color: Qt.alpha(Colours.signalStyle.tint(navigationList.activeIndex), 0.13)
 
                         Behavior on y { Anim { type: Anim.DefaultSpatial } }
                         Behavior on color { CAnim {} }
@@ -148,7 +148,7 @@ Item {
                             width: 3
                             height: parent.height - Tokens.spacing.large
                             radius: Tokens.rounding.full
-                            color: Settings.barSignal ? Colours.signalStyle.tint(navigationList.activeIndex) : Colours.palette.m3primary
+                            color: Colours.signalStyle.tint(navigationList.activeIndex)
                         }
                     }
 
@@ -185,10 +185,10 @@ Item {
                                     id: navChip
 
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: Settings.barSignal ? 32 : navIcon.implicitWidth
-                                    height: Settings.barSignal ? 32 : navIcon.implicitHeight
+                                    width: 32
+                                    height: 32
                                     radius: Tokens.rounding.medium
-                                    color: Settings.barSignal ? Qt.alpha(navItem.tint, navItem.active ? 0.3 : 0.16) : "transparent"
+                                    color: Qt.alpha(navItem.tint, navItem.active ? 0.3 : 0.16)
 
                                     Behavior on color { CAnim {} }
 
@@ -197,7 +197,7 @@ Item {
 
                                         anchors.centerIn: parent
                                         text: navItem.modelData.icon
-                                        color: Settings.barSignal ? Colours.legibleAccent(navItem.tint, Colours.signalStyle.base) : (navItem.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant)
+                                        color: Colours.legibleAccent(navItem.tint, Colours.signalStyle.base)
                                         fontStyle: Tokens.font.icon.small
                                         fill: navItem.active ? 1 : 0
                                     }
@@ -205,11 +205,11 @@ Item {
 
                                 StyledText {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: parent.width - (Settings.barSignal ? 56 : 32)
+                                    width: parent.width - 56
                                     elide: Text.ElideRight
                                     text: navItem.modelData.label
-                                    font: Settings.barSignal && navItem.active ? Tokens.font.label.builders.medium.weight(Font.DemiBold).build() : Tokens.font.label.builders.medium.weight(navItem.active ? Font.Medium : Font.Normal).build()
-                                    color: Settings.barSignal ? (navItem.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant) : (navItem.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant)
+                                    font: navItem.active ? Tokens.font.label.builders.medium.weight(Font.DemiBold).build() : Tokens.font.label.builders.medium.weight(navItem.active ? Font.Medium : Font.Normal).build()
+                                    color: (navItem.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
                                 }
                             }
                         }
@@ -222,12 +222,11 @@ Item {
             width: parent.width - navigation.width - parent.spacing
             height: parent.height
             radius: Tokens.rounding.large
-            color: Settings.barSignal ? Colours.signalStyle.surface : Colours.layer(Colours.palette.m3surfaceContainerHigh, 1)
+            color: Colours.signalStyle.surface
             clip: true
 
             // Accent glow falling from the top of the pane, behind its content.
             Rectangle {
-                visible: Settings.barSignal
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top

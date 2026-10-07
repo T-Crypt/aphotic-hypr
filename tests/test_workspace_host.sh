@@ -21,7 +21,7 @@ grep -qE 'source: .*componentUrl' "$CONTENT" || fail "Workspace does not dynamic
 grep -qE 'surfaceActive' "$CONTENT" || fail "Workspace loads plugin content while hidden"
 grep -qE 'StateLayer \{' "$CONTENT" || fail "Workspace navigation has no per-item hover feedback"
 grep -qE 'Anim \{ type: Anim\.DefaultSpatial \}' "$CONTENT" || fail "Workspace selection pill does not use the shared spatial curve"
-grep -qE 'Colours\.layer\(Colours\.palette\.m3surfaceContainerHigh, 2\)' "$CONTENT" || fail "Workspace lacks notch surface elevation"
+grep -qE 'color: Colours\.signalStyle\.glass' "$CONTENT" || fail "Workspace lacks the Signal glass surface"
 grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.length > 0' "$WINDOW" || fail "Workspace window does not disappear when no plugin is eligible"
 grep -qE 'id: workspaceWindows' "$SHELL" || fail "shell has no Workspace window variants"
 grep -qE 'workspace: \(\) =>' "$SHELL" || fail "shell has no Workspace toggle route"

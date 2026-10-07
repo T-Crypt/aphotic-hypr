@@ -1,0 +1,28 @@
+name: Docs drift
+
+# The wiki is a separate repo, so this runs on the PR branch and clones the
+# public wiki: a PR to dev checks dev's commands against the wiki, a release
+# PR to main checks main's. The weekly wiki sync runs the same checker.
+on:
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Clone wiki
+        run: git clone --depth 1 "https://github.com/${{ github.repository }}.wiki.git" wiki
+
+      - name: Check SDK docs against this branch
+        run: python3 tools/ci/check_docs_drift.py wiki

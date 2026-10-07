@@ -10,13 +10,13 @@ ColumnLayout {
     spacing: Tokens.spacing.small / 2
 
     StyledText {
-        text: Settings.barSignal ? qsTr("Keyboard layout").toUpperCase() : qsTr("Keyboard layout")
+        text: qsTr("Keyboard layout").toUpperCase()
         color: Colours.palette.m3onSurfaceVariant
-        font: Settings.barSignal ? Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build() : Tokens.font.label.medium
+        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
     StyledText {
         text: Hypr.kbLayout || qsTr("Unknown")
-        font: Settings.barSignal ? Tokens.font.title.builders.medium.weight(Font.DemiBold).build() : Tokens.font.title.medium
+        font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
     }
 }

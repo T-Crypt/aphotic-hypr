@@ -57,9 +57,9 @@ TOOL_STATUS = {
     "PostToolUse": "completed",
     "PostToolUseFailure": "errored",
 }
-# Only Claude Code runs through this script, but a harness override
-# can still name a harness this hook has no provider for.
-PROVIDER_BY_HARNESS = {"claude": "anthropic"}
+# Codex's hook adapter and `agent emit` state the real provider from the
+# session log when they can; this covers the records that cannot.
+PROVIDER_BY_HARNESS = {"claude": "anthropic", "codex": "openai"}
 CACHE_READ_KEYS = ("cache_read_input_tokens", "cache_read_tokens")
 CACHE_WRITE_KEYS = ("cache_creation_input_tokens", "cache_write_tokens")
 

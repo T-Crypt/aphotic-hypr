@@ -308,7 +308,7 @@ Item {
 
             radius: Tokens.rounding.medium
             color: flyout.color
-            edgeColor: Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
+            edgeColor: Colours.signalStyle.hairline
             corner: Settings.barHorizontal ? (Settings.barPositionBottom ? 2 : 0) : (Settings.barPositionRight ? 2 : 3)
             x: Settings.barHorizontal ? -radius : (Settings.barPositionRight ? parent.width - radius : 0)
             y: Settings.barHorizontal ? (Settings.barPositionBottom ? parent.height - radius : 0) : -radius
@@ -319,7 +319,7 @@ Item {
 
             radius: Tokens.rounding.medium
             color: flyout.color
-            edgeColor: Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
+            edgeColor: Colours.signalStyle.hairline
             corner: Settings.barHorizontal ? (Settings.barPositionBottom ? 3 : 1) : (Settings.barPositionRight ? 0 : 1)
             x: Settings.barHorizontal ? parent.width : (Settings.barPositionRight ? parent.width - radius : 0)
             y: Settings.barHorizontal ? (Settings.barPositionBottom ? parent.height - radius : 0) : parent.height
@@ -331,7 +331,7 @@ Item {
         Shape {
             anchors.fill: flyout
             z: 1
-            visible: Settings.barSignal && flyout.visible
+            visible: flyout.visible
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
@@ -367,7 +367,7 @@ Item {
             topRightRadius: (Settings.barHorizontal ? !Settings.barPositionBottom : Settings.barPositionRight) ? 0 : Tokens.rounding.medium
             bottomLeftRadius: (Settings.barHorizontal ? Settings.barPositionBottom : !Settings.barPositionRight) ? 0 : Tokens.rounding.medium
             bottomRightRadius: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? 0 : Tokens.rounding.medium
-            color: Settings.barSignal ? Colours.signalStyle.bar : Colours.palette.m3surfaceContainerHigh
+            color: Colours.signalStyle.bar
 
             // Plain MouseArea, not HoverHandler -- see BarWrapper.qml's
             // hoverArea comment for the general reasoning. No buttons
@@ -584,7 +584,7 @@ Item {
 
             radius: Tokens.rounding.medium
             color: agentFlyout.color
-            edgeColor: Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
+            edgeColor: Colours.signalStyle.hairline
             corner: Settings.barHorizontal ? (Settings.barPositionBottom ? 2 : 0) : (Settings.barPositionRight ? 2 : 3)
             x: Settings.barHorizontal ? -radius : (Settings.barPositionRight ? parent.width - radius : 0)
             y: Settings.barHorizontal ? (Settings.barPositionBottom ? parent.height - radius : 0) : -radius
@@ -595,7 +595,7 @@ Item {
 
             radius: Tokens.rounding.medium
             color: agentFlyout.color
-            edgeColor: Settings.barSignal ? Colours.signalStyle.hairline : "transparent"
+            edgeColor: Colours.signalStyle.hairline
             corner: Settings.barHorizontal ? (Settings.barPositionBottom ? 3 : 1) : (Settings.barPositionRight ? 0 : 1)
             x: Settings.barHorizontal ? parent.width : (Settings.barPositionRight ? parent.width - radius : 0)
             y: Settings.barHorizontal ? (Settings.barPositionBottom ? parent.height - radius : 0) : parent.height
@@ -612,7 +612,7 @@ Item {
             topRightRadius: (Settings.barHorizontal ? !Settings.barPositionBottom : Settings.barPositionRight) ? 0 : Tokens.rounding.medium
             bottomLeftRadius: (Settings.barHorizontal ? Settings.barPositionBottom : !Settings.barPositionRight) ? 0 : Tokens.rounding.medium
             bottomRightRadius: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? 0 : Tokens.rounding.medium
-            color: Settings.barSignal ? Colours.signalStyle.bar : Colours.palette.m3surfaceContainerHigh
+            color: Colours.signalStyle.bar
 
             Loader {
                 id: agentLoader

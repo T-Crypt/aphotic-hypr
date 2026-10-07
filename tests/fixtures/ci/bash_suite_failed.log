@@ -1,0 +1,29 @@
+test	Run bash test suite	﻿2026-10-05T21:59:12.1471250Z ##[group]Run fail=0
+test	Run bash test suite	2026-10-05T21:59:12.1471542Z ^[[36;1mfail=0^[[0m
+test	Run bash test suite	2026-10-05T21:59:12.1471761Z ^[[36;1mfor f in tests/test_*.sh; do^[[0m
+test	Run bash test suite	2026-10-05T21:59:12.1472024Z ^[[36;1m  echo "=== $f ==="^[[0m
+test	Run bash test suite	2026-10-05T21:59:12.1472301Z ^[[36;1m  bash "$f" || { echo "FAILED: $f"; fail=1; }^[[0m
+test	Run bash test suite	2026-10-05T21:59:12.1472591Z ^[[36;1mdone^[[0m
+test	Run bash test suite	2026-10-05T21:59:12.1472782Z ^[[36;1mexit "$fail"^[[0m
+test	Run bash test suite	2026-10-05T21:59:12.1536707Z shell: /usr/bin/bash -e {0}
+test	Run bash test suite	2026-10-05T21:59:12.1536960Z env:
+test	Run bash test suite	2026-10-05T21:59:12.1537226Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+test	Run bash test suite	2026-10-05T21:59:12.1537669Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+test	Run bash test suite	2026-10-05T21:59:12.1538292Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+test	Run bash test suite	2026-10-05T21:59:12.1538674Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+test	Run bash test suite	2026-10-05T21:59:12.1539049Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+test	Run bash test suite	2026-10-05T21:59:12.1539691Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+test	Run bash test suite	2026-10-05T21:59:12.1540050Z ##[endgroup]
+test	Run bash test suite	2026-10-05T21:59:12.1620787Z === tests/test_agent_hook.sh ===
+test	Run bash test suite	2026-10-05T21:59:12.2851051Z PASS: agent_hook writes on tool events, marks idle on Stop, deletes on SessionEnd, no-ops without session_id
+test	Run bash test suite	2026-10-05T21:59:12.2866157Z === tests/test_agent_usage_cmd.sh ===
+test	Run bash test suite	2026-10-05T21:59:12.3256265Z PASS: agent usage-update writes a valid record, rejects unknown subcommands
+test	Run bash test suite	2026-10-05T21:59:18.9418107Z === tests/test_display_manager.sh ===
+test	Run bash test suite	2026-10-05T21:59:19.0314113Z PASS: display manager switch
+test	Run bash test suite	2026-10-05T21:59:19.0331852Z === tests/test_docs_tools.sh ===
+test	Run bash test suite	2026-10-05T21:59:39.6553401Z status: fatal: ambiguous argument 'origin/main': unknown revision or path not in the working tree.
+test	Run bash test suite	2026-10-05T21:59:39.6554507Z Use '--' to separate paths from revisions, like this:
+test	Run bash test suite	2026-10-05T21:59:39.6555138Z 'git <command> [<revision>...] -- [<file>...]'
+test	Run bash test suite	2026-10-05T21:59:39.6667110Z FAILED: tests/test_docs_tools.sh
+test	Run bash test suite	2026-10-05T21:59:39.6669079Z === tests/test_doctor_config_links.sh ===
+test	Run bash test suite	2026-10-05T21:59:39.6927671Z PASS: doctor config links

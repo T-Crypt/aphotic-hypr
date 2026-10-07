@@ -33,7 +33,6 @@ ColumnLayout {
 
     signal categorySelected(id: string, sectionId: string)
 
-    readonly property bool signalSkin: Settings.barSignal
     readonly property var groupOrder: [...new Set(root.categories.map(c => c.group ?? ""))]
 
     readonly property var _categoryEntries: root.categories.map(c => ({
@@ -59,11 +58,25 @@ ColumnLayout {
     spacing: Tokens.spacing.medium
 
     StyledRect {
+        id: searchBox
+
         Layout.fillWidth: true
         Layout.preferredHeight: 36
         visible: root.showSearch
         radius: Tokens.rounding.full
         color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+
+        GradedOutline {
+            radius: searchBox.radius
+            level: 2
+            accent: searchInput.activeFocus
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.IBeamCursor
+            onClicked: searchInput.forceActiveFocus()
+        }
 
         RowLayout {
             anchors.fill: parent
@@ -86,6 +99,12 @@ ColumnLayout {
                 color: Colours.palette.m3onSurface
 
                 Keys.onEscapePressed: searchInput.text = ""
+                // Enter opens the top match, so search works without the mouse.
+                Keys.onReturnPressed: {
+                    const hit = root.filteredCategories[0];
+                    if (hit)
+                        root.categorySelected(hit.categoryId, hit.sectionId ?? "");
+                }
 
                 StyledText {
                     visible: searchInput.text.length === 0
@@ -94,6 +113,20 @@ ColumnLayout {
                     text: qsTr("Search settings…")
                     color: Colours.palette.m3onSurfaceVariant
                     font: Tokens.font.body.small
+                }
+            }
+
+            MaterialIcon {
+                visible: searchInput.text.length > 0
+                text: "close"
+                color: Colours.palette.m3onSurfaceVariant
+                fontStyle: Tokens.font.icon.small
+
+                StateLayer {
+                    anchors.fill: parent
+                    anchors.margins: -Tokens.padding.extraSmall
+                    radius: Tokens.rounding.full
+                    onClicked: searchInput.text = ""
                 }
             }
         }
@@ -137,7 +170,7 @@ ColumnLayout {
                         readonly property bool isLast: categoryButton.index === root.filteredCategories.length - 1
                         readonly property color tint: Colours.signalStyle.tint(root.groupOrder.indexOf(categoryButton.modelData.group ?? ""))
                         // First entry of its group, at rest: carries the group header.
-                        readonly property bool groupStart: root.signalSkin && !categoryButton.isSection && (categoryButton.modelData.group ?? "").length > 0 && (categoryButton.index === 0 || (root.filteredCategories[categoryButton.index - 1]?.group ?? "") !== categoryButton.modelData.group) && searchInput.text.trim().length === 0
+                        readonly property bool groupStart: !categoryButton.isSection && (categoryButton.modelData.group ?? "").length > 0 && (categoryButton.index === 0 || (root.filteredCategories[categoryButton.index - 1]?.group ?? "") !== categoryButton.modelData.group) && searchInput.text.trim().length === 0
 
                         Layout.fillWidth: true
                         // Inset on all sides while active, not just a color
@@ -157,12 +190,12 @@ ColumnLayout {
                         Layout.bottomMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
                         implicitHeight: rowContent.implicitHeight + Tokens.padding.medium * 2
 
-                        color: root.signalSkin ? (categoryButton.active ? Qt.alpha(categoryButton.tint, 0.13) : "transparent") : categoryButton.active ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                        color: (categoryButton.active ? Qt.alpha(categoryButton.tint, 0.13) : "transparent")
 
-                        topLeftRadius: root.signalSkin ? Tokens.rounding.medium : stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isFirst ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                        topRightRadius: root.signalSkin ? Tokens.rounding.medium : stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isFirst ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                        bottomLeftRadius: root.signalSkin ? Tokens.rounding.medium : stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isLast ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                        bottomRightRadius: root.signalSkin ? Tokens.rounding.medium : stateLayer.pressed ? Tokens.rounding.medium : categoryButton.active ? Tokens.rounding.extraLarge : categoryButton.isLast ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+                        topLeftRadius: Tokens.rounding.medium
+                        topRightRadius: Tokens.rounding.medium
+                        bottomLeftRadius: Tokens.rounding.medium
+                        bottomRightRadius: Tokens.rounding.medium
 
                         Behavior on color {
                             CAnim {}
@@ -192,6 +225,17 @@ ColumnLayout {
                             Anim { type: Anim.DefaultEffects }
                         }
 
+                        GradedOutline {
+                            topLeftRadius: categoryButton.topLeftRadius
+                            topRightRadius: categoryButton.topRightRadius
+                            bottomLeftRadius: categoryButton.bottomLeftRadius
+                            bottomRightRadius: categoryButton.bottomRightRadius
+                            showRim: categoryButton.active || stateLayer.containsMouse
+                            accent: categoryButton.active
+                            accentColour: categoryButton.tint
+                            hovered: stateLayer.containsMouse
+                        }
+
                         StyledText {
                             id: groupHeader
 
@@ -211,7 +255,7 @@ ColumnLayout {
                             height: parent.height - Tokens.padding.small * 2
                             radius: Tokens.rounding.full
                             color: categoryButton.tint
-                            opacity: root.signalSkin && categoryButton.active ? 1 : 0
+                            opacity: categoryButton.active ? 1 : 0
 
                             Behavior on opacity {
                                 Anim { type: Anim.DefaultEffects }
@@ -239,7 +283,7 @@ ColumnLayout {
                                 Layout.preferredWidth: 36
                                 Layout.preferredHeight: 36
                                 radius: Tokens.rounding.medium
-                                color: root.signalSkin ? Qt.alpha(categoryButton.tint, categoryButton.active ? 0.32 : 0.18) : categoryButton.active ? Colours.palette.m3primary : Colours.palette.m3secondaryContainer
+                                color: Qt.alpha(categoryButton.tint, categoryButton.active ? 0.32 : 0.18)
 
                                 Behavior on color {
                                     CAnim {}
@@ -248,7 +292,7 @@ ColumnLayout {
                                 MaterialIcon {
                                     anchors.centerIn: parent
                                     text: categoryButton.modelData.icon
-                                    color: root.signalSkin ? Colours.legibleAccent(categoryButton.tint, Colours.signalStyle.surface) : (categoryButton.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSecondaryContainer)
+                                    color: Colours.legibleAccent(categoryButton.tint, Colours.signalStyle.surface)
                                     fontStyle: Tokens.font.icon.builders.medium.weight(Font.Medium).build()
                                     fill: categoryButton.active ? 1 : 0
                                 }
@@ -261,8 +305,8 @@ ColumnLayout {
                                 StyledText {
                                     Layout.fillWidth: true
                                     text: categoryButton.modelData.label
-                                    color: root.signalSkin && !categoryButton.active ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
-                                    font: root.signalSkin && categoryButton.active ? Tokens.font.body.builders.medium.weight(Font.DemiBold).build() : Tokens.font.body.medium
+                                    color: !categoryButton.active ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
+                                    font: categoryButton.active ? Tokens.font.body.builders.medium.weight(Font.DemiBold).build() : Tokens.font.body.medium
                                     elide: Text.ElideRight
                                 }
 

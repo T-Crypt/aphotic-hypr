@@ -16,7 +16,6 @@ Item {
     signal wheelUp()
     signal wheelDown()
 
-    readonly property bool signalSkin: Settings.barSignal
     readonly property color tint: Colours.signalStyle.tint(0)
 
     implicitWidth: Tokens.sizes.osd.sliderWidth
@@ -30,20 +29,20 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: height / 2
-        border.width: root.signalSkin ? 1 : 0
-        border.color: root.signalSkin ? Colours.signalStyle.hairline : "transparent"
-        color: root.signalSkin ? Colours.signalStyle.glass : Colours.tPalette.m3surfaceContainer
+        border.width: 1
+        border.color: Colours.signalStyle.hairline
+        color: Colours.signalStyle.glass
     }
 
     StyledRect {
         anchors.left: parent.left
-        anchors.leftMargin: root.signalSkin ? 3 : 0
+        anchors.leftMargin: 3
         anchors.top: parent.top
-        anchors.topMargin: root.signalSkin ? 3 : 0
+        anchors.topMargin: 3
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: root.signalSkin ? 3 : 0
+        anchors.bottomMargin: 3
         radius: height / 2
-        width: Math.max(height, (parent.width - (root.signalSkin ? 6 : 0)) * root.fraction)
+        width: Math.max(height, (parent.width - 6) * root.fraction)
         color: Colours.palette.m3primary
 
         Behavior on width {
@@ -63,16 +62,15 @@ Item {
         width: 32
         height: 32
         radius: 16
-        visible: root.signalSkin
         color: Qt.alpha(root.tint, 0.18)
     }
 
     Item {
         id: iconHost
 
-        x: root.signalSkin ? (root.height - 32) / 2 : Tokens.padding.medium
+        x: (root.height - 32) / 2
         y: (root.height - icon.implicitHeight) / 2
-        width: root.signalSkin ? 32 : icon.implicitWidth
+        width: 32
         height: icon.implicitHeight
 
         MaterialIcon {
@@ -80,7 +78,7 @@ Item {
 
             anchors.centerIn: parent
             text: root.icon
-            color: root.signalSkin ? Colours.legibleAccent(root.tint, Colours.signalStyle.surface) : Colours.palette.m3onPrimary
+            color: Colours.legibleAccent(root.tint, Colours.signalStyle.surface)
             scale: 0.9 + 0.25 * root.fraction
 
             Behavior on scale {
@@ -96,9 +94,8 @@ Item {
         anchors.rightMargin: Tokens.padding.large
         anchors.verticalCenter: parent.verticalCenter
         text: Math.round(root.value * 100) + "%"
-        font: root.signalSkin ? Tokens.font.label.builders.medium.weight(Font.DemiBold).build() : Tokens.font.label.medium
-        color: root.fraction > 0.85 ? Colours.palette.m3onPrimary
-              : (root.signalSkin ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+        font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
+        color: root.fraction > 0.85 ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
     }
 
     MouseArea {
