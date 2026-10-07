@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.8
+
+VPN support (Tailscale, Netbird, Mullvad, OpenVPN), a clean install path for hybrid NVIDIA laptops, and shell icons that render on first boot.
+
 ## 2.0.7
 
 The Signal line skin brings one new look and one motion to every surface, and the Aphotic greeter becomes your login screen.
