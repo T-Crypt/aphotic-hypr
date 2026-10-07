@@ -1,0 +1,18 @@
+{"v":2,"harness":"omp","sessionId":"o1","event":"session_start","status":"running","t":1791397100000,"ts":"2026-10-07T18:31:40Z","model":"NInfer-Qwen3.8-27B","provider":"llama-swap","cwd":"/home/t/Aphotic-Hypr"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"turn","status":"running","t":1791397100100,"ts":"2026-10-07T18:31:40Z"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"quota","status":"running","t":1791397100200,"ts":"2026-10-07T18:31:40Z","quota":{"context":{"usedPercent":3.9,"resetsAt":0},"fiveHour":{"usedPercent":42.9,"resetsAt":1791407000},"sevenDay":{"usedPercent":6.2,"resetsAt":1791757000}}}
+{"v":2,"harness":"omp","sessionId":"o1","event":"turn","status":"running","t":1791397100300,"ts":"2026-10-07T18:31:40Z"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"usage","status":"running","t":1791397101000,"ts":"2026-10-07T18:31:41Z","model":"NInfer-Qwen3.8-27B","provider":"llama-swap","inputTokens":11898,"outputTokens":177,"reasoningTokens":173,"cacheReadTokens":11898,"cacheWriteTokens":0,"cost":{"amount":0.0021,"currency":"USD"}}
+{"v":2,"harness":"omp","sessionId":"o1","event":"tool_call","status":"running","t":1791397101100,"ts":"2026-10-07T18:31:41Z","tool":"bash","toolId":"call_o1","toolStatus":"running"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"tool_call","status":"running","t":1791397101500,"ts":"2026-10-07T18:31:41Z","tool":"bash","toolId":"call_o1","toolStatus":"completed"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"tool_call","status":"running","t":1791397102000,"ts":"2026-10-07T18:31:42Z","tool":"task","toolId":"call_o2","toolStatus":"running","agentId":"w1","agentType":"explore"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"quota","status":"running","t":1791397103000,"ts":"2026-10-07T18:31:43Z","quota":{"context":{"usedPercent":4.5,"resetsAt":0}}}
+{"v":2,"harness":"omp","sessionId":"o1","event":"error","status":"idle","t":1791397104000,"ts":"2026-10-07T18:31:44Z","error":{"kind":"timeout","message":"tool call timed out"},"agentId":"w1"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"turn","status":"waiting","t":1791397105000,"ts":"2026-10-07T18:31:45Z"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"usage","status":"running","t":1791397106000,"ts":"2026-10-07T18:31:46Z","model":"NInfer-Qwen3.8-27B","provider":"llama-swap","inputTokens":9422,"outputTokens":28,"reasoningTokens":28,"cacheReadTokens":0,"cacheWriteTokens":0}
+{"v":2,"harness":"omp","sessionId":"o1","event":"quota","status":"running","t":1791397106100,"ts":"2026-10-07T18:31:46Z","quota":{"context":{"usedPercent":3.6,"resetsAt":0}}}
+{"v":2,"harness":"omp","sessionId":"o1","event":"turn","status":"idle","t":1791397106200,"ts":"2026-10-07T18:31:46Z"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"session_end","status":"ended","t":1791397107000,"ts":"2026-10-07T18:31:47Z","endReason":"shutdown"}
+{not valid json at all
+{"v":1,"sessionId":"o1","event":"post_tool_use","status":"running","timestamp":"2026-10-07T18:31:41Z","t":1791397101500,"tool":"bash"}
+{"v":2,"harness":"omp","sessionId":"o1","event":"usage","status":"running","t":1791397108000,"ts":"2026-10-07T18:31:48Z","inputTokens":10,"outputTokens":5,"vendorExtra":{"beta":true}}

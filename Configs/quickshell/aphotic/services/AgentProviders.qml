@@ -43,7 +43,9 @@ Singleton {
     readonly property var _uiMeta: ({
         "claude": { icon: "smart_toy", processName: "claude", launchCmd: ["claude"], pluginName: "claude-hooks" },
         "codex": { icon: "terminal", processName: "codex", launchCmd: ["codex"], pluginName: "codex-hooks" },
-        "opencode": { icon: "terminal", processName: "opencode", launchCmd: ["opencode"], pluginName: "opencode-hooks" }
+        "opencode": { icon: "terminal", processName: "opencode", launchCmd: ["opencode"], pluginName: "opencode-hooks" },
+        "omp": { icon: "terminal", processName: "omp", launchCmd: ["omp"], pluginName: "pi-hooks" },
+        "pi": { icon: "terminal", processName: "pi", launchCmd: ["pi"], pluginName: "pi-hooks" }
     })
 
     // Set of active harness tabs: ids/enablement come from AgentRoles (the
@@ -296,6 +298,11 @@ Singleton {
     // docs/AGENT_TRACKING.md's "no setup required" promise for a harness
     // that never fires a hook event at all -- correctness there doesn't
     // need 5s freshness, so this fires 12x slower than it used to.
+    // Pi and OMP have no reconcile entry: Pi runs as a plain node process
+    // (comm "node", never "pi") and OMP's comm doesn't match `pgrep -x
+    // omp`, so a process-name count would report zero for a running
+    // session; both always emit hook events when wired, so the tail is
+    // their only presence source.
     Timer {
         id: agentReconcile
 

@@ -96,7 +96,7 @@ def is_v2(record: dict | None) -> bool:
     return isinstance(record, dict) and record.get("v") == 2
 
 
-@pytest.mark.parametrize("fixture_name", ["claude.jsonl", "codex.jsonl"])
+@pytest.mark.parametrize("fixture_name", ["claude.jsonl", "codex.jsonl", "pi.jsonl", "omp.jsonl"])
 def test_every_v2_line_validates_and_malformed_lines_do_not(fixture_name):
     lines = load_lines(FIXTURES / fixture_name)
 
@@ -123,14 +123,14 @@ def test_every_v2_line_validates_and_malformed_lines_do_not(fixture_name):
     assert saw_v2, f"{fixture_name} must contain v2 lines"
 
 
-@pytest.mark.parametrize("fixture_name", ["claude.jsonl", "codex.jsonl"])
+@pytest.mark.parametrize("fixture_name", ["claude.jsonl", "codex.jsonl", "pi.jsonl", "omp.jsonl"])
 def test_fixture_covers_all_seven_event_kinds(fixture_name):
     lines = load_lines(FIXTURES / fixture_name)
     kinds = {r["event"] for _, r in lines if is_v2(r)}
     assert kinds == EVENT_ENUM
 
 
-@pytest.mark.parametrize("fixture_name", ["claude.jsonl", "codex.jsonl"])
+@pytest.mark.parametrize("fixture_name", ["claude.jsonl", "codex.jsonl", "pi.jsonl", "omp.jsonl"])
 def test_fixture_has_unknown_fields_line(fixture_name):
     lines = load_lines(FIXTURES / fixture_name)
     known_top_level = {
@@ -208,7 +208,7 @@ def test_fixtures_replay_through_normalizer_without_status_regression():
     """The normalizer must not send usage/quota/error kinds through the
     v1 status-changing branch: applyTo() special-cases them so a running
     session doesn't get bounced to idle by an additive record."""
-    for fixture_name in ("claude.jsonl", "codex.jsonl"):
+    for fixture_name in ("claude.jsonl", "codex.jsonl", "pi.jsonl", "omp.jsonl"):
         lines = load_lines(FIXTURES / fixture_name)
         status_neutral_kinds = {"usage", "quota", "error"}
         for _, record in lines:
