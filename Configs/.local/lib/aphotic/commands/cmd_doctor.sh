@@ -90,6 +90,21 @@ _aphotic_doctor_config_links() {
     fi
 }
 
+
+# Without this font every shell icon renders as its name. A stale font
+# cache hides it even when the package is installed.
+_aphotic_doctor_icon_font() {
+    local font="Material Symbols Rounded"
+    if fc-list : family 2>/dev/null | grep -qF "$font"; then
+        printf '  [ok]   %s\n' "$font"
+    elif pacman -Q ttf-material-symbols-variable &>/dev/null; then
+        printf '  [warn] %s is installed but missing from the font cache; the shell shows icon names instead of icons\n' "$font"
+        echo "  Fix: fc-cache -f && systemctl --user restart aphotic-shell.service"
+    else
+        printf '  [MISS] %s; the shell shows icon names instead of icons\n' "$font"
+        echo "  Fix: sudo pacman -S --needed ttf-material-symbols-variable && systemctl --user restart aphotic-shell.service"
+    fi
+}
 _aphotic_doctor_version_drift() {
     source "${LIB_DIR}/state.sh"
 
