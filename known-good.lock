@@ -1,4 +1,4 @@
-# canary 2026-10-07
+# canary 2026-10-08
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -495,7 +495,7 @@ opencore-amr 0.1.6-2
 openjpeg2 2.5.4-1
 openssh 10.6p1-1
 openssl 3.6.5-1
-openvpn 2.7.7-1
+openvpn 2.7.8-1
 opus 1.6.1-1
 orc 0.4.44-1
 p11-kit 0.26.5-1
@@ -561,16 +561,16 @@ qt5-translations 5.15.19-1
 qt5-wayland 5.15.19+kde+r55-1
 qt5-x11extras 5.15.19-1
 qt5ct 1.9-2
-qt6-base 6.11.2-3
-qt6-declarative 6.11.2-2
-qt6-imageformats 6.11.2-1
-qt6-multimedia 6.11.2-1
-qt6-multimedia-ffmpeg 6.11.2-1
-qt6-shadertools 6.11.2-1
-qt6-svg 6.11.2-1
-qt6-translations 6.11.2-1
-qt6-wayland 6.11.2-1
-qt6ct 0.11-8
+qt6-base 6.12.0-2
+qt6-declarative 6.12.0-1
+qt6-imageformats 6.12.0-1
+qt6-multimedia 6.12.0-1
+qt6-multimedia-ffmpeg 6.12.0-1
+qt6-shadertools 6.12.0-1
+qt6-svg 6.12.0-1
+qt6-translations 6.12.0-1
+qt6-wayland 6.12.0-1
+qt6ct 0.11-9
 quickshell 0.3.1-1
 radeontop 1.4-3
 rav1e 0.8.1-3
@@ -627,7 +627,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 80-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.140.0-2
+visual-studio-code-bin 1.141.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
@@ -660,14 +660,14 @@ xfce4-settings 4.20.5-1
 xfconf 4.20.0-2
 xkeyboard-config 2.48-1
 xorg-fonts-encodings 1.1.0-2
-xorg-server 21.1.24-1
-xorg-server-common 21.1.24-1
+xorg-server 21.1.25-1
+xorg-server-common 21.1.25-1
 xorg-setxkbmap 1.3.5-1
 xorg-xauth 1.1.5-1
 xorg-xkbcomp 1.5.0-1
 xorg-xprop 1.2.8-1
 xorg-xrandr 1.5.4-1
-xorg-xwayland 24.1.13-1
+xorg-xwayland 24.1.14-1
 xorgproto 2026.1-1
 xvidcore 1.3.7-4
 xxhash 0.8.4-1
