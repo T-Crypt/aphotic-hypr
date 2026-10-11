@@ -12,7 +12,7 @@ ColumnLayout {
     readonly property string repoUrl: "https://github.com/T-Crypt/Aphotic-Hypr"
     readonly property string releasesUrl: "https://github.com/T-Crypt/Aphotic-Hypr/releases"
     readonly property string licenseUrl: "https://github.com/T-Crypt/Aphotic-Hypr/blob/main/LICENSE"
-    property string version: "…"
+    readonly property string version: InstallProfile.version || "…"
 
     // "idle" | "checking" | "current" | "available" | "error"
     property string updateState: "idle"
@@ -388,17 +388,6 @@ ColumnLayout {
     }
 
     Process {
-        id: versionProc
-        command: ["cat", `${Quickshell.env("APHOTIC_DOTS_DIR") || `${Quickshell.env("HOME")}/Aphotic-Hypr`}/VERSION`]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.trim().length > 0)
-                    root.version = text.trim();
-            }
-        }
-    }
-
-    Process {
         id: updateCheckProc
         command: ["curl", "-s", "-m", "10", "https://api.github.com/repos/T-Crypt/aphotic-hypr/releases/latest"]
         stdout: StdioCollector {
@@ -463,7 +452,6 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
-        versionProc.running = true;
         syncCheckProc.running = true;
     }
 }

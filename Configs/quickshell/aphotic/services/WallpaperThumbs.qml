@@ -9,6 +9,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 
 // Every picker used to point a plain Image at the full-resolution source and
 // lean on sourceSize to downscale at decode time. That decode still reads and
@@ -24,10 +25,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string script: {
-        const dotsDir = Quickshell.env("APHOTIC_DOTS_DIR") || `${Quickshell.env("HOME")}/Aphotic-Hypr`;
-        return `${dotsDir}/Configs/.local/lib/aphotic/wallpaper_thumbs.py`;
-    }
+    readonly property string script: `${InstallProfile.dotsDir}/Configs/.local/lib/aphotic/wallpaper_thumbs.py`
 
     // Bumped whenever a batch lands. thumbFor()/posterFor() read it so that
     // a binding written as `source: WallpaperThumbs.thumbFor(path)`

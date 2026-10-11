@@ -239,9 +239,12 @@ def apply_palette_clamp(theme, pins):
     if not os.path.isfile(raw_file):
         return
 
-    # The CLI's lib/ lives in the dots checkout, not under ~/.local --
-    # install.sh only symlinks ~/.local/bin/aphotic.
-    dots_dir = os.environ.get("APHOTIC_DOTS_DIR") or os.path.expanduser("~/Aphotic-Hypr")
+    # The CLI's lib/ lives in the dots checkout, not under ~/.local. The CLI
+    # keeps the data-dir link pointed at it, whatever the clone is named.
+    data_home = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    dots_link = os.path.join(data_home, "aphotic", "dots")
+    dots_dir = os.environ.get("APHOTIC_DOTS_DIR") or (
+        dots_link if os.path.isdir(dots_link) else os.path.expanduser("~/Aphotic-Hypr"))
     live = os.path.join(schemes_dir, f"{theme}-live.json")
     cmd = [
         "python3", os.path.join(dots_dir, "Configs/.local/lib/aphotic/palette_clamp.py"),

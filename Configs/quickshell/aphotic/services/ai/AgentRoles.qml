@@ -7,6 +7,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.services
 import qs.services.ai
 
 // Single source of harness/provider role + locality for every AI CLI this
@@ -176,7 +177,7 @@ Singleton {
     }
 
     FileView {
-        path: `${Quickshell.env("HOME")}/Aphotic-Hypr/aphotic.toml`
+        path: `${InstallProfile.dotsDir}/aphotic.toml`
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {
