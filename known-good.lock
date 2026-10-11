@@ -1,4 +1,4 @@
-# canary 2026-10-10
+# canary 2026-10-11
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -12,7 +12,7 @@ alsa-ucm-conf 1.2.16.1-1
 aom 3.15.2-1
 aquamarine 0.15.1-1
 archlinux-keyring 20260909-1
-at-spi2-core 2.62.0.1-1
+at-spi2-core 2.62.1-1
 attr 2.6.0-1
 audit 4.2.1-1
 autoconf 2.73-1
@@ -488,8 +488,8 @@ nvidia-open-dkms 615.78.08-1
 nvidia-utils 615.78.08-1
 nwg-look 1.1.2-1
 ocl-icd 2.3.5-1
-oh-my-zsh-git r7976.42a4ccb1b-1
-oniguruma 6.9.10-1
+oh-my-zsh-git r7977.48feb570f-1
+oniguruma 6.9.10-3
 openal 1.25.2-2
 opencore-amr 0.1.6-2
 openjpeg2 2.5.4-1
@@ -536,7 +536,7 @@ portaudio 1:19.7.0-4
 procps-ng 4.0.7-1
 psmisc 23.7-2
 pugixml 1.16-1
-python 3.14.7-1
+python 3.14.8-1
 python-cairo 1.29.2-1
 python-certifi 2026.07.22-1
 python-cffi 2.1.1-1
