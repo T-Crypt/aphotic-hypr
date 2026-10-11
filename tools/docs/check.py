@@ -17,7 +17,7 @@ HISTORY = {"LEDGER.md", "DECISIONS.md", "KNOWLEDGE_BASE.md"}
 
 
 STATE_WORDS = r"open|opened|draft|merged|closed"
-PATH_PREFIXES = ("Configs/", "lib/", "tests/", "tools/", "scripts/", "profiles/", "site/", "src/", "assets/", ".epiq/")
+PATH_PREFIXES = ("Configs/", "lib/", "tests/", "tools/", "scripts/", "profiles/", "site/", "src/", "assets/", ".ome/")
 
 
 def command(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
