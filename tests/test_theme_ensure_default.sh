@@ -20,7 +20,7 @@ export HOME="$TESTHOME"
 export XDG_CONFIG_HOME="$TESTHOME/.config"
 export XDG_STATE_HOME="$TESTHOME/.local/state"
 export XDG_DATA_HOME="$TESTHOME/.local/share"
-export APHOTIC_DOTS_DIR="$ROOT"
+export APHOTIC_DOTS_DIR="$TESTHOME/Aphotic-Hypr"
 # Point away from the real system SDDM theme dir -- this test must never
 # touch /usr/share/sddm on the machine running it.
 export APHOTIC_SDDM_THEME_DIR="$TESTHOME/no-such-sddm-theme"
