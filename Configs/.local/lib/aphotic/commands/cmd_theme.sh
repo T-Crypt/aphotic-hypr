@@ -617,10 +617,7 @@ _aphotic_theme_ensure_default() {
         fi
     done
 
-    # Same fixed clone-path convention InstallProfile.qml uses for
-    # aphotic.toml -- see that file's comment for why it's not derived
-    # from the running script's own location.
-    local toml="${HOME}/Aphotic-Hypr/aphotic.toml"
+    local toml="${APHOTIC_DOTS_DIR}/aphotic.toml"
     local theme_name; theme_name="$(_aphotic_toml_get "$toml" theme name || true)"
 
     if [[ -z "$theme_name" ]] || [[ ! -d "$(_aphotic_theme_dir "$theme_name")" ]]; then
