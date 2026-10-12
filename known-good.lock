@@ -1,4 +1,4 @@
-# canary 2026-10-11
+# canary 2026-10-12
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -335,7 +335,7 @@ libmng 2.0.3-4
 libmnl 1.0.5-2
 libmodplug 0.8.9.0-7
 libmpc 1.4.1-1
-libnautilus-extension 51.0.1-2
+libnautilus-extension 51.1-1
 libndp 1.9-1
 libnetfilter_conntrack 1.1.1-1
 libnewt 0.52.25-2
@@ -488,7 +488,7 @@ nvidia-open-dkms 615.78.08-1
 nvidia-utils 615.78.08-1
 nwg-look 1.1.2-1
 ocl-icd 2.3.5-1
-oh-my-zsh-git r7977.48feb570f-1
+oh-my-zsh-git r7985.083c339e0-1
 oniguruma 6.9.10-3
 openal 1.25.2-2
 opencore-amr 0.1.6-2
@@ -517,7 +517,7 @@ pcre 8.45-5
 pcre2 10.49-1
 pcsclite 2.5.2-1
 peg 0.1.19-1
-perl 5.42.2-2
+perl 5.42.3-1
 perl-error 0.17030-3
 perl-mailtools 2.22-3
 perl-timedate 2.35-1
@@ -595,8 +595,8 @@ source-highlight 3.1.9-19
 speex 1.2.1-2
 speexdsp 1.2.1-2
 spirv-tools 1:1.4.363.0-1
-sqlite 3.53.4-1
-srt 1.5.7-1
+sqlite 3.54.0-1
+srt 1.5.7-2
 starship 1.26.0-1
 startup-notification 0.12-9
 sudo 1.9.17.p2-6
