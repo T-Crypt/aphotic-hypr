@@ -21,7 +21,21 @@ APHOTIC_RECOVERY_STATE_FILE="${APHOTIC_STATE_HOME}/recovery.json"
 APHOTIC_CHANGE_LOG="${APHOTIC_STATE_HOME}/changes.log"
 
 # Where the Aphotic-Hypr dots repo lives. Overridable via env for dev/CI.
-APHOTIC_DOTS_DIR="${APHOTIC_DOTS_DIR:-$HOME/Aphotic-Hypr}"
+# Otherwise it's the checkout this script runs from, so a clone under any
+# name or letter case works.
+if [[ -z "${APHOTIC_DOTS_DIR:-}" ]]; then
+    _aphotic_self_root="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../.." 2>/dev/null && pwd)"
+    if [[ -n "$_aphotic_self_root" && -f "$_aphotic_self_root/VERSION" ]]; then
+        APHOTIC_DOTS_DIR="$_aphotic_self_root"
+    else
+        APHOTIC_DOTS_DIR="$HOME/Aphotic-Hypr"
+    fi
+    unset _aphotic_self_root
+fi
+
+# The shell and helper scripts can't see where the CLI lives, so they read
+# the repo through this link. Kept current on every run.
+APHOTIC_DOTS_LINK="${XDG_DATA_HOME:-$HOME/.local/share}/aphotic/dots"
 
 # Read from the repo's VERSION file so `aphotic doctor` reflects the
 # actual checked-out commit's version, not a string that drifts from it.
@@ -74,6 +88,13 @@ fi
 
 mkdir -p "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$APHOTIC_DATA_HOME" \
          "$APHOTIC_RUNTIME_DIR" "$APHOTIC_BACKUP_DIR" "$APHOTIC_PLUGINS_DIR"
+
+# Only the installed CLI moves the link, so running a second checkout (or its
+# tests) leaves the live shell alone.
+if [[ "$(readlink -f "$HOME/.local/bin/aphotic" 2>/dev/null)" == "$APHOTIC_DOTS_DIR/"* \
+      && "$(readlink "$APHOTIC_DOTS_LINK" 2>/dev/null)" != "$APHOTIC_DOTS_DIR" ]]; then
+    ln -sfn "$APHOTIC_DOTS_DIR" "$APHOTIC_DOTS_LINK" 2>/dev/null || true
+fi
 
 export APHOTIC_VERSION APHOTIC_CONFIG_HOME APHOTIC_STATE_HOME APHOTIC_DATA_HOME \
        APHOTIC_RUNTIME_DIR APHOTIC_CONFIG_FILE APHOTIC_BACKUP_DIR APHOTIC_DOTS_DIR \

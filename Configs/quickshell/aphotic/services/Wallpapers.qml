@@ -213,10 +213,7 @@ Singleton {
     // complete, valid palette for the hooks to read.
     function _startClamp(clamp: var): void {
         const home = Quickshell.env("HOME");
-        // The CLI's lib/ lives in the dots checkout, not under ~/.local
-        // (install.sh only symlinks ~/.local/bin/aphotic) -- same env-var-
-        // with-default resolution AboutPane.qml uses to read VERSION.
-        const dotsDir = Quickshell.env("APHOTIC_DOTS_DIR") || `${home}/Aphotic-Hypr`;
+        const dotsDir = InstallProfile.dotsDir;
         const cmd = [
             "python3", `${dotsDir}/Configs/.local/lib/aphotic/palette_clamp.py`,
             `${home}/.cache/wal/colors.json`,
