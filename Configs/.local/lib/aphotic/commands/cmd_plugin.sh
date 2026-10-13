@@ -522,6 +522,53 @@ _aphotic_plugin_actions_json() {
 # A bind runs something, so both `combo` and `action` are required, and
 # validate holds `action` to an id this same manifest declares. Same five
 # numbered sections, and the same flat reader, as `[action]` above.
+#
+# `combo` is manifest text on its way into a shell command and into two
+# Hyprland grammars, so it is held to the shape
+# services/PluginKeybindCore.js can turn into both forms: '+' separated
+# tokens, the key last, each token a name (no spaces, no quoting, no
+# comma) and every token before it a modifier both Hyprland parsers know.
+# Anything else has no legacy form and no modmask to check the live bind
+# table with, and the shell refuses it rather than binding something
+# Hyprland rejects -- so say so here, where the author is looking.
+APHOTIC_PLUGIN_KEYBIND_MODIFIERS="SHIFT CAPS CTRL CONTROL ALT MOD1 MOD2 MOD3 SUPER WIN LOGO MOD4 MOD5"
+
+# "" when the combo is one the shell can bind, else why it is not. The
+# token shape is PluginKeybindCore.js's TOKEN and the list above is its
+# MODIFIERS table; tests/test_plugin_keybind_core.cjs and
+# tests/test_plugin_keybind_capability.sh hold the two sides to the same
+# answers.
+_aphotic_plugin_combo_error() {
+    local combo="$1" token i
+    local -a tokens=()
+
+    [[ -n "${combo//[[:space:]]/}" ]] || { echo "is empty"; return 0; }
+
+    IFS='+' read -r -a tokens <<<"$combo"
+    for ((i = 0; i < ${#tokens[@]}; i++)); do
+        token="${tokens[$i]}"
+        # Trim the spaces around a '+' -- anything else is the token's own
+        # character and fails the shape check below, the way
+        # PluginKeybindCore.js's TOKEN fails it.
+        token="${token#"${token%%[! ]*}"}"
+        token="${token%"${token##*[! ]}"}"
+        if [[ -z "$token" ]]; then
+            echo "has an empty token"
+            return 0
+        fi
+        if [[ ! "$token" =~ ^[A-Za-z0-9_:.-]+$ ]]; then
+            echo "has a token ('${token}') that isn't a key or a modifier name"
+            return 0
+        fi
+        if (( i < ${#tokens[@]} - 1 )) && ! _aphotic_plugin_in_list "${token^^}" "$APHOTIC_PLUGIN_KEYBIND_MODIFIERS"; then
+            echo "names '${token}', which isn't a modifier both Hyprland parsers know"
+            return 0
+        fi
+    done
+
+    echo ""
+}
+
 _aphotic_plugin_keybind_entry_json() {
     local manifest="$1" section="$2" combo action description layer data
     combo="$(aphotic_toml_get "$manifest" "$section" combo)"
@@ -1608,7 +1655,7 @@ _aphotic_plugin_validate() {
     fi
 
     if [[ "$keybind_entries" != "null" ]]; then
-        local declared_actions bind_action duplicate_combo
+        local declared_actions bind_action duplicate_combo combo_error bind_combo bind_description
         declared_actions="$(_aphotic_plugin_actions_json "$manifest")"
         while IFS= read -r bind_action; do
             [[ -n "$bind_action" ]] || continue
@@ -1619,13 +1666,40 @@ _aphotic_plugin_validate() {
             fi
         done < <(jq -r '.[].action' <<<"$keybind_entries")
 
+        # A combo outside the shape the shell can derive both forms from is
+        # refused at bind time -- no key to check the live bind table with,
+        # and no legacy string Hyprland would accept -- so name it here,
+        # where an author sees it before installing.
+        while IFS= read -r bind_combo; do
+            [[ -n "$bind_combo" ]] || continue
+            combo_error="$(_aphotic_plugin_combo_error "$bind_combo")"
+            if [[ -n "$combo_error" ]]; then
+                aphotic_err "${name}: [keybind].combo '${bind_combo}' ${combo_error}, so nothing can be bound to it"
+                fails=$((fails + 1))
+            fi
+        done < <(jq -r '.[].combo' <<<"$keybind_entries")
+
+        # The description is the label, and it rides inside the bind line's
+        # own field syntax. A comma in it shifts every field after it and a
+        # control character ends the line, so the shell would bind with the
+        # label dropped rather than bind that: an error here, not a warning.
+        while IFS= read -r bind_description; do
+            [[ -n "$bind_description" ]] || continue
+            if [[ "$bind_description" == *","* ]] \
+                || printf '%s' "$bind_description" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+                aphotic_err "${name}: [keybind].description '${bind_description}' has a comma or a control character, which the bind line reads as syntax"
+                fails=$((fails + 1))
+            fi
+        done < <(jq -r '.[].description' <<<"$keybind_entries")
+
         # Two of the plugin's own sections on one combo: the second bind
-        # replaces the first, so one action silently never runs.
+        # replaces the first, so one action silently never runs. Compared
+        # case-insensitively, the way the shell's own combo identity is.
         while IFS= read -r duplicate_combo; do
             [[ -n "$duplicate_combo" ]] || continue
             aphotic_warn "${name}: [keybind] combo '${duplicate_combo}' is declared more than once -- only the first is bound"
             warns=$((warns + 1))
-        done < <(jq -r '[.[].combo] | group_by(.) | map(select(length > 1)) | .[][0]' <<<"$keybind_entries")
+        done < <(jq -r '[.[].combo] | group_by(ascii_downcase) | map(select(length > 1)) | .[][0]' <<<"$keybind_entries")
     fi
 
     # Every file a manifest section points at: must resolve inside the

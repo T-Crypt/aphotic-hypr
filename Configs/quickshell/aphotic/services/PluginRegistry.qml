@@ -11,6 +11,7 @@ import qs.services
 import qs.services.ai
 import qs.services.profile
 import "PluginRegistryCore.js" as RegistryCore
+import "PluginKeybindCore.js" as KeybindCore
 import "PluginPaths.js" as Paths
 import "SonarTargets.js" as Discovery
 
@@ -251,7 +252,11 @@ Singleton {
     // else -- Settings does not show plugin binds.
     readonly property var keybindRegistrations: {
         const bindings = [];
-        const combos = ({});
+        // Keyed on the combo the conflict check itself identifies
+        // (PluginKeybindCore.comboKey), not on the manifest's spelling of
+        // it: two plugins that write one physical combo two ways are one
+        // combo, and asserting both would leave one action unreachable.
+        const claimed = new Map();
         for (const name of Object.keys(root._installed)) {
             if (!root.isEnabled(name))
                 continue;
@@ -268,14 +273,27 @@ Singleton {
                 };
                 if (!root._gateSatisfied(entry))
                     continue;
-                // Only a bind that is actually going to be asserted claims
-                // the combo: a gated-off one holds no key, so a second
-                // plugin on the same combo still gets it.
-                if (combos[entry.combo]) {
-                    console.warn(`aphotic keybind: ${entry.id} skipped, ${entry.combo} is already bound by ${combos[entry.combo]}`);
+                const combo = KeybindCore.comboKey(bind.combo);
+                if (combo.length === 0) {
+                    console.warn(`aphotic keybind: ${entry.id} skipped, '${bind.combo}' is not a combo this shell can bind`);
                     continue;
                 }
-                combos[entry.combo] = name;
+                // Only a bind that is actually going to be asserted claims
+                // the combo: a gated-off one holds no key, and one whose
+                // action does not resolve binds nothing -- the same
+                // Actions.has the worker applies as its last word. Either
+                // way a second plugin on the same combo still gets it,
+                // which is what a claim made here for a bind that can never
+                // happen would take away.
+                if (claimed.has(combo)) {
+                    console.warn(`aphotic keybind: ${entry.id} skipped, '${bind.combo}' is already bound by ${claimed.get(combo)}`);
+                    continue;
+                }
+                if (!Actions.has(entry.id)) {
+                    console.warn(`aphotic keybind: ${entry.id} skipped, its action does not resolve`);
+                    continue;
+                }
+                claimed.set(combo, entry.id);
                 bindings.push(entry);
             }
         }

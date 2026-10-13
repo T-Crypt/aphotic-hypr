@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import "PluginKeybindCore.js" as KeybindCore
 
 // One plugin's declared combo, bound while that plugin is enabled and the
 // combo is free.
@@ -18,6 +19,12 @@ import qs.services
 // rule. A foreign bind wins; our own is not a conflict, so re-asserting
 // after a compositor reload still works.
 //
+// A plugin's combo, command and description are a manifest's own text and
+// this worker's assert is one shell line. services/PluginKeybindCore.js
+// parses the combo and quotes all three on the way in; a combo it cannot
+// represent refuses the bind rather than deriving a string Hyprland would
+// reject under a modmask that matches no live bind.
+//
 // Not a singleton: one instance per registration, made by
 // services/PluginKeybinds.qml.
 Scope {
@@ -28,16 +35,13 @@ Scope {
     required property string description
     required property bool wanted
 
-    // "SUPER + SHIFT + R" -> "SUPER SHIFT, R": the legacy parser wants the
-    // key after a comma and the modifiers space-separated. Derived from the
-    // one combo the manifest declares, not declared a second time; a combo
-    // with no separator passes through as it is.
-    readonly property string legacyCombo: {
-        const at = root.combo.lastIndexOf(" + ");
-        if (at < 0)
-            return root.combo;
-        return root.combo.slice(0, at).split(" + ").join(" ") + ", " + root.combo.slice(at + 3);
-    }
+    // {key, modmask, legacy}, or {error}. One reading of the combo feeds
+    // the legacy string the one legacy parser wants, the key and modmask
+    // the conflict check compares, and the refusal above.
+    readonly property var _parsed: KeybindCore.parse(root.combo)
+    readonly property string _comboIssue: root._parsed.error ?? ""
+
+    readonly property string legacyCombo: root._parsed.legacy ?? ""
 
     // "", "lua" or "legacy". A property rather than a branch inside
     // _sync() because `wanted` and `Hypr.usingLua` settle independently --
@@ -47,7 +51,7 @@ Scope {
     // silently unbound. Same reasoning and shape as WorkspaceKeybind's.
     // A conflict or an unresolved reading also means "", so a bind is
     // never asserted over a key somebody else holds.
-    readonly property string desiredForm: !root.wanted || !root._checked || root._conflict ? "" : (Hypr.usingLua ? "lua" : "legacy")
+    readonly property string desiredForm: !root.wanted || root._comboIssue.length > 0 || !root._checked || root._conflict ? "" : (Hypr.usingLua ? "lua" : "legacy")
     readonly property string appliedForm: root._applied
 
     property string _applied: ""
@@ -60,19 +64,12 @@ Scope {
     property bool _collected: false
     property int _exitCode: -1
 
-    // Hyprland's own modifier bits, the same ones HyprKeybinds decodes the
-    // cheatsheet with. A combo naming anything outside this table matches
-    // no live bind rather than a wrong one.
-    readonly property var _modBits: ({ "SUPER": 64, "ALT": 8, "CTRL": 4, "CONTROL": 4, "SHIFT": 1 })
-
-    readonly property var _target: {
-        const tokens = root.combo.split(" + ").map(t => t.trim()).filter(t => t.length > 0);
-        const key = (tokens.pop() ?? "").toLowerCase();
-        let modmask = 0;
-        for (const token of tokens)
-            modmask |= root._modBits[token.toUpperCase()] ?? 0;
-        return { key: key, modmask: modmask };
-    }
+    // A refused combo counts as no bind at all: no key to look for, and a
+    // modmask no live bind can carry, so the check can never call one of
+    // them ours.
+    readonly property var _target: root._parsed.error
+        ? { key: "", modmask: -1 }
+        : { key: String(root._parsed.key).toLowerCase(), modmask: root._parsed.modmask }
 
     function _bindsOnCombo(binds: var): var {
         return (binds || []).filter(b => b && !b.mouse
@@ -91,17 +88,35 @@ Scope {
     // a second binding that runs the action twice on one press. Each clear
     // is a refusal or a no-op on the parser it does not apply to. Nothing
     // is written to the user's config. Quiet on a box with no Hyprland.
+    //
+    // Every manifest-supplied value is quoted by KeybindCore before it is
+    // interpolated here, so the line is the same line whatever the manifest
+    // says: nothing in it can end the quote it sits in.
     function _assertScript(form: string): string {
-        let script = `hyprctl eval 'hl.unbind("${root.combo}")' 2>/dev/null || true; `
-            + `hyprctl keyword unbind "${root.legacyCombo}" 2>/dev/null || true`;
+        let script = `hyprctl eval ${KeybindCore.shellQuote(KeybindCore.luaUnbind(root.combo))} 2>/dev/null || true; `
+            + `hyprctl keyword unbind ${KeybindCore.shellQuote(root.legacyCombo)} 2>/dev/null || true`;
         if (form === "lua")
-            script += `; hyprctl eval 'hl.bind("${root.combo}", hl.dsp.exec_cmd("${root.command}"), { description = "${root.description}" })' 2>/dev/null || true`;
+            script += `; hyprctl eval ${KeybindCore.shellQuote(KeybindCore.luaBind(root.combo, root.command, root.description))} 2>/dev/null || true`;
         else if (form === "legacy")
-            script += `; hyprctl keyword bindd "${root.legacyCombo}, ${root.description}, exec, ${root.command}" 2>/dev/null || true`;
+            script += `; hyprctl keyword bindd ${KeybindCore.shellQuote(KeybindCore.legacyBind(root._parsed, root.description, root.command))} 2>/dev/null || true`;
         return script;
     }
 
     function refresh(): void {
+        if (root._comboIssue.length > 0) {
+            // Nothing is read and nothing is written: the conflict check has
+            // no key to compare, so it cannot see the user's bind on the
+            // combo the manifest meant, and the clear-then-assert would
+            // derive a string Hyprland refuses.
+            console.warn(`aphotic keybind: refusing '${root.combo}': ${root._comboIssue}`);
+            root._checking = false;
+            root._checkAgain = false;
+            root._checked = false;
+            root._conflict = false;
+            root._owns = false;
+            root._applied = "";
+            return;
+        }
         if (root._checking) {
             root._checkAgain = true;
             return;
@@ -153,8 +168,12 @@ Scope {
             return;
         const had = root._applied;
         root._applied = want;
-        if (want.length > 0)
+        if (want.length > 0) {
+            const issue = KeybindCore.labelIssue(root.description);
+            if (issue.length > 0)
+                console.warn(`aphotic keybind: '${root.combo}' is bound without a description: ${issue}`);
             binder.command = ["sh", "-c", root._assertScript(want)];
+        }
         else if (had.length > 0 && root._owns)
             binder.command = ["sh", "-c", root._assertScript("")];
         else
@@ -173,6 +192,20 @@ Scope {
     }
     onWantedChanged: root.refresh()
     Component.onCompleted: root.refresh()
+
+    Connections {
+        // A combo this worker passed over as somebody else's stays
+        // unbound until the bind table is read again. HyprKeybinds reads
+        // it for the cheatsheet and Sonar pings it, so a combo freed out
+        // of band is picked up then rather than only at the next start --
+        // the same re-check ShelfShortcut.qml hangs off this signal.
+        target: HyprKeybinds
+
+        function onEntriesChanged(): void {
+            if (root.wanted)
+                root.refresh();
+        }
+    }
 
     Connections {
         target: Hypr
