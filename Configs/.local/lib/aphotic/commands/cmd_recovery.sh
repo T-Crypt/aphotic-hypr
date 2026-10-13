@@ -24,19 +24,19 @@ APHOTIC_RECOVERY_KEEP=10
 # ---- recording -------------------------------------------------------
 
 _aphotic_recovery_record() {
-    local result="${1:-unknown}" status="${2:-}" tmp
+    local result="${1:-unknown}" status="${2:-}"
     # A clean stop is a restart or a logout, not a failure.
     [[ "$result" == "success" ]] && return 0
     command -v jq >/dev/null 2>&1 || return 0
 
     [[ -f "$APHOTIC_RECOVERY_STATE_FILE" ]] || echo '{"failures": []}' > "$APHOTIC_RECOVERY_STATE_FILE"
-    tmp="$(mktemp)"
-    jq --arg at "$(date -Iseconds)" \
+    aphotic_write_atomic "$APHOTIC_RECOVERY_STATE_FILE" \
+       jq --arg at "$(date -Iseconds)" \
        --arg result "$result" \
        --arg status "$status" \
        --argjson keep "$APHOTIC_RECOVERY_KEEP" \
        '.failures = ((.failures // []) + [{at: $at, result: $result, status: $status}] | .[-$keep:])' \
-       "$APHOTIC_RECOVERY_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_RECOVERY_STATE_FILE"
+       "$APHOTIC_RECOVERY_STATE_FILE"
     return 0
 }
 

@@ -400,13 +400,18 @@ Singleton {
         path: `${Quickshell.env("HOME")}/.local/state/aphotic/plugins.json`
         watchChanges: true
         onFileChanged: reload()
+        // A read that lands on a file another process is rewriting, or a
+        // load that fails outright, keeps the last good registry. The CLI
+        // is the writer, in another process, so a bad read is always
+        // possible; blanking _data turned one of those into "no plugins
+        // installed" across the whole shell until the next successful
+        // read. The next write reloads it either way.
         onLoaded: {
             try {
                 root._data = JSON.parse(text());
             } catch (e) {
-                root._data = ({});
+                // keep the last good _data
             }
         }
-        onLoadFailed: root._data = ({})
     }
 }

@@ -959,7 +959,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api tmp
+    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api
     local display desc category binaries
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
@@ -989,8 +989,8 @@ _aphotic_plugin_registry_sync() {
     api="$(_aphotic_plugin_api_json "$manifest")"
 
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
-    tmp="$(mktemp)"
-    jq --arg n "$name" \
+    aphotic_write_atomic "$APHOTIC_PLUGINS_STATE_FILE" \
+       jq --arg n "$name" \
        --arg version "${version:-0.0.0}" \
        --arg display_name "${display:-$name}" \
        --arg description "${desc:-}" \
@@ -1006,7 +1006,7 @@ _aphotic_plugin_registry_sync() {
        --argjson actions "$actions" \
        --argjson api "$api" \
        '.installed = ((.installed // {}) + {($n): {version: $version, display_name: $display_name, description: $description, category: $category, shelter: $shelter, requires_binaries: $requires_binaries, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions, api: $api}})' \
-       "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+       "$APHOTIC_PLUGINS_STATE_FILE"
     # Every install and update funnels through here, so this is the one
     # place that has to record "a plugin's code changed" for recovery.
     aphotic_record_change "plugin-registered" "${name} ${version:-0.0.0}"
@@ -1018,12 +1018,12 @@ _aphotic_plugin_registry_sync() {
 # this same file, watched live via FileView) without the shell needing
 # to know anything else changed.
 _aphotic_plugin_registry_remove() {
-    local name="$1" tmp
+    local name="$1"
     aphotic_require jq || return 1
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || return 0
-    tmp="$(mktemp)"
-    jq --arg n "$name" 'if .installed then .installed |= del(.[$n]) else . end' \
-       "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+    aphotic_write_atomic "$APHOTIC_PLUGINS_STATE_FILE" \
+        jq --arg n "$name" 'if .installed then .installed |= del(.[$n]) else . end' \
+        "$APHOTIC_PLUGINS_STATE_FILE"
     aphotic_record_change "plugin-removed" "$name"
 }
 
