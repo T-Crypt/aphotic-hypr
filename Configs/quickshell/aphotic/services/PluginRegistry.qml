@@ -234,6 +234,54 @@ Singleton {
         return actions;
     }
 
+    // Plugins that declare `[keybind]` -- the `keybind` capability, the
+    // same presence-follows-the-plugin rule WorkspaceKeybind.qml applies
+    // to the Workspace surface, generalised to a combo the manifest names.
+    //
+    // The id is the namespaced action id actionRegistrations builds,
+    // because that is what the bind runs: there is no second way to reach
+    // a plugin's action. The description falls back to that action's own
+    // label and then to its id, so a cheatsheet row is never blank. No
+    // core file names a plugin -- the prefix is the install key, read at
+    // runtime.
+    //
+    // Two plugins on one combo: the first in registry order wins, so the
+    // outcome is the same on every restart rather than whichever file
+    // watcher fired last. The dropped one is named in the log and nowhere
+    // else -- Settings does not show plugin binds.
+    readonly property var keybindRegistrations: {
+        const bindings = [];
+        const combos = ({});
+        for (const name of Object.keys(root._installed)) {
+            if (!root.isEnabled(name))
+                continue;
+            for (const bind of (root._installed[name]?.keybinds ?? [])) {
+                if (!bind || !bind.combo || !bind.action)
+                    continue;
+                const entry = {
+                    plugin: name,
+                    id: `${name}.${bind.action}`,
+                    combo: bind.combo,
+                    description: bind.description || (root._installed[name]?.actions ?? []).find(a => a?.id === bind.action)?.label || bind.action,
+                    requiresLayer: bind.requires_layer ?? "",
+                    requiresData: bind.requires_data ?? ""
+                };
+                if (!root._gateSatisfied(entry))
+                    continue;
+                // Only a bind that is actually going to be asserted claims
+                // the combo: a gated-off one holds no key, so a second
+                // plugin on the same combo still gets it.
+                if (combos[entry.combo]) {
+                    console.warn(`aphotic keybind: ${entry.id} skipped, ${entry.combo} is already bound by ${combos[entry.combo]}`);
+                    continue;
+                }
+                combos[entry.combo] = name;
+                bindings.push(entry);
+            }
+        }
+        return bindings;
+    }
+
     // Everything Settings -> Plugins needs to draw one installed row,
     // built once per plugins.json change. The pane used to get this by
     // running `aphotic plugin list --json`, which re-reads every manifest
