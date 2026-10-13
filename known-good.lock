@@ -1,4 +1,4 @@
-# canary 2026-10-12
+# canary 2026-10-13
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -174,7 +174,7 @@ iso-codes 4.20.1-1
 jack2 1.9.22-2
 jansson 2.15.1-1
 jasper 4.2.9-1
-jbigkit 2.1-8
+jbigkit 2.2-1
 jemalloc 1:5.4.0-1
 jq 1.8.2-1
 json-c 0.19-1
@@ -188,7 +188,7 @@ kmod 34.2-1
 krb5 1.22.2-1
 kvantum 1.1.8-1
 kvantum-qt5 1.1.8-1
-kwindowsystem 6.30.0-1
+kwindowsystem 6.31.0-1
 l-smash 2.14.5-4
 lame 4.0-1
 lcms2 2.19.1-1
@@ -391,7 +391,7 @@ libtasn1 4.21.0-1
 libteam 1.32-3
 libthai 0.1.30-1
 libtheora 1.2.0-1
-libtiff 4.7.2-1
+libtiff 4.7.2-2
 libtirpc 1.3.8-1
 libtool 2.6.2-5
 libtsan 16.2.1+r23+gd564253eb6c8-1
@@ -453,7 +453,7 @@ lmdb 0.9.35-1
 lsof 4.99.7-1
 lua 5.5.1-1
 lua54 5.4.9-1
-luajit 2.1.1788856981+c6ffc14-1
+luajit 2.1.1791890110+634daf2-1
 lxappearance 0.6.4-3
 lz4 1:1.10.0-2
 lzo 2.10-5
@@ -486,9 +486,9 @@ nss 3.131-1
 numactl 2.0.19-1
 nvidia-open-dkms 615.78.08-1
 nvidia-utils 615.78.08-1
-nwg-look 1.1.2-1
+nwg-look 1.2.0-1
 ocl-icd 2.3.5-1
-oh-my-zsh-git r7985.083c339e0-1
+oh-my-zsh-git r7990.964ddf789-1
 oniguruma 6.9.10-3
 openal 1.25.2-2
 opencore-amr 0.1.6-2
@@ -588,7 +588,7 @@ shadow 4.20.0.arch1-1
 shared-mime-info 2.5.1-2
 slang 2.3.3-4
 slurp 1.5.0-2
-snappy 1.2.2-3
+snappy 1.3.1-1
 sndio 1.10.0-1
 sound-theme-freedesktop 0.8-6
 source-highlight 3.1.9-19
