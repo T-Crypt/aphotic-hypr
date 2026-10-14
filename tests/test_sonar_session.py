@@ -141,11 +141,12 @@ ShellRoot {
 """
 
 
-def run_probe(tmp_path: Path, probe_text=PROBE, extra_env=None) -> dict:
+def run_probe(tmp_path: Path, probe_text=PROBE, extra_env=None,
+              marker="SONAR_SESSION", prefix="_sonar_session_") -> dict:
     home = tmp_path / "home"
     (home / "runtime").mkdir(mode=0o700, parents=True)
     probe = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".qml", prefix="_sonar_session_",
+        mode="w", suffix=".qml", prefix=prefix,
         dir=QML_ROOT, delete=False,
     )
     try:
@@ -170,8 +171,8 @@ def run_probe(tmp_path: Path, probe_text=PROBE, extra_env=None) -> dict:
         Path(probe.name).unlink(missing_ok=True)
 
     raw = result.stdout + "\n" + result.stderr
-    lines = [l.split("SONAR_SESSION ", 1)[1]
-             for l in raw.splitlines() if "SONAR_SESSION " in l]
+    lines = [l.split(marker + " ", 1)[1]
+             for l in raw.splitlines() if marker + " " in l]
     assert lines, (
         "probe never reported\n"
         f"qs exited {result.returncode}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
