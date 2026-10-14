@@ -12,6 +12,7 @@ Item {
     readonly property var activeSurface: root.workspace.find(surface => surface.id === root.activeId) ?? null
     property string activeId: ""
     property bool surfaceActive: false
+    property string failedLabel: ""
 
     function _ensureActive(): void {
         if (root.workspace.some(surface => surface.id === root.activeId))
@@ -259,8 +260,14 @@ Item {
                 source: root.activeSurface?.componentUrl ?? ""
 
                 onStatusChanged: {
-                    if (paneLoader.status === Loader.Ready)
+                    if (paneLoader.status === Loader.Ready) {
+                        root.failedLabel = "";
                         root._revealPane();
+                    } else if (paneLoader.status === Loader.Error) {
+                        root.failedLabel = root.activeSurface?.label ?? root.activeId;
+                        if (root.activeId.length > 0 && !PluginRegistry.failedSurfaceIds.includes(root.activeId))
+                            PluginRegistry.failedSurfaceIds = PluginRegistry.failedSurfaceIds.concat([root.activeId]);
+                    }
                 }
             }
 
@@ -299,7 +306,9 @@ Item {
                 }
 
                 StyledText {
-                    text: qsTr("No plugin surfaces")
+                    text: root.failedLabel.length > 0
+                          ? qsTr("Failed to load %1").arg(root.failedLabel)
+                          : qsTr("No plugin surfaces")
                     font: Tokens.font.label.medium
                     color: Colours.palette.m3onSurfaceVariant
                 }

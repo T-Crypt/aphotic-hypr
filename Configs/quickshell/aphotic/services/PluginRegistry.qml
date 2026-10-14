@@ -40,6 +40,10 @@ Singleton {
 
     property var _data: ({})
     property bool _sheltered: false
+    // Workspace surfaces whose component failed to load. They still exist in
+    // the registry, but a failed surface neither counts nor keeps the
+    // workspace keybind alive once we have seen it fail to load.
+    property var failedSurfaceIds: ([])
 
     Component.onCompleted: ProfileEngine.register({
         id: "plugin-surfaces",
