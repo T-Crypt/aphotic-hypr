@@ -111,9 +111,9 @@ _aphotic_theme_read_state() {
 }
 
 _aphotic_theme_write_state() {
-    local theme="$1" wallpaper="$2" tmp
-    tmp="$(mktemp)"
-    jq -n --arg t "$theme" --arg w "$wallpaper" '{theme: $t, wallpaper: $w}' > "$tmp" && mv "$tmp" "$APHOTIC_THEME_STATE_FILE"
+    local theme="$1" wallpaper="$2"
+    aphotic_write_atomic "$APHOTIC_THEME_STATE_FILE" \
+        jq -n --arg t "$theme" --arg w "$wallpaper" '{theme: $t, wallpaper: $w}'
 }
 
 # `wallust cs <name>` resolves a scheme by name inside wallust's own
@@ -560,22 +560,19 @@ _aphotic_theme_apply() {
         gtk_user_set="$(jq -r '.gtkThemeUserSet // false' "$settings_file")"
 
         if [[ -n "$icon_theme" && "$icon_user_set" != "true" ]]; then
-            local tmp; tmp="$(mktemp)"
-            jq --arg v "$icon_theme" '.iconTheme = $v' "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+            aphotic_write_atomic "$settings_file" jq --arg v "$icon_theme" '.iconTheme = $v' "$settings_file"
             gsettings set org.gnome.desktop.interface icon-theme "$icon_theme" 2>/dev/null || true
             for f in "${HOME}/.config/qt5ct/qt5ct.conf" "${HOME}/.config/qt6ct/qt6ct.conf"; do
                 [[ -f "$f" ]] && sed -i "s/^icon_theme=.*/icon_theme=${icon_theme}/" "$f"
             done
         fi
         if [[ -n "$cursor_theme" && "$cursor_user_set" != "true" ]]; then
-            local tmp; tmp="$(mktemp)"
-            jq --arg v "$cursor_theme" '.cursorTheme = $v' "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+            aphotic_write_atomic "$settings_file" jq --arg v "$cursor_theme" '.cursorTheme = $v' "$settings_file"
             hyprctl setcursor "$cursor_theme" "$(jq -r '.cursorSize // 24' "$settings_file")" 2>/dev/null || true
             gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" 2>/dev/null || true
         fi
         if [[ -n "$gtk_theme" && "$gtk_user_set" != "true" ]]; then
-            local tmp; tmp="$(mktemp)"
-            jq --arg v "$gtk_theme" '.gtkTheme = $v' "$settings_file" > "$tmp" && mv "$tmp" "$settings_file"
+            aphotic_write_atomic "$settings_file" jq --arg v "$gtk_theme" '.gtkTheme = $v' "$settings_file"
             gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" 2>/dev/null || true
         fi
     fi
