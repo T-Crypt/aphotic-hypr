@@ -1149,9 +1149,29 @@ _aphotic_plugin_relink_all_ui_modules() {
     local name
     while IFS= read -r name; do
         [[ -z "$name" ]] && continue
-        aphotic_plugin_is_enabled "$name" || continue
-        _aphotic_plugin_link_ui_module "$name"
+        if aphotic_plugin_is_enabled "$name"; then
+            _aphotic_plugin_link_ui_module "$name"
+        else
+            _aphotic_plugin_unlink_ui_module "$name"
+        fi
     done < <(aphotic_plugin_names)
+
+    local link module_name installed_name installed
+    for link in "${QUICKSHELL_CONFIG_DIR}/modules/plugins"/*; do
+        [[ -L "$link" ]] || continue
+        module_name="$(basename "$link")"
+        installed=false
+        while IFS= read -r installed_name; do
+            [[ -z "$installed_name" ]] && continue
+            if [[ "$(_aphotic_plugin_ui_module_name "$installed_name")" == "$module_name" ]]; then
+                installed=true
+                break
+            fi
+        done < <(aphotic_plugin_names)
+        if [[ "$installed" != "true" ]]; then
+            rm -f "$link"
+        fi
+    done
 }
 
 _aphotic_plugin_install() {
@@ -1300,9 +1320,11 @@ _aphotic_plugin_update_one() {
 
     _aphotic_plugin_install_deps "$dest"
     _aphotic_plugin_registry_sync "$name"
-    _aphotic_plugin_link_ui_module "$name"
     if aphotic_plugin_is_enabled "$name"; then
+        _aphotic_plugin_link_ui_module "$name"
         _aphotic_plugin_wire_harness "$name" || true
+    else
+        _aphotic_plugin_unlink_ui_module "$name"
     fi
 
     if [[ "$from" == "$to" ]]; then
@@ -1703,11 +1725,13 @@ aphotic_cmd_plugin() {
         enable)
             [[ -n "${1:-}" ]] || { aphotic_err "usage: aphotic plugin enable <name>"; return 1; }
             aphotic_plugin_set_enabled "$1" true && aphotic_ok "enabled ${1}"
+            _aphotic_plugin_link_ui_module "$1"
             _aphotic_plugin_wire_harness "$1" || true
             ;;
         disable)
             [[ -n "${1:-}" ]] || { aphotic_err "usage: aphotic plugin disable <name>"; return 1; }
             aphotic_plugin_set_enabled "$1" false && aphotic_ok "disabled ${1}"
+            _aphotic_plugin_unlink_ui_module "$1"
             _aphotic_plugin_unwire_harness "$1" || true
             ;;
         update)
