@@ -31,13 +31,13 @@ _aphotic_play_stat_get() {
 # Sets .<game>.<key> = $3. Best-effort -- silently no-ops without jq
 # rather than blocking play on a missing dependency.
 _aphotic_play_stat_set() {
-    local game="$1" key="$2" value="$3"
+    local game="$1" key="$2" value="$3" tmp
     command -v jq >/dev/null 2>&1 || return 0
     mkdir -p "$(dirname "$APHOTIC_PLAY_SCORES_FILE")"
     if [[ -f "$APHOTIC_PLAY_SCORES_FILE" ]]; then
         aphotic_write_atomic "$APHOTIC_PLAY_SCORES_FILE" \
             jq --arg g "$game" --arg k "$key" --argjson v "$value" '.[$g][$k] = $v' \
-            "$APHOTIC_PLAY_SCORES_FILE" 2>/dev/null
+            "$APHOTIC_PLAY_SCORES_FILE" >/dev/null 2>&1 || true
     else
         aphotic_write_atomic "$APHOTIC_PLAY_SCORES_FILE" \
             jq -n --arg g "$game" --arg k "$key" --argjson v "$value" '{($g): {($k): $v}}'

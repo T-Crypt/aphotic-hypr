@@ -56,6 +56,8 @@ _aphotic_plugin_root_value() {
 APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action edge_tab"
 APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action keybind"
 
+APHOTIC_PLUGIN_KEYBIND_MODIFIERS="SHIFT CAPS CTRL CONTROL ALT MOD1 MOD2 MOD3 SUPER WIN LOGO MOD4 MOD5"
+
 # ---------------------------------------------------------------------
 # The shell runtime API a plugin may call (manifest v3.9's [api]).
 #
@@ -506,113 +508,6 @@ _aphotic_plugin_actions_json() {
     fi
 
     printf '%s\n' "${entries[@]}" | jq -s .
-}
-
-# The `keybind` capability (manifest v3.11). A plugin names a combo and
-# the action it runs, and the shell binds the combo in Hyprland while the
-# plugin is installed, enabled and past its own gate -- the same
-# presence-follows-the-plugin rule WorkspaceKeybind.qml applies to the
-# Workspace surface, generalised to a combo the manifest names instead.
-#
-# `combo` is the canonical Lua form: tokens joined by " + ", the key last.
-# The legacy form ("SUPER SHIFT, R") is derived from it at bind time, not
-# declared -- a plugin only ever writes one combo, and the shell knows
-# which parser the running Hyprland speaks.
-#
-# A bind runs something, so both `combo` and `action` are required, and
-# validate holds `action` to an id this same manifest declares. Same five
-# numbered sections, and the same flat reader, as `[action]` above.
-#
-# `combo` is manifest text on its way into a shell command and into two
-# Hyprland grammars, so it is held to the shape
-# services/PluginKeybindCore.js can turn into both forms: '+' separated
-# tokens, the key last, each token a name (no spaces, no quoting, no
-# comma) and every token before it a modifier both Hyprland parsers know.
-# Anything else has no legacy form and no modmask to check the live bind
-# table with, and the shell refuses it rather than binding something
-# Hyprland rejects -- so say so here, where the author is looking.
-APHOTIC_PLUGIN_KEYBIND_MODIFIERS="SHIFT CAPS CTRL CONTROL ALT MOD1 MOD2 MOD3 SUPER WIN LOGO MOD4 MOD5"
-
-# "" when the combo is one the shell can bind, else why it is not. The
-# token shape is PluginKeybindCore.js's TOKEN and the list above is its
-# MODIFIERS table; tests/test_plugin_keybind_core.cjs and
-# tests/test_plugin_keybind_capability.sh hold the two sides to the same
-# answers.
-_aphotic_plugin_combo_error() {
-    local combo="$1" token i
-    local -a tokens=()
-
-    [[ -n "${combo//[[:space:]]/}" ]] || { echo "is empty"; return 0; }
-
-    IFS='+' read -r -a tokens <<<"$combo"
-    for ((i = 0; i < ${#tokens[@]}; i++)); do
-        token="${tokens[$i]}"
-        # Trim the spaces around a '+' -- anything else is the token's own
-        # character and fails the shape check below, the way
-        # PluginKeybindCore.js's TOKEN fails it.
-        token="${token#"${token%%[! ]*}"}"
-        token="${token%"${token##*[! ]}"}"
-        if [[ -z "$token" ]]; then
-            echo "has an empty token"
-            return 0
-        fi
-        if [[ ! "$token" =~ ^[A-Za-z0-9_:.-]+$ ]]; then
-            echo "has a token ('${token}') that isn't a key or a modifier name"
-            return 0
-        fi
-        if (( i < ${#tokens[@]} - 1 )) && ! _aphotic_plugin_in_list "${token^^}" "$APHOTIC_PLUGIN_KEYBIND_MODIFIERS"; then
-            echo "names '${token}', which isn't a modifier both Hyprland parsers know"
-            return 0
-        fi
-    done
-
-    echo ""
-}
-
-_aphotic_plugin_keybind_entry_json() {
-    local manifest="$1" section="$2" combo action description layer data
-    combo="$(aphotic_toml_get "$manifest" "$section" combo)"
-    action="$(aphotic_toml_get "$manifest" "$section" action)"
-    if [[ -z "$combo" ]] || [[ -z "$action" ]]; then
-        return 1
-    fi
-
-    description="$(aphotic_toml_get "$manifest" "$section" description)"
-    layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
-    data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
-
-    jq -n \
-        --arg action "$action" \
-        --arg combo "$combo" \
-        --arg description "${description:-}" \
-        --arg requires_layer "${layer:-}" \
-        --arg requires_data "${data:-}" \
-        '{action: $action, combo: $combo, description: $description, requires_layer: $requires_layer, requires_data: $requires_data}'
-}
-
-_aphotic_plugin_keybinds_json() {
-    local manifest="$1" entries=() entry section
-    for section in keybind keybind_2 keybind_3 keybind_4 keybind_5; do
-        if entry="$(_aphotic_plugin_keybind_entry_json "$manifest" "$section")"; then
-            entries+=("$entry")
-        fi
-    done
-
-    if [[ ${#entries[@]} -eq 0 ]]; then
-        echo 'null'
-        return 0
-    fi
-
-    printf '%s\n' "${entries[@]}" | jq -s .
-}
-
-# The [keybind*] sections a manifest declares, by name. Validate needs to
-# see a section that contributed nothing (no combo, no action) as present
-# anyway: that is exactly the declaration whose capability tag is missing.
-_aphotic_plugin_manifest_keybind_sections() {
-    local manifest="$1"
-    [[ -f "$manifest" ]] || return 0
-    sed -n 's/^[[:space:]]*\[\(keybind\(_[2-5]\)\?\)\][[:space:]]*$/\1/p' "$manifest" | sort -u
 }
 
 _aphotic_plugin_describe() {
@@ -1067,7 +962,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions keybinds api
+    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api keybinds tmp
     local display desc category binaries
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
@@ -1655,6 +1550,87 @@ _aphotic_plugin_validate() {
         fails=$((fails + 1))
     fi
 
+    # Every file a manifest section points at: must resolve inside the
+    # plugin's own directory (no leading '/', no '..' segment -- these
+    # get concatenated straight into a symlink target or a Loader
+    # source, never re-checked at load time) and must actually exist.
+    # hooks/harness scripts aren't required to be +x yet -- install
+    # chmods hooks/ after copying, and this runs before that ever
+    # happens.
+    local -a path_checks=(
+        "ui.dashboard_tab:component" "ui.notch_tile:component"
+        "ui.settings_pane:component" "ui.workspace:component" "ui.edge_tab:component"
+        "ui.overlay:component" "ui.fullscreen-overlay:component"
+        "ui.pet_action:component" "ui.pet_action_2:component" "ui.pet_action_3:component"
+        "profile:component"
+        "action:component" "action_2:component" "action_3:component" "action_4:component" "action_5:component"
+        "cli:script"
+        "hooks:on_theme_change" "hooks:on_project_open" "hooks:on_workspace_launch"
+        "harness:wire" "harness:unwire"
+    )
+    local check section key value
+    for check in "${path_checks[@]}"; do
+        section="${check%%:*}"
+        key="${check##*:}"
+        value="$(aphotic_toml_get "$manifest" "$section" "$key")"
+        [[ -n "$value" ]] || continue
+
+        if [[ "$value" == /* || "$value" == *..* ]]; then
+            aphotic_err "${name}: [${section}].${key} = '${value}' is not a safe relative path"
+            fails=$((fails + 1))
+            continue
+        fi
+        if [[ "$section" == "ui.edge_tab" ]]; then
+            if [[ "$value" == *%* || "$value" == *:* || "$value" == *\\* || "$value" == *\#* || "$value" == *\?* ]] || ! python3 - "$dir" "$value" <<'CHECK_PATH'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1]).resolve()
+try:
+    Path(root / sys.argv[2]).resolve().relative_to(root)
+except ValueError:
+    sys.exit(1)
+CHECK_PATH
+            then
+                aphotic_err "${name}: [ui.edge_tab].component is not a safe relative path"
+                fails=$((fails + 1))
+                continue
+            fi
+        fi
+        if [[ ! -f "${dir}/${value}" ]]; then
+            aphotic_err "${name}: [${section}].${key} points at '${value}', which doesn't exist"
+            fails=$((fails + 1))
+        fi
+    done
+
+    # Informational: aphotic_require's own pattern is warn-and-no-op,
+    # never a hard install-time block, so this stays a warning even
+    # though it means the plugin does nothing useful on this machine.
+    local bin
+    while IFS= read -r bin; do
+        [[ -z "$bin" ]] && continue
+        command -v "$bin" >/dev/null 2>&1 || {
+            aphotic_warn "${name}: requires.binaries lists '${bin}', not found on this machine"
+            warns=$((warns + 1))
+        }
+    done < <(aphotic_toml_get_array "$manifest" requires binaries)
+
+    # Whether this particular build can host what's declared. Same
+    # check install runs; surfaced here so it's visible before install
+    # ever touches the shell, not after.
+    local verdict
+    verdict="$(_aphotic_plugin_host_verdict "$caps" "$surfaces")"
+    case "$verdict" in
+        ok) ;;
+        partial:*)
+            aphotic_warn "${name}: partially hosted on this build -- ${verdict#partial:} unhosted"
+            warns=$((warns + 1))
+            ;;
+        inert:*)
+            aphotic_warn "${name}: nothing this build hosts -- ${verdict#inert:} unhosted (needs a newer Aphotic)"
+            warns=$((warns + 1))
+            ;;
+    esac
+
     # keybind and [keybind*] have to agree from both directions, same as
     # ui-surface above. A section with no capability tag is the unhosted
     # case the gate exists to catch, so it is an error; a capability tag
@@ -1834,6 +1810,84 @@ _aphotic_plugin_registry_backfill() {
         _aphotic_plugin_registry_sync "$name" >/dev/null 2>&1 || true
     done < <(jq -r '(.installed // {}) | keys[]' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)
 }
+
+_aphotic_plugin_combo_error() {
+    local combo="$1" token i
+    local -a tokens=()
+
+    [[ -n "${combo//[[:space:]]/}" ]] || { echo "is empty"; return 0; }
+
+    IFS='+' read -r -a tokens <<<"$combo"
+    for ((i = 0; i < ${#tokens[@]}; i++)); do
+        token="${tokens[$i]}"
+        # Trim the spaces around a '+' -- anything else is the token's own
+        # character and fails the shape check below, the way
+        # PluginKeybindCore.js's TOKEN fails it.
+        token="${token#"${token%%[! ]*}"}"
+        token="${token%"${token##*[! ]}"}"
+        if [[ -z "$token" ]]; then
+            echo "has an empty token"
+            return 0
+        fi
+        if [[ ! "$token" =~ ^[A-Za-z0-9_:.-]+$ ]]; then
+            echo "has a token ('${token}') that isn't a key or a modifier name"
+            return 0
+        fi
+        if (( i < ${#tokens[@]} - 1 )) && ! _aphotic_plugin_in_list "${token^^}" "$APHOTIC_PLUGIN_KEYBIND_MODIFIERS"; then
+            echo "names '${token}', which isn't a modifier both Hyprland parsers know"
+            return 0
+        fi
+    done
+
+    echo ""
+}
+
+_aphotic_plugin_keybind_entry_json() {
+    local manifest="$1" section="$2" combo action description layer data
+    combo="$(aphotic_toml_get "$manifest" "$section" combo)"
+    action="$(aphotic_toml_get "$manifest" "$section" action)"
+    if [[ -z "$combo" ]] || [[ -z "$action" ]]; then
+        return 1
+    fi
+
+    description="$(aphotic_toml_get "$manifest" "$section" description)"
+    layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
+    data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
+
+    jq -n \
+        --arg action "$action" \
+        --arg combo "$combo" \
+        --arg description "${description:-}" \
+        --arg requires_layer "${layer:-}" \
+        --arg requires_data "${data:-}" \
+        '{action: $action, combo: $combo, description: $description, requires_layer: $requires_layer, requires_data: $requires_data}'
+}
+
+_aphotic_plugin_keybinds_json() {
+    local manifest="$1" entries=() entry section
+    for section in keybind keybind_2 keybind_3 keybind_4 keybind_5; do
+        if entry="$(_aphotic_plugin_keybind_entry_json "$manifest" "$section")"; then
+            entries+=("$entry")
+        fi
+    done
+
+    if [[ ${#entries[@]} -eq 0 ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    printf '%s\n' "${entries[@]}" | jq -s .
+}
+
+# The [keybind*] sections a manifest declares, by name. Validate needs to
+# see a section that contributed nothing (no combo, no action) as present
+# anyway: that is exactly the declaration whose capability tag is missing.
+_aphotic_plugin_manifest_keybind_sections() {
+    local manifest="$1"
+    [[ -f "$manifest" ]] || return 0
+    sed -n 's/^[[:space:]]*\[\(keybind\(_[2-5]\)\?\)\][[:space:]]*$/\1/p' "$manifest" | sort -u
+}
+
 
 aphotic_cmd_plugin() {
     local sub="${1:-}"; shift || true
