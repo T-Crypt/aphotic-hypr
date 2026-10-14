@@ -38,14 +38,15 @@ def generated_block(root: Path) -> str:
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
     except subprocess.TimeoutExpired:
         pass
-    # A timed-out or failed fetch leaves no ref behind, and a shallow CI
-    # checkout never has one; fall back to the local history instead of
-    # crashing on the missing ref.
+    # Use FETCH_HEAD rather than refs/remotes/origin/main so a fetch cannot
+    # leave a new persistent ref behind and change this process's answer on
+    # a second run (that would make --write non-idempotent). A timed-out or
+    # failed fetch still falls back to local history.
     have_origin_main = subprocess.run(
-        ["git", "rev-parse", "--verify", "--quiet", "refs/remotes/origin/main"],
+        ["git", "rev-parse", "--verify", "--quiet", "FETCH_HEAD"],
         cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
     ).returncode == 0
-    ref = "origin/main" if have_origin_main else "HEAD"
+    ref = "FETCH_HEAD" if have_origin_main else "HEAD"
     heading = "### Recent origin/main" if have_origin_main else "### Recent local history"
     log = run(["git", "log", ref, "-15", "--oneline"], root).splitlines()
     lines = [START, "", "### Open pull requests", ""]

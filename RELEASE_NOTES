@@ -1,0 +1,20 @@
+# Aphotic 2.0.8
+
+Released: 2026-10-07
+
+## Changes since v2.0.7
+
+- **Harness v2**: `aphotic agent emit/run` (MGWG56Y) and Codex v2 stream consumer (PJPM4GB) (#302). Extends the FTN6AW1 event/stats contract across harnesses.
+- **SDK**: Developer hub on the site (8D66Q36, #301); Proxmox Dev VM helper (12QRFSX, #299).
+- **Docs & CI**: CLI reference generation and docs drift checks (9A2Z2VK, #300); CI kit usable by agents (W6S4RT4, #295); AGENTS.md never overwrites a local CLAUDE.md (KH5NNJV, #297).
+- **Design**: Signal is the design language (R14EHYS, #298); Settings outlines and direct Signal selection (TV6RHDR, #291).
+- **AI**: Claim standalone llama.cpp servers (Z629CEG, #292).
+- **Platform**: NVIDIA/session handling across syncs (FWC4197, #290); VPN provider adapters groundwork (K4GXT0S, 3FYPM2Y, SGXK37F); theme and Sonar refinements; writer v2 adapter records (TVMBMGH); AgentEvents backlog to all holders (FMGA6ZW).
+- **Tests & tooling**: Plugin id check skips comments (P758BCX); CI triage tool (`tools/ci/triage.py`); uninstall robustness improvements.
+
+## Verification
+
+- CI green on dev: bash-syntax, 76 bash tests, 256 Python tests passed (2 skipped).
+- Headless QML probe passed for changed surfaces where applicable.
+- No breaking config changes; install path unchanged.
+

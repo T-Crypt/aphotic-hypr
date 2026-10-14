@@ -36,7 +36,7 @@ grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)' "$ACTIONS" || fail "Worksp
 # exists while a plugin registers a ui.workspace.
 
 [[ -f "$KEYBIND" ]] || fail "Workspace keybind service is missing"
-grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.length > 0' "$KEYBIND" || fail "Workspace keybind is not gated on a registered surface"
+grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.some\(surface => !PluginRegistry\.failedSurfaceIds\.includes\(surface\.id\)\)' "$KEYBIND" || fail "Workspace keybind is not gated on a registered surface"
 grep -qE 'singleton WorkspaceKeybind 1\.0 WorkspaceKeybind\.qml' "$QMLDIR" || fail "Workspace keybind singleton is not exported"
 
 # A pragma Singleton nothing names is never constructed, and nothing

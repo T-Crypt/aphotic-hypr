@@ -66,9 +66,11 @@ aphotic_cmd_ai() {
             mkdir -p "$APHOTIC_CONFIG_HOME"
             [[ -f "$conf" ]] || echo '{}' > "$conf"
             if [[ -n "$model" && "$provider" == "ollama" ]]; then
-                aphotic_write_atomic "$conf" jq --arg p "$provider" --arg m "$model" '.activeProvider = $p | .ollamaModel = $m' "$conf"
+                aphotic_write_atomic "$conf" \
+                    jq --arg p "$provider" --arg m "$model" '.activeProvider = $p | .ollamaModel = $m' "$conf"
             else
-                aphotic_write_atomic "$conf" jq --arg p "$provider" '.activeProvider = $p' "$conf"
+                aphotic_write_atomic "$conf" \
+                    jq --arg p "$provider" '.activeProvider = $p' "$conf"
             fi
 
             if [[ -n "$model" && "$provider" != "ollama" ]]; then
