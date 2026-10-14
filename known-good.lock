@@ -1,4 +1,4 @@
-# canary 2026-10-13
+# canary 2026-10-14
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -627,7 +627,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 80-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.141.0-1
+visual-studio-code-bin 1.141.1-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
@@ -676,7 +676,7 @@ yay 13.0.1-1
 yay-debug 13.0.1-1
 zeromq 4.3.5-3
 zimg 3.0.6-2
-zlib 1:1.3.2-3
+zlib 1:1.3.2-4
 zlib-ng 2.3.3-1
 zsh 5.9.2-1
 zsh-autosuggestions 0.7.1-1
