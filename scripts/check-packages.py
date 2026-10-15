@@ -28,6 +28,29 @@ def load_packages():
             pkgs.add(pkg)
     return pkgs
 
+def load_flatpaks():
+    """Collect Flatpak application ids referenced in profiles TOML files.
+
+    Scans profiles/base/*.toml and profiles/layers/*.toml for `flatpak.apps`
+    lists plus profiles/custom_flatpaks.lst, returning a set of unique ids.
+    """
+    ids = set()
+    for base in sorted((ROOT / "profiles" / "base").glob("*.toml")):
+        d = tomllib.load(open(base, "rb"))
+        for fid in d.get("flatpak", {}).get("apps", []):
+            ids.add(fid)
+    for layer in sorted((ROOT / "profiles" / "layers").glob("*.toml")):
+        d = tomllib.load(open(layer, "rb"))
+        for fid in d.get("flatpak", {}).get("apps", []):
+            ids.add(fid)
+    custom = ROOT / "profiles" / "custom_flatpaks.lst"
+    if custom.is_file():
+        for line in custom.read_text().splitlines():
+            fid = line.strip()
+            if fid:
+                ids.add(fid)
+    return ids
+
 
 def check_official(pkg):
     """Return True if `pkg` exists in official Arch repos, False if not,
@@ -90,6 +113,30 @@ def main():
             print(m)
         sys.exit(1)
     print("\nAll packages verified.")
+
+    print("\nFlatpak applications:")
+    flatpaks = load_flatpaks()
+    flatpak_missing = []
+    import shutil, subprocess
+    if shutil.which("flatpak") is None:
+        print("  SKIP: flatpak not installed on this machine")
+    else:
+        for fid in sorted(flatpaks):
+            proc = subprocess.run(
+                ["flatpak", "remote-info", "--system", "flathub", fid],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
+            if proc.returncode == 0:
+                print(f"{fid:35s} Flatpak")
+            else:
+                print(f"{fid:35s} !!! NOT FOUND !!!")
+                flatpak_missing.append(fid)
+        if flatpak_missing:
+            print("\n--- MISSING (flatpak) ---")
+            for fid in flatpak_missing:
+                print(fid)
+            sys.exit(1)
+        print("\nAll Flatpak applications verified.")
 
 
 if __name__ == "__main__":
