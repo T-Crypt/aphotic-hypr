@@ -11,6 +11,8 @@ hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "Open file
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("qs -c aphotic ipc call launcher toggle"), { description = "Toggle app launcher" })
 hl.bind(mainMod .. " + space", hl.dsp.exec_cmd("qs -c aphotic ipc call launcher toggle"), { description = "Toggle app launcher" })
 hl.bind(mainMod .. " + S", hl.dsp.exec_cmd('grim -g "$(slurp)" - | swappy -f -'), { description = "Screenshot: select area" })
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd('mkdir -p ~/Videos && wf-recorder -g "$(slurp)" -f ~/Videos/$(date +%Y-%m-%d_%H-%M-%S).mp4'), { description = "Screen recording: select area" })
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("pkill wf-recorder"), { description = "Stop screen recording" })
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("qs -c aphotic ipc call wallpaperpicker toggle"), { description = "Wallpaper picker (current theme)" })
 hl.bind(mainMod .. " + CTRL + W", hl.dsp.exec_cmd("qs -c aphotic ipc call launcher openWallpapers"), { description = "Browse wallpapers (all themes)" })
 -- SUPER + SHIFT + W is the Workspace plane, and it is deliberately not

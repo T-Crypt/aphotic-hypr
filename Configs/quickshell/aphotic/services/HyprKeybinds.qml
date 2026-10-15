@@ -100,7 +100,7 @@ Singleton {
             return "Workspaces";
         if (/window|floating|pseudotile|split direction|\bgroup\b|fullscreen|\bpin\b/.test(d))
             return "Windows";
-        if (d.includes("screenshot") || d.includes("color from screen"))
+        if (d.includes("screenshot") || d.includes("screen recording") || d.includes("color from screen"))
             return "Capture";
         if (/volume|brightness|microphone|\btrack\b|\bmedia\b|\baudio\b/.test(d))
             return "Media & Hardware";
