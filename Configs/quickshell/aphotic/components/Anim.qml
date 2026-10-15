@@ -1,5 +1,6 @@
 import QtQuick
 import qs.config
+import qs.services
 
 NumberAnimation {
     enum Type {
@@ -16,12 +17,19 @@ NumberAnimation {
         SlowSpatial,
         FastEffects,
         DefaultEffects,
-        SlowEffects
+        SlowEffects,
+        Enter,
+        Exit
     }
 
     property int type: Anim.DefaultSpatial
 
-    duration: {
+    // The token value for this type, before Motion scales it.
+    readonly property int baseDuration: {
+        if (type === Anim.Enter)
+            return Tokens.anim.durations.enter;
+        if (type === Anim.Exit)
+            return Tokens.anim.durations.exit;
         if (type < Anim.StandardSmall || type > Anim.SlowEffects)
             return Tokens.anim.durations.normal;
 
@@ -42,6 +50,9 @@ NumberAnimation {
         const idx = type % 4; // 0-7 are the 4 standard types
         return Tokens.anim.durations[types[idx]];
     }
+
+    duration: Motion.duration(baseDuration)
+
     easing: {
         if (type === Anim.FastSpatial)
             return Tokens.anim.expressiveFastSpatial;
