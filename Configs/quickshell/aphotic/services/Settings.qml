@@ -225,6 +225,19 @@ Singleton {
     property bool osdEnableBrightness: Config.osd.enableBrightness
     property bool osdEnableMicrophone: Config.osd.enableMicrophone
 
+    // The phone stack. All eight off, and only `phoneBridge` does anything
+    // yet: it is the flag the device bridge reads before it looks for a
+    // phone, and the gate both the shelf tab and the notch tile read
+    // through services/Phone.qml.
+    property bool phoneBridge: Config.phone.bridge
+    property bool phoneMirror: Config.phone.mirror
+    property bool phoneCalls: Config.phone.calls
+    property bool phoneAlarms: Config.phone.alarms
+    property bool phoneIcons: Config.phone.icons
+    property bool phoneCamera: Config.phone.camera
+    property bool phoneMic: Config.phone.mic
+    property bool phoneLocalSend: Config.phone.localSend
+
     property real notifExpireTimeout: GlobalConfig.notifs.defaultExpireTimeout
 
     // "" = use the active theme's own accent (Colours.qml's hardcoded
@@ -390,6 +403,14 @@ Singleton {
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
             osdEnableMicrophone: root.osdEnableMicrophone,
+            phoneBridge: root.phoneBridge,
+            phoneMirror: root.phoneMirror,
+            phoneCalls: root.phoneCalls,
+            phoneAlarms: root.phoneAlarms,
+            phoneIcons: root.phoneIcons,
+            phoneCamera: root.phoneCamera,
+            phoneMic: root.phoneMic,
+            phoneLocalSend: root.phoneLocalSend,
             notifExpireTimeout: root.notifExpireTimeout,
             accentColorOverride: root.accentColorOverride,
             statusIconBluetoothColor: root.statusIconBluetoothColor,
@@ -668,6 +689,14 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
     onOsdEnableMicrophoneChanged: root._saveState()
+    onPhoneBridgeChanged: root._saveState()
+    onPhoneMirrorChanged: root._saveState()
+    onPhoneCallsChanged: root._saveState()
+    onPhoneAlarmsChanged: root._saveState()
+    onPhoneIconsChanged: root._saveState()
+    onPhoneCameraChanged: root._saveState()
+    onPhoneMicChanged: root._saveState()
+    onPhoneLocalSendChanged: root._saveState()
     onNotifExpireTimeoutChanged: root._saveState()
     onAccentColorOverrideChanged: root._saveState()
     onStatusIconBluetoothColorChanged: root._saveState()
@@ -885,6 +914,22 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.osdEnableBrightness = data.osdEnableBrightness;
                 if (typeof data.osdEnableMicrophone === "boolean")
                     root.osdEnableMicrophone = data.osdEnableMicrophone;
+                if (typeof data.phoneBridge === "boolean")
+                    root.phoneBridge = data.phoneBridge;
+                if (typeof data.phoneMirror === "boolean")
+                    root.phoneMirror = data.phoneMirror;
+                if (typeof data.phoneCalls === "boolean")
+                    root.phoneCalls = data.phoneCalls;
+                if (typeof data.phoneAlarms === "boolean")
+                    root.phoneAlarms = data.phoneAlarms;
+                if (typeof data.phoneIcons === "boolean")
+                    root.phoneIcons = data.phoneIcons;
+                if (typeof data.phoneCamera === "boolean")
+                    root.phoneCamera = data.phoneCamera;
+                if (typeof data.phoneMic === "boolean")
+                    root.phoneMic = data.phoneMic;
+                if (typeof data.phoneLocalSend === "boolean")
+                    root.phoneLocalSend = data.phoneLocalSend;
                 if (typeof data.notifExpireTimeout === "number")
                     root.notifExpireTimeout = data.notifExpireTimeout;
                 if (typeof data.accentColorOverride === "string")
