@@ -1,20 +1,19 @@
-# Aphotic 2.0.8
+# Aphotic 2.0.9
 
-Released: 2026-10-07
+Released: 2026-10-14
 
-## Changes since v2.0.7
+## Changes since v2.0.8
 
-- **Harness v2**: `aphotic agent emit/run` (MGWG56Y) and Codex v2 stream consumer (PJPM4GB) (#302). Extends the FTN6AW1 event/stats contract across harnesses.
-- **SDK**: Developer hub on the site (8D66Q36, #301); Proxmox Dev VM helper (12QRFSX, #299).
-- **Docs & CI**: CLI reference generation and docs drift checks (9A2Z2VK, #300); CI kit usable by agents (W6S4RT4, #295); AGENTS.md never overwrites a local CLAUDE.md (KH5NNJV, #297).
-- **Design**: Signal is the design language (R14EHYS, #298); Settings outlines and direct Signal selection (TV6RHDR, #291).
-- **AI**: Claim standalone llama.cpp servers (Z629CEG, #292).
-- **Platform**: NVIDIA/session handling across syncs (FWC4197, #290); VPN provider adapters groundwork (K4GXT0S, 3FYPM2Y, SGXK37F); theme and Sonar refinements; writer v2 adapter records (TVMBMGH); AgentEvents backlog to all holders (FMGA6ZW).
-- **Tests & tooling**: Plugin id check skips comments (P758BCX); CI triage tool (`tools/ci/triage.py`); uninstall robustness improvements.
+- **Plugin keybinds**: a `[keybind]` manifest block binds its combo for as long as the plugin that declared it is enabled, and runs that plugin's own `[action]` through the command palette's existing path (8M406NY, #310). A bind the user already has on the combo wins, and combos are parsed to a strict grammar so manifest text cannot reach the shell's bind table.
+- **Two new plugins**: the game library on the workspace plane, with a notch tile and big picture mode (3CV8G2B, plugins #46), and profile-driven remote desktop sessions over xfreerdp, with a Network settings pane and `SUPER + ALT + P` (CANN9PC, plugins #47). The remote desktop plugin declares its own package requirements, since the binary name and the package name differ.
+- **Plugin reliability**: state writes stage beside their target instead of truncating the live file, and a registry read that fails to parse no longer empties the shell's plugin list (#311). Disabling a plugin unlinks its QML module, `update` relinks only an enabled one, and a workspace surface whose component fails to load is named in the plane rather than shown as an empty state (JZGECWJ, 7AH2G4R, #313).
+- **Hyprland**: `auto_group` is off by default, so a window opened beside a grouped one tiles like any other, and grouping by hand still works (MHFMSBC, #312). The workspace plane's keybind clears both the Lua and the legacy parser table before it binds, so a bind a stopped shell left behind can no longer stack a second one on `SUPER + SHIFT + W` (26P3448, #306).
+- **Harnesses**: Pi and OMP register as agent harnesses on the v2 event and stats contract, so both show up in the agent graph and the bar's harness tabs (FJXMJ10, #305).
+- **Install path and tooling**: the dots directory resolves wherever the checkout was cloned (7Z0KF5B, #308), and the maintainer board moved from epiq to OME (00VFYPZ, #309).
 
 ## Verification
 
-- CI green on dev: bash-syntax, 76 bash tests, 256 Python tests passed (2 skipped).
-- Headless QML probe passed for changed surfaces where applicable.
-- No breaking config changes; install path unchanged.
-
+- `tools/ci/local.sh` is green in a checkout shaped like the runner's: shell syntax, the bash suite and the Python suite.
+- The font cache work and the plugin keybind capability pass on this branch (`tests/test_install_fonts.sh`, `tests/test_plugin_keybind_capability.sh`). Both the font cache rebuild and the doctor's icon font check were released with 2.0.8 on `main` and had never reached `dev`, so this branch merges `main` in to carry them forward.
+- The QML surfaces were not exercised on a live desktop. They take the same load path as the merged commits, and the headless probe in CI covers the plugin registry and the keybind core.
+- Nothing in this release touches a provider, a kernel module or a boot path. No breaking config changes.

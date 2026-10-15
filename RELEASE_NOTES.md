@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.9
+
+Plugins can own a keybind, and the first two to use it are a game library on the workspace plane and remote desktop sessions over xfreerdp.
+
 ## 2.0.8
 
 VPN support (Tailscale, Netbird, Mullvad, OpenVPN), a clean install path for hybrid NVIDIA laptops, and shell icons that render on first boot.
