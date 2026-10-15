@@ -1,4 +1,4 @@
-# canary 2026-10-14
+# canary 2026-10-15
 abseil-cpp 20260817.0-2
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
@@ -33,7 +33,7 @@ boost-libs 1.92.0-1
 brightnessctl 0.5.1-3
 brotli 1.2.0-1
 btop 1.4.7-1
-bubblewrap 0.13.0-1
+bubblewrap 0.13.1-1
 bzip2 1.0.8-6
 ca-certificates 20240618-1
 ca-certificates-mozilla 3.131-1
@@ -453,7 +453,7 @@ lmdb 0.9.35-1
 lsof 4.99.7-1
 lua 5.5.1-1
 lua54 5.4.9-1
-luajit 2.1.1791890110+634daf2-1
+luajit 2.1.1791988261+2a8e017-1
 lxappearance 0.6.4-3
 lz4 1:1.10.0-2
 lzo 2.10-5
@@ -486,7 +486,7 @@ nss 3.131-1
 numactl 2.0.19-1
 nvidia-open-dkms 615.78.08-1
 nvidia-utils 615.78.08-1
-nwg-look 1.2.0-1
+nwg-look 1.2.1-1
 ocl-icd 2.3.5-1
 oh-my-zsh-git r7990.964ddf789-1
 oniguruma 6.9.10-3
@@ -561,7 +561,7 @@ qt5-translations 5.15.19-1
 qt5-wayland 5.15.19+kde+r55-1
 qt5-x11extras 5.15.19-1
 qt5ct 1.9-2
-qt6-base 6.12.0-2
+qt6-base 6.12.0-3
 qt6-declarative 6.12.0-1
 qt6-imageformats 6.12.0-1
 qt6-multimedia 6.12.0-1
@@ -627,7 +627,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 80-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.141.1-1
+visual-studio-code-bin 1.142.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
