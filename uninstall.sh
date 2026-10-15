@@ -177,6 +177,12 @@ if [[ "$PURGE_PACKAGES" == "1" ]]; then
     while IFS= read -r pkg; do
       [[ -n "$pkg" ]] && "$AUR_HELPER" -R --noconfirm "$pkg"
     done <<< "$packages"
+
+    # Flatpaks ship through Flathub, not pacman. Uninstall them separately.
+    flatpaks=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --custom-flatpaks "$ROOT_DIR/profiles/custom_flatpaks.lst" --field flatpak)
+    while IFS= read -r pkg; do
+      [[ -n "$pkg" ]] && sudo flatpak uninstall --system -y "$pkg" || true
+    done <<< "$flatpaks"
   fi
 fi
 

@@ -9,13 +9,18 @@ FIXTURES = Path(__file__).resolve().parent / "fixtures" / "toml"
 
 def test_base_only():
     result = merge_packages(str(FIXTURES / "base.toml"), [])
-    assert result == {"prep": ["alpha", "beta"], "main": ["hyprland", "waybar"]}
+    assert result == {
+        "prep": ["alpha", "beta"],
+        "main": ["hyprland", "waybar"],
+        "flatpak": ["org.example.Base"],
+    }
 
 
 def test_base_plus_one_layer():
     result = merge_packages(str(FIXTURES / "base.toml"), [str(FIXTURES / "layer_a.toml")])
     assert result["prep"] == ["alpha", "beta", "gamma"]
     assert result["main"] == ["hyprland", "waybar", "gamemode"]
+    assert result["flatpak"] == ["org.example.Base", "org.example.LayerA"]
 
 
 def test_base_plus_multiple_layers_dedup():
@@ -24,6 +29,7 @@ def test_base_plus_multiple_layers_dedup():
         [str(FIXTURES / "layer_a.toml"), str(FIXTURES / "layer_b.toml")],
     )
     assert result["main"] == ["hyprland", "waybar", "gamemode", "neovim"]
+    assert result["flatpak"] == ["org.example.Base", "org.example.LayerA", "org.example.LayerB"]
 
 
 def test_custom_apps_appended_and_deduped():
@@ -35,9 +41,26 @@ def test_custom_apps_appended_and_deduped():
     assert result["main"] == ["hyprland", "waybar", "gamemode", "spotify", "neovim"]
 
 
+def test_custom_flatpaks_appended_and_deduped():
+    result = merge_packages(
+        str(FIXTURES / "base.toml"),
+        [str(FIXTURES / "layer_a.toml")],
+        custom_flatpaks_path=str(FIXTURES / "custom_flatpaks.lst"),
+    )
+    assert result["flatpak"] == ["org.example.Base", "org.example.LayerA", "org.example.Custom"]
+
+
+def test_flatpak_defaults_to_empty_without_the_table():
+    result = merge_packages(str(FIXTURES / "layer_a.toml"), [])
+    assert result["flatpak"] == ["org.example.LayerA"]
+    assert result["main"] == ["gamemode"]
+
+
 if __name__ == "__main__":
     test_base_only()
     test_base_plus_one_layer()
     test_base_plus_multiple_layers_dedup()
     test_custom_apps_appended_and_deduped()
+    test_custom_flatpaks_appended_and_deduped()
+    test_flatpak_defaults_to_empty_without_the_table()
     print("PASS: all merge tests")

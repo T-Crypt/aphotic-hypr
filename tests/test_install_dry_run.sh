@@ -20,6 +20,9 @@ fi
 for pkg in quickshell gamemode mangohud neovim ollama llmfit spotify; do
   echo "$output" | grep -q -- "$pkg" || fail "expected '$pkg' in dry-run plan"
 done
+echo "$output" | grep -q -- "org.gtk.Gtk3theme.adw-gtk3-dark" || fail "expected flatpak app in dry-run plan"
+echo "$output" | grep -q -- "com.heroicgameslauncher.hgl" || fail "expected gaming flatpak in dry-run plan"
+echo "$output" | grep -q -- "io.freetubeapp.FreeTube" || fail "expected FreeTube in dry-run plan"
 
 [[ ! -f aphotic.toml ]] || fail "dry-run should not have written aphotic.toml"
 

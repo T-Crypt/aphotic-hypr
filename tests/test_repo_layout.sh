@@ -12,13 +12,14 @@ for d in lib/colors lib/bar lib/install lib/toml themes/default profiles/base pr
 done
 
 [[ -f themes/THEME_SPEC.md ]] || fail "missing themes/THEME_SPEC.md"
-[[ -f profiles/custom_apps.lst ]] || fail "missing profiles/custom_apps.lst"
-[[ -L custom_apps.lst ]] || fail "custom_apps.lst is not a symlink"
 
-target=$(readlink custom_apps.lst)
-[[ "$target" == "profiles/custom_apps.lst" ]] || fail "custom_apps.lst points to '$target', expected profiles/custom_apps.lst"
-
-diff <(cat custom_apps.lst) <(cat profiles/custom_apps.lst) >/dev/null || fail "symlinked content mismatch"
+for list in custom_apps.lst custom_flatpaks.lst; do
+  [[ -f "profiles/$list" ]] || fail "missing profiles/$list"
+  [[ -L "$list" ]] || fail "$list is not a symlink"
+  target=$(readlink "$list")
+  [[ "$target" == "profiles/$list" ]] || fail "$list points to '$target', expected profiles/$list"
+  diff <(cat "$list") <(cat "profiles/$list") >/dev/null || fail "symlinked content mismatch for $list"
+done
 
 git check-ignore -q aphotic.toml || fail "aphotic.toml is not gitignored"
 git check-ignore -q install.log || fail "install.log is not gitignored"
