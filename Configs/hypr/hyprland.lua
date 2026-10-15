@@ -69,6 +69,13 @@ hl.config({
     },
 
     group = {
+        -- A window opened while a grouped window has focus joins that group
+        -- and fills the workspace as one tab instead of tiling, which reads
+        -- as "the terminal opened fullscreen"; dragging a window onto another
+        -- arms the same trap. Grouping by hand (SUPER+G) still works.
+        auto_group      = false,
+        drag_into_group = 0,
+
         col = {
             border_active          = colors.color4,
             border_inactive        = colors.color3,
