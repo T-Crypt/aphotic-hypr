@@ -11,6 +11,7 @@ import qs.services
 import qs.services.ai
 import qs.services.profile
 import "PluginRegistryCore.js" as RegistryCore
+import "PluginKeybindCore.js" as KeybindCore
 import "PluginPaths.js" as Paths
 import "SonarTargets.js" as Discovery
 
@@ -40,6 +41,10 @@ Singleton {
 
     property var _data: ({})
     property bool _sheltered: false
+    // Workspace surfaces whose component failed to load. They still exist in
+    // the registry, but a failed surface neither counts nor keeps the
+    // workspace keybind alive once we have seen it fail to load.
+    property var failedSurfaceIds: ([])
 
     Component.onCompleted: ProfileEngine.register({
         id: "plugin-surfaces",
@@ -234,6 +239,71 @@ Singleton {
         return actions;
     }
 
+    // Plugins that declare `[keybind]` -- the `keybind` capability, the
+    // same presence-follows-the-plugin rule WorkspaceKeybind.qml applies
+    // to the Workspace surface, generalised to a combo the manifest names.
+    //
+    // The id is the namespaced action id actionRegistrations builds,
+    // because that is what the bind runs: there is no second way to reach
+    // a plugin's action. The description falls back to that action's own
+    // label and then to its id, so a cheatsheet row is never blank. No
+    // core file names a plugin -- the prefix is the install key, read at
+    // runtime.
+    //
+    // Two plugins on one combo: the first in registry order wins, so the
+    // outcome is the same on every restart rather than whichever file
+    // watcher fired last. The dropped one is named in the log and nowhere
+    // else -- Settings does not show plugin binds.
+    readonly property var keybindRegistrations: {
+        const bindings = [];
+        // Keyed on the combo the conflict check itself identifies
+        // (PluginKeybindCore.comboKey), not on the manifest's spelling of
+        // it: two plugins that write one physical combo two ways are one
+        // combo, and asserting both would leave one action unreachable.
+        const claimed = new Map();
+        for (const name of Object.keys(root._installed)) {
+            if (!root.isEnabled(name))
+                continue;
+            for (const bind of (root._installed[name]?.keybinds ?? [])) {
+                if (!bind || !bind.combo || !bind.action)
+                    continue;
+                const entry = {
+                    plugin: name,
+                    id: `${name}.${bind.action}`,
+                    combo: bind.combo,
+                    description: bind.description || (root._installed[name]?.actions ?? []).find(a => a?.id === bind.action)?.label || bind.action,
+                    requiresLayer: bind.requires_layer ?? "",
+                    requiresData: bind.requires_data ?? ""
+                };
+                if (!root._gateSatisfied(entry))
+                    continue;
+                const combo = KeybindCore.comboKey(bind.combo);
+                if (combo.length === 0) {
+                    console.warn(`aphotic keybind: ${entry.id} skipped, '${bind.combo}' is not a combo this shell can bind`);
+                    continue;
+                }
+                // Only a bind that is actually going to be asserted claims
+                // the combo: a gated-off one holds no key, and one whose
+                // action does not resolve binds nothing -- the same
+                // Actions.has the worker applies as its last word. Either
+                // way a second plugin on the same combo still gets it,
+                // which is what a claim made here for a bind that can never
+                // happen would take away.
+                if (claimed.has(combo)) {
+                    console.warn(`aphotic keybind: ${entry.id} skipped, '${bind.combo}' is already bound by ${claimed.get(combo)}`);
+                    continue;
+                }
+                if (!Actions.has(entry.id)) {
+                    console.warn(`aphotic keybind: ${entry.id} skipped, its action does not resolve`);
+                    continue;
+                }
+                claimed.set(combo, entry.id);
+                bindings.push(entry);
+            }
+        }
+        return bindings;
+    }
+
     // Everything Settings -> Plugins needs to draw one installed row,
     // built once per plugins.json change. The pane used to get this by
     // running `aphotic plugin list --json`, which re-reads every manifest
@@ -400,13 +470,18 @@ Singleton {
         path: `${Quickshell.env("HOME")}/.local/state/aphotic/plugins.json`
         watchChanges: true
         onFileChanged: reload()
+        // A read that lands on a file another process is rewriting, or a
+        // load that fails outright, keeps the last good registry. The CLI
+        // is the writer, in another process, so a bad read is always
+        // possible; blanking _data turned one of those into "no plugins
+        // installed" across the whole shell until the next successful
+        // read. The next write reloads it either way.
         onLoaded: {
             try {
                 root._data = JSON.parse(text());
             } catch (e) {
-                root._data = ({});
+                // keep the last good _data
             }
         }
-        onLoadFailed: root._data = ({})
     }
 }

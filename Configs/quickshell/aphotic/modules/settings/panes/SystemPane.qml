@@ -9,7 +9,7 @@ import qs.services
 ColumnLayout {
     id: root
 
-    readonly property string dotsDir: `${Quickshell.env("HOME")}/Aphotic-Hypr`
+    readonly property string dotsDir: InstallProfile.dotsDir
 
     property string doctorOutput: qsTr("Running aphotic doctor…")
     property string packageCheckOutput: ""

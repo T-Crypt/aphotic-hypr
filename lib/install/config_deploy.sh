@@ -63,7 +63,7 @@ build_shell_shaders() {
 # opens on, and doing all of them on a large collection would spend real
 # time on images the user may never look at.
 build_wallpaper_thumbs() {
-  local script="${APHOTIC_DOTS_DIR:-$HOME/Aphotic-Hypr}/Configs/.local/lib/aphotic/wallpaper_thumbs.py"
+  local script="${APHOTIC_DOTS_DIR:-$ROOT_DIR}/Configs/.local/lib/aphotic/wallpaper_thumbs.py"
   local awww_dir="$HOME/.config/awww"
   local theme=""
 
@@ -239,6 +239,9 @@ deploy_user_configs() {
 
   mkdir -p "$HOME/.local/bin"
   ln -sf "$ROOT_DIR/Configs/.local/bin/aphotic" "$HOME/.local/bin/aphotic"
+  # The shell reads the checkout through this link, so the clone's name doesn't matter.
+  mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/aphotic"
+  ln -sfn "$ROOT_DIR" "${XDG_DATA_HOME:-$HOME/.local/share}/aphotic/dots"
 
   # The cp -R above just wiped modules/plugins/* (any installed
   # ui-surface plugin's QML module symlink) along with the rest of
