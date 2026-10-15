@@ -519,7 +519,6 @@ main() {
   # Optional: every failure is reported and skipped, never fatal.
   install_flatpak_list "$flatpak_apps"
 
-
   # After the main list, since the accelerated runner depends on the
   # `ollama` the ai layer installs, and before setup_assistant, which
   # pulls a model and wants the GPU runner already in place.
