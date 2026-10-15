@@ -104,6 +104,14 @@ QtObject {
             readonly property int expressiveFastEffects: 150
             readonly property int expressiveDefaultEffects: 200
             readonly property int expressiveSlowEffects: 300
+            readonly property int enter: 400
+            readonly property int exit: 200
+            readonly property int snap: 150
+            readonly property int resize: 300
+            readonly property int compactSmall: 100
+            readonly property int compactMedium: 200
+            readonly property int compactLarge: 400
+            readonly property int tooltip: 100
         }
 
         readonly property var emphasized: ({
