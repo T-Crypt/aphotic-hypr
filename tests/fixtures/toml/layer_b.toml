@@ -3,3 +3,6 @@ name = "fixture-layer-b"
 
 [packages]
 main = ["hyprland", "neovim"]
+
+[flatpak]
+apps = ["org.example.LayerA", "org.example.LayerB"]

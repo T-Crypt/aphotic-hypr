@@ -26,6 +26,7 @@ source "$ROOT_DIR/lib/install/wallust.sh"
 source "$ROOT_DIR/lib/install/report.sh"
 source "$ROOT_DIR/lib/install/snapshot.sh"
 source "$ROOT_DIR/lib/install/packages.sh"
+source "$ROOT_DIR/lib/install/flatpak.sh"
 source "$ROOT_DIR/lib/install/detect.sh"
 source "$ROOT_DIR/lib/install/system_prep.sh"
 source "$ROOT_DIR/lib/install/config_deploy.sh"
@@ -356,8 +357,9 @@ main() {
     layer_args=$(IFS=,; echo "${layer_paths[*]}")
   fi
 
-  local main_pkgs prep_pkgs base_main_pkgs base_prep_pkgs
+  local main_pkgs prep_pkgs base_main_pkgs base_prep_pkgs flatpak_apps
   main_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --custom-apps "$ROOT_DIR/profiles/custom_apps.lst" --field main) || { echo -e "$CER - Failed to resolve package list (check --profile/--with values)"; exit 1; }
+  flatpak_apps=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --custom-apps "$ROOT_DIR/profiles/custom_apps.lst" --custom-flatpaks "$ROOT_DIR/profiles/custom_flatpaks.lst" --field flatpak) || { echo -e "$CER - Failed to resolve Flatpak list (check --profile/--with values)"; exit 1; }
   prep_pkgs=$("$PYTHON_BIN" "$ROOT_DIR/lib/toml/merge.py" --base "$ROOT_DIR/profiles/base/$PROFILE.toml" --layers "$layer_args" --field prep) || { echo -e "$CER - Failed to resolve package list (check --profile/--with values)"; exit 1; }
   # The same two fields resolved from the base profile alone -- no layers,
   # no custom_apps.lst. That set is the shell itself, and a failure in it
@@ -393,6 +395,8 @@ main() {
     print_package_plan "$prep_pkgs" "$base_prep_pkgs"
     echo "  main packages:"
     print_package_plan "$main_pkgs" "$base_main_pkgs"
+    echo "  flatpak apps:"
+    print_flatpak_plan "$flatpak_apps"
     if [[ "$ISNVIDIA" == "true" ]]; then
       echo "  would install Nvidia driver: matching kernel headers + nvidia-open-dkms"
       echo "  would regenerate initramfs/UKI (mkinitcpio -P)"
@@ -510,6 +514,11 @@ main() {
 
   install_package_list "$main_pkgs" "$base_main_pkgs"
 
+  # Flatpaks ship through Flathub, never through pacman. Run them after the
+  # main package list so the `flatpak` binary it installs is on PATH first.
+  # Optional: every failure is reported and skipped, never fatal.
+  install_flatpak_list "$flatpak_apps"
+
   # After the main list, since the accelerated runner depends on the
   # `ollama` the ai layer installs, and before setup_assistant, which
   # pulls a model and wants the GPU runner already in place.
@@ -575,12 +584,15 @@ main() {
   if ((${#FAILED_OPTIONAL_PACKAGES[@]} > 0)); then
     echo -e "  Failed (optional): ${#FAILED_OPTIONAL_PACKAGES[@]} -- listed below"
   fi
+  if ((${#FAILED_FLATPAK_APPS[@]} > 0)); then
+    echo -e "  Failed (Flatpak): ${#FAILED_FLATPAK_APPS[@]} -- listed below"
+  fi
   if [[ ",$LAYERS," == *",exploit-"* ]]; then
     echo -e "  Exploit disclaimer: $([[ -f "$EXPLOIT_ACK_FILE" ]] && echo "acknowledged, see $EXPLOIT_ACK_FILE" || echo "not recorded")"
   fi
   echo -e "$COK - Install complete."
   report_failed_optional_packages
-
+  report_failed_flatpak_apps
   "$HOME/.local/bin/aphotic" whatsnew &>> "$INSTLOG" || true
 
   if [[ "$ISNVIDIA" == "true" ]]; then

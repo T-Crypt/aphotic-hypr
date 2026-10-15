@@ -34,38 +34,55 @@ def _dedup(seq):
     return out
 
 
-def merge_packages(base_path, layer_paths, custom_apps_path=None):
-    """Merge package lists from a base TOML and zero or more layer TOMLs.
+def _read_list(path):
+    """Read a newline-separated list file, stripping blanks and whitespace.
+
+    `custom_apps.lst` and `custom_flatpaks.lst` are the two users of this:
+    one package or Flatpak id per line, editable by hand, no comments.
+    """
+    out = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            item = line.strip()
+            if item:
+                out.append(item)
+    return out
+
+
+def merge_packages(base_path, layer_paths, custom_apps_path=None, custom_flatpaks_path=None):
+    """Merge package and Flatpak lists from a base TOML and zero or more layers.
 
     Parameters
-    - base_path: path to the base TOML describing `packages.prep` and
-      `packages.main` lists.
-    - layer_paths: iterable of paths to layer TOML files; each may also contain
-      `packages.prep` and `packages.main` lists which are appended in order.
+    - base_path: path to the base TOML describing `packages.prep`,
+      `packages.main` and `flatpak.apps` lists.
+    - layer_paths: iterable of paths to layer TOML files; each may also
+      contain the same three lists, appended in order.
     - custom_apps_path: optional path to a newline-separated text file of
       additional package names to append to the `main` list.
+    - custom_flatpaks_path: optional path to a newline-separated text file
+      of additional Flatpak application ids to append to the `flatpak` list.
 
-    Returns a dict with keys "prep" and "main", each a deduplicated list
-    preserving first-seen order. Deduplication ensures repeated packages
-    across layers or custom lists don't appear multiple times.
+    Returns a dict with keys "prep", "main" and "flatpak", each a
+    deduplicated list preserving first-seen order. Deduplication ensures
+    repeated entries across layers or custom lists don't appear twice.
     """
     base = _load(base_path)
     prep = list(base.get("packages", {}).get("prep", []))
     main = list(base.get("packages", {}).get("main", []))
+    flatpak = list(base.get("flatpak", {}).get("apps", []))
 
     for layer_path in layer_paths:
         layer = _load(layer_path)
         prep.extend(layer.get("packages", {}).get("prep", []))
         main.extend(layer.get("packages", {}).get("main", []))
+        flatpak.extend(layer.get("flatpak", {}).get("apps", []))
 
     if custom_apps_path:
-        with open(custom_apps_path, "r", encoding="utf-8") as f:
-            for line in f:
-                app = line.strip()
-                if app:
-                    main.append(app)
+        main.extend(_read_list(custom_apps_path))
+    if custom_flatpaks_path:
+        flatpak.extend(_read_list(custom_flatpaks_path))
 
-    return {"prep": _dedup(prep), "main": _dedup(main)}
+    return {"prep": _dedup(prep), "main": _dedup(main), "flatpak": _dedup(flatpak)}
 
 
 if __name__ == "__main__":
@@ -75,10 +92,11 @@ if __name__ == "__main__":
     parser.add_argument("--base", required=True)
     parser.add_argument("--layers", default="")
     parser.add_argument("--custom-apps", default=None)
-    parser.add_argument("--field", choices=["prep", "main"], required=True)
+    parser.add_argument("--custom-flatpaks", default=None)
+    parser.add_argument("--field", choices=["prep", "main", "flatpak"], required=True)
     args = parser.parse_args()
 
     layer_paths = [p for p in args.layers.split(",") if p]
-    result = merge_packages(args.base, layer_paths, args.custom_apps)
+    result = merge_packages(args.base, layer_paths, args.custom_apps, args.custom_flatpaks)
     for pkg in result[args.field]:
         print(pkg)
