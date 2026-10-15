@@ -69,10 +69,13 @@ Item {
             return quickTab;
         if (id === "agents")
             return agentsTab;
+        if (id === "phone")
+            return phoneTab;
         return null;
     }
 
     Component { id: mediaTab; ShelfMediaTab {} }
     Component { id: quickTab; ShelfQuickTab {} }
     Component { id: agentsTab; ShelfAgentsTab { owner: "shelf-agents:" + root.output + ":" + root.edge } }
+    Component { id: phoneTab; ShelfPhoneTab {} }
 }
