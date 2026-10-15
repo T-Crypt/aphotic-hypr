@@ -54,6 +54,10 @@ NumberAnimation {
     duration: Motion.duration(baseDuration)
 
     easing: {
+        if (type === Anim.Enter)
+            return Tokens.anim.emphasizedDecel;
+        if (type === Anim.Exit)
+            return Tokens.anim.emphasizedAccel;
         if (type === Anim.FastSpatial)
             return Tokens.anim.expressiveFastSpatial;
         if (type === Anim.DefaultSpatial)
