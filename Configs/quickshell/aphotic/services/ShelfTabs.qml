@@ -20,7 +20,13 @@ Singleton {
         { id: "media", label: qsTr("Media"), icon: "music_note", componentUrl: "", core: true, edges: ["left", "right"], notch: false },
         { id: "agents", label: qsTr("Agents"), icon: "smart_toy", componentUrl: "", core: true, edges: ["left", "right"], notch: false,
             available: InstallProfile.aiEnabled },
-        { id: "quick", label: qsTr("Quick controls"), icon: "bolt", componentUrl: "", core: true, edges: ["left", "right"], notch: false }
+        { id: "quick", label: qsTr("Quick controls"), icon: "bolt", componentUrl: "", core: true, edges: ["left", "right"], notch: false },
+        // The phone tab exists only while the bridge has a device in reach,
+        // so an install that never asked for the phone stack has the same
+        // tab list it always had. Later capabilities add their rows to this
+        // tab behind their own flags.
+        { id: "phone", label: qsTr("Phone"), icon: "smartphone", componentUrl: "", core: true, edges: ["left", "right"], notch: false,
+            available: Phone.available }
     ].filter(t => t.available !== false)
 
     // Plugin tabs come from the same registry every other surface kind

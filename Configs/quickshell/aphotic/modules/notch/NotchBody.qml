@@ -157,6 +157,8 @@ ColumnLayout {
                 return processTileLoader;
             if (root.shownTileId === "palette")
                 return paletteTileLoader;
+            if (root.shownTileId === "phone")
+                return phoneTileLoader;
             const count = pluginRepeater.count;
             const i = root.pluginTiles.findIndex(t => t.id === root.shownTileId);
             if (i >= 0 && i < count)
@@ -187,6 +189,17 @@ ColumnLayout {
             visible: paletteTileLoader.active
 
             sourceComponent: paletteComp
+        }
+
+        Loader {
+            id: phoneTileLoader
+
+            width: tileHost.width
+            y: (1 - tileHost.enterT) * Tokens.spacing.medium
+            active: root.shownTileId === "phone"
+            visible: phoneTileLoader.active
+
+            sourceComponent: phoneComp
         }
 
         // Every gated-in plugin tile is built, not just the shown one: a
@@ -288,5 +301,10 @@ ColumnLayout {
             // covering the answer.
             onInvoked: root.dismissed()
         }
+    }
+
+    Component {
+        id: phoneComp
+        NotchPhoneTile {}
     }
 }
