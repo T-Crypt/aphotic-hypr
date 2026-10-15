@@ -4,3 +4,6 @@ name = "fixture-layer-a"
 [packages]
 prep = ["beta", "gamma"]
 main = ["gamemode"]
+
+[flatpak]
+apps = ["org.example.LayerA"]
