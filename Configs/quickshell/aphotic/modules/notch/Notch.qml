@@ -56,10 +56,13 @@ StyledRect {
         tab: t
     }))
 
-    // The base shell's own tiles. Both are core: the notch ships with the
-    // base layer and every install has them, which is what makes the
-    // palette a settings question (which actions are in it) rather than an
-    // install one (whether it exists at all).
+    // The base shell's own tiles. Processes and the palette are core: the
+    // notch ships with the base layer and every install has them, which is
+    // what makes the palette a settings question (which actions are in it)
+    // rather than an install one (whether it exists at all). The phone tile
+    // is core too, and absent while the bridge has nothing in reach, so an
+    // install that never turned the phone stack on has the two tiles it
+    // always had.
     readonly property var tiles: [
         {
             plugin: "",
@@ -74,7 +77,14 @@ StyledRect {
             icon: "bolt",
             label: qsTr("Commands"),
             componentUrl: ""
-        }
+        },
+        ...(Phone.available ? [{
+            plugin: "",
+            id: "phone",
+            icon: "smartphone",
+            label: qsTr("Phone"),
+            componentUrl: ""
+        }] : [])
     ].concat(root.pluginTiles).concat(root.shelfTiles)
 
     // Kept as a condition rather than assumed: core ships two tiles
