@@ -17,6 +17,7 @@ singleton HyprKeybinds 1.0 HyprKeybinds.qml
 singleton InstallProfile 1.0 InstallProfile.qml
 singleton LauncherUsage 1.0 LauncherUsage.qml
 singleton ModelStorage 1.0 ModelStorage.qml
+singleton Motion 1.0 Motion.qml
 singleton NetworkUsage 1.0 NetworkUsage.qml
 singleton Nmcli 1.0 Nmcli.qml
 singleton NotificationHistory 1.0 NotificationHistory.qml
