@@ -47,7 +47,7 @@
       }
     },
     "m3_palette_reads": {
-      "total": 1040,
+      "total": 1050,
       "files": {
         "Configs/quickshell/aphotic/components/AphoticMark.qml": 2,
         "Configs/quickshell/aphotic/components/AppIcon.qml": 1,
@@ -158,6 +158,7 @@
         "Configs/quickshell/aphotic/modules/notch/NotchBody.qml": 4,
         "Configs/quickshell/aphotic/modules/notch/NotchIdleStrip.qml": 9,
         "Configs/quickshell/aphotic/modules/notch/NotchPaletteTile.qml": 4,
+        "Configs/quickshell/aphotic/modules/notch/NotchPhoneTile.qml": 5,
         "Configs/quickshell/aphotic/modules/notch/NotchProcessTile.qml": 14,
         "Configs/quickshell/aphotic/modules/notch/NotchSwitcher.qml": 7,
         "Configs/quickshell/aphotic/modules/notificationcenter/NotificationCenterContent.qml": 13,
@@ -197,6 +198,7 @@
         "Configs/quickshell/aphotic/modules/shelves/ShelfEchoRing.qml": 1,
         "Configs/quickshell/aphotic/modules/shelves/ShelfHandle.qml": 2,
         "Configs/quickshell/aphotic/modules/shelves/ShelfMediaTab.qml": 4,
+        "Configs/quickshell/aphotic/modules/shelves/ShelfPhoneTab.qml": 5,
         "Configs/quickshell/aphotic/modules/shelves/ShelfQuickTab.qml": 6,
         "Configs/quickshell/aphotic/modules/shelves/ShelfTabStrip.qml": 3,
         "Configs/quickshell/aphotic/modules/sonar/SonarOverlay.qml": 13,
@@ -213,7 +215,7 @@
       }
     },
     "state_layer_uses": {
-      "total": 165,
+      "total": 167,
       "files": {
         "Configs/quickshell/aphotic/components/ColorPickerField.qml": 1,
         "Configs/quickshell/aphotic/components/SettingsPresetRow.qml": 1,
@@ -267,6 +269,7 @@
         "Configs/quickshell/aphotic/modules/notch/Notch.qml": 1,
         "Configs/quickshell/aphotic/modules/notch/NotchBody.qml": 2,
         "Configs/quickshell/aphotic/modules/notch/NotchPaletteTile.qml": 1,
+        "Configs/quickshell/aphotic/modules/notch/NotchPhoneTile.qml": 1,
         "Configs/quickshell/aphotic/modules/notch/NotchProcessTile.qml": 2,
         "Configs/quickshell/aphotic/modules/notch/NotchSwitcher.qml": 1,
         "Configs/quickshell/aphotic/modules/notificationcenter/NotificationCenterContent.qml": 4,
@@ -293,13 +296,14 @@
         "Configs/quickshell/aphotic/modules/settings/panes/WallpaperTile.qml": 1,
         "Configs/quickshell/aphotic/modules/settings/panes/WorkspaceProfilesPane.qml": 7,
         "Configs/quickshell/aphotic/modules/shelves/ShelfMediaTab.qml": 1,
+        "Configs/quickshell/aphotic/modules/shelves/ShelfPhoneTab.qml": 1,
         "Configs/quickshell/aphotic/modules/shelves/ShelfQuickTab.qml": 1,
         "Configs/quickshell/aphotic/modules/shelves/ShelfTabStrip.qml": 1,
         "Configs/quickshell/aphotic/modules/workspace/WorkspaceContent.qml": 1
       }
     },
     "material_icon_uses": {
-      "total": 193,
+      "total": 197,
       "files": {
         "Configs/quickshell/aphotic/components/AppIcon.qml": 1,
         "Configs/quickshell/aphotic/components/ColorPickerField.qml": 4,
@@ -369,6 +373,7 @@
         "Configs/quickshell/aphotic/modules/notch/NotchBody.qml": 2,
         "Configs/quickshell/aphotic/modules/notch/NotchIdleStrip.qml": 2,
         "Configs/quickshell/aphotic/modules/notch/NotchPaletteTile.qml": 2,
+        "Configs/quickshell/aphotic/modules/notch/NotchPhoneTile.qml": 2,
         "Configs/quickshell/aphotic/modules/notch/NotchProcessTile.qml": 1,
         "Configs/quickshell/aphotic/modules/notch/NotchSwitcher.qml": 1,
         "Configs/quickshell/aphotic/modules/notificationcenter/NotificationCenterContent.qml": 6,
@@ -395,6 +400,7 @@
         "Configs/quickshell/aphotic/modules/settings/panes/WallpaperTile.qml": 3,
         "Configs/quickshell/aphotic/modules/settings/panes/WorkspaceProfilesPane.qml": 5,
         "Configs/quickshell/aphotic/modules/shelves/ShelfMediaTab.qml": 1,
+        "Configs/quickshell/aphotic/modules/shelves/ShelfPhoneTab.qml": 2,
         "Configs/quickshell/aphotic/modules/shelves/ShelfQuickTab.qml": 1,
         "Configs/quickshell/aphotic/modules/shelves/ShelfTabStrip.qml": 1,
         "Configs/quickshell/aphotic/modules/switcher/SwitcherWindow.qml": 1,
