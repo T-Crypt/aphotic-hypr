@@ -179,6 +179,7 @@ QtObject {
         readonly property bool camera: false
         readonly property bool mic: false
         readonly property bool localSend: false
+        readonly property bool messages: false
     }
 
     // Merged from the standalone BackgroundConfig.qml/DashboardConfig.qml

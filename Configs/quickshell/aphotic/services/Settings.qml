@@ -225,7 +225,7 @@ Singleton {
     property bool osdEnableBrightness: Config.osd.enableBrightness
     property bool osdEnableMicrophone: Config.osd.enableMicrophone
 
-    // The phone stack. All eight off, and only `phoneBridge` does anything
+    // The phone stack. All nine off, and only `phoneBridge` does anything
     // yet: it is the flag the device bridge reads before it looks for a
     // phone, and the gate both the shelf tab and the notch tile read
     // through services/Phone.qml.
@@ -237,6 +237,7 @@ Singleton {
     property bool phoneCamera: Config.phone.camera
     property bool phoneMic: Config.phone.mic
     property bool phoneLocalSend: Config.phone.localSend
+    property bool phoneMessages: Config.phone.messages
 
     property real notifExpireTimeout: GlobalConfig.notifs.defaultExpireTimeout
 
@@ -411,6 +412,7 @@ Singleton {
             phoneCamera: root.phoneCamera,
             phoneMic: root.phoneMic,
             phoneLocalSend: root.phoneLocalSend,
+            phoneMessages: root.phoneMessages,
             notifExpireTimeout: root.notifExpireTimeout,
             accentColorOverride: root.accentColorOverride,
             statusIconBluetoothColor: root.statusIconBluetoothColor,
@@ -697,6 +699,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onPhoneCameraChanged: root._saveState()
     onPhoneMicChanged: root._saveState()
     onPhoneLocalSendChanged: root._saveState()
+    onPhoneMessagesChanged: root._saveState()
     onNotifExpireTimeoutChanged: root._saveState()
     onAccentColorOverrideChanged: root._saveState()
     onStatusIconBluetoothColorChanged: root._saveState()
@@ -930,6 +933,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.phoneMic = data.phoneMic;
                 if (typeof data.phoneLocalSend === "boolean")
                     root.phoneLocalSend = data.phoneLocalSend;
+                if (typeof data.phoneMessages === "boolean")
+                    root.phoneMessages = data.phoneMessages;
                 if (typeof data.notifExpireTimeout === "number")
                     root.notifExpireTimeout = data.notifExpireTimeout;
                 if (typeof data.accentColorOverride === "string")

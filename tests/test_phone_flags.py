@@ -1,9 +1,9 @@
 """The phone stack's flags and its device bridge, offscreen.
 
-Flags first: all eight default off on a fresh HOME, and the bridge flag
+Flags first: all nine default off on a fresh HOME, and the bridge flag
 actually moves when something assigns it, so a later phase proving the
 bridge reads a value rather than a constant. Then the save half: each of
-the eight flags assigned on its own has to reach settings.json, because
+the nine flags assigned on its own has to reach settings.json, because
 that file is the user's surface for them and a flag that only moves in
 memory comes back off at the next boot. Then the bridge itself: what it
 spawns and what it parses when the flag is off, when the flag is on with a
@@ -36,6 +36,7 @@ SECOND_PHONE = "11111111_2222_3333_4444_555566667777"
 PHONE_FLAGS = [
     "phoneBridge", "phoneMirror", "phoneCalls", "phoneAlarms",
     "phoneIcons", "phoneCamera", "phoneMic", "phoneLocalSend",
+    "phoneMessages",
 ]
 
 FLAGS_PROBE = """import QtQuick
@@ -64,11 +65,13 @@ ShellRoot {
         onTriggered: {
             root.result.settings = [
                 Settings.phoneBridge, Settings.phoneMirror, Settings.phoneCalls, Settings.phoneAlarms,
-                Settings.phoneIcons, Settings.phoneCamera, Settings.phoneMic, Settings.phoneLocalSend
+                Settings.phoneIcons, Settings.phoneCamera, Settings.phoneMic, Settings.phoneLocalSend,
+                Settings.phoneMessages
             ];
             root.result.config = [
                 Config.phone.bridge, Config.phone.mirror, Config.phone.calls, Config.phone.alarms,
-                Config.phone.icons, Config.phone.camera, Config.phone.mic, Config.phone.localSend
+                Config.phone.icons, Config.phone.camera, Config.phone.mic, Config.phone.localSend,
+                Config.phone.messages
             ];
             Settings.phoneBridge = true;
             root.result.wired = Settings.phoneBridge === true;
@@ -449,6 +452,101 @@ ShellRoot {
 }
 """
 
+# The message store: PHONE_MESSAGES turns its flag on from inside,
+# PHONE_SEND sends one message through the stub, PHONE_INCOMING records
+# one incoming message without touching the command. The stub's call log
+# is the independent observer for the send argv.
+MESSAGES_PROBE = """import QtQuick
+import Quickshell
+import Quickshell.Io
+import qs.services
+
+ShellRoot {
+    id: root
+
+    property var result: ({})
+    property bool done: false
+    property bool enable: Quickshell.env("PHONE_MESSAGES") === "1"
+    property bool bridge: Quickshell.env("PHONE_BRIDGE") === "1"
+    property bool send: Quickshell.env("PHONE_SEND") === "1"
+    property bool incoming: Quickshell.env("PHONE_INCOMING") === "1"
+    property string device: "aaaaaaaa_bbbb_cccc_dddd_eeeeffff0000"
+    property string dest: "+15551234567"
+    property int tick: 0
+    property int phase: 0
+
+    FileView {
+        id: callLog
+        path: Quickshell.env("PHONE_CALLS")
+        printErrors: false
+    }
+
+    function sendCalls(): int {
+        callLog.reload();
+        const lines = String(callLog.text() ?? "").split("\\n");
+        let n = 0;
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].indexOf("--send-sms") >= 0)
+                n++;
+        }
+        return n;
+    }
+
+    function report(): void {
+        if (root.done)
+            return;
+        root.done = true;
+        root.result.spawns = PhoneMessages.spawns;
+        root.result.toolPresent = PhoneMessages.toolPresent;
+        root.result.lastError = PhoneMessages.lastError;
+        root.result.enabled = PhoneMessages.enabled;
+        root.result.available = PhoneMessages.available;
+        root.result.threads = PhoneMessages.threadsFor(root.device);
+        root.result.sends = root.sendCalls();
+        console.log("PHONE_MESSAGES " + JSON.stringify(root.result));
+        Qt.quit();
+    }
+
+    Timer {
+        interval: 50
+        repeat: true
+        running: !root.done
+        onTriggered: {
+            root.tick++;
+            if (root.tick > 120) {
+                root.report();
+                return;
+            }
+            if (root.phase === 0) {
+                root.phase = 1;
+                if (root.bridge)
+                    Settings.phoneBridge = true;
+                if (root.enable)
+                    Settings.phoneMessages = true;
+                return;
+            }
+            if (root.phase === 1) {
+                // The bridge scan settles first when it runs, so the
+                // send below observes the reachable state above it.
+                if (root.bridge && Phone.spawns === 0)
+                    return;
+                if (root.send)
+                    PhoneMessages.sendSms(root.device, root.dest, "hello");
+                if (root.incoming)
+                    PhoneMessages.addIncoming(root.device, root.dest, "hi", 1700000000000);
+                root.phase = 2;
+                return;
+            }
+            // A send that started has reached the stub's log, which is
+            // the independent observer beyond the spawn count.
+            if (root.send && PhoneMessages.spawns > 0 && root.sendCalls() < PhoneMessages.spawns)
+                return;
+            root.report();
+        }
+    }
+}
+"""
+
 # A stand-in for kdeconnect-cli: prints the fixture, records every call, and
 # exits with PHONE_EXIT so a failing scan can be driven too.
 STUB = '''#!/usr/bin/env python3
@@ -482,6 +580,11 @@ def refresh(tmp_path: Path, extra_env: dict) -> dict:
                      marker="PHONE_REFRESH", prefix="_phone_flags_")
 
 
+def messages(tmp_path: Path, extra_env: dict) -> dict:
+    return run_probe(tmp_path, MESSAGES_PROBE, extra_env=extra_env,
+                     marker="PHONE_MESSAGES", prefix="_phone_messages_")
+
+
 def stub_bin(tmp_path: Path, output: str, log: Path, exit_code: int = 0) -> dict:
     """PATH first entry holding a kdeconnect-cli that logs its argv."""
     bin_dir = tmp_path / "stub-bin"
@@ -506,8 +609,8 @@ def calls(log: Path) -> list:
 def test_phone_flags_default_off_and_are_writable(tmp_path):
     out = flags(tmp_path)
 
-    assert out["settings"] == [False] * 8, out
-    assert out["config"] == [False] * 8, out
+    assert out["settings"] == [False] * 9, out
+    assert out["config"] == [False] * 9, out
     assert out["wired"] is True, out
     assert out["restored"] is True, out
 
@@ -516,7 +619,7 @@ def test_phone_flags_default_off_and_are_writable(tmp_path):
                     reason="needs Quickshell (qs) to run the shell probe")
 @pytest.mark.parametrize("flag", PHONE_FLAGS)
 def test_phone_flag_reaches_settings_json(tmp_path, flag):
-    # settings.json is the only surface these eight have today, so a flag
+    # settings.json is the only surface these nine have today, so a flag
     # whose handler never fires is a switch that looks set and is not.
     log = tmp_path / "calls.jsonl"
     out = save(tmp_path, flag, stub_bin(tmp_path, "", log))
@@ -699,3 +802,71 @@ def test_phone_bridge_refreshes_once_per_ask(tmp_path):
     assert out["spawnsForNotchClick"] == 4, out
     assert out["callsForNotchClick"] == 4, out
     assert calls(log) == [["--list-available", "--id-name-only"]] * 4, log.read_text()
+
+
+MSG_DEVICE = TEST_PHONE
+MSG_DEST = "+15551234567"
+MSG_ARGV = ["--send-sms", "hello", "--destination", MSG_DEST, "-d", MSG_DEVICE]
+
+
+@pytest.mark.skipif(shutil.which("qs") is None,
+                    reason="needs Quickshell (qs) to run the shell probe")
+def test_phone_messages_sends_through_the_stub_and_records_the_thread(tmp_path):
+    log = tmp_path / "calls.jsonl"
+    out = messages(tmp_path, {
+        **stub_bin(tmp_path, f"{TEST_PHONE} Test Phone\n", log),
+        "PHONE_BRIDGE": "1",
+        "PHONE_MESSAGES": "1",
+        "PHONE_SEND": "1",
+    })
+
+    assert out["enabled"] is True, out
+    assert out["available"] is True, out
+    assert out["spawns"] == 1, out
+    assert out["sends"] == 1, out
+    assert out["toolPresent"] is True, out
+    assert out["lastError"] == "", out
+    assert MSG_ARGV in calls(log), log.read_text()
+    assert len(out["threads"]) == 1, out
+    entry = out["threads"][0]
+    assert entry["address"] == MSG_DEST, out
+    assert entry["body"] == "hello", out
+    assert entry["direction"] == "out", out
+
+
+@pytest.mark.skipif(shutil.which("qs") is None,
+                    reason="needs Quickshell (qs) to run the shell probe")
+def test_phone_messages_records_an_incoming_message_without_the_command(tmp_path):
+    log = tmp_path / "calls.jsonl"
+    out = messages(tmp_path, {
+        **stub_bin(tmp_path, f"{TEST_PHONE} Test Phone\n", log),
+        "PHONE_BRIDGE": "1",
+        "PHONE_MESSAGES": "1",
+        "PHONE_INCOMING": "1",
+    })
+
+    assert out["spawns"] == 0, out
+    assert len(out["threads"]) == 1, out
+    entry = out["threads"][0]
+    assert entry == {
+        "deviceId": MSG_DEVICE, "address": MSG_DEST, "body": "hi",
+        "timestamp": 1700000000000, "direction": "in",
+    }, out
+
+
+@pytest.mark.skipif(shutil.which("qs") is None,
+                    reason="needs Quickshell (qs) to run the shell probe")
+def test_phone_messages_sends_nothing_while_its_flag_is_off(tmp_path):
+    log = tmp_path / "calls.jsonl"
+    out = messages(tmp_path, {
+        **stub_bin(tmp_path, f"{TEST_PHONE} Test Phone\n", log),
+        "PHONE_SEND": "1",
+    })
+
+    # The send never runs: the surface is gated behind the bridge, so
+    # with both flags off there is no spawn, no stub call, and no entry.
+    assert out["enabled"] is False, out
+    assert out["available"] is False, out
+    assert out["spawns"] == 0, out
+    assert out["sends"] == 0, out
+    assert out["threads"] == [], out
