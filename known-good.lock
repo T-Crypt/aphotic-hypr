@@ -1,5 +1,6 @@
-# canary 2026-10-15
+# canary 2026-10-16
 abseil-cpp 20260817.0-2
+accountsservice 26.27.3-1
 acl 2.4.0-1
 adw-gtk-theme 6.5-1
 adwaita-cursors 51.0-1
@@ -10,6 +11,7 @@ alsa-lib 1.2.16.1-1
 alsa-topology-conf 1.2.5.1-4
 alsa-ucm-conf 1.2.16.1-1
 aom 3.15.2-1
+appstream 1.2.1-1
 aquamarine 0.15.1-1
 archlinux-keyring 20260909-1
 at-spi2-core 2.62.1-1
@@ -41,13 +43,15 @@ ca-certificates-utils 20240618-1
 cairo 1.18.6-1
 cairomm-1.16 1.18.1-1
 cava 1.0.0-1
+cfitsio 1:4.7.0-1
 cliphist 1:0.7.0-2
 colord 1.4.8-1
+composefs 1.0.8-1
 coreutils 9.12-2
 cpio 2.15-3
 cpptrace 1.0.4-2
 cryptsetup 2.8.8-1
-curl 8.22.0-1
+curl 8.23.0-1
 dav1d 1.5.4-1
 db5.3 5.3.28-7
 dbus 1.16.2-1
@@ -82,12 +86,13 @@ file 5.48-1
 file-roller 44.7-1
 filesystem 2025.10.12-1
 findutils 4.11.0-1
-firefox 157.0.1-1
+firefox 158.0-1
 flac 1.5.0-1
+flatpak 1:1.18.4-1
 flex 2.6.4-6
 fontconfig 2:2.18.3-2
 freeglut 3.8.0-1
-freetype2 2.14.3-1
+freetype2 2.15.0-1
 fribidi 1.0.17-1
 fuse-common 3.18.3-1
 fuse3 3.18.3-1
@@ -111,7 +116,7 @@ glibc 2.44+r50+g1848099f063e-1
 glibmm-2.68 2.90.0-1
 glslang 1:1.4.363.0-1
 glu 9.0.3-3
-glycin 2.2.2-1
+glycin 2.2.3-1
 gmp 6.3.0-3
 gnome-themes-extra 1:3.28-1
 gnu-free-fonts 20120503-9
@@ -149,10 +154,12 @@ gupnp-igd 1.6.0-2
 gvfs 1.62.0-3
 gzip 1.15-1
 harfbuzz 14.6.0-1
+hdf5 2.2.0-1
 hicolor-icon-theme 0.18-1
 hidapi 0.15.0-1
 highway 1.4.0-1
 hwdata 0.412-1
+hwloc 2.15.0-1
 hyprcursor 0.1.13-7
 hyprgraphics 0.5.1-4
 hypridle 0.1.8-2
@@ -164,6 +171,7 @@ hyprutils 0.14.2-1
 hyprwire 0.3.1-3
 iana-etc 20260617-1
 icu 78.3-1
+imath 3.2.3-1
 iniparser 4.3.2-1
 intel-gpu-tools 2.5-1
 inter-font 4.1-1
@@ -195,7 +203,7 @@ lcms2 2.19.1-1
 leancrypto 1.9.1-1
 lib32-brotli 1.2.0-2
 lib32-bzip2 1.0.8-4
-lib32-curl 8.22.0-1
+lib32-curl 8.23.0-1
 lib32-e2fsprogs 1.47.4-1
 lib32-expat 2.9.0-1
 lib32-gcc-libs 16.2.1+r23+gd564253eb6c8-1
@@ -250,8 +258,9 @@ lib32-xz 5.8.4-1
 lib32-zlib 1.3.2-1
 lib32-zstd 1.5.7-2
 libadwaita 1:1.10.0-1
+libaec 1.1.7-1
 libappindicator 12.10.1-2
-libarchive 3.8.9-1
+libarchive 3.8.10-1
 libasan 16.2.1+r23+gd564253eb6c8-1
 libass 0.17.5-1
 libassuan 3.0.0-1
@@ -261,6 +270,7 @@ libatomic 16.2.1+r23+gd564253eb6c8-1
 libavc1394 0.5.4-7
 libavif 1.4.2-1
 libb2 0.98.1-3
+libblake3 1.8.7-1
 libblockdev 3.5.0-2
 libblockdev-crypto 3.5.0-2
 libblockdev-fs 3.5.0-2
@@ -280,6 +290,7 @@ libcap 2.78-1
 libcap-ng 0.9.6-1
 libcdio 2.4.0-1
 libcdio-paranoia 10.2+2.0.2-3
+libcgif 0.5.4-1
 libcloudproviders 0.4.1-1
 libcolord 1.4.8-1
 libcups 2:2.4.20-1
@@ -304,6 +315,7 @@ libevent 2.1.13-2
 libexif 0.6.26-1
 libffi 3.8.0-1
 libfontenc 1.1.9-1
+libfyaml 0.9.6-3
 libgcc 16.2.1+r23+gd564253eb6c8-1
 libgcrypt 1.12.4-1
 libgfortran 16.2.1+r23+gd564253eb6c8-1
@@ -329,6 +341,8 @@ libksba 1.8.1-1
 libldap 2.7.1-1
 liblsan 16.2.1+r23+gd564253eb6c8-1
 libmakepkg-dropins 20-2
+libmalcontent 0.14.0-4
+libmatio 1.5.30-1
 libmd 1.3.0-1
 libmm-glib 1.24.2-1
 libmng 2.0.3-4
@@ -368,6 +382,7 @@ libpsl 0.21.5-2
 libpulse 17.0+r98+gb096704c0-1
 libquadmath 16.2.1+r23+gd564253eb6c8-1
 libraqm 0.11.0-1
+libraw 0.22.2-1
 libraw1394 2.1.2-4
 librsvg 2:2.63.2-1
 librsync 1:2.3.4-2
@@ -404,6 +419,7 @@ libusb 1.0.30-1
 libva 2.24.1-1
 libvdpau 1.5-4
 libverto 0.3.2-6
+libvips 8.18.7-1
 libvorbis 1.3.7-4
 libvpl 2.17.0-1
 libvpx 1.17.0-1
@@ -432,6 +448,7 @@ libxkbcommon-x11 1.13.2-1
 libxkbfile 1.2.0-1
 libxklavier 5.4-7
 libxml2 2.15.4-1
+libxmlb 0.3.29-1
 libxmu 1.3.1-1
 libxpresent 1.0.2-1
 libxrandr 1.5.5-1
@@ -489,17 +506,21 @@ nvidia-utils 615.78.08-1
 nwg-look 1.2.1-1
 ocl-icd 2.3.5-1
 oh-my-zsh-git r7990.964ddf789-1
+onetbb 2023.1.0-1
 oniguruma 6.9.10-3
 openal 1.25.2-2
 opencore-amr 0.1.6-2
+openexr 3.5.2-1
 openjpeg2 2.5.4-1
-openssh 10.6p1-1
+openjph 0.32.0-1
+openssh 10.6p1-2
 openssl 3.6.5-1
 openvpn 2.7.8-1
 opus 1.6.1-1
 orc 0.4.44-1
+ostree 2026.4-1
 p11-kit 0.26.5-1
-pacman 7.1.0.r9.g54d9411-2
+pacman 7.1.0.r9.g54d9411-3
 pacman-contrib 1.13.1-1
 pacman-mirrorlist 20260610-1
 pam 1.7.3-1
@@ -636,6 +657,7 @@ vulkan-radeon 1:26.2.4-1
 wayland 1.26.0-1
 wayland-protocols 1.49-1
 webp-pixbuf-loader 0.2.7-2
+wf-recorder 0.6.0-2
 which 2.25-1
 wireplumber 0.5.18-1
 wl-clipboard 1:2.3.0-1
@@ -651,6 +673,7 @@ xcb-util-keysyms 0.4.1-5
 xcb-util-renderutil 0.3.10-2
 xcb-util-wm 0.4.2-2
 xcur2png 0.7.1-9
+xdg-dbus-proxy 0.1.9-1
 xdg-desktop-portal 1.22.1-2
 xdg-desktop-portal-gtk 1.15.3-1
 xdg-desktop-portal-hyprland 1.4.1-2
@@ -660,8 +683,8 @@ xfce4-settings 4.20.5-1
 xfconf 4.20.0-2
 xkeyboard-config 2.48-1
 xorg-fonts-encodings 1.1.0-2
-xorg-server 21.1.25-1
-xorg-server-common 21.1.25-1
+xorg-server 21.1.25-2
+xorg-server-common 21.1.25-2
 xorg-setxkbmap 1.3.5-1
 xorg-xauth 1.1.5-1
 xorg-xkbcomp 1.5.0-1
