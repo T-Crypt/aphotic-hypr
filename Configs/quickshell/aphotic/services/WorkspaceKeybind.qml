@@ -51,7 +51,7 @@ Singleton {
     readonly property string description: "Toggle plugin workspace"
     readonly property string command: "qs -c aphotic ipc call workspace toggle"
 
-    readonly property bool wanted: PluginRegistry.surfacesFor("workspace").some(surface => !PluginRegistry.failedSurfaceIds.includes(surface.id))
+    readonly property bool wanted: PluginRegistry.surfacesFor("workspace").some(surface => !PluginRegistry.surfaceFailed(surface))
 
     // "", "lua" or "legacy". Which form the bind should be in right now,
     // and the reason this is a property rather than a branch inside
