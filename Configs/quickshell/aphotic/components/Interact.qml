@@ -32,6 +32,7 @@ MouseArea {
 
     anchors.fill: parent
     enabled: !root.disabled
+    focus: !root.disabled
     cursorShape: root.disabled ? undefined : Qt.PointingHandCursor
     hoverEnabled: true
 
