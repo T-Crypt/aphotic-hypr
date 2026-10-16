@@ -271,10 +271,10 @@ StyledRect {
     }
 
     // Faded rather than flipped straight to invisible: the click that
-    // opens the notch starts a ripple that runs 600ms, longer than the
-    // open, so hiding this the instant `expanded` flips cut the ripple off
-    // mid-sweep and read as a flash under the growing surface.
-    StateLayer {
+    // opens the notch leaves its press treatment running past the flip,
+    // so hiding this the instant `expanded` flips cut that off mid-sweep
+    // and read as a flash under the growing surface.
+    Interact {
         radius: root.radius
         disabled: root.expanded
         visible: opacity > 0

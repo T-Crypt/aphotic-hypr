@@ -72,7 +72,7 @@ RowLayout {
                 }
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 // Signal: the hover tone lands at full strength; the active

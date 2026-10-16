@@ -28,7 +28,7 @@ Item {
         DevProfile.projectOpened(root.modelData.path);
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();

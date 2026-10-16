@@ -113,7 +113,7 @@ ColumnLayout {
                     fontStyle: Tokens.font.icon.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !AiProviders.busy

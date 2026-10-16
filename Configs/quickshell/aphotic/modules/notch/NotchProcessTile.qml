@@ -95,7 +95,7 @@ ColumnLayout {
             CAnim {}
         }
 
-        StateLayer {
+        Interact {
             radius: parent.radius
             onClicked: ProcessUsage.sortBy = sortChip.key
         }
@@ -155,7 +155,7 @@ ColumnLayout {
                 radius: Tokens.rounding.full
                 color: Colours.palette.m3secondaryContainer
 
-                StateLayer {
+                Interact {
                     radius: parent.radius
                     onClicked: Actions.invoke("resources.inspect", {
                         screenState: root.screenState

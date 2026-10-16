@@ -142,7 +142,7 @@ ColumnLayout {
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !visBtn.active
@@ -286,7 +286,7 @@ ColumnLayout {
                             text: "close"
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.extraSmall
                                 radius: Tokens.rounding.full
@@ -316,7 +316,7 @@ ColumnLayout {
                     font: Tokens.font.body.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: addChip.expanded = !addChip.expanded
@@ -356,7 +356,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             onClicked: {
                                 Settings.dockPinnedApps = [...Settings.dockPinnedApps, parent.modelData.id];

@@ -44,10 +44,10 @@ Item {
         Anim { type: Anim.StandardSmall }
     }
 
-    StateLayer {
+    Interact {
         anchors.fill: parent
         radius: Tokens.rounding.full
-        stateOpacity: root.showHover && containsMouse ? 0.08 : 0
+        stateOpacity: root.showHover && containsMouse ? 1 : 0
         onClicked: {
             if (root.item.windows.length > 0) {
                 WindowList.cycleWindows(root.item.windows);

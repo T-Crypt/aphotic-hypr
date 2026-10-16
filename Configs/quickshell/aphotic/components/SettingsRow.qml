@@ -66,9 +66,9 @@ StyledRect {
         hovered: root.activatable && rowState.containsMouse
     }
 
-    // Under the content, so a trailing control's own StateLayer still
+    // Under the content, so a trailing control's own Interact still
     // takes its clicks first rather than the row swallowing them.
-    StateLayer {
+    Interact {
         id: rowState
 
         anchors.fill: parent

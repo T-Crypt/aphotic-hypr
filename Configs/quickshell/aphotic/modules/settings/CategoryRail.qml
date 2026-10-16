@@ -122,7 +122,7 @@ ColumnLayout {
                 color: Colours.palette.m3onSurfaceVariant
                 fontStyle: Tokens.font.icon.small
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.extraSmall
                     radius: Tokens.rounding.full
@@ -321,7 +321,7 @@ ColumnLayout {
                             }
                         }
 
-                        StateLayer {
+                        Interact {
                             id: stateLayer
 
                             anchors.fill: parent

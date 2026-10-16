@@ -144,7 +144,7 @@ StyledRect {
                     implicitWidth: closeIcon.implicitHeight
                     implicitHeight: closeIcon.implicitHeight
 
-                    StateLayer {
+                    Interact {
                         radius: Tokens.rounding.full
                         onClicked: root.modelData.close()
                     }
@@ -207,7 +207,7 @@ StyledRect {
                         radius: Tokens.rounding.full
                         color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             onClicked: {

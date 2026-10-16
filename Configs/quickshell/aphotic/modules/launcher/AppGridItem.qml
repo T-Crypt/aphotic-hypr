@@ -22,7 +22,7 @@ Item {
         root.screenState.launcher = false;
     }
 
-    StateLayer {
+    Interact {
         anchors.fill: parent
         anchors.margins: Tokens.spacing.extraSmall
         radius: Tokens.rounding.large

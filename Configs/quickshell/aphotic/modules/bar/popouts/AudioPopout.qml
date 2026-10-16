@@ -55,7 +55,7 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: sinkLabel.implicitHeight + Tokens.padding.small * 2
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.medium
                 color: (sinkRow.modelData === Audio.sink ? Colours.palette.m3primary : Colours.signalStyle.hover)
                 stateOpacity: (sinkRow.modelData === Audio.sink ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))

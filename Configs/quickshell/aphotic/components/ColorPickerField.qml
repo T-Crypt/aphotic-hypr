@@ -67,7 +67,7 @@ Item {
             }
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: parent.radius
             onClicked: popup.visible ? popup.close() : popup.open()

@@ -177,7 +177,7 @@ Item {
                             font: Tokens.font.label.large
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             disabled: !button.modelData.enabled

@@ -162,7 +162,7 @@ StyledRect {
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: {

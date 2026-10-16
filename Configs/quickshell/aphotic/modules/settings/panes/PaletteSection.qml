@@ -128,7 +128,7 @@ ColumnLayout {
                         color: root.picking && root.pickIndex === slotRow.index ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -141,7 +141,7 @@ ColumnLayout {
                         color: Colours.palette.m3onSurfaceVariant
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -155,7 +155,7 @@ ColumnLayout {
                         color: slotRow.modelData.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                         fontStyle: Tokens.font.icon.medium
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full

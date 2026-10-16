@@ -20,7 +20,7 @@ Item {
         root.screenState.pkgInstall = false;
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: root.execute()
     }

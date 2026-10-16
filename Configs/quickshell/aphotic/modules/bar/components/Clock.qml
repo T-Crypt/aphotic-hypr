@@ -34,7 +34,7 @@ StyledRect {
     color: "transparent"
     radius: Tokens.rounding.full
 
-    StateLayer {
+    Interact {
         radius: root.radius
         onClicked: root.screenState.dashboard = !root.screenState.dashboard
     }

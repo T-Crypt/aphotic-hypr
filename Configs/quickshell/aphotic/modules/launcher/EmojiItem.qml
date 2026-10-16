@@ -19,7 +19,7 @@ Item {
         Quickshell.execDetached(["sh", "-c", "printf '%s' \"$1\" | wl-copy", "_", root.modelData.emoji]);
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();

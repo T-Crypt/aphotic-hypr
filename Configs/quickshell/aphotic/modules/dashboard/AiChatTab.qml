@@ -134,7 +134,7 @@ ColumnLayout {
                     font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: providerPill.available
@@ -142,8 +142,8 @@ ColumnLayout {
                     color: Colours.signalStyle.hover
                 }
 
-                // A StateLayer's own MouseArea goes `enabled: false` when
-                // disabled (so the hover/ripple visuals correctly turn
+                // An Interact's own MouseArea goes `enabled: false` when
+                // disabled (so the hover/press visuals correctly turn
                 // off), and a disabled MouseArea does not accept the
                 // click -- it falls through to whatever is behind it,
                 // which here is DashboardWindow's full-screen click-
@@ -186,7 +186,7 @@ ColumnLayout {
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 stateOpacity: (containsMouse ? 1 : 0)
@@ -502,7 +502,7 @@ ColumnLayout {
                     fontStyle: Tokens.font.icon.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !AiProviders.busy

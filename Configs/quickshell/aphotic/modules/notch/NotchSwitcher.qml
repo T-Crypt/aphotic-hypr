@@ -96,12 +96,12 @@ StyledRect {
             height: root.segmentHeight
             clip: true
 
-            StateLayer {
+            Interact {
                 radius: seg.height / 2
                 disabled: !root.interactive
                 // The gliding highlight above is this strip's hover
                 // treatment; a second one per segment is the flash it
-                // exists to replace. The press ripple still runs.
+                // exists to replace. The press treatment still runs.
                 stateOpacity: 0
                 onClicked: root.picked(seg.modelData.id)
                 onContainsMouseChanged: {

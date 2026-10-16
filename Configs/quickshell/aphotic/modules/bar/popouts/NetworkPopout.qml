@@ -40,7 +40,7 @@ ColumnLayout {
                 border.color: Nmcli.wifiEnabled ? Colours.palette.m3primary : Colours.signalStyle.hairline
             }
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 color: Nmcli.wifiEnabled ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
                 onClicked: Nmcli.toggleWifi(() => {})
@@ -78,7 +78,7 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: netLabel.implicitHeight + Tokens.padding.small * 2
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.medium
                 color: (netRow.modelData.active ? Colours.palette.m3primary : Colours.signalStyle.hover)
                 stateOpacity: (netRow.modelData.active ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))

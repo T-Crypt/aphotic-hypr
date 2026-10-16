@@ -36,7 +36,7 @@ ColumnLayout {
             implicitWidth: icon_.implicitHeight + Tokens.padding.small * 2
             implicitHeight: implicitWidth
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 onClicked: btn.clicked()
             }

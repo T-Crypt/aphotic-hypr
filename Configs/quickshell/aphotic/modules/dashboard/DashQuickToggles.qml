@@ -50,7 +50,7 @@ Item {
                 }
             }
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.medium
                 onClicked: tile.clicked()
             }

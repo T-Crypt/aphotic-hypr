@@ -96,7 +96,7 @@ Item {
                         color: Colours.palette.m3onSurfaceVariant
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full

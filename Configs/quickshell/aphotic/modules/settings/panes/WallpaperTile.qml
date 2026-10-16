@@ -122,7 +122,7 @@ StyledClippingRect {
         }
     }
 
-    StateLayer {
+    Interact {
         anchors.fill: parent
         radius: root.radius
     }

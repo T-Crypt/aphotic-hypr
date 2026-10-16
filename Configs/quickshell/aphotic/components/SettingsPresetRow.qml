@@ -52,7 +52,7 @@ SettingsRow {
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     id: pillState
 
                     anchors.fill: parent

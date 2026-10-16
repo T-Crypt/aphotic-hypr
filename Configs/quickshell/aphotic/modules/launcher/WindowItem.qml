@@ -21,7 +21,7 @@ Item {
         WindowList.focus(root.modelData.address);
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();

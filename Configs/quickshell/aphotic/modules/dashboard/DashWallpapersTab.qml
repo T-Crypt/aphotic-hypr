@@ -37,7 +37,7 @@ ColumnLayout {
         implicitHeight: btn.implicitWidth
         opacity: btn.enabled_ ? 1 : 0.4
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: Tokens.rounding.full
             disabled: !btn.enabled_

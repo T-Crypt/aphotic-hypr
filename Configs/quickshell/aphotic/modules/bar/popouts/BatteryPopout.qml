@@ -105,7 +105,7 @@ ColumnLayout {
                     border.color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primary : Colours.signalStyle.hairline
                 }
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.medium
                     color: Colours.signalStyle.hover
                     stateOpacity: (containsMouse ? 1 : 0)

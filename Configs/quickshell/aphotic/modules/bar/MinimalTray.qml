@@ -58,7 +58,7 @@ Item {
                 }
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 anchors.margins: -Tokens.padding.extraSmall
                 radius: Tokens.rounding.full

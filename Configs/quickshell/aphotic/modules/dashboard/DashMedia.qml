@@ -147,12 +147,12 @@ Item {
                 implicitHeight: implicitWidth
                 opacity: enabled_ ? 1 : 0.4
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     showHoverBackground: btn.enabled_
                 }
 
-                // A disabled StateLayer's MouseArea stops accepting
+                // A disabled Interact's MouseArea stops accepting
                 // clicks entirely, letting them fall through to
                 // DashboardWindow's full-screen click-outside-to-dismiss
                 // MouseArea behind it -- closing the whole dashboard
@@ -213,7 +213,7 @@ Item {
                     implicitWidth: 8
                     implicitHeight: 8
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: 4
                         color: dot.modelData === Players.active ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
