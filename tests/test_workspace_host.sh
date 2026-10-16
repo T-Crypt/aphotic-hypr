@@ -19,6 +19,8 @@ grep -qE 'property bool workspace' "$STATE" || fail "Workspace has no per-screen
 grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)' "$CONTENT" || fail "Workspace does not use generic registrations"
 grep -qE 'source: .*componentUrl' "$CONTENT" || fail "Workspace does not dynamically load plugin content"
 grep -qE 'surfaceActive' "$CONTENT" || fail "Workspace loads plugin content while hidden"
+grep -qE 'PluginRegistry\.markSurfaceFailed\(root\.activeSurface, true\)' "$CONTENT" || fail "Workspace does not mark a surface failed when its loader errors"
+grep -qE 'PluginRegistry\.markSurfaceFailed\(root\.activeSurface, false\)' "$CONTENT" || fail "Workspace does not clear a failed surface mark when it loads"
 grep -qE 'Interact \{' "$CONTENT" || fail "Workspace navigation has no per-item hover feedback"
 grep -qE 'Anim \{ type: Anim\.DefaultSpatial \}' "$CONTENT" || fail "Workspace selection pill does not use the shared spatial curve"
 grep -qE 'color: Colours\.signalStyle\.glass' "$CONTENT" || fail "Workspace lacks the Signal glass surface"
@@ -36,7 +38,7 @@ grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)' "$ACTIONS" || fail "Worksp
 # exists while a plugin registers a ui.workspace.
 
 [[ -f "$KEYBIND" ]] || fail "Workspace keybind service is missing"
-grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.some\(surface => !PluginRegistry\.failedSurfaceIds\.includes\(surface\.id\)\)' "$KEYBIND" || fail "Workspace keybind is not gated on a registered surface"
+grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.some\(surface => !PluginRegistry\.surfaceFailed\(surface\)\)' "$KEYBIND" || fail "Workspace keybind does not skip failed surfaces"
 grep -qE 'singleton WorkspaceKeybind 1\.0 WorkspaceKeybind\.qml' "$QMLDIR" || fail "Workspace keybind singleton is not exported"
 
 # A pragma Singleton nothing names is never constructed, and nothing
