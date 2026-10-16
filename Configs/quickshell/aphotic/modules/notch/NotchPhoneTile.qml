@@ -58,7 +58,7 @@ ColumnLayout {
         radius: Tokens.rounding.small
         color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
 
-        StateLayer {
+        Interact {
             radius: parent.radius
             onClicked: Phone.refresh()
         }

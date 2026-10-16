@@ -23,7 +23,7 @@ Item {
         root.screenState.settings = true;
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();

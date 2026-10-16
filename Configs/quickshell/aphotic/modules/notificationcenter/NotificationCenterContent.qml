@@ -126,7 +126,7 @@ Item {
                         }
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                         stateOpacity: (containsMouse ? 1 : 0)
@@ -174,7 +174,7 @@ Item {
                         border.color: Colours.signalStyle.hairline
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
                         stateOpacity: (containsMouse ? 1 : 0)
@@ -213,7 +213,7 @@ Item {
                         border.color: Colours.signalStyle.hairline
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
                         stateOpacity: (containsMouse ? 1 : 0)
@@ -243,7 +243,7 @@ Item {
                         border.color: Colours.signalStyle.hairline
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
                         stateOpacity: (containsMouse ? 1 : 0)

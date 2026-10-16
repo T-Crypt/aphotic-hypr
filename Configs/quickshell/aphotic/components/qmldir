@@ -10,6 +10,7 @@ ConcaveCorner 1.0 ConcaveCorner.qml
 DepthGradient 1.0 DepthGradient.qml
 DepthLayer 1.0 DepthLayer.qml
 Elevation 1.0 Elevation.qml
+Interact 1.0 Interact.qml
 KbCodeField 1.0 KbCodeField.qml
 KeyboardStateWatch 1.0 KeyboardStateWatch.qml
 Logo 1.0 Logo.qml
@@ -23,7 +24,6 @@ SettingsRow 1.0 SettingsRow.qml
 SettingsSection 1.0 SettingsSection.qml
 SettingsToggleRow 1.0 SettingsToggleRow.qml
 SignalText 1.0 SignalText.qml
-StateLayer 1.0 StateLayer.qml
 StyledClippingRect 1.0 StyledClippingRect.qml
 ShapeShadow 1.0 ShapeShadow.qml
 StyledRect 1.0 StyledRect.qml

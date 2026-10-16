@@ -39,7 +39,7 @@ ColumnLayout {
                 border.color: Bluetooth.defaultAdapter?.enabled ? Colours.palette.m3primary : Colours.signalStyle.hairline
             }
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 color: Bluetooth.defaultAdapter?.enabled ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
                 onClicked: {
@@ -70,7 +70,7 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: devLabel.implicitHeight + Tokens.padding.small * 2
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.medium
                 color: (devRow.modelData.connected ? Colours.palette.m3primary : Colours.signalStyle.hover)
                 stateOpacity: (devRow.modelData.connected ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))

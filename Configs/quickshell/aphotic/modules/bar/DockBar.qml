@@ -146,7 +146,7 @@ Item {
                 // on" by growing it, and a highlight gliding under icons
                 // that are themselves swelling reads as two effects
                 // fighting -- so the dock shows one or the other, never
-                // both. DockAppIcon's own StateLayer hover takes over
+                // both. DockAppIcon's own Interact hover takes over
                 // whenever this pill is off.
                 HoverPill {
                     container: iconGrid

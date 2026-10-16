@@ -199,7 +199,7 @@ ColumnLayout {
                 text: "folder_open"
                 color: root.created ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3outlineVariant
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full
@@ -316,7 +316,7 @@ ColumnLayout {
                 font: Tokens.font.body.medium
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 onClicked: root.createTheme()

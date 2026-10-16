@@ -38,7 +38,7 @@ ColumnLayout {
                 fontStyle: Tokens.font.icon.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
             }
@@ -141,7 +141,7 @@ ColumnLayout {
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }

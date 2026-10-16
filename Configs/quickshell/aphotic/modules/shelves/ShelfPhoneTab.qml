@@ -75,7 +75,7 @@ Flickable {
                 color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
             }
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 onClicked: Phone.refresh()
             }

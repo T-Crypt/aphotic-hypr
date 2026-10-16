@@ -166,7 +166,7 @@ ColumnLayout {
             implicitHeight: implicitWidth
             opacity: enabled_ ? 1 : 0.4
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 disabled: !btn.enabled_
                 onClicked: btn.clicked()
@@ -218,7 +218,7 @@ ColumnLayout {
                 implicitWidth: 8
                 implicitHeight: 8
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: Tokens.rounding.full
                     color: dot.modelData === root.player ? Colours.palette.m3primary : Colours.palette.m3outlineVariant

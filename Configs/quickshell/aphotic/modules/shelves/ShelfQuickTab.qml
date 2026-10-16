@@ -49,7 +49,7 @@ Flickable {
                     color: tile.modelData.active ? Colours.layer(Colours.palette.m3primary, 0.18) : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
                 }
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     onClicked: tile.modelData.toggle()
                 }

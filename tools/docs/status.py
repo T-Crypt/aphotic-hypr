@@ -32,21 +32,14 @@ def generated_block(root: Path) -> str:
             root,
         )
     )
-    # Best effort: an offline or slow machine still gets the last-known list.
-    try:
-        subprocess.run(["git", "fetch", "-q", "origin", "main"], cwd=root, timeout=20,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-    except subprocess.TimeoutExpired:
-        pass
-    # Use FETCH_HEAD rather than refs/remotes/origin/main so a fetch cannot
-    # leave a new persistent ref behind and change this process's answer on
-    # a second run (that would make --write non-idempotent). A timed-out or
-    # failed fetch still falls back to local history.
+    # Read a remote ref that already exists. A fetch would leave FETCH_HEAD
+    # behind, so a second run could answer from a different history than the
+    # first and --write would stop being idempotent.
     have_origin_main = subprocess.run(
-        ["git", "rev-parse", "--verify", "--quiet", "FETCH_HEAD"],
+        ["git", "show-ref", "--verify", "--quiet", "refs/remotes/origin/main"],
         cwd=root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
     ).returncode == 0
-    ref = "FETCH_HEAD" if have_origin_main else "HEAD"
+    ref = "refs/remotes/origin/main" if have_origin_main else "HEAD"
     heading = "### Recent origin/main" if have_origin_main else "### Recent local history"
     log = run(["git", "log", ref, "-15", "--oneline"], root).splitlines()
     lines = [START, "", "### Open pull requests", ""]

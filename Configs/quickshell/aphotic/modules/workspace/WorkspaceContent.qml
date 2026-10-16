@@ -170,7 +170,7 @@ Item {
                             width: navigationList.width
                             height: Tokens.sizes.workspace.itemHeight
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: Tokens.rounding.medium
                                 onClicked: root.activeId = navItem.modelData.id

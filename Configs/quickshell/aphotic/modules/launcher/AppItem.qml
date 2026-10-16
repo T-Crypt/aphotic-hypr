@@ -16,7 +16,7 @@ Item {
     width: ListView.view?.width ?? 0
     implicitHeight: Tokens.sizes.launcher.itemHeight
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             LauncherUsage.recordLaunch(root.modelData.id);

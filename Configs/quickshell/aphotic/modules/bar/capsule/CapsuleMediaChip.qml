@@ -42,7 +42,7 @@ Item {
         radius: Tokens.rounding.full
         color: root.active ? Colours.palette.m3secondaryContainer : "transparent"
 
-        StateLayer {
+        Interact {
             radius: parent.radius
             onClicked: root.toggled()
         }

@@ -49,7 +49,7 @@ Item {
                 implicitWidth: prevIcon.implicitHeight
                 implicitHeight: prevIcon.implicitHeight
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     onClicked: root.viewDate = new Date(root.viewYear, root.viewMonth - 1, 1)
                 }
@@ -74,7 +74,7 @@ Item {
                 implicitWidth: nextIcon.implicitHeight
                 implicitHeight: nextIcon.implicitHeight
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     onClicked: root.viewDate = new Date(root.viewYear, root.viewMonth + 1, 1)
                 }

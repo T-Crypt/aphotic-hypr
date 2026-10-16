@@ -19,7 +19,7 @@ grep -qE 'property bool workspace' "$STATE" || fail "Workspace has no per-screen
 grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)' "$CONTENT" || fail "Workspace does not use generic registrations"
 grep -qE 'source: .*componentUrl' "$CONTENT" || fail "Workspace does not dynamically load plugin content"
 grep -qE 'surfaceActive' "$CONTENT" || fail "Workspace loads plugin content while hidden"
-grep -qE 'StateLayer \{' "$CONTENT" || fail "Workspace navigation has no per-item hover feedback"
+grep -qE 'Interact \{' "$CONTENT" || fail "Workspace navigation has no per-item hover feedback"
 grep -qE 'Anim \{ type: Anim\.DefaultSpatial \}' "$CONTENT" || fail "Workspace selection pill does not use the shared spatial curve"
 grep -qE 'color: Colours\.signalStyle\.glass' "$CONTENT" || fail "Workspace lacks the Signal glass surface"
 grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.length > 0' "$WINDOW" || fail "Workspace window does not disappear when no plugin is eligible"

@@ -113,7 +113,7 @@ ColumnLayout {
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     disabled: !actionButton.enabled

@@ -152,7 +152,7 @@ StyledRect {
             implicitHeight: markReadIcon.implicitHeight
             visible: !root.modelData.read
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 onClicked: NotificationHistory.markRead(root.modelData.id)
             }
@@ -172,7 +172,7 @@ StyledRect {
             implicitHeight: deleteIcon.implicitHeight
             opacity: 0.5
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 onClicked: NotificationHistory.deleteEntry(root.modelData.id)
             }

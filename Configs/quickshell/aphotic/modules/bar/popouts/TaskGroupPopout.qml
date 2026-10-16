@@ -53,7 +53,7 @@ ColumnLayout {
                 elide: Text.ElideRight
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 color: Colours.signalStyle.hover

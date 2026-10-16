@@ -106,7 +106,7 @@ Item {
                 onCurrentChanged: if (!current) stopTrace()
                 Component.onCompleted: traceRing.seen = Shelves.ackCount(chip.output,chip.edge)
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     onClicked: root.select(chip.modelData.id)
                 }

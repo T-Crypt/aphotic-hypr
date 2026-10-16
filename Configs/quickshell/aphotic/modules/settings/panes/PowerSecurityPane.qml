@@ -81,7 +81,7 @@ ColumnLayout {
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !profileBtn.active
@@ -125,7 +125,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -138,7 +138,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -171,7 +171,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -184,7 +184,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -217,7 +217,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -230,7 +230,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full

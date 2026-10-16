@@ -49,7 +49,7 @@ Item {
         radius: Tokens.rounding.full
         color: "transparent"
 
-        StateLayer {
+        Interact {
             radius: parent.radius
             onClicked: root.screenState.dashboard = !root.screenState.dashboard
         }

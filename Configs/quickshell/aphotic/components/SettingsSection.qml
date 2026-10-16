@@ -72,7 +72,7 @@ ColumnLayout {
             hovered: headerState.containsMouse
         }
 
-        StateLayer {
+        Interact {
             id: headerState
 
             topLeftRadius: header.topLeftRadius

@@ -25,7 +25,7 @@ Item {
         Toaster.toast(qsTr("Copied"), root.formattedResult, "content_copy");
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();

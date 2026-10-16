@@ -71,13 +71,13 @@ ColumnLayout {
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                                 showHoverBackground: providerPill.available
                             }
 
-                            // A disabled StateLayer's own MouseArea stops
+                            // A disabled Interact's own MouseArea stops
                             // accepting clicks, letting them fall through
                             // to whatever is behind it -- the dashboard's
                             // click-outside-to-dismiss MouseArea, in this
@@ -199,7 +199,7 @@ ColumnLayout {
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             disabled: AiProviders.startingOllama
@@ -228,7 +228,7 @@ ColumnLayout {
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             disabled: AiProviders.stoppingOllama
@@ -261,7 +261,7 @@ ColumnLayout {
                         fontStyle: Tokens.font.icon.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                     }
@@ -302,7 +302,7 @@ ColumnLayout {
                         font: Tokens.font.label.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                         showHoverBackground: !modelPill.active
@@ -421,7 +421,7 @@ ColumnLayout {
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -574,7 +574,7 @@ ColumnLayout {
                             color: modelRow.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -587,7 +587,7 @@ ColumnLayout {
                             color: Colours.palette.m3error
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -661,7 +661,7 @@ ColumnLayout {
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             showHoverBackground: !AiProviders.pulling
@@ -759,7 +759,7 @@ ColumnLayout {
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -783,7 +783,7 @@ ColumnLayout {
                                 fontStyle: Tokens.font.icon.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -847,7 +847,7 @@ ColumnLayout {
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -872,7 +872,7 @@ ColumnLayout {
                                 fontStyle: Tokens.font.icon.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -916,7 +916,7 @@ ColumnLayout {
                             color: Colours.palette.m3error
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -980,7 +980,7 @@ ColumnLayout {
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -1149,7 +1149,7 @@ ColumnLayout {
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             showHoverBackground: !AiProviders.pulling
@@ -1184,7 +1184,7 @@ ColumnLayout {
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                         }
@@ -1284,7 +1284,7 @@ ColumnLayout {
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                 }

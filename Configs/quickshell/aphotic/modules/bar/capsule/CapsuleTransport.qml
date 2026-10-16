@@ -35,7 +35,7 @@ RowLayout {
             Anim { type: Anim.FastSpatial }
         }
 
-        StateLayer {
+        Interact {
             id: state_
 
             radius: seg.radius

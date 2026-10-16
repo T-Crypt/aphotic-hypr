@@ -72,17 +72,17 @@ StyledRect {
         Toaster.toast(qsTr("Couldn't open %1").arg(identity), qsTr("No running window or installed app found"), "error");
     }
 
-    StateLayer {
+    Interact {
         radius: root.radius
         disabled: !Players.active?.canTogglePlaying
         onClicked: Players.active?.togglePlaying()
     }
 
-    // StateLayer above only ever accepts its own default LeftButton (see
-    // components/StateLayer.qml -- it's a MouseArea with no
+    // Interact above only ever accepts its own default LeftButton (see
+    // components/Interact.qml -- it's a MouseArea with no
     // acceptedButtons override), so right-click reaches nothing today.
     // A separate MouseArea limited to RightButton catches it without
-    // touching StateLayer's own left-click ripple/toggle behavior at all.
+    // touching Interact's own left-click toggle behavior at all.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton

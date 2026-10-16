@@ -67,7 +67,7 @@ ColumnLayout {
                 fontStyle: Tokens.font.icon.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
             }
@@ -95,7 +95,7 @@ ColumnLayout {
                 fontStyle: Tokens.font.icon.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 showHoverBackground: !root.historyOpen
@@ -146,7 +146,7 @@ ColumnLayout {
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: providerPill.available
@@ -182,7 +182,7 @@ ColumnLayout {
                 font: Tokens.font.label.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
             }

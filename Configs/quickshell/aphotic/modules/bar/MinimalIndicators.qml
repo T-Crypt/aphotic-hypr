@@ -87,7 +87,7 @@ Item {
             color: item.colour
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: Tokens.rounding.full
             onClicked: item.clicked()

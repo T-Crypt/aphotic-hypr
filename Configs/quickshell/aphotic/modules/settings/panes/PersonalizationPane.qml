@@ -132,7 +132,7 @@ ColumnLayout {
                     fontStyle: Tokens.font.icon.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !swatch.active
@@ -226,7 +226,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -239,7 +239,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -350,7 +350,7 @@ ColumnLayout {
                         font: Tokens.font.body.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                         onClicked: root.newIconPattern = unresolvedRow.modelData.appClass
@@ -417,7 +417,7 @@ ColumnLayout {
                         color: Colours.palette.m3onSurfaceVariant
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -527,7 +527,7 @@ ColumnLayout {
             font: Tokens.font.body.medium
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: parent.radius
             disabled: !parent.canAdd
@@ -685,7 +685,7 @@ ColumnLayout {
             font: Tokens.font.label.small
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: parent.radius
             showHoverBackground: !pill.active

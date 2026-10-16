@@ -162,7 +162,7 @@ Item {
                 height: width
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 onClicked: root.screenState.launcher = !root.screenState.launcher
@@ -274,10 +274,10 @@ Item {
             }
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: parent.radius
-            // StateLayer is a MouseArea and takes LeftButton only by
+            // Interact is a MouseArea and takes LeftButton only by
             // default. Left-click walks the group's windows one at a
             // time; the list of them all moved to right-click, since a
             // popout on every click is in the way of the common case.

@@ -53,7 +53,7 @@ Item {
             Anim {}
         }
 
-        StateLayer {
+        Interact {
             id: state
 
             radius: bg.radius

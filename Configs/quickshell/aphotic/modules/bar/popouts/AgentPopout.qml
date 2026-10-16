@@ -67,7 +67,7 @@ ColumnLayout {
                     color: Colours.signalStyle.accentLine
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     color: Colours.signalStyle.hover
                     stateOpacity: (containsMouse ? 1 : 0)

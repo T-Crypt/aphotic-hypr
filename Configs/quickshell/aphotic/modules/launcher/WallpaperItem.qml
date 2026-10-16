@@ -21,7 +21,7 @@ Item {
         Themes.setTheme(modelData.theme, modelData.file);
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();

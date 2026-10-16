@@ -99,7 +99,7 @@ ColumnLayout {
                 font: Tokens.font.label.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
             }
@@ -144,7 +144,7 @@ ColumnLayout {
                     font: Tokens.font.label.medium
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                 }
@@ -350,7 +350,7 @@ ColumnLayout {
                 font: Tokens.font.label.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 disabled: root.packageCheckRunning
@@ -447,7 +447,7 @@ ColumnLayout {
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     disabled: root.pendingUpdatesRunning

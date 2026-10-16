@@ -255,7 +255,7 @@ Item {
                             }
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             showHoverBackground: !themeCard.active
@@ -294,7 +294,7 @@ Item {
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: Tokens.rounding.extraLarge
                 }
@@ -359,7 +359,7 @@ Item {
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             showHoverBackground: !wallpaperPill.active
@@ -395,7 +395,7 @@ Item {
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: Tokens.rounding.extraLarge
                 }
@@ -452,7 +452,7 @@ Item {
                                     font: Tokens.font.label.small
                                 }
 
-                                StateLayer {
+                                Interact {
                                     anchors.fill: parent
                                     radius: parent.radius
                                     showHoverBackground: !layoutPill.active
@@ -518,7 +518,7 @@ Item {
                                     font: Tokens.font.label.small
                                 }
 
-                                StateLayer {
+                                Interact {
                                     anchors.fill: parent
                                     radius: parent.radius
                                     showHoverBackground: !intervalPill.active

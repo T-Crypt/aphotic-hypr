@@ -68,7 +68,7 @@ Item {
                 width: column.width
                 implicitHeight: Tokens.sizes.launcher.itemHeight * 0.7
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.medium
                     onClicked: {
                         menuItem.modelData.action();

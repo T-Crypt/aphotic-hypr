@@ -382,7 +382,7 @@ Item {
             color: Colours.palette.m3onSurfaceVariant
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: cycleButton.radius
             onClicked: {

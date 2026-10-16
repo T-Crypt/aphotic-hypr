@@ -63,7 +63,7 @@ ColumnLayout {
             radius: Tokens.rounding.medium
             color: "transparent"
 
-            StateLayer {
+            Interact {
                 radius: parent.radius
                 disabled: !root.expanded || !root.switchable
                 onClicked: root.cycled()
@@ -114,7 +114,7 @@ ColumnLayout {
             radius: Tokens.rounding.full
             color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
 
-            StateLayer {
+            Interact {
                 radius: parent.radius
                 disabled: !root.expanded
                 onClicked: root.dismissed()

@@ -38,7 +38,7 @@ ColumnLayout {
             radius: Tokens.rounding.medium
             color: "transparent"
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 color: Colours.signalStyle.hover
                 stateOpacity: (containsMouse ? 1 : 0)

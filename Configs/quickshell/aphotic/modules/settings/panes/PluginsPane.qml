@@ -426,7 +426,7 @@ ColumnLayout {
             fontStyle: Tokens.font.icon.small
             opacity: root.refreshing ? 0.4 : 1
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 anchors.margins: -Tokens.padding.small
                 radius: Tokens.rounding.full
@@ -459,7 +459,7 @@ ColumnLayout {
                 }
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
             }
@@ -529,7 +529,7 @@ ColumnLayout {
                 color: Colours.palette.m3onSurfaceVariant
                 fontStyle: Tokens.font.icon.small
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full
@@ -577,7 +577,7 @@ ColumnLayout {
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: root.scope = scopeChip.modelData.id
@@ -630,7 +630,7 @@ ColumnLayout {
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: root.category = catChip.modelData.id
@@ -696,7 +696,7 @@ ColumnLayout {
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: trustProc.running = true
@@ -874,7 +874,7 @@ ColumnLayout {
                     color: pluginRow.on ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.medium
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -906,7 +906,7 @@ ColumnLayout {
                         font: Tokens.font.label.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                         disabled: !pluginRow.actionable
@@ -927,7 +927,7 @@ ColumnLayout {
                     color: Colours.palette.m3onSurfaceVariant
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -1056,7 +1056,7 @@ ColumnLayout {
                         font: Tokens.font.label.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -1075,7 +1075,7 @@ ColumnLayout {
                 color: Colours.palette.m3primary
                 font: Tokens.font.label.small
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full
@@ -1089,7 +1089,7 @@ ColumnLayout {
                 color: Colours.palette.m3error
                 font: Tokens.font.label.small
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full
