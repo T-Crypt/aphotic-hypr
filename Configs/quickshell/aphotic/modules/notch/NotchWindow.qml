@@ -24,7 +24,11 @@ PanelWindow {
     readonly property bool dockHorizontal: Settings.barHorizontal
     // Which way the hub opens: away from the edge the bar is docked
     // against, so the two never grow into each other.
-    readonly property real edgeGap: 0
+    // How far the notch sits off the edge it docks against (i.e. off the
+    // bar's drawn edge). Defaults to 0 so the notch is flush against the bar
+    // (no see-through strip). Config.notch.edgeGap stays available as an
+    // intentional knob, but read from config so it is one source of truth.
+    readonly property real edgeGap: Config.notch.edgeGap
     readonly property bool growsPositive: root.dockHorizontal ? !Settings.barPositionBottom : !Settings.barPositionRight
 
     WlrLayershell.namespace: "aphotic-notch"
