@@ -21,20 +21,20 @@ ColumnLayout {
 
         MaterialIcon {
             text: icon
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             fontStyle: Tokens.font.icon.small
         }
 
         StyledText {
             text: label
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
         }
 
         StyledText {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignRight
             text: `${formatted.value.toFixed(1)} ${formatted.unit}`
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
         }
 
@@ -52,7 +52,7 @@ ColumnLayout {
                     width: 3
                     height: Math.max(2, modelData / parent.maxVal * 24)
                     anchors.bottom: parent.bottom
-                    color: Colours.palette.m3primary
+                    color: Colours.signal
                     opacity: 0.7
                 }
             }
@@ -82,7 +82,7 @@ ColumnLayout {
             const up = NetworkUsage.formatBytesTotal(NetworkUsage.uploadTotal);
             return qsTr("Total: %1 %2 down, %3 %4 up").arg(down.value.toFixed(1)).arg(down.unit).arg(up.value.toFixed(1)).arg(up.unit);
         }
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.small
     }
 }

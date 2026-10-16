@@ -41,9 +41,9 @@ Item {
             StyledRect {
                 anchors.fill: parent
                 radius: Tokens.rounding.medium
-                color: (tile.active ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.surface)
+                color: (tile.active ? Qt.alpha(Colours.signal, 0.18) : Colours.signalStyle.surface)
                 border.width: 1
-                border.color: tile.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                border.color: tile.active ? Colours.signal : Colours.signalStyle.hairline
 
                 Behavior on color {
                     CAnim {}
@@ -64,7 +64,7 @@ Item {
                 MaterialIcon {
                     Layout.alignment: Qt.AlignHCenter
                     text: tile.icon
-                    color: (tile.active ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (tile.active ? Colours.signalOnSurface : Colours.inkMuted)
                     fontStyle: Tokens.font.icon.medium
                     fill: tile.active ? 1 : 0
                 }
@@ -72,7 +72,7 @@ Item {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: tile.label
-                    color: (tile.active ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (tile.active ? Colours.signalOnSurface : Colours.inkMuted)
                     font: Tokens.font.label.small
                 }
             }

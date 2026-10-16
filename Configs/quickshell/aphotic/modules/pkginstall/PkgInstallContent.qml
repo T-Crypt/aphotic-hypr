@@ -49,7 +49,7 @@ Item {
         transformOrigin: Item.Center
 
         radius: Tokens.rounding.large
-        color: Colours.palette.m3surfaceContainer
+        color: Colours.surface
 
         Behavior on opacity {
             Anim {
@@ -82,7 +82,7 @@ Item {
 
                 MaterialIcon {
                     text: "search"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
 
@@ -97,7 +97,7 @@ Item {
                         anchors.right: parent.right
                         clip: true
                         font: Tokens.font.body.large
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
 
                         Keys.onEscapePressed: root.screenState.pkgInstall = false
                         Keys.onReturnPressed: {
@@ -117,7 +117,7 @@ Item {
                         elide: Text.ElideRight
                         text: qsTr("Search packages (official + AUR)…")
                         font: searchInput.font
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         visible: searchInput.text.length === 0
                     }
                 }
@@ -125,7 +125,7 @@ Item {
                 MaterialIcon {
                     visible: PkgSearch.searching
                     text: "sync"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
             }
@@ -134,7 +134,7 @@ Item {
                 Layout.fillWidth: true
                 visible: PkgSearch.errorText.length > 0
                 text: PkgSearch.errorText
-                color: Colours.palette.m3error
+                color: Colours.alert
                 font: Tokens.font.body.small
                 wrapMode: Text.Wrap
             }
@@ -155,7 +155,7 @@ Item {
 
                 highlight: StyledRect {
                     radius: Tokens.rounding.medium
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     opacity: 0.08
                 }
                 highlightFollowsCurrentItem: true
@@ -169,7 +169,7 @@ Item {
                     anchors.centerIn: parent
                     visible: list.count === 0 && searchInput.text.trim().length > 0 && !PkgSearch.searching
                     text: qsTr("No results")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.medium
                 }
             }

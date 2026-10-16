@@ -21,7 +21,7 @@ Item {
     }
 
     required property ScreenState screenState
-    property color colour: Colours.palette.m3secondaryOnSurface
+    property color colour: Colours.signalSecondaryOnSurface
     // Full/Taskbar want the same background-chip treatment every other
     // entry (Clock/Tray/OsIcon/...) already has, so the agent icon has
     // its own visual boundary instead of blending into whatever's next
@@ -100,7 +100,7 @@ Item {
         implicitWidth: Math.max(count.implicitWidth + Tokens.padding.extraSmall, Tokens.spacing.medium)
         implicitHeight: Tokens.spacing.medium
         radius: Tokens.rounding.full
-        color: Colours.palette.m3primary
+        color: Colours.signal
 
         StyledText {
             id: count
@@ -108,7 +108,7 @@ Item {
             anchors.centerIn: parent
             text: root.badgeCount > 9 ? "9+" : String(root.badgeCount)
             font: Tokens.font.label.small
-            color: Colours.palette.m3onPrimary
+            color: Colours.onSignal
         }
     }
 

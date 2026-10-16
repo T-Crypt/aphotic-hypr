@@ -18,7 +18,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: Bluetooth.defaultAdapter?.enabled ? "bluetooth" : "bluetooth_disabled"
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
         }
 
         StyledText {
@@ -34,14 +34,14 @@ ColumnLayout {
             Rectangle {
                 anchors.fill: parent
                 radius: Tokens.rounding.full
-                color: Bluetooth.defaultAdapter?.enabled ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
+                color: Bluetooth.defaultAdapter?.enabled ? Qt.alpha(Colours.signal, 0.18) : Colours.signalStyle.raised
                 border.width: 1
-                border.color: Bluetooth.defaultAdapter?.enabled ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                border.color: Bluetooth.defaultAdapter?.enabled ? Colours.signal : Colours.signalStyle.hairline
             }
 
             Interact {
                 radius: Tokens.rounding.full
-                color: Bluetooth.defaultAdapter?.enabled ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
+                color: Bluetooth.defaultAdapter?.enabled ? Colours.signal : Colours.raised
                 onClicked: {
                     if (Bluetooth.defaultAdapter)
                         Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled;
@@ -72,7 +72,7 @@ ColumnLayout {
 
             Interact {
                 radius: Tokens.rounding.medium
-                color: (devRow.modelData.connected ? Colours.palette.m3primary : Colours.signalStyle.hover)
+                color: (devRow.modelData.connected ? Colours.signal : Colours.signalStyle.hover)
                 stateOpacity: (devRow.modelData.connected ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))
                 onClicked: devRow.modelData.connected ? devRow.modelData.disconnect() : devRow.modelData.connect()
             }
@@ -94,7 +94,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: Icons.getBluetoothIcon(devRow.modelData.icon)
-                    color: devRow.modelData.connected ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: devRow.modelData.connected ? Colours.signal : Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -102,14 +102,14 @@ ColumnLayout {
                     id: devLabel
                     Layout.fillWidth: true
                     text: devRow.modelData.name
-                    color: devRow.modelData.connected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
+                    color: devRow.modelData.connected ? Colours.ink : Colours.inkMuted
                     elide: Text.ElideRight
                 }
 
                 StyledText {
                     visible: devRow.modelData.connected
                     text: qsTr("Connected")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.medium
                 }
             }
@@ -119,6 +119,6 @@ ColumnLayout {
     StyledText {
         visible: Bluetooth.devices.values.length === 0
         text: qsTr("No devices")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
     }
 }

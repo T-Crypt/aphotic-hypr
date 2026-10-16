@@ -27,7 +27,7 @@ Item {
         radius: Tokens.rounding.full
         color: "transparent"
         border.width: 2
-        border.color: Colours.palette.m3primary
+        border.color: Colours.signal
         opacity: 0
 
         SequentialAnimation {

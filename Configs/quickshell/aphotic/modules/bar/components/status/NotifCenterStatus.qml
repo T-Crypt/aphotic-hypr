@@ -10,7 +10,7 @@ MaterialIcon {
     required property ScreenState screenState
 
     text: "history"
-    color: NotificationHistory.unreadCount > 0 ? Colours.palette.m3primary : root.colour
+    color: NotificationHistory.unreadCount > 0 ? Colours.signal : root.colour
     fill: NotificationHistory.unreadCount > 0 ? 1 : 0
 
     MouseArea {

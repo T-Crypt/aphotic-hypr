@@ -41,7 +41,7 @@ Item {
                 StyledText {
                     text: root.modelData.name
                     font: Tokens.font.body.medium
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     elide: Text.ElideRight
                 }
 
@@ -49,14 +49,14 @@ Item {
                     Layout.preferredWidth: repoLabel.implicitWidth + Tokens.padding.small * 2
                     Layout.preferredHeight: repoLabel.implicitHeight + Tokens.padding.extraSmall
                     radius: Tokens.rounding.full
-                    color: root.modelData.isAur ? Colours.palette.m3tertiary : Colours.palette.m3secondaryContainer
+                    color: root.modelData.isAur ? Colours.signalTertiary : Colours.chip
 
                     StyledText {
                         id: repoLabel
                         anchors.centerIn: parent
                         text: root.modelData.isAur ? qsTr("AUR") : root.modelData.repo
                         font: Tokens.font.label.small
-                        color: root.modelData.isAur ? Colours.contrastOn(Colours.palette.m3tertiary) : Colours.palette.m3onSecondaryContainer
+                        color: root.modelData.isAur ? Colours.contrastOn(Colours.signalTertiary) : Colours.chipInk
                     }
                 }
 
@@ -64,7 +64,7 @@ Item {
                     visible: root.modelData.installed
                     text: qsTr("Installed")
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3secondary
+                    color: Colours.signalSecondary
                 }
             }
 
@@ -72,7 +72,7 @@ Item {
                 Layout.fillWidth: true
                 text: root.modelData.description
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
             }
         }

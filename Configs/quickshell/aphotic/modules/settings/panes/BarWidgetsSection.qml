@@ -79,7 +79,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Widgets")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -87,7 +87,7 @@ ColumnLayout {
         Layout.fillWidth: true
         text: qsTr("Drag the handle to reorder. Disabled widgets leave no gap behind.")
         wrapMode: Text.WordWrap
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.small
     }
 
@@ -119,7 +119,7 @@ ColumnLayout {
                     MaterialIcon {
                         visible: widgetRow.info.jump.length > 0
                         text: "open_in_new"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
                         Interact {
@@ -133,7 +133,7 @@ ColumnLayout {
                     MaterialIcon {
                         text: widgetRow.modelData.enabled ? "toggle_on" : "toggle_off"
                         fill: 1
-                        color: widgetRow.modelData.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: widgetRow.modelData.enabled ? Colours.signal : Colours.inkMuted
                         fontStyle: Tokens.font.icon.medium
 
                         Interact {
@@ -151,7 +151,7 @@ ColumnLayout {
                     // enough vertically to count as a flick.
                     MaterialIcon {
                         text: "drag_indicator"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
                         MouseArea {

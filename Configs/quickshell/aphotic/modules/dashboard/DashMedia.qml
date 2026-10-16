@@ -39,7 +39,7 @@ Item {
                 anchors.centerIn: parent
                 visible: !Players.active || Players.getArtUrl(Players.active).length === 0
                 text: "music_note"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.extraLarge
             }
         }
@@ -49,7 +49,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             horizontalAlignment: Text.AlignHCenter
             text: Players.active?.trackTitle || qsTr("No media playing")
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             font: Tokens.font.body.medium
             elide: Text.ElideRight
         }
@@ -60,7 +60,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             visible: text.length > 0
             text: Players.active?.trackArtist ?? ""
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
             elide: Text.ElideRight
         }
@@ -74,7 +74,7 @@ Item {
             StyledRect {
                 anchors.fill: parent
                 radius: height / 2
-                color: Colours.tPalette.m3surfaceContainer
+                color: Colours.surface
             }
 
             StyledRect {
@@ -83,7 +83,7 @@ Item {
                 anchors.bottom: parent.bottom
                 radius: parent.height / 2
                 width: Players.active?.length > 0 ? parent.width * Math.min(1, Players.active.position / Players.active.length) : 0
-                color: Colours.palette.m3primary
+                color: Colours.signal
 
                 Behavior on width {
                     enabled: !dashSeekArea.pressed
@@ -118,7 +118,7 @@ Item {
             StyledText {
                 text: root.formatTime(Players.active?.position ?? 0)
                 font: Tokens.font.label.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
 
             Item {
@@ -128,7 +128,7 @@ Item {
             StyledText {
                 text: root.formatTime(Players.active?.length ?? 0)
                 font: Tokens.font.label.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
         }
 
@@ -171,7 +171,7 @@ Item {
                     id: icon_
                     anchors.centerIn: parent
                     text: btn.icon
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     fontStyle: Tokens.font.icon.medium
                 }
             }
@@ -216,7 +216,7 @@ Item {
                     Interact {
                         anchors.fill: parent
                         radius: 4
-                        color: dot.modelData === Players.active ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
+                        color: dot.modelData === Players.active ? Colours.signal : Colours.outline
                         onClicked: Players.manualActive = dot.modelData
                     }
                 }

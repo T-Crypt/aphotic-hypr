@@ -26,7 +26,7 @@ Item {
 
     property real radius: 0
     property color color: "transparent"
-    property color shadowColor: Colours.palette.m3shadow
+    property color shadowColor: Colours.shadow
     property real shadowOpacity: 0.5
     property real shadowBlur: 0.5
     property real shadowVerticalOffset: 2

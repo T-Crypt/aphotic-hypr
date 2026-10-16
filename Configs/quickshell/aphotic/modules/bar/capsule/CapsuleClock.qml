@@ -71,7 +71,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: (parent.height - height) / 2 + (hover.hovered ? -9 : 0)
                 text: root.timeText
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 font: root.fontStyle
                 opacity: hover.hovered ? 0 : 1
 
@@ -93,7 +93,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: (parent.height - height) / 2 + (hover.hovered ? 0 : 9)
                 text: root.dateText
-                color: Colours.palette.m3primaryOnSurface
+                color: Colours.signalOnSurface
                 font: root.fontStyle
                 opacity: hover.hovered ? 1 : 0
                 visible: opacity > 0
@@ -126,14 +126,14 @@ Item {
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 text: Time.hourStr
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 font: root.fontStyle
             }
 
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 text: Time.minuteStr
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: root.fontStyle
             }
 
@@ -141,7 +141,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 visible: Settings.twelveHourClock
                 text: Time.amPmStr.toLowerCase()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.builders.small.scale(0.9).build()
             }
         }

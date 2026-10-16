@@ -19,7 +19,7 @@ RectangularShadow {
     id: root
 
     required property Item target
-    property color glowColour: Colours.palette.m3primary
+    property color glowColour: Colours.signal
     property real intensity: DepthFx.glowIntensity
     property real glowBlur: 18
     property real glowSpread: 0.06

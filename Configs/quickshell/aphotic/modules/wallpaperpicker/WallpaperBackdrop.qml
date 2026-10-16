@@ -99,7 +99,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             visible: !root.lossless
-            color: Colours.palette.m3surfaceContainer
+            color: Colours.surface
             opacity: 0.15
 
             Behavior on color {

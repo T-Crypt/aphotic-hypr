@@ -212,7 +212,7 @@ StyledRect {
     // identically) until the last few frames, then drops through the whole
     // visible range at once.
     radius: root.collapsedThick / 2 + (Tokens.rounding.extraLarge - root.collapsedThick / 2) * root.alongT
-    color: root.joined ? Colours.signalStyle.bar : Colours.tPalette.m3surfaceContainer
+    color: root.joined ? Colours.signalStyle.bar : Colours.surface
 
     // Signal skin: the notch hangs from the bar as one piece, so the corners
     // on the bar side go square and fillets carry the bar edge into its sides.
@@ -364,7 +364,7 @@ StyledRect {
             radius: root.radius
             color: "transparent"
             border.width: 1
-            border.color: Colours.palette.m3outlineVariant
+            border.color: Colours.outline
         }
     }
 }

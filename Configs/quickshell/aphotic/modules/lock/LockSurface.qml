@@ -13,7 +13,7 @@ WlSessionLockSurface {
     required property WlSessionLock lock
     required property var pam
 
-    color: Colours.palette.m3surfaceContainer
+    color: Colours.surface
 
     DepthLayer {
         anchors.fill: parent
@@ -58,11 +58,11 @@ WlSessionLockSurface {
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: Qt.alpha(Colours.palette.m3surfaceContainer, 0.35)
+                color: Qt.alpha(Colours.surface, 0.35)
             }
             GradientStop {
                 position: 1
-                color: Qt.alpha(Colours.palette.m3surfaceContainer, 0.8)
+                color: Qt.alpha(Colours.surface, 0.8)
             }
         }
     }
@@ -83,7 +83,7 @@ WlSessionLockSurface {
         width: 0
         height: width
         radius: width / 2
-        color: Qt.alpha(Colours.palette.m3primary, 0.35)
+        color: Qt.alpha(Colours.signal, 0.35)
         opacity: 0
         visible: width > 0
 

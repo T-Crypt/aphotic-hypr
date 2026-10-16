@@ -53,7 +53,7 @@ StyledRect {
         anchors.topMargin: root.radius
         anchors.bottomMargin: root.radius
         width: 2
-        color: Colours.palette.m3error
+        color: Colours.alert
     }
 
     RowLayout {
@@ -71,7 +71,7 @@ StyledRect {
             Layout.alignment: Qt.AlignVCenter
             visible: !root.modelData.read
             radius: 4
-            color: Colours.palette.m3primary
+            color: Colours.signal
         }
 
         Rectangle {
@@ -81,7 +81,7 @@ StyledRect {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: Tokens.rounding.full
-            color: Qt.alpha(Colours.palette.m3primary, 0.14)
+            color: Qt.alpha(Colours.signal, 0.14)
 
             AppIcon {
                 anchors.centerIn: parent
@@ -90,7 +90,7 @@ StyledRect {
                 fallbackGlyph: Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
                 size: 20
                 fontStyle: Tokens.font.icon.medium
-                colour: Colours.palette.m3primary
+                colour: Colours.signal
             }
         }
 
@@ -103,7 +103,7 @@ StyledRect {
                 Layout.fillWidth: true
                 text: (root.modelData.appName || root.modelData.summary).toUpperCase()
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
             }
 
@@ -112,7 +112,7 @@ StyledRect {
                 visible: false
                 text: `${root.modelData.summary} · ${root.relativeTime(root.modelData.timestamp)}`
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
             }
 
@@ -125,14 +125,14 @@ StyledRect {
                     Layout.fillWidth: true
                     text: root.modelData.summary
                     font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     elide: Text.ElideRight
                 }
 
                 StyledText {
                     text: root.relativeTime(root.modelData.timestamp)
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
 
@@ -141,7 +141,7 @@ StyledRect {
                 text: root.modelData.body
                 visible: text.length > 0
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
         }
@@ -161,7 +161,7 @@ StyledRect {
                 id: markReadIcon
                 anchors.centerIn: parent
                 text: "close"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
         }
@@ -181,7 +181,7 @@ StyledRect {
                 id: deleteIcon
                 anchors.centerIn: parent
                 text: "delete"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
         }

@@ -228,7 +228,7 @@ Item {
         radius: Tokens.rounding.extraLarge
         color: Colours.signalStyle.surface
         border.width: 0
-        border.color: Colours.palette.m3outlineVariant
+        border.color: Colours.outline
 
         // Signal: a sheet off the bottom edge -- square on the attached
         // side, panel radius on top.
@@ -261,7 +261,7 @@ Item {
 
                 StyledRect {
                     anchors.fill: parent
-                    color: Colours.palette.m3shadow
+                    color: Colours.shadow
                     opacity: 0.25
                 }
 
@@ -289,7 +289,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "search"
                                 fontStyle: Tokens.font.icon.medium
-                                color: Colours.palette.m3onSurfaceVariant
+                                color: Colours.inkMuted
                             }
 
                             Item {
@@ -304,7 +304,7 @@ Item {
                                     clip: true
 
                                     font: Tokens.font.body.large
-                                    color: Colours.palette.m3onSurface
+                                    color: Colours.ink
 
                                     // Grid style (Settings.launcherStyle === "grid",
                                     // apps mode only) swaps the visible results view
@@ -371,7 +371,7 @@ Item {
                                         }
                                     }
                                     font: search.font
-                                    color: Colours.palette.m3onSurfaceVariant
+                                    color: Colours.inkMuted
                                     visible: search.text.length === 0
                                 }
                             }

@@ -10,7 +10,7 @@ import qs.services
 Item {
     id: root
 
-    property color colour: Colours.palette.m3primary
+    property color colour: Colours.signal
     property Item hoveredEntry: null
 
     implicitWidth: Settings.barHorizontal ? icons.implicitWidth : Settings.barInnerWidth
@@ -64,7 +64,7 @@ Item {
 
         required property bool active
         required property string icon
-        property color colour: Colours.palette.m3primary
+        property color colour: Colours.signal
         signal clicked
 
         implicitWidth: glyph.implicitWidth

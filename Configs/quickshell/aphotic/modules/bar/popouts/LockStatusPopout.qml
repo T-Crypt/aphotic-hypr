@@ -14,7 +14,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: "keyboard_capslock"
-            color: Hypr.capsLock ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+            color: Hypr.capsLock ? Colours.signal : Colours.inkMuted
         }
         StyledText {
             text: qsTr("Caps Lock: %1").arg(Hypr.capsLock ? qsTr("on") : qsTr("off"))
@@ -26,7 +26,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: "dialpad"
-            color: Hypr.numLock ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+            color: Hypr.numLock ? Colours.signal : Colours.inkMuted
         }
         StyledText {
             text: qsTr("Num Lock: %1").arg(Hypr.numLock ? qsTr("on") : qsTr("off"))

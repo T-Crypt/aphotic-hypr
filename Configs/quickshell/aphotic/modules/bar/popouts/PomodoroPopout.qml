@@ -12,7 +12,7 @@ ColumnLayout {
     StyledText {
         Layout.alignment: Qt.AlignHCenter
         text: (Pomodoro.isBreak ? qsTr("Break") : qsTr("Focus")).toUpperCase()
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
@@ -45,7 +45,7 @@ ColumnLayout {
                 id: icon_
                 anchors.centerIn: parent
                 text: btn.icon
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 fontStyle: Tokens.font.icon.medium
             }
         }

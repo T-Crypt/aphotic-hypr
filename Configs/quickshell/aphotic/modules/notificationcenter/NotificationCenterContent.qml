@@ -92,14 +92,14 @@ Item {
 
                 MaterialIcon {
                     text: "notifications"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
 
                 StyledText {
                     Layout.fillWidth: true
                     text: qsTr("Notifications")
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
                 }
 
@@ -121,7 +121,7 @@ Item {
                         // The pill reads as the small-caps count label.
                         StyledText {
                             text: `${NotificationHistory.unreadCount} NEW`
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                         }
                     }
@@ -196,7 +196,7 @@ Item {
 
                         anchors.centerIn: parent
                         text: clearAll.armed ? "delete_forever" : "delete_sweep"
-                        color: clearAll.armed ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                        color: clearAll.armed ? Colours.alert : Colours.inkMuted
                         fill: clearAll.armed ? 1 : 0
                         fontStyle: Tokens.font.icon.small
                     }
@@ -226,7 +226,7 @@ Item {
 
                         anchors.centerIn: parent
                         text: DoNotDisturb.enabled ? "notifications_off" : "notifications"
-                        color: DoNotDisturb.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: DoNotDisturb.enabled ? Colours.signal : Colours.inkMuted
                         fill: DoNotDisturb.enabled ? 1 : 0
                         fontStyle: Tokens.font.icon.small
                     }
@@ -256,7 +256,7 @@ Item {
 
                         anchors.centerIn: parent
                         text: "close"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
                 }
@@ -280,20 +280,20 @@ Item {
 
                     MaterialIcon {
                         text: Weather.conditionIcon
-                        color: Colours.palette.m3secondary
+                        color: Colours.signalSecondary
                         fontStyle: Tokens.font.icon.medium
                     }
 
                     StyledText {
                         text: `${Math.round(Weather.currentTemp)}°${Settings.weatherUnits === "fahrenheit" ? "F" : "C"}`
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                         font: Tokens.font.body.medium
                     }
 
                     StyledText {
                         Layout.fillWidth: true
                         text: Weather.conditionText
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.body.small
                         elide: Text.ElideRight
                     }
@@ -359,14 +359,14 @@ Item {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: "notifications_none"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.extraLarge
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: qsTr("No notifications yet")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.body.medium
                     }
                 }

@@ -19,7 +19,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Host info").toUpperCase()
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
@@ -57,7 +57,7 @@ ColumnLayout {
 
                 StyledText {
                     text: modelData.label
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                 }
 
@@ -70,7 +70,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "content_copy"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
             }
@@ -80,7 +80,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Click a row to copy")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 }

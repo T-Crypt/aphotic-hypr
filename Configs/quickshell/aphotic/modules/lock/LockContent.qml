@@ -37,7 +37,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: Time.format("hh:mm")
             font: Tokens.font.headline.builders.large.scale(4).weight(Font.DemiBold).letterSpacing(-2).build()
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             opacity: reveal.staggered(0)
             transform: Translate {
                 y: (1 - reveal.staggered(0)) * Tokens.spacing.large
@@ -48,7 +48,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: Time.format("dddd, MMMM d").toUpperCase()
             font: Tokens.font.label.builders.medium.weight(Font.DemiBold).letterSpacing(3).build()
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             opacity: reveal.staggered(1)
             transform: Translate {
                 y: (1 - reveal.staggered(1)) * Tokens.spacing.large
@@ -107,15 +107,15 @@ Item {
                         Layout.preferredWidth: 44
                         Layout.preferredHeight: 44
                         radius: 22
-                        color: Qt.alpha(Colours.palette.m3primary, 0.18)
+                        color: Qt.alpha(Colours.signal, 0.18)
                         border.width: 1
-                        border.color: Qt.alpha(Colours.palette.m3primary, 0.5)
+                        border.color: Qt.alpha(Colours.signal, 0.5)
 
                         StyledText {
                             anchors.centerIn: parent
                             text: (Quickshell.env("USER") ?? "?").charAt(0).toUpperCase()
                             font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
-                            color: Colours.palette.m3primaryOnSurface
+                            color: Colours.signalOnSurface
                         }
                     }
 
@@ -125,7 +125,7 @@ Item {
 
                         StyledText {
                             text: qsTr("LOCKED")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                         }
 
@@ -133,7 +133,7 @@ Item {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: Quickshell.env("USER") ?? ""
-                            color: Colours.palette.m3onSurface
+                            color: Colours.ink
                             font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
                         }
                     }
@@ -153,7 +153,7 @@ Item {
 
                 readonly property bool typing: root.pam.buffer.length > 0 && root.pam.state === Pam.None
                 border.width: typing ? 2 : 1
-                border.color: typing ? Qt.alpha(Colours.palette.m3primary, 0.6) : Colours.signalStyle.hairline
+                border.color: typing ? Qt.alpha(Colours.signal, 0.6) : Colours.signalStyle.hairline
                 Behavior on border.color {
                     CAnim {}
                 }
@@ -173,7 +173,7 @@ Item {
                     radius: parent.radius
                     color: "transparent"
                     border.width: 2
-                    border.color: Colours.palette.m3error
+                    border.color: Colours.alert
                     opacity: 0
 
                     SequentialAnimation {
@@ -193,10 +193,10 @@ Item {
                     text: root.pam.state === Pam.MaxTries ? "lock_clock" : root.pam.state !== Pam.None ? "error" : "lock"
                     color: {
                         if (root.pam.state !== Pam.None)
-                            return Colours.palette.m3error;
+                            return Colours.alert;
                         if (root.pam.buffer.length > 0)
-                            return Colours.palette.m3primary;
-                        return Colours.palette.m3onSurfaceVariant;
+                            return Colours.signal;
+                        return Colours.inkMuted;
                     }
                     Behavior on color {
                         CAnim {}
@@ -221,7 +221,7 @@ Item {
                             width: Tokens.padding.small
                             height: Tokens.padding.small
                             radius: height / 2
-                            color: Colours.palette.m3onSurface
+                            color: Colours.ink
                             scale: 0
                             transformOrigin: Item.Center
 
@@ -241,7 +241,7 @@ Item {
 
                     StyledText {
                         text: root.pam.buffer.length === 0 ? qsTr("Enter password…") : ""
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.body.medium
                     }
                 }
@@ -260,7 +260,7 @@ Item {
                     return qsTr("Incorrect password");
                 return "";
             }
-            color: Colours.palette.m3error
+            color: Colours.alert
             font: Tokens.font.body.small
             opacity: (text.length > 0 ? 1 : 0) * reveal.staggered(3)
             transform: Translate {

@@ -207,7 +207,7 @@ ColumnLayout {
             anchors.fill: parent
             visible: false
             radius: parent.radius
-            baseColour: Colours.tPalette.m3surfaceContainer
+            baseColour: Colours.surface
         }
 
         Loader {

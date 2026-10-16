@@ -108,7 +108,7 @@ StyledRect {
             Layout.preferredWidth: 36
             Layout.preferredHeight: 36
             radius: Tokens.rounding.medium
-            color: Qt.alpha(Colours.palette.m3onSurface, 0.05)
+            color: Qt.alpha(Colours.ink, 0.05)
 
             Loader {
                 anchors.centerIn: parent
@@ -120,7 +120,7 @@ StyledRect {
 
                 MaterialIcon {
                     text: root.icon
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
             }
@@ -142,7 +142,7 @@ StyledRect {
                 Layout.fillWidth: true
                 text: root.description
                 elide: Text.ElideRight
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
         }

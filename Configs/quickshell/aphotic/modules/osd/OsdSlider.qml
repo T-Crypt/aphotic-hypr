@@ -43,7 +43,7 @@ Item {
         anchors.bottomMargin: 3
         radius: height / 2
         width: Math.max(height, (parent.width - 6) * root.fraction)
-        color: Colours.palette.m3primary
+        color: Colours.signal
 
         Behavior on width {
             Anim {
@@ -95,7 +95,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: Math.round(root.value * 100) + "%"
         font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
-        color: root.fraction > 0.85 ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
+        color: root.fraction > 0.85 ? Colours.onSignal : Colours.ink
     }
 
     MouseArea {

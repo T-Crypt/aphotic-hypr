@@ -64,7 +64,7 @@ Item {
         appClass: root.item.iconKeys
         size: parent.width * 0.6
         fontStyle: Tokens.font.icon.large
-        colour: Colours.palette.m3onSurface
+        colour: Colours.ink
     }
 
     Rectangle {
@@ -72,7 +72,7 @@ Item {
         width: 5
         height: 5
         radius: 2.5
-        color: Colours.palette.m3primary
+        color: Colours.signal
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 2
