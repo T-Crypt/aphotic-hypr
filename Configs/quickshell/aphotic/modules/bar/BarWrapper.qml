@@ -136,7 +136,7 @@ Item {
     // that purpose, leaving Bar.qml sized down to a couple of px instead
     // of its real content. Plain width/height bindings have no such
     // ambiguity.
-    StyledRect {
+    SignalSurface {
         id: background
 
         width: Settings.barHorizontal ? root.width : root.implicitWidth
@@ -148,9 +148,7 @@ Item {
         // draw their own full-bleed background internally (TaskbarBar.qml/
         // MinimalBar.qml) instead of inheriting Full's strip treatment.
         radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? height : width)
-        color: Colours.signalStyle.bar
-        border.width: 0
-        border.color: Colours.palette.m3outlineVariant
+        tone: Colours.signalStyle.bar
         visible: root.shouldBeVisible && Settings.barStyle === "full"
 
         Behavior on radius {
