@@ -21,6 +21,10 @@ PanelWindow {
     // and must never renegotiate the layer surface, so the window is
     // sized once to the largest state the capsule can reach and only the
     // inner surface moves -- the same budgeting NotchWindow.qml does.
+    // Reserve the collapsed band plus its edge margin. With the integer
+    // rowThickness below the pill never overflows this zone by more than
+    // padding, and the compositor flushes the notch (pinned to the zone's
+    // bottom) against the pill's bottom edge on the normal layout.
     readonly property int reservedThickness: collapsedThickness + edgeMargin
     // Room for the pill PLUS the media popout that opens away from the
     // docked edge, so the compositor never has to renegotiate the surface

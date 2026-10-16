@@ -133,7 +133,7 @@ Item {
             width: parent.width
             height: flick.visibleArea.heightRatio * parent.height
             radius: parent.radius
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
         }
     }
 }

@@ -5,8 +5,8 @@ import qs.services
 Item {
     id: root
 
-    property color frameColour: Colours.palette.m3onSurface
-    property color accentColour: Colours.palette.m3primary
+    property color frameColour: Colours.ink
+    property color accentColour: Colours.signal
 
     implicitWidth: 512
     implicitHeight: 512

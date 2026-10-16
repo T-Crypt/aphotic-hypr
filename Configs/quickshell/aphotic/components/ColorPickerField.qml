@@ -14,7 +14,7 @@ Item {
 
     property string value: ""
     property bool allowUnset: true
-    property color unsetPreviewColour: Colours.palette.m3primary
+    property color unsetPreviewColour: Colours.signal
     property var presets: ["#4A5A52", "#669B04", "#3B82F6", "#EF4444", "#F59E0B", "#8B5CF6", "#EC4899", "#14B8A6"]
 
     implicitWidth: trigger.implicitWidth
@@ -34,7 +34,7 @@ Item {
         implicitWidth: 72
         implicitHeight: 32
         radius: Tokens.rounding.small
-        color: Colours.tPalette.m3surfaceContainer
+        color: Colours.surface
 
         RowLayout {
             anchors.fill: parent
@@ -47,13 +47,13 @@ Item {
                 radius: 10
                 color: root.value.length > 0 ? root.value : "transparent"
                 border.width: root.value.length > 0 ? 0 : 2
-                border.color: Colours.palette.m3onSurfaceVariant
+                border.color: Colours.inkMuted
 
                 MaterialIcon {
                     anchors.centerIn: parent
                     visible: root.value.length === 0
                     text: "palette"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.builders.small.scale(0.7).build()
                 }
             }
@@ -62,7 +62,7 @@ Item {
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignRight
                 text: "expand_more"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
         }
@@ -82,9 +82,9 @@ Item {
 
             background: StyledRect {
                 radius: Tokens.rounding.medium
-                color: Colours.tPalette.m3surfaceContainer
+                color: Colours.surface
                 border.width: 1
-                border.color: Colours.palette.m3outlineVariant
+                border.color: Colours.outline
             }
 
             contentItem: ColumnLayout {
@@ -92,7 +92,7 @@ Item {
 
                 StyledText {
                     text: qsTr("Common")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.medium
                 }
 
@@ -105,14 +105,14 @@ Item {
                         implicitWidth: 32
                         implicitHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.tPalette.m3surfaceContainerHigh
+                        color: Colours.raised
                         border.width: root.value.length === 0 ? 3 : 1
-                        border.color: root.value.length === 0 ? Colours.palette.m3onSurface : Colours.palette.m3outlineVariant
+                        border.color: root.value.length === 0 ? Colours.ink : Colours.outline
 
                         MaterialIcon {
                             anchors.centerIn: parent
                             text: "palette"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
                         }
 
@@ -135,7 +135,7 @@ Item {
                             radius: Tokens.rounding.full
                             color: swatch.modelData
                             border.width: root.value.toLowerCase() === swatch.modelData.toLowerCase() ? 3 : 1
-                            border.color: root.value.toLowerCase() === swatch.modelData.toLowerCase() ? Colours.palette.m3onSurface : Colours.palette.m3outlineVariant
+                            border.color: root.value.toLowerCase() === swatch.modelData.toLowerCase() ? Colours.ink : Colours.outline
 
                             MaterialIcon {
                                 anchors.centerIn: parent
@@ -156,7 +156,7 @@ Item {
                 StyledText {
                     Layout.topMargin: Tokens.spacing.small
                     text: qsTr("Custom")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.medium
                 }
 
@@ -184,7 +184,7 @@ Item {
                         StyledRect {
                             anchors.fill: parent
                             radius: height / 2
-                            color: Colours.tPalette.m3surfaceContainerHigh
+                            color: Colours.raised
                         }
 
                         StyledRect {
@@ -215,7 +215,7 @@ Item {
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: root.value.length > 0 ? root.value : qsTr("theme default")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.mono.small
                     }
                 }

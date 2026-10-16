@@ -44,7 +44,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: root.modelData.name
             font: Tokens.font.body.medium
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             elide: Text.ElideRight
             width: parent.width - parent.spacing - Tokens.font.body.large.pointSize * 2
         }

@@ -19,7 +19,7 @@ ColumnLayout {
 
     readonly property bool byMem: ProcessUsage.sortBy === "mem"
     readonly property bool byGpu: ProcessUsage.sortBy === "gpu"
-    readonly property color metricColour: root.byGpu ? Colours.palette.m3secondary : root.byMem ? Colours.palette.m3tertiary : Colours.palette.m3primary
+    readonly property color metricColour: root.byGpu ? Colours.signalSecondary : root.byMem ? Colours.signalTertiary : Colours.signal
 
     // Padded to a constant length so the tile's implicitHeight -- and
     // therefore the notch's animated height -- does not twitch as
@@ -89,7 +89,7 @@ ColumnLayout {
         implicitWidth: sortChipLabel.implicitWidth + Tokens.padding.small * 2
         implicitHeight: 20
         radius: Tokens.rounding.full
-        color: sortChip.active ? Colours.palette.m3secondaryContainer : "transparent"
+        color: sortChip.active ? Colours.chip : "transparent"
 
         Behavior on color {
             CAnim {}
@@ -105,7 +105,7 @@ ColumnLayout {
 
             anchors.centerIn: parent
             text: sortChip.label
-            color: sortChip.active ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurfaceVariant
+            color: sortChip.active ? Colours.chipInk : Colours.inkMuted
             font: Tokens.font.label.builders.small.weight(Font.Medium).build()
         }
     }
@@ -116,7 +116,7 @@ ColumnLayout {
         visible: root.posture
         implicitHeight: postureRow.implicitHeight + Tokens.padding.small * 2
         radius: Tokens.rounding.small
-        color: Qt.alpha(Colours.posture(ResourcePosture.level, Colours.palette.m3primary), 0.14)
+        color: Qt.alpha(Colours.posture(ResourcePosture.level, Colours.signal), 0.14)
 
         RowLayout {
             id: postureRow
@@ -127,7 +127,7 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "hub"
-                color: Colours.posture(ResourcePosture.level, Colours.palette.m3primary)
+                color: Colours.posture(ResourcePosture.level, Colours.signal)
                 fontStyle: Tokens.font.icon.small
                 fill: 1
             }
@@ -153,7 +153,7 @@ ColumnLayout {
                 implicitWidth: flowLabel.implicitWidth + Tokens.padding.small * 2
                 implicitHeight: 20
                 radius: Tokens.rounding.full
-                color: Colours.palette.m3secondaryContainer
+                color: Colours.chip
 
                 Interact {
                     radius: parent.radius
@@ -167,7 +167,7 @@ ColumnLayout {
 
                     anchors.centerIn: parent
                     text: qsTr("Flow")
-                    color: Colours.palette.m3onSecondaryContainer
+                    color: Colours.chipInk
                     font: Tokens.font.label.builders.small.weight(Font.Medium).build()
                 }
             }
@@ -211,7 +211,7 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: 24
             radius: Tokens.rounding.small
-            color: row.modelData ? Colours.layer(Colours.palette.m3surfaceContainerHigh, 2) : "transparent"
+            color: row.modelData ? Colours.layer(Colours.raised, 2) : "transparent"
 
             StyledRect {
                 anchors.left: parent.left
@@ -242,13 +242,13 @@ ColumnLayout {
 
                 StyledText {
                     text: row.modelData ? String(row.modelData.pid) : ""
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.mono.small
                 }
 
                 StyledText {
                     text: row.modelData ? root.labelFor(row.modelData) : ""
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     font: Tokens.font.mono.builders.small.weight(Font.Medium).build()
                     horizontalAlignment: Text.AlignRight
 
@@ -266,7 +266,7 @@ ColumnLayout {
                 elide: Text.ElideRight
                 visible: row.index === 0 && !row.modelData && root.emptyNote.length > 0
                 text: root.emptyNote
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
         }

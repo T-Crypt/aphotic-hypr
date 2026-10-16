@@ -19,14 +19,14 @@ Item {
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: Time.hourStr
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             font: Tokens.font.headline.builders.large.scale(1.3).weight(Font.DemiBold).build()
         }
 
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: Time.minuteStr
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             font: Tokens.font.headline.builders.large.scale(1.3).weight(Font.DemiBold).build()
         }
 
@@ -34,14 +34,14 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: Tokens.spacing.medium
             text: Time.format("dddd")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.medium
         }
 
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: Time.format("MMMM d, yyyy")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
     }

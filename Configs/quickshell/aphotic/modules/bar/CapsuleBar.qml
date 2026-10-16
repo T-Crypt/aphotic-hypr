@@ -36,7 +36,7 @@ Item {
     // what cut the status icons off. Same floor-not-cap rule the row
     // itself uses along its length.
     readonly property real rowCross: root.horizontal ? collapsedRow.implicitHeight : collapsedRow.implicitWidth
-    readonly property int rowThickness: Math.max(Settings.barInnerWidth, root.rowCross) + Tokens.padding.extraSmall * 2
+    readonly property int rowThickness: Math.round(Math.max(Settings.barInnerWidth, root.rowCross) + Tokens.padding.extraSmall * 2)
     readonly property real rowExtent: root.horizontal ? collapsedRow.implicitWidth : collapsedRow.implicitHeight
     readonly property real alongExtent: Math.max(rowExtent + Tokens.padding.medium * 2, Config.bar.capsule.minLength)
 

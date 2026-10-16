@@ -236,7 +236,7 @@ MouseArea {
         id: overlay
 
         anchors.fill: parent
-        color: Colours.palette.m3secondary
+        color: Colours.signalSecondary
         opacity: 0.3
 
         layer.enabled: true
@@ -273,7 +273,7 @@ MouseArea {
         color: "transparent"
         radius: root.realRounding > 0 ? root.realRounding + root.realBorderWidth : 0
         border.width: root.realBorderWidth
-        border.color: Colours.palette.m3primary
+        border.color: Colours.signal
 
         x: selectionRect.x - root.realBorderWidth
         y: selectionRect.y - root.realBorderWidth

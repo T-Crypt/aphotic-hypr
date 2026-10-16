@@ -72,7 +72,7 @@ Item {
                 Layout.fillWidth: true
                 horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
                 text: root.player?.trackTitle || qsTr("Nothing playing")
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 font: Tokens.font.body.medium
                 elide: Text.ElideRight
             }
@@ -82,7 +82,7 @@ Item {
                 horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
                 visible: text.length > 0
                 text: root.player?.trackArtist ?? ""
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.medium
                 elide: Text.ElideRight
             }
@@ -98,7 +98,7 @@ Item {
 
                 StyledText {
                     text: root.formatTime(root.player?.position ?? 0)
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
@@ -111,7 +111,7 @@ Item {
                         width: parent.width
                         height: 5
                         radius: Tokens.rounding.full
-                        color: Colours.palette.m3surfaceContainerHigh
+                        color: Colours.raised
                     }
 
                     StyledRect {
@@ -119,7 +119,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         height: 5
                         radius: Tokens.rounding.full
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
                         width: (root.player?.length ?? 0) > 0 ? parent.width * Math.min(1, root.player.position / root.player.length) : 0
 
                         Behavior on width {
@@ -154,7 +154,7 @@ Item {
 
                 StyledText {
                     text: root.formatTime(root.player?.length ?? 0)
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
             }

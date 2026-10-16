@@ -30,6 +30,6 @@ StyledRect {
 
         anchors.centerIn: parent
         text: "tune"
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
     }
 }

@@ -65,7 +65,7 @@ ColumnLayout {
         Layout.preferredHeight: 36
         visible: root.showSearch
         radius: Tokens.rounding.full
-        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: Colours.layer(Colours.surface, 2)
 
         GradedOutline {
             radius: searchBox.radius
@@ -87,7 +87,7 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "search"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
@@ -97,7 +97,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 clip: true
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
 
                 Keys.onEscapePressed: searchInput.text = ""
                 // Enter opens the top match, so search works without the mouse.
@@ -112,7 +112,7 @@ ColumnLayout {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: qsTr("Search settings…")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                 }
             }
@@ -120,7 +120,7 @@ ColumnLayout {
             MaterialIcon {
                 visible: searchInput.text.length > 0
                 text: "close"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
 
                 Interact {
@@ -245,7 +245,7 @@ ColumnLayout {
                             x: Tokens.padding.medium
                             y: -implicitHeight - Tokens.spacing.small
                             text: (categoryButton.modelData.group ?? "").toUpperCase()
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             opacity: 0.75
                             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                         }
@@ -307,7 +307,7 @@ ColumnLayout {
                                 StyledText {
                                     Layout.fillWidth: true
                                     text: categoryButton.modelData.label
-                                    color: !categoryButton.active ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
+                                    color: !categoryButton.active ? Colours.inkMuted : Colours.ink
                                     font: categoryButton.active ? Tokens.font.body.builders.medium.weight(Font.DemiBold).build() : Tokens.font.body.medium
                                     elide: Text.ElideRight
                                 }
@@ -316,7 +316,7 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     visible: (categoryButton.modelData.description ?? "").length > 0
                                     text: categoryButton.modelData.description ?? ""
-                                    color: Colours.palette.m3onSurfaceVariant
+                                    color: Colours.inkMuted
                                     font: Tokens.font.label.small
                                     elide: Text.ElideRight
                                 }
@@ -349,7 +349,7 @@ ColumnLayout {
             width: 3
             height: Math.max(24, listFlick.visibleArea.heightRatio * listFlick.height)
             radius: Tokens.rounding.full
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             opacity: 0.35
         }
     }
@@ -361,7 +361,7 @@ ColumnLayout {
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
         text: qsTr("No matches")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 }

@@ -51,7 +51,7 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.large
-        color: Colours.palette.m3surfaceContainer
+        color: Colours.surface
     }
     MouseArea { objectName: "shelf-interior"; anchors.fill: parent; acceptedButtons: Qt.AllButtons }
 

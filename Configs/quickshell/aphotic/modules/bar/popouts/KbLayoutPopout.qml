@@ -11,7 +11,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Keyboard layout").toUpperCase()
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 

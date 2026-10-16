@@ -47,14 +47,14 @@ GridLayout {
         property real perc: 0
         property bool vertical: false
         property int length: 34
-        property color barColour: Colours.palette.m3primary
+        property color barColour: Colours.signal
 
         readonly property real fill: Math.max(0, Math.min(1, microBar.perc))
 
         implicitWidth: microBar.vertical ? 4 : microBar.length
         implicitHeight: microBar.vertical ? microBar.length : 4
         radius: Tokens.rounding.full
-        color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+        color: Colours.layer(Colours.raised, 2)
 
         StyledRect {
             x: 0
@@ -72,7 +72,7 @@ GridLayout {
         Layout.alignment: Qt.AlignCenter
         visible: root.contextShown
         text: RuntimeContext.policy.icon
-        color: Colours.palette.m3secondary
+        color: Colours.signalSecondary
         fontStyle: Tokens.font.icon.small
         fill: 1
     }
@@ -80,7 +80,7 @@ GridLayout {
     MaterialIcon {
         Layout.alignment: Qt.AlignCenter
         text: root.posture ? "hub" : "monitoring"
-        color: root.posture ? Colours.posture(ResourcePosture.level, Colours.palette.m3primaryOnSurface) : Colours.palette.m3primaryOnSurface
+        color: root.posture ? Colours.posture(ResourcePosture.level, Colours.signalOnSurface) : Colours.signalOnSurface
         fontStyle: Tokens.font.icon.small
         fill: 1
     }
@@ -91,7 +91,7 @@ GridLayout {
         vertical: root.stacked
         length: root.gaugeLength
         perc: SystemUsage.cpuPerc
-        barColour: Colours.palette.m3primary
+        barColour: Colours.signal
     }
 
     MicroBar {
@@ -100,7 +100,7 @@ GridLayout {
         vertical: root.stacked
         length: root.gaugeLength
         perc: SystemUsage.memPerc
-        barColour: Colours.palette.m3tertiary
+        barColour: Colours.signalTertiary
     }
 
     // Spans both gauges' footprint so the strip keeps its size.
@@ -110,7 +110,7 @@ GridLayout {
         vertical: root.stacked
         length: root.gaugeLength * 2 + Tokens.spacing.small
         perc: ResourcePosture.resource?.ratio ?? 0
-        barColour: Colours.posture(ResourcePosture.level, Colours.palette.m3primary)
+        barColour: Colours.posture(ResourcePosture.level, Colours.signal)
     }
 
     StyledRect {
@@ -118,7 +118,7 @@ GridLayout {
         implicitWidth: 6
         implicitHeight: 6
         radius: Tokens.rounding.full
-        color: Colours.palette.m3primary
+        color: Colours.signal
         visible: root.attention
 
         SequentialAnimation on opacity {

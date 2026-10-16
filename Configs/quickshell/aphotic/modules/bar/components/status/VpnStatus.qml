@@ -9,6 +9,6 @@ MaterialIcon {
     required property color colour
 
     text: "vpn_key"
-    color: Vpn.status.connected ? Colours.palette.m3primary : root.colour
+    color: Vpn.status.connected ? Colours.signal : root.colour
     fill: Vpn.status.connected ? 1 : 0
 }

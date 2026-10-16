@@ -47,7 +47,7 @@ StyledRect {
         anchors.centerIn: parent
         appClass: root.win.appClass
         size: Math.max(14, Math.min(28, Math.min(root.width, root.height) * 0.45))
-        colour: Colours.palette.m3onSurface
+        colour: Colours.ink
     }
 
     // Only nine badges exist, so a card with more windows than that
@@ -60,12 +60,12 @@ StyledRect {
         width: 15
         height: 15
         radius: Tokens.rounding.full
-        color: root.selected ? Qt.alpha(root.tint, 0.3) : Colours.layer(Colours.palette.m3surfaceContainer, 3)
+        color: root.selected ? Qt.alpha(root.tint, 0.3) : Colours.layer(Colours.surface, 3)
 
         StyledText {
             anchors.centerIn: parent
             text: root.badge
-            color: root.selected ? Colours.legibleAccent(root.tint, Colours.signalStyle.raised) : Colours.palette.m3onSurfaceVariant
+            color: root.selected ? Colours.legibleAccent(root.tint, Colours.signalStyle.raised) : Colours.inkMuted
             font: Tokens.font.label.small
         }
     }

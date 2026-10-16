@@ -48,7 +48,7 @@ ColumnLayout {
             id: icon_
             anchors.centerIn: parent
             text: btn.icon
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             fontStyle: Tokens.font.icon.medium
         }
     }
@@ -63,7 +63,7 @@ ColumnLayout {
             StyledText {
                 Layout.maximumWidth: 220
                 text: (root.themeInfo?.displayName ?? Themes.activeTheme).toUpperCase()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                 elide: Text.ElideRight
             }
@@ -71,7 +71,7 @@ ColumnLayout {
             StyledText {
                 Layout.maximumWidth: 220
                 text: Themes.activeWallpaper
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
                 elide: Text.ElideRight
             }
@@ -84,7 +84,7 @@ ColumnLayout {
         StyledText {
             visible: root.wallpapers.length > 0
             text: qsTr("%1 of %2").arg(Math.max(0, root.currentIndex) + 1).arg(root.wallpapers.length)
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -155,7 +155,7 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
         visible: root.wallpapers.length === 0
         text: qsTr("No wallpapers found")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.medium
     }
 }

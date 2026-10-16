@@ -66,7 +66,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        color: Colours.palette.m3shadow
+        color: Colours.shadow
         opacity: reveal.visibleProgress * 0.55
     }
 
@@ -121,7 +121,7 @@ PanelWindow {
                     MaterialIcon {
                         text: "swap_horiz"
                         fontStyle: Tokens.font.icon.large
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
                     }
 
                     StyledText {
@@ -132,7 +132,7 @@ PanelWindow {
 
                     StyledText {
                         text: qsTr("%n window(s)", "", Switcher.windows.length)
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }
@@ -178,7 +178,7 @@ PanelWindow {
 
                     StyledText {
                         text: Switcher.current ? Switcher.current.appClass : qsTr("empty desktop")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }
@@ -186,7 +186,7 @@ PanelWindow {
                 StyledText {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                     text: qsTr("Tab cycle  ·  A-; workspace  ·  1-9 window  ·  arrows move  ·  release Alt to switch  ·  Esc cancel")
                 }

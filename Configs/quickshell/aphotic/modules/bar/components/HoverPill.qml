@@ -63,7 +63,7 @@ StyledRect {
     implicitWidth: diameter
     implicitHeight: diameter
     radius: diameter / 2
-    color: Colours.palette.m3onSurface
+    color: Colours.ink
 
     x: Settings.barHorizontal ? container.x + centerAlong - diameter / 2 : container.x + container.width / 2 - diameter / 2
     y: Settings.barHorizontal ? container.y + container.height / 2 - diameter / 2 : container.y + centerAlong - diameter / 2

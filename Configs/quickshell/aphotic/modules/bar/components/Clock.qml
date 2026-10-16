@@ -24,7 +24,7 @@ StyledRect {
 
     required property ScreenState screenState
 
-    readonly property color colour: Colours.palette.m3tertiaryOnSurface
+    readonly property color colour: Colours.signalTertiaryOnSurface
     readonly property int padding: Config.bar.clock.background ? Tokens.padding.medium : Tokens.padding.extraSmall
     readonly property var font: Tokens.font.body.builders.small.scale(1.1)
 
@@ -63,7 +63,7 @@ StyledRect {
                 Layout.alignment: Qt.AlignVCenter
                 text: Time.format("ddd d")
                 font: Tokens.font.label.medium
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
 
             Loader {
@@ -93,7 +93,7 @@ StyledRect {
             StyledText {
                 text: `${Time.hourStr}:${Time.minuteStr}`
                 font: root.font.scale(1.15).weight(Font.DemiBold).build()
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
             }
 
             Loader {
@@ -163,7 +163,7 @@ StyledRect {
                         Layout.topMargin: 4
                         Layout.bottomMargin: Tokens.padding.extraSmall / 2
                         implicitHeight: 1
-                        color: Colours.palette.m3outlineVariant
+                        color: Colours.outline
                     }
                 }
             }

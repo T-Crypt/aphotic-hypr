@@ -21,9 +21,9 @@ SettingsRow {
         StyledRect {
             anchors.fill: parent
             radius: height / 2
-            color: root.checked ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+            color: root.checked ? Colours.signal : Colours.layer(Colours.surface, 3)
             border.width: root.checked ? 0 : 1
-            border.color: Colours.palette.m3outlineVariant
+            border.color: Colours.outline
 
             Behavior on color {
                 CAnim {}
@@ -34,7 +34,7 @@ SettingsRow {
             width: root.checked ? 16 : 12
             height: width
             radius: width / 2
-            color: root.checked ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+            color: root.checked ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
             anchors.verticalCenter: parent.verticalCenter
             x: root.checked ? parent.width - width - 3 : 5
 

@@ -19,7 +19,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: Nmcli.wifiEnabled ? "wifi" : "wifi_off"
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
         }
 
         StyledText {
@@ -35,14 +35,14 @@ ColumnLayout {
             Rectangle {
                 anchors.fill: parent
                 radius: Tokens.rounding.full
-                color: Nmcli.wifiEnabled ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
+                color: Nmcli.wifiEnabled ? Qt.alpha(Colours.signal, 0.18) : Colours.signalStyle.raised
                 border.width: 1
-                border.color: Nmcli.wifiEnabled ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                border.color: Nmcli.wifiEnabled ? Colours.signal : Colours.signalStyle.hairline
             }
 
             Interact {
                 radius: Tokens.rounding.full
-                color: Nmcli.wifiEnabled ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
+                color: Nmcli.wifiEnabled ? Colours.signal : Colours.raised
                 onClicked: Nmcli.toggleWifi(() => {})
             }
         }
@@ -51,7 +51,7 @@ ColumnLayout {
     StyledText {
         visible: Nmcli.hasAvailableEthernet
         text: Nmcli.activeEthernet?.connected ? qsTr("Ethernet connected (%1)").arg(Nmcli.activeEthernet.iface) : qsTr("Ethernet available")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -80,7 +80,7 @@ ColumnLayout {
 
             Interact {
                 radius: Tokens.rounding.medium
-                color: (netRow.modelData.active ? Colours.palette.m3primary : Colours.signalStyle.hover)
+                color: (netRow.modelData.active ? Colours.signal : Colours.signalStyle.hover)
                 stateOpacity: (netRow.modelData.active ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))
                 onClicked: {
                     if (netRow.modelData.active)
@@ -109,7 +109,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: Icons.getNetworkIcon(netRow.modelData.strength, netRow.modelData.isSecure)
-                    color: netRow.modelData.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: netRow.modelData.active ? Colours.signal : Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -117,7 +117,7 @@ ColumnLayout {
                     id: netLabel
                     Layout.fillWidth: true
                     text: netRow.modelData.ssid
-                    color: netRow.modelData.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
+                    color: netRow.modelData.active ? Colours.ink : Colours.inkMuted
                     elide: Text.ElideRight
                 }
 
@@ -125,7 +125,7 @@ ColumnLayout {
                     visible: netRow.modelData.isSecure
                     text: "lock"
                     fontStyle: Tokens.font.icon.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
         }

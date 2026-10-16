@@ -34,7 +34,13 @@ Item {
     readonly property alias hoverTarget: content
 
     readonly property int padding: Math.max(Tokens.padding.small, Config.border.thickness)
-    readonly property int contentWidth: Settings.barInnerWidth + padding * 2
+    // Integer thickness. The bar's exclusive zone (barWrapper.exclusiveZone) and
+    // its rendered fill (background/content) must agree down to a pixel, or the
+    // notch -- pinned to the zone's bottom by the compositor -- lands a hairline
+    // off the bar's drawn edge. Rounding here (not truncating) keeps them
+    // bit-identical and lets a fractional setting such as the full style's
+    // 0.78 multiplier resolve to a whole device pixel.
+    readonly property int contentWidth: Math.round(Settings.barInnerWidth + padding * 2)
     // "hidden" reserves no desktop space at all, matching a fully disabled
     // bar; "autohide" still reserves the thin sliver so windows don't tile
     // into the space the reveal-on-hover strip occupies.

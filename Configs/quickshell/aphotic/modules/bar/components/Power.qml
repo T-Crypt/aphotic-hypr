@@ -40,7 +40,7 @@ Item {
         anchors.centerIn: parent
 
         text: "power_settings_new"
-        color: Colours.palette.m3error
+        color: Colours.alert
         fontStyle: Tokens.font.icon.builders.small.weight(Font.Bold).build()
     }
 }

@@ -59,7 +59,7 @@ RowLayout {
                 MaterialIcon {
                     id: icon
                     text: tabButton.modelData.icon
-                    color: (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (tabButton.active ? Colours.ink : Colours.inkMuted)
                     fontStyle: Tokens.font.icon.small
                     fill: tabButton.active ? 1 : 0
                 }
@@ -67,7 +67,7 @@ RowLayout {
                 StyledText {
                     id: label
                     text: tabButton.modelData.label
-                    color: (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (tabButton.active ? Colours.ink : Colours.inkMuted)
                     font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
                 }
             }

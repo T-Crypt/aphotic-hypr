@@ -51,7 +51,7 @@ Item {
             anchors.fill: parent
             anchors.margins: 1
             radius: Math.max(0, parent.radius - 1)
-            color: Colours.palette.m3surfaceContainer
+            color: Colours.surface
         }
     }
 
@@ -104,13 +104,13 @@ Item {
                         StyledText {
                             text: qsTr("Workspace")
                             font: Tokens.font.headline.builders.medium.weight(Font.DemiBold).build()
-                            color: Colours.palette.m3onSurface
+                            color: Colours.ink
                         }
 
                         StyledText {
                             text: qsTr("Plugin tools").toUpperCase()
                             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                         }
                     }
                 }
@@ -121,7 +121,7 @@ Item {
                     bottomPadding: Tokens.spacing.extraSmall
                     text: qsTr("AVAILABLE")
                     font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
 
                 Item {
@@ -210,7 +210,7 @@ Item {
                                     elide: Text.ElideRight
                                     text: navItem.modelData.label
                                     font: navItem.active ? Tokens.font.label.builders.medium.weight(Font.DemiBold).build() : Tokens.font.label.builders.medium.weight(navItem.active ? Font.Medium : Font.Normal).build()
-                                    color: (navItem.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                                    color: (navItem.active ? Colours.ink : Colours.inkMuted)
                                 }
                             }
                         }
@@ -237,11 +237,11 @@ Item {
                 gradient: Gradient {
                     GradientStop {
                         position: 0
-                        color: Qt.alpha(Colours.palette.m3primary, 0.1)
+                        color: Qt.alpha(Colours.signal, 0.1)
                     }
                     GradientStop {
                         position: 1
-                        color: Qt.alpha(Colours.palette.m3primary, 0)
+                        color: Qt.alpha(Colours.signal, 0)
                     }
                 }
             }
@@ -300,7 +300,7 @@ Item {
 
                 MaterialIcon {
                     text: "widgets"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     opacity: 0.5
                     fontStyle: Tokens.font.icon.large
                 }
@@ -310,7 +310,7 @@ Item {
                           ? qsTr("Failed to load %1").arg(root.failedLabel)
                           : qsTr("No plugin surfaces")
                     font: Tokens.font.label.medium
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
         }

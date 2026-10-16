@@ -16,7 +16,7 @@ ColumnLayout {
         Layout.bottomMargin: -Tokens.spacing.small
         Layout.leftMargin: Tokens.padding.small
         text: qsTr("Clock")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
     }
 
@@ -53,7 +53,7 @@ ColumnLayout {
         Layout.bottomMargin: -Tokens.spacing.small
         Layout.leftMargin: Tokens.padding.small
         text: qsTr("Weather")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
     }
 
@@ -70,7 +70,7 @@ ColumnLayout {
                 Layout.preferredWidth: 200
                 Layout.preferredHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                color: Colours.layer(Colours.surface, 3)
 
                 TextInput {
                     id: locationInput
@@ -81,7 +81,7 @@ ColumnLayout {
                     verticalAlignment: TextInput.AlignVCenter
                     clip: true
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     text: Settings.weatherLocation
 
                     Keys.onReturnPressed: Settings.weatherLocation = locationInput.text.trim()
@@ -91,7 +91,7 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         text: qsTr("City name, or blank for auto")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }

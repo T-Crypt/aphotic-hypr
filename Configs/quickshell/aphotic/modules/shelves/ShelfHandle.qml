@@ -19,8 +19,8 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: root.radius
-        color: root.hovered ? Colours.layer(Colours.palette.m3onSurface, 0.12)
-            : Colours.layer(Colours.palette.m3onSurface, 0.06)
+        color: root.hovered ? Colours.layer(Colours.ink, 0.12)
+            : Colours.layer(Colours.ink, 0.06)
         Behavior on color {
             enabled: RenderGate.decorative
             CAnim {}

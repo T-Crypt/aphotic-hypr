@@ -32,10 +32,10 @@ Item {
             id: scene
             background: Colours.signalStyle.surface
             surface: Colours.signalStyle.raised
-            accent: Colours.palette.m3primary
-            secondary: Colours.palette.m3tertiary
-            ink: Colours.palette.m3onSurface
-            muted: Colours.palette.m3onSurfaceVariant
+            accent: Colours.signal
+            secondary: Colours.signalTertiary
+            ink: Colours.ink
+            muted: Colours.inkMuted
             hairline: Colours.signalStyle.hairline
             edgeLight: Colours.signalStyle.edgeLight
             motion: root.motion

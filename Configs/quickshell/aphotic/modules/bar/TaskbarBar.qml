@@ -252,7 +252,7 @@ Item {
             appClass: item.group.appClass
             size: parent.width * 0.6
             fontStyle: Tokens.font.icon.large
-            colour: Colours.palette.m3onSurface
+            colour: Colours.ink
         }
 
         StyledRect {
@@ -260,7 +260,7 @@ Item {
             width: countLabel.implicitWidth + Tokens.padding.extraSmall * 2
             height: countLabel.implicitHeight
             radius: Tokens.rounding.full
-            color: Colours.palette.m3primary
+            color: Colours.signal
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: -2
@@ -269,7 +269,7 @@ Item {
                 id: countLabel
                 anchors.centerIn: parent
                 text: item.group.windows.length
-                color: Colours.contrastOn(Colours.palette.m3primary)
+                color: Colours.contrastOn(Colours.signal)
                 font: Tokens.font.label.small
             }
         }

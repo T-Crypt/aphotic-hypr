@@ -162,7 +162,7 @@ StyledRect {
                 // items now are.
                 rotation: Settings.barHorizontal ? (root.expanded ? 90 : -90) : (root.expanded ? 180 : 0)
                 text: "expand_less"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.medium
 
                 Behavior on rotation {

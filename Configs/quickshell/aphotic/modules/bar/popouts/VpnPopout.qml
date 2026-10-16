@@ -17,7 +17,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: "vpn_key"
-            color: Vpn.status.connected ? Colours.palette.m3primary : Colours.palette.m3onSurface
+            color: Vpn.status.connected ? Colours.signal : Colours.ink
             fill: Vpn.status.connected ? 1 : 0
         }
 
@@ -29,7 +29,7 @@ ColumnLayout {
 
         StyledText {
             text: Vpn.status.connected ? qsTr("Connected") : qsTr("Not connected")
-            color: Vpn.status.connected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
+            color: Vpn.status.connected ? Colours.ink : Colours.inkMuted
             font: Tokens.font.label.medium
         }
     }
@@ -37,7 +37,7 @@ ColumnLayout {
     StyledText {
         visible: Vpn.status.connected && (Vpn.status.primary?.name ?? "").length > 0
         text: Vpn.status.primary?.name ?? ""
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -45,7 +45,7 @@ ColumnLayout {
         visible: !Vpn.status.connected
         Layout.preferredWidth: 220
         text: qsTr("No active VPN connection.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.small
         wrapMode: Text.Wrap
     }

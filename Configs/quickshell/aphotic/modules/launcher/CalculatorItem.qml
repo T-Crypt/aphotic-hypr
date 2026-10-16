@@ -46,7 +46,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: "calculate"
             fontStyle: Tokens.font.icon.large
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
         }
 
         StyledText {
@@ -56,7 +56,7 @@ Item {
             width: parent.width - icon.width - resultText.width - parent.spacing * 2
             text: root.modelData.expression
             font: Tokens.font.body.medium
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             elide: Text.ElideRight
         }
 
