@@ -391,6 +391,7 @@ ColumnLayout {
         Layout.topMargin: Tokens.spacing.medium
 
         SettingsPresetRow {
+            searchId: "updateCheck"
             icon: "update"
             label: qsTr("Pending update check")
             presets: [{

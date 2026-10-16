@@ -36,6 +36,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsRow {
+                searchId: "aiActive"
                 icon: "smart_toy"
                 label: qsTr("Active")
                 description: qsTr("Used when AI Chat opens")
@@ -244,6 +245,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiModel"
                 icon: "memory"
                 label: qsTr("Model")
                 description: AiConfig.ollamaModel.length > 0 ? AiConfig.ollamaModel : qsTr("None selected")
@@ -385,6 +387,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiInferenceMode"
                 icon: InferenceMode.active ? "speed" : "memory"
                 label: qsTr("Inference mode")
                 description: {
@@ -603,6 +606,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsRow {
+                searchId: "aiPullModel"
                 icon: "download"
                 label: qsTr("Pull new model")
                 description: qsTr("Downloads a model onto the Ollama host")
@@ -698,6 +702,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             ApiKeyRow {
+                searchId: "apiKeyClaude"
                 icon: "key"
                 label: qsTr("Claude (Anthropic)")
                 hasKey: AiKeys.hasAnthropicKey
@@ -706,6 +711,7 @@ ColumnLayout {
             }
 
             ApiKeyRow {
+                searchId: "apiKeyGemini"
                 icon: "key"
                 label: qsTr("Gemini")
                 hasKey: AiKeys.hasGeminiKey
@@ -714,6 +720,7 @@ ColumnLayout {
             }
 
             ApiKeyRow {
+                searchId: "apiKeyChatgpt"
                 icon: "key"
                 label: qsTr("ChatGPT")
                 hasKey: AiKeys.hasOpenaiKey
@@ -737,6 +744,7 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 SettingsRow {
+                    searchId: "aiOllamaModels"
                     icon: "folder"
                     label: qsTr("Ollama models")
                     description: ModelStorage.ollamaDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ollamaDir).arg(ModelStorage.ollamaDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ollamaDir)
@@ -797,6 +805,7 @@ ColumnLayout {
                 }
 
                 SettingsRow {
+                    searchId: "aiGgufDir"
                     icon: "folder_open"
                     label: qsTr("GGUF directory")
                     description: ModelStorage.ggufDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ggufDir).arg(ModelStorage.ggufDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ggufDir)
@@ -944,6 +953,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "aiQuickChat"
                 label: qsTr("Quick-chat popout")
                 description: qsTr("SUPER+Shift+A — a fast overlay separate from the AI Chat tab above")
                 checked: Settings.intelligenceEnabled
@@ -951,6 +961,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiDefaultProvider"
                 icon: "smart_toy"
                 label: qsTr("Default provider")
                 description: qsTr("Used for new Intelligence sessions — blank follows Active above")
@@ -995,6 +1006,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiDefaultModel"
                 icon: "memory"
                 label: qsTr("Default model")
                 description: qsTr("Ollama-only — blank follows the Active model above")
@@ -1032,6 +1044,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiSessionLimits"
                 icon: "auto_delete"
                 label: qsTr("Session limits")
                 description: qsTr("Older or excess sessions are pruned automatically — 0 disables a limit")
@@ -1127,6 +1140,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsRow {
+                searchId: "aiInstalledModel"
                 icon: "smart_toy"
                 label: qsTr("Installed model")
                 description: AiConfig.assistantModel.length > 0 ? AiConfig.assistantModel : qsTr("Unknown")

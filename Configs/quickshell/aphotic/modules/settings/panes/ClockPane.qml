@@ -24,6 +24,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
+            searchId: "twelveHourClock"
             icon: "schedule"
             label: qsTr("12-hour clock")
             checked: Settings.twelveHourClock
@@ -31,6 +32,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "barClockDate"
             icon: "calendar_month"
             label: qsTr("Show date in bar clock")
             checked: Settings.showClockDate
@@ -38,6 +40,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "desktopClock"
             icon: "nest_clock_farsight_analog"
             label: qsTr("Desktop clock")
             checked: Settings.desktopClockEnabled
@@ -58,6 +61,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "weatherLocation"
             icon: "location_on"
             label: qsTr("Location")
             description: Weather.resolvedLocationName.length > 0 ? Weather.resolvedLocationName : qsTr("Auto-detected from IP address")
@@ -95,6 +99,7 @@ ColumnLayout {
         }
 
         SettingsPresetRow {
+            searchId: "weatherUnits"
             icon: "thermostat"
             label: qsTr("Units")
             presets: [{

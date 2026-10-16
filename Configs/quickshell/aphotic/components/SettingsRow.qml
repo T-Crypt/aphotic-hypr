@@ -12,6 +12,14 @@ StyledRect {
     required property string label
     property string description: ""
 
+    // Search addressing. `searchId` is the anchor a settings-search hit
+    // matches (see config/SettingsCategories.qml), and `highlighted` marks
+    // the row once a hit lands on it, so a deep search opens the right pane
+    // with the right row shown instead of a scroll position that has to be
+    // guessed.
+    property string searchId: ""
+    property bool highlighted: false
+
     // A row whose subject has a real mark of its own rather than a
     // Material glyph fills this instead of `icon`, and gets the same
     // rounded plate around it.
@@ -39,7 +47,9 @@ StyledRect {
     Layout.preferredHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
     implicitHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
 
-    color: Colours.signalStyle.raised
+    // A search hit marks the row it landed on: tinted fill plus the accent
+    // rim, the same pair SettingsSection uses for a matched section.
+    color: root.highlighted ? Qt.tint(Colours.signalStyle.raised, Colours.signalStyle.hover) : Colours.signalStyle.raised
     topLeftRadius: root.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
     topRightRadius: root.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
     bottomLeftRadius: root.last ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
@@ -57,12 +67,16 @@ StyledRect {
     Behavior on bottomRightRadius {
         Anim { type: Anim.DefaultEffects }
     }
+    Behavior on color {
+        CAnim {}
+    }
 
     GradedOutline {
         topLeftRadius: root.topLeftRadius
         topRightRadius: root.topRightRadius
         bottomLeftRadius: root.bottomLeftRadius
         bottomRightRadius: root.bottomRightRadius
+        accent: root.highlighted
         hovered: root.activatable && rowState.containsMouse
     }
 

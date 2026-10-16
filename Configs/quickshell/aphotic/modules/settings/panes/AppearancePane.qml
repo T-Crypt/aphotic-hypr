@@ -283,6 +283,7 @@ Item {
                     id: communityRowContent
                     anchors.left: parent.left
                     anchors.right: parent.right
+                    searchId: "communityThemes"
                     icon: "public"
                     label: qsTr("Community themes")
                     description: root.communityFiltered.length > 0 ? qsTr("%n available to download", "", root.communityFiltered.length) : qsTr("Nothing new to download right now")
@@ -384,6 +385,7 @@ Item {
                     id: rowContent
                     anchors.left: parent.left
                     anchors.right: parent.right
+                    searchId: "browseWallpapers"
                     icon: "grid_view"
                     label: qsTr("Browse all wallpapers")
                     description: qsTr("View every wallpaper across all themes")
@@ -417,6 +419,7 @@ Item {
                 Layout.fillWidth: true
 
                 SettingsRow {
+                    searchId: "wallpaperPickerLayout"
                     icon: "view_carousel"
                     label: qsTr("Launcher layout")
                     description: qsTr("How SUPER+W presents your wallpapers")
@@ -479,6 +482,7 @@ Item {
                 Layout.fillWidth: true
 
                 SettingsToggleRow {
+                    searchId: "autoCycleWallpaper"
                     icon: "slideshow"
                     label: qsTr("Auto-cycle wallpaper")
                     description: qsTr("Randomly advances within the active theme's wallpapers")
@@ -487,6 +491,7 @@ Item {
                 }
 
                 SettingsRow {
+                    searchId: "cycleInterval"
                     icon: "timer"
                     label: qsTr("Interval")
                     description: qsTr("Every %1 minutes").arg(Settings.wallpaperAutoCycleInterval)

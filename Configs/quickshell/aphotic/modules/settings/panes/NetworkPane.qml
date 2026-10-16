@@ -38,6 +38,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "vpnConfig"
             icon: "vpn_key"
             label: qsTr("Config file")
             description: qsTr(".ovpn path")
@@ -78,6 +79,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "vpnAutoConnect"
             icon: "power_settings_new"
             label: qsTr("Auto-connect")
             description: qsTr("Connect automatically at login")
@@ -86,6 +88,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "vpnStatus"
             icon: "cable"
             label: qsTr("Status")
             description: root.profileActive ? qsTr("Connected") : qsTr("Not connected")

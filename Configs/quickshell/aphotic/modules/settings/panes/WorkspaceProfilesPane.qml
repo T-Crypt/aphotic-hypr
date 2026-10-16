@@ -142,6 +142,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "profileName"
             icon: "edit"
             label: qsTr("Profile name")
 
@@ -172,6 +173,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "profileCommand"
             icon: "terminal"
             label: qsTr("Command")
             description: qsTr("Launched with hyprctl dispatch exec")
@@ -203,6 +205,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "profileWorkspace"
             icon: "dashboard"
             label: qsTr("Workspace")
             description: qsTr("Opens on workspace %1").arg(root.newEntryWorkspace)

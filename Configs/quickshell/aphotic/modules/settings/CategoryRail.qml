@@ -31,7 +31,7 @@ ColumnLayout {
     // defaults true and only PluginsPane opts out.
     property bool showSearch: true
 
-    signal categorySelected(id: string, sectionId: string)
+    signal categorySelected(id: string, sectionId: string, rowId: string)
 
     readonly property var groupOrder: [...new Set(root.categories.map(c => c.group ?? ""))]
 
@@ -45,14 +45,15 @@ ColumnLayout {
         sectionId: ""
     }))
 
-    // Sections only ever appear as results, never at rest -- a rail that
-    // listed them unprompted would be the long rail this design removes.
+    // Sections and rows only ever appear as results, never at rest -- a
+    // rail that listed them unprompted would be the long rail this design
+    // removes.
     readonly property var filteredCategories: {
         const q = searchInput.text.trim().toLowerCase();
         if (q.length === 0)
             return root._categoryEntries;
         const pool = root.searchIndex.length > 0 ? root.searchIndex : root._categoryEntries;
-        return pool.filter(e => e.label.toLowerCase().includes(q) || (e.description ?? "").toLowerCase().includes(q));
+        return pool.filter(e => (e.searchKey ?? `${e.label} ${e.description ?? ""}`.toLowerCase()).includes(q));
     }
 
     spacing: Tokens.spacing.medium
@@ -103,7 +104,7 @@ ColumnLayout {
                 Keys.onReturnPressed: {
                     const hit = root.filteredCategories[0];
                     if (hit)
-                        root.categorySelected(hit.categoryId, hit.sectionId ?? "");
+                        root.categorySelected(hit.categoryId, hit.sectionId ?? "", hit.rowId ?? "");
                 }
 
                 StyledText {
@@ -165,7 +166,8 @@ ColumnLayout {
                         required property int index
 
                         readonly property bool isSection: (categoryButton.modelData.sectionId ?? "").length > 0
-                        readonly property bool active: !categoryButton.isSection && categoryButton.modelData.categoryId === root.currentCategory
+                        readonly property bool isRow: (categoryButton.modelData.rowId ?? "").length > 0
+                        readonly property bool active: !categoryButton.isSection && !categoryButton.isRow && categoryButton.modelData.categoryId === root.currentCategory
                         readonly property bool isFirst: categoryButton.index === 0
                         readonly property bool isLast: categoryButton.index === root.filteredCategories.length - 1
                         readonly property color tint: Colours.signalStyle.tint(root.groupOrder.indexOf(categoryButton.modelData.group ?? ""))
@@ -184,7 +186,7 @@ ColumnLayout {
                         // at each corner. Insetting means the reveal is even
                         // on every side, an intentional "floating pill" look
                         // instead of an accidental corner-only artifact.
-                        Layout.leftMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.isSection ? Tokens.spacing.large : 0)
+                        Layout.leftMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.isSection || categoryButton.isRow ? Tokens.spacing.large : 0)
                         Layout.rightMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
                         Layout.topMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.groupStart ? groupHeader.implicitHeight + Tokens.spacing.large - (categoryButton.index === 0 ? Tokens.spacing.medium : 0) : 0)
                         Layout.bottomMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
@@ -331,7 +333,7 @@ ColumnLayout {
                             bottomRightRadius: categoryButton.bottomRightRadius
                             showHoverBackground: !categoryButton.active
 
-                            onClicked: root.categorySelected(categoryButton.modelData.categoryId, categoryButton.modelData.sectionId ?? "")
+                            onClicked: root.categorySelected(categoryButton.modelData.categoryId, categoryButton.modelData.sectionId ?? "", categoryButton.modelData.rowId ?? "")
                         }
                     }
                 }

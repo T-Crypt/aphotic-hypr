@@ -92,6 +92,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsPresetRow {
+                searchId: "kbLayout"
                 icon: "keyboard"
                 label: qsTr("Layout")
                 presets: root.layoutPresets
@@ -100,6 +101,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "kbCustomCode"
                 icon: "edit"
                 label: qsTr("Custom code")
                 description: qsTr("Any xkb code not listed above -- press Enter to apply")
@@ -112,6 +114,7 @@ ColumnLayout {
             }
 
             SettingsPresetRow {
+                searchId: "kbVariant"
                 icon: "tune"
                 label: qsTr("Variant")
                 description: qsTr("Applies to the primary layout only")
@@ -137,6 +140,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsRow {
+                searchId: "kbAddLayout"
                 icon: "add"
                 label: qsTr("Add a layout")
                 description: qsTr("Press Enter to add it to the switch order below")
@@ -240,6 +244,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsPresetRow {
+                searchId: "kbSwitchKey"
                 icon: "swap_horiz"
                 label: qsTr("Switch key")
                 description: qsTr("Cycles through %1 in order").arg([Settings.kbLayout || "us", ...Settings.additionalKbLayouts].join(", "))
@@ -272,6 +277,7 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 SettingsRow {
+                    searchId: "kbModel"
                     icon: "keyboard_alt"
                     label: qsTr("Keyboard model")
                     description: qsTr("Empty uses the system default")
@@ -284,6 +290,7 @@ ColumnLayout {
                 }
 
                 SettingsRow {
+                    searchId: "kbRules"
                     icon: "rule"
                     label: qsTr("XKB rules")
                     description: qsTr("Empty uses the system default")
