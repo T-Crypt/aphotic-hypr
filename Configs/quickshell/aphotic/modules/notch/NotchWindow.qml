@@ -89,7 +89,7 @@ PanelWindow {
         // persisted orientation loads and flips the condition. Pinning the
         // docked-edge side and centring the other is also what makes the
         // panel grow away from the bar rather than about its own centre.
-        x: root.dockHorizontal ? (parent.width - width) / 2 : (root.growsPositive ? root.edgeGap : parent.width - width - root.edgeGap)
-        y: root.dockHorizontal ? (root.growsPositive ? root.edgeGap : parent.height - height - root.edgeGap) : (parent.height - height) / 2
+        x: root.dockHorizontal ? Math.round((parent.width - width) / 2) : (root.growsPositive ? root.edgeGap : parent.width - width - root.edgeGap)
+        y: root.dockHorizontal ? (root.growsPositive ? root.edgeGap : parent.height - height - root.edgeGap) : Math.round((parent.height - height) / 2)
     }
 }
