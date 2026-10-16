@@ -422,7 +422,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: "refresh"
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             fontStyle: Tokens.font.icon.small
             opacity: root.refreshing ? 0.4 : 1
 
@@ -438,7 +438,7 @@ ColumnLayout {
             implicitWidth: ghLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 32
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+            color: Colours.layer(Colours.surface, 2)
 
             RowLayout {
                 anchors.centerIn: parent
@@ -446,7 +446,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "code"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -454,7 +454,7 @@ ColumnLayout {
                     id: ghLabel
 
                     text: qsTr("aphotic-plugins on GitHub")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
             }
@@ -476,7 +476,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("Plugins add real functionality without touching this repo. Install one to add it, then use the toggle to turn it on or off.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -484,7 +484,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: 36
         radius: Tokens.rounding.full
-        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: Colours.layer(Colours.surface, 2)
 
         RowLayout {
             anchors.fill: parent
@@ -494,7 +494,7 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "search"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
@@ -504,7 +504,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 clip: true
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
 
                 Keys.onEscapePressed: searchInput.text = ""
                 // Debounced rather than bound straight to root.query:
@@ -518,7 +518,7 @@ ColumnLayout {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: qsTr("Search %1 plugins…").arg(root.visibleRows.length)
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                 }
             }
@@ -526,7 +526,7 @@ ColumnLayout {
             MaterialIcon {
                 visible: searchInput.text.length > 0
                 text: "close"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
 
                 Interact {
@@ -566,14 +566,14 @@ ColumnLayout {
                 implicitWidth: scopeLabel.implicitWidth + Tokens.padding.large * 2
                 implicitHeight: 30
                 radius: Tokens.rounding.full
-                color: scopeChip.current ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                color: scopeChip.current ? Colours.signal : Colours.layer(Colours.surface, 2)
 
                 StyledText {
                     id: scopeLabel
 
                     anchors.centerIn: parent
                     text: `${scopeChip.modelData.label}  ${scopeChip.modelData.count}`
-                    color: scopeChip.current ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                    color: scopeChip.current ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
@@ -607,9 +607,9 @@ ColumnLayout {
                 implicitWidth: catRow.implicitWidth + Tokens.padding.medium * 2
                 implicitHeight: 28
                 radius: Tokens.rounding.full
-                color: catChip.current ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : "transparent"
+                color: catChip.current ? Colours.layer(Colours.surface, 3) : "transparent"
                 border.width: 1
-                border.color: catChip.current ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                border.color: catChip.current ? Colours.signal : Colours.layer(Colours.surface, 3)
 
                 RowLayout {
                     id: catRow
@@ -619,13 +619,13 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: catChip.modelData.icon
-                        color: catChip.current ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: catChip.current ? Colours.signal : Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
 
                     StyledText {
                         text: catChip.modelData.label
-                        color: catChip.current ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: catChip.current ? Colours.signal : Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -647,7 +647,7 @@ ColumnLayout {
         visible: root.category === "security" && !root.catalogueTrusted
         implicitHeight: securityPromptCol.implicitHeight + Tokens.padding.large * 2
         radius: Tokens.rounding.medium
-        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: Colours.layer(Colours.surface, 2)
 
         ColumnLayout {
             id: securityPromptCol
@@ -663,7 +663,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "security"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
 
                 StyledText {
@@ -676,7 +676,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: qsTr("These come from a separate, less-vetted index and stay hidden until you trust it, the same way the exploit layer asks before it installs anything.")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
 
@@ -685,14 +685,14 @@ ColumnLayout {
                 implicitWidth: trustLabel.implicitWidth + Tokens.padding.large * 2
                 implicitHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.palette.m3primary
+                color: Colours.signal
 
                 StyledText {
                     id: trustLabel
 
                     anchors.centerIn: parent
                     text: qsTr("Trust the security plugin index")
-                    color: Colours.contrastOn(Colours.palette.m3primary)
+                    color: Colours.contrastOn(Colours.signal)
                     font: Tokens.font.label.small
                 }
 
@@ -722,7 +722,7 @@ ColumnLayout {
                 return qsTr("Couldn't reach the plugin index, and nothing is installed yet.");
             return qsTr("Nothing in this category.");
         }
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -804,7 +804,7 @@ ColumnLayout {
         width: ListView.view?.width ?? 0
         implicitHeight: rowCol.implicitHeight + Tokens.padding.medium * 2
 
-        color: pluginRow.expanded ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: pluginRow.expanded ? Colours.layer(Colours.surface, 3) : Colours.layer(Colours.surface, 2)
 
         // Rounded as one card: the group's ends round, everything between
         // them stays square. SettingsGroup does this by stamping its static
@@ -830,7 +830,7 @@ ColumnLayout {
                 MaterialIcon {
                     Layout.alignment: Qt.AlignVCenter
                     text: "extension"
-                    color: pluginRow.modelData.installed ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: pluginRow.modelData.installed ? Colours.signal : Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
 
@@ -849,7 +849,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         text: root.metaLine(pluginRow.modelData)
                         elide: Text.ElideRight
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -861,7 +861,7 @@ ColumnLayout {
                     visible: pluginRow.warning.length > 0
                     Layout.alignment: Qt.AlignVCenter
                     text: pluginRow.modelData.unavailable || pluginRow.modelData.layerOff ? "error" : "warning"
-                    color: pluginRow.modelData.unavailable || pluginRow.modelData.layerOff ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                    color: pluginRow.modelData.unavailable || pluginRow.modelData.layerOff ? Colours.alert : Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                     fill: 1
                 }
@@ -871,7 +871,7 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     text: pluginRow.on ? "toggle_on" : "toggle_off"
                     fill: 1
-                    color: pluginRow.on ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: pluginRow.on ? Colours.signal : Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
 
                     Interact {
@@ -895,14 +895,14 @@ ColumnLayout {
                     implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
                     implicitHeight: 30
                     radius: Tokens.rounding.full
-                    color: pluginRow.actionable ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: pluginRow.actionable ? Colours.signal : Colours.layer(Colours.surface, 3)
 
                     StyledText {
                         id: installLabel
 
                         anchors.centerIn: parent
                         text: pluginRow.modelData.unavailable ? qsTr("Unavailable") : qsTr("Install")
-                        color: pluginRow.actionable ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                        color: pluginRow.actionable ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                         font: Tokens.font.label.small
                     }
 
@@ -924,7 +924,7 @@ ColumnLayout {
                 MaterialIcon {
                     Layout.alignment: Qt.AlignVCenter
                     text: pluginRow.expanded ? "expand_less" : "expand_more"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
                     Interact {
@@ -971,7 +971,7 @@ ColumnLayout {
             visible: detail.row.description.length > 0
             text: detail.row.description
             wrapMode: Text.Wrap
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
 
@@ -980,7 +980,7 @@ ColumnLayout {
             visible: detail.warning.length > 0
             text: detail.warning
             wrapMode: Text.Wrap
-            color: detail.row.unavailable || detail.row.layerOff ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+            color: detail.row.unavailable || detail.row.layerOff ? Colours.alert : Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -997,7 +997,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: root.surfaceIcon(surfaceRow.modelData)
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -1005,7 +1005,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: root.surfaceLabel(surfaceRow.modelData)
                     elide: Text.ElideRight
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
             }
@@ -1016,7 +1016,7 @@ ColumnLayout {
             visible: detail.row.configKeys.length > 0
             text: qsTr("Uses settings: %1").arg(detail.row.configKeys.join(", "))
             wrapMode: Text.Wrap
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -1025,7 +1025,7 @@ ColumnLayout {
             visible: detail.row.externalConfig.length > 0
             text: qsTr("Wires: %1").arg(detail.row.externalConfig.join(", "))
             wrapMode: Text.Wrap
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -1046,13 +1046,13 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: jump.modelData.icon
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
                         fontStyle: Tokens.font.icon.small
                     }
 
                     StyledText {
                         text: jump.modelData.label
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
                         font: Tokens.font.label.small
                     }
 
@@ -1072,7 +1072,7 @@ ColumnLayout {
             StyledText {
                 visible: detail.row.updatable
                 text: qsTr("Update")
-                color: Colours.palette.m3primary
+                color: Colours.signal
                 font: Tokens.font.label.small
 
                 Interact {
@@ -1086,7 +1086,7 @@ ColumnLayout {
             StyledText {
                 visible: detail.row.installed
                 text: qsTr("Remove")
-                color: Colours.palette.m3error
+                color: Colours.alert
                 font: Tokens.font.label.small
 
                 Interact {

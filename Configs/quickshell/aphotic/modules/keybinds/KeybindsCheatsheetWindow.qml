@@ -51,7 +51,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        color: Colours.palette.m3shadow
+        color: Colours.shadow
         opacity: reveal.visibleProgress * 0.45
     }
 
@@ -102,7 +102,7 @@ PanelWindow {
                     MaterialIcon {
                         text: "keyboard"
                         fontStyle: Tokens.font.icon.large
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
                     }
 
                     StyledText {
@@ -113,7 +113,7 @@ PanelWindow {
 
                     StyledText {
                         text: qsTr("%1 binds").arg(HyprKeybinds.entries.length)
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
 
@@ -121,12 +121,12 @@ PanelWindow {
                         Layout.preferredWidth: 32
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                        color: Colours.layer(Colours.surface, 2)
 
                         MaterialIcon {
                             anchors.centerIn: parent
                             text: "close"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
                         }
 
@@ -209,7 +209,7 @@ PanelWindow {
                                         StyledText {
                                             Layout.fillWidth: true
                                             text: group.modelData.category.toUpperCase()
-                                            color: Colours.palette.m3onSurfaceVariant
+                                            color: Colours.inkMuted
                                             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                                         }
                                     }
@@ -217,7 +217,7 @@ PanelWindow {
                                     StyledText {
                                         visible: false
                                         text: group.modelData.category
-                                        color: Colours.palette.m3primary
+                                        color: Colours.signal
                                         font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
                                     }
 
@@ -225,7 +225,7 @@ PanelWindow {
                                         visible: false
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 1
-                                        color: Colours.palette.m3outlineVariant
+                                        color: Colours.outline
                                         opacity: 0.5
                                     }
 
@@ -266,7 +266,7 @@ PanelWindow {
                                                         anchors.centerIn: parent
                                                         text: bindRow.modelData.combo
                                                         font: Tokens.font.mono.builders.small.weight(Font.DemiBold).build()
-                                                        color: Colours.palette.m3onSurfaceVariant
+                                                        color: Colours.inkMuted
                                                     }
                                                 }
 
@@ -274,7 +274,7 @@ PanelWindow {
                                                     Layout.fillWidth: true
                                                     text: bindRow.modelData.description
                                                     font: Tokens.font.body.medium
-                                                    color: Colours.palette.m3onSurfaceVariant
+                                                    color: Colours.inkMuted
                                                     elide: Text.ElideRight
                                                 }
                                             }

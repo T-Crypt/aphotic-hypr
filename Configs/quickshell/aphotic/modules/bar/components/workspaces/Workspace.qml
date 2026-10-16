@@ -49,7 +49,7 @@ GridLayout {
 
         animate: true
         text: ""
-        color: Config.bar.workspaces.occupiedBg || root.isOccupied || root.activeWsId === root.ws ? Colours.palette.m3onSurface : Colours.layer(Colours.palette.m3outlineVariant, 2)
+        color: Config.bar.workspaces.occupiedBg || root.isOccupied || root.activeWsId === root.ws ? Colours.ink : Colours.layer(Colours.outline, 2)
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
         font.family: Tokens.font.workspaces
@@ -59,7 +59,7 @@ GridLayout {
             implicitWidth: root.signalDot
             implicitHeight: root.signalDot
             radius: root.signalDot / 2
-            color: Qt.alpha(Colours.palette.m3onSurface, root.isOccupied ? 0.7 : 0.25)
+            color: Qt.alpha(Colours.ink, root.isOccupied ? 0.7 : 0.25)
             opacity: root.activeWsId === root.ws ? 0 : 1
 
             Behavior on opacity {
@@ -158,7 +158,7 @@ GridLayout {
                     grade: 0
                     appClass: modelData.lastIpcObject?.class ?? ""
                     fallbackGlyph: "terminal"
-                    colour: Colours.palette.m3onSurfaceVariant
+                    colour: Colours.inkMuted
                 }
             }
         }

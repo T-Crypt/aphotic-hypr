@@ -18,7 +18,7 @@ Item {
     property real size: 0
     property font fontStyle: Tokens.font.icon.small
     property int grade: Colours.light ? 0 : -25
-    property color colour: Colours.palette.m3onSurface
+    property color colour: Colours.ink
     property bool animate: false
     property bool asynchronous: false
 

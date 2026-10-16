@@ -15,7 +15,7 @@ import qs.services
 Item {
     id: root
 
-    property color particleColour: Colours.palette.m3primary
+    property color particleColour: Colours.signal
     property int count: DepthFx.particleCount
     property real opacityScale: 1
 

@@ -27,7 +27,7 @@ Flickable {
             Layout.fillWidth: true
             Layout.margins: Tokens.padding.small
             text: root.player?.title ?? qsTr("Nothing playing")
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             font: Tokens.font.label.medium
             elide: Text.ElideRight
             maximumLineCount: 2
@@ -39,7 +39,7 @@ Flickable {
             Layout.leftMargin: Tokens.padding.small
             Layout.rightMargin: Tokens.padding.small
             text: root.player?.artist ?? ""
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
             elide: Text.ElideRight
         }
@@ -68,7 +68,7 @@ Flickable {
                     StyledRect {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+                        color: Colours.layer(Colours.raised, 2)
                     }
 
                     Interact {
@@ -81,7 +81,7 @@ Flickable {
                         anchors.centerIn: parent
                         text: button.modelData.icon
                         fontStyle: Tokens.font.icon.medium
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                     }
                 }
             }

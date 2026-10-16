@@ -63,7 +63,7 @@ Item {
                     radius: Tokens.rounding.full
                     color: "transparent"
                     border.width: 1
-                    border.color: Colours.palette.m3primary
+                    border.color: Colours.signal
                     opacity: 0
 
                     property int seen: 0
@@ -115,7 +115,7 @@ Item {
                     anchors.centerIn: parent
                     text: chip.modelData.icon
                     fontStyle: Tokens.font.icon.large
-                    color: chip.current ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: chip.current ? Colours.signal : Colours.inkMuted
                 }
             }
         }

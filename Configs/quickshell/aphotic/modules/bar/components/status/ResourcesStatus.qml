@@ -14,6 +14,6 @@ MaterialIcon {
 
     animate: true
     text: "hub"
-    color: posture ? Colours.posture(ResourcePosture.level, colour) : highLoad < 0.85 ? colour : Colours.palette.m3error
+    color: posture ? Colours.posture(ResourcePosture.level, colour) : highLoad < 0.85 ? colour : Colours.alert
     fill: 1
 }

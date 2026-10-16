@@ -33,7 +33,7 @@ StyledRect {
 
     implicitHeight: 36
     radius: Tokens.rounding.full
-    color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+    color: Colours.layer(Colours.raised, 2)
     clip: true
 
     // One highlight that glides to whichever segment the pointer is over,
@@ -47,7 +47,7 @@ StyledRect {
         width: root.segment
         height: root.segmentHeight
         radius: Tokens.rounding.full
-        color: Colours.palette.m3onSurface
+        color: Colours.ink
         visible: opacity > 0
         opacity: root.hoveredIndex >= 0 && root.hoveredIndex !== root.currentIndex ? 0.08 : 0
 
@@ -65,7 +65,7 @@ StyledRect {
         width: root.segment
         height: root.segmentHeight
         radius: Tokens.rounding.full
-        color: Colours.palette.m3primary
+        color: Colours.signal
 
         Behavior on x {
             SpringAnimation {
@@ -88,7 +88,7 @@ StyledRect {
 
             readonly property bool active: seg.index === root.currentIndex
             readonly property bool flagged: root.attentionIds.includes(seg.modelData.id)
-            readonly property color fg: seg.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+            readonly property color fg: seg.active ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
 
             x: root.offsetOf(seg.index)
             y: root.inset
@@ -152,7 +152,7 @@ StyledRect {
                     implicitWidth: 5
                     implicitHeight: 5
                     radius: Tokens.rounding.full
-                    color: seg.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3primary
+                    color: seg.active ? Colours.contrastOn(Colours.signal) : Colours.signal
                     visible: seg.flagged
                 }
             }

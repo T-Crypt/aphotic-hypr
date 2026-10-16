@@ -27,7 +27,7 @@ StyledRect {
     implicitWidth: 180
     implicitHeight: 32
     radius: Tokens.rounding.full
-    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+    color: Colours.layer(Colours.surface, 3)
 
     onTextChanged: {
         if (!input.activeFocus)
@@ -43,7 +43,7 @@ StyledRect {
         verticalAlignment: TextInput.AlignVCenter
         clip: true
         font: Tokens.font.label.small
-        color: Colours.palette.m3onSurface
+        color: Colours.ink
         text: root.text
 
         onAccepted: root.commit()
@@ -58,7 +58,7 @@ StyledRect {
             visible: input.text.length === 0
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
     }

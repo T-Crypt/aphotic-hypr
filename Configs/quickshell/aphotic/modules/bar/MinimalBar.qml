@@ -80,7 +80,7 @@ Item {
 
         StyledText {
             text: Settings.twelveHourClock ? `${Time.hourStr}:${Time.minuteStr} ${Time.amPmStr.toLowerCase()}` : `${Time.hourStr}:${Time.minuteStr}`
-            color: Colours.palette.m3secondaryOnSurface
+            color: Colours.signalSecondaryOnSurface
             font: Tokens.font.body.small
         }
     }

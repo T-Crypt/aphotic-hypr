@@ -9,7 +9,7 @@ import qs.services
 Rectangle {
     id: root
 
-    property color baseColour: Colours.tPalette.m3surfaceContainer
+    property color baseColour: Colours.surface
     property real strength: 0.05
 
     color: "transparent"

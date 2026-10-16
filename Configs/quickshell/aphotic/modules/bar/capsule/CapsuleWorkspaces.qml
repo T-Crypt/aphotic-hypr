@@ -79,7 +79,7 @@ Item {
                     radius: slot.isActive ? 5 : pip.base / 2
                     rotation: slot.isActive ? (slotHover.hovered ? -12 : 16) : (slotHover.hovered ? 12 : 0)
                     scale: slotHover.hovered ? 1.18 : 1
-                    color: slot.isActive ? Colours.palette.m3primary : (slot.isOccupied ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3outlineVariant)
+                    color: slot.isActive ? Colours.signal : (slot.isOccupied ? Colours.inkMuted : Colours.outline)
                     opacity: slot.isActive ? 1 : (slot.isOccupied ? 0.8 : 0.45)
 
                     Behavior on width {

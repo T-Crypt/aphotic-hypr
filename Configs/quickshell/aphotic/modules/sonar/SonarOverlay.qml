@@ -77,7 +77,7 @@ Item {
             radius: width / 2
             color: "transparent"
             border.width: index === 0 ? 1.5 : 1
-            border.color: Colours.palette.m3primary
+            border.color: Colours.signal
             opacity: (index === 0 ? 0.5 : index === 1 ? 0.16 : 0.07)
                 * Math.min(1, waveRadius / Tokens.spacing.extraLarge)
             visible: root.localOrigin !== null && waveRadius > 0
@@ -112,9 +112,9 @@ Item {
                     anchors.fill: parent
                     anchors.margins: -Tokens.spacing.extraSmall - Tokens.spacing.medium * bloom
                     radius: Tokens.rounding.large + Tokens.spacing.medium * bloom
-                    color: Qt.alpha(Colours.palette.m3primary, 0.035 * (1 - bloom))
+                    color: Qt.alpha(Colours.signal, 0.035 * (1 - bloom))
                     border.width: 1
-                    border.color: Colours.palette.m3primary
+                    border.color: Colours.signal
                     opacity: (outline.shelf ? 0.3 : 0.2) * (1 - bloom)
                     antialiasing: true
                 }
@@ -122,10 +122,10 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 anchors.margins: -Tokens.spacing.extraSmall / 2
-                color: Qt.alpha(Colours.palette.m3primary, outline.modelData.disabled ? 0.035 : 0.07)
+                color: Qt.alpha(Colours.signal, outline.modelData.disabled ? 0.035 : 0.07)
                 radius: Tokens.rounding.large
                 border.width: outline.modelData.disabled ? 0 : 1
-                border.color: Qt.alpha(Colours.palette.m3primary, 0.55)
+                border.color: Qt.alpha(Colours.signal, 0.55)
                 antialiasing: true
             }
             Canvas {
@@ -136,7 +136,7 @@ Item {
                 onPaint: {
                     const ctx = getContext("2d");
                     ctx.reset();
-                    ctx.strokeStyle = Colours.palette.m3primary;
+                    ctx.strokeStyle = Colours.signal;
                     ctx.lineWidth = 1;
                     ctx.setLineDash([4,5]);
                     ctx.beginPath();
@@ -160,15 +160,15 @@ Item {
                 width: outline.plate?.width ?? 0
                 height: outline.plate?.height ?? 0
                 radius: Tokens.rounding.medium
-                color: Qt.alpha(Colours.palette.m3surfaceContainerHigh, 0.97)
+                color: Qt.alpha(Colours.raised, 0.97)
                 border.width: 1
-                border.color: Qt.alpha(Colours.palette.m3onSurface, 0.1)
+                border.color: Qt.alpha(Colours.ink, 0.1)
                 antialiasing: true
 
                 Rectangle {
                     x: Tokens.padding.small; y: 15
                     width: 4; height: 4; radius: 2
-                    color: Colours.palette.m3primary
+                    color: Colours.signal
                     opacity: outline.modelData.disabled ? 0.5 : 1
                 }
                 StyledText {
@@ -182,7 +182,7 @@ Item {
                     x: Tokens.padding.large; y: 29
                     width: parent.width - Tokens.padding.large - Tokens.padding.small
                     text: outline.modelData.shortcut
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     elide: Text.ElideRight
                     font: Tokens.font.label.small
                 }
@@ -203,11 +203,11 @@ Item {
                     width: Math.min(110, parent.width - Tokens.padding.small * 2)
                     height: 28
                     radius: Tokens.rounding.small
-                    color: Colours.palette.m3primary
+                    color: Colours.signal
                     StyledText {
                         anchors.centerIn: parent
                         text: outline.modelData.route === "plugin-settings" ? qsTr("Settings") : outline.modelData.disabled ? qsTr("Enable") : qsTr("Open")
-                        color: Colours.palette.m3onPrimary
+                        color: Colours.onSignal
                         font: Tokens.font.label.medium
                     }
                     MouseArea {
@@ -229,7 +229,7 @@ Item {
         width: Math.min(root.width - Tokens.spacing.small * 2, groupLabel.implicitWidth + Tokens.padding.small * 2)
         height: 28
         radius: Tokens.rounding.small
-        color: Colours.palette.m3surfaceContainer
+        color: Colours.surface
         StyledText {
             id: groupLabel
             anchors.centerIn: parent

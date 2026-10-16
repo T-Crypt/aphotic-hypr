@@ -19,7 +19,7 @@ Shape {
     property int level: 1
     property bool hovered: false
     property bool accent: false
-    property color accentColour: Colours.palette.m3primary
+    property color accentColour: Colours.signal
     // Consumers gate the rim through this rather than `visible`: `visible`
     // carries the degenerate-size guard below, and overriding it leaves a
     // collapsed delegate rendering a solid gradient block instead of a rim.
@@ -28,8 +28,8 @@ Shape {
     readonly property real _lit: [0.10, 0.13, 0.18][Math.max(0, Math.min(2, root.level))] + (root.hovered ? 0.08 : 0)
     readonly property real _shade: [0.035, 0.045, 0.07][Math.max(0, Math.min(2, root.level))] + (root.hovered ? 0.03 : 0)
 
-    property color topColour: root.accent ? Qt.alpha(root.accentColour, 0.9) : Qt.alpha(Colours.palette.m3onSurface, root._lit)
-    property color bottomColour: root.accent ? Qt.alpha(root.accentColour, 0.4) : Qt.alpha(Colours.palette.m3onSurface, root._shade)
+    property color topColour: root.accent ? Qt.alpha(root.accentColour, 0.9) : Qt.alpha(Colours.ink, root._lit)
+    property color bottomColour: root.accent ? Qt.alpha(root.accentColour, 0.4) : Qt.alpha(Colours.ink, root._shade)
 
     function _clamp(r: real, inset: real): real {
         return Math.max(0, Math.min(r, root.width / 2, root.height / 2) - inset);

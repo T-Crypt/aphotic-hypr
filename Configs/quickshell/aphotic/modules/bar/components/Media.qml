@@ -22,7 +22,7 @@ StyledRect {
         }
     }
 
-    readonly property color colour: Colours.palette.m3tertiaryOnSurface
+    readonly property color colour: Colours.signalTertiaryOnSurface
 
     color: "transparent"
     radius: Tokens.rounding.full

@@ -20,9 +20,9 @@ Item {
     readonly property bool blurEnabled: bgEnabled && Config.background.desktopClock.background.blur
     readonly property bool invertColors: Config.background.desktopClock.invertColors
     readonly property bool useLightSet: Colours.light ? !invertColors : invertColors
-    readonly property color safePrimary: useLightSet ? Colours.palette.m3onPrimary : Colours.palette.m3primary
-    readonly property color safeSecondary: useLightSet ? Colours.palette.m3onSurface : Colours.palette.m3secondary
-    readonly property color safeTertiary: useLightSet ? Colours.palette.m3onTertiary : Colours.palette.m3tertiary
+    readonly property color safePrimary: useLightSet ? Colours.onSignal : Colours.signal
+    readonly property color safeSecondary: useLightSet ? Colours.ink : Colours.signalSecondary
+    readonly property color safeTertiary: useLightSet ? Colours.onSignalTertiary : Colours.signalTertiary
 
     implicitWidth: layout.implicitWidth + (Tokens.padding.large * 4 * root.clockScale)
     implicitHeight: layout.implicitHeight + (Tokens.padding.large * 2 * root.clockScale)
@@ -35,7 +35,7 @@ Item {
         layer.enabled: Config.background.desktopClock.shadow.enabled
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Colours.palette.m3shadow
+            shadowColor: Colours.shadow
             shadowOpacity: Config.background.desktopClock.shadow.opacity
             shadowBlur: Config.background.desktopClock.shadow.blur
         }
@@ -66,7 +66,7 @@ Item {
             anchors.fill: parent
             radius: Tokens.rounding.large * root.clockScale
             opacity: Config.background.desktopClock.background.opacity
-            color: Colours.palette.m3surfaceContainer
+            color: Colours.surface
 
             layer.enabled: root.blurEnabled
         }

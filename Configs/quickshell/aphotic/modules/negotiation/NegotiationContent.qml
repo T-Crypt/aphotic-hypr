@@ -43,9 +43,9 @@ Item {
         transformOrigin: Item.Center
 
         radius: Tokens.rounding.large
-        color: Colours.palette.m3surfaceContainer
+        color: Colours.surface
         border.width: Config.border.thickness
-        border.color: Colours.palette.m3outlineVariant
+        border.color: Colours.outline
 
         Behavior on opacity {
             Anim {
@@ -81,7 +81,7 @@ Item {
                 MaterialIcon {
                     text: "swap_horiz"
                     fontStyle: Tokens.font.icon.large
-                    color: Colours.palette.m3primary
+                    color: Colours.signal
                 }
 
                 StyledText {
@@ -94,7 +94,7 @@ Item {
                 StyledText {
                     visible: ResourceEngine.pendingCount > 1
                     text: qsTr("+%1 more").arg(ResourceEngine.pendingCount - 1)
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.medium
                 }
             }
@@ -121,7 +121,7 @@ Item {
                     Layout.fillWidth: true
                     visible: root.negotiation?.reason === "capacity"
                     text: qsTr("Combined claims are %1 against a %2 %3 safety budget.").arg(Math.round(root.negotiation?.total ?? 0)).arg(Math.round(root.negotiation?.budget ?? 0)).arg(root.negotiation?.unit ?? "")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.medium
                     wrapMode: Text.WordWrap
                 }
@@ -166,14 +166,14 @@ Item {
                         Layout.preferredHeight: buttonLabel.implicitHeight + Tokens.padding.small * 2
                         radius: Tokens.rounding.full
                         opacity: button.modelData.enabled ? 1 : 0.4
-                        color: button.modelData.filled ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                        color: button.modelData.filled ? Colours.signal : Colours.layer(Colours.surface, 2)
 
                         StyledText {
                             id: buttonLabel
 
                             anchors.centerIn: parent
                             text: button.modelData.label
-                            color: button.modelData.filled ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface
+                            color: button.modelData.filled ? Colours.contrastOn(Colours.signal) : Colours.ink
                             font: Tokens.font.label.large
                         }
 
@@ -191,7 +191,7 @@ Item {
                 Layout.fillWidth: true
                 visible: !(root.negotiation?.claimantSuspendable ?? false)
                 text: qsTr("%1 has no graceful-stop hook, so it can't be suspended from here.").arg(root.negotiation?.claimant.owner ?? "")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.medium
                 wrapMode: Text.WordWrap
             }

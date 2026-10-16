@@ -150,7 +150,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("Build a static theme with a fixed, hand-picked palette instead of one derived from a wallpaper. Creates a real theme folder under ~/.config/awww -- it shows up in Appearance's theme grid like any other once created.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -167,14 +167,14 @@ ColumnLayout {
                 implicitWidth: 220
                 implicitHeight: 32
                 radius: Tokens.rounding.small
-                color: Colours.palette.m3surfaceContainerHigh
+                color: Colours.raised
 
                 TextInput {
                     id: nameInput
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.small
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     clip: true
                     text: root.themeName
                     onTextChanged: root.themeName = text
@@ -184,7 +184,7 @@ ColumnLayout {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         text: qsTr("My Theme")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -199,7 +199,7 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "folder_open"
-                color: root.created ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3outlineVariant
+                color: root.created ? Colours.inkMuted : Colours.outline
 
                 Interact {
                     anchors.fill: parent
@@ -215,7 +215,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Special")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -238,7 +238,7 @@ ColumnLayout {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: specialCol.modelData.label
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
@@ -255,7 +255,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Normal colours")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -279,7 +279,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Bright colours")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -308,13 +308,13 @@ ColumnLayout {
             implicitWidth: createLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 40
             radius: Tokens.rounding.medium
-            color: Colours.palette.m3primary
+            color: Colours.signal
 
             StyledText {
                 id: createLabel
                 anchors.centerIn: parent
                 text: qsTr("Create theme")
-                color: Colours.contrastOn(Colours.palette.m3primary)
+                color: Colours.contrastOn(Colours.signal)
                 font: Tokens.font.body.medium
             }
 
@@ -330,7 +330,7 @@ ColumnLayout {
             wrapMode: Text.Wrap
             visible: root.createStatus.length > 0
             text: root.createStatus
-            color: root.created ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3error
+            color: root.created ? Colours.inkMuted : Colours.alert
             font: Tokens.font.body.small
         }
     }
@@ -340,7 +340,7 @@ ColumnLayout {
         Layout.bottomMargin: Tokens.spacing.medium
         wrapMode: Text.Wrap
         text: qsTr("After creating, run \"aphotic theme list\" or reopen Appearance to switch to it -- switching themes and previewing swatch changes live is a follow-up increment.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 }

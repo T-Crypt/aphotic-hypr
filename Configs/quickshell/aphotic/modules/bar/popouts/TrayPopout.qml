@@ -24,7 +24,7 @@ ColumnLayout {
         visible: !!root.item?.tooltipDescription
         Layout.maximumWidth: 260
         text: root.item?.tooltipDescription ?? ""
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
         wrapMode: Text.Wrap
     }
@@ -32,7 +32,7 @@ ColumnLayout {
     StyledText {
         Layout.maximumWidth: 260
         text: qsTr("Left-click to activate, right-click for options")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
         wrapMode: Text.Wrap
     }

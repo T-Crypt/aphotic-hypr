@@ -28,7 +28,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Sonar")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -143,10 +143,10 @@ ColumnLayout {
                     description: qsTr("Comma-separated desktop IDs; press Enter to save")
                     StyledRect {
                         implicitWidth: 180; implicitHeight: 32; radius: Tokens.rounding.full
-                        color: Colours.palette.m3surfaceContainerHigh
+                        color: Colours.raised
                         TextInput {
                             anchors.fill: parent; anchors.margins: Tokens.padding.small
-                            clip: true; color: Colours.palette.m3onSurface; font: Tokens.font.label.small
+                            clip: true; color: Colours.ink; font: Tokens.font.label.small
                             text: edgeGroup.config.pinned.join(", ")
                             onAccepted: Shelves.update(root.output,edgeGroup.modelData,{pinned:text.split(",").map(s => s.trim()).filter(Boolean)})
                         }
@@ -171,7 +171,7 @@ ColumnLayout {
                 StyledText {
                     Layout.leftMargin: Tokens.padding.small
                     text: qsTr("Tabs")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.medium
                 }
 
@@ -193,7 +193,7 @@ ColumnLayout {
                     Layout.leftMargin: Tokens.padding.small
                     Layout.rightMargin: Tokens.padding.small
                     text: qsTr("No tabs for this edge.")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                     wrapMode: Text.WordWrap
                 }
@@ -207,7 +207,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Shelf effects")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 

@@ -58,7 +58,7 @@ Item {
                     id: prevIcon
                     anchors.centerIn: parent
                     text: "chevron_left"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
 
@@ -67,7 +67,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: root.viewDate.toLocaleDateString(Qt.locale(), "MMMM yyyy")
                 font: Tokens.font.body.large
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
             }
 
             Item {
@@ -83,7 +83,7 @@ Item {
                     id: nextIcon
                     anchors.centerIn: parent
                     text: "chevron_right"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
         }
@@ -100,7 +100,7 @@ Item {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: modelData
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                 }
             }
@@ -141,7 +141,7 @@ Item {
                             StyledText {
                                 anchors.centerIn: parent
                                 text: cell.modelData
-                                color: cell.isToday ? Colours.palette.m3onSurface : Colours.palette.m3onSurface
+                                color: cell.isToday ? Colours.ink : Colours.ink
                                 font: Tokens.font.body.small
                             }
                         }

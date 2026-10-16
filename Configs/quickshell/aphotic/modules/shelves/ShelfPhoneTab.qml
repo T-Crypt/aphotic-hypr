@@ -36,7 +36,7 @@ Flickable {
                 StyledRect {
                     anchors.fill: parent
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+                    color: Colours.layer(Colours.raised, 2)
                 }
 
                 RowLayout {
@@ -50,7 +50,7 @@ Flickable {
                         text: "smartphone"
                         fontStyle: Tokens.font.icon.medium
                         fill: 1
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
                     }
 
                     StyledText {
@@ -72,7 +72,7 @@ Flickable {
             StyledRect {
                 anchors.fill: parent
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+                color: Colours.layer(Colours.raised, 2)
             }
 
             Interact {
@@ -90,13 +90,13 @@ Flickable {
                     Layout.preferredWidth: Tokens.sizes.bar.innerWidth * 0.6
                     text: "refresh"
                     fontStyle: Tokens.font.icon.medium
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
 
                 StyledText {
                     Layout.fillWidth: true
                     text: qsTr("Refresh")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
             }

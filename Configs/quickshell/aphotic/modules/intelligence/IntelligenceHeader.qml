@@ -63,7 +63,7 @@ ColumnLayout {
             MaterialIcon {
                 anchors.centerIn: parent
                 text: "add_comment"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
@@ -82,7 +82,7 @@ ColumnLayout {
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
             radius: Tokens.rounding.full
-            color: root.historyOpen ? Colours.palette.m3primary : "transparent"
+            color: root.historyOpen ? Colours.signal : "transparent"
 
             Behavior on color {
                 CAnim {}
@@ -91,7 +91,7 @@ ColumnLayout {
             MaterialIcon {
                 anchors.centerIn: parent
                 text: "history"
-                color: root.historyOpen ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                color: root.historyOpen ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
@@ -132,7 +132,7 @@ ColumnLayout {
                 width: pillLabel.implicitWidth + Tokens.padding.medium * 2
                 radius: Tokens.rounding.full
                 opacity: providerPill.available ? 1 : 0.4
-                color: providerPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                color: providerPill.active ? Colours.signal : Colours.layer(Colours.surface, 3)
 
                 Behavior on color {
                     CAnim {}
@@ -142,7 +142,7 @@ ColumnLayout {
                     id: pillLabel
                     anchors.centerIn: parent
                     text: providerPill.modelData.label
-                    color: providerPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                    color: providerPill.active ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
@@ -169,7 +169,7 @@ ColumnLayout {
             height: 26
             width: Math.min(modelLabel.implicitWidth, 120) + Tokens.padding.medium * 2
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+            color: Colours.layer(Colours.surface, 3)
 
             StyledText {
                 id: modelLabel
@@ -178,7 +178,7 @@ ColumnLayout {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
                 text: AiConfig.ollamaHostConfigured ? (root.effectiveModel || qsTr("Select model")) : qsTr("Set host…")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
 
@@ -200,7 +200,7 @@ ColumnLayout {
                 padding: Tokens.padding.small
                 background: StyledRect {
                     radius: Tokens.rounding.medium
-                    color: Colours.tPalette.m3surfaceContainer
+                    color: Colours.surface
                 }
 
                 contentItem: ColumnLayout {
@@ -211,7 +211,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         text: qsTr("No models found on this host")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
 
@@ -226,7 +226,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 30
                             radius: Tokens.rounding.small
-                            color: modelOption.modelData === root.effectiveModel ? Colours.palette.m3primary : "transparent"
+                            color: modelOption.modelData === root.effectiveModel ? Colours.signal : "transparent"
 
                             StyledText {
                                 anchors.left: parent.left
@@ -235,7 +235,7 @@ ColumnLayout {
                                 anchors.verticalCenter: parent.verticalCenter
                                 elide: Text.ElideRight
                                 text: modelOption.modelData
-                                color: modelOption.modelData === root.effectiveModel ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface
+                                color: modelOption.modelData === root.effectiveModel ? Colours.contrastOn(Colours.signal) : Colours.ink
                                 font: Tokens.font.label.small
                             }
 

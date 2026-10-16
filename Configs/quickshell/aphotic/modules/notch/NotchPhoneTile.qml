@@ -25,7 +25,7 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: 24
             radius: Tokens.rounding.small
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Colours.layer(Colours.raised, 2)
 
             RowLayout {
                 anchors.fill: parent
@@ -35,7 +35,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "smartphone"
-                    color: Colours.palette.m3primary
+                    color: Colours.signal
                     fontStyle: Tokens.font.icon.small
                     fill: 1
                 }
@@ -56,7 +56,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: 24
         radius: Tokens.rounding.small
-        color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+        color: Colours.layer(Colours.raised, 2)
 
         Interact {
             radius: parent.radius
@@ -71,14 +71,14 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "refresh"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
             StyledText {
                 Layout.fillWidth: true
                 text: qsTr("Refresh")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
         }
