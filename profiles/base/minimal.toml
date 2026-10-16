@@ -16,7 +16,7 @@ prep = ["qt5-wayland", "qt5ct", "qt6-wayland", "qt6ct", "qt5-svg", "qt5-quickcon
 # codeberg archive that gets regenerated, and the -git one now builds
 # 4.0.0-alpha. lib/install/wallust.sh installs the upstream static binary
 # against a pinned sha256 instead, and never fails the install.
-main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "qt6-multimedia", "ffmpeg", "kitty", "awww", "xdg-desktop-portal-hyprland", "matugen", "openvpn", "swappy", "grim", "slurp", "brightnessctl", "swaylock-effects", "hypridle", "cava", "ttf-jetbrains-mono-nerd", "ttf-material-symbols-variable", "inter-font", "pamixer", "network-manager-applet", "networkmanager", "blueman", "papirus-icon-theme", "papirus-folders", "bibata-cursor-theme", "adw-gtk-theme", "greetd", "flatpak"]
+main = ["quickshell", "qt6-shadertools", "qt6-imageformats", "qt6-multimedia", "ffmpeg", "kitty", "awww", "xdg-desktop-portal-hyprland", "matugen", "openvpn", "swappy", "grim", "slurp", "wf-recorder", "brightnessctl", "swaylock-effects", "hypridle", "cava", "ttf-jetbrains-mono-nerd", "ttf-material-symbols-variable", "inter-font", "pamixer", "network-manager-applet", "networkmanager", "blueman", "papirus-icon-theme", "papirus-folders", "bibata-cursor-theme", "adw-gtk-theme", "greetd", "flatpak"]
 
 # Flatpak applications. The bare `flatpak` binary is above in [packages]
 # main; this table is what gets installed through it by lib/install/

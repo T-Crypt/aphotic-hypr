@@ -39,6 +39,7 @@ SHELL_BINARIES = {
     "cliphist": "cliphist",
     "wl-copy": "wl-clipboard",
     "swappy": "swappy",
+    "wf-recorder": "wf-recorder",
     "swaylock": "swaylock-effects",
     "xdg-open": "xdg-utils",
 }
@@ -110,7 +111,7 @@ OPTIONAL = {
 FULL_ONLY_APPS = {"firefox", "thunar", "code"}
 
 # Launchers and system tools that are not profile packages.
-NOT_PACKAGES = {"qs", "aphotic", "systemctl", "dbus-update-activation-environment"}
+NOT_PACKAGES = {"qs", "aphotic", "systemctl", "dbus-update-activation-environment", "pkill", "mkdir"}
 
 # Settings.qml default -> package that provides it.
 DEFAULT_THEMES = {
