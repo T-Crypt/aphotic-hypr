@@ -257,7 +257,8 @@ QtObject {
         // compositor clips the bounce and the shadow instead of the shell.
         readonly property int surfaceMargin: 40
         // How far the strip sits off the edge it docks against.
-        readonly property int edgeGap: 4
+        // 0 = flush against the bar (no see-through strip). Default 0.
+        readonly property int edgeGap: 0
 
         readonly property int processUpdateInterval: 1500
         readonly property int gpuUpdateInterval: 3000
