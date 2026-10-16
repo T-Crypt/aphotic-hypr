@@ -18,7 +18,7 @@ ColumnLayout {
         StyledText {
             Layout.fillWidth: true
             text: qsTr("Agents").toUpperCase()
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
         }
 
@@ -82,14 +82,14 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: tabRect.modelData.icon
-                        color: tabRect.isSelected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
+                        color: tabRect.isSelected ? Colours.ink : Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                         fill: tabRect.isSelected ? 1 : 0
                     }
 
                     StyledText {
                         text: tabRect.modelData.label
-                        color: tabRect.isSelected ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
+                        color: tabRect.isSelected ? Colours.ink : Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }
@@ -137,7 +137,7 @@ ColumnLayout {
                         }
                     }
                     fontStyle: Tokens.font.icon.small
-                    color: parent.modelData.event === "pre_tool_use" ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: parent.modelData.event === "pre_tool_use" ? Colours.signal : Colours.inkMuted
                 }
 
                 StyledText {
@@ -149,7 +149,7 @@ ColumnLayout {
 
                 StyledText {
                     text: parent.modelData.event === "pre_tool_use" ? qsTr("running") : qsTr("idle")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
             }
@@ -158,21 +158,21 @@ ColumnLayout {
         StyledText {
             visible: detail.stat.availability === "unavailable"
             text: qsTr("No usage data yet")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
 
         StyledText {
             visible: detail.stat.availability === "unsupported"
             text: qsTr("Usage tracking not supported for this CLI version")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
 
         StyledText {
             visible: detail.stat.availability === "available"
             text: qsTr("Today: %1 tokens").arg(detail.stat.todayTokens ?? 0)
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
 
@@ -188,7 +188,7 @@ ColumnLayout {
                 StyledText {
                     Layout.fillWidth: true
                     text: parent.modelData.model
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.medium
                     elide: Text.ElideRight
                 }
@@ -204,7 +204,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Right-click the bar icon to launch · middle-click to switch provider")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
         wrapMode: Text.Wrap
     }

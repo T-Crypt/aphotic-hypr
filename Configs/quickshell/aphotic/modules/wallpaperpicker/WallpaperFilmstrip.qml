@@ -390,7 +390,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root._fileFor(strip.currentIndex)
                 font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 animate: true
             }
 
@@ -428,7 +428,7 @@ Item {
                             implicitWidth: dot.current ? 9 : 6
                             implicitHeight: implicitWidth
                             radius: implicitWidth / 2
-                            color: dot.current ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                            color: dot.current ? Colours.signal : Colours.ink
                             opacity: dot.current ? 0.55 + 0.45 * DepthFx.pulse : 0.4 - 0.09 * Math.abs(dot.offset)
 
                             Behavior on implicitWidth {

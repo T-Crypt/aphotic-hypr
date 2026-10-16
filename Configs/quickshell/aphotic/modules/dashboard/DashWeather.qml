@@ -22,14 +22,14 @@ Item {
 
             MaterialIcon {
                 text: Weather.conditionIcon
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 fontStyle: Tokens.font.icon.large
             }
 
             StyledText {
                 visible: Weather.hasData
                 text: `${Math.round(Weather.currentTemp)}°${Settings.weatherUnits === "fahrenheit" ? "F" : "C"}`
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 font: Tokens.font.headline.builders.large.scale(1.1).weight(Font.DemiBold).build()
             }
         }
@@ -38,7 +38,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             visible: !Weather.hasData
             text: Weather.errorText.length > 0 ? Weather.errorText : qsTr("Loading weather…")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
             wrapMode: Text.WordWrap
             horizontalAlignment: Text.AlignHCenter
@@ -49,7 +49,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             visible: Weather.hasData
             text: Weather.conditionText
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.medium
         }
 
@@ -57,7 +57,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             visible: Weather.hasData && Weather.resolvedLocationName.length > 0
             text: Weather.resolvedLocationName
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -78,21 +78,21 @@ Item {
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: Qt.formatDate(new Date(parent.modelData.day), "ddd")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
 
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: Weather._iconFor(parent.modelData.code)
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: `${Math.round(parent.modelData.high)}°/${Math.round(parent.modelData.low)}°`
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }

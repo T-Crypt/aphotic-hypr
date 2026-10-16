@@ -43,7 +43,7 @@ Item {
             width: parent.height * 0.7
             height: width
             radius: Tokens.rounding.medium
-            color: Colours.palette.m3surfaceContainerHigh
+            color: Colours.raised
             clip: true
 
             Image {
@@ -74,7 +74,7 @@ Item {
                 text: "check_circle"
                 fill: 1
                 fontStyle: Tokens.font.icon.small
-                color: Colours.palette.m3primary
+                color: Colours.signal
             }
         }
     }

@@ -221,11 +221,11 @@ RowLayout {
             gradient: Gradient {
                 GradientStop {
                     position: 0
-                    color: Qt.alpha(Colours.palette.m3primary, 0.1)
+                    color: Qt.alpha(Colours.signal, 0.1)
                 }
                 GradientStop {
                     position: 1
-                    color: Qt.alpha(Colours.palette.m3primary, 0)
+                    color: Qt.alpha(Colours.signal, 0)
                 }
             }
         }
@@ -336,7 +336,7 @@ RowLayout {
                     Layout.topMargin: Tokens.spacing.large
                     Layout.leftMargin: Tokens.padding.small
                     text: qsTr("Plugins")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
                 }
 
@@ -387,11 +387,11 @@ RowLayout {
             gradient: Gradient {
                 GradientStop {
                     position: 0
-                    color: Qt.alpha(Colours.palette.m3shadow, 0.35)
+                    color: Qt.alpha(Colours.shadow, 0.35)
                 }
                 GradientStop {
                     position: 1
-                    color: Qt.alpha(Colours.palette.m3shadow, 0)
+                    color: Qt.alpha(Colours.shadow, 0)
                 }
             }
 
@@ -447,7 +447,7 @@ RowLayout {
             width: 8
             height: Math.max(24, paneFlick.visibleArea.heightRatio * paneFlick.height)
             radius: Tokens.rounding.full
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             opacity: dragArea.pressed ? 0.7 : dragArea.containsMouse ? 0.55 : 0.35
 
             Behavior on opacity {

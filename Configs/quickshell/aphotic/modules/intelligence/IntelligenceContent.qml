@@ -41,7 +41,7 @@ Item {
         transformOrigin: Item.Right
 
         radius: Tokens.rounding.large
-        color: Colours.palette.m3surfaceContainer
+        color: Colours.surface
 
         Behavior on x {
             Anim {

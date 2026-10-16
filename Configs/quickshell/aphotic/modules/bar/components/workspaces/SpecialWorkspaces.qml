@@ -178,13 +178,13 @@ Item {
                 y: (view.currentItem?.y ?? 0) - view.contentY
                 implicitHeight: (view.currentItem as SpecialWsDelegate)?.size ?? 0
 
-                color: Colours.palette.m3tertiary
+                color: Colours.signalTertiary
                 radius: Tokens.rounding.full
 
                 Colouriser {
                     source: view
-                    sourceColor: Colours.palette.m3onSurface
-                    colorizationColor: Colours.palette.m3onTertiary
+                    sourceColor: Colours.ink
+                    colorizationColor: Colours.onSignalTertiary
 
                     anchors.horizontalCenter: parent.horizontalCenter
 
@@ -361,7 +361,7 @@ Item {
                         grade: 0
                         appClass: modelData.lastIpcObject?.class ?? ""
                         fallbackGlyph: "terminal"
-                        colour: Colours.palette.m3onSurfaceVariant
+                        colour: Colours.inkMuted
                     }
                 }
             }

@@ -57,7 +57,7 @@ Item {
             StyledText {
                 text: root.modelData?.comment || root.modelData?.genericName || ""
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
                 width: parent.width
             }

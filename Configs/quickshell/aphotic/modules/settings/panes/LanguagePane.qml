@@ -73,7 +73,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("Your keyboard layout, in xkb codes. The pills are the common ones -- any other code works too, typed by hand. Everything here is written to ~/.config/hypr/keyboard.lua and applied to the running session immediately.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -84,7 +84,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Primary layout")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -132,7 +132,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Additional layouts")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -174,7 +174,7 @@ ColumnLayout {
 
                         MaterialIcon {
                             text: "arrow_upward"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
                             visible: layoutRow.index > 0
 
@@ -188,7 +188,7 @@ ColumnLayout {
 
                         MaterialIcon {
                             text: "arrow_downward"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
                             visible: layoutRow.index < Settings.additionalKbLayouts.length - 1
 
@@ -202,7 +202,7 @@ ColumnLayout {
 
                         MaterialIcon {
                             text: "delete"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
 
                             Interact {
@@ -223,7 +223,7 @@ ColumnLayout {
             wrapMode: Text.Wrap
             visible: Settings.additionalKbLayouts.length === 0
             text: qsTr("No additional layouts yet -- add one to enable layout switching.")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
     }
@@ -236,7 +236,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Switching")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -269,7 +269,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: qsTr("The rest of the xkb keyboard description, for hardware the defaults get wrong. Leave these empty unless you know you need them -- they are written to ~/.config/hypr/keyboard.lua alongside the layout above.")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
 

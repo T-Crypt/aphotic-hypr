@@ -30,7 +30,7 @@ StyledRect {
         readonly property real headerHeight: card.title.length > 0 ? cardTitle.implicitHeight + Tokens.padding.medium : 0
 
         radius: Tokens.rounding.medium
-        color: card.selected ? Qt.alpha(Colours.palette.m3primary, 0.08) : Colours.signalStyle.raised
+        color: card.selected ? Qt.alpha(Colours.signal, 0.08) : Colours.signalStyle.raised
         border.width: 1
         border.color: card.selected ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline
 
@@ -64,7 +64,7 @@ StyledRect {
 
             StyledText {
                 text: card.title.toUpperCase()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
             }
         }
@@ -111,7 +111,7 @@ StyledRect {
                     StyledText {
                         visible: false
                         text: wsCard.modelData.id
-                        color: wsCard.active ? Colours.legibleAccent(Colours.palette.m3primary, Colours.signalStyle.surface) : Colours.palette.m3onSurface
+                        color: wsCard.active ? Colours.legibleAccent(Colours.signal, Colours.signalStyle.surface) : Colours.ink
                         font: Tokens.font.title.builders.medium.weight(Font.Medium).build()
                     }
 
@@ -145,7 +145,7 @@ StyledRect {
                                     anchors.centerIn: parent
                                     appClass: modelData.lastIpcObject?.class ?? ""
                                     fallbackGlyph: "desktop_windows"
-                                    colour: Colours.palette.m3onSurfaceVariant
+                                    colour: Colours.inkMuted
                                     fontStyle: Tokens.font.icon.small
                                 }
                             }
@@ -157,7 +157,7 @@ StyledRect {
                         Layout.fillHeight: true
                         verticalAlignment: Text.AlignVCenter
                         text: qsTr("Empty")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }

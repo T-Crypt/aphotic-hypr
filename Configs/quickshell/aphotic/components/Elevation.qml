@@ -36,7 +36,7 @@ Item {
         bottomRightRadius: root.bottomRightRadius
         blur: root.blur
         offset: Qt.vector2d(0, root.offsetY)
-        color: Colours.palette.m3shadow
+        color: Colours.shadow
         opacity: root.inside ? root.levelOpacity : root.target.opacity * root.levelOpacity
         scale: root.inside ? 1 : root.target.scale
         transformOrigin: root.target.transformOrigin

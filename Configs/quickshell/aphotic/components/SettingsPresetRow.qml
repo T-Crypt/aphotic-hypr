@@ -31,7 +31,7 @@ SettingsRow {
                 Layout.preferredWidth: presetLabel.implicitWidth + Tokens.padding.medium * 2
                 radius: Tokens.rounding.full
                 opacity: presetPill.selectable ? 1 : 0.45
-                color: (presetPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Qt.alpha(Colours.palette.m3onSurface, 0.04))
+                color: (presetPill.active ? Qt.alpha(Colours.signal, 0.16) : Qt.alpha(Colours.ink, 0.04))
 
                 Behavior on color {
                     CAnim {}
@@ -48,7 +48,7 @@ SettingsRow {
                     id: presetLabel
                     anchors.centerIn: parent
                     text: presetPill.modelData.label
-                    color: (presetPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (presetPill.active ? Colours.ink : Colours.inkMuted)
                     font: Tokens.font.label.small
                 }
 

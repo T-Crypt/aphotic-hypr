@@ -39,9 +39,9 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.large
-        color: Colours.palette.m3surfaceContainerHigh
+        color: Colours.raised
         border.width: Config.border.thickness
-        border.color: Colours.palette.m3outlineVariant
+        border.color: Colours.outline
 
         Elevation {
             target: parent
@@ -86,7 +86,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: menuItem.modelData.icon
                         fontStyle: Tokens.font.icon.medium
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                     }
 
                     StyledText {

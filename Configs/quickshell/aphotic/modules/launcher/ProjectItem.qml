@@ -49,7 +49,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: root.modelData.icon === "code" ? "code" : "folder"
             fontStyle: Tokens.font.icon.large
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
         }
 
         Column {
@@ -66,7 +66,7 @@ Item {
             StyledText {
                 text: root.modelData.path
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
                 width: parent.width
             }

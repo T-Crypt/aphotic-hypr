@@ -24,7 +24,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Power profile")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -60,7 +60,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: profileCol.implicitHeight + Tokens.padding.medium * 2
                 radius: Tokens.rounding.medium
-                color: profileBtn.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+                color: profileBtn.active ? Colours.signal : Colours.surface
 
                 ColumnLayout {
                     id: profileCol
@@ -70,13 +70,13 @@ ColumnLayout {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.icon
-                        color: profileBtn.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: profileBtn.active ? Colours.onSignal : Colours.inkMuted
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.label
-                        color: profileBtn.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: profileBtn.active ? Colours.onSignal : Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }
@@ -95,7 +95,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Idle & lock")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -124,7 +124,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "remove"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
                     Interact {
@@ -137,7 +137,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "add"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
                     Interact {
@@ -172,7 +172,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "remove"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
                     Interact {
@@ -185,7 +185,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "add"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
                     Interact {
@@ -220,7 +220,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "remove"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
                     Interact {
@@ -233,7 +233,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "add"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
                     Interact {
@@ -250,7 +250,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Lockout")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -258,7 +258,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("Failed unlock attempts are handled by your system's PAM/faillock policy, the same as any other login prompt — Aphotic doesn't layer its own attempt counter on top of it.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 }

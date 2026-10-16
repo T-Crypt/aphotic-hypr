@@ -95,7 +95,7 @@ ColumnLayout {
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
                 radius: Tokens.rounding.medium
-                color: Qt.alpha(Colours.palette.m3primary, root.expanded ? 0.22 : 0.12)
+                color: Qt.alpha(Colours.signal, root.expanded ? 0.22 : 0.12)
 
                 Behavior on color {
                     CAnim {}
@@ -104,7 +104,7 @@ ColumnLayout {
                 MaterialIcon {
                     anchors.centerIn: parent
                     text: root.icon
-                    color: Colours.palette.m3primaryOnSurface
+                    color: Colours.signalOnSurface
                     fontStyle: Tokens.font.icon.small
                 }
             }
@@ -124,7 +124,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     visible: root.description.length > 0
                     text: root.description
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                     elide: Text.ElideRight
                 }
@@ -132,7 +132,7 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "expand_more"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
                 rotation: root.expanded ? 180 : 0
 

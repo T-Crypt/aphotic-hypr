@@ -85,7 +85,7 @@ Item {
         active: root.completed && !root.source
 
         sourceComponent: StyledRect {
-            color: Colours.palette.m3surfaceContainer
+            color: Colours.surface
 
             Row {
                 anchors.centerIn: parent
@@ -93,7 +93,7 @@ Item {
 
                 MaterialIcon {
                     text: "sentiment_stressed"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font.pointSize: Tokens.fontSize.extraLarge * 2
                 }
 
@@ -103,14 +103,14 @@ Item {
 
                     StyledText {
                         text: qsTr("No wallpaper set")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font.pointSize: Tokens.fontSize.extraLarge
                         font.bold: true
                     }
 
                     StyledText {
                         text: qsTr("Pick one with SUPER+W")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font.pointSize: Tokens.fontSize.normal
                     }
                 }

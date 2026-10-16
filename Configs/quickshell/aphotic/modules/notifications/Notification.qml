@@ -53,7 +53,7 @@ StyledRect {
         anchors.topMargin: root.radius
         anchors.bottomMargin: root.radius
         width: 2
-        color: Colours.palette.m3error
+        color: Colours.alert
     }
 
     // Bioluminescent flash-response on arrival, echoing the deep-sea cue
@@ -64,7 +64,7 @@ StyledRect {
         id: arrivalGlow
 
         target: root
-        glowColour: root.critical ? Colours.palette.m3error : Colours.palette.m3primary
+        glowColour: root.critical ? Colours.alert : Colours.signal
         glowBlur: 26
         intensity: 0
         breathing: false
@@ -122,7 +122,7 @@ StyledRect {
                     StyledText {
                         text: root.modelData?.appName || root.modelData?.summary || ""
                         font: Tokens.font.body.medium
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                         elide: Text.ElideRight
                         width: parent.width
                     }
@@ -131,7 +131,7 @@ StyledRect {
                         text: root.modelData?.appName ? (root.modelData?.summary ?? "") : ""
                         visible: text.length > 0
                         font: Tokens.font.body.small
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         elide: Text.ElideRight
                         width: parent.width
                     }
@@ -153,7 +153,7 @@ StyledRect {
                         id: closeIcon
                         anchors.centerIn: parent
                         text: "close"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
                 }
@@ -165,7 +165,7 @@ StyledRect {
                 visible: text.length > 0
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 width: parent.width
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
 
                 onLinkActivated: link => Qt.openUrlExternally(link)
@@ -205,7 +205,7 @@ StyledRect {
                         implicitWidth: actionContent.implicitWidth + Tokens.padding.medium * 2
                         implicitHeight: 26
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                        color: Colours.layer(Colours.surface, 3)
 
                         Interact {
                             anchors.fill: parent
@@ -226,14 +226,14 @@ StyledRect {
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: text.length > 0
                                 text: actionBtn.modelData.icon ?? ""
-                                color: Colours.palette.m3primary
+                                color: Colours.signal
                                 fontStyle: Tokens.font.icon.small
                             }
 
                             StyledText {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: actionBtn.modelData.text
-                                color: Colours.palette.m3onSurface
+                                color: Colours.ink
                                 font: Tokens.font.label.small
                             }
                         }
@@ -261,7 +261,7 @@ StyledRect {
             fallbackGlyph: Icons.getNotifIcon(root.modelData?.summary ?? "", root.modelData?.urgency)
             size: Tokens.sizes.notifs.image
             fontStyle: Tokens.font.icon.medium
-            colour: root.critical ? Colours.palette.m3onSurface : Colours.palette.m3primary
+            colour: root.critical ? Colours.ink : Colours.signal
         }
     }
 }

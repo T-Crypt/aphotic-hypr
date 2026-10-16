@@ -20,7 +20,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Style")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -70,7 +70,7 @@ ColumnLayout {
         visible: Settings.barStyle !== "full" && !Settings.barHorizontal
         implicitHeight: warningRow.implicitHeight + Tokens.padding.medium * 2
         radius: Tokens.rounding.medium
-        color: Colours.palette.m3error
+        color: Colours.alert
 
         RowLayout {
             id: warningRow
@@ -82,14 +82,14 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "warning"
-                color: Colours.palette.m3onError
+                color: Colours.onAlert
             }
 
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: qsTr("This style is designed for top/bottom placement -- side placement may look broken.")
-                color: Colours.palette.m3onError
+                color: Colours.onAlert
                 font: Tokens.font.body.small
             }
         }
@@ -97,7 +97,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Visibility")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -121,7 +121,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: visCol.implicitHeight + Tokens.padding.medium * 2
                 radius: Tokens.rounding.medium
-                color: visBtn.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+                color: visBtn.active ? Colours.signal : Colours.surface
 
                 ColumnLayout {
                     id: visCol
@@ -131,13 +131,13 @@ ColumnLayout {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: visBtn.modelData.icon
-                        color: visBtn.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: visBtn.active ? Colours.onSignal : Colours.inkMuted
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: visBtn.modelData.label
-                        color: visBtn.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: visBtn.active ? Colours.onSignal : Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }
@@ -231,7 +231,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Dock")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -257,7 +257,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Pinned apps")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -277,7 +277,7 @@ ColumnLayout {
                     implicitWidth: chipRow.implicitWidth + Tokens.padding.medium * 2
                     implicitHeight: chipRow.implicitHeight + Tokens.padding.small * 2
                     radius: Tokens.rounding.full
-                    color: Colours.tPalette.m3surfaceContainerHigh
+                    color: Colours.raised
 
                     RowLayout {
                         id: chipRow
@@ -314,7 +314,7 @@ ColumnLayout {
                 radius: Tokens.rounding.full
                 color: "transparent"
                 border.width: 1
-                border.color: Colours.palette.m3outlineVariant
+                border.color: Colours.outline
 
                 StyledText {
                     id: addLabel
@@ -338,7 +338,7 @@ ColumnLayout {
 
             sourceComponent: StyledRect {
                 radius: Tokens.rounding.medium
-                color: Colours.tPalette.m3surfaceContainer
+                color: Colours.surface
 
                 ListView {
                     anchors.fill: parent
@@ -383,7 +383,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Taskbar")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -407,7 +407,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Minimal")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -431,7 +431,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Capsule")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 

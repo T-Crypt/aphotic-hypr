@@ -78,12 +78,12 @@ ColumnLayout {
                     implicitWidth: 28
                     implicitHeight: 28
                     radius: Tokens.rounding.small
-                    color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+                    color: Colours.layer(Colours.raised, 2)
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         text: root.activeTile?.icon ?? "monitoring"
-                        color: Colours.palette.m3primaryOnSurface
+                        color: Colours.signalOnSurface
                         fontStyle: Tokens.font.icon.medium
                         fill: 1
                     }
@@ -112,7 +112,7 @@ ColumnLayout {
             implicitWidth: 28
             implicitHeight: 28
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Colours.layer(Colours.raised, 2)
 
             Interact {
                 radius: parent.radius
@@ -123,7 +123,7 @@ ColumnLayout {
             MaterialIcon {
                 anchors.centerIn: parent
                 text: "close"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
         }

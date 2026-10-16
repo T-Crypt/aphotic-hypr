@@ -128,7 +128,7 @@ Item {
                     anchors.margins: Tokens.padding.medium
                     text: "movie"
                     fill: 1
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -158,7 +158,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.model.entries[grid.currentIndex]?.file ?? ""
                 font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 animate: true
             }
 
@@ -166,7 +166,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: (root.model.entries[grid.currentIndex]?.theme ?? "").toUpperCase()
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 animate: true
             }
         }

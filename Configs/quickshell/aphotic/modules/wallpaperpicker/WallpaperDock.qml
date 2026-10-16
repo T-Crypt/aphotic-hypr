@@ -160,7 +160,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.model.entries[strip.currentIndex]?.file ?? ""
                 font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 animate: true
             }
 
@@ -168,7 +168,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: (root.model.entries[strip.currentIndex]?.theme ?? "").toUpperCase()
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 animate: true
             }
         }
@@ -261,7 +261,7 @@ Item {
                     visible: strip.count > 0
                     color: "transparent"
                     border.width: 2
-                    border.color: Colours.palette.m3primary
+                    border.color: Colours.signal
                     opacity: 0.55 + 0.45 * DepthFx.pulse
 
                     transform: Scale {
@@ -373,7 +373,7 @@ Item {
                         anchors.margins: Tokens.padding.large + Tokens.padding.small
                         text: "movie"
                         fill: 1
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                         fontStyle: Tokens.font.icon.small
                     }
 

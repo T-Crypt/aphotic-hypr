@@ -72,7 +72,7 @@ Item {
         // The blob already defines the silhouette when it is masking, so a
         // second rounded-rect clip underneath would only cut the petals off.
         radius: root.shapedActive ? 0 : root.cornerRadius
-        color: Colours.palette.m3surfaceContainerHigh
+        color: Colours.raised
 
         Image {
             id: art
@@ -102,7 +102,7 @@ Item {
             anchors.centerIn: parent
             visible: !art.visible
             text: "music_note"
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             fontStyle: root.artSize >= 56 ? Tokens.font.icon.large : Tokens.font.icon.small
         }
     }

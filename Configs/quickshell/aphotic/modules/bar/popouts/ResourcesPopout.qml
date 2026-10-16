@@ -36,7 +36,7 @@ ColumnLayout {
         id: usageBar
 
         property real perc: 0
-        property color barColour: Colours.palette.m3primary
+        property color barColour: Colours.signal
 
         Layout.fillWidth: true
         implicitHeight: 4
@@ -61,7 +61,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: "memory"
-            color: Colours.palette.m3primary
+            color: Colours.signal
             fill: 1
         }
 
@@ -92,7 +92,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 visible: !!SystemUsage.cpuName
                 text: SystemUsage.cpuTemp > 0 ? qsTr("%1 · %2°C").arg(SystemUsage.cpuName).arg(Math.round(SystemUsage.cpuTemp)) : SystemUsage.cpuName
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.medium
                 elide: Text.ElideRight
             }
@@ -101,7 +101,7 @@ ColumnLayout {
 
     UsageBar {
         perc: SystemUsage.cpuPerc
-        barColour: Colours.palette.m3primary
+        barColour: Colours.signal
     }
 
     RowLayout {
@@ -110,7 +110,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: "memory_alt"
-            color: Colours.palette.m3tertiary
+            color: Colours.signalTertiary
             fill: 1
         }
 
@@ -135,7 +135,7 @@ ColumnLayout {
 
     UsageBar {
         perc: SystemUsage.memPerc
-        barColour: Colours.palette.m3tertiary
+        barColour: Colours.signalTertiary
     }
 
     ColumnLayout {
@@ -145,7 +145,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Storage").toUpperCase()
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
         }
 
@@ -176,14 +176,14 @@ ColumnLayout {
                             const totalFmt = SystemUsage.formatKib(diskRow.modelData.total);
                             return qsTr("%1 / %2 %3 · %4%").arg(usedFmt.value.toFixed(1)).arg(totalFmt.value.toFixed(1)).arg(totalFmt.unit).arg(Math.round(diskRow.modelData.perc * 100));
                         }
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }
 
                 UsageBar {
                     perc: diskRow.modelData.perc
-                    barColour: Colours.palette.m3secondary
+                    barColour: Colours.signalSecondary
                 }
             }
         }
