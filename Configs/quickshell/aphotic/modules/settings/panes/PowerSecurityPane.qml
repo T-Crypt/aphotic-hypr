@@ -103,6 +103,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
+            searchId: "screensaverIdle"
             icon: "screenshot_monitor"
             label: qsTr("Screensaver when idle")
             description: Settings.idleLockEnabled && Settings.screensaverTimeout >= Settings.idleLockTimeout ? qsTr("Never shows: the screen locks first") : root.formatMinutes(Settings.screensaverTimeout)
@@ -111,6 +112,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "screensaverAfter"
             icon: "timer"
             label: qsTr("Screensaver after")
             description: root.formatMinutes(Settings.screensaverTimeout)
@@ -149,6 +151,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "lockIdle"
             icon: "lock_clock"
             label: qsTr("Lock when idle")
             description: root.formatMinutes(Settings.idleLockTimeout)
@@ -157,6 +160,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "lockAfter"
             icon: "timer"
             label: qsTr("Lock after")
             description: root.formatMinutes(Settings.idleLockTimeout)
@@ -195,6 +199,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "suspendIdle"
             icon: "bedtime"
             label: qsTr("Suspend when idle")
             description: root.formatMinutes(Settings.idleSuspendTimeout)
@@ -203,6 +208,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "suspendAfter"
             icon: "timer"
             label: qsTr("Suspend after")
             description: root.formatMinutes(Settings.idleSuspendTimeout)

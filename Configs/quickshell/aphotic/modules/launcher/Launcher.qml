@@ -436,10 +436,11 @@ Item {
                         // searchIndex, not list: a plugin's settings pane is a
                         // section inside another category's pane rather than a
                         // category of its own, and its entry id
-                        // ("<category>/<section>") is the address
+                        // ("<category>/<section>", or "<category>/<section>/
+                        // <row>" for a setting row) is the address
                         // SettingsPanel.qml resolves on the way in.
                         const all = SettingsCategories.searchIndex;
-                        return root.query.length === 0 ? all : all.filter(c => c.label.toLowerCase().includes(root.query) || c.description.toLowerCase().includes(root.query));
+                        return root.query.length === 0 ? all : all.filter(c => (c.searchKey ?? "").includes(root.query));
                     }
                     case "keybinds": {
                         const all = HyprKeybinds.entries;

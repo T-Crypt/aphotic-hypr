@@ -31,19 +31,77 @@ RowLayout {
     readonly property var categories: SettingsCategories.list
 
     // currentCategory is an address, not just a category id: a search hit
-    // on a plugin's section arrives as "<category>/<section>", which is
-    // also the id searchIndex hands the launcher, so the same string
-    // survives the ScreenState.settingsCategory handoff untouched.
+    // on a plugin's section arrives as "<category>/<section>", a hit on a
+    // setting row as "<category>/<section>/<row>" (the section empty for a
+    // core pane row), which is also the id searchIndex hands the launcher,
+    // so the same string survives the ScreenState.settingsCategory handoff
+    // untouched.
     readonly property string currentCategoryId: root.currentCategory.split("/")[0]
     property string requestedSection: ""
+    property string requestedRow: ""
+    property var _highlightedRow: null
+    property int _rowAttempts: 0
 
     readonly property var sections: SettingsCategories.sectionsFor(root.currentCategoryId)
 
     onCurrentCategoryChanged: {
         const parts = root.currentCategory.split("/");
         root.requestedSection = parts.length > 1 ? parts[1] : "";
-        if (root.requestedSection !== "")
+        root.requestedRow = parts.length > 2 ? parts[2] : "";
+        root._highlightedRow = null;
+        root._rowAttempts = 0;
+        if (root.requestedSection !== "" || root.requestedRow !== "")
             revealTimer.restart();
+    }
+
+    // A search hit can name a row instead of a section. The row components
+    // carry the address as `searchId` (components/SettingsRow.qml), so the
+    // pane is found by walking the loaded tree rather than every pane
+    // wiring its own registry. A row inside a collapsed inline section has
+    // no instance yet; opening the sections and retrying is the one case
+    // that needs a second pass.
+    function _findRow(item: var, rowId: string): var {
+        if (!item || !item.children)
+            return null;
+        for (const child of item.children) {
+            if (child.searchId !== undefined && child.searchId === rowId)
+                return child;
+            const found = root._findRow(child, rowId);
+            if (found)
+                return found;
+        }
+        return null;
+    }
+
+    function _expandSections(item: var): void {
+        if (!item || !item.children)
+            return;
+        for (const child of item.children) {
+            if (typeof child.expanded === "boolean" && child.content !== undefined && !child.expanded)
+                child.expanded = true;
+            root._expandSections(child);
+        }
+    }
+
+    function _revealRow(): void {
+        if (root._highlightedRow) {
+            root._highlightedRow.highlighted = false;
+            root._highlightedRow = null;
+        }
+        if (root.requestedRow === "" || !paneLoader.item)
+            return;
+        const row = root._findRow(paneLoader.item, root.requestedRow);
+        if (!row) {
+            if (root._rowAttempts < 2) {
+                root._rowAttempts += 1;
+                root._expandSections(paneLoader.item);
+                rowRetryTimer.restart();
+            }
+            return;
+        }
+        root._highlightedRow = row;
+        row.highlighted = true;
+        paneFlick.revealItem(row);
     }
 
     onCategoriesChanged: {
@@ -98,7 +156,14 @@ RowLayout {
             currentCategory: root.currentCategoryId
             categories: root.categories
             searchIndex: SettingsCategories.searchIndex
-            onCategorySelected: (id, sectionId) => root.currentCategory = sectionId.length > 0 ? `${id}/${sectionId}` : id
+            onCategorySelected: (id, sectionId, rowId) => {
+                const parts = [id];
+                if (sectionId.length > 0 || rowId.length > 0)
+                    parts.push(sectionId);
+                if (rowId.length > 0)
+                    parts.push(rowId);
+                root.currentCategory = parts.join("/");
+            }
         }
     }
 
@@ -175,13 +240,17 @@ RowLayout {
             boundsBehavior: Flickable.StopAtBounds
             clip: true
 
+            function revealItem(item: Item): void {
+                const limit = Math.max(0, paneFlick.contentHeight - paneFlick.height);
+                paneFlick.contentY = Math.min(limit, Math.max(0, item.mapToItem(paneColumn, 0, 0).y));
+            }
+
             function revealSection(sectionId: string): void {
                 for (let i = 0; i < sectionRepeater.count; i++) {
                     const item = sectionRepeater.itemAt(i);
                     if (item?.modelData?.id !== sectionId)
                         continue;
-                    const limit = Math.max(0, paneFlick.contentHeight - paneFlick.height);
-                    paneFlick.contentY = Math.min(limit, Math.max(0, item.mapToItem(paneColumn, 0, 0).y));
+                    paneFlick.revealItem(item);
                     return;
                 }
             }
@@ -347,7 +416,17 @@ RowLayout {
             id: revealTimer
 
             interval: 32
-            onTriggered: paneFlick.revealSection(root.requestedSection)
+            onTriggered: {
+                paneFlick.revealSection(root.requestedSection);
+                root._revealRow();
+            }
+        }
+
+        Timer {
+            id: rowRetryTimer
+
+            interval: 32
+            onTriggered: root._revealRow()
         }
 
         StyledRect {

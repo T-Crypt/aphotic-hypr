@@ -165,6 +165,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsPresetRow {
+            searchId: "depthEffects"
             icon: "blur_on"
             label: qsTr("Depth effects")
             presets: root.depthEffectsPresets
@@ -214,6 +215,7 @@ ColumnLayout {
         Layout.topMargin: Tokens.spacing.small
 
         SettingsRow {
+            searchId: "cursorSize"
             icon: "photo_size_select_small"
             label: qsTr("Cursor size")
             description: qsTr("%1px").arg(Settings.cursorSize)
@@ -433,6 +435,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "iconAppMatch"
             icon: "pattern"
             label: qsTr("App match")
             description: qsTr("An app class or desktop-entry name")
@@ -468,6 +471,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "customIcon"
             icon: "image"
             label: qsTr("Icon")
             description: qsTr("Path, theme name, or glyph name")
@@ -500,6 +504,7 @@ ColumnLayout {
         }
 
         SettingsPresetRow {
+            searchId: "iconTreatAs"
             icon: "category"
             label: qsTr("Treat icon as")
             description: qsTr("Auto picks an image when the value resolves to one")
@@ -590,6 +595,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "statusIconBluetooth"
             icon: "bluetooth"
             label: qsTr("Bluetooth")
 
@@ -600,6 +606,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconWifi"
             icon: "wifi"
             label: qsTr("Wi-Fi")
 
@@ -610,6 +617,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconPower"
             icon: "bolt"
             label: qsTr("Power profile")
 
@@ -620,6 +628,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconPerformance"
             icon: "monitoring"
             label: qsTr("Performance")
 
@@ -630,6 +639,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconHostInfo"
             icon: "lan"
             label: qsTr("Host info")
 
@@ -640,6 +650,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconPomodoro"
             icon: "timer"
             label: qsTr("Pomodoro")
 
@@ -650,6 +661,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconDnd"
             icon: "notifications_off"
             label: qsTr("Do Not Disturb")
 

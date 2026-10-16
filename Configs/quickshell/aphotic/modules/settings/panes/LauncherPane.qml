@@ -18,6 +18,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsPresetRow {
+            searchId: "resultsStyle"
             icon: "grid_view"
             label: qsTr("Results style")
             description: qsTr("App-search results only — clipboard, emoji, windows, themes, and projects always show as a list")

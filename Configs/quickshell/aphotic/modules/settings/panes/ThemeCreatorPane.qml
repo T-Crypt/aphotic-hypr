@@ -158,6 +158,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "themeName"
             icon: "edit"
             label: qsTr("Theme name")
             description: root.themeSlug.length > 0 ? qsTr("Folder: ~/.config/awww/%1").arg(root.themeSlug) : qsTr("Used for both the display name and the folder")
@@ -191,6 +192,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "themeFolder"
             icon: "folder_open"
             label: qsTr("Theme folder")
             description: root.created ? root.themeDir : qsTr("Available once created")

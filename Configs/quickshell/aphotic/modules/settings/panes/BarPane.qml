@@ -156,6 +156,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
+            searchId: "dockBarRight"
             visible: !Settings.barHorizontal
             icon: "dock_to_right"
             label: qsTr("Dock bar to right edge")
@@ -164,6 +165,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "dockBarBottom"
             visible: Settings.barHorizontal
             icon: "vertical_align_bottom"
             label: qsTr("Dock bar to bottom edge")
@@ -172,6 +174,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "barCompact"
             icon: "density_small"
             label: qsTr("Compact bar")
             checked: Settings.barCompact
@@ -182,6 +185,7 @@ ColumnLayout {
         // dock, full width, entries flowing left-to-right) alongside the
         // left/right-docked, top-to-bottom mode above.
         SettingsToggleRow {
+            searchId: "barHorizontal"
             icon: "swap_horiz"
             label: qsTr("Horizontal orientation")
             checked: Settings.barHorizontal
@@ -189,6 +193,7 @@ ColumnLayout {
         }
 
         SettingsPresetRow {
+            searchId: "barCorners"
             icon: "rounded_corner"
             label: qsTr("Corners")
             presets: [
@@ -234,6 +239,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "dockAutoHide"
                 icon: "visibility_off"
                 label: qsTr("Auto-hide when a window is focused")
                 checked: Settings.dockAutoHide
@@ -241,6 +247,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "dockMagnification"
                 icon: "zoom_in"
                 label: qsTr("Icon magnification on hover")
                 checked: Settings.dockMagnification
@@ -384,6 +391,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "taskbarGrouping"
                 icon: "layers"
                 label: qsTr("Group windows by app")
                 checked: Settings.taskbarGrouping
@@ -407,6 +415,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "minimalDnd"
                 icon: "do_not_disturb_on"
                 label: qsTr("Show Do Not Disturb indicator")
                 checked: Settings.minimalShowDnd
@@ -430,6 +439,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "capsuleMedia"
                 icon: "music_note"
                 label: qsTr("Show media in the capsule")
                 checked: Settings.capsuleMedia
@@ -437,6 +447,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "capsuleExpand"
                 icon: "pan_zoom"
                 label: qsTr("Expand on hover")
                 checked: Settings.capsuleExpandOnHover
@@ -444,6 +455,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "capsuleShapedArt"
                 icon: "shapes"
                 label: qsTr("Animated album artwork shape")
                 checked: Settings.capsuleShapedArt
@@ -451,6 +463,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "capsuleAnimations"
                 icon: "animation"
                 label: qsTr("Animate transitions")
                 checked: Settings.capsuleAnimations

@@ -108,12 +108,14 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 SettingsRow {
+                    searchId: "displayResolution"
                     icon: "aspect_ratio"
                     label: qsTr("Resolution & refresh rate")
                     description: `${card.info.width ?? 0}x${card.info.height ?? 0}@${(card.info.refreshRate ?? 0).toFixed(2)}Hz`
                 }
 
                 SettingsRow {
+                    searchId: "displayScale"
                     icon: "zoom_in"
                     label: qsTr("Scale")
                     description: qsTr("%1x").arg((card.modelData.scale ?? 1).toFixed(2))

@@ -204,6 +204,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "paletteAddAction"
             icon: "add"
             label: qsTr("Add an action")
             description: root.available.length === 0 ? qsTr("Every action is already in the list") : ""
