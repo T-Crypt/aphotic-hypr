@@ -262,11 +262,11 @@ Item {
                 onStatusChanged: {
                     if (paneLoader.status === Loader.Ready) {
                         root.failedLabel = "";
+                        PluginRegistry.markSurfaceFailed(root.activeSurface, false);
                         root._revealPane();
                     } else if (paneLoader.status === Loader.Error) {
                         root.failedLabel = root.activeSurface?.label ?? root.activeId;
-                        if (root.activeId.length > 0 && !PluginRegistry.failedSurfaceIds.includes(root.activeId))
-                            PluginRegistry.failedSurfaceIds = PluginRegistry.failedSurfaceIds.concat([root.activeId]);
+                        PluginRegistry.markSurfaceFailed(root.activeSurface, true);
                     }
                 }
             }

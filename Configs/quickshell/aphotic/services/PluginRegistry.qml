@@ -41,10 +41,13 @@ Singleton {
 
     property var _data: ({})
     property bool _sheltered: false
-    // Workspace surfaces whose component failed to load. They still exist in
-    // the registry, but a failed surface neither counts nor keeps the
-    // workspace keybind alive once we have seen it fail to load.
-    property var failedSurfaceIds: ([])
+    // Workspace surfaces whose component failed to load, keyed
+    // "plugin:surfaceId" because a surface id is only unique within its
+    // plugin. They still exist in the registry, but a failed surface
+    // neither counts nor keeps the workspace keybind alive, and the mark
+    // clears the moment the surface loads so a plugin fixed mid-session
+    // is bound again without a shell restart.
+    property var failedSurfaces: ({})
 
     Component.onCompleted: ProfileEngine.register({
         id: "plugin-surfaces",
@@ -133,6 +136,19 @@ Singleton {
     function surfacesFor(surface: string): var {
         return RegistryCore.surfacesFor(root.surfaceRegistrations, root._installed, surface, root._sheltered)
             .filter(s => root._gateSatisfied(s));
+    }
+
+    // The failed-surface verdict for one registration, and the one writer
+    // of the mark set. Hosts mark a surface failed when its loader gives
+    // up and clear it when the surface loads.
+    function surfaceFailed(surface: var): bool {
+        return RegistryCore.surfaceFailed(surface, root.failedSurfaces);
+    }
+
+    function markSurfaceFailed(surface: var, failed: bool): void {
+        const next = RegistryCore.markFailed(root.failedSurfaces, surface, failed);
+        if (next !== root.failedSurfaces)
+            root.failedSurfaces = next;
     }
 
     function settingsSectionsFor(category: string): var {
