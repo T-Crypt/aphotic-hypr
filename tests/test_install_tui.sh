@@ -217,6 +217,32 @@ run_tui
 grep -q "s3cret-pw-xyz" "$WORKDIR/install.log" && fail "typed input must never be written to install.log"
 grep -q "s3cret-pw-xyz" "$WORKDIR/out" && fail "typed input must never be echoed back"
 
+# --- at the 80-column minimum no line spills, across every screen
+reset_run
+export FAKE_GPU=nvidia
+answers '1\n1\n1\n2,4\n\n2\n1\n1\n1\ny\n\ny\nr\n'
+COLUMNS=80 LINES=24 PATH="$WORKDIR/bin:$PATH" HOME="$WORKDIR/home" XDG_STATE_HOME="$WORKDIR/state" \
+  APHOTIC_BACKUP_ROOT="$WORKDIR/backups" FAKE_GPU=nvidia TUI_NO_SUDO=1 \
+  TUI_INSTALL_SH="$WORKDIR/install-stub.sh" TERM=dumb \
+  bash "$ROOT/install-tui.sh" < "$WORKDIR/answers" > "$WORKDIR/out" 2>&1
+unset FAKE_GPU
+python3 - "$WORKDIR/out" 80 <<'PY' || fail "a screen line exceeded 80 columns at the 80x24 minimum"
+import sys, re, unicodedata
+path, limit = sys.argv[1], int(sys.argv[2])
+ansi = re.compile(r'\x1b\[[0-9;?]*[A-Za-z]')
+def width(s):
+    return sum(2 if unicodedata.east_asian_width(c) in ('W', 'F') else 1 for c in s)
+bad = []
+for i, raw in enumerate(open(path, encoding='utf-8', errors='replace'), 1):
+    line = ansi.sub('', raw.rstrip('\n')).replace('\r', '')
+    if width(line) > limit:
+        bad.append((i, width(line), line))
+if bad:
+    for i, w, line in bad[:8]:
+        print(f"line {i}: width {w}: {line}")
+    sys.exit(1)
+PY
+
 # --- install.sh keeps its flag-driven path: the wrapper changed nothing
 cd "$ROOT"
 output=$(bash install.sh --dry-run --profile full --theme default < /dev/null 2>&1)

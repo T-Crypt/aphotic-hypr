@@ -164,7 +164,7 @@ tui_load_layers() {
 # the name alone.
 tui_load_themes() {
   TUI_THEME_NAMES=() TUI_THEME_DESC=() TUI_THEME_BG=() TUI_THEME_FG=()
-  TUI_THEME_A=() TUI_THEME_B=() TUI_THEME_HAVE=()
+  TUI_THEME_ACCENT=() TUI_THEME_ACCENT2=() TUI_THEME_HAVE=()
   local d name desc anchor cs bg fg ca cb count=0
   for d in "$TUI_ROOT"/Configs/awww/*/; do
     [[ -d "$d" ]] || continue
@@ -185,8 +185,8 @@ tui_load_themes() {
     TUI_THEME_DESC+=("${desc:-$name}")
     TUI_THEME_BG+=("$bg")
     TUI_THEME_FG+=("$fg")
-    TUI_THEME_A+=("$ca")
-    TUI_THEME_B+=("$cb")
+    TUI_THEME_ACCENT+=("$ca")
+    TUI_THEME_ACCENT2+=("$cb")
     if [[ -n "$bg" && -n "$fg" && -n "$ca" ]]; then
       TUI_THEME_HAVE+=(1)
       count=$((count + 1))

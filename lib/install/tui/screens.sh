@@ -15,15 +15,45 @@ tui_screen_begin() {
   printf '\n'
 }
 
+# The step line. It shows the position ("step 3 of 11") and a window of the
+# flow around the current step, eliding the rest, so it fits any width down
+# to the 80-column minimum. A wider terminal shows more neighbours.
 tui_breadcrumb() {
-  local idx="$1" i out=""
-  for i in "${!TUI_FLOW[@]}"; do
-    if (( i == idx )); then out+="${TUI_C_ACCENT}${TUI_BOLD}${TUI_FLOW[$i]}${TUI_R}"
-    elif (( i < idx )); then out+="${TUI_C_MUTED}${TUI_FLOW[$i]}${TUI_R}"
-    else out+="${TUI_C_HAIR}${TUI_FLOW[$i]}${TUI_R}"; fi
-    if (( i < ${#TUI_FLOW[@]} - 1 )); then out+="${TUI_C_HAIR} ${TUI_DOT} ${TUI_R}"; fi
+  local idx="$1"
+  local total="${#TUI_FLOW[@]}"
+  local sep=" ${TUI_DOT} "
+  local prefix="step $((idx + 1)) of $total"
+  local budget=$(( TUI_COLS - 2 - ${#prefix} - ${#sep} ))
+  (( budget < 1 )) && budget=1
+  local lo=$idx hi=$idx best_lo=$idx best_hi=$idx j cand
+  while :; do
+    cand=""
+    (( lo > 0 )) && cand+="${TUI_ELLIPSIS}${sep}"
+    for (( j = lo; j <= hi; j++ )); do
+      (( j > lo )) && cand+="$sep"
+      cand+="${TUI_FLOW[$j]}"
+    done
+    (( hi < total - 1 )) && cand+="${sep}${TUI_ELLIPSIS}"
+    (( ${#cand} <= budget )) || break
+    best_lo=$lo; best_hi=$hi
+    if (( hi < total - 1 )); then hi=$((hi + 1))
+    elif (( lo > 0 )); then lo=$((lo - 1))
+    else break
+    fi
   done
-  printf '  %s\n' "$out"
+
+  local out="  ${TUI_C_MUTED}${prefix}${TUI_R}${TUI_C_HAIR}${sep}${TUI_R}"
+  (( best_lo > 0 )) && out+="${TUI_C_HAIR}${TUI_ELLIPSIS}${sep}${TUI_R}"
+  local name
+  for (( j = best_lo; j <= best_hi; j++ )); do
+    (( j > best_lo )) && out+="${TUI_C_HAIR}${sep}${TUI_R}"
+    name="${TUI_FLOW[$j]}"
+    if (( j == idx )); then out+="${TUI_C_ACCENT}${TUI_BOLD}${name}${TUI_R}"
+    elif (( j < idx )); then out+="${TUI_C_MUTED}${name}${TUI_R}"
+    else out+="${TUI_C_HAIR}${name}${TUI_R}"; fi
+  done
+  (( best_hi < total - 1 )) && out+="${TUI_C_HAIR}${sep}${TUI_ELLIPSIS}${TUI_R}"
+  printf '%s\n' "$out"
 }
 
 tui_flow_index() {
@@ -34,24 +64,28 @@ tui_flow_index() {
   printf '%s' "-1"
 }
 
+tui_fact() {
+  printf '  %s%s%s %s\n' "$TUI_BOLD" "$(printf '%-12s' "$1")" "$TUI_R" "$(tui_fit "$2" "$((TUI_COLS - 16))")"
+}
+
 tui_step_welcome() {
   tui_screen_begin 0
   printf '\n  %sAphotic installer%s\n' "$TUI_BOLD" "$TUI_R"
   tui_hint "A guided path over install.sh. This screen reads only; nothing changes until the Run screen."
   printf '\n'
-  printf '  %-12s %s\n' "System" "$TUI_DISTRO"
-  printf '  %-12s %s\n' "GPU" "$TUI_GPU"
+  tui_fact "System" "$TUI_DISTRO"
+  tui_fact "GPU" "$TUI_GPU"
   if [[ "$TUI_HAS_INSTALL" == "1" ]]; then
-    printf '  %-12s %s\n' "Aphotic" "already installed here"
+    tui_fact "Aphotic" "already installed here"
   else
-    printf '  %-12s %s\n' "Aphotic" "not installed"
+    tui_fact "Aphotic" "not installed"
   fi
   if [[ "$TUI_BACKUPS" != "0" ]]; then
-    printf '  %-12s %s\n' "Backups" "$TUI_BACKUPS saved (latest ${TUI_BACKUP_LATEST:-unknown})"
+    tui_fact "Backups" "$TUI_BACKUPS saved (latest ${TUI_BACKUP_LATEST:-unknown})"
   else
-    printf '  %-12s %s\n' "Backups" "none in $(tui_backup_root)"
+    tui_fact "Backups" "none in $(tui_backup_root)"
   fi
-  printf '  %-12s %s\n' "Channel" "$TUI_CHANNEL_NOW"
+  tui_fact "Channel" "$TUI_CHANNEL_NOW"
   printf '\n'
   tui_hint "Uninstall and repair are separate: this path only installs. Run ./uninstall.sh to remove Aphotic."
   TUI_ITEMS=("Full install" "Config-only sync" "Dry run (preview)" "Quit")
@@ -145,7 +179,7 @@ tui_step_layers() {
   local sel_hits
   sel_hits="$(tui_layers_selected_indices)"
   i=0
-  while IFS= read -r hit; do TUI_SELECTED[$i]="$hit"; i=$((i + 1)); done <<< "$sel_hits"
+  while IFS= read -r hit; do TUI_SELECTED[i]="$hit"; i=$((i + 1)); done <<< "$sel_hits"
   local picks
   local rc=0
   tui_multi "Toggle layers, enter confirms" picks "space toggles, a all, n none." || rc=$?
@@ -180,7 +214,7 @@ tui_step_theme() {
     local label="${TUI_THEME_DESC[$i]}"
     TUI_ITEMS+=("$label")
     if (( TUI_TRUECOLOR )) && [[ "${TUI_THEME_HAVE[$i]}" == "1" ]]; then
-      TUI_DESC+=("$(tui_swatch "${TUI_THEME_BG[$i]}")$(tui_swatch "${TUI_THEME_B[$i]}")$(tui_swatch "${TUI_THEME_A[$i]}")$(tui_swatch "${TUI_THEME_FG[$i]}")")
+      TUI_DESC+=("$(tui_swatch "${TUI_THEME_BG[$i]}")$(tui_swatch "${TUI_THEME_ACCENT2[$i]}")$(tui_swatch "${TUI_THEME_ACCENT[$i]}")$(tui_swatch "${TUI_THEME_FG[$i]}")")
     else
       TUI_DESC+=("${TUI_THEME_NAMES[$i]}")
     fi
@@ -319,11 +353,17 @@ tui_step_review() {
   tui_screen_begin "$idx"
   printf '\n  %sReview%s\n' "$TUI_BOLD" "$TUI_R"
   printf '  %sinstall.sh command line (copyable):%s\n\n' "$TUI_C_MUTED" "$TUI_R"
-  printf '    %s\n\n' "$(tui_cmdline)"
+  tui_wrap "$(tui_cmdline)" 4 "$TUI_C_INK"
+  printf '\n'
   printf '  %sWhat each choice means:%s\n\n' "$TUI_C_MUTED" "$TUI_R"
   TUI_REVIEW_STEPS=()
   local n=0
-  _add() { TUI_REVIEW_STEPS+=("$1"); n=$((n + 1)); printf '    %s%d)%s %s\n' "$TUI_C_INK" "$n" "$TUI_R" "$2"; }
+  _add() {
+    TUI_REVIEW_STEPS+=("$1"); n=$((n + 1))
+    local pfx="    $n) "
+    printf '    %s%s)%s ' "$TUI_C_INK" "$n" "$TUI_R"
+    tui_wrap_prefixed "${#pfx}" "$2"
+  }
   _add channel "Channel: $TUI_CHANNEL"
   if [[ "$TUI_MODE" != "config" ]]; then
     _add profile "Profile: $TUI_PROFILE"
@@ -363,7 +403,8 @@ tui_step_review() {
     esac
   fi
   printf '  r=run, b=back, or a number to edit: '
-  if ! IFS= read -r answer; then return 3; fi
+  if ! IFS= read -r answer; then printf '\n'; return 3; fi
+  printf '\n'
   case "$answer" in
     ""|r|R|run) return 0 ;;
     b|B) return 1 ;;
@@ -381,8 +422,10 @@ tui_step_review() {
 }
 
 # The exact argv install.sh will receive, shown on Review and used by Run.
+# Values come from validated enums and repo filenames, so they carry no
+# spaces and print as-is.
 tui_cmdline() {
   printf './install.sh'
   local a
-  for a in "${TUI_ARGV[@]}"; do printf ' %q' "$a"; done
+  for a in "${TUI_ARGV[@]}"; do printf ' %s' "$a"; done
 }

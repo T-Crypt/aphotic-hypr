@@ -130,14 +130,14 @@ tui_rule() {
 # The wordmark. A hairline opens around the name, the name sits in the gap
 # lit, and a caption carries the product name and version underneath.
 tui_wordmark() {
-  local name="A P H O T I C" inner left right ver
+  local name="A P H O T I C" inner segment left right ver
   ver="${TUI_VERSION:-}"
   inner="${#name}"
-  (( TUI_COLS > inner + 4 )) || { printf '%s\n' "$name"; return 0; }
-  left=$(( (TUI_COLS - inner) / 2 - 2 ))
-  right=$(( TUI_COLS - inner - 4 - left ))
-  (( left < 0 )) && left=0
-  (( right < 0 )) && right=0
+  # Two hairlines, a space, the name, a space, two hairlines.
+  segment=$(( inner + 6 ))
+  (( TUI_COLS > segment )) || { printf '%s\n' "$name"; return 0; }
+  left=$(( (TUI_COLS - segment) / 2 ))
+  right=$(( TUI_COLS - segment - left ))
   printf '%*s' "$left" ''
   printf '%s%s%s' "$TUI_C_HAIR" "$(tui_rep "$TUI_CH_H" 2)" "$TUI_C_LIVE"
   printf '%s%s%s' "$TUI_C_ACCENT" "$TUI_BOLD" " $name "
@@ -159,6 +159,63 @@ tui_center() {
   printf '%*s%s' "$pad" '' "$text"
 }
 
+# Truncate a single line to a width, ending with an ellipsis when it is cut.
+tui_fit() {
+  local s="$1" w="${2:-$TUI_COLS}"
+  (( w < 1 )) && w=1
+  if (( ${#s} > w )); then printf '%s%s' "${s:0:$((w - 1))}" "$TUI_ELLIPSIS"; else printf '%s' "$s"; fi
+}
+
+# Word-wrap text to the terminal width, indenting each line. A word longer
+# than the line is cut with an ellipsis so nothing spills past the width.
+# TUI_WRAP_LINES reports how many lines were written.
+tui_wrap() {
+  local text="$1" indent="${2:-0}" color="${3:-}"
+  local avail=$(( TUI_COLS - indent ))
+  (( avail < 8 )) && avail=8
+  local -a words=()
+  read -ra words <<< "$text"
+  local line="" w lines=0
+  for w in "${words[@]}"; do
+    (( ${#w} > avail )) && w="$(tui_fit "$w" "$avail")"
+    if (( ${#line} == 0 )); then line="$w"
+    elif (( ${#line} + 1 + ${#w} <= avail )); then line+=" $w"
+    else printf '%*s%s%s%s\n' "$indent" '' "$color" "$line" "$TUI_R"; lines=$((lines + 1)); line="$w"
+    fi
+  done
+  if [[ -n "$line" ]]; then
+    printf '%*s%s%s%s\n' "$indent" '' "$color" "$line" "$TUI_R"
+    lines=$((lines + 1))
+  fi
+  TUI_WRAP_LINES=$lines
+  return 0
+}
+
+# Like tui_wrap, but the caller has already printed a prefix that starts the
+# first line, so the first line carries no indent and continuation lines
+# align under the prefix (whose visible width is <indent>).
+tui_wrap_prefixed() {
+  local indent="$1" text="$2" color="${3:-}"
+  local avail=$(( TUI_COLS - indent ))
+  (( avail < 8 )) && avail=8
+  local -a words=()
+  read -ra words <<< "$text"
+  local line="" w first=1
+  for w in "${words[@]}"; do
+    (( ${#w} > avail )) && w="$(tui_fit "$w" "$avail")"
+    if (( ${#line} == 0 )); then line="$w"
+    elif (( ${#line} + 1 + ${#w} <= avail )); then line+=" $w"
+    else
+      if (( first )); then printf '%s%s%s' "$color" "$line" "$TUI_R"; first=0
+      else printf '%*s%s%s%s' "$indent" '' "$color" "$line" "$TUI_R"; fi
+      printf '\n'
+      line="$w"
+    fi
+  done
+  if (( first )); then printf '%s%s%s\n' "$color" "$line" "$TUI_R"
+  else printf '%*s%s%s%s\n' "$indent" '' "$color" "$line" "$TUI_R"; fi
+}
+
 # Screen title with a running step counter, drawn over the hairline.
 tui_title() {
   local step="$1" total="$2" name="$3"
@@ -166,18 +223,24 @@ tui_title() {
 }
 
 tui_note() {
-  local role="$1" text="$2"
+  local role="$1" text="$2" mark="" color=""
   case "$role" in
-    ok) printf '  %s%s %s%s\n' "$TUI_C_OK" "$TUI_OK_GLYPH" "$text" "$TUI_R" ;;
-    warn) printf '  %s%s %s%s\n' "$TUI_C_WARN" "$TUI_WARN_GLYPH" "$text" "$TUI_R" ;;
-    err) printf '  %s%s %s%s\n' "$TUI_C_ERR" "$TUI_ERR_GLYPH" "$text" "$TUI_R" ;;
-    muted) printf '  %s%s%s\n' "$TUI_C_MUTED" "$text" "$TUI_R" ;;
-    *) printf '  %s\n' "$text" ;;
+    ok) mark="$TUI_OK_GLYPH"; color="$TUI_C_OK" ;;
+    warn) mark="$TUI_WARN_GLYPH"; color="$TUI_C_WARN" ;;
+    err) mark="$TUI_ERR_GLYPH"; color="$TUI_C_ERR" ;;
+    muted) color="$TUI_C_MUTED" ;;
+    *) ;;
   esac
+  if [[ -n "$mark" ]]; then
+    printf '  %s%s%s ' "$color" "$mark" "$TUI_R"
+    tui_wrap "$text" 4 "$color"
+  else
+    tui_wrap "$text" 2 "$color"
+  fi
 }
 
 tui_hint() {
-  printf '%s%s%s\n' "$TUI_C_MUTED" "$1" "$TUI_R"
+  tui_wrap "$1" 0 "$TUI_C_MUTED"
 }
 
 tui_glyph_init() {

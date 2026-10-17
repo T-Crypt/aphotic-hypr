@@ -43,7 +43,7 @@ tui_sudo_upfront() {
 }
 
 tui_log_pane() {
-  printf '%s%s%s\n' "$TUI_C_MUTED" "--- $(pwd)/install.log (last $TUI_LOG_LINES lines) ---" "$TUI_R"
+  printf '%s%s%s\n' "$TUI_C_MUTED" "$(tui_fit "--- $(pwd)/install.log (last $TUI_LOG_LINES lines) ---" "$TUI_COLS")" "$TUI_R"
   if [[ -f install.log ]]; then
     tail -n "$TUI_LOG_LINES" install.log
   else
@@ -86,7 +86,8 @@ tui_render_run() {
   tui_clear
   tui_wordmark
   printf '\n'
-  printf '  %sRunning:%s %s\n' "$TUI_BOLD" "$TUI_R" "$(tui_cmdline)"
+  printf '  %sRunning:%s\n' "$TUI_BOLD" "$TUI_R"
+  tui_wrap "$(tui_cmdline)" 4 "$TUI_C_MUTED"
   printf '  %sStage %s/%s%s  %s%ss elapsed%s\n' "$TUI_C_MUTED" "$TUI_STAGE_INDEX" "$TUI_TOTAL_STAGES" "$TUI_R" "$TUI_C_MUTED" "$(tui_elapsed)" "$TUI_R"
   printf '  %s' "$TUI_C_LIVE"
   tui_rule "$lit"
@@ -105,7 +106,8 @@ tui_run_installer() {
     tui_note err "Could not create a pipe for the installer output."
     return 1
   fi
-  printf '  %s%s%s\n' "$TUI_C_MUTED" "Running $(tui_cmdline)" "$TUI_R"
+  printf '  %sRunning%s\n' "$TUI_BOLD" "$TUI_R"
+  tui_wrap "$(tui_cmdline)" 4 "$TUI_C_MUTED"
   "$TUI_INSTALL_SH" "${TUI_ARGV[@]}" > "$TUI_FIFO" 2>&1 &
   TUI_CHILD=$!
   exec 3< "$TUI_FIFO"
@@ -140,7 +142,8 @@ tui_finish() {
   printf '\n'
   if (( status == 0 )); then
     printf '  %sInstall finished.%s\n' "$TUI_C_OK" "$TUI_R"
-    printf '  %sElapsed %ss. Log: %s/install.log%s\n\n' "$TUI_C_MUTED" "$(tui_elapsed)" "$(pwd)" "$TUI_R"
+    tui_wrap "Elapsed $(tui_elapsed)s. Log: $(pwd)/install.log" 2 "$TUI_C_MUTED"
+    printf '\n'
     printf '  %sNext steps%s\n' "$TUI_BOLD" "$TUI_R"
     printf '    %sLog out and back in, or reboot, so the new session starts.%s\n' "$TUI_C_INK" "$TUI_R"
     printf '    %sSession menu: Super+Backspace%s\n' "$TUI_C_MUTED" "$TUI_R"
@@ -155,9 +158,9 @@ tui_finish() {
     fi
   else
     printf '  %sInstall did not finish (exit %s).%s\n' "$TUI_C_ERR" "$status" "$TUI_R"
-    printf '  %sLog: %s/install.log%s\n' "$TUI_C_MUTED" "$(pwd)" "$TUI_R"
-    printf '  %sReport it: %s%s\n' "$TUI_C_MUTED" "${APHOTIC_ISSUES_URL:-https://github.com/T-Crypt/Aphotic-Hypr/issues}" "$TUI_R"
-    printf '  %sinstall.sh prints its own redacted failure report and offers to file it when it can.%s\n' "$TUI_C_MUTED" "$TUI_R"
+    tui_wrap "Log: $(pwd)/install.log" 2 "$TUI_C_MUTED"
+    tui_wrap "Report it: ${APHOTIC_ISSUES_URL:-https://github.com/T-Crypt/Aphotic-Hypr/issues}" 2 "$TUI_C_MUTED"
+    tui_wrap "install.sh prints its own redacted failure report and offers to file it when it can." 2 "$TUI_C_MUTED"
   fi
   printf '\n'
   return "$status"

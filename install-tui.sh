@@ -28,14 +28,19 @@ TUI_ARGV=()
 
 # UTF-8 terminals get the U+2500 hairline; others get a hyphen.
 case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in
-  *[Uu][Tt][Ff]-8*|*[Uu][Tt][Ff]8*) TUI_CHAR_H="─" ;;
-  *) TUI_CHAR_H="-" ;;
+  *[Uu][Tt][Ff]-8*|*[Uu][Tt][Ff]8*) TUI_CHAR_H="─"; TUI_ELLIPSIS="…" ;;
+  *) TUI_CHAR_H="-"; TUI_ELLIPSIS="..." ;;
 esac
 
+# shellcheck source=lib/install/tui/theme.sh
 source "$TUI_ROOT/lib/install/tui/theme.sh"
+# shellcheck source=lib/install/tui/data.sh
 source "$TUI_ROOT/lib/install/tui/data.sh"
+# shellcheck source=lib/install/tui/menu.sh
 source "$TUI_ROOT/lib/install/tui/menu.sh"
+# shellcheck source=lib/install/tui/screens.sh
 source "$TUI_ROOT/lib/install/tui/screens.sh"
+# shellcheck source=lib/install/tui/run.sh
 source "$TUI_ROOT/lib/install/tui/run.sh"
 
 tui_cleanup() {

@@ -58,24 +58,31 @@ tui_menu_confirm_quit() {
 # Draw the option list. Sets TUI_DRAWN to the number of lines printed so the
 # interactive loop can move back up and redraw in place.
 tui_pick_draw() {
-  local title="$1" sel="$2" i
+  local title="$1" sel="$2" i num item drawn=2
   printf '\n  %s%s%s\n' "$TUI_BOLD" "$title" "$TUI_R"
   for i in "${!TUI_ITEMS[@]}"; do
+    num=$((i + 1))
+    item="$(tui_fit "${TUI_ITEMS[$i]}" "$((TUI_COLS - 8))")"
     if [[ "${TUI_DISABLED[$i]:-0}" == "1" ]]; then
-      printf '  %s%s%d) %s%s\n' "$TUI_C_MUTED" "$TUI_DIM" "$((i + 1))" "${TUI_ITEMS[$i]}" "$TUI_R"
+      printf '  %s%s%d) %s%s\n' "$TUI_C_MUTED" "$TUI_DIM" "$num" "$item" "$TUI_R"
     elif (( i == sel )); then
-      printf '  %s%s%s %d) %s%s\n' "$TUI_C_LIVE" "$TUI_BOLD" "$TUI_ACTIVE_GLYPH" "$((i + 1))" "${TUI_ITEMS[$i]}" "$TUI_R"
+      printf '  %s%s%s %d) %s%s\n' "$TUI_C_LIVE" "$TUI_BOLD" "$TUI_ACTIVE_GLYPH" "$num" "$item" "$TUI_R"
     else
-      printf '    %s%d) %s%s\n' "$TUI_C_INK" "$((i + 1))" "${TUI_ITEMS[$i]}" "$TUI_R"
+      printf '    %s%d) %s%s\n' "$TUI_C_INK" "$num" "$item" "$TUI_R"
     fi
-    if [[ -n "${TUI_DESC[$i]:-}" ]]; then
-      printf '       %s%s%s\n' "$TUI_C_MUTED" "${TUI_DESC[$i]}" "$TUI_R"
+    drawn=$((drawn + 1))
+    local desc="${TUI_DESC[$i]:-}"
+    if [[ -n "$desc" ]]; then
+      if [[ "$desc" == *$'\e'* ]]; then
+        printf '       %s%s%s\n' "$TUI_C_MUTED" "$desc" "$TUI_R"
+        drawn=$((drawn + 1))
+      else
+        tui_wrap "$desc" 7 "$TUI_C_MUTED"
+        drawn=$((drawn + TUI_WRAP_LINES))
+      fi
     fi
   done
-  TUI_DRAWN=$(( ${#TUI_ITEMS[@]} + 2 ))
-  local desc_count=0
-  for i in "${!TUI_DESC[@]}"; do [[ -n "${TUI_DESC[$i]:-}" ]] && desc_count=$((desc_count + 1)); done
-  TUI_DRAWN=$(( TUI_DRAWN + desc_count ))
+  TUI_DRAWN=$drawn
 }
 
 # tui_pick <title> <default-index> <var> [hint]
@@ -90,13 +97,14 @@ tui_pick() {
   if (( ! TUI_INTERACTIVE )); then
     printf '\n  %s\n' "$title"
     for i in "${!TUI_ITEMS[@]}"; do
-      printf '    %d) %s' "$((i + 1))" "${TUI_ITEMS[$i]}"
-      [[ -n "${TUI_DESC[$i]:-}" ]] && printf ' -- %s' "${TUI_DESC[$i]}"
-      [[ "${TUI_DISABLED[$i]:-0}" == "1" ]] && printf ' (unavailable)'
-      printf '\n'
+      local tag=""
+      [[ "${TUI_DISABLED[$i]:-0}" == "1" ]] && tag=" (unavailable)"
+      printf '    %d) %s%s\n' "$((i + 1))" "$(tui_fit "${TUI_ITEMS[$i]}" "$((TUI_COLS - 8))")" "$tag"
+      [[ -n "${TUI_DESC[$i]:-}" ]] && tui_wrap "${TUI_DESC[$i]}" 4 "$TUI_C_MUTED"
     done
     printf '  Choose 1-%d [default %d]: ' "$count" "$((sel + 1))"
-    if ! IFS= read -r answer; then return 3; fi
+    if ! IFS= read -r answer; then printf '\n'; return 3; fi
+    printf '\n'
     case "$answer" in
       "") ;;
       q|Q) return 3 ;;
@@ -147,26 +155,33 @@ tui_pick() {
 }
 
 tui_multi_draw() {
-  local title="$1" sel="$2" i
+  local title="$1" sel="$2" i num item drawn=2
   printf '\n  %s%s%s\n' "$TUI_BOLD" "$title" "$TUI_R"
   for i in "${!TUI_ITEMS[@]}"; do
+    num=$((i + 1))
+    item="$(tui_fit "${TUI_ITEMS[$i]}" "$((TUI_COLS - 10))")"
     local mark="${TUI_OFF_GLYPH}"
     [[ "${TUI_SELECTED[$i]:-0}" == "1" ]] && mark="${TUI_ON_GLYPH}"
     if [[ "${TUI_DISABLED[$i]:-0}" == "1" ]]; then
-      printf '  %s%s %s %d) %s%s\n' "$TUI_C_MUTED" "$TUI_DIM" "$mark" "$((i + 1))" "${TUI_ITEMS[$i]}" "$TUI_R"
+      printf '  %s%s %s %d) %s%s\n' "$TUI_C_MUTED" "$TUI_DIM" "$mark" "$num" "$item" "$TUI_R"
     elif (( i == sel )); then
-      printf '  %s%s%s %s %d) %s%s\n' "$TUI_C_LIVE" "$TUI_BOLD" "$TUI_ACTIVE_GLYPH" "$mark" "$((i + 1))" "${TUI_ITEMS[$i]}" "$TUI_R"
+      printf '  %s%s%s %s %d) %s%s\n' "$TUI_C_LIVE" "$TUI_BOLD" "$TUI_ACTIVE_GLYPH" "$mark" "$num" "$item" "$TUI_R"
     else
-      printf '    %s%s %d) %s%s\n' "$TUI_C_INK" "$mark" "$((i + 1))" "${TUI_ITEMS[$i]}" "$TUI_R"
+      printf '    %s%s %d) %s%s\n' "$TUI_C_INK" "$mark" "$num" "$item" "$TUI_R"
     fi
-    if [[ -n "${TUI_DESC[$i]:-}" ]]; then
-      printf '       %s%s%s\n' "$TUI_C_MUTED" "${TUI_DESC[$i]}" "$TUI_R"
+    drawn=$((drawn + 1))
+    local desc="${TUI_DESC[$i]:-}"
+    if [[ -n "$desc" ]]; then
+      if [[ "$desc" == *$'\e'* ]]; then
+        printf '       %s%s%s\n' "$TUI_C_MUTED" "$desc" "$TUI_R"
+        drawn=$((drawn + 1))
+      else
+        tui_wrap "$desc" 7 "$TUI_C_MUTED"
+        drawn=$((drawn + TUI_WRAP_LINES))
+      fi
     fi
   done
-  TUI_DRAWN=$(( ${#TUI_ITEMS[@]} + 2 ))
-  local d=0
-  for i in "${!TUI_DESC[@]}"; do [[ -n "${TUI_DESC[$i]:-}" ]] && d=$((d + 1)); done
-  TUI_DRAWN=$(( TUI_DRAWN + d ))
+  TUI_DRAWN=$drawn
 }
 
 # tui_multi <title> <var> [hint]
@@ -180,29 +195,29 @@ tui_multi() {
   if (( ! TUI_INTERACTIVE )); then
     printf '\n  %s\n' "$title"
     for i in "${!TUI_ITEMS[@]}"; do
-      local mark="${TUI_OFF_GLYPH}"
+      local mark="${TUI_OFF_GLYPH}" tag=""
       [[ "${TUI_SELECTED[$i]:-0}" == "1" ]] && mark="${TUI_ON_GLYPH}"
-      printf '    %s %d) %s' "$mark" "$((i + 1))" "${TUI_ITEMS[$i]}"
-      [[ -n "${TUI_DESC[$i]:-}" ]] && printf ' -- %s' "${TUI_DESC[$i]}"
-      [[ "${TUI_DISABLED[$i]:-0}" == "1" ]] && printf ' (unavailable)'
-      printf '\n'
+      [[ "${TUI_DISABLED[$i]:-0}" == "1" ]] && tag=" (unavailable)"
+      printf '    %s %d) %s%s\n' "$mark" "$((i + 1))" "$(tui_fit "${TUI_ITEMS[$i]}" "$((TUI_COLS - 10))")" "$tag"
+      [[ -n "${TUI_DESC[$i]:-}" ]] && tui_wrap "${TUI_DESC[$i]}" 4 "$TUI_C_MUTED"
     done
     printf '  Toggle numbers (comma separated), "all", "none", or blank to keep: '
-    if ! IFS= read -r answer; then return 3; fi
+    if ! IFS= read -r answer; then printf '\n'; return 3; fi
+    printf '\n'
     case "$answer" in
       q|Q) return 3 ;;
       b|B) return 1 ;;
       "") ;;
-      all|ALL|a|A) for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[$i]=1; done ;;
-      none|NONE|n|N) for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[$i]=0; done ;;
+      all|ALL|a|A) for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[i]=1; done ;;
+      none|NONE|n|N) for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[i]=0; done ;;
       *)
-        for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[$i]=0; done
+        for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[i]=0; done
         local -a chosen=()
         IFS=', ' read -ra chosen <<< "$answer"
         local p
         for p in "${chosen[@]}"; do
           if [[ "$p" =~ ^[0-9]+$ ]] && (( p >= 1 && p <= count )); then
-            TUI_SELECTED[$((p - 1))]=1
+            TUI_SELECTED[p - 1]=1
           fi
         done
         ;;
@@ -225,17 +240,17 @@ tui_multi() {
     case "$TUI_KEY" in
       up) (( sel > 0 )) && sel=$((sel - 1)) || true ;;
       down) (( sel < count - 1 )) && sel=$((sel + 1)) || true ;;
-      space) if [[ "${TUI_DISABLED[$sel]:-0}" == "1" ]]; then :; elif [[ "${TUI_SELECTED[$sel]:-0}" == "1" ]]; then TUI_SELECTED[$sel]=0; else TUI_SELECTED[$sel]=1; fi ;;
+      space) if [[ "${TUI_DISABLED[$sel]:-0}" == "1" ]]; then :; elif [[ "${TUI_SELECTED[$sel]:-0}" == "1" ]]; then TUI_SELECTED[sel]=0; else TUI_SELECTED[sel]=1; fi ;;
       enter) printf '\n'; tui_multi_result "$var"; return 0 ;;
       back) printf '\n'; return 1 ;;
       quit) if tui_menu_confirm_quit; then return 3; fi ;;
       eof) printf '\n'; return 3 ;;
-      char:a|char:A) for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[$i]=1; done ;;
-      char:n|char:N) for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[$i]=0; done ;;
+      char:a|char:A) for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[i]=1; done ;;
+      char:n|char:N) for i in "${!TUI_ITEMS[@]}"; do TUI_SELECTED[i]=0; done ;;
       num:*)
         local n="${TUI_KEY#num:}"
         if (( n >= 1 && n <= count )); then
-          if [[ "${TUI_SELECTED[$((n - 1))]:-0}" == "1" ]]; then TUI_SELECTED[$((n - 1))]=0; else TUI_SELECTED[$((n - 1))]=1; fi
+          if [[ "${TUI_SELECTED[$((n - 1))]:-0}" == "1" ]]; then TUI_SELECTED[n - 1]=0; else TUI_SELECTED[n - 1]=1; fi
         fi
         ;;
       *) continue ;;
@@ -263,7 +278,8 @@ tui_yesno() {
   [[ "$default" == "y" ]] && hint="Y/n" || hint="y/N"
   if (( ! TUI_INTERACTIVE )); then
     printf '\n  %s [%s]: ' "$title" "$hint"
-    if ! IFS= read -r answer; then return 3; fi
+    if ! IFS= read -r answer; then printf '\n'; return 3; fi
+    printf '\n'
     case "$answer" in
       q|Q) return 3 ;;
       b|B) return 1 ;;
@@ -293,7 +309,8 @@ tui_input() {
   local title="$1" default="$2" var="$3" hint="${4:-}" answer
   if (( ! TUI_INTERACTIVE )); then
     printf '\n  %s [%s]%s: ' "$title" "$default" "${hint:+ ($hint)}"
-    if ! IFS= read -r answer; then return 3; fi
+    if ! IFS= read -r answer; then printf '\n'; return 3; fi
+    printf '\n'
     case "$answer" in q|Q) return 3 ;; b|B) return 1 ;; esac
     answer="${answer:-$default}"
   else
