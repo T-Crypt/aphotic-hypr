@@ -9,43 +9,93 @@ import qs.modules.dashboard
 
 // Concept QJX858H: the dashboard as one signal spine.
 //
-// The machine lives above the line as terrain drawn from live service
-// values. The day lives below it as leaves hanging off the spine, each
-// one marked on the spine by a 2px accent segment when it has something
-// alive in it. Darkness is the resting state: the terrain drains to the
-// idle hairline and nothing moves when nothing changes.
+// The machine lives above the line as terrain. The day lives below it in
+// equal slots, and a 2px accent segment sits on the spine over the middle
+// of every slot that has something alive in it. The surface carries its
+// own darkness, so a bright wallpaper never outshouts the data.
 //
-// Prototype only. Not wired into the live dashboard; renders straight
-// from the real services and mounts no sampler of its own.
+// Prototype only. Not wired into the live dashboard.
 Item {
     id: root
 
     readonly property real margin: Tokens.padding.extraExtraLarge
     readonly property bool portrait: stage.height > stage.width
 
-    // The open state the hosting window binds to its dashboard flag.
     property bool shown: true
 
-    // Watch registrations live with this surface: closing the dashboard
-    // unmounts them, the services stop polling, and the terrain goes
-    // quiet with nothing left to draw.
+    // Closing the dashboard unmounts these, the services stop polling and
+    // the terrain goes quiet.
     SystemUsageWatch {}
     NetworkUsageWatch {}
 
     readonly property bool mediaAlive: Players.active !== null
     readonly property bool focusAlive: Pomodoro.running
     readonly property bool weatherAlive: Weather.hasData
-    readonly property bool controlsAlive: Nmcli.wifiEnabled
-        || (Bluetooth.defaultAdapter?.enabled ?? false)
-        || DoNotDisturb.enabled
+    readonly property bool controlsAlive: Nmcli.wifiEnabled || (Bluetooth.defaultAdapter?.enabled ?? false) || DoNotDisturb.enabled
 
-    // The accent segment under a leaf marks it only while it is alive;
-    // a resting leaf leaves its stretch of spine dark.
     readonly property var leaves: [mediaLeaf, focusLeaf, weatherLeaf, controlsLeaf]
-    readonly property var leafAlive: [root.mediaAlive, root.focusAlive, root.weatherAlive, root.controlsAlive]
+    readonly property var shownLeaves: leaves.filter(l => l.present)
 
-    // The probe seeds the terrain's trails; the live surface never does.
     property alias terrain: terrain
+
+    function rate(bytes: real): string {
+        if (bytes >= 1024 * 1024)
+            return qsTr("%1 MiB/s").arg((bytes / 1048576).toFixed(1));
+        return qsTr("%1 KiB/s").arg(Math.round(bytes / 1024));
+    }
+
+    function gib(kib: real): string {
+        return (kib / 1048576).toFixed(1);
+    }
+
+    component Leaf: Item {
+        id: leaf
+
+        required property string label
+        required property bool alive
+        property bool present: true
+        default property alias content: body.data
+
+        readonly property int slot: root.shownLeaves.indexOf(leaf)
+        readonly property real slotWidth: root.portrait ? dayZone.width : dayZone.width / Math.max(1, root.shownLeaves.length)
+
+        visible: leaf.present
+        x: root.portrait ? 0 : leaf.slot * leaf.slotWidth
+        y: root.portrait ? root.shownLeaves.slice(0, leaf.slot).reduce((sum, l) => sum + l.implicitHeight + Tokens.spacing.extraLarge, 0) : 0
+        width: leaf.slotWidth
+        implicitHeight: title.implicitHeight + Tokens.spacing.medium + body.childrenRect.height
+
+        // Portrait stacks the leaves, so the spine cannot point at them;
+        // each one carries its own accent instead.
+        Rectangle {
+            visible: root.portrait
+            x: -Tokens.spacing.medium
+            width: 2
+            height: leaf.implicitHeight
+            radius: Tokens.rounding.full
+            color: Colours.signalStyle.accentLine
+            opacity: leaf.alive ? 1 : 0
+        }
+
+        StyledText {
+            id: title
+
+            anchors.horizontalCenter: root.portrait ? undefined : parent.horizontalCenter
+            text: leaf.label.toUpperCase()
+            color: leaf.alive ? Colours.ink : Colours.inkMuted
+            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.6).build()
+        }
+
+        Item {
+            id: body
+
+            anchors.top: title.bottom
+            anchors.topMargin: Tokens.spacing.medium
+            x: root.portrait ? 0 : (leaf.width - body.childrenRect.width) / 2
+            width: body.childrenRect.width
+            height: body.childrenRect.height
+        }
+    }
 
     SurfaceReveal {
         id: reveal
@@ -59,26 +109,45 @@ Item {
 
             anchors.fill: parent
 
-            // The clock resolves out of noise through SignalText. The
-            // low-rate shimmer clock belongs to this surface: it runs
-            // only while the dashboard is open, and never under reduced
-            // motion, where the text holds resolved and still.
+            // The surface's own darkness, deepest behind the terrain and
+            // the leaves, lighter at the floor so the wallpaper still
+            // reads at the edge.
+            Rectangle {
+                anchors.fill: parent
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0
+                        color: Qt.alpha(Colours.shadow, 0.66)
+                    }
+                    GradientStop {
+                        position: 0.62
+                        color: Qt.alpha(Colours.shadow, 0.66)
+                    }
+                    GradientStop {
+                        position: 1
+                        color: Qt.alpha(Colours.shadow, 0.4)
+                    }
+                }
+            }
+
             SignalText {
                 id: clock
 
                 x: root.margin
                 y: root.margin
-                text: Time.timeStr
+                text: {
+                    Time.minuteStr;
+                    return Time.format(Settings.twelveHourClock ? "h:mm AP" : "HH:mm");
+                }
+                family: Tokens.font.headline.large.family
                 ink: Colours.ink
                 glow: Colours.signalStyle.accentLine
-                pixelSize: root.portrait ? 96 : 132
+                pixelSize: root.portrait ? 88 : Math.round(Math.max(72, Math.min(128, stage.height * 0.1)))
                 weight: Font.DemiBold
-                letterSpacing: 8
+                letterSpacing: 2
                 property real progress: 0
 
                 Component.onCompleted: {
-                    // Reduced motion never resolves from noise: the time
-                    // is shown settled from the first frame.
                     if (Motion.reducedMotion)
                         clock.progress = 1;
                 }
@@ -86,24 +155,23 @@ Item {
                 Connections {
                     target: Time
 
-                    // Every minute the clock re-resolves out of noise:
-                    // one visible beat of light, then rest again.
                     function onMinuteStrChanged(): void {
-                        clock.progress = 0;
+                        if (!Motion.reducedMotion)
+                            clock.progress = 0;
                     }
                 }
 
+                // Runs for about a second after each minute change, then
+                // stops until the next one.
                 Timer {
                     id: shimmerClock
 
                     interval: 84
-
-                    running: !Motion.reducedMotion
+                    running: !Motion.reducedMotion && clock.progress < 1
                     repeat: true
                     onTriggered: {
                         clock.time = (clock.time + 0.25) % 3600;
-                        if (clock.progress < 1)
-                            clock.progress = Math.min(1, clock.progress + 0.08);
+                        clock.progress = Math.min(1, clock.progress + 0.08);
                     }
                 }
 
@@ -120,51 +188,56 @@ Item {
                 anchors.left: parent.left
                 anchors.leftMargin: root.margin
                 anchors.top: clock.bottom
-                anchors.topMargin: Tokens.spacing.small
+                anchors.topMargin: Tokens.spacing.extraSmall
                 text: Time.format("dddd, MMMM d")
-                color: Colours.inkMuted
-                font: Tokens.font.label.builders.medium.weight(Font.Medium).letterSpacing(1.4).build()
+                color: Colours.ink
+                opacity: 0.72
+                font: Tokens.font.title.builders.small.weight(Font.Medium).letterSpacing(0.6).build()
             }
 
-            PulseTerrain {
-                id: terrain
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: dateLine.bottom
-                anchors.topMargin: Tokens.spacing.extraLarge
-                height: root.portrait
-                    ? Math.max(120, Math.min(220, stage.height * 0.18))
-                    : Math.max(140, Math.min(300, stage.height * 0.3))
-            }
-
-            Row {
+            Grid {
                 id: readouts
 
-                anchors.right: parent.right
+                columns: root.portrait ? 2 : 4
+                columnSpacing: Tokens.spacing.extraLarge * 1.5
+                rowSpacing: Tokens.spacing.large
+                anchors.right: root.portrait ? undefined : parent.right
                 anchors.rightMargin: root.margin
-                anchors.top: terrain.top
-                anchors.topMargin: Tokens.spacing.large
-                spacing: Tokens.spacing.extraLarge
+                anchors.left: root.portrait ? parent.left : undefined
+                anchors.leftMargin: root.margin
+                y: root.portrait ? dateLine.y + dateLine.height + Tokens.spacing.extraLarge : dateLine.y + dateLine.height - readouts.height
 
                 component Readout: Column {
                     id: readout
 
                     required property string value
+                    property string total: ""
                     required property string label
 
                     spacing: Tokens.spacing.extraSmall
 
-                    StyledText {
-                        text: readout.value
-                        color: Colours.ink
-                        font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
+                    Row {
+                        spacing: Tokens.spacing.extraSmall
+
+                        StyledText {
+                            text: readout.value
+                            color: Colours.ink
+                            font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
+                        }
+
+                        StyledText {
+                            anchors.baseline: parent.children[0].baseline
+                            visible: readout.total.length > 0
+                            text: readout.total
+                            color: Colours.inkMuted
+                            font: Tokens.font.body.builders.small.weight(Font.Medium).build()
+                        }
                     }
 
                     StyledText {
                         text: readout.label.toUpperCase()
                         color: Colours.inkMuted
-                        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.6).build()
                     }
                 }
 
@@ -179,29 +252,42 @@ Item {
                 }
 
                 Readout {
-                    value: `${Math.round(SystemUsage.memPerc * 100)}%`
+                    value: root.gib(SystemUsage.memUsed)
+                    total: qsTr("/ %1 GiB").arg(root.gib(SystemUsage.memTotal))
                     label: qsTr("Memory")
                 }
 
                 Readout {
-                    value: `${Math.round(NetworkUsage.downloadSpeed / 1024)} KiB/s`
+                    value: root.rate(NetworkUsage.downloadSpeed)
                     label: qsTr("Network")
                 }
             }
 
-            // The spine. A 1px idle hairline carrying one 2px accent
-            // segment under every leaf that is alive. This is
-            // SignalLine's active-segment vocabulary grown past the one
-            // active segment the bar's line can express; if the concept
-            // ships, the multi-segment form generalises back into
-            // SignalLine rather than living here.
+            PulseTerrain {
+                id: terrain
+
+                anchors.left: parent.left
+                anchors.right: parent.right
+                y: (root.portrait ? readouts.y + readouts.height : dateLine.y + dateLine.height) + Tokens.spacing.extraLarge * 1.5
+                // Landscape terrain takes whatever height the leaves leave over, so a
+                // short screen keeps every leaf on screen and a tall one fills.
+                height: {
+                    if (root.portrait)
+                        return Math.max(110, Math.min(180, stage.height * 0.14));
+                    const below = 3 + Tokens.spacing.extraExtraLarge + Math.max(dayZone.height, calendarLeaf.height) + root.margin * 2;
+                    return Math.max(90, Math.min(300, stage.height - terrain.y - below));
+                }
+            }
+
+            // The spine: a 1px hairline with one 2px accent over the middle
+            // of every live slot. If the concept ships, the multi-segment
+            // form belongs in SignalLine.
             Item {
                 id: spine
 
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: terrain.bottom
-                anchors.topMargin: Tokens.spacing.extraLarge
                 height: 3
 
                 Rectangle {
@@ -213,26 +299,20 @@ Item {
                 }
 
                 Repeater {
-                    model: root.leaves
+                    model: root.portrait ? [] : root.shownLeaves
 
                     Rectangle {
                         id: segment
 
                         required property Item modelData
-                        readonly property int index: root.leaves.indexOf(modelData)
-                        readonly property bool alive: root.leafAlive[segment.index] ?? false
-                        // Leaves sit under the spine in both orientations,
-                        // so the segment tracks whichever container holds
-                        // the leaf right now.
-                        readonly property Item container: root.portrait ? dayColumn : dayRow
 
-                        x: segment.container.x + modelData.x + modelData.width / 2 - width / 2
-                        y: 1
-                        width: Tokens.spacing.large
+                        x: dayZone.x + segment.modelData.x + segment.modelData.width / 2 - width / 2
+                        y: 0
+                        width: Tokens.spacing.extraLarge * 2
                         height: 2
                         radius: Tokens.rounding.full
                         color: Colours.signalStyle.accentLine
-                        opacity: segment.alive ? 1 : 0
+                        opacity: segment.modelData.alive ? 1 : 0
                         visible: segment.opacity > 0
 
                         Behavior on opacity {
@@ -244,78 +324,72 @@ Item {
                 }
             }
 
-            // Landscape: the day's leaves spread across the full width
-            // under the spine, so the row reads as one line of hanging
-            // cards rather than a cluster in one corner.
-            Row {
-                id: dayRow
+            // Three zones in landscape: the leaves share the width left of
+            // the calendar in equal slots; the calendar keeps the right.
+            Item {
+                id: dayZone
 
                 x: root.margin
                 anchors.top: spine.bottom
                 anchors.topMargin: Tokens.spacing.extraExtraLarge
-                visible: !root.portrait
-                spacing: {
-                    const used = root.leaves.reduce((sum, leaf) => sum + leaf.implicitWidth, 0);
-                    const room = calendarLeaf.x - dayRow.x - used;
-                    return Math.max(Tokens.spacing.extraLarge, room / (root.leaves.length + 1));
-                }
+                width: root.portrait ? stage.width * 0.48 - root.margin : calendarLeaf.x - root.margin - Tokens.spacing.extraExtraLarge
+                height: childrenRect.height
 
-                DashMedia {
+                Leaf {
                     id: mediaLeaf
+
+                    label: qsTr("Now playing")
+                    alive: root.mediaAlive
+
+                    DashMedia {}
                 }
 
-                DashPomodoro {
+                Leaf {
                     id: focusLeaf
+
+                    label: qsTr("Timer")
+                    alive: root.focusAlive
+
+                    DashPomodoro {}
                 }
 
-                DashWeather {
+                Leaf {
                     id: weatherLeaf
 
-                    visible: Weather.hasData
+                    label: qsTr("Weather")
+                    alive: root.weatherAlive
+                    present: Weather.hasData
+
+                    DashWeather {}
                 }
 
-                DashQuickToggles {
+                Leaf {
                     id: controlsLeaf
+
+                    label: qsTr("Controls")
+                    alive: root.controlsAlive
+
+                    DashQuickToggles {}
                 }
             }
 
-            // Portrait: the same leaves stack in a column at the left
-            // edge while the calendar keeps the right side.
             Column {
-                id: dayColumn
-
-                x: root.margin
-                anchors.top: spine.bottom
-                anchors.topMargin: Tokens.spacing.extraExtraLarge
-                visible: root.portrait
-                spacing: Tokens.spacing.extraLarge
-
-                DashMedia {
-                    id: mediaLeafP
-                }
-
-                DashPomodoro {
-                    id: focusLeafP
-                }
-
-                DashWeather {
-                    id: weatherLeafP
-
-                    visible: Weather.hasData
-                }
-
-                DashQuickToggles {
-                    id: controlsLeafP
-                }
-            }
-
-            DashCalendar {
                 id: calendarLeaf
 
                 anchors.right: parent.right
                 anchors.rightMargin: root.margin
                 anchors.top: spine.bottom
                 anchors.topMargin: Tokens.spacing.extraExtraLarge
+                spacing: Tokens.spacing.medium
+
+                StyledText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: qsTr("Calendar").toUpperCase()
+                    color: Colours.ink
+                    font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.6).build()
+                }
+
+                DashCalendar {}
             }
 
             Row {

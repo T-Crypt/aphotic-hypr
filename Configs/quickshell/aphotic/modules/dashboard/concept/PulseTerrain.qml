@@ -4,18 +4,20 @@ import QtQuick
 import qs.config
 import qs.services
 
-// The machine's terrain: CPU history as a filled ridge, memory as a fill
-// rising from the floor, network as a thin bright line scaled to the
-// session's own peak.
+// The machine's terrain: CPU history as a ridge and network as a low band
+// along the floor. Memory stays a readout; as a line it read as a stray
+// rule across the screen. The newest sample sits at the
+// right edge and history runs off to the left.
 //
-// The trail exists only while a surface above this mounts the watches:
-// samples land when the services themselves change, so this canvas keeps
-// no sampler and repaints only when a sample or a size lands. Closed
-// dashboard means no samples, no paints, no cost.
+// Samples land only while a surface above mounts the watches, so this
+// canvas keeps no sampler and repaints only when a sample or a size lands.
 Canvas {
     id: root
 
     readonly property int capacity: 48
+    // Below this rate the network band stays flat, so idle chatter does
+    // not draw a hill.
+    readonly property real netFloor: 64 * 1024
     property var cpuTrail: []
     property var netTrail: []
 
@@ -23,11 +25,6 @@ Canvas {
     onNetTrailChanged: root.requestPaint()
     onWidthChanged: root.requestPaint()
     onHeightChanged: root.requestPaint()
-    onMemPercChanged: root.requestPaint()
-
-    // Memory is instantaneous, not a trail: one fill line bound to the
-    // service value.
-    readonly property real memPerc: SystemUsage.memPerc
 
     function pushCpu(value: real): void {
         const next = root.cpuTrail.concat([Math.max(0, Math.min(1, value))]);
@@ -39,9 +36,8 @@ Canvas {
         root.netTrail = next.length > root.capacity ? next.slice(next.length - root.capacity) : next;
     }
 
-    // The probe seeds the trails with a waveform so a render does not
-    // need minutes of polling first. Nothing in the live surface calls
-    // this; the real trails fill from the services alone.
+    // The probe seeds both trails so a render does not need minutes of
+    // polling first. The live surface never calls this.
     function seed(cpu: var, net: var): void {
         root.cpuTrail = cpu;
         root.netTrail = net;
@@ -63,62 +59,61 @@ Canvas {
         }
     }
 
+    function _xAt(i: int, count: int): real {
+        const step = root.width / (root.capacity - 1);
+        return root.width - (count - 1 - i) * step;
+    }
+
     onPaint: {
         const ctx = root.getContext("2d");
-        ctx.clearRect(0, 0, root.width, root.height);
+        const h = root.height;
+        ctx.clearRect(0, 0, root.width, h);
 
-        const memH = root.height * root.memPerc;
-        if (memH > 0) {
-            ctx.fillStyle = Qt.alpha(Colours.signalTertiary, 0.16);
-            ctx.fillRect(0, root.height - memH, root.width, memH);
-        }
-
-        const crest = 0.9;
-        const count = root.cpuTrail.length;
-        if (count > 0) {
-            const step = root.width / root.capacity;
+        const net = root.netTrail;
+        if (net.length > 1) {
+            let peak = root.netFloor;
+            for (let i = 0; i < net.length; i++)
+                peak = Math.max(peak, net[i]);
+            const bandH = h * 0.28;
 
             ctx.beginPath();
-            ctx.moveTo(0, root.height);
-            for (let i = 0; i < count; i++)
-                ctx.lineTo(i * step, root.height - root.cpuTrail[i] * root.height * crest);
-            ctx.lineTo((count - 1) * step, root.height);
+            ctx.moveTo(root._xAt(0, net.length), h);
+            for (let i = 0; i < net.length; i++)
+                ctx.lineTo(root._xAt(i, net.length), h - (net[i] / peak) * bandH);
+            ctx.lineTo(root.width, h);
             ctx.closePath();
-            ctx.fillStyle = Qt.alpha(Colours.signalStyle.accentLine, 0.28);
+            ctx.fillStyle = Qt.alpha(Colours.signalSecondary, 0.09);
+            ctx.fill();
+        }
+
+        const cpu = root.cpuTrail;
+        if (cpu.length > 1) {
+            const crest = 0.92;
+            const yAt = i => h - cpu[i] * h * crest;
+
+            const fill = ctx.createLinearGradient(0, 0, 0, h);
+            fill.addColorStop(0, Qt.alpha(Colours.signalStyle.accentLine, 0.26));
+            fill.addColorStop(1, Qt.alpha(Colours.signalStyle.accentLine, 0));
+
+            ctx.beginPath();
+            ctx.moveTo(root._xAt(0, cpu.length), h);
+            for (let i = 0; i < cpu.length; i++)
+                ctx.lineTo(root._xAt(i, cpu.length), yAt(i));
+            ctx.lineTo(root.width, h);
+            ctx.closePath();
+            ctx.fillStyle = fill;
             ctx.fill();
 
             ctx.beginPath();
-            for (let i = 0; i < count; i++) {
-                const x = i * step;
-                const y = root.height - root.cpuTrail[i] * root.height * crest;
+            for (let i = 0; i < cpu.length; i++) {
                 if (i === 0)
-                    ctx.moveTo(x, y);
+                    ctx.moveTo(root._xAt(i, cpu.length), yAt(i));
                 else
-                    ctx.lineTo(x, y);
+                    ctx.lineTo(root._xAt(i, cpu.length), yAt(i));
             }
-            ctx.strokeStyle = Qt.alpha(Colours.signalStyle.accentLine, 0.85);
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        }
-
-        const netCount = root.netTrail.length;
-        if (netCount > 1) {
-            let peak = 1;
-            for (let i = 0; i < netCount; i++)
-                peak = Math.max(peak, root.netTrail[i]);
-
-            const step = root.width / root.capacity;
-            ctx.beginPath();
-            for (let i = 0; i < netCount; i++) {
-                const x = i * step;
-                const y = root.height - (root.netTrail[i] / peak) * root.height * 0.5;
-                if (i === 0)
-                    ctx.moveTo(x, y);
-                else
-                    ctx.lineTo(x, y);
-            }
-            ctx.strokeStyle = Qt.alpha(Colours.signalSecondary, 0.75);
+            ctx.strokeStyle = Qt.alpha(Colours.signalStyle.accentLine, 0.9);
             ctx.lineWidth = 1.5;
+            ctx.lineJoin = "round";
             ctx.stroke();
         }
     }

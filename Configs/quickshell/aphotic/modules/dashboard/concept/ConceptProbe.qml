@@ -99,7 +99,7 @@ ShellRoot {
                         const wave = 0.18 + 0.16 * Math.sin(i / 4.5) + 0.08 * Math.sin(i / 1.7);
                         const spike = (i >= 20 && i <= 23) ? 0.5 : 0;
                         cpu.push(Math.min(1, Math.max(0.04, wave + spike)));
-                        net.push(Math.max(0, 0.3 + 0.25 * Math.sin(i / 3.1) + (i >= 33 && i <= 35 ? 0.4 : 0)));
+                        net.push(Math.max(0, 1024 * (180 + 140 * Math.sin(i / 3.1) + (i >= 33 && i <= 35 ? 900 : 0))));
                     }
                     surface.terrain.seed(cpu, net);
                     console.log("PROBE seeded terrain");
