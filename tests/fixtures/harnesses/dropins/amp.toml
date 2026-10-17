@@ -1,4 +1,4 @@
-# A custom harness with no hooks of its own: the design's 2b example.
+# A custom harness with no hooks of its own.
 [harness.amp]
 label = "Amp"
 icon = "terminal"

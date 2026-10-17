@@ -12,10 +12,9 @@ wins on an id, a drop-in beats every plugin):
    from the filename.
 
 Validation happens here, once, at the boundary between untrusted TOML
-and every consumer (design J3KTGS1 section 2d): a malformed descriptor
-is dropped with a warning that names its source and the rest of the
-merge survives. The merged record lands at
-``<state>/harnesses.json`` (schemaVersion 1, section 2c shape), written
+and every consumer: a malformed descriptor is dropped with a warning
+that names its source and the rest of the merge survives. The merged
+record lands at ``<state>/harnesses.json`` (schemaVersion 1), written
 atomically so a watching shell never reads a half-written file.
 """
 from __future__ import annotations
@@ -245,7 +244,7 @@ def _plugin_descriptors(plugins_state: Path, plugin_root: Path, emit) -> list[di
 
 def _dropin_descriptors(config_root: Path, plugin_ids: dict[str, str], emit) -> list[dict]:
     """Drop-ins from <config_root>/harnesses/, sorted by filename. A drop-in
-    whose id a plugin already claimed replaces it (section 3a)."""
+    whose id a plugin already claimed replaces it."""
     dropin_root = config_root / DROPIN_DIR_NAME
     if not dropin_root.is_dir():
         return []

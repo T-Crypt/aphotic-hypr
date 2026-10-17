@@ -1139,12 +1139,10 @@ _aphotic_plugin_unwire_harness() {
     _aphotic_plugin_run_harness_lifecycle_script "$1" unwire
 }
 
-# J3KTGS1 slice 1: the merged harness descriptor record. A plugin
-# lifecycle event is one of the moments plugins.json changes, so the
-# merge runs right after each of them; drop-in edits are picked up by
-# `aphotic agent harnesses` or the next usage-update. Best-effort, same
-# as wire/unwire: a failed merge leaves harnesses.json stale and says
-# so, it never fails the plugin command.
+# The merge runs after every moment plugins.json changes; drop-in edits
+# are picked up by `aphotic agent harnesses` or the next usage-update.
+# Best-effort, same as wire/unwire: a failed merge leaves harnesses.json
+# stale and says so, it never fails the plugin command.
 _aphotic_plugin_harness_merge() {
     command -v python3 >/dev/null 2>&1 || return 0
     python3 "$(_aphotic_plugin_lib_dir)/harnesses_merge.py" "$APHOTIC_STATE_HOME" \
@@ -1714,11 +1712,9 @@ CHECK_PATH
         done < <(jq -r '[.[].combo] | group_by(ascii_downcase) | map(select(length > 1)) | .[][0]' <<<"$keybind_entries")
     fi
 
-    # [harness.<id>] descriptor subtables agree with the capability tag
-    # the same way [ui.*]/[keybind] do, and an id outside the shape the
-    # merge accepts is worth naming before install, since the merge will
-    # silently drop it (J3KTGS1 section 2d). Both are warnings: the merge
-    # refuses the descriptor, not the plugin.
+    # An id outside the shape the merge accepts is worth naming before
+    # install, since the merge will silently drop it. Both are warnings:
+    # the merge refuses the descriptor, not the plugin.
     local harness_sections hid has_harness_cap="false"
     harness_sections="$(_aphotic_plugin_manifest_harness_sections "$manifest")"
     _aphotic_plugin_in_list "harness-hook" "$caps" && has_harness_cap="true"
