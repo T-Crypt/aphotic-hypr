@@ -33,10 +33,7 @@ Item {
     // than a literal couple-of-pixels sliver.
     readonly property alias hoverTarget: content
 
-    // The edge the notch joins: the edge away from the screen edge this bar
-    // docks to. The strip leaves it to the SignalLine so the hairline can
-    // open across the shared notch span.
-    readonly property string notchEdge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
 
     readonly property int padding: Math.max(Tokens.padding.small, Config.border.thickness)
     // Integer thickness. The bar's exclusive zone (barWrapper.exclusiveZone) and

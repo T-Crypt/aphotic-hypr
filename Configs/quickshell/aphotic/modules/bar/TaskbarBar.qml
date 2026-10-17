@@ -20,9 +20,7 @@ Item {
     required property bool fullscreen
     required property real thickness
 
-    // The edge the notch joins: the edge away from the screen edge this bar
-    // docks to. The strip's hairline opens there across the shared notch span.
-    readonly property string notchEdge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
 
     implicitWidth: thickness
     implicitHeight: layout.implicitHeight + Tokens.padding.small * 2

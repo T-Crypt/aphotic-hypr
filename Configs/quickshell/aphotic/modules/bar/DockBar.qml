@@ -16,10 +16,7 @@ Item {
     required property ShellScreen screen
     required property ScreenState screenState
 
-    // The edge the notch joins: the edge away from the screen edge this dock
-    // anchors to. The pill's hairline opens there across the shared notch
-    // span, and the accent sits on the same edge.
-    readonly property string notchEdge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
 
     readonly property var dockItems: WindowList.dockItems(Settings.dockPinnedApps,"",true)
 

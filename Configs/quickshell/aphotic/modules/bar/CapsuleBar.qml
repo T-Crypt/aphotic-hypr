@@ -16,10 +16,7 @@ Item {
     required property ShellScreen screen
     required property ScreenState screenState
 
-    // The edge the notch joins: the edge away from the screen edge this
-    // capsule docks to. The pill's hairline opens there across the shared
-    // notch span.
-    readonly property string notchEdge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
 
     readonly property bool horizontal: Settings.barHorizontal
     // Which way the popout grows: away from the screen edge the bar is

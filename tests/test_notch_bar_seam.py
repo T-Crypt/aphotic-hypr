@@ -34,6 +34,15 @@ NOT_BAR_EDGE = {
 
 GAP = re.compile(r"gapLength:\s*root\.screenState\.notchSpan")
 EDGE = re.compile(r"edge:\s*root\.notchEdge")
+# The one place the notch edge is decided, the BarLayout.js function every
+# style binds through.
+NOTCH_EDGE = re.compile(
+    r"notchEdge:\s*BarLayout\.notchEdge\(\s*Settings\.barHorizontal,\s*"
+    r"Settings\.barPositionBottom,\s*Settings\.barPositionRight\s*\)"
+)
+INLINE_NOTCH_EDGE = (
+    '(Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"'
+)
 
 
 def _code(relative_path: str) -> str:
@@ -62,11 +71,15 @@ def _bar_edges(name: str, text: str):
         yield sid, body
 
 
-def test_every_style_ships_the_notch_edge_rule():
+def test_every_style_shares_one_notch_edge_rule():
     for name, path in STYLES.items():
         text = _code(path)
-        assert re.search(r"readonly property string notchEdge:", text), (
-            f"{path} has no single notchEdge the surface and line share"
+        assert NOTCH_EDGE.search(text), (
+            f"{path} must bind notchEdge from BarLayout.notchEdge, the one "
+            "source, not its own copy of the math"
+        )
+        assert INLINE_NOTCH_EDGE not in text, (
+            f"{path} still computes the notch edge inline"
         )
 
 
