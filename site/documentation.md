@@ -1,7 +1,7 @@
 ---
 layout: docs
 title: Documentation
-description: Public documentation for Aphotic-Hypr.
+description: Public documentation for Aphotic.
 ---
 # Documentation
 
