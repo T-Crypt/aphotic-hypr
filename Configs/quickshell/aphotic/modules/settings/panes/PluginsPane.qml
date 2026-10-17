@@ -428,7 +428,7 @@ ColumnLayout {
             implicitWidth: ghLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 32
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.surface, 2)
+            color: Colours.layer(Colours.surfaceLift, 2)
 
             RowLayout {
                 anchors.centerIn: parent
@@ -469,7 +469,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: 36
         radius: Tokens.rounding.full
-        color: Colours.layer(Colours.surface, 2)
+        color: Colours.layer(Colours.surfaceLift, 2)
 
         RowLayout {
             anchors.fill: parent
@@ -550,7 +550,7 @@ ColumnLayout {
                 implicitWidth: scopeLabel.implicitWidth + Tokens.padding.large * 2
                 implicitHeight: 30
                 radius: Tokens.rounding.full
-                color: scopeChip.current ? Colours.signal : Colours.layer(Colours.surface, 2)
+                color: scopeChip.current ? Colours.signal : Colours.layer(Colours.surfaceLift, 2)
 
                 StyledText {
                     id: scopeLabel
@@ -591,9 +591,9 @@ ColumnLayout {
                 implicitWidth: catRow.implicitWidth + Tokens.padding.medium * 2
                 implicitHeight: 28
                 radius: Tokens.rounding.full
-                color: catChip.current ? Colours.layer(Colours.surface, 3) : "transparent"
+                color: catChip.current ? Colours.layer(Colours.surfaceLift, 3) : "transparent"
                 border.width: 1
-                border.color: catChip.current ? Colours.signal : Colours.layer(Colours.surface, 3)
+                border.color: catChip.current ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                 RowLayout {
                     id: catRow
@@ -631,7 +631,7 @@ ColumnLayout {
         visible: root.category === "security" && !root.catalogueTrusted
         implicitHeight: securityPromptCol.implicitHeight + Tokens.padding.large * 2
         radius: Tokens.rounding.medium
-        color: Colours.layer(Colours.surface, 2)
+        color: Colours.layer(Colours.surfaceLift, 2)
 
         ColumnLayout {
             id: securityPromptCol
@@ -788,7 +788,7 @@ ColumnLayout {
         width: ListView.view?.width ?? 0
         implicitHeight: rowCol.implicitHeight + Tokens.padding.medium * 2
 
-        color: pluginRow.expanded ? Colours.layer(Colours.surface, 3) : Colours.layer(Colours.surface, 2)
+        color: pluginRow.expanded ? Colours.layer(Colours.surfaceLift, 3) : Colours.layer(Colours.surfaceLift, 2)
 
         // Rounded as one card: the group's ends round, everything between
         // them stays square. SettingsGroup does this by stamping its static
@@ -879,7 +879,7 @@ ColumnLayout {
                     implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
                     implicitHeight: 30
                     radius: Tokens.rounding.full
-                    color: pluginRow.actionable ? Colours.signal : Colours.layer(Colours.surface, 3)
+                    color: pluginRow.actionable ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                     StyledText {
                         id: installLabel

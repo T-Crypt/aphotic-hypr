@@ -70,7 +70,7 @@ ColumnLayout {
                 Layout.preferredWidth: 200
                 Layout.preferredHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.surface, 3)
+                color: Colours.layer(Colours.surfaceLift, 3)
 
                 TextInput {
                     id: locationInput

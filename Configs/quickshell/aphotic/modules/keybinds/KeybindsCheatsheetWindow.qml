@@ -119,7 +119,7 @@ PanelWindow {
                         Layout.preferredWidth: 32
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.surface, 2)
+                        color: Colours.layer(Colours.surfaceLift, 2)
 
                         MaterialIcon {
                             anchors.centerIn: parent

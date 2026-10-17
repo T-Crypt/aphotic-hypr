@@ -60,7 +60,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: profileCol.implicitHeight + Tokens.padding.medium * 2
                 radius: Tokens.rounding.medium
-                color: profileBtn.active ? Colours.signal : Colours.surface
+                color: profileBtn.active ? Colours.signal : Colours.surfaceLift
 
                 ColumnLayout {
                     id: profileCol

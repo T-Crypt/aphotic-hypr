@@ -51,7 +51,7 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.large
-        color: root.selected ? Colours.layer(Colours.surface, 2) : Colours.surface
+        color: root.selected ? Colours.layer(Colours.surfaceLift, 2) : Colours.surfaceLift
         border.width: root.selected ? 2 : 0
         border.color: Colours.signal
 
