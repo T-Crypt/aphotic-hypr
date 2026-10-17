@@ -21,7 +21,7 @@ StyledRect {
     property bool highlighted: false
 
     // A row whose subject has a real mark of its own rather than a
-    // Material glyph fills this instead of `icon`, and gets the same
+    // glyph name fills this instead of `icon`, and gets the same
     // rounded plate around it.
     property Component iconItem: null
 

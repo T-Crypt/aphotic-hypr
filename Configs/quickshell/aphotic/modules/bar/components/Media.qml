@@ -38,17 +38,12 @@ StyledRect {
         Anim {}
     }
 
-    // Right click = "open the player" -- same left/right differentiation
-    // AgentIndicator.qml already establishes for this bar (left = primary
-    // action, right = a secondary one), but deliberately NOT that other
-    // component's own "opens a static page" left-click shape: this stays
-    // a real app launch/focus, not a persistent panel. Focuses the
-    // player's own window if one's already open (matches WindowItem.qml's
-    // launcher focus mechanism exactly), falling back to launching it
-    // fresh via its real desktop entry (same source the launcher's own
-    // app search reads, matched by name -- not a hardcoded per-app
-    // command table, so this isn't limited to Spotify specifically; any
-    // MPRIS player with a matching .desktop entry works the same way).
+    // Right click = "open the player". Focuses the player's own window if
+    // one is open (same mechanism WindowItem.qml's launcher focus uses),
+    // otherwise launches it fresh via its real desktop entry, matched by
+    // name from the same source the launcher's own app search reads. Not
+    // a hardcoded per-app command table, so any MPRIS player with a
+    // matching entry works the same way.
     function openPlayer(): void {
         const identity = Players.getIdentity(root.active ? Players.active : null);
         if (!identity)

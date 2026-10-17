@@ -39,10 +39,9 @@ ColumnLayout {
             MaterialIcon {
                 anchors.centerIn: parent
                 // Covers both "no art URL at all" and "URL given but the
-                // fetch failed" (a dead YouTube thumbnail, unreachable
-                // player-supplied trackArtUrl, etc.) -- without the status
-                // check this tile silently renders blank on a failed
-                // remote fetch instead of falling back to the note icon.
+                // fetch failed" -- without the status check this tile
+                // silently renders blank on a failed remote fetch instead
+                // of falling back to the note icon.
                 visible: !albumArt.visible
                 text: "music_note"
                 color: Colours.inkMuted
@@ -201,7 +200,7 @@ ColumnLayout {
     }
 
     // Player switcher -- only shown when more than one MPRIS source is
-    // active (e.g. Spotify + a browser tab).
+    // active (for example a desktop player beside a browser tab).
     RowLayout {
         Layout.alignment: Qt.AlignHCenter
         spacing: Tokens.spacing.small

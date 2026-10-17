@@ -28,7 +28,7 @@ Item {
         level: 2
     }
 
-    StyledRect {
+    SignalSurface {
         id: card
 
         width: root.width
@@ -45,9 +45,7 @@ Item {
         scale: root.open ? 1 : 0.96
         transformOrigin: Item.Right
         radius: Tokens.rounding.large
-        color: Colours.signalStyle.glass
-        border.width: 1
-        border.color: Colours.signalStyle.hairline
+        tone: Colours.signalStyle.glass
 
         Behavior on x {
             Anim {
@@ -118,7 +116,6 @@ Item {
                         anchors.centerIn: parent
                         spacing: Tokens.spacing.extraSmall
 
-                        // The pill reads as the small-caps count label.
                         StyledText {
                             text: `${NotificationHistory.unreadCount} NEW`
                             color: Colours.inkMuted

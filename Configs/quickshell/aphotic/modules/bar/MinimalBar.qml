@@ -19,6 +19,8 @@ Item {
     required property bool fullscreen
     required property real thickness
 
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
+
     implicitWidth: Settings.barHorizontal ? thickness : layout.implicitWidth + Tokens.padding.small * 2
     implicitHeight: Settings.barHorizontal ? layout.implicitHeight + Tokens.padding.small * 2 : thickness
 
@@ -35,19 +37,19 @@ Item {
             Audio.decrementVolume();
     }
 
-    // Translucent Signal surface, no border: at rest the bar IS its
-    // inner-edge line, so the idle hairline below carries the whole
-    // outline instead of a filled accent strip.
+    // No border and no extra tint: at rest the bar IS its inner-edge line,
+    // and its fill matches the joined notch fill exactly so the join does
+    // not step in tone.
     SignalSurface {
         anchors.fill: parent
-        tone: Qt.alpha(Colours.signalStyle.bar, 0.6)
         radius: BarLayout.cornerRadius(Settings.barCorners, root.thickness)
         border.width: 0
     }
 
     SignalLine {
         horizontal: Settings.barHorizontal
-        edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+        edge: root.notchEdge
+        gapLength: root.screenState.notchSpan
         level: "idle"
     }
 

@@ -18,33 +18,19 @@ Item {
     property color colour: Colours.inkMuted
 
     readonly property int spacing: Tokens.spacing.medium / 2
-    // Real gap BETWEEN pills -- previously a single 1px divider line
-    // inside one continuous background, which read as "no separation,
-    // one shape" rather than distinct groups.
+    // Real gap between pills, not a divider line inside one continuous
+    // background: pills read as distinct groups.
     readonly property int groupSpacing: Tokens.spacing.small
 
     // Bar.qml's checkPopout reads this for group-aware hit-testing: find
-    // which pill's own bounds contain the hover position first, THEN
-    // the nearest icon within just that pill -- tightly scoped to each
-    // pill's real extent rather than one flat search across every icon
-    // regardless of which group it's visually in. checkPopout computes
-    // its own nearest-icon match directly from its own pointer sample
-    // (via BarHit.nearestAlong against `pill.icons`) rather than reading
-    // `pill.hoveredEntry` below -- an earlier version read `hoveredEntry`
-    // instead, to avoid two independent handlers (this pill's own local
-    // MouseArea vs. BarWrapper.qml's outer HoverHandler) disagreeing
-    // about which icon is hovered. That created a worse bug than the one
-    // it fixed: on first entry into a pill (confirmed live approaching a
-    // horizontal bar's status pill from directly underneath), the outer
-    // handler's own first sample can fire before this pill's own
-    // MouseArea has updated `hoveredEntry` for that same position,
-    // reading stale/null state and failing to show a popout at all.
-    // Each consumer now computes its own match independently from its
-    // own event stream -- `hoveredEntry` below only drives the HoverPill
-    // highlight, checkPopout never reads it.
-    //
-    // `pill` also carries its own `hoveredEntry`, kept live by the pill's
-    // own local MouseArea below, purely for the HoverPill highlight.
+    // which pill's own bounds contain the hover position first, then the
+    // nearest icon within just that pill. checkPopout computes its own
+    // match from its own pointer sample (via BarHit.nearestAlong against
+    // `pill.icons`) and must not read `pill.hoveredEntry` below -- on
+    // first entry into a pill, the outer hover handler's sample can fire
+    // before this pill's MouseArea has updated `hoveredEntry` for that
+    // position, reading stale state and failing to show a popout at all.
+    // `hoveredEntry` only drives the HoverPill highlight.
     readonly property var groupContainers: {
         const result = [];
         for (let i = 0; i < groupRepeater.count; i++) {
@@ -55,9 +41,8 @@ Item {
         return result;
     }
 
-    // groupDivider entries now just mark a split point between pills
-    // instead of rendering as a visible line -- the pills' own gap does
-    // that job.
+    // groupDivider entries only mark a split point between pills; the
+    // pills' own gap does the visual job.
     readonly property var groups: {
         const values = Settings.barStatusIcons.filter(e => e.enabled);
         const out = [];
@@ -77,22 +62,20 @@ Item {
         return out;
     }
 
-    // The cross-axis is a floor, not a cap. A status entry that draws an
-    // icon beside text (Bluetooth with a battery percentage, for one) is
-    // wider than it is tall, so it clears a horizontal bar's thickness and
-    // overflows a vertical one -- where the pill below clips, and the icon
-    // is simply cut off. Taking the larger of the configured thickness and
-    // what the content actually measures lets a side bar widen to fit
-    // instead of truncating, and changes nothing for a bar whose icons
-    // already fit.
+    // Cross-axis is a floor, not a cap. An entry that draws an icon beside
+    // text (Bluetooth with a battery percentage, for one) is wider than it
+    // is tall, so it overflows a vertical bar's thickness and the pill
+    // below clips it. Taking the larger of the configured thickness and
+    // what the content measures widens a side bar to fit instead of
+    // truncating, and changes nothing when everything already fits.
     implicitWidth: Settings.barHorizontal ? groupLayout.implicitWidth : Math.max(Settings.barInnerWidth, groupLayout.implicitWidth)
     implicitHeight: Settings.barHorizontal ? Math.max(Settings.barInnerWidth, groupLayout.implicitHeight) : groupLayout.implicitHeight
 
-    // At the root, not inside the kbLayout delegate. EntryWrapper's default
-    // property is `Item item`, and this watch is a plain QtObject, so putting
-    // it there made the whole file fail to compile. Here it also does what it
-    // exists for: one subscription for the component rather than one that came
-    // and went with whichever entries the user's config happens to enable.
+    // At the root, not inside the kbLayout delegate: EntryWrapper's default
+    // property is `Item item`, and this watch is a plain QtObject, so
+    // nesting it there fails to compile. Here it also holds one steady
+    // subscription for the component instead of one that comes and goes
+    // with whichever entries the user's config enables.
     KeyboardStateWatch {}
 
     GridLayout {
@@ -106,29 +89,16 @@ Item {
         rowSpacing: root.groupSpacing
         columnSpacing: root.groupSpacing
 
-        // Real bug, confirmed live with instrumented width logging (not
-        // guessed): in this state, only `anchors.right` is active for the
-        // along-axis (no opposing `anchors.left`), so QtQuick correctly
-        // leaves `width` un-derived from anchors -- but GridLayout, unlike
-        // some other item types, does NOT automatically keep its own
-        // `width` following its `implicitWidth` just because nothing else
-        // is driving it. Captured data: `groupLayout.width` stayed frozen
-        // at an early, stale value (`Settings.barInnerWidth`, from before
-        // the repeater had populated real icon content) while its real
-        // `implicitWidth` had long since grown to the icons' true combined
-        // width -- so `anchors.right`'s own position math
-        // (`x = root.width - groupLayout.width`) used that stale, too-small
-        // width, placing the pill well short of where the real content
-        // actually needed to start. Every icon still rendered (this
-        // GridLayout doesn't clip), just positioned as if the pill were
-        // much narrower than it truly was -- reported live as the
-        // rightmost status pill (Notifications/bell) rendering outside the
-        // Dock style's own outer pill boundary. Explicit `width:
-        // implicitWidth` here keeps it live-tracking instead of ever
-        // going stale. The default (non-"vertical") state doesn't need
-        // this: `anchors.left` + `anchors.right` together there already
-        // derive `width` correctly (a real opposing anchor pair, unlike
-        // this state's single line).
+        // Only `anchors.right` is active along-axis here (no opposing pair), so
+        // QtQuick leaves `width` un-derived from anchors, and GridLayout does
+        // not follow its own implicitWidth in that state: `width` stayed
+        // frozen at a stale early value while the real content had long
+        // since grown, so `anchors.right`'s position math placed the pill
+        // short of where its content actually needed to start (reported
+        // live as the rightmost status pill rendering outside the Dock
+        // style's outer pill). Explicit `width: implicitWidth` keeps it
+        // live-tracking. The default state doesn't need this: left and
+        // right anchors together derive width correctly.
         states: State {
             name: "vertical"
             when: Settings.barHorizontal
@@ -175,10 +145,10 @@ Item {
                 }
 
                 // Plain MouseArea, not HoverHandler -- see BarWrapper.qml's
-                // matching hoverArea comment for the full reasoning. A
-                // HoverHandler-based version could genuinely miss a fast
-                // or directional pointer entry into this pill, leaving the
-                // hover-highlight state stuck/null with no popout.
+                // hoverArea comment for the full reasoning. A HoverHandler
+                // here can miss a fast or directional pointer entry into
+                // this pill, leaving the hover highlight stuck or null
+                // with no popout shown.
                 MouseArea {
                     id: pillHover
 
@@ -367,14 +337,11 @@ Item {
     }
 
     // Simple uniform spacing (pillIcons' own rowSpacing/columnSpacing)
-    // replaces the old per-item topGap/bottomGap edge-margin-gating --
-    // that machinery existed only to avoid a phantom gap around
-    // lockStatus when it collapses to zero width, which only ever
-    // happens within one pill (the System group). Accepting that one
-    // minor, rare cosmetic edge case (a slightly wider gap around a
-    // collapsed lockStatus icon) in exchange for real per-pill grouping
-    // without threading first/last-present indices through 13 delegate
-    // call sites that would each need it.
+    // replaces the old per-item gap machinery, which existed only to avoid
+    // a phantom gap around a collapsed lockStatus within one pill. That
+    // rare cosmetic case is accepted in exchange for real per-pill
+    // grouping without threading first/last-present indices through every
+    // delegate call site.
     component EntryWrapper: Item {
         id: statusEntry
 

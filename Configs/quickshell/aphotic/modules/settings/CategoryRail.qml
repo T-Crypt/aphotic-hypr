@@ -22,13 +22,9 @@ ColumnLayout {
 
     // PluginsPane.qml reuses this component for its own much-shorter
     // category filter (7 fixed categories, no reason to search) rather
-    // than duplicating the pill-list styling -- but the search box's
-    // placeholder ("Search settings…") is real navigation-rail-specific
-    // copy, and its ~48px pushed every category pill down by that much
-    // with nothing equivalent on the neighboring "Browse available"
-    // column, reading as visibly off-center between the two. Off by
-    // default would break the main Settings rail's own search, so this
-    // defaults true and only PluginsPane opts out.
+    // than duplicating the pill-list styling. The search box's
+    // placeholder and its height are rail-specific, so PluginsPane opts
+    // out of them; default true keeps the main Settings rail's search.
     property bool showSearch: true
 
     signal categorySelected(id: string, sectionId: string, rowId: string)
@@ -176,16 +172,11 @@ ColumnLayout {
 
                         Layout.fillWidth: true
                         // Inset on all sides while active, not just a color
-                        // swap -- the active fill (m3secondaryContainer) is a
-                        // genuinely different, much lighter color family than
-                        // the near-black panel/row backdrop (tPalette.
-                        // m3surfaceContainer and its layer(2) variant), so a
-                        // full-bleed pill fully rounded to extraLarge cut away
-                        // a big corner triangle that only ever revealed that
-                        // mismatched dark backdrop -- reading as a black notch
-                        // at each corner. Insetting means the reveal is even
-                        // on every side, an intentional "floating pill" look
-                        // instead of an accidental corner-only artifact.
+                        // swap: the active fill is a much lighter color
+                        // family than the near-black panel backdrop, so a
+                        // full-bleed pill revealed a dark corner notch at
+                        // each rounded corner. Insetting reveals evenly on
+                        // every side.
                         Layout.leftMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.isSection || categoryButton.isRow ? Tokens.spacing.large : 0)
                         Layout.rightMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
                         Layout.topMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.groupStart ? groupHeader.implicitHeight + Tokens.spacing.large - (categoryButton.index === 0 ? Tokens.spacing.medium : 0) : 0)
