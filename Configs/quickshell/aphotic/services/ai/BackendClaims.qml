@@ -121,14 +121,19 @@ QtObject {
             }
 
             if (pid > 0 && root.gpuVram) {
-                resident[name] = true;
-                owned[root._adoptedId(pid)] = true;
+                // A PID holds its VRAM once. Another adapter may hold this
+                // process already -- a llama-swap server started through a
+                // wrapper still looks standalone -- and it owns the claim,
+                // so this owner leaves the process alone.
                 if (root._pids[name] !== pid) {
                     if (root._pids[name])
                         root.gpuVram.unadopt(root._pids[name]);
-                    root.gpuVram.adopt(pid, root.owner, root.priority);
+                    if (!root.gpuVram.adopt(pid, root.owner, root.priority))
+                        continue;
                     root._pids[name] = pid;
                 }
+                resident[name] = true;
+                owned[root._adoptedId(pid)] = true;
                 // GpuVramSource registers the claim on its next scan, so the
                 // first passport after a load carries no amount yet.
                 const measured = ResourceEngine.claimById(root._adoptedId(pid))?.amount ?? 0;
