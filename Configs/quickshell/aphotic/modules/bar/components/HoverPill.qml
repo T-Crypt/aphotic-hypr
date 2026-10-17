@@ -43,8 +43,8 @@ StyledRect {
     // icons is only one icon tall, so sizing off the container would shrink
     // the highlight to smaller than the icon it sits behind.
     property real thickness: Settings.barInnerWidth
-    // How strongly the highlight reads. Matches the Material state-layer
-    // hover opacity the rest of the shell uses.
+    // How strongly the highlight reads. Matches the hover opacity the
+    // rest of the shell's surfaces use.
     property real strength: 0.08
 
     readonly property real diameter: Math.max(0, Math.min(thickness, Settings.barInnerWidth) - Tokens.padding.extraSmall)
@@ -56,7 +56,7 @@ StyledRect {
     property real centerAlong
 
     visible: opacity > 0
-    // The Material circle never paints under Signal (the edge line carries
+    // The circle never paints under the signal skin (the edge line carries
     // the hover instead); the component still publishes the line's hover
     // segment from the same hover state.
     opacity: 0
