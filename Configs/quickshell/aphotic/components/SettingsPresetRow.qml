@@ -57,13 +57,7 @@ SettingsRow {
 
                     anchors.fill: parent
                     radius: parent.radius
-                    visible: presetPill.selectable
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: presetPill.selectable
-                    cursorShape: presetPill.selectable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    disabled: !presetPill.selectable
                     onClicked: root.selected(presetPill.modelData.value)
                 }
             }

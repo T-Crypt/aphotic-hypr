@@ -20,7 +20,7 @@ SettingsRow {
 
         StyledRect {
             anchors.fill: parent
-            radius: height / 2
+            radius: Tokens.rounding.full
             color: root.checked ? Colours.signal : Colours.layer(Colours.surface, 3)
             border.width: root.checked ? 0 : 1
             border.color: Colours.outline
@@ -33,7 +33,7 @@ SettingsRow {
         StyledRect {
             width: root.checked ? 16 : 12
             height: width
-            radius: width / 2
+            radius: Tokens.rounding.full
             color: root.checked ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
             anchors.verticalCenter: parent.verticalCenter
             x: root.checked ? parent.width - width - 3 : 5
@@ -47,9 +47,8 @@ SettingsRow {
             }
         }
 
-        MouseArea {
+        Interact {
             anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
             onClicked: root.toggled(!root.checked)
         }
     }
