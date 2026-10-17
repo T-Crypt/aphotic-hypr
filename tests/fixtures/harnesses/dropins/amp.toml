@@ -1,0 +1,7 @@
+# A custom harness with no hooks of its own: the design's 2b example.
+[harness.amp]
+label = "Amp"
+icon = "terminal"
+launch = ["amp"]
+match = "amp"
+usage = "stream"
