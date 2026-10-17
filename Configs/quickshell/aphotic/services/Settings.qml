@@ -136,7 +136,7 @@ Singleton {
     // list is unchanged whatever is installed.
     property bool shelfNotchTabs: false
 
-    property string agentSelectedProvider: "claude"
+    property string agentSelectedProvider: ""
     property bool agentGraphEnabled: true
     // Node budget and layout tick rate for the agent graph surface, never
     // its visual treatment -- every tier renders the same look. "auto"
@@ -875,7 +875,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.capsuleAnimations = data.capsuleAnimations;
                 if (typeof data.flowShellActivity === "boolean")
                     root.flowShellActivity = data.flowShellActivity;
-                if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "opencode"].includes(data.agentSelectedProvider))
+                if (typeof data.agentSelectedProvider === "string" && data.agentSelectedProvider.length > 0)
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.agentGraphEnabled === "boolean")
                     root.agentGraphEnabled = data.agentGraphEnabled;
