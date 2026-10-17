@@ -1,4 +1,4 @@
-# canary 2026-10-16
+# canary 2026-10-17
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -240,7 +240,7 @@ lib32-libxext 1.3.7-1
 lib32-libxml2 2.15.4-1
 lib32-libxshmfence 1.3.3-1
 lib32-libxxf86vm 1.1.7-1
-lib32-llvm-libs 1:23.1.1-1
+lib32-llvm-libs 1:23.1.3-1
 lib32-lm_sensors 1:3.6.2-2
 lib32-mesa 1:26.2.4-1
 lib32-ncurses 6.6-2
@@ -384,7 +384,7 @@ libquadmath 16.2.1+r23+gd564253eb6c8-1
 libraqm 0.11.0-1
 libraw 0.22.2-1
 libraw1394 2.1.2-4
-librsvg 2:2.63.2-1
+librsvg 2:2.63.3-1
 librsync 1:2.3.4-2
 libsamplerate 0.2.2-3
 libsasl 2.1.28-5
@@ -464,7 +464,7 @@ libzip 1.11.4-1
 licenses 20240728-1
 linux-api-headers 7.2-1
 llhttp 9.3.1-1
-llvm-libs 23.1.1-1
+llvm-libs 23.1.3-2
 lm_sensors 1:3.6.2-1
 lmdb 0.9.35-1
 lsof 4.99.7-1
