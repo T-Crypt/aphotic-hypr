@@ -22,11 +22,21 @@ From `Configs/quickshell/aphotic/`:
 ```sh
 cp modules/dashboard/concept/ConceptProbe.qml ConceptProbeRun.qml
 QT_QPA_PLATFORM=offscreen \
+  HOME=/tmp/opencode/concept-home \
   CONCEPT_W=1920 CONCEPT_H=1080 CONCEPT_MS=14000 \
   CONCEPT_OUT=/tmp/opencode/concept-1920x1080.png \
   qs -p ConceptProbeRun.qml
 rm ConceptProbeRun.qml
 ```
+
+`HOME` points at a throwaway directory holding copies of
+`~/.local/state/aphotic/palette.json`, `settings.json` and
+`~/.config/awww/current-wallpaper`, so the probe renders the operator's
+real dark palette over their wallpaper (plus the 0.35 dim layer, the
+same composition the dashboard window uses) without touching the real
+files. `CONCEPT_OPEN_DELAY=500 CONCEPT_MOTION_MS=150` grabs a frame
+mid-entrance instead. The staged files are copies made at run time and
+the originals are only ever read.
 
 Run it a second time with `CONCEPT_W=3440 CONCEPT_H=1440` for the
 ultrawide render. The CPU ridge grows one sample per service poll while

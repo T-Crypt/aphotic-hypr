@@ -23,6 +23,9 @@ Item {
     readonly property real margin: Tokens.padding.extraExtraLarge
     readonly property bool portrait: stage.height > stage.width
 
+    // The open state the hosting window binds to its dashboard flag.
+    property bool shown: true
+
     // Watch registrations live with this surface: closing the dashboard
     // unmounts them, the services stop polling, and the terrain goes
     // quiet with nothing left to draw.
@@ -48,7 +51,7 @@ Item {
         id: reveal
 
         anchors.fill: parent
-        shown: true
+        shown: root.shown
         edge: "bottom"
 
         Item {
@@ -65,7 +68,7 @@ Item {
 
                 x: root.margin
                 y: root.margin
-                text: Time.hourStr + ":" + Time.minuteStr
+                text: Time.timeStr
                 ink: Colours.ink
                 glow: Colours.signalStyle.accentLine
                 pixelSize: root.portrait ? 96 : 132
