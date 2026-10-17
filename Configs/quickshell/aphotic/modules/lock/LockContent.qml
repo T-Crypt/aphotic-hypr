@@ -244,7 +244,7 @@ Item {
             visible: text.length > 0
             text: {
                 if (root.pam.state === Pam.MaxTries)
-                    return qsTr("Too many attempts. Locked out for a moment.");
+                    return qsTr("Too many attempts. Locked out for now, try again later.");
                 if (root.pam.state === Pam.Error)
                     return qsTr("Authentication error");
                 if (root.pam.state === Pam.Failed)
