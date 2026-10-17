@@ -1,0 +1,14 @@
+[plugin]
+name = "beta-hooks"
+display_name = "Beta Hooks"
+description = "Claims the same id as alpha-hooks and loses to registry order."
+version = "1.0.0"
+category = "ai"
+capabilities = ["harness-hook"]
+
+[harness]
+wire = "hooks/wire.sh"
+unwire = "hooks/unwire.sh"
+
+[harness.dup]
+label = "Beta"
