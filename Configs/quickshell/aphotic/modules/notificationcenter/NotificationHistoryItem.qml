@@ -10,7 +10,7 @@ import qs.components
 import qs.services
 import qs.utils
 
-StyledRect {
+SignalSurface {
     id: root
 
     required property var modelData
@@ -31,29 +31,16 @@ StyledRect {
         return Qt.formatDate(new Date(ms), "MMM d");
     }
 
-    color: Colours.signalStyle.raised
-    border.width: 1
-    border.color: Colours.signalStyle.hairline
+    tone: Colours.signalStyle.raised
     radius: Tokens.rounding.medium
     implicitHeight: inner.implicitHeight + Tokens.padding.medium * 2
 
-    Rectangle {
-        x: root.radius
-        width: root.width - root.radius * 2
-        height: 1
-        color: Colours.signalStyle.edgeLight
-    }
-
-    // Signal: critical reads as an edge line, not a red-filled card.
-    Rectangle {
-        visible: root.modelData.urgency === NotificationUrgency.Critical
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.topMargin: root.radius
-        anchors.bottomMargin: root.radius
-        width: 2
-        color: Colours.alert
+    // Critical urgency rides the signal line: idle for a normal entry,
+    // warn for a critical one.
+    SignalLine {
+        horizontal: false
+        edge: "start"
+        level: root.modelData.urgency === NotificationUrgency.Critical ? "warn" : "idle"
     }
 
     RowLayout {
@@ -66,11 +53,11 @@ StyledRect {
         spacing: Tokens.spacing.medium
 
         Rectangle {
-            Layout.preferredWidth: 8
-            Layout.preferredHeight: 8
+            Layout.preferredWidth: Tokens.spacing.small
+            Layout.preferredHeight: Tokens.spacing.small
             Layout.alignment: Qt.AlignVCenter
             visible: !root.modelData.read
-            radius: 4
+            radius: Tokens.rounding.full
             color: Colours.signal
         }
 
@@ -116,7 +103,6 @@ StyledRect {
                 elide: Text.ElideRight
             }
 
-            // Signal: summary leads the line DemiBold, time sits muted at the right.
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.small
