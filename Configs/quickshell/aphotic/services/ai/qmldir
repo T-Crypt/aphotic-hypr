@@ -5,6 +5,7 @@ singleton AgentRoles 1.0 AgentRoles.qml
 singleton AiConfig 1.0 AiConfig.qml
 singleton AiKeys 1.0 AiKeys.qml
 singleton AiProviders 1.0 AiProviders.qml
+singleton Harnesses 1.0 Harnesses.qml
 singleton EngineRegistry 1.0 EngineRegistry.qml
 singleton IntelligenceSessions 1.0 IntelligenceSessions.qml
 singleton InferenceMode 1.0 InferenceMode.qml

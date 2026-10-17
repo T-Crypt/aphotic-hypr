@@ -11,13 +11,16 @@ import qs.services
 import qs.services.ai
 
 // Single source of harness/provider role + locality for every AI CLI this
-// shell knows about. A harness (Claude Code, Codex, OpenCode, Gemini CLI,
-// Pi, Oh My Pi) runs a session and executes tool calls; a provider (Ollama,
-// Studio, huggingface-cli) only serves inference and never gets its own
-// Bar tab or Agent Graph node -- it's read as an annotation on whichever
-// harness is using it as a backend. Optional [agents.<id>] tables in
-// aphotic.toml override the built-in defaults below, read the same
-// regex-over-known-keys way InstallProfile.qml reads [install].
+// shell knows about. A harness runs a session and executes tool calls; a
+// provider (Ollama, Studio, huggingface-cli) only serves inference and
+// never gets its own Bar tab or Agent Graph node -- it's read as an
+// annotation on whichever harness is using it as a backend. Harness rows
+// come from the merged descriptor record (Harnesses), so this file never
+// names a harness: the built-in table below holds provider rows only, and
+// a harness row is whatever descriptor the machine declares. Optional
+// [agents.<id>] tables in aphotic.toml override the provider rows only,
+// read the same regex-over-known-keys way InstallProfile.qml reads
+// [install].
 //
 // Merged from two independent implementations that landed on either side
 // of the `main`/`modular` split (reconciled 2026-08-30): `main`'s richer
@@ -36,17 +39,11 @@ Singleton {
     // two roles are not mutually exclusive, and collapsing them into one
     // field would misrepresent Claude either way round.
     //
-    // Codex, OpenCode, Gemini CLI, Pi and Oh My Pi are harnesses only.
-    // and execute tool calls; there is no plain "talk to it" mode behind
-    // them, so they must not be offered as chat providers (§4.1). Providers
-    // serve inference by definition, so `chat` defaults true for them.
+    // A harness whose descriptor sets chat to false (or leaves it out) is
+    // a session runner with no plain "talk to it" mode, so it must not be
+    // offered as a chat provider (§4.1). Providers serve inference by
+    // definition, so `chat` defaults true for them.
     readonly property var _defaults: [
-        { id: "claude", label: "Claude Code", role: "harness", chat: true, locality: null },
-        { id: "codex", label: "Codex", role: "harness", chat: false, locality: null },
-        { id: "opencode", label: "OpenCode", role: "harness", chat: false, locality: null },
-        { id: "geminicli", label: "Gemini CLI", role: "harness", chat: false, locality: null },
-        { id: "omp", label: "Oh My Pi", role: "harness", chat: false, locality: null },
-        { id: "pi", label: "Pi", role: "harness", chat: false, locality: null },
         { id: "ollama", label: "Ollama", role: "provider", chat: true, locality: "local" },
         { id: "llama-swap", label: "llama-swap", role: "provider", chat: false, locality: "local" },
         // Off unless aphotic.toml opts in with `[agents.unsloth] enabled =
@@ -60,6 +57,17 @@ Singleton {
 
     property var _overrides: ({})
 
+    // Harness rows are the descriptors themselves, not a table this file
+    // keeps in sync: a descriptor is the opt-in, so it is on, and its
+    // chat flag is the descriptor's own.
+    readonly property var harnessRows: Harnesses.harnesses.map(h => ({
+        id: h.id,
+        label: h.label,
+        role: "harness",
+        chat: h.chat,
+        enabled: true
+    }))
+
     readonly property var entries: root._defaults.map(d => {
         const o = root._overrides[d.id] ?? {};
         return {
@@ -70,7 +78,7 @@ Singleton {
             locality: d.locality,
             enabled: o.enabled ?? d.enabled ?? true
         };
-    })
+    }).concat(root.harnessRows)
 
     readonly property var harnesses: root.entries.filter(e => e.role === "harness" && e.enabled)
     readonly property var providers: root.entries.filter(e => e.role === "provider" && e.enabled)
@@ -79,14 +87,14 @@ Singleton {
         return (root.entries.find(e => e.id === id) ?? {}).role ?? "";
     }
 
-    // Whether this id may be offered as a selectable chat provider. Ids this
-    // classifier has never heard of pass -- Gemini and ChatGPT are raw HTTP
-    // APIs with no CLI behind them (distinct from the `geminicli` harness
-    // above), and the Aphotic Assistant is a local model, so none of them
-    // are agent-tracking concerns at all and none belong in _defaults.
+    // Whether this id may be offered as a selectable chat provider.
+    readonly property var _httpOnlyChatApis: ["gemini", "chatgpt"]
+
     function servesChat(id: string): bool {
         const e = root.entries.find(e => e.id === id);
-        return e ? e.chat === true : true;
+        if (e)
+            return e.chat === true;
+        return root._httpOnlyChatApis.includes(id);
     }
 
     function localityFor(id: string): string {
@@ -98,14 +106,7 @@ Singleton {
         return e ? e.enabled : true;
     }
 
-    // "Configured" means a real, live availability signal, not just "the
-    // id is classified as a harness above" -- a harness nobody has ever
-    // logged into gives Agent Graph nothing to render. OpenCode has no
-    // availability signal anywhere yet (AiProviders.qml has no entry for
-    // it), so it can't contribute true here even though it's classified
-    // as a harness above -- a known gap, not an oversight; see the
-    // AI-chat-surface audit item in APHOTIC_UNIFIED_VISION.md §4.1.
-    readonly property bool hasConfiguredHarness: AiProviders.claudeAvailable || AiProviders.codexAvailable
+    readonly property bool hasConfiguredHarness: Harnesses.harnesses.length > 0
 
     // Display casing for harness codename models. A codename cannot be
     // derived from its id -- "sol" is styled SOL and "luna" is styled Luna
@@ -201,6 +202,10 @@ Singleton {
                 next[id] = entry;
             }
             root._overrides = next;
+            for (const h of Harnesses.harnesses) {
+                if (next[h.id])
+                    console.warn(`aphotic agents: [agents.${h.id}] is a harness id and is ignored; declare it in ${Quickshell.env("HOME")}/.config/aphotic/harnesses/${h.id}.toml`);
+            }
         }
         onLoadFailed: {
             root._overrides = {};

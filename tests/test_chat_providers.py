@@ -47,14 +47,11 @@ def test_codex_is_not_a_chat_provider():
     assert 'case "codex"' not in text
 
 
-def test_codex_harness_tracking_stays():
-    assert _roles()["codex"] == {"role": "harness", "chat": "false"}
-    providers = (ROOT / "Configs/quickshell/aphotic/services/AgentProviders.qml").read_text()
-    assert re.search(r'"codex":\s*\{[^}]*processName:\s*"codex"', providers)
+def test_codex_chat_axis_stays():
     ai = (AI / "AiProviders.qml").read_text()
     assert "codexAvailable" in ai
     roles = (AI / "AgentRoles.qml").read_text()
-    assert "AiProviders.codexAvailable" in roles
+    assert "AiProviders.codexAvailable" not in roles
 
 
 def _ai_profile(tmp_path: Path, provider: str) -> subprocess.CompletedProcess:

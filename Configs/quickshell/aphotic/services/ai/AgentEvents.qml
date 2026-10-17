@@ -142,7 +142,7 @@ Singleton {
         if (index === -1) {
             sessions.push({
                 id: event.sessionId,
-                harness: event.harness || "claude",
+                harness: event.harness || "unknown",
                 status: "idle",
                 model: event.model ?? "",
                 cwd: event.cwd ?? "",
