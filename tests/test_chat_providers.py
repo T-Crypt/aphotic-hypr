@@ -2,9 +2,7 @@
 
 Codex sat in AiProviders' base list and relied on servesChat() to hide it,
 so an `[agents.codex] chat = true` override or a CLI `ai profile codex`
-could still select a harness that has no conversational mode. servesChat
-now fails closed off the descriptor record, and the harness half of the
-codex assertions moved to tests/test_harness_gate.py with the gate.
+could still select a harness that has no conversational mode.
 """
 import os
 import re
@@ -50,12 +48,6 @@ def test_codex_is_not_a_chat_provider():
 
 
 def test_codex_chat_axis_stays():
-    # The harness half of codex moved to the descriptor record (see
-    # tests/test_harness_gate.py): its role and chat flag now come from
-    # the descriptor, and AgentProviders' process table leaves with the
-    # bar in the next slice. What this file still pins is the chat axis:
-    # the login probe stays in AiProviders, and AgentRoles no longer
-    # reads it.
     ai = (AI / "AiProviders.qml").read_text()
     assert "codexAvailable" in ai
     roles = (AI / "AgentRoles.qml").read_text()

@@ -23,14 +23,8 @@ Singleton {
 
     readonly property string _recordPath: `${Quickshell.env("HOME")}/.local/state/aphotic/harnesses.json`
 
-    // Every merged descriptor, in merge order (registry order for
-    // plugins, then drop-in filenames). Consumers keep that order as
-    // their tie-break; it is the record's own order.
     property var harnesses: []
 
-    // The list the surfaces read. Every descriptor is visible for now;
-    // the hidden and order settings are this property's one extension
-    // point when the settings pane grows them.
     readonly property var visible: root.harnesses
 
     // The descriptor claiming the id, or null when no descriptor does:
@@ -51,8 +45,6 @@ Singleton {
                     return;
                 root.harnesses = data.harnesses ?? [];
             } catch (e) {
-                // Missing or torn: keep the last good record. The merge
-                // writes atomically, so a bad read is always transient.
             }
         }
     }

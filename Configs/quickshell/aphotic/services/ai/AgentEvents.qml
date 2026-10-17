@@ -142,9 +142,6 @@ Singleton {
         if (index === -1) {
             sessions.push({
                 id: event.sessionId,
-                // The v2 contract makes harness required, so an untagged
-                // record is malformed: it folds under the literal unknown,
-                // never under a harness its tokens do not belong to.
                 harness: event.harness || "unknown",
                 status: "idle",
                 model: event.model ?? "",

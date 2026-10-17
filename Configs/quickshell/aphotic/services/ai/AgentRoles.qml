@@ -43,10 +43,6 @@ Singleton {
     // a session runner with no plain "talk to it" mode, so it must not be
     // offered as a chat provider (§4.1). Providers serve inference by
     // definition, so `chat` defaults true for them.
-    //
-    // Provider rows only: the built-in harness rows left with the descriptor
-    // record, so a harness exists here if and only if its descriptor is
-    // installed (Harnesses.harnesses below).
     readonly property var _defaults: [
         { id: "ollama", label: "Ollama", role: "provider", chat: true, locality: "local" },
         { id: "llama-swap", label: "llama-swap", role: "provider", chat: false, locality: "local" },
@@ -91,21 +87,14 @@ Singleton {
         return (root.entries.find(e => e.id === id) ?? {}).role ?? "";
     }
 
-    // Whether this id may be offered as a selectable chat provider. The
-    // classifier fails closed: an id with no row above and no descriptor
-    // is not a chat provider, which is what keeps a retired harness row
-    // from reading as one once it leaves _defaults. Gemini and ChatGPT are
-    // the exception: raw HTTP APIs with no CLI behind them, so they have
-    // neither row nor descriptor and are named here rather than passing as
-    // unknown (the Aphotic Assistant is built into AiProviders, never
-    // classified).
-    readonly property var _chatApis: ["gemini", "chatgpt"]
+    // Whether this id may be offered as a selectable chat provider.
+    readonly property var _httpOnlyChatApis: ["gemini", "chatgpt"]
 
     function servesChat(id: string): bool {
         const e = root.entries.find(e => e.id === id);
         if (e)
             return e.chat === true;
-        return root._chatApis.includes(id);
+        return root._httpOnlyChatApis.includes(id);
     }
 
     function localityFor(id: string): string {
@@ -117,12 +106,6 @@ Singleton {
         return e ? e.enabled : true;
     }
 
-    // "Configured" means the user opted a harness in: a descriptor is the
-    // opt-in and it is the only signal this gate reads. The two chat-axis
-    // login probes keep running for the chat surfaces and no longer feed
-    // the gate, so an OpenCode-only machine -- or a custom drop-in
-    // harness -- opens the same surfaces a Claude machine does, and a
-    // machine with no descriptor answers false and stays gated off.
     readonly property bool hasConfiguredHarness: Harnesses.harnesses.length > 0
 
     // Display casing for harness codename models. A codename cannot be
@@ -219,8 +202,6 @@ Singleton {
                 next[id] = entry;
             }
             root._overrides = next;
-            // Overrides are provider-row only now: a table for a harness id
-            // is ignored, with a migration pointer for one release.
             for (const h of Harnesses.harnesses) {
                 if (next[h.id])
                     console.warn(`aphotic agents: [agents.${h.id}] is a harness id and is ignored; declare it in ${Quickshell.env("HOME")}/.config/aphotic/harnesses/${h.id}.toml`);
