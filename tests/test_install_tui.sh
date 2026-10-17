@@ -180,6 +180,18 @@ answers '1\nb\n4\n'
 run_tui
 [[ "$(grep -c "What would you like to do?" "$WORKDIR/out")" -ge 2 ]] || fail "b should return to Welcome"
 
+# --- the key reader: a lone ESC is back (never quit), and an arrow split
+# across two reads still reads as an arrow
+read_key() {
+  bash -c 'source "$0/lib/install/tui/menu.sh"; tui_read_key; printf "%s" "$TUI_KEY"' "$ROOT"
+}
+key_one=$(printf '\e[A' | read_key)
+[[ "$key_one" == "up" ]] || fail "one-chunk arrow should read as up, got: $key_one"
+key_split=$( { printf '\e'; sleep 0.1; printf '[A'; } | read_key )
+[[ "$key_split" == "up" ]] || fail "split arrow should read as up, got: $key_split"
+key_esc=$(printf '\e' | read_key)
+[[ "$key_esc" == "back" ]] || fail "a lone ESC must be back, not quit, got: $key_esc"
+
 # --- the run screen reads stage constants from install.sh, never a copy
 grep -q "^STAGE_COLORS=(" "$ROOT/install-tui.sh" && fail "wrapper must not hardcode STAGE_COLORS"
 grep -rq "^STAGE_COLORS=(" "$ROOT/lib/install/tui/" && fail "lib must not hardcode STAGE_COLORS"

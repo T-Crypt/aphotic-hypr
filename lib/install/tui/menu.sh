@@ -7,22 +7,34 @@
 # a pipe, a serial console, or a dumb terminal every question is a numbered
 # line read from stdin, so tests and scripts drive it the same way.
 
-# Read one key from the terminal into TUI_KEY. Arrows arrive as escape
-# sequences; a lone escape is "back".
+# Read one key from the terminal into TUI_KEY. A lone escape is "back", never
+# quit (quit is q with a confirm). CSI sequences are read to their final byte,
+# so an arrow delivered in two chunks over a slow link still reads as an arrow.
+TUI_ESC_TIMEOUT="${TUI_ESC_TIMEOUT:-0.3}"
+
 tui_read_key() {
-  local k rest
+  local k ch seq
   IFS= read -rsn1 k || { TUI_KEY="eof"; return 0; }
   case "$k" in
     $'\e')
-      IFS= read -rsn2 -t 0.05 rest 2>/dev/null || rest=""
-      case "$rest" in
-        "[A") TUI_KEY="up" ;;
-        "[B") TUI_KEY="down" ;;
-        "[C") TUI_KEY="right" ;;
-        "[D") TUI_KEY="left" ;;
-        "") TUI_KEY="back" ;;
-        *) TUI_KEY="unknown" ;;
-      esac
+      seq="$k"
+      IFS= read -rsn1 -t "$TUI_ESC_TIMEOUT" ch || ch=""
+      if [[ "$ch" == "[" ]]; then
+        seq+="$ch"
+        while IFS= read -rsn1 -t "$TUI_ESC_TIMEOUT" ch; do
+          seq+="$ch"
+          [[ "$ch" == [A-Za-z~] ]] && break
+        done
+        case "$seq" in
+          $'\e[A'|$'\eOA') TUI_KEY="up" ;;
+          $'\e[B'|$'\eOB') TUI_KEY="down" ;;
+          $'\e[C'|$'\eOC') TUI_KEY="right" ;;
+          $'\e[D'|$'\eOD') TUI_KEY="left" ;;
+          *) TUI_KEY="unknown" ;;
+        esac
+      else
+        TUI_KEY="back"
+      fi
       ;;
     "") TUI_KEY="enter" ;;
     " ") TUI_KEY="space" ;;
