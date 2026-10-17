@@ -1,0 +1,28 @@
+[plugin]
+name = "claude-hooks"
+display_name = "Claude Code Agent Hooks"
+description = "Fixture mirroring the shipped claude-hooks manifest shape."
+version = "1.1.0"
+category = "ai"
+capabilities = ["harness-hook"]
+
+[owns]
+external_config = [
+    "~/.claude/settings.json (hook entries)",
+    "~/.claude/settings.json (statusLine command, only when the slot is free)",
+]
+
+[harness]
+wire = "hooks/wire.sh"
+unwire = "hooks/unwire.sh"
+
+[harness.claude]
+label = "Claude Code"
+icon = "smart_toy"
+provider = "anthropic"
+match = "claude"
+launch = ["claude"]
+usage = "scan"
+scan = ".claude/projects/*/*.jsonl"
+context = "statusline"
+chat = true

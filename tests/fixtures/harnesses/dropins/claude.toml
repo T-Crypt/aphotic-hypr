@@ -1,0 +1,5 @@
+# Overrides the claude descriptor from the claude-hooks fixture wholesale:
+# only the fields set here survive, everything else falls back to defaults.
+[harness.claude]
+label = "Claude"
+usage = "stream"

@@ -220,6 +220,33 @@ Singleton {
         return providers;
     }
 
+    // Plugins that declare `[engine]` -- the `engine` capability. A plugin
+    // serves one engine and the shell mounts a descriptor-driven adapter
+    // for it, so the registration is the manifest's own engine block plus
+    // the install key. No core file names an engine: the id, protocol and
+    // every other field come from the plugin.
+    //
+    // The gate is the same layer/data vocabulary every capability uses.
+    // One engine per plugin, so there is no second list here.
+    readonly property var engineRegistrations: {
+        const engines = [];
+        for (const name of Object.keys(root._installed)) {
+            if (!root.isEnabled(name))
+                continue;
+            const engine = root._installed[name]?.engine;
+            if (!engine)
+                continue;
+            const entry = Object.assign({}, engine, {
+                plugin: name,
+                requiresLayer: engine.requires_layer ?? "",
+                requiresData: engine.requires_data ?? ""
+            });
+            if (root._gateSatisfied(entry))
+                engines.push(entry);
+        }
+        return engines;
+    }
+
     // Plugins that declare `[action]` -- the `action` capability, ACT-01's
     // substrate. An action is a named thing a user can ask for, not a
     // surface: it draws nothing, and every surface that offers actions

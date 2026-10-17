@@ -1,0 +1,19 @@
+[plugin]
+name = "codex-hooks"
+display_name = "Codex Agent Hooks"
+description = "Fixture mirroring the shipped codex-hooks manifest shape."
+version = "2.1.0"
+category = "ai"
+capabilities = ["harness-hook"]
+
+[harness]
+wire = "hooks/wire.sh"
+unwire = "hooks/unwire.sh"
+
+[harness.codex]
+provider = "openai"
+match = "codex"
+launch = ["codex"]
+usage = "scan"
+scan = ".codex/sessions/*.jsonl"
+context = "stream"

@@ -1,0 +1,16 @@
+[plugin]
+name = "opencode-hooks"
+display_name = "OpenCode Agent Hooks"
+description = "Fixture mirroring the shipped opencode-hooks manifest shape."
+version = "2.0.0"
+category = "ai"
+capabilities = ["harness-hook"]
+
+[harness]
+wire = "hooks/wire.sh"
+unwire = "hooks/unwire.sh"
+
+[harness.opencode]
+match = "opencode"
+usage = "stream"
+context = "stream"
