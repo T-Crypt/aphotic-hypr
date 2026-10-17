@@ -3,7 +3,7 @@ name = "gaming"
 description = "Performance profile + launcher polish"
 
 [packages]
-main = ["gamemode", "lib32-gamemode", "mangohud", "lib32-mangohud", "steam"]
+main = ["gamemode", "lib32-gamemode", "mangohud", "lib32-mangohud", "steam", "gamescope"]
 
 # Storefronts and compatibility shims ship as Flatpaks rather than AUR
 # packages: the Flatpak builds keep their own runtime and don't need the

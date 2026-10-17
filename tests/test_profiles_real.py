@@ -87,7 +87,7 @@ def test_gaming_layer_adds_packages():
         str(ROOT / "profiles/base/full.toml"),
         [str(ROOT / "profiles/layers/gaming.toml")],
     )
-    for pkg in ["gamemode", "mangohud", "steam"]:
+    for pkg in ["gamemode", "mangohud", "steam", "gamescope"]:
         assert pkg in result["main"]
 
 
