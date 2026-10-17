@@ -1,0 +1,10 @@
+# Every field-level validation warning in one descriptor. The label and
+# icon fall back silently; the rest each name their exact warning.
+[harness.sloppy]
+label = ""
+icon = 7
+match = "bad match"
+launch = ["", "nope"]
+usage = "turbo"
+context = "nope"
+chat = "true"

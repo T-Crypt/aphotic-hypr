@@ -1,0 +1,5 @@
+# The stem is the id, and this one fails the id charset rule.
+label = "Bad id"
+
+[harness."Bad_ID"]
+label = "Bad id"

@@ -29,7 +29,7 @@ ColumnLayout {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.surface, 2)
+            color: Colours.layer(Colours.surfaceLift, 2)
 
             MaterialIcon {
                 anchors.centerIn: parent
@@ -90,7 +90,7 @@ ColumnLayout {
                     width: 220
                     implicitHeight: communityCol.implicitHeight + Tokens.padding.large * 2
                     radius: Tokens.rounding.medium
-                    color: Colours.surface
+                    color: Colours.surfaceLift
 
                     ColumnLayout {
                         id: communityCol

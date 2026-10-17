@@ -48,7 +48,7 @@ RowLayout {
         const parts = root.currentCategory.split("/");
         root.requestedSection = parts.length > 1 ? parts[1] : "";
         root.requestedRow = parts.length > 2 ? parts[2] : "";
-        root._highlightedRow = null;
+        root._clearHighlight();
         root._rowAttempts = 0;
         if (root.requestedSection !== "" || root.requestedRow !== "")
             revealTimer.restart();
@@ -83,11 +83,18 @@ RowLayout {
         }
     }
 
-    function _revealRow(): void {
-        if (root._highlightedRow) {
+    // The panel owns the one mark a search hit leaves. Clearing it here,
+    // before the reference drops, keeps a row from a previous hit marked
+    // when the next hit lands in the same category (whose address change
+    // never rebuilds the pane, so the old row survives to be seen).
+    function _clearHighlight(): void {
+        if (root._highlightedRow && root._highlightedRow.highlighted !== undefined)
             root._highlightedRow.highlighted = false;
-            root._highlightedRow = null;
-        }
+        root._highlightedRow = null;
+    }
+
+    function _revealRow(): void {
+        root._clearHighlight();
         if (root.requestedRow === "" || !paneLoader.item)
             return;
         const row = root._findRow(paneLoader.item, root.requestedRow);

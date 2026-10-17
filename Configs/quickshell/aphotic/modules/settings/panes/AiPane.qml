@@ -58,7 +58,7 @@ ColumnLayout {
                             Layout.preferredWidth: pillLabel.implicitWidth + Tokens.padding.medium * 2
                             radius: Tokens.rounding.full
                             opacity: providerPill.available ? 1 : 0.4
-                            color: providerPill.active ? Colours.signal : Colours.layer(Colours.surface, 3)
+                            color: providerPill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                             Behavior on color {
                                 CAnim {}
@@ -129,7 +129,7 @@ ColumnLayout {
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.surface, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     TextInput {
                         id: hostInput
@@ -219,7 +219,7 @@ ColumnLayout {
                         radius: Tokens.rounding.full
                         visible: AiProviders.ollamaReachable
                         opacity: AiProviders.stoppingOllama ? 0.5 : 1
-                        color: Colours.layer(Colours.surface, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         StyledText {
                             id: stopLabel
@@ -254,7 +254,7 @@ ColumnLayout {
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 28
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.surface, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     MaterialIcon {
                         anchors.centerIn: parent
@@ -294,7 +294,7 @@ ColumnLayout {
                     implicitHeight: 28
                     implicitWidth: modelLabel.implicitWidth + Tokens.padding.medium * 2
                     radius: Tokens.rounding.full
-                    color: modelPill.active ? Colours.signal : Colours.layer(Colours.surface, 2)
+                    color: modelPill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 2)
 
                     StyledText {
                         id: modelLabel
@@ -345,7 +345,7 @@ ColumnLayout {
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.surface, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     TextInput {
                         id: llamaSwapHostInput
@@ -414,7 +414,7 @@ ColumnLayout {
                             Layout.preferredHeight: 28
                             Layout.preferredWidth: inferenceLabel.implicitWidth + Tokens.padding.medium * 2
                             radius: Tokens.rounding.full
-                            color: inferencePill.active ? Colours.signal : Colours.layer(Colours.surface, 3)
+                            color: inferencePill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                             StyledText {
                                 id: inferenceLabel
@@ -464,7 +464,7 @@ ColumnLayout {
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.surface, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     TextInput {
                         id: lmStudioHostInput
@@ -618,7 +618,7 @@ ColumnLayout {
                         Layout.preferredWidth: 160
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.surface, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         TextInput {
                             id: pullInput
@@ -782,7 +782,7 @@ ColumnLayout {
                             Layout.preferredWidth: 28
                             Layout.preferredHeight: 28
                             radius: Tokens.rounding.full
-                            color: Colours.layer(Colours.surface, 3)
+                            color: Colours.layer(Colours.surfaceLift, 3)
 
                             MaterialIcon {
                                 anchors.centerIn: parent
@@ -817,7 +817,7 @@ ColumnLayout {
                             Layout.preferredWidth: 200
                             Layout.preferredHeight: 32
                             radius: Tokens.rounding.full
-                            color: Colours.layer(Colours.surface, 3)
+                            color: Colours.layer(Colours.surfaceLift, 3)
 
                             TextInput {
                                 id: ggufDirInput
@@ -872,7 +872,7 @@ ColumnLayout {
                             Layout.preferredWidth: 28
                             Layout.preferredHeight: 28
                             radius: Tokens.rounding.full
-                            color: Colours.layer(Colours.surface, 3)
+                            color: Colours.layer(Colours.surfaceLift, 3)
 
                             MaterialIcon {
                                 anchors.centerIn: parent
@@ -981,7 +981,7 @@ ColumnLayout {
                             Layout.preferredHeight: 28
                             Layout.preferredWidth: defaultProviderLabel.implicitWidth + Tokens.padding.medium * 2
                             radius: Tokens.rounding.full
-                            color: defaultProviderPill.active ? Colours.signal : Colours.layer(Colours.surface, 3)
+                            color: defaultProviderPill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                             StyledText {
                                 id: defaultProviderLabel
@@ -1015,7 +1015,7 @@ ColumnLayout {
                     Layout.preferredWidth: 160
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.surface, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     TextInput {
                         id: defaultModelInput
@@ -1056,7 +1056,7 @@ ColumnLayout {
                         Layout.preferredWidth: 60
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.surface, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         TextInput {
                             id: maxSessionsInput
@@ -1090,7 +1090,7 @@ ColumnLayout {
                         Layout.preferredWidth: 60
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.surface, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         TextInput {
                             id: autoPruneInput
@@ -1153,7 +1153,7 @@ ColumnLayout {
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
                         opacity: AiProviders.pulling ? 0.5 : 1
-                        color: Colours.layer(Colours.surface, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         StyledText {
                             id: reinstallLabel
@@ -1184,7 +1184,7 @@ ColumnLayout {
                         Layout.preferredWidth: uninstallLabel.implicitWidth + Tokens.padding.large * 2
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: uninstallButton.confirming ? Colours.alert : Colours.layer(Colours.surface, 3)
+                        color: uninstallButton.confirming ? Colours.alert : Colours.layer(Colours.surfaceLift, 3)
 
                         Behavior on color {
                             CAnim {}
@@ -1250,7 +1250,7 @@ ColumnLayout {
                 Layout.preferredWidth: 170
                 Layout.preferredHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.surface, 3)
+                color: Colours.layer(Colours.surfaceLift, 3)
 
                 TextInput {
                     id: keyInput
@@ -1288,7 +1288,7 @@ ColumnLayout {
                 Layout.preferredWidth: clearLabel.implicitWidth + Tokens.padding.large * 2
                 Layout.preferredHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.surface, 3)
+                color: Colours.layer(Colours.surfaceLift, 3)
 
                 StyledText {
                     id: clearLabel
