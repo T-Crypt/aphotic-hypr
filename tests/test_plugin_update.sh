@@ -155,4 +155,37 @@ aphotic_plugin_set_enabled scratch-upd true
 _aphotic_plugin_update nonexistent >/dev/null 2>&1 && fail "expected update of an uninstalled plugin to fail"
 _aphotic_plugin_update "" >/dev/null 2>&1 && fail "expected update with no argument to fail"
 
+# --- an update reruns the harness descriptor merge ---
+
+HSRC="$APHOTIC_PLUGINS_REPO/scratch-hooks"
+mkdir -p "$HSRC/hooks"
+printf '#!/bin/sh\nexit 0\n' > "$HSRC/hooks/wire.sh"
+printf '#!/bin/sh\nexit 0\n' > "$HSRC/hooks/unwire.sh"
+write_hooks_manifest() {
+    cat > "$HSRC/plugin.toml" <<EOF
+[plugin]
+name = "scratch-hooks"
+display_name = "Scratch Hooks"
+description = "test harness plugin"
+version = "$1"
+category = "ai"
+capabilities = ["harness-hook"]
+
+[harness]
+wire = "hooks/wire.sh"
+unwire = "hooks/unwire.sh"
+$2
+EOF
+}
+write_hooks_manifest "1.0.0" ""
+_aphotic_plugin_install scratch-hooks false >/dev/null 2>&1
+HARNESSES="$APHOTIC_STATE_HOME/harnesses.json"
+[[ "$(jq '[.harnesses[] | select(.id == "scratch")] | length' "$HARNESSES")" -eq 0 ]] \
+    || fail "expected no scratch descriptor before the update"
+
+write_hooks_manifest "1.1.0" $'\n[harness.scratch]\nlabel = "Scratch"'
+_aphotic_plugin_update scratch-hooks >/dev/null 2>&1
+[[ "$(jq -r '.harnesses[] | select(.id == "scratch") | .label' "$HARNESSES")" == "Scratch" ]] \
+    || fail "expected update to rerun the harness merge and pick up the new descriptor"
+
 echo "PASS: plugin update refreshes in place, preserves disabled state, and stages safely"
