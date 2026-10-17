@@ -1515,8 +1515,9 @@ _aphotic_plugin_update() {
     _aphotic_plugin_sync_repo || return 1
 
     if [[ "$target" != "--all" ]]; then
-        _aphotic_plugin_update_one "$target"
-        return $?
+        _aphotic_plugin_update_one "$target" || rc=1
+        _aphotic_plugin_harness_merge
+        return "$rc"
     fi
 
     # A disabled plugin is skipped by --all rather than refreshed:
@@ -1538,6 +1539,7 @@ _aphotic_plugin_update() {
     if [[ ${#skipped[@]} -gt 0 ]]; then
         aphotic_log "skipped ${#skipped[@]} disabled plugin(s): ${skipped[*]} -- update by name to refresh anyway"
     fi
+    _aphotic_plugin_harness_merge
     return "$rc"
 }
 
