@@ -962,7 +962,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api keybinds tmp
+    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api keybinds
     local display desc category binaries
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
@@ -1139,6 +1139,16 @@ _aphotic_plugin_unwire_harness() {
     _aphotic_plugin_run_harness_lifecycle_script "$1" unwire
 }
 
+# The merge runs after every moment plugins.json changes; drop-in edits
+# are picked up by `aphotic agent harnesses` or the next usage-update.
+# Best-effort, same as wire/unwire: a failed merge leaves harnesses.json
+# stale and says so, it never fails the plugin command.
+_aphotic_plugin_harness_merge() {
+    command -v python3 >/dev/null 2>&1 || return 0
+    python3 "$(_aphotic_plugin_lib_dir)/harnesses_merge.py" "$APHOTIC_STATE_HOME" \
+        || aphotic_warn "harness descriptor merge failed -- harnesses.json may be stale"
+}
+
 # Real, live-confirmed architecture gap (2026-08-30): install.sh's
 # `deploy_user_configs` does `rm -rf`/`cp -R` over the WHOLE of
 # `Configs/quickshell/aphotic` -> `~/.config/quickshell/aphotic` on
@@ -1250,6 +1260,7 @@ _aphotic_plugin_install() {
     _aphotic_plugin_registry_sync "$name"
     _aphotic_plugin_link_ui_module "$name"
     _aphotic_plugin_wire_harness "$name" || true
+    _aphotic_plugin_harness_merge
 
     aphotic_ok "installed ${name}"
     echo "PLUGIN INSTALLED: ${name}"
@@ -1383,6 +1394,7 @@ _aphotic_plugin_remove() {
     rm -rf "$dest"
     aphotic_plugin_set_enabled "$name" true # clear any disabled-state entry
     _aphotic_plugin_registry_remove "$name"
+    _aphotic_plugin_harness_merge
     aphotic_ok "removed ${name}"
 }
 
@@ -1700,6 +1712,24 @@ CHECK_PATH
         done < <(jq -r '[.[].combo] | group_by(ascii_downcase) | map(select(length > 1)) | .[][0]' <<<"$keybind_entries")
     fi
 
+    # An id outside the shape the merge accepts is worth naming before
+    # install, since the merge will silently drop it. Both are warnings:
+    # the merge refuses the descriptor, not the plugin.
+    local harness_sections hid has_harness_cap="false"
+    harness_sections="$(_aphotic_plugin_manifest_harness_sections "$manifest")"
+    _aphotic_plugin_in_list "harness-hook" "$caps" && has_harness_cap="true"
+    while IFS= read -r hid; do
+        [[ -n "$hid" ]] || continue
+        if [[ "$has_harness_cap" == "false" ]]; then
+            aphotic_warn "${name}: [harness.${hid}] present but capabilities does not include 'harness-hook'"
+            warns=$((warns + 1))
+        fi
+        if [[ ! "$hid" =~ ^[a-z][a-z0-9_-]*$ ]]; then
+            aphotic_warn "${name}: [harness.${hid}] id '${hid}' is not lowercase letters, digits, hyphens or underscores -- dropped"
+            warns=$((warns + 1))
+        fi
+    done <<<"$harness_sections"
+
     # Every file a manifest section points at: must resolve inside the
     # plugin's own directory (no leading '/', no '..' segment -- these
     # get concatenated straight into a symlink target or a Loader
@@ -1888,6 +1918,14 @@ _aphotic_plugin_manifest_keybind_sections() {
     sed -n 's/^[[:space:]]*\[\(keybind\(_[2-5]\)\?\)\][[:space:]]*$/\1/p' "$manifest" | sort -u
 }
 
+# The [harness.<id>] descriptor subtables a manifest declares, by id.
+# [harness] itself (wire/unwire) never matches, only the dotted ones.
+_aphotic_plugin_manifest_harness_sections() {
+    local manifest="$1"
+    [[ -f "$manifest" ]] || return 0
+    sed -n 's/^[[:space:]]*\[harness\.\([^]]*\)\][[:space:]]*$/\1/p' "$manifest" | sort -u
+}
+
 
 aphotic_cmd_plugin() {
     local sub="${1:-}"; shift || true
@@ -1960,12 +1998,14 @@ aphotic_cmd_plugin() {
             aphotic_plugin_set_enabled "$1" true && aphotic_ok "enabled ${1}"
             _aphotic_plugin_link_ui_module "$1"
             _aphotic_plugin_wire_harness "$1" || true
+            _aphotic_plugin_harness_merge
             ;;
         disable)
             [[ -n "${1:-}" ]] || { aphotic_err "usage: aphotic plugin disable <name>"; return 1; }
             aphotic_plugin_set_enabled "$1" false && aphotic_ok "disabled ${1}"
             _aphotic_plugin_unlink_ui_module "$1"
             _aphotic_plugin_unwire_harness "$1" || true
+            _aphotic_plugin_harness_merge
             ;;
         update)
             _aphotic_plugin_update "${1:-}"
