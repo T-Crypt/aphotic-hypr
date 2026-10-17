@@ -79,7 +79,7 @@ ColumnLayout {
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: -Tokens.spacing.extraSmall
-                text: "Aphotic-Hypr"
+                text: "Aphotic"
                 color: Colours.ink
                 font: Tokens.font.headline.large
             }

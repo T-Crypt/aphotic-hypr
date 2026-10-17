@@ -2,7 +2,7 @@
 
 ## Our pledge
 
-We want participation in Aphotic-Hypr to be a harassment-free experience
+We want participation in Aphotic to be a harassment-free experience
 for everyone, regardless of experience level, gender identity and
 expression, sexual orientation, disability, personal appearance, body
 size, race, ethnicity, age, religion, or nationality.
