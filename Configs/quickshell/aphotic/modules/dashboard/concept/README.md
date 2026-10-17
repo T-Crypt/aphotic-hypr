@@ -2,10 +2,12 @@
 
 The recommended concept, "Signal Spine", lives here as a working prototype:
 
-- `ConceptPulse.qml` -- the surface: clock resolving out of noise, the
-  machine's terrain above the spine, the day's leaves below it.
-- `PulseTerrain.qml` -- the canvas that draws CPU history as a ridge,
-  memory as a rising fill and network as a thin bright line.
+- `ConceptPulse.qml` -- the surface: clock, readouts, the machine's
+  terrain above the spine, the day's leaves below it in equal slots. The
+  surface draws its own dark gradient, so a bright wallpaper never
+  outshouts the text.
+- `PulseTerrain.qml` -- the canvas that draws CPU history as a ridge and
+  network as a low band along the floor. Memory stays a readout.
 - `ConceptProbe.qml` -- the offscreen render probe. It copies to the
   config root at run time because `qs -p` resolves `qs.*` imports only
   from the config root.
