@@ -962,7 +962,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api keybinds tmp
+    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api keybinds
     local display desc category binaries
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
