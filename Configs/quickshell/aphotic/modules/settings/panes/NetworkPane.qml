@@ -47,7 +47,7 @@ ColumnLayout {
                 implicitWidth: 260
                 implicitHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.surface, 3)
+                color: Colours.layer(Colours.surfaceLift, 3)
 
                 TextInput {
                     id: configInput
@@ -99,7 +99,7 @@ ColumnLayout {
                 implicitWidth: actionLabel.implicitWidth + Tokens.padding.large * 2
                 implicitHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.surface
+                color: Colours.surfaceLift
                 opacity: actionButton.enabled ? 1 : 0.5
 
                 readonly property bool enabled: !Vpn.busy && (root.profileActive || Settings.vpnConfigPath.length > 0)

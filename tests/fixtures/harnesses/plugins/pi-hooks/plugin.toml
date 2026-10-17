@@ -1,0 +1,21 @@
+[plugin]
+name = "pi-hooks"
+display_name = "Pi Agent Hooks"
+description = "Fixture mirroring the shipped pi-hooks manifest shape: two harnesses from one manifest."
+version = "1.0.0"
+category = "ai"
+capabilities = ["harness-hook"]
+
+[harness]
+wire = "hooks/wire.sh"
+unwire = "hooks/unwire.sh"
+
+[harness.pi]
+label = "Pi"
+usage = "stream"
+context = "stream"
+
+[harness.omp]
+label = "OMP"
+usage = "stream"
+context = "stream"

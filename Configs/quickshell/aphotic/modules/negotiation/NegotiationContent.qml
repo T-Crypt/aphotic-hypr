@@ -166,7 +166,7 @@ Item {
                         Layout.preferredHeight: buttonLabel.implicitHeight + Tokens.padding.small * 2
                         radius: Tokens.rounding.full
                         opacity: button.modelData.enabled ? 1 : 0.4
-                        color: button.modelData.filled ? Colours.signal : Colours.layer(Colours.surface, 2)
+                        color: button.modelData.filled ? Colours.signal : Colours.layer(Colours.surfaceLift, 2)
 
                         StyledText {
                             id: buttonLabel

@@ -112,7 +112,7 @@ ColumnLayout {
                 implicitWidth: 40
                 implicitHeight: 40
                 radius: Tokens.rounding.full
-                color: swatch.isThemeDefault ? Colours.surface : swatch.modelData
+                color: swatch.isThemeDefault ? Colours.surfaceLift : swatch.modelData
                 border.width: swatch.active ? 3 : 1
                 border.color: swatch.active ? Colours.ink : Colours.outline
 
@@ -517,7 +517,7 @@ ColumnLayout {
         implicitWidth: addIconLabel.implicitWidth + Tokens.padding.large * 2
         implicitHeight: 40
         radius: Tokens.rounding.medium
-        color: canAdd ? Colours.signal : Colours.surface
+        color: canAdd ? Colours.signal : Colours.surfaceLift
 
         StyledText {
             id: addIconLabel
@@ -682,7 +682,7 @@ ColumnLayout {
         implicitHeight: 32
         implicitWidth: pillLabel.implicitWidth + Tokens.padding.large * 2
         radius: Tokens.rounding.full
-        color: pill.active ? Colours.signal : Colours.surface
+        color: pill.active ? Colours.signal : Colours.surfaceLift
 
         StyledText {
             id: pillLabel

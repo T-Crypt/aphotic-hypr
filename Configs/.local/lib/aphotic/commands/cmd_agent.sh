@@ -4,6 +4,7 @@
 # @cmd.desc: Track AI coding-agent usage and feed the agent event stream
 # @cmd.group: CORE
 # @cmd.opt: usage-update  | Parse local Claude/Codex transcripts and write agent-usage.json
+# @cmd.opt: harnesses  | Merge harness descriptors from plugins and drop-ins into harnesses.json
 # @cmd.opt: emit <event>  | Write one validated v2 agent event through the hook writer
 # @cmd.opt: run --harness NAME -- <command...>  | Wrap a command with session_start and session_end
 
@@ -69,7 +70,8 @@ aphotic_cmd_agent() {
     case "${1:-}" in
         -h|--help|"")
             cat <<HELP
-Usage: aphotic agent usage-update
+Usage: aphotic agent harnesses
+       aphotic agent usage-update
        aphotic agent emit <event> --session ID --harness NAME
                [--model M] [--provider P] [--cwd DIR] [--status S] [--end-reason R]
                [--tokens-in N] [--tokens-out N] [--cache-read N] [--cache-write N]
@@ -79,6 +81,12 @@ Usage: aphotic agent usage-update
   usage-update   Parse local Claude/Codex transcripts and write
                  \$APHOTIC_STATE_HOME/agent-usage.json (aggregate token
                  counts only -- never prompts, responses, or credentials)
+
+  harnesses      Re-merge harness descriptors (plugin manifests plus
+                 ~/.config/aphotic/harnesses/ drop-ins) into
+                 \$APHOTIC_STATE_HOME/harnesses.json. Runs on its own
+                 after any plugin change; run it by hand to pick up a
+                 drop-in edit immediately.
 
   emit <event>   Write one validated v2 agent event through the hook
                  writer. For harnesses without a hook system of their
@@ -94,7 +102,15 @@ HELP
             ;;
         usage-update)
             aphotic_require python3 || return 1
+            # The merge first: it is the only moment drop-in edits and
+            # plugin manifest changes reach harnesses.json on this path,
+            # and agent_usage is about to be the next reader of it.
+            python3 "${APHOTIC_AGENT_LIB_DIR}/harnesses_merge.py" "$APHOTIC_STATE_HOME" || return 1
             python3 "${APHOTIC_AGENT_LIB_DIR}/agent_usage.py" "$APHOTIC_STATE_HOME"
+            ;;
+        harnesses)
+            aphotic_require python3 || return 1
+            python3 "${APHOTIC_AGENT_LIB_DIR}/harnesses_merge.py" "$APHOTIC_STATE_HOME"
             ;;
         emit)
             shift

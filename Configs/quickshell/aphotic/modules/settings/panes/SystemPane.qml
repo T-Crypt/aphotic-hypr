@@ -89,7 +89,7 @@ ColumnLayout {
             Layout.preferredHeight: 28
             Layout.preferredWidth: refreshLabel.implicitWidth + Tokens.padding.medium * 2
             radius: Tokens.rounding.full
-            color: Colours.surface
+            color: Colours.surfaceLift
 
             StyledText {
                 id: refreshLabel
@@ -287,7 +287,7 @@ ColumnLayout {
         // to be exactly as tall as its content, not a guessed constant.
         Layout.preferredHeight: doctorText.implicitHeight + Tokens.padding.medium * 2
         radius: Tokens.rounding.large
-        color: Colours.surface
+        color: Colours.surfaceLift
 
         StyledText {
             id: doctorText
@@ -339,7 +339,7 @@ ColumnLayout {
             Layout.preferredHeight: 28
             Layout.preferredWidth: checkLabel.implicitWidth + Tokens.padding.medium * 2
             radius: Tokens.rounding.full
-            color: Colours.surface
+            color: Colours.surfaceLift
             opacity: root.packageCheckRunning ? 0.5 : 1
 
             StyledText {
@@ -437,7 +437,7 @@ ColumnLayout {
                 Layout.preferredHeight: 28
                 Layout.preferredWidth: pendingCheckLabel.implicitWidth + Tokens.padding.medium * 2
                 radius: Tokens.rounding.full
-                color: Colours.surface
+                color: Colours.surfaceLift
                 opacity: root.pendingUpdatesRunning ? 0.5 : 1
 
                 StyledText {

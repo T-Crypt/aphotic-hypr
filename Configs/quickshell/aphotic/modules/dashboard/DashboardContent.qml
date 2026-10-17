@@ -207,7 +207,7 @@ ColumnLayout {
             anchors.fill: parent
             visible: false
             radius: parent.radius
-            baseColour: Colours.surface
+            baseColour: Colours.surfaceLift
         }
 
         Loader {

@@ -249,7 +249,7 @@ ColumnLayout {
             implicitWidth: addEntryLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 36
             radius: Tokens.rounding.medium
-            color: Colours.surface
+            color: Colours.surfaceLift
 
             StyledText {
                 id: addEntryLabel
@@ -311,7 +311,7 @@ ColumnLayout {
             implicitWidth: saveLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 40
             radius: Tokens.rounding.medium
-            color: canSave ? Colours.signal : Colours.surface
+            color: canSave ? Colours.signal : Colours.surfaceLift
 
             StyledText {
                 id: saveLabel

@@ -21,7 +21,7 @@ SettingsRow {
         StyledRect {
             anchors.fill: parent
             radius: Tokens.rounding.full
-            color: root.checked ? Colours.signal : Colours.layer(Colours.surface, 3)
+            color: root.checked ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
             border.width: root.checked ? 0 : 1
             border.color: Colours.outline
 

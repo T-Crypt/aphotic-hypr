@@ -1,0 +1,14 @@
+[plugin]
+name = "alpha-hooks"
+display_name = "Alpha Hooks"
+description = "Claims an id a second fixture plugin also claims."
+version = "1.0.0"
+category = "ai"
+capabilities = ["harness-hook"]
+
+[harness]
+wire = "hooks/wire.sh"
+unwire = "hooks/unwire.sh"
+
+[harness.dup]
+label = "Alpha"

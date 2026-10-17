@@ -74,7 +74,7 @@ Item {
             StyledRect {
                 anchors.fill: parent
                 radius: height / 2
-                color: Colours.surface
+                color: Colours.surfaceLift
             }
 
             StyledRect {
