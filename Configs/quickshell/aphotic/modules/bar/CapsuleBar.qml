@@ -16,6 +16,11 @@ Item {
     required property ShellScreen screen
     required property ScreenState screenState
 
+    // The edge the notch joins: the edge away from the screen edge this
+    // capsule docks to. The pill's hairline opens there across the shared
+    // notch span.
+    readonly property string notchEdge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+
     readonly property bool horizontal: Settings.barHorizontal
     // Which way the popout grows: away from the screen edge the bar is
     // docked against, so it never covers the pill.
@@ -115,6 +120,8 @@ Item {
         height: root.horizontal ? root.rowThickness : root.alongExtent
 
         radius: BarLayout.cornerRadius(Settings.barCorners, root.rowThickness)
+        horizontal: root.horizontal
+        openEdge: root.notchEdge
         // Hard guarantee, not decoration: this window masks input to the
         // bar's own bounds, so anything a child renders outside them is
         // both visually loose and completely dead to the pointer. Clipping
@@ -199,8 +206,9 @@ Item {
             }
         }
 
-        // The screen-facing edge line, shortened by the corner radius at
-        // both ends so the hairline never runs off the rounded corners.
+        // The notch-facing edge line, shortened by the corner radius at both
+        // ends so the hairline never runs off the rounded corners. It opens
+        // across the notch span.
         Item {
             x: root.horizontal ? parent.radius : 0
             y: root.horizontal ? 0 : parent.radius
@@ -209,7 +217,8 @@ Item {
 
             SignalLine {
                 horizontal: root.horizontal
-                edge: (root.horizontal ? !Settings.barPositionBottom : !Settings.barPositionRight) ? "start" : "end"
+                edge: root.notchEdge
+                gapLength: root.screenState.notchSpan
             }
         }
     }

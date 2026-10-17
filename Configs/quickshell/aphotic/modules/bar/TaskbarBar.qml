@@ -20,6 +20,10 @@ Item {
     required property bool fullscreen
     required property real thickness
 
+    // The edge the notch joins: the edge away from the screen edge this bar
+    // docks to. The strip's hairline opens there across the shared notch span.
+    readonly property string notchEdge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+
     implicitWidth: thickness
     implicitHeight: layout.implicitHeight + Tokens.padding.small * 2
 
@@ -205,7 +209,8 @@ Item {
         readonly property Item task: root.focusedTaskItem
 
         horizontal: Settings.barHorizontal
-        edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+        edge: root.notchEdge
+        gapLength: root.screenState.notchSpan
         level: "active"
         activeStart: {
             // Read the task's x/y for the dependency: mapToItem alone

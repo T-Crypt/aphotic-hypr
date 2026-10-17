@@ -33,6 +33,11 @@ Item {
     // than a literal couple-of-pixels sliver.
     readonly property alias hoverTarget: content
 
+    // The edge the notch joins: the edge away from the screen edge this bar
+    // docks to. The strip leaves it to the SignalLine so the hairline can
+    // open across the shared notch span.
+    readonly property string notchEdge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+
     readonly property int padding: Math.max(Tokens.padding.small, Config.border.thickness)
     // Integer thickness. The bar's exclusive zone (barWrapper.exclusiveZone) and
     // its rendered fill (background/content) must agree down to a pixel, or the
@@ -155,6 +160,10 @@ Item {
         // MinimalBar.qml) instead of inheriting Full's strip treatment.
         radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? height : width)
         tone: Colours.signalStyle.bar
+        horizontal: Settings.barHorizontal
+        // The notch-facing edge is the SignalLine's to draw below, with the
+        // gap the notch span opens in it.
+        openEdge: root.notchEdge
         visible: root.shouldBeVisible && Settings.barStyle === "full"
 
         Behavior on radius {
@@ -174,8 +183,8 @@ Item {
                 : 0
 
             horizontal: Settings.barHorizontal
-            edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
-            gapLength: root.screenState?.notchSpan ?? 0
+            edge: root.notchEdge
+            gapLength: root.screenState.notchSpan
             activeStart: (signalLine.win?.signalActiveStart ?? 0) - signalLine.origin
             activeLength: signalLine.win?.signalActiveLength ?? 0
             hoverStart: (signalLine.win?.signalHoverStart ?? 0) - signalLine.origin
