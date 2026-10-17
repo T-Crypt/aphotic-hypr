@@ -20,9 +20,9 @@ ColumnLayout {
 
     readonly property var activeSession: IntelligenceSessions.activeSession
     // Resolved through chatProviderOr because a saved session records the
-    // provider it was created with -- an old Ollama session on a shell with
-    // the AI layer off, or any Codex session, would otherwise leave the
-    // header pointing at a pill that is no longer in the list.
+    // provider it was created with: one whose provider is no longer
+    // configured, or whose AI layer is off, would otherwise leave the
+    // header pointing at a pill that is not in the list.
     readonly property string effectiveProvider: AiProviders.chatProviderOr(root.activeSession?.provider ?? (Settings.intelligenceDefaultProvider || AiConfig.activeProvider))
     readonly property string effectiveModel: root.activeSession?.model ?? (Settings.intelligenceDefaultModel || AiConfig.ollamaModel)
 
@@ -41,11 +41,8 @@ ColumnLayout {
             IntelligenceSessions.createSession(root.effectiveProvider, model);
     }
 
-    // The two action buttons get their own pinned row -- previously they
-    // trailed the provider-pill row and scrolled out of reach whenever the
-    // pills overflowed. Keeping them on a fixed top-right row means they're
-    // always in the same spot regardless of how many providers are
-    // configured or how long the active Ollama model name is.
+    // The two action buttons sit on their own pinned row so they stay in
+    // the top-right corner no matter how far the provider pills wrap.
     RowLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.small
@@ -70,10 +67,6 @@ ColumnLayout {
             Interact {
                 anchors.fill: parent
                 radius: parent.radius
-            }
-
-            MouseArea {
-                anchors.fill: parent
                 onClicked: root.newSessionRequested()
             }
         }
@@ -99,21 +92,15 @@ ColumnLayout {
                 anchors.fill: parent
                 radius: parent.radius
                 showHoverBackground: !root.historyOpen
-            }
-
-            MouseArea {
-                anchors.fill: parent
                 onClicked: root.historyToggled()
             }
         }
     }
 
-    // Fixed-width provider labels + an unbounded Ollama model name can
-    // together exceed the panel's width. This used to scroll horizontally
-    // with no visible affordance, so pills like "Codex" silently ended up
-    // off-screen with no hint they existed. Wrapping onto additional lines
-    // instead keeps every pill visible and reachable with a plain click --
-    // the card has vertical room to spare for it.
+    // The provider pills can together exceed the panel's width. They used
+    // to scroll horizontally with no visible affordance, hiding pills
+    // off-screen. Wrapping onto more lines keeps every pill visible and
+    // reachable with a plain click, and the card has room for it.
     Flow {
         Layout.fillWidth: true
         spacing: Tokens.spacing.small
@@ -150,10 +137,6 @@ ColumnLayout {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: providerPill.available
-                }
-
-                MouseArea {
-                    anchors.fill: parent
                     onClicked: {
                         if (providerPill.available)
                             root._selectProvider(providerPill.modelData.id);
@@ -185,10 +168,6 @@ ColumnLayout {
             Interact {
                 anchors.fill: parent
                 radius: parent.radius
-            }
-
-            MouseArea {
-                anchors.fill: parent
                 onClicked: modelMenu.open()
             }
 
