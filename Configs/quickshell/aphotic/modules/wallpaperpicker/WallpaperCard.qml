@@ -101,7 +101,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            color: Colours.surface
+            color: Colours.surfaceLift
         }
 
         Image {

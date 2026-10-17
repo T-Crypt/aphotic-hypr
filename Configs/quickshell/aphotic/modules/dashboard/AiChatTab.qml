@@ -206,7 +206,7 @@ ColumnLayout {
                 padding: Tokens.padding.small
                 background: StyledRect {
                     radius: Tokens.rounding.medium
-                    color: Colours.surface
+                    color: Colours.surfaceLift
                 }
 
                 contentItem: ColumnLayout {

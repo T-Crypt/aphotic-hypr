@@ -34,7 +34,7 @@ Item {
         implicitWidth: 72
         implicitHeight: 32
         radius: Tokens.rounding.small
-        color: Colours.surface
+        color: Colours.surfaceLift
 
         RowLayout {
             anchors.fill: parent
@@ -82,7 +82,7 @@ Item {
 
             background: StyledRect {
                 radius: Tokens.rounding.medium
-                color: Colours.surface
+                color: Colours.surfaceLift
                 border.width: 1
                 border.color: Colours.outline
             }

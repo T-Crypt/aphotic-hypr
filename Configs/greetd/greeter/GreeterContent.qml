@@ -293,7 +293,7 @@ Item {
                     visible: root._greetdChecked && !Greetd.available
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
-                    text: qsTr("greetd session not detected — this screen only functions when launched by greetd.")
+                    text: qsTr("greetd session not detected. This screen only runs when greetd launches it.")
                     color: Colours.errorColor
                     font.pixelSize: 12
                 }

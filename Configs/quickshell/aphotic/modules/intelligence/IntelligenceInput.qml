@@ -50,7 +50,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(Math.max(48, inputFlick.contentHeight + Tokens.padding.medium * 2), 160)
         radius: Tokens.rounding.large
-        color: Colours.layer(Colours.surface, 3)
+        color: Colours.layer(Colours.surfaceLift, 3)
 
         RowLayout {
             anchors.fill: parent
