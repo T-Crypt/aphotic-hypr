@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell.Io
 import qs.services
 import qs.services.profile
+import "profile/ClaimAdoption.js" as Adoption
 
 // The one place "gpu-vram" is ever declared, and the catch-all claim
 // source for GPU memory held by anything that isn't a domain plugin.
@@ -88,7 +89,7 @@ QtObject {
     }
 
     function _isMine(id: string): bool {
-        return id.startsWith(root.claimPrefix) || root._isAdoptedId(id);
+        return id.startsWith(root.claimPrefix) || Adoption.namesManagedPid(root._adopted, id);
     }
 
     function _releaseAll(): void {
@@ -108,31 +109,23 @@ QtObject {
     // two call sites have to agree about.
     property var _adopted: ({})
 
-    function adopt(pid: int, owner: string, priority: string): void {
+    function adopt(pid: int, owner: string, priority: string): bool {
         if (!pid || !owner)
-            return;
-        const next = Object.assign({}, root._adopted);
-        next[String(pid)] = {
-            owner: owner,
-            priority: priority === "foreground" ? "foreground" : "background"
-        };
-        root._adopted = next;
+            return false;
+        const result = Adoption.adopt(root._adopted, pid, owner, priority);
+        if (result.taken)
+            return false;
+        root._adopted = result.adopted;
         ResourceEngine.release(`${root.claimPrefix}${pid}`);
+        return true;
     }
 
     function unadopt(pid: int): void {
-        const key = String(pid);
-        if (!Object.prototype.hasOwnProperty.call(root._adopted, key))
+        const result = Adoption.unadopt(root._adopted, pid);
+        if (!result.owner)
             return;
-        const owned = root._adopted[key];
-        const next = Object.assign({}, root._adopted);
-        delete next[key];
-        root._adopted = next;
-        ResourceEngine.release(root._adoptedId(key, owned.owner));
-    }
-
-    function _adoptedId(pid: string, owner: string): string {
-        return `${owner}-proc-${pid}`;
+        root._adopted = result.adopted;
+        ResourceEngine.release(Adoption.claimId(pid, result.owner));
     }
 
     property string _probeVendor: ""
@@ -292,7 +285,7 @@ QtObject {
             const name = root._displayName(proc.path);
             const owned = root._adopted[proc.pid] ?? null;
             const owner = owned ? owned.owner : name;
-            const id = owned ? root._adoptedId(proc.pid, owner) : `${root.claimPrefix}${proc.pid}`;
+            const id = owned ? Adoption.claimId(proc.pid, owner) : `${root.claimPrefix}${proc.pid}`;
             seen[id] = true;
 
             const known = ResourceEngine.claimById(id);
@@ -316,14 +309,6 @@ QtObject {
             if (root._isMine(claim.id))
                 ResourceEngine.release(claim.id);
         }
-    }
-
-    function _isAdoptedId(id: string): bool {
-        for (const pid of Object.keys(root._adopted)) {
-            if (id === root._adoptedId(pid, root._adopted[pid].owner))
-                return true;
-        }
-        return false;
     }
 
     property Process _capacityProc: Process {
