@@ -281,7 +281,7 @@ function _sourceLabel(source, sourceName) {
     return "core";
 }
 
-// Section 3 precedence: a drop-in outranks a plugin, a plugin outranks
+// Precedence is drop-in over plugin over core, and a tie inside one tier
 // core, and a tie inside one tier keeps the first in registry order. Feed
 // the list highest-tier first. Every entry stays in `descriptors`, winner
 // before the entry it shadows; a shadowed entry carries an

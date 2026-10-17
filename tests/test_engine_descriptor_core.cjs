@@ -209,7 +209,7 @@ const hostile = core.normalize({ id: 'x', protocol: 'engine-report', endpoint: '
 assert.equal(hostile.descriptor.label, hostileLabel, 'a label is data, not syntax');
 assert.ok(!existsSync(marker), 'nothing ran while normalizing');
 
-// --- resolve: section 3 precedence -------------------------------------
+// --- resolve: drop-in over plugin over core ----------------------------
 
 function descriptor(id, source, sourceName, extra) {
     return Object.assign({ id: id, protocol: 'llama-swap', endpoint: '/running', host_key: 'h', capabilities: ['models'],

@@ -16,7 +16,7 @@ import "EngineDescriptorCore.js" as Core
 // [engine] block a plugin carries in plugins.json. The parser and the
 // precedence live in EngineDescriptorCore.js; this singleton owns the
 // scan, reads the host store, and exposes the resolved list. Nothing
-// consumes it in this slice, so no surface moves.
+// consumes it yet, so no surface moves.
 Singleton {
     id: root
 
@@ -105,7 +105,6 @@ Singleton {
     Process {
         id: scanProc
 
-        running: true
         command: ["sh", "-c", `for f in "$1"/*.toml; do [ -f "$f" ] || continue; printf 'CORE\\t%s\\n' "$(basename "$f")"; printf 'TEXT_BEGIN\\n'; cat "$f"; printf '\\nTEXT_END\\n'; done; for f in "$2"/*.toml; do [ -f "$f" ] || continue; printf 'DROP\\t%s\\n' "$(basename "$f")"; printf 'TEXT_BEGIN\\n'; cat "$f"; printf '\\nTEXT_END\\n'; done`, "aphotic-engines", root.enginesDir, root.dropInDir]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -167,6 +166,9 @@ Singleton {
         printErrors: false
     }
 
+    // The first scan starts on this process's exit, so startup runs the
+    // pipeline exactly once. `running: true` on scanProc would run it a
+    // second time alongside this trigger.
     Process {
         id: mkConfigDir
 
