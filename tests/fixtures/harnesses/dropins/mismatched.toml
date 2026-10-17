@@ -1,0 +1,4 @@
+# The subtable name does not match this file's stem, so the descriptor is
+# dropped with the filename-mismatch warning.
+[harness.other]
+label = "Other"

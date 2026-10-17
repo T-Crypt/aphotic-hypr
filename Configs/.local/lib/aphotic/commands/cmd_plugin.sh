@@ -1296,6 +1296,16 @@ _aphotic_plugin_unwire_harness() {
     _aphotic_plugin_run_harness_lifecycle_script "$1" unwire
 }
 
+# The merge runs after every moment plugins.json changes; drop-in edits
+# are picked up by `aphotic agent harnesses` or the next usage-update.
+# Best-effort, same as wire/unwire: a failed merge leaves harnesses.json
+# stale and says so, it never fails the plugin command.
+_aphotic_plugin_harness_merge() {
+    command -v python3 >/dev/null 2>&1 || return 0
+    python3 "$(_aphotic_plugin_lib_dir)/harnesses_merge.py" "$APHOTIC_STATE_HOME" \
+        || aphotic_warn "harness descriptor merge failed -- harnesses.json may be stale"
+}
+
 # Real, live-confirmed architecture gap (2026-08-30): install.sh's
 # `deploy_user_configs` does `rm -rf`/`cp -R` over the WHOLE of
 # `Configs/quickshell/aphotic` -> `~/.config/quickshell/aphotic` on
@@ -1407,6 +1417,7 @@ _aphotic_plugin_install() {
     _aphotic_plugin_registry_sync "$name"
     _aphotic_plugin_link_ui_module "$name"
     _aphotic_plugin_wire_harness "$name" || true
+    _aphotic_plugin_harness_merge
 
     aphotic_ok "installed ${name}"
     echo "PLUGIN INSTALLED: ${name}"
@@ -1540,6 +1551,7 @@ _aphotic_plugin_remove() {
     rm -rf "$dest"
     aphotic_plugin_set_enabled "$name" true # clear any disabled-state entry
     _aphotic_plugin_registry_remove "$name"
+    _aphotic_plugin_harness_merge
     aphotic_ok "removed ${name}"
 }
 
@@ -2109,6 +2121,14 @@ _aphotic_plugin_manifest_keybind_sections() {
     sed -n 's/^[[:space:]]*\[\(keybind\(_[2-5]\)\?\)\][[:space:]]*$/\1/p' "$manifest" | sort -u
 }
 
+# The [harness.<id>] descriptor subtables a manifest declares, by id.
+# [harness] itself (wire/unwire) never matches, only the dotted ones.
+_aphotic_plugin_manifest_harness_sections() {
+    local manifest="$1"
+    [[ -f "$manifest" ]] || return 0
+    sed -n 's/^[[:space:]]*\[harness\.\([^]]*\)\][[:space:]]*$/\1/p' "$manifest" | sort -u
+}
+
 
 aphotic_cmd_plugin() {
     local sub="${1:-}"; shift || true
@@ -2181,12 +2201,14 @@ aphotic_cmd_plugin() {
             aphotic_plugin_set_enabled "$1" true && aphotic_ok "enabled ${1}"
             _aphotic_plugin_link_ui_module "$1"
             _aphotic_plugin_wire_harness "$1" || true
+            _aphotic_plugin_harness_merge
             ;;
         disable)
             [[ -n "${1:-}" ]] || { aphotic_err "usage: aphotic plugin disable <name>"; return 1; }
             aphotic_plugin_set_enabled "$1" false && aphotic_ok "disabled ${1}"
             _aphotic_plugin_unlink_ui_module "$1"
             _aphotic_plugin_unwire_harness "$1" || true
+            _aphotic_plugin_harness_merge
             ;;
         update)
             _aphotic_plugin_update "${1:-}"
