@@ -85,6 +85,23 @@ _pkg_in_repos() {
   pacman -Si "$1" &>/dev/null
 }
 
+# Prints the first installed package that conflicts with $1. pacman
+# --noconfirm declines to remove it, and the installer never removes a
+# package on the user's behalf, so the caller skips $1 instead.
+_pkg_conflicting_installed() {
+  local conflicts c
+  conflicts=$(pacman -Si "$1" 2>/dev/null | awk -F': *' '/^Conflicts With/ { print $2; exit }')
+  for c in $conflicts; do
+    c="${c%%[<>=]*}"
+    [[ -z "$c" || "$c" == "None" ]] && continue
+    if pacman -T "$c" &>/dev/null; then
+      echo "$c"
+      return 0
+    fi
+  done
+  return 1
+}
+
 # Omarchy's pacman-guard hook wants its documented opt-out on direct pacman
 # calls (same reason install.sh's -Syu carries it).
 _pacman_install_cmd() {
@@ -181,6 +198,11 @@ install_software() {
   fi
   if _pkg_installed "$pkg"; then
     echo -e "$COK - $pkg is already installed."
+    return 0
+  fi
+  local held
+  if held=$(_pkg_conflicting_installed "$pkg"); then
+    echo -e "$CWR - Skipping $pkg: $held is installed and conflicts with it. Remove $held yourself to switch."
     return 0
   fi
   if [[ "$DRY_RUN" == "1" ]]; then
