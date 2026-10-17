@@ -8,14 +8,12 @@ import qs.config
 import qs.components
 import qs.services
 
-// First increment of a standalone theme-creation flow, deliberately
-// separate from AppearancePane (which only *selects* an existing theme,
-// never define/edit one). Creates a *static* theme: a fixed colorscheme
-// under ~/.config/wallust/colorschemes/<slug>.json (pywal format) plus a
-// matching ~/.config/awww/<slug>/theme.toml that points [engine].colorscheme
-// at it -- see themes/THEME_SPEC.md's "Fixed colorschemes" section. This
-// is purely additive to ~/.config -- it never touches the git repo, so
-// there's nothing to commit here.
+// Creates a static theme: a fixed colorscheme under
+// ~/.config/wallust/colorschemes/<slug>.json (pywal format) plus a
+// ~/.config/awww/<slug>/theme.toml that points [engine].colorscheme at
+// it (themes/THEME_SPEC.md, "Fixed colorschemes"). Separate from
+// AppearancePane, which only selects an existing theme. Writes stay
+// under ~/.config and never touch the git repo.
 ColumnLayout {
     id: root
 
@@ -82,7 +80,7 @@ ColumnLayout {
         const themeToml = [
             "[theme]",
             `display_name = "${root.themeName.trim()}"`,
-            `description = "Static, hand-picked palette -- created via the Theme Creator."`,
+            `description = "Static, hand-picked palette, created with the Theme Creator."`,
             "",
             "[engine]",
             `colorscheme = "${root.themeSlug}"`,
@@ -149,7 +147,7 @@ ColumnLayout {
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Build a static theme with a fixed, hand-picked palette instead of one derived from a wallpaper. Creates a real theme folder under ~/.config/awww -- it shows up in Appearance's theme grid like any other once created.")
+        text: qsTr("Build a static theme with a fixed, hand-picked palette instead of one derived from a wallpaper. It creates a real theme folder under ~/.config/awww and shows up in Appearance's theme grid like any other once created.")
         color: Colours.inkMuted
         font: Tokens.font.body.small
     }
@@ -339,7 +337,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.bottomMargin: Tokens.spacing.medium
         wrapMode: Text.Wrap
-        text: qsTr("After creating, run \"aphotic theme list\" or reopen Appearance to switch to it -- switching themes and previewing swatch changes live is a follow-up increment.")
+        text: qsTr("After creating, run \"aphotic theme list\" or reopen Appearance to switch to it. Switching from this pane and previewing swatch changes live are still to come.")
         color: Colours.inkMuted
         font: Tokens.font.body.small
     }

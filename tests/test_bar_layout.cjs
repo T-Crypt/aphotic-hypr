@@ -71,4 +71,11 @@ assert.equal(bar.next('taskbar'), 'minimal');
 assert.equal(bar.next('minimal'), 'full');
 assert.equal(bar.next('bogus'), 'full');
 
+// The notch edge is the edge away from the docked screen edge: "start" (top
+// or left) on a bottom/right bar, "end" (bottom or right) on a top/left bar.
+assert.equal(bar.notchEdge(true, false, false), 'end');   // docked top
+assert.equal(bar.notchEdge(true, true, false), 'start');  // docked bottom
+assert.equal(bar.notchEdge(false, false, false), 'end');  // docked left
+assert.equal(bar.notchEdge(false, false, true), 'start'); // docked right
+
 console.log('BarLayout migration and corner rules passed');
