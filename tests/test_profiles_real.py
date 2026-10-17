@@ -91,6 +91,15 @@ def test_gaming_layer_adds_packages():
         assert pkg in result["main"]
 
 
+def test_dev_layer_adds_packages():
+    result = merge_packages(
+        str(ROOT / "profiles/base/full.toml"),
+        [str(ROOT / "profiles/layers/dev.toml")],
+    )
+    for pkg in ["neovim", "docker", "docker-compose", "npm"]:
+        assert pkg in result["main"]
+
+
 def test_exploit_layer_adds_packages():
     # profiles/layers/exploit.toml deliberately has no [packages] block --
     # lib/install/exploit_disclaimer.sh's expand_layer_bundles() expands
