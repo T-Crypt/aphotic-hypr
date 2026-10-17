@@ -119,7 +119,7 @@ ColumnLayout {
                 width: pillLabel.implicitWidth + Tokens.padding.medium * 2
                 radius: Tokens.rounding.full
                 opacity: providerPill.available ? 1 : 0.4
-                color: providerPill.active ? Colours.signal : Colours.layer(Colours.surface, 3)
+                color: providerPill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                 Behavior on color {
                     CAnim {}
@@ -152,7 +152,7 @@ ColumnLayout {
             height: 26
             width: Math.min(modelLabel.implicitWidth, 120) + Tokens.padding.medium * 2
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.surface, 3)
+            color: Colours.layer(Colours.surfaceLift, 3)
 
             StyledText {
                 id: modelLabel
@@ -179,7 +179,7 @@ ColumnLayout {
                 padding: Tokens.padding.small
                 background: StyledRect {
                     radius: Tokens.rounding.medium
-                    color: Colours.surface
+                    color: Colours.surfaceLift
                 }
 
                 contentItem: ColumnLayout {

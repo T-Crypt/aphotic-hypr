@@ -16,7 +16,7 @@ StyledClippingRect {
     implicitWidth: 120
     implicitHeight: 120
     radius: Tokens.rounding.largeIncreased
-    color: Colours.surface
+    color: Colours.surfaceLift
     border.width: root.active ? 3 : 0
     border.color: Colours.signal
 
@@ -49,7 +49,7 @@ StyledClippingRect {
     StyledRect {
         anchors.fill: parent
         visible: thumb.status !== Image.Ready
-        color: Colours.surface
+        color: Colours.surfaceLift
 
         MaterialIcon {
             anchors.centerIn: parent

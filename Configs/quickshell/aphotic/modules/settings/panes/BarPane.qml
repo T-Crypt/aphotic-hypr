@@ -121,7 +121,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: visCol.implicitHeight + Tokens.padding.medium * 2
                 radius: Tokens.rounding.medium
-                color: visBtn.active ? Colours.signal : Colours.surface
+                color: visBtn.active ? Colours.signal : Colours.surfaceLift
 
                 ColumnLayout {
                     id: visCol
@@ -338,7 +338,7 @@ ColumnLayout {
 
             sourceComponent: StyledRect {
                 radius: Tokens.rounding.medium
-                color: Colours.surface
+                color: Colours.surfaceLift
 
                 ListView {
                     anchors.fill: parent

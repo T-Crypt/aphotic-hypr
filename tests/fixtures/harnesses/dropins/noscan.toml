@@ -1,0 +1,6 @@
+# usage = "scan" with a glob that is not home-relative: falls back to
+# stream with the scan warning.
+[harness.noscan]
+label = "No scan"
+usage = "scan"
+scan = "/etc/*"

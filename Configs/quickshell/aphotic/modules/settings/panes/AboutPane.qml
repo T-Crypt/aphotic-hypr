@@ -56,7 +56,7 @@ ColumnLayout {
         implicitWidth: content.implicitWidth + Tokens.padding.large * 4
         implicitHeight: content.implicitHeight + Tokens.padding.large * 3
         radius: Tokens.rounding.extraLarge
-        color: Colours.layer(Colours.surface, 2)
+        color: Colours.layer(Colours.surfaceLift, 2)
 
         DepthGradient {
             anchors.fill: parent
@@ -79,7 +79,7 @@ ColumnLayout {
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: -Tokens.spacing.extraSmall
-                text: "Aphotic-Hypr"
+                text: "Aphotic"
                 color: Colours.ink
                 font: Tokens.font.headline.large
             }
@@ -95,7 +95,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
                 textFormat: Text.RichText
                 text: `<a href="${root.repoUrl}">${root.repoUrl}</a>`
-                color: Colours.legibleAccent(Colours.signal, Colours.surface)
+                color: Colours.legibleAccent(Colours.signal, Colours.surfaceLift)
                 font: Tokens.font.body.medium
                 onLinkActivated: link => Qt.openUrlExternally(link)
 
@@ -114,7 +114,7 @@ ColumnLayout {
                 StyledText {
                     textFormat: Text.RichText
                     text: `<a href="${root.releasesUrl}">${qsTr("Release notes")}</a>`
-                    color: Colours.legibleAccent(Colours.signal, Colours.surface)
+                    color: Colours.legibleAccent(Colours.signal, Colours.surfaceLift)
                     font: Tokens.font.body.medium
                     onLinkActivated: link => Qt.openUrlExternally(link)
 
@@ -134,7 +134,7 @@ ColumnLayout {
                 StyledText {
                     textFormat: Text.RichText
                     text: `<a href="${root.licenseUrl}">${qsTr("GPL-3.0 license")}</a>`
-                    color: Colours.legibleAccent(Colours.signal, Colours.surface)
+                    color: Colours.legibleAccent(Colours.signal, Colours.surfaceLift)
                     font: Tokens.font.body.medium
                     onLinkActivated: link => Qt.openUrlExternally(link)
 
@@ -183,7 +183,7 @@ ColumnLayout {
                         Layout.preferredHeight: 28
                         Layout.preferredWidth: checkLabel.implicitWidth + Tokens.padding.medium * 2
                         radius: Tokens.rounding.full
-                        color: Colours.surface
+                        color: Colours.surfaceLift
                         opacity: root.updateState === "checking" ? 0.5 : 1
 
                         StyledText {
@@ -275,7 +275,7 @@ ColumnLayout {
                     visible: root.missingPackages.length > 0
                     implicitHeight: missingCol.implicitHeight + Tokens.padding.medium * 2
                     radius: Tokens.rounding.medium
-                    color: Colours.layer(Colours.surface, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     ColumnLayout {
                         id: missingCol
@@ -341,7 +341,7 @@ ColumnLayout {
                     visible: root.lastSync !== null
                     implicitHeight: lastCol.implicitHeight + Tokens.padding.medium * 2
                     radius: Tokens.rounding.medium
-                    color: Colours.layer(Colours.surface, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     ColumnLayout {
                         id: lastCol

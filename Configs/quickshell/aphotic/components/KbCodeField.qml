@@ -27,7 +27,7 @@ StyledRect {
     implicitWidth: 180
     implicitHeight: 32
     radius: Tokens.rounding.full
-    color: Colours.layer(Colours.surface, 3)
+    color: Colours.layer(Colours.surfaceLift, 3)
 
     onTextChanged: {
         if (!input.activeFocus)
