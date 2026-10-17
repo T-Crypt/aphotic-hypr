@@ -96,7 +96,7 @@ StyledClippingRect {
             anchors.verticalCenter: parent.verticalCenter
             width: 6
             height: 6
-            radius: 3
+            radius: Tokens.rounding.full
             color: Colours.signalStyle.tint(root.tintIndex)
         }
 
@@ -109,7 +109,7 @@ StyledClippingRect {
 
     // Selecting the card itself is what picks an empty desktop; on a
     // populated one the tiles above take the click first.
-    MouseArea {
+    Interact {
         anchors.fill: parent
         z: -1
         onClicked: Switcher.selectWorkspace(root.card.id)

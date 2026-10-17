@@ -124,22 +124,24 @@ Item {
         visible: false
         layer.enabled: true
 
+        // An alpha mask for MultiEffect, so the stops carry opacity only and
+        // stay out of the palette.
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: "#00ffffff"
+                color: Qt.rgba(1, 1, 1, 0)
             }
             GradientStop {
                 position: root.fadeStop
-                color: "#ffffffff"
+                color: Qt.rgba(1, 1, 1, 1)
             }
             GradientStop {
                 position: 1 - root.fadeStop
-                color: "#ffffffff"
+                color: Qt.rgba(1, 1, 1, 1)
             }
             GradientStop {
                 position: 1
-                color: "#00ffffff"
+                color: Qt.rgba(1, 1, 1, 0)
             }
         }
     }

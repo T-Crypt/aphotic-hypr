@@ -12,7 +12,7 @@ Item {
 
     readonly property int cellHeight: Math.max(120, Math.round(root.height * 0.219))
     readonly property int cellWidth: Math.round(cellHeight * 16 / 9)
-    readonly property int cellSpacing: Math.max(8, Math.round(root.width * 0.007))
+    readonly property int cellSpacing: Math.max(Tokens.spacing.small, Math.round(root.width * 0.007))
     readonly property int slotPitch: cellWidth + cellSpacing
     readonly property real centerScale: 1.35
     readonly property int visibleSlots: 5
