@@ -83,19 +83,10 @@ Item {
 
             // Signal: the field sits in a glass card with the user above it,
             // the same card the login greeter shows.
-            StyledRect {
+            SignalSurface {
                 anchors.fill: parent
                 radius: Tokens.rounding.large
-                color: Colours.signalStyle.glass
-                border.width: 1
-                border.color: Colours.signalStyle.hairline
-
-                Rectangle {
-                    x: parent.radius
-                    width: parent.width - parent.radius * 2
-                    height: 1
-                    color: Colours.signalStyle.edgeLight
-                }
+                tone: Colours.signalStyle.glass
 
                 RowLayout {
                     x: fieldContainer.cardPad
@@ -106,7 +97,7 @@ Item {
                     StyledRect {
                         Layout.preferredWidth: 44
                         Layout.preferredHeight: 44
-                        radius: 22
+                        radius: Tokens.rounding.full
                         color: Qt.alpha(Colours.signal, 0.18)
                         border.width: 1
                         border.color: Qt.alpha(Colours.signal, 0.5)
@@ -253,7 +244,7 @@ Item {
             visible: text.length > 0
             text: {
                 if (root.pam.state === Pam.MaxTries)
-                    return qsTr("Too many attempts — locked out temporarily");
+                    return qsTr("Too many attempts. Locked out for a moment.");
                 if (root.pam.state === Pam.Error)
                     return qsTr("Authentication error");
                 if (root.pam.state === Pam.Failed)
