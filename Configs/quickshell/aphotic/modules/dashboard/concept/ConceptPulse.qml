@@ -7,14 +7,6 @@ import qs.components
 import qs.services
 import qs.modules.dashboard
 
-// Concept QJX858H: the dashboard as one signal spine.
-//
-// The machine lives above the line as terrain. The day lives below it in
-// equal slots, and a 2px accent segment sits on the spine over the middle
-// of every slot that has something alive in it. The surface carries its
-// own darkness, so a bright wallpaper never outshouts the data.
-//
-// Prototype only. Not wired into the live dashboard.
 Item {
     id: root
 
@@ -23,8 +15,6 @@ Item {
 
     property bool shown: true
 
-    // Closing the dashboard unmounts these, the services stop polling and
-    // the terrain goes quiet.
     SystemUsageWatch {}
     NetworkUsageWatch {}
 
@@ -65,8 +55,6 @@ Item {
         width: leaf.slotWidth
         implicitHeight: title.implicitHeight + Tokens.spacing.medium + body.childrenRect.height
 
-        // Portrait stacks the leaves, so the spine cannot point at them;
-        // each one carries its own accent instead.
         Rectangle {
             visible: root.portrait
             x: -Tokens.spacing.medium
@@ -109,9 +97,6 @@ Item {
 
             anchors.fill: parent
 
-            // The surface's own darkness, deepest behind the terrain and
-            // the leaves, lighter at the floor so the wallpaper still
-            // reads at the edge.
             Rectangle {
                 anchors.fill: parent
                 gradient: Gradient {
@@ -161,8 +146,6 @@ Item {
                     }
                 }
 
-                // Runs for about a second after each minute change, then
-                // stops until the next one.
                 Timer {
                     id: shimmerClock
 
@@ -269,8 +252,6 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 y: (root.portrait ? readouts.y + readouts.height : dateLine.y + dateLine.height) + Tokens.spacing.extraLarge * 1.5
-                // Landscape terrain takes whatever height the leaves leave over, so a
-                // short screen keeps every leaf on screen and a tall one fills.
                 height: {
                     if (root.portrait)
                         return Math.max(110, Math.min(180, stage.height * 0.14));
@@ -279,9 +260,6 @@ Item {
                 }
             }
 
-            // The spine: a 1px hairline with one 2px accent over the middle
-            // of every live slot. If the concept ships, the multi-segment
-            // form belongs in SignalLine.
             Item {
                 id: spine
 
@@ -324,8 +302,6 @@ Item {
                 }
             }
 
-            // Three zones in landscape: the leaves share the width left of
-            // the calendar in equal slots; the calendar keeps the right.
             Item {
                 id: dayZone
 

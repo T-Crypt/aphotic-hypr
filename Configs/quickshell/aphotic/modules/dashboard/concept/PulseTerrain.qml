@@ -4,20 +4,11 @@ import QtQuick
 import qs.config
 import qs.services
 
-// The machine's terrain: CPU history as a ridge and network as a low band
-// along the floor. Memory stays a readout; as a line it read as a stray
-// rule across the screen. The newest sample sits at the
-// right edge and history runs off to the left.
-//
-// Samples land only while a surface above mounts the watches, so this
-// canvas keeps no sampler and repaints only when a sample or a size lands.
 Canvas {
     id: root
 
     readonly property int capacity: 48
-    // Below this rate the network band stays flat, so idle chatter does
-    // not draw a hill.
-    readonly property real netFloor: 64 * 1024
+    readonly property real netFlatBelow: 64 * 1024
     property var cpuTrail: []
     property var netTrail: []
 
@@ -36,9 +27,7 @@ Canvas {
         root.netTrail = next.length > root.capacity ? next.slice(next.length - root.capacity) : next;
     }
 
-    // The probe seeds both trails so a render does not need minutes of
-    // polling first. The live surface never calls this.
-    function seed(cpu: var, net: var): void {
+    function seedForProbe(cpu: var, net: var): void {
         root.cpuTrail = cpu;
         root.netTrail = net;
     }
@@ -71,7 +60,7 @@ Canvas {
 
         const net = root.netTrail;
         if (net.length > 1) {
-            let peak = root.netFloor;
+            let peak = root.netFlatBelow;
             for (let i = 0; i < net.length; i++)
                 peak = Math.max(peak, net[i]);
             const bandH = h * 0.28;
