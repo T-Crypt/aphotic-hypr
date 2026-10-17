@@ -49,6 +49,9 @@ SettingsRow {
 
         Interact {
             anchors.fill: parent
+            // switchTrack is a plain Item, so Interact's layers would fall
+            // back to a square 0 radius; give them the track's pill.
+            radius: Tokens.rounding.full
             onClicked: root.toggled(!root.checked)
         }
     }
