@@ -23,3 +23,9 @@ used pages:
 The loop on a checkout: `tools/ci/local.sh` before every push, and a
 windowless `QT_QPA_PLATFORM=offscreen qs -p <component.qml>` probe for QML
 changes — never `qs -p .` on a live desktop, it maps a second bar.
+
+Plugin manifests declare capabilities next to code. A `[harness.<id>]` table
+needs the `harness-hook` capability, and `aphotic plugin validate` warns when
+the table ships without it. `aphotic agent harnesses` merges manifest
+descriptors with the drop-ins in `~/.config/aphotic/harnesses/`, and plugin
+install, remove, enable and disable rerun the merge.
