@@ -11,7 +11,9 @@ import "MessagePolicy.js" as Policy
 // entry carrying address, body, timestamp, and direction. Sends go through
 // the guarded kdeconnect-cli below, one at a time, and receive arrives
 // through addIncoming, which the daemon listener will call once its signal
-// is observed on paired hardware. No Timer and no polling.
+// is observed on paired hardware. A send that exits non-zero never reached
+// the phone, so it lands in `failed` instead of the thread. No Timer and no
+// polling.
 Singleton {
     id: root
 
@@ -21,6 +23,10 @@ Singleton {
     readonly property bool available: root.enabled && Phone.available
 
     property var threads: ({})
+    // Sends that exited non-zero, in the order they failed. Kept out of the
+    // thread because they never reached the phone; a surface shows them with
+    // their code and offers retry(), the only way one goes back on the queue.
+    property var failed: []
     property bool toolPresent: false
     property string lastError: ""
     property int spawns: 0
@@ -38,6 +44,32 @@ Singleton {
             next[key] = root.threads[key];
         next[entry.deviceId] = [...list, entry];
         root.threads = next;
+    }
+
+    function _fail(entry: var, code: int): void {
+        root.failed = [...root.failed, {
+            deviceId: entry.deviceId,
+            destination: entry.destination,
+            body: entry.body,
+            timestamp: Date.now(),
+            error: String(code)
+        }];
+    }
+
+    // A person's way to try a failed send again: move it back to the queue
+    // and kick it. A later failure puts it back in the list. Nothing here
+    // runs on its own.
+    function retry(entry: var): void {
+        const idx = root.failed.indexOf(entry);
+        if (idx < 0)
+            return;
+        root.failed = root.failed.filter((item, i) => i !== idx);
+        root._queue = [...root._queue, {
+            deviceId: entry.deviceId,
+            destination: entry.destination,
+            body: entry.body
+        }];
+        root._kick();
     }
 
     // The daemon listener's way in. Rejects anything short of a full
@@ -93,15 +125,21 @@ Singleton {
             const head = root._queue.length > 0 ? root._queue[0] : null;
             root._queue = root._queue.slice(1);
             root.toolPresent = code !== 127;
-            root.lastError = code === 0 ? "" : String(code);
-            if (code === 0 && head) {
-                root._append({
-                    deviceId: head.deviceId,
-                    address: head.destination,
-                    body: head.body,
-                    timestamp: Date.now(),
-                    direction: "out"
-                });
+            // 127 is the guard reporting kdeconnect-cli absent, the same
+            // ordinary state Phone.qml keeps out of lastError.
+            root.lastError = (code === 0 || code === 127) ? "" : String(code);
+            if (head) {
+                if (code === 0) {
+                    root._append({
+                        deviceId: head.deviceId,
+                        address: head.destination,
+                        body: head.body,
+                        timestamp: Date.now(),
+                        direction: "out"
+                    });
+                } else {
+                    root._fail(head, code);
+                }
             }
             root._kick();
         }
