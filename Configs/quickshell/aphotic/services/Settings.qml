@@ -136,7 +136,8 @@ Singleton {
     // list is unchanged whatever is installed.
     property bool shelfNotchTabs: false
 
-    property string agentSelectedProvider: "claude"
+    // "" = no saved choice; the indicator falls back to the first tab.
+    property string agentSelectedProvider: ""
     property bool agentGraphEnabled: true
     // Node budget and layout tick rate for the agent graph surface, never
     // its visual treatment -- every tier renders the same look. "auto"
@@ -875,7 +876,10 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.capsuleAnimations = data.capsuleAnimations;
                 if (typeof data.flowShellActivity === "boolean")
                     root.flowShellActivity = data.flowShellActivity;
-                if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "opencode"].includes(data.agentSelectedProvider))
+                // No whitelist: a descriptor validates the id at read time,
+                // and the indicator falls back to the first tab when the
+                // saved id is absent.
+                if (typeof data.agentSelectedProvider === "string" && data.agentSelectedProvider.length > 0)
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.agentGraphEnabled === "boolean")
                     root.agentGraphEnabled = data.agentGraphEnabled;
