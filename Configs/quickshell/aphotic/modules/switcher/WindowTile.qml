@@ -56,7 +56,7 @@ StyledRect {
         visible: root.badge > 0 && root.badge <= 9
         anchors.top: parent.top
         anchors.left: parent.left
-        anchors.margins: 3
+        anchors.margins: Tokens.padding.extraSmall
         width: 15
         height: 15
         radius: Tokens.rounding.full
@@ -70,9 +70,8 @@ StyledRect {
         }
     }
 
-    MouseArea {
+    Interact {
         anchors.fill: parent
-        hoverEnabled: true
         onEntered: Switcher.selectAddress(root.win.address)
         onClicked: {
             Switcher.selectAddress(root.win.address);

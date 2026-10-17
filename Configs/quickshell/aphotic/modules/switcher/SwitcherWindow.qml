@@ -188,7 +188,7 @@ PanelWindow {
                     horizontalAlignment: Text.AlignHCenter
                     color: Colours.inkMuted
                     font: Tokens.font.label.small
-                    text: qsTr("Tab cycle  ·  A-; workspace  ·  1-9 window  ·  arrows move  ·  release Alt to switch  ·  Esc cancel")
+                    text: qsTr("Tab cycle  ·  home row jumps workspace  ·  1-9 picks window  ·  arrows move  ·  release Alt to switch  ·  Esc cancel")
                 }
             }
         }
