@@ -11,11 +11,9 @@ import qs.services
 Item {
     id: root
 
-    // Main dashboard container
     implicitWidth: content.implicitWidth
     implicitHeight: content.implicitHeight
 
-    // Dashboard content
     RowLayout {
         id: content
 
@@ -24,20 +22,17 @@ Item {
         spacing: Tokens.spacing.medium
         visible: !placeholder.visible
 
-        // Main column for performance metrics
         ColumnLayout {
             id: mainColumn
 
             Layout.fillWidth: true
             spacing: Tokens.spacing.medium
 
-            // CPU and GPU row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
                 visible: cpuCard.active || gpuCard.active
 
-                // CPU Card
                 Loader {
                     id: cpuCard
 
@@ -92,13 +87,11 @@ Item {
                 }
             }
 
-            // Memory, Storage and Network row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
                 visible: memoryCard.active || storageCard.active || networkCard.active
 
-                // Memory Card
                 Loader {
                     id: memoryCard
 
@@ -117,7 +110,6 @@ Item {
                     }
                 }
 
-                // Storage Card
                 Loader {
                     id: storageCard
 
@@ -126,7 +118,6 @@ Item {
                     sourceComponent: StorageGaugeCard {}
                 }
 
-                // Network Card
                 Loader {
                     id: networkCard
 
@@ -137,7 +128,6 @@ Item {
             }
         }
 
-        // Battery Tank (if applicable)
         Loader {
             Layout.fillWidth: false
             active: UPower.displayDevice.isLaptopBattery && Config.dashboard.performance.showBattery
@@ -145,7 +135,6 @@ Item {
         }
     }
 
-    // Placeholder when no widgets are enabled
     StyledRect {
         id: placeholder
 
@@ -190,7 +179,6 @@ Item {
         }
     }
 
-    // Function to display temperature with proper unit conversion
     function displayTemp(temp: real): string {
         return `${Math.ceil(Config.services.useFahrenheitPerformance ? temp * 1.8 + 32 : temp)}°${Config.services.useFahrenheitPerformance ? "F" : "C"}`;
     }
@@ -204,7 +192,6 @@ Item {
         return name.replace(/\(R\)|\(TM\)|\(C\)/g, "").replace(/\s*@\s*[\d.]+\s*[GM]Hz/i, "").replace(/\s+/g, " ").trim();
     }
 
-    // Components for dashboard cards
     component BatteryTank: StyledClippingRect {
         id: batteryTank
 
@@ -223,7 +210,6 @@ Item {
         Component.onCompleted: animatedPercentage = percentage
         onPercentageChanged: animatedPercentage = percentage
 
-        // Background Fill
         StyledRect {
             anchors.left: parent.left
             anchors.right: parent.right
@@ -237,7 +223,6 @@ Item {
             anchors.margins: Tokens.padding.large
             spacing: Tokens.spacing.small
 
-            // Header Section
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.small
@@ -283,7 +268,6 @@ Item {
                 Layout.fillHeight: true
             }
 
-            // Bottom Info Section
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: -4
@@ -528,7 +512,7 @@ Item {
             id: mainStatColumn
 
             anchors.right: parent.right
-            anchors.rightMargin: 32
+            anchors.rightMargin: Tokens.padding.extraLargeIncreased
             y: statRow.mapToItem(heroCard, 0, statRow.height / 2).y - height / 2
             spacing: 0
 
@@ -699,7 +683,6 @@ Item {
                 animatedPercentage = currentDisk.perc;
         }
 
-        // Update diskCount and animatedPercentage when disks data changes
         Connections {
             function onDisksChanged() {
                 if (SystemUsage.disks.length !== storageGaugeCard.diskCount)
@@ -740,7 +723,6 @@ Item {
                 }
                 accentColor: storageGaugeCard.accentColor
 
-                // Scroll hint icon
                 MaterialIcon {
                     text: "unfold_more"
                     color: Colours.inkMuted
@@ -866,7 +848,6 @@ Item {
                 accentColor: networkCard.accentColor
             }
 
-            // Sparkline graph
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -991,7 +972,6 @@ Item {
                     }
                 }
 
-                // "No data" placeholder
                 StyledText {
                     anchors.centerIn: parent
                     text: qsTr("Collecting data...")
@@ -1002,7 +982,6 @@ Item {
                 }
             }
 
-            // Download row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
@@ -1037,7 +1016,6 @@ Item {
                 }
             }
 
-            // Upload row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
@@ -1072,7 +1050,6 @@ Item {
                 }
             }
 
-            // Session totals
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium

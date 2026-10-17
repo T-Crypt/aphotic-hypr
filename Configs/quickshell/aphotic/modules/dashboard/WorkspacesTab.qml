@@ -58,7 +58,7 @@ StyledRect {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 6
                 height: 6
-                radius: 3
+                radius: Tokens.rounding.full
                 color: Colours.signalStyle.tint(card.tintIndex)
             }
 

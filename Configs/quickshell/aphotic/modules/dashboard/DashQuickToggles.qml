@@ -6,10 +6,10 @@ import qs.components
 import qs.services
 
 // Wi-Fi/Bluetooth/DND one-shot toggles -- deliberately not the deferred
-// Network/Bluetooth Settings pages (config-ownership conflicts, see
-// ROADMAP_FEATURES.md): these just flip current state via nmcli/the
-// native Bluetooth adapter/DoNotDisturb, they never own or persist any
-// config themselves. No airplane-mode tile -- there's no single reliable
+// Network/Bluetooth Settings pages: those pages own their config, and
+// these tiles just flip current state via nmcli/the native Bluetooth
+// adapter/DoNotDisturb, they never own or persist any config themselves.
+// No airplane-mode tile -- there's no single reliable
 // "is airplane mode on" concept to read back on a desktop (only wifi+bt
 // individually), and a tile that fakes combined state would drift out of
 // sync the moment either one changes independently, so it's dropped

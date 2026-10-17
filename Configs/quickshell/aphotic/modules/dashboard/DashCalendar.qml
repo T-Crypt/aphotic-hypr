@@ -133,7 +133,7 @@ Item {
                             height: 28
                             radius: Tokens.rounding.full
                             // Signal: today is a 1px accent ring, not a filled disc.
-                            color: cell.isToday ? "transparent" : "transparent"
+                            color: "transparent"
                             border.width: cell.isToday ? 1 : 0
                             border.color: Colours.signalStyle.accentLine
                             visible: cell.modelData !== 0
@@ -141,7 +141,7 @@ Item {
                             StyledText {
                                 anchors.centerIn: parent
                                 text: cell.modelData
-                                color: cell.isToday ? Colours.ink : Colours.ink
+                                color: Colours.ink
                                 font: Tokens.font.body.small
                             }
                         }

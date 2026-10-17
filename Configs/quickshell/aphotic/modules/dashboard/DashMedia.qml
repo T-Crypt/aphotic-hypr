@@ -65,7 +65,6 @@ Item {
             elide: Text.ElideRight
         }
 
-        // Seek bar
         Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 6
@@ -215,7 +214,7 @@ Item {
 
                     Interact {
                         anchors.fill: parent
-                        radius: 4
+                        radius: Tokens.rounding.full
                         color: dot.modelData === Players.active ? Colours.signal : Colours.outline
                         onClicked: Players.manualActive = dot.modelData
                     }
