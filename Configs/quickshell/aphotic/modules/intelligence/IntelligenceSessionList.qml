@@ -41,7 +41,7 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.medium
-        color: Colours.surface
+        color: Colours.surfaceLift
 
         MouseArea {
             anchors.fill: parent
@@ -64,7 +64,7 @@ Item {
                 width: list.width
                 implicitHeight: 52
                 radius: Tokens.rounding.small
-                color: row.modelData.id === IntelligenceSessions.activeSessionId ? Colours.layer(Colours.surface, 3) : "transparent"
+                color: row.modelData.id === IntelligenceSessions.activeSessionId ? Colours.layer(Colours.surfaceLift, 3) : "transparent"
 
                 RowLayout {
                     anchors.fill: parent

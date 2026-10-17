@@ -61,7 +61,7 @@ ColumnLayout {
         Layout.preferredHeight: 36
         visible: root.showSearch
         radius: Tokens.rounding.full
-        color: Colours.layer(Colours.surface, 2)
+        color: Colours.layer(Colours.surfaceLift, 2)
 
         GradedOutline {
             radius: searchBox.radius

@@ -67,7 +67,7 @@ StyledClippingRect {
         implicitHeight: keyLabel.implicitHeight + Tokens.padding.extraSmall
         radius: Tokens.rounding.small
         visible: root.card.key.length > 0
-        color: root.active ? Colours.signal : Colours.layer(Colours.surface, 3)
+        color: root.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
         StyledText {
             id: keyLabel

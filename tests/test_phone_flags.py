@@ -470,10 +470,14 @@ ShellRoot {
     property bool bridge: Quickshell.env("PHONE_BRIDGE") === "1"
     property bool send: Quickshell.env("PHONE_SEND") === "1"
     property bool incoming: Quickshell.env("PHONE_INCOMING") === "1"
+    property bool retry: Quickshell.env("PHONE_RETRY") === "1"
     property string device: "aaaaaaaa_bbbb_cccc_dddd_eeeeffff0000"
     property string dest: "+15551234567"
     property int tick: 0
     property int phase: 0
+    property bool retrySent: false
+    property int sendsBeforeRetry: 0
+    property int settle: 0
 
     FileView {
         id: callLog
@@ -502,6 +506,7 @@ ShellRoot {
         root.result.enabled = PhoneMessages.enabled;
         root.result.available = PhoneMessages.available;
         root.result.threads = PhoneMessages.threadsFor(root.device);
+        root.result.failed = PhoneMessages.failed;
         root.result.sends = root.sendCalls();
         console.log("PHONE_MESSAGES " + JSON.stringify(root.result));
         Qt.quit();
@@ -537,11 +542,31 @@ ShellRoot {
                 root.phase = 2;
                 return;
             }
-            // A send that started has reached the stub's log, which is
-            // the independent observer beyond the spawn count.
-            if (root.send && PhoneMessages.spawns > 0 && root.sendCalls() < PhoneMessages.spawns)
+            if (root.phase === 2) {
+                // A send that started has reached the stub's log, which is
+                // the independent observer beyond the spawn count.
+                if (root.send && PhoneMessages.spawns > 0 && root.sendCalls() < PhoneMessages.spawns)
+                    return;
+                if (root.retry) {
+                    root.sendsBeforeRetry = root.sendCalls();
+                    root.retrySent = PhoneMessages.failed.length > 0;
+                    if (root.retrySent)
+                        PhoneMessages.retry(PhoneMessages.failed[0]);
+                    root.phase = 3;
+                    return;
+                }
+                root.report();
                 return;
-            root.report();
+            }
+            // The retried send has to reach the log, then settle so its
+            // exit code lands before the report reads the failed list.
+            if (root.phase === 3) {
+                if (root.retrySent && root.sendCalls() <= root.sendsBeforeRetry)
+                    return;
+                if (++root.settle < 2)
+                    return;
+                root.report();
+            }
         }
     }
 }
@@ -870,3 +895,80 @@ def test_phone_messages_sends_nothing_while_its_flag_is_off(tmp_path):
     assert out["spawns"] == 0, out
     assert out["sends"] == 0, out
     assert out["threads"] == [], out
+
+
+@pytest.mark.skipif(shutil.which("qs") is None,
+                    reason="needs Quickshell (qs) to run the shell probe")
+def test_phone_messages_keeps_a_send_that_failed(tmp_path):
+    # A send that exits non-zero never reached the phone, so it must not be
+    # recorded as delivered and must not vanish: it belongs in the failed
+    # list with the code that kept it from going out.
+    log = tmp_path / "calls.jsonl"
+    out = messages(tmp_path, {
+        **stub_bin(tmp_path, f"{TEST_PHONE} Test Phone\n", log, exit_code=1),
+        "PHONE_BRIDGE": "1",
+        "PHONE_MESSAGES": "1",
+        "PHONE_SEND": "1",
+    })
+
+    assert out["spawns"] == 1, out
+    assert out["sends"] == 1, out
+    assert out["toolPresent"] is True, out
+    assert out["lastError"] == "1", out
+    assert out["threads"] == [], out
+    assert len(out["failed"]) == 1, out
+    entry = out["failed"][0]
+    assert entry["deviceId"] == MSG_DEVICE, out
+    assert entry["destination"] == MSG_DEST, out
+    assert entry["body"] == "hello", out
+    assert entry["error"] == "1", out
+    assert MSG_ARGV in calls(log), log.read_text()
+
+
+@pytest.mark.skipif(shutil.which("qs") is None,
+                    reason="needs Quickshell (qs) to run the shell probe")
+def test_phone_messages_without_the_command_keeps_the_message_without_an_error(tmp_path):
+    # Exit 127 is the guard saying kdeconnect-cli is not installed, which
+    # Phone.qml reports as no error at all. The send still did not happen,
+    # so the message stays in the failed list, but lastError stays empty.
+    bin_dir = tmp_path / "bare-bin"
+    bin_dir.mkdir()
+    for name in ("sh", "timeout", "qs"):
+        (bin_dir / name).symlink_to(shutil.which(name))
+    out = messages(tmp_path, {
+        "PATH": str(bin_dir),
+        "PHONE_BRIDGE": "1",
+        "PHONE_MESSAGES": "1",
+        "PHONE_SEND": "1",
+    })
+
+    assert out["spawns"] == 1, out
+    assert out["toolPresent"] is False, out
+    assert out["lastError"] == "", out
+    assert out["threads"] == [], out
+    assert len(out["failed"]) == 1, out
+    assert out["failed"][0]["body"] == "hello", out
+    assert out["failed"][0]["error"] == "127", out
+
+
+@pytest.mark.skipif(shutil.which("qs") is None,
+                    reason="needs Quickshell (qs) to run the shell probe")
+def test_phone_messages_retry_resends_a_failed_message(tmp_path):
+    # The failed entry is one a person can act on: retry() puts it back on
+    # the queue and the stub sees the same argv a second time. Nothing runs
+    # on its own, so the second send only happens because retry() asked.
+    log = tmp_path / "calls.jsonl"
+    out = messages(tmp_path, {
+        **stub_bin(tmp_path, f"{TEST_PHONE} Test Phone\n", log, exit_code=1),
+        "PHONE_BRIDGE": "1",
+        "PHONE_MESSAGES": "1",
+        "PHONE_SEND": "1",
+        "PHONE_RETRY": "1",
+    })
+
+    assert out["spawns"] == 2, out
+    assert out["sends"] == 2, out
+    send_calls = [c for c in calls(log) if "--send-sms" in c]
+    assert send_calls == [MSG_ARGV, MSG_ARGV], log.read_text()
+    assert len(out["failed"]) == 1, out
+    assert out["failed"][0]["body"] == "hello", out
