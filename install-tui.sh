@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# install-tui.sh -- menu-driven wrapper over install.sh.
+# install-tui.sh -- a keyboard-driven installer over install.sh.
 #
-# UI only: every answer collected here becomes flags passed to
-# ./install.sh. No installer logic lives in this file; install.sh stays
-# untouched so the flag-driven path CI depends on is byte-identical.
+# UI only: every answer collected here becomes flags on a single
+# ./install.sh command line. install.sh and its lib/install stage files stay
+# untouched, so the flag-driven path CI depends on is byte-identical. The
+# installer runs once, from the Run screen; every screen before it reads
+# only.
 set -euo pipefail
 
 TUI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,233 +13,235 @@ TUI_INSTALL_SH="${TUI_INSTALL_SH:-$TUI_ROOT/install.sh}"
 TUI_LOG_LINES="${TUI_LOG_LINES:-10}"
 TUI_NO_SUDO="${TUI_NO_SUDO:-0}"
 
-# Same one-line tags install.sh uses (wizard.sh echoes $CWR itself).
-CNT="[\e[1;36mNOTE\e[0m]"
-CER="[\e[1;31mERROR\e[0m]"
-CWR="[\e[1;35mWARNING\e[0m]"
-
-source "$TUI_ROOT/lib/install/ui.sh"
-source "$TUI_ROOT/lib/install/wizard.sh"
-
-# TUI_STATE: the whole session in one place (choice, profile, layers,
-# theme, dry-run flag, the argv built for install.sh). Anything that
-# needs the install's domain state reads it from install.sh itself.
-TUI_CHOICE=""
-TUI_PROFILE=""
-TUI_LAYERS=""
-TUI_THEME=""
-TUI_FORCE_DRYRUN=0
-TUI_ARGV=()
-TUI_TOTAL_STAGES=""
-TUI_STAGE_COLORS=()
-TUI_RUNNING=0
-TUI_CHILD=0
+TUI_INTERACTIVE=0
+TUI_ALT=0
+TUI_RESIZED=0
+TUI_STTY_SAVED=""
 TUI_SUDO_KEEPALIVE=0
+TUI_CHILD=0
+TUI_RUNNING=0
 TUI_FIFO=""
+TUI_FORCE_DRYRUN=0
+TUI_RING=()
+TUI_FLOW=()
+TUI_ARGV=()
 
-# Read stage constants out of install.sh without sourcing it: sourcing
-# would execute main (channel-resolve fetch, python bootstrap, the full
-# install). grep keeps the wrapper side-effect free.
+# UTF-8 terminals get the U+2500 hairline; others get a hyphen.
+case "${LC_ALL:-${LC_CTYPE:-${LANG:-}}}" in
+  *[Uu][Tt][Ff]-8*|*[Uu][Tt][Ff]8*) TUI_CHAR_H="─" ;;
+  *) TUI_CHAR_H="-" ;;
+esac
+
+source "$TUI_ROOT/lib/install/tui/theme.sh"
+source "$TUI_ROOT/lib/install/tui/data.sh"
+source "$TUI_ROOT/lib/install/tui/menu.sh"
+source "$TUI_ROOT/lib/install/tui/screens.sh"
+source "$TUI_ROOT/lib/install/tui/run.sh"
+
 tui_cleanup() {
+  tui_restore
   [[ "$TUI_SUDO_KEEPALIVE" != "0" ]] && kill "$TUI_SUDO_KEEPALIVE" 2>/dev/null
   [[ -n "$TUI_FIFO" ]] && rm -f "$TUI_FIFO" 2>/dev/null
   true
 }
 
-# Ctrl+C at a menu quits cleanly. Mid-install it asks first (reading
-# from /dev/tty, never stdin, so the answer cannot be stolen by the
-# installer child sharing stdin); without a terminal it stops at once.
+# Ctrl+C at a menu quits cleanly. Mid-install it asks first, reading from
+# /dev/tty so the answer cannot be stolen by the installer child.
 tui_on_int() {
   if [[ "$TUI_RUNNING" != "1" ]]; then
-    echo ""
-    echo "Quit."
+    tui_restore
+    printf '\nQuit. Nothing was changed.\n'
     exit 0
   fi
+  tui_restore
   local answer="n"
   if [[ -t 0 ]]; then
-    echo ""
-    read -rp "Abort the install? [y/N] " answer </dev/tty 2>/dev/null || answer="n"
-    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
-      echo "Continuing."
-      return 0
-    fi
+    printf '\nAbort the install? [y/N] '
+    IFS= read -r answer </dev/tty 2>/dev/null || answer="n"
   fi
-  echo -e "$CWR - Aborted. Nothing further will be installed."
+  if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+    tui_cursor_hide
+    return 0
+  fi
+  printf '\nAborted. Nothing further will be installed.\n'
   [[ "$TUI_CHILD" != "0" ]] && kill "$TUI_CHILD" 2>/dev/null
   exit 130
 }
 
-trap tui_cleanup EXIT
-trap tui_on_int INT
-
-tui_load_stages() {
-  TUI_TOTAL_STAGES="$(sed -n 's/^TOTAL_STAGES=//p' "$TUI_ROOT/install.sh" | head -n1)"
-  local line
-  line="$(sed -n 's/^STAGE_COLORS=//p' "$TUI_ROOT/install.sh" | head -n1)"
-  line="${line#\(}"
-  line="${line%\)}"
-  read -ra TUI_STAGE_COLORS <<< "$line"
-}
-
-tui_stage_color() {
-  local n="${1:-1}" count="${#TUI_STAGE_COLORS[@]}"
-  ((count > 0)) || { echo "36"; return 0; }
-  echo "${TUI_STAGE_COLORS[$(((n - 1) % count))]}"
-}
-
-# Banner ASCII duplicates install.sh:print_banner (canonical there) so
-# the wrapper shows the same splash without sourcing the installer.
-tui_banner() {
-  cat <<'EOF'
-  █████╗ ██████╗ ██╗  ██╗ ██████╗ ████████╗██╗ ██████╗
- ██╔══██╗██╔══██╗██║  ██║██╔═══██╗╚══██╔══╝██║██╔════╝
- ███████║██████╔╝███████║██║   ██║   ██║   ██║██║
- ██╔══██║██╔═══╝ ██╔══██║██║   ██║   ██║   ██║██║
- ██║  ██║██║     ██║  ██║╚██████╔╝   ██║   ██║╚██████╗
- ╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝   ╚═╝ ╚═════╝
-           ██╗  ██╗██╗   ██╗██████╗ ██████╗
-           ██║  ██║╚██╗ ██╔╝██╔══██╗██╔══██╗
-           ███████║ ╚████╔╝ ██████╔╝██████╔╝
-           ██╔══██║  ╚██╔╝  ██╔═══╝ ██╔══██╗
-           ██║  ██║   ██║   ██║     ██║  ██║
-           ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝
-EOF
-  echo "APHOTIC installer -- menu-driven setup (${TUI_TOTAL_STAGES} stages)"
-}
-
-tui_menu_line() {
-  local idx="$1" text="$2" sel="$3"
-  if [[ "$idx" == "$sel" ]]; then
-    echo "  > $idx) $text"
-  else
-    echo "    $idx) $text"
-  fi
-}
-
-# Number+Enter always works (pipes, serial, tests). On a real terminal
-# arrow keys move and Enter picks; q or Esc quits anywhere.
-tui_menu() {
-  local items=("Install Aphotic" "Dry-run preview" "Guided answers" "Exit")
-  local sel=1 key rest line
-  while true; do
-    echo ""
-    echo "What now? (number + Enter; arrows + Enter on a terminal, q quits)"
-    local i
-    for i in 1 2 3 4; do
-      tui_menu_line "$i" "${items[$((i - 1))]}" "$sel"
-    done
-    if [[ -t 0 ]]; then
-      IFS= read -rsn1 key || { TUI_CHOICE="4"; return 0; }
-      case "$key" in
-        $'\e') IFS= read -t 0.2 -rsn2 rest || rest=""; key+="$rest" ;;
-        "") TUI_CHOICE="$sel"; return 0 ;;
-        [1-4]) TUI_CHOICE="$key"; return 0 ;;
-        q|Q) TUI_CHOICE="4"; return 0 ;;
-      esac
-      case "$key" in
-        $'\e') TUI_CHOICE="4"; return 0 ;;
-        $'\e[A') ((sel > 1)) && ((sel--)) || true ;;
-        $'\e[B') ((sel < 4)) && ((sel++)) || true ;;
-      esac
-    else
-      IFS= read -r line || { TUI_CHOICE="4"; return 0; }
-      case "$line" in
-        1|2|3|4) TUI_CHOICE="$line"; return 0 ;;
-        q|Q|quit|exit) TUI_CHOICE="4"; return 0 ;;
-        "") TUI_CHOICE="4"; return 0 ;;
-        *) echo "Pick 1-4 (or q to quit)." ;;
-      esac
-    fi
-  done
-}
-
-tui_collect_answers() {
-  TUI_PROFILE="$(prompt_profile)"
-  TUI_LAYERS="$(prompt_layers 2)"
-  TUI_THEME="$(prompt_theme)"
-}
+tui_on_winch() { TUI_RESIZED=1; }
 
 tui_build_argv() {
   TUI_ARGV=()
-  [[ -n "$TUI_PROFILE" ]] && TUI_ARGV+=(--profile "$TUI_PROFILE")
-  [[ -n "$TUI_LAYERS" ]] && TUI_ARGV+=(--with "$TUI_LAYERS")
-  [[ -n "$TUI_THEME" ]] && TUI_ARGV+=(--theme "$TUI_THEME")
-  if [[ "$TUI_CHOICE" == "2" || "$TUI_FORCE_DRYRUN" == "1" ]]; then
-    TUI_ARGV+=(--dry-run)
+  if [[ "$TUI_MODE" == "config" ]]; then
+    TUI_ARGV+=(--config-only)
+    TUI_ARGV+=(--channel "$TUI_CHANNEL")
+    return 0
   fi
+  TUI_ARGV+=(--channel "$TUI_CHANNEL")
+  TUI_ARGV+=(--profile "$TUI_PROFILE")
+  if [[ -n "$TUI_LAYERS_CSV" ]]; then TUI_ARGV+=(--with "$TUI_LAYERS_CSV"); fi
+  if [[ -n "$TUI_THEME" ]]; then TUI_ARGV+=(--theme "$TUI_THEME"); fi
+  case "$TUI_ASSISTANT" in
+    on) TUI_ARGV+=(--with-assistant) ;;
+    off) TUI_ARGV+=(--no-assistant) ;;
+  esac
+  (( TUI_KEEP_SDDM )) && TUI_ARGV+=(--keep-sddm) || true
+  if [[ -n "$TUI_NVIDIA_ACTION" ]]; then TUI_ARGV+=(--nvidia-driver "$TUI_NVIDIA_ACTION"); fi
+  case "$TUI_CONFLICTS" in
+    strip) TUI_ARGV+=(--strip-conflicts) ;;
+    keep) TUI_ARGV+=(--keep-conflicts) ;;
+  esac
+  (( TUI_NO_BACKUP )) && TUI_ARGV+=(--no-backup) || true
+  if [[ "$TUI_KEEP_BACKUPS" != "5" ]]; then TUI_ARGV+=(--keep-backups "$TUI_KEEP_BACKUPS"); fi
+  (( TUI_ACCEPT_EXPLOIT )) && TUI_ARGV+=(--accept-exploit-disclaimer) || true
+  if [[ "$TUI_MODE" == "dry" || "$TUI_FORCE_DRYRUN" == "1" ]]; then TUI_ARGV+=(--dry-run); fi
+  return 0
 }
 
-# sudo reads the password from the terminal itself, before any logging
-# starts. The wrapper never prompts for, echoes, or logs a password.
-tui_sudo_upfront() {
-  [[ "$TUI_NO_SUDO" == "1" ]] && return 0
-  [[ -t 0 ]] || return 0
-  command -v sudo >/dev/null 2>&1 || return 0
-  echo -e "$CNT - Checking sudo access (ask sudo, not this wrapper)."
-  sudo -v || { echo -e "$CER - sudo access is required to install."; return 1; }
-  (
-    while kill -0 "$$" 2>/dev/null; do
-      sudo -n true 2>/dev/null || exit 0
-      sleep 50
-    done
-  ) &
-  TUI_SUDO_KEEPALIVE=$!
+tui_build_flow() {
+  TUI_FLOW=("welcome" "channel")
+  if [[ "$TUI_MODE" != "config" ]]; then
+    TUI_FLOW+=("profile" "layers" "theme" "assistant" "display")
+    if (( TUI_NVIDIA )); then TUI_FLOW+=("nvidia"); fi
+    TUI_FLOW+=("conflicts" "backup")
+    if (( TUI_EXPLOIT_SELECTED )); then TUI_FLOW+=("exploit"); fi
+  fi
+  TUI_FLOW+=("review")
 }
 
-tui_log_pane() {
-  echo "--- install.log (last $TUI_LOG_LINES lines) ---"
-  if [[ -f install.log ]]; then
-    tail -n "$TUI_LOG_LINES" install.log
-  else
-    echo "(no install.log yet)"
-  fi
-}
-
-tui_run_installer() {
-  local status=0
-  if [[ -t 1 ]]; then
-    echo -e "\e[1;$(tui_stage_color 1)m── install.sh ${TUI_ARGV[*]:-} ──\e[0m"
-  else
-    echo -e "$CNT - Running: install.sh ${TUI_ARGV[*]:-}"
-  fi
-  TUI_FIFO="$(mktemp -u)"
-  mkfifo "$TUI_FIFO"
-  tee -a install.log <"$TUI_FIFO" &
-  local tee_pid=$!
-  "$TUI_INSTALL_SH" "${TUI_ARGV[@]}" >"$TUI_FIFO" 2>&1 &
-  TUI_CHILD=$!
-  TUI_RUNNING=1
-  while kill -0 "$TUI_CHILD" 2>/dev/null; do
-    wait "$TUI_CHILD" && status=0 || status=$?
+tui_defaults() {
+  TUI_MODE="full"
+  TUI_CHANNEL="$TUI_CHANNEL_NOW"
+  TUI_PROFILE="full"
+  TUI_LAYERS_CSV=""
+  TUI_THEME="tokyonight"
+  TUI_ASSISTANT="off"
+  TUI_KEEP_SDDM=0
+  TUI_NVIDIA_ACTION="keep"
+  TUI_CONFLICTS=""
+  TUI_NO_BACKUP=0
+  TUI_KEEP_BACKUPS=5
+  TUI_ACCEPT_EXPLOIT=0
+  TUI_EXPLOIT_SELECTED=0
+  local i
+  for i in "${!TUI_PROFILE_NAMES[@]}"; do
+    [[ "${TUI_PROFILE_NAMES[$i]}" == "full" ]] || continue
   done
-  TUI_RUNNING=0
-  TUI_CHILD=0
-  wait "$tee_pid" 2>/dev/null || true
-  tui_log_pane
-  return "$status"
+  [[ ${#TUI_PROFILE_NAMES[@]} -gt 0 ]] || TUI_PROFILE="minimal"
+  for i in "${!TUI_THEME_NAMES[@]}"; do
+    [[ "${TUI_THEME_NAMES[$i]}" == "tokyonight" ]] && return 0
+  done
+  [[ ${#TUI_THEME_NAMES[@]} -gt 0 ]] && TUI_THEME="${TUI_THEME_NAMES[0]}"
+  return 0
 }
 
-main() {
+tui_assistant_implies_ai() {
+  [[ "$TUI_ASSISTANT" == "on" ]] || return 0
+  [[ ",$TUI_LAYERS_CSV," == *",ai,"* ]] && return 0
+  if [[ -n "$TUI_LAYERS_CSV" ]]; then TUI_LAYERS_CSV+=",ai"; else TUI_LAYERS_CSV="ai"; fi
+}
+
+tui_driver() {
+  local index=0 jump_review=0 total step rc st
+  while :; do
+    tui_build_flow
+    total="${#TUI_FLOW[@]}"
+    (( index >= total )) && break
+    step="${TUI_FLOW[$index]}"
+    rc=0
+    "tui_step_${step}" || rc=$?
+    if [[ "$step" == "review" ]]; then
+      case "$rc" in
+        0)
+          tui_assistant_implies_ai
+          tui_build_argv
+          if ! tui_sudo_upfront; then
+            tui_note err "Cannot install without sudo access."
+            return 1
+          fi
+          st=0
+          tui_run_installer || st=$?
+          tui_finish "$st" || true
+          return "$st"
+          ;;
+        1) index=$((index - 1)); (( index < 0 )) && index=0 ;;
+        2) index="$TUI_REVIEW_TARGET" ;;
+        3) return 0 ;;
+      esac
+      continue
+    fi
+    case "$rc" in
+      3) return 0 ;;
+      1) index=$((index - 1)); (( index < 0 )) && index=0 ;;
+      *)
+        if (( jump_review )); then
+          jump_review=0
+          tui_build_flow
+          index=$(( ${#TUI_FLOW[@]} - 1 ))
+        else
+          index=$((index + 1))
+        fi
+        ;;
+    esac
+  done
+  return 0
+}
+
+tui_help() {
+  cat <<EOF
+Usage: ${0##*/} [--dry-run] [--help] [--version]
+
+  A keyboard-driven interface over ./install.sh. Point it at another copy
+  with \$TUI_INSTALL_SH. Answer everything before the Run screen; nothing
+  changes on disk until then.
+
+  --dry-run      hand install.sh --dry-run no matter what Welcome says
+  --help         this text
+  --version      print the Aphotic version and exit
+EOF
+}
+
+tui_parse_args() {
+  TUI_FORCE_DRYRUN=0
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --dry-run) TUI_FORCE_DRYRUN=1; shift ;;
-      -h|--help) echo "Usage: ./install-tui.sh [--dry-run]"; exit 0 ;;
-      *) echo -e "$CER - Unknown option: $1"; exit 1 ;;
+      -h|--help) tui_help; exit 0 ;;
+      -v|--version) cat "$TUI_ROOT/VERSION" 2>/dev/null || true; exit 0 ;;
+      *) printf 'Unknown option: %s\n' "$1" >&2; tui_help >&2; exit 1 ;;
     esac
   done
+}
+
+main() {
+  tui_parse_args "$@"
+  tui_init_colour
+  tui_glyph_init
+  tui_measure
+
+  if [[ -t 0 && -t 1 && "${TUI_FORCE_PLAIN:-0}" != "1" ]]; then
+    TUI_INTERACTIVE=1
+  fi
+  if (( TUI_INTERACTIVE )); then
+    if ! tui_size_ok; then
+      tui_too_small
+      exit 1
+    fi
+    TUI_STTY_SAVED="$(stty -g 2>/dev/null || true)"
+    tui_enter_alt
+    tui_cursor_hide
+  fi
+
+  trap tui_cleanup EXIT
+  trap tui_on_int INT
+  trap tui_on_winch WINCH
+
+  tui_data_init
+  tui_defaults
   tui_load_stages
-  tui_banner
-  tui_menu
-  case "$TUI_CHOICE" in
-    4) exit 0 ;;
-    3) tui_build_argv ;;
-    1|2)
-      tui_collect_answers
-      tui_build_argv
-      ;;
-  esac
-  tui_sudo_upfront
-  tui_run_installer
+  [[ "$TUI_FORCE_DRYRUN" == "1" && "$TUI_MODE" != "config" ]] && true
+
+  tui_driver
 }
 
 main "$@"
