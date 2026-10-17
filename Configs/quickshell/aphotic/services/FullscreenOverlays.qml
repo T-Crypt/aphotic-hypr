@@ -31,24 +31,31 @@ Singleton {
     property bool idle: false
     property var engaged: []
 
+    // A surface id is unique only within its plugin, so engaged entries
+    // carry both.
+    function _key(surface: var): string {
+        return `${surface.plugin}:${surface.id}`;
+    }
+
     function presented(surface: var): bool {
         if (SessionLockState.locked)
             return false;
         if (surface.trigger === "manual")
-            return root.engaged.includes(surface.id);
+            return root.engaged.includes(root._key(surface));
         if (surface.trigger === "idle" || !surface.trigger)
             return root.idle;
         return false;
     }
 
-    function engage(id: string): void {
-        if (!root.engaged.includes(id))
-            root.engaged = root.engaged.concat([id]);
+    function engage(surface: var): void {
+        const key = root._key(surface);
+        if (!root.engaged.includes(key))
+            root.engaged = root.engaged.concat([key]);
     }
 
     function dismiss(surface: var): void {
         if (surface.trigger === "manual")
-            root.engaged = root.engaged.filter(e => e !== surface.id);
+            root.engaged = root.engaged.filter(e => e !== root._key(surface));
         else
             root.idle = false;
     }

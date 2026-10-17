@@ -112,6 +112,11 @@ Singleton {
                 unregister: local => { if (live("sonar.register")) EchoRegistry.unregister(plugin, local); }
             };
 
+        if (grants.includes("overlay.present"))
+            h.overlays = {
+                present: local => live("overlay.present") && root._present(plugin, local)
+            };
+
         if (grants.includes("notifications.publish"))
             h.notify = (summary, body) => {
                 if (live("notifications.publish"))
@@ -119,6 +124,17 @@ Singleton {
             };
 
         return h;
+    }
+
+    function _present(plugin: string, local: string): bool {
+        const surface = PluginRegistry.surfacesFor("fullscreen-overlay")
+            .find(s => s.plugin === plugin && s.id === local && s.trigger === "manual");
+        if (!surface) {
+            console.warn(`PluginApi: ${plugin} has no manual fullscreen overlay '${local}'`);
+            return false;
+        }
+        FullscreenOverlays.engage(surface);
+        return true;
     }
 
     function _owns(plugin: string, name: string): bool {
