@@ -35,7 +35,7 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.large
-        color: Colours.surface
+        color: Colours.surfaceLift
 
         MouseArea {
             anchors.fill: parent
@@ -97,7 +97,7 @@ Item {
                                 Layout.fillWidth: true
                                 implicitHeight: seg.modelData.code ? codeText.implicitHeight + Tokens.padding.small * 2 : 0
                                 radius: Tokens.rounding.small
-                                color: Colours.layer(Colours.surface, 3)
+                                color: Colours.layer(Colours.surfaceLift, 3)
 
                                 StyledText {
                                     id: codeText

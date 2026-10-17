@@ -57,7 +57,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: content.implicitHeight + Tokens.padding.large * 2
         radius: Tokens.rounding.large
-        color: Colours.surface
+        color: Colours.surfaceLift
 
         ColumnLayout {
             id: content

@@ -192,7 +192,7 @@ SignalSurface {
                         implicitWidth: actionContent.implicitWidth + Tokens.padding.medium * 2
                         implicitHeight: 26
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.surface, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         Interact {
                             anchors.fill: parent
