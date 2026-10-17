@@ -106,7 +106,7 @@ ColumnLayout {
             searchId: "screensaverIdle"
             icon: "screenshot_monitor"
             label: qsTr("Screensaver when idle")
-            description: Settings.idleLockEnabled && Settings.screensaverTimeout >= Settings.idleLockTimeout ? qsTr("Never shows: the screen locks first") : root.formatMinutes(Settings.screensaverTimeout)
+            description: Settings.idleLockEnabled && Settings.screensaverTimeout >= Settings.idleLockTimeout ? qsTr("The screen locks first, so this never shows") : root.formatMinutes(Settings.screensaverTimeout)
             checked: Settings.screensaverEnabled
             onToggled: state => Settings.screensaverEnabled = state
         }
@@ -257,7 +257,7 @@ ColumnLayout {
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Failed unlock attempts are handled by your system's PAM/faillock policy, the same as any other login prompt — Aphotic doesn't layer its own attempt counter on top of it.")
+        text: qsTr("Failed unlock attempts are handled by your system's PAM/faillock policy, the same as any other login prompt. Aphotic adds no attempt counter of its own.")
         color: Colours.inkMuted
         font: Tokens.font.body.small
     }
