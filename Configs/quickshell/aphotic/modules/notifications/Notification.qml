@@ -10,7 +10,7 @@ import qs.components.effects
 import qs.services
 import qs.utils
 
-StyledRect {
+SignalSurface {
     id: root
 
     required property NotifData modelData
@@ -24,9 +24,7 @@ StyledRect {
     readonly property int bodyTextFormat: /[<*_`#\[\]]/.test(modelData?.body ?? "") ? Text.MarkdownText : Text.PlainText
     readonly property bool critical: modelData?.urgency === NotificationUrgency.Critical
 
-    color: Colours.signalStyle.glass
-    border.width: 1
-    border.color: Colours.signalStyle.hairline
+    tone: Colours.signalStyle.glass
     radius: Tokens.rounding.medium
 
     implicitWidth: Tokens.sizes.notifs.width
@@ -37,23 +35,12 @@ StyledRect {
         level: 2
     }
 
-    Rectangle {
-        x: root.radius
-        width: root.width - root.radius * 2
-        height: 1
-        color: Colours.signalStyle.edgeLight
-    }
-
-    // Signal: critical reads as an edge line, not a red-filled card.
-    Rectangle {
-        visible: root.critical
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.topMargin: root.radius
-        anchors.bottomMargin: root.radius
-        width: 2
-        color: Colours.alert
+    // Critical urgency rides the signal line: idle for a normal toast,
+    // warn for a critical one.
+    SignalLine {
+        horizontal: false
+        edge: "start"
+        level: root.critical ? "warn" : "idle"
     }
 
     // Bioluminescent flash-response on arrival, echoing the deep-sea cue
