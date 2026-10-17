@@ -56,12 +56,10 @@ ColumnLayout {
     }
 
     Repeater {
-        // Wrapped in ScriptModel (rather than binding model: directly to a
-        // freshly sorted/sliced array) so unchanged entries keep their
-        // delegate identity across re-evaluations -- a plain array binding
-        // reads as a full model reset to Repeater, destroying and
-        // recreating every delegate (losing hover/press state) on every
-        // network-list change instead of diffing just what moved.
+        // ScriptModel (not a plain array binding) so unchanged entries keep
+        // delegate identity: a plain array binding reads as a full model
+        // reset to Repeater, which destroys and recreates every delegate
+        // (losing hover/press state) on every network-list change.
         model: ScriptModel {
             values: {
                 const list = Nmcli.networks.slice();
