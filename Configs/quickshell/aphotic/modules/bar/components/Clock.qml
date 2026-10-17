@@ -140,7 +140,7 @@ StyledRect {
                 visible: active
 
                 sourceComponent: ColumnLayout {
-                    spacing: layout.spacing - 4
+                    spacing: layout.spacing - Tokens.spacing.extraSmall
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
@@ -160,7 +160,7 @@ StyledRect {
                         Layout.fillWidth: true
                         Layout.leftMargin: -Tokens.padding.extraSmall
                         Layout.rightMargin: -Tokens.padding.extraSmall
-                        Layout.topMargin: 4
+                        Layout.topMargin: Tokens.spacing.extraSmall
                         Layout.bottomMargin: Tokens.padding.extraSmall / 2
                         implicitHeight: 1
                         color: Colours.outline
@@ -186,7 +186,7 @@ StyledRect {
             }
 
             StyledText {
-                Layout.topMargin: -parent.spacing - 4
+                Layout.topMargin: -parent.spacing - Tokens.spacing.extraSmall
                 Layout.alignment: Qt.AlignHCenter
                 text: Time.minuteStr
                 font: {
@@ -204,7 +204,7 @@ StyledRect {
             }
 
             Loader {
-                Layout.topMargin: -parent.spacing - 4
+                Layout.topMargin: -parent.spacing - Tokens.spacing.extraSmall
                 Layout.alignment: Qt.AlignHCenter
                 asynchronous: true
                 active: GlobalConfig.services.useTwelveHourClock
