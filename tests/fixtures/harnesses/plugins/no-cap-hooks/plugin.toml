@@ -1,0 +1,10 @@
+[plugin]
+name = "no-cap-hooks"
+display_name = "No Capability Hooks"
+description = "Declares a [harness.<id>] subtable without the harness-hook capability: the merge reads nothing from it."
+version = "1.0.0"
+category = "ai"
+capabilities = []
+
+[harness.ghost]
+label = "Ghost"
