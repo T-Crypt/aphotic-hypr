@@ -136,10 +136,6 @@ ColumnLayout {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !swatch.active
-                }
-
-                MouseArea {
-                    anchors.fill: parent
                     onClicked: Settings.accentColorOverride = swatch.modelData
                 }
             }
@@ -156,7 +152,7 @@ ColumnLayout {
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Breathing glow and ambient particles layered on top of your theme. Subtle is a lighter tier for lower-end GPUs; Off returns to flat, static highlights everywhere.")
+        text: qsTr("Breathing glow and ambient particles layered on top of your theme. Subtle is a lighter tier for lower-end GPUs. Off returns to flat, static highlights everywhere.")
         color: Colours.inkMuted
         font: Tokens.font.body.small
     }
@@ -291,7 +287,7 @@ ColumnLayout {
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Qt apps (qt5ct/qt6ct) follow this too, but only pick it up on next launch, not live.")
+        text: qsTr("Qt apps (qt5ct/qt6ct) follow this too and pick it up on their next launch.")
         color: Colours.inkMuted
         font: Tokens.font.body.small
     }
@@ -586,7 +582,7 @@ ColumnLayout {
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("These normally just inherit the bar's default icon colour. Override any of them independently, or leave on theme default.")
+        text: qsTr("These normally inherit the bar's default icon colour. Override any of them, or leave them on theme default.")
         color: Colours.inkMuted
         font: Tokens.font.body.small
     }
@@ -701,10 +697,6 @@ ColumnLayout {
             anchors.fill: parent
             radius: parent.radius
             showHoverBackground: !pill.active
-        }
-
-        MouseArea {
-            anchors.fill: parent
             onClicked: pill.clicked()
         }
     }
