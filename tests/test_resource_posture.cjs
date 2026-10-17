@@ -97,4 +97,19 @@ ep = P.episodes([], P.assess(over, vram(), pending, null, false));
 assert.equal(ep.fresh.length, 0);
 ep = P.episodes(ep.held, P.assess(over, vram(), null, null, false));
 assert.equal(ep.fresh.length, 0);
+// A swap clears the resource for a moment: inside the settle window the
+// same holders re-raising is the same episode; after it, a new one.
+ep = P.episodes([], P.assess(over, vram(), null, null, false), 1000, 15000);
+assert.equal(ep.fresh.length, 1);
+ep = P.episodes(ep.held, P.assess([claim('a', 'ai', 100)], vram(), null, null, false), 2000, 15000);
+assert.equal(ep.fresh.length, 0);
+ep = P.episodes(ep.held, P.assess(over, vram(), null, null, false), 3000, 15000);
+assert.equal(ep.fresh.length, 0);
+ep = P.episodes(ep.held, P.assess([claim('a', 'ai', 100)], vram(), null, null, false), 4000, 15000);
+ep = P.episodes(ep.held, P.assess(over, vram(), null, null, false), 40000, 15000);
+assert.equal(ep.fresh.length, 1);
+// Still contended after a long quiet gap: the same episode, no repeat.
+ep = P.episodes([], P.assess(over, vram(), null, null, false), 0, 15000);
+ep = P.episodes(ep.held, P.assess(over, vram(), null, null, false), 60000, 15000);
+assert.equal(ep.fresh.length, 0);
 console.log('Contention episodes: passed');

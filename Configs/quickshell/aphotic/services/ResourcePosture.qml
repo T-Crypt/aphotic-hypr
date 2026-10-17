@@ -36,6 +36,10 @@ Singleton {
 
     readonly property int historyLimit: 20
     readonly property int settleMs: 4000
+    // A swap clears a resource for a moment before it re-raises. Hold the
+    // episode open across that gap so the same holders do not get a second
+    // notification.
+    readonly property int episodeWindowMs: 15000
 
     // A resource entered contention that no one will be asked about:
     // over budget, nothing on it can be suspended. Once per episode; the
@@ -48,7 +52,7 @@ Singleton {
     property var _held: []
 
     onStateChanged: {
-        const next = Posture.episodes(root._held, root.state);
+        const next = Posture.episodes(root._held, root.state, Date.now(), root.episodeWindowMs);
         root._held = next.held;
         for (const r of next.fresh)
             root.contentionStarted(r);
