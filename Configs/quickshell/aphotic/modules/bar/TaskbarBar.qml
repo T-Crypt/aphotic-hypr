@@ -20,6 +20,8 @@ Item {
     required property bool fullscreen
     required property real thickness
 
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
+
     implicitWidth: thickness
     implicitHeight: layout.implicitHeight + Tokens.padding.small * 2
 
@@ -205,7 +207,8 @@ Item {
         readonly property Item task: root.focusedTaskItem
 
         horizontal: Settings.barHorizontal
-        edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+        edge: root.notchEdge
+        gapLength: root.screenState.notchSpan
         level: "active"
         activeStart: {
             // Read the task's x/y for the dependency: mapToItem alone

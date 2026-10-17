@@ -13,10 +13,9 @@ Item {
     readonly property var activeSession: IntelligenceSessions.activeSession
     readonly property bool thisSessionBusy: AiProviders.busy && root.activeSession !== null && AiProviders.activeRequestId === root.activeSession.id
 
-    // Splits a message on fenced ```code``` blocks so the bubble delegate
-    // can render code in a monospace block instead of wrapping it as plain
-    // prose -- deliberately minimal (no inline-code spans, bold/italic,
-    // lists, headers): this is markdown-LITE, not a full renderer.
+    // Splits a message on fenced ```code``` blocks so the bubble can render
+    // code in a monospace block instead of wrapping it as prose. This is
+    // markdown-lite, not a full renderer: no inline spans, bold or lists.
     function segments(text: string): var {
         const parts = [];
         const re = /```[a-zA-Z0-9_+-]*\n([\s\S]*?)```/g;

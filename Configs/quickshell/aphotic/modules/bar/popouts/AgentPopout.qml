@@ -112,10 +112,9 @@ ColumnLayout {
         }
 
         // Live per-session activity, sourced from AgentProviders'
-        // `agent-events.jsonl` tail -- `event` here is that log's own
-        // normalized name (pre_tool_use/post_tool_use/notification/...),
-        // not the raw Claude Code hook name. One row per currently-open
-        // session.
+        // `agent-events.jsonl` tail. `event` is that log's own normalized
+        // name (pre_tool_use/post_tool_use/notification/...). One row per
+        // currently-open session.
         Repeater {
             model: detail.stat.liveSessions ?? []
 
@@ -164,7 +163,7 @@ ColumnLayout {
 
         StyledText {
             visible: detail.stat.availability === "unsupported"
-            text: qsTr("Usage tracking not supported for this CLI version")
+            text: qsTr("Usage tracking not supported for this version")
             color: Colours.inkMuted
             font: Tokens.font.body.small
         }
@@ -194,7 +193,7 @@ ColumnLayout {
                 }
 
                 StyledText {
-                    text: qsTr("%1 tok").arg(parent.modelData.tokens)
+                    text: qsTr("%1 tokens").arg(parent.modelData.tokens)
                     font: Tokens.font.label.medium
                 }
             }

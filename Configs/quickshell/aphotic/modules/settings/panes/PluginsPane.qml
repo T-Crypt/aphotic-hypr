@@ -8,19 +8,10 @@ import qs.config
 import qs.components
 import qs.services
 
-// One searchable list of every plugin, installed or not.
-//
-// The pane used to stack an "Installed" section above a "Browse
-// available" block, each with its own Repeater and the browse block with
-// its own nested scroll. A Repeater instantiates every delegate at once,
-// so the cost of opening this pane grew with the size of the catalogue,
-// and a plugin that was both installed and in the index appeared twice
-// in two places that looked like two different things.
-//
-// Now: one ListView over one merged model, where a plugin's state lives
-// on its own row. The list virtualizes, so a 2000-entry catalogue costs
-// the same as a 9-entry one, and search rather than scrolling is how you
-// find anything in it.
+// One searchable list of every plugin, installed or not: one ListView
+// over one merged model, a plugin's state on its own row. The list
+// virtualizes, so a 2000-entry catalogue costs the same as a 9-entry
+// one, and search rather than scrolling is how you find anything in it.
 //
 // Data comes from PluginRegistry (installed, watched reactively) and
 // ~/.local/state/aphotic/plugin-index.json (the catalogue, written and
@@ -222,9 +213,8 @@ ColumnLayout {
         return surface.icon || PluginSurfaces.iconFor(root.surfaceKind(surface));
     }
 
-    // The one line under a plugin's name, assembled here so the delegate
-    // holds text rather than a chip Repeater per row. The old row drew a
-    // chip per capability and a row per surface, ~35 objects each.
+    // The one line under a plugin's name, assembled here so the
+    // delegate holds text rather than a chip Repeater per row.
     function metaLine(row: var): string {
         const parts = [];
         if (row.version.length > 0)
@@ -462,11 +452,6 @@ ColumnLayout {
             Interact {
                 anchors.fill: parent
                 radius: parent.radius
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
                 onClicked: Qt.openUrlExternally(root.repoUrl)
             }
         }
@@ -475,7 +460,7 @@ ColumnLayout {
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Plugins add real functionality without touching this repo. Install one to add it, then use the toggle to turn it on or off.")
+        text: qsTr("Plugins add real functionality without touching this repo. Install one, then use the toggle to turn it on or off.")
         color: Colours.inkMuted
         font: Tokens.font.body.small
     }
@@ -546,9 +531,8 @@ ColumnLayout {
         onTriggered: root.query = searchInput.text.trim().toLowerCase()
     }
 
-    // Scope and category are two filters, not a navigation rail. The rail
-    // this pane used to borrow cost 220px of width and read as a place to
-    // go rather than a way to narrow what is already here.
+    // Scope and category are two filters, not a navigation rail. They
+    // narrow what is already here rather than being places to go.
     RowLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.extraSmall
@@ -944,8 +928,7 @@ ColumnLayout {
             }
 
             // Inactive until the row is opened, so a collapsed row costs
-            // nothing for detail nobody is looking at. This is what the
-            // old row drew inline for every plugin at once.
+            // nothing for detail nobody is looking at.
             Loader {
                 Layout.fillWidth: true
                 active: pluginRow.expanded
@@ -1023,7 +1006,7 @@ ColumnLayout {
         StyledText {
             Layout.fillWidth: true
             visible: detail.row.externalConfig.length > 0
-            text: qsTr("Wires: %1").arg(detail.row.externalConfig.join(", "))
+            text: qsTr("Configured in: %1").arg(detail.row.externalConfig.join(", "))
             wrapMode: Text.Wrap
             color: Colours.inkMuted
             font: Tokens.font.label.small

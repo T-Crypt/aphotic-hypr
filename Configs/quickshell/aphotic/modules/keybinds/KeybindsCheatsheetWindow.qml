@@ -8,11 +8,9 @@ import qs.config
 import qs.components
 import qs.services
 
-// SUPER+K cheatsheet -- every hyprctl-reported bind with a description
-// (HyprKeybinds.qml), grouped into a small set of heuristic categories
-// and laid out as one scrollable column. Same PanelWindow/click-outside/
-// Escape-to-close shape as SettingsWindow.qml, so it reads as the same
-// kind of surface rather than a one-off.
+// SUPER+K cheatsheet: every bind HyprKeybinds reports, grouped into
+// heuristic categories in one scrollable column. Same PanelWindow,
+// click-outside and Escape-to-close shape as SettingsWindow.qml.
 PanelWindow {
     id: root
 
@@ -133,10 +131,6 @@ PanelWindow {
                         Interact {
                             anchors.fill: parent
                             radius: parent.radius
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
                             onClicked: root.screenState.keybindsCheatsheet = false
                         }
                     }
@@ -161,7 +155,7 @@ PanelWindow {
                         Repeater {
                             model: HyprKeybinds.categorizedEntries
 
-                            StyledRect {
+                            SignalSurface {
                                 id: group
 
                                 required property var modelData
@@ -172,20 +166,11 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 implicitHeight: groupLayout.implicitHeight + Tokens.padding.medium * 2
                                 radius: Tokens.rounding.medium
-                                color: Colours.signalStyle.raised
-                                border.width: 1
-                                border.color: Colours.signalStyle.hairline
+                                tone: Colours.signalStyle.raised
 
                                 Elevation {
                                     target: group
                                     level: 1
-                                }
-
-                                Rectangle {
-                                    x: group.radius
-                                    width: group.width - group.radius * 2
-                                    height: 1
-                                    color: Colours.signalStyle.edgeLight
                                 }
 
                                 ColumnLayout {
@@ -202,7 +187,7 @@ PanelWindow {
                                         Rectangle {
                                             Layout.preferredWidth: 6
                                             Layout.preferredHeight: 6
-                                            radius: 3
+                                            radius: Tokens.rounding.full
                                             color: group.tint
                                         }
 

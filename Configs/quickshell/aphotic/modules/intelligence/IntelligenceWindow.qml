@@ -29,16 +29,13 @@ PanelWindow {
     implicitWidth: screen.width
     implicitHeight: screen.height
 
-    // Geometry here is completely static (full-screen, non-exclusive,
-    // never animated) -- animating a layer-shell surface's own anchors/
-    // margins/size forces Wayland to renegotiate the surface and produces
-    // visible geometry glitches. The actual open/close motion lives
-    // entirely on IntelligenceContent's own transform (x/scale/opacity),
-    // a plain QtQuick Item inside this static window. `showContent` keeps
-    // the window itself mapped through the close transition (mirroring
-    // modules/bar/popouts/Wrapper.qml's identical showContent/closeTimer
-    // pattern) instead of yanking `visible` false mid-animation and
-    // cutting it short.
+    // Geometry stays static (full-screen, non-exclusive, never animated):
+    // animating a layer-shell surface's own anchors, margins or size forces
+    // Wayland to renegotiate the surface and glitches. The open/close motion
+    // lives on IntelligenceContent's own transform instead. `showContent`
+    // keeps the window mapped through the close transition (same
+    // showContent/closeTimer pattern as popouts/Wrapper.qml) so `visible` is
+    // not yanked false mid-animation.
     readonly property bool open: root.screenState.intelligence
     property bool showContent: root.open
 

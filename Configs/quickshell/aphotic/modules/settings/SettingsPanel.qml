@@ -109,13 +109,9 @@ RowLayout {
             root.currentCategory = "appearance";
     }
 
-    // Was 980x560 -- fixed since this panel first shipped with 5-6
-    // categories; 14 exist now (SettingsCategories.list) and several
-    // panes (AI, Network, Personalization) have grown dense enough that
-    // the old size left everything visibly cramped. Bumped, still a
-    // fixed size rather than screen-relative -- comfortably fits inside
-    // even this repo's smallest documented target (1920x1080) with
-    // margin, without needing per-screen sizing logic.
+    // Fixed size, not screen-relative: 14 categories and several dense
+    // panes need the room, and it still fits the smallest supported
+    // target (1920x1080) with margin.
     width: 1180
     height: 720
     spacing: 0
@@ -432,13 +428,9 @@ RowLayout {
         StyledRect {
             id: scrollThumb
 
-            // Was 4px with no MouseArea at all -- just a scroll-position
-            // indicator, not actually grabbable. Widened to a real click
-            // target and made draggable (real ask: "hard to grab... and
-            // use it without my scroll wheel"). Drag math sets
-            // paneFlick.contentY directly from the mouse delta rather
-            // than binding drag.target to this item -- QML's drag
-            // mechanics overwrite a bound `y` with a plain value on
+            // Drag math sets paneFlick.contentY directly from the mouse
+            // delta rather than binding drag.target to this item -- QML's
+            // drag mechanics overwrite a bound `y` with a plain value on
             // press, which would have permanently broken the one-way
             // binding below after the first drag.
             visible: paneFlick.contentHeight > paneFlick.height
@@ -458,7 +450,7 @@ RowLayout {
                 id: dragArea
 
                 anchors.fill: parent
-                anchors.margins: -4
+                anchors.margins: -Tokens.padding.extraSmall
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 preventStealing: true
