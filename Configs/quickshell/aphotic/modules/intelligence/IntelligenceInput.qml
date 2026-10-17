@@ -117,10 +117,6 @@ ColumnLayout {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !AiProviders.busy
-                }
-
-                MouseArea {
-                    anchors.fill: parent
                     onClicked: root.send()
                 }
             }
