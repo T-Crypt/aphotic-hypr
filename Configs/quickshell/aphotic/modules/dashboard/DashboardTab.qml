@@ -10,54 +10,6 @@ Item {
     implicitWidth: layout.item?.implicitWidth ?? 0
     implicitHeight: layout.item?.implicitHeight ?? 0
 
-    component Card: StyledRect {
-        id: card
-
-        property string title: ""
-        property int tintIndex: 0
-        readonly property real headerHeight: card.title.length > 0 ? cardTitle.implicitHeight + Tokens.padding.medium : 0
-
-        radius: Tokens.rounding.medium
-        color: Colours.signalStyle.raised
-        border.width: 1
-        border.color: Colours.signalStyle.hairline
-
-        Elevation {
-            target: card
-            level: 1
-        }
-
-        Rectangle {
-            x: card.radius
-            width: card.width - card.radius * 2
-            height: 1
-            color: Colours.signalStyle.edgeLight
-        }
-
-        Row {
-            id: cardTitle
-
-            visible: card.headerHeight > 0
-            x: Tokens.padding.large
-            y: Tokens.padding.medium
-            spacing: Tokens.spacing.small
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 6
-                height: 6
-                radius: Tokens.rounding.full
-                color: Colours.signalStyle.tint(card.tintIndex)
-            }
-
-            StyledText {
-                text: card.title.toUpperCase()
-                color: Colours.inkMuted
-                font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-            }
-        }
-    }
-
     Loader {
         id: layout
 
@@ -77,7 +29,7 @@ Item {
                 Layout.preferredWidth: Math.max(dateTime.implicitWidth, weather.implicitWidth) + Tokens.padding.large * 2
                 spacing: Tokens.spacing.medium
 
-                Card {
+                SignalCard {
                     id: todayCard
 
                     title: qsTr("Today")
@@ -95,7 +47,7 @@ Item {
                     }
                 }
 
-                Card {
+                SignalCard {
                     id: weatherCard
 
                     title: qsTr("Weather")
@@ -114,7 +66,7 @@ Item {
                 }
             }
 
-            Card {
+            SignalCard {
                 id: calendarCard
 
                 title: qsTr("Calendar")
@@ -136,7 +88,7 @@ Item {
                 Layout.fillHeight: true
                 spacing: Tokens.spacing.medium
 
-                Card {
+                SignalCard {
                     id: mediaCard
 
                     title: qsTr("Now playing")
@@ -157,7 +109,7 @@ Item {
                 RowLayout {
                     spacing: Tokens.spacing.medium
 
-                    Card {
+                    SignalCard {
                         id: focusCard
 
                         title: qsTr("Timer")
@@ -175,7 +127,7 @@ Item {
                         }
                     }
 
-                    Card {
+                    SignalCard {
                         id: controlsCard
 
                         title: qsTr("Controls")
@@ -202,7 +154,7 @@ Item {
         RowLayout {
             spacing: Tokens.spacing.medium
 
-            Card {
+            SignalCard {
                 Layout.preferredWidth: dateTimeClassic.implicitWidth
                 Layout.preferredHeight: dateTimeClassic.implicitHeight
 
@@ -211,7 +163,7 @@ Item {
                 }
             }
 
-            Card {
+            SignalCard {
                 Layout.preferredWidth: calendarClassic.implicitWidth
                 Layout.preferredHeight: calendarClassic.implicitHeight
 
@@ -220,7 +172,7 @@ Item {
                 }
             }
 
-            Card {
+            SignalCard {
                 Layout.preferredWidth: mediaClassic.implicitWidth
                 Layout.preferredHeight: mediaClassic.implicitHeight
 
@@ -229,7 +181,7 @@ Item {
                 }
             }
 
-            Card {
+            SignalCard {
                 Layout.preferredWidth: pomodoroClassic.implicitWidth
                 Layout.preferredHeight: pomodoroClassic.implicitHeight
 
@@ -238,7 +190,7 @@ Item {
                 }
             }
 
-            Card {
+            SignalCard {
                 Layout.preferredWidth: quickTogglesClassic.implicitWidth
                 Layout.preferredHeight: quickTogglesClassic.implicitHeight
 
@@ -247,7 +199,7 @@ Item {
                 }
             }
 
-            Card {
+            SignalCard {
                 Layout.preferredWidth: weatherClassic.implicitWidth
                 Layout.preferredHeight: weatherClassic.implicitHeight
 

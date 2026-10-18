@@ -205,11 +205,11 @@ Singleton {
     // is what the picker has always been, so it stays the default.
     readonly property var wallpaperPickerLayouts: ["coverflow", "grid", "dock"]
     property string wallpaperPickerLayout: "coverflow"
-    // Which surface the SUPER+D dashboard's Dashboard tab shows: "classic"
-    // widget cards or the "spine" Signal Spine layout. The classic cards
-    // are what the tab has always shown, so they stay the default.
+    // Which surface the SUPER+D dashboard's Dashboard tab shows: the
+    // "spine" Signal Spine, which carries the machine stats, or the
+    // "classic" widget cards, which bring back the Performance tab.
     readonly property var dashboardLayouts: ["classic", "spine"]
-    property string dashboardLayout: "classic"
+    property string dashboardLayout: "spine"
     // Owned by the live-wallpaper plugin (see its [owns] table). Kept here
     // rather than in plugin state for the same reason agentGraph*'s keys
     // are: one settings file, one schema, one place a user's preferences

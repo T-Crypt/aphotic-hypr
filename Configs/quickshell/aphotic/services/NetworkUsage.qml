@@ -45,7 +45,7 @@ Singleton {
     // every tick anyway with nothing to show it to. Same registration-
     // counted shape as SystemUsage.detailedMonitoring -- see
     // NetworkUsageWatch.qml, mounted by NetworkSpeedStatus.qml,
-    // NetworkSpeedPopout.qml and Dashboard.qml's NetworkCard.
+    // NetworkSpeedPopout.qml and PerformanceTab.qml's NetworkCard.
     property int _watchers: 0
     readonly property bool wanted: root._watchers > 0
 

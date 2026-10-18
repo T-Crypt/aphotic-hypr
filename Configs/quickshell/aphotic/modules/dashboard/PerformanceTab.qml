@@ -1,4 +1,3 @@
-// Dashboard.qml -- resource-monitoring cards (CPU/GPU/memory/storage/network/battery)
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -71,7 +70,7 @@ Item {
                         secondaryLabel: qsTr("Temp")
                         usage: SystemUsage.gpuStatsAvailable ? SystemUsage.gpuPerc : 0
                         temperature: SystemUsage.gpuStatsAvailable ? SystemUsage.gpuTemp : 0
-                        accentColor: Colours.signalSecondary
+                        accentColor: Colours.signal
                         // Only shown when more than one GPU was detected
                         // (e.g. an Intel/AMD iGPU alongside a discrete
                         // NVIDIA/AMD card) -- a single-GPU machine never
@@ -106,7 +105,7 @@ Item {
                             const totalFmt = SystemUsage.formatKib(SystemUsage.memTotal);
                             return `${usedFmt.value.toFixed(1)} / ${Math.floor(totalFmt.value)} ${totalFmt.unit}`;
                         }
-                        accentColor: Colours.signalTertiary
+                        accentColor: Colours.signal
                     }
                 }
 
@@ -331,16 +330,15 @@ Item {
         spacing: Tokens.spacing.small
 
         MaterialIcon {
-            text: parent.icon
-            fill: 1
-            color: parent.accentColor
-            fontStyle: Tokens.font.icon.large
+            text: cardHeader.icon
+            color: cardHeader.accentColor
+            fontStyle: Tokens.font.icon.medium
         }
 
-        StyledText {
+        SectionLabel {
             Layout.fillWidth: true
-            text: parent.title
-            font.pointSize: Tokens.fontSize.normal
+            label: cardHeader.title
+            alive: true
             elide: Text.ElideRight
         }
     }
@@ -666,7 +664,7 @@ Item {
         readonly property real arcStartAngle: 0.75 * Math.PI
         readonly property real arcSweep: 1.5 * Math.PI
         property real animatedPercentage: 0
-        property color accentColor: Colours.signalSecondary
+        property color accentColor: Colours.signal
 
         color: Colours.signalStyle.raised
         radius: Tokens.rounding.medium

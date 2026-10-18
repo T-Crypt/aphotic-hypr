@@ -3,7 +3,7 @@
   "note": "Design language counts for the shell. Re-baseline with python3 tests/test_design_language.py --update.",
   "categories": {
     "hex_colours": {
-      "total": 76,
+      "total": 72,
       "files": {
         "Configs/quickshell/aphotic-recovery/Colours.qml": 9,
         "Configs/quickshell/aphotic/components/ColorPickerField.qml": 8,
@@ -14,13 +14,12 @@
         "Configs/quickshell/aphotic/modules/flow/FlowSummary.qml": 1,
         "Configs/quickshell/aphotic/modules/settings/panes/PersonalizationPane.qml": 8,
         "Configs/quickshell/aphotic/modules/settings/panes/ThemeCreatorPane.qml": 19,
-        "Configs/quickshell/aphotic/modules/wallpaperpicker/WallpaperBackdrop.qml": 4,
         "Configs/quickshell/aphotic/services/Colours.qml": 12,
         "Configs/quickshell/aphotic/services/StatusColours.js": 3
       }
     },
     "numeric_radii": {
-      "total": 34,
+      "total": 24,
       "files": {
         "Configs/quickshell/aphotic-recovery/ActionButton.qml": 1,
         "Configs/quickshell/aphotic-recovery/RecoveryContent.qml": 3,
@@ -31,18 +30,10 @@
         "Configs/quickshell/aphotic/components/ShapeShadow.qml": 1,
         "Configs/quickshell/aphotic/modules/bar/DockAppIcon.qml": 1,
         "Configs/quickshell/aphotic/modules/bar/TaskbarBar.qml": 1,
-        "Configs/quickshell/aphotic/modules/dashboard/DashMedia.qml": 1,
-        "Configs/quickshell/aphotic/modules/dashboard/DashboardTab.qml": 1,
-        "Configs/quickshell/aphotic/modules/dashboard/WorkspacesTab.qml": 1,
         "Configs/quickshell/aphotic/modules/flow/FlowScene.qml": 8,
         "Configs/quickshell/aphotic/modules/flow/FlowSummary.qml": 1,
-        "Configs/quickshell/aphotic/modules/keybinds/KeybindsCheatsheetWindow.qml": 1,
-        "Configs/quickshell/aphotic/modules/launcher/Launcher.qml": 4,
-        "Configs/quickshell/aphotic/modules/lock/LockContent.qml": 1,
-        "Configs/quickshell/aphotic/modules/notificationcenter/NotificationHistoryItem.qml": 1,
-        "Configs/quickshell/aphotic/modules/osd/OsdSlider.qml": 1,
+        "Configs/quickshell/aphotic/modules/launcher/Launcher.qml": 2,
         "Configs/quickshell/aphotic/modules/sonar/SonarOverlay.qml": 1,
-        "Configs/quickshell/aphotic/modules/switcher/WorkspaceCard.qml": 1,
         "Configs/quickshell/aphotic/services/Sonar.qml": 1
       }
     },
@@ -107,7 +98,7 @@
         "Configs/quickshell/aphotic/modules/dashboard/DashQuickToggles.qml": 1,
         "Configs/quickshell/aphotic/modules/dashboard/DashWallpapersTab.qml": 1,
         "Configs/quickshell/aphotic/modules/dashboard/DashWeather.qml": 2,
-        "Configs/quickshell/aphotic/modules/dashboard/Dashboard.qml": 8,
+        "Configs/quickshell/aphotic/modules/dashboard/PerformanceTab.qml": 8,
         "Configs/quickshell/aphotic/modules/intelligence/IntelligenceHeader.qml": 2,
         "Configs/quickshell/aphotic/modules/intelligence/IntelligenceInput.qml": 1,
         "Configs/quickshell/aphotic/modules/intelligence/IntelligenceSessionList.qml": 1,
@@ -166,11 +157,9 @@
       "files": {}
     },
     "material_comments": {
-      "total": 9,
+      "total": 6,
       "files": {
-        "Configs/quickshell/aphotic/components/SettingsRow.qml": 1,
         "Configs/quickshell/aphotic/config/Tokens.qml": 4,
-        "Configs/quickshell/aphotic/modules/bar/components/HoverPill.qml": 2,
         "Configs/quickshell/aphotic/services/Colours.qml": 1,
         "Configs/quickshell/aphotic/services/Settings.qml": 1
       }

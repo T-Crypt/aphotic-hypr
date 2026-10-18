@@ -4,20 +4,20 @@ import QtQuick
 import Quickshell
 import qs.components
 import qs.services
-import "modules/dashboard/concept" as Concept
+import "modules/dashboard/spine" as Spine
 
 // Never maps a window on a live desktop: run with QT_QPA_PLATFORM=offscreen (Quickshell).
 // qs resolves `qs.*` imports only from the config root, so a wrapper copies this file to the root.
 ShellRoot {
     id: probe
 
-    readonly property int outW: Number(Quickshell.env("CONCEPT_W") || 1920)
-    readonly property int outH: Number(Quickshell.env("CONCEPT_H") || 1080)
-    readonly property int grabAfterMs: Number(Quickshell.env("CONCEPT_MS") || 4000)
-    readonly property int openAfterMs: Number(Quickshell.env("CONCEPT_OPEN_DELAY") || 0)
-    readonly property int motionMs: Number(Quickshell.env("CONCEPT_MOTION_MS") || 150)
-    readonly property string outFile: Quickshell.env("CONCEPT_OUT") || "/tmp/opencode/concept.png"
-    readonly property string wallpaper: Quickshell.env("CONCEPT_WALLPAPER") || "/tmp/opencode/concept-wallpaper.jpg"
+    readonly property int outW: Number(Quickshell.env("SPINE_W") || 1920)
+    readonly property int outH: Number(Quickshell.env("SPINE_H") || 1080)
+    readonly property int grabAfterMs: Number(Quickshell.env("SPINE_MS") || 4000)
+    readonly property int openAfterMs: Number(Quickshell.env("SPINE_OPEN_DELAY") || 0)
+    readonly property int motionMs: Number(Quickshell.env("SPINE_MOTION_MS") || 150)
+    readonly property string outFile: Quickshell.env("SPINE_OUT") || "/tmp/opencode/spine.png"
+    readonly property string wallpaper: Quickshell.env("SPINE_WALLPAPER") || "/tmp/opencode/spine-wallpaper.jpg"
 
     Component.onCompleted: console.log("PROBE size", probe.outW, "x", probe.outH, "run", probe.grabAfterMs, "ms", "open", probe.openAfterMs, "motion", probe.motionMs)
 
@@ -48,7 +48,7 @@ ShellRoot {
                 opacity: 0.35
             }
 
-            Concept.ConceptPulse {
+            Spine.SpineSurface {
                 id: surface
 
                 anchors.fill: parent

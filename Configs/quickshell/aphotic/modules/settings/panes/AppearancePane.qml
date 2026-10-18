@@ -474,15 +474,15 @@ Item {
                     searchId: "dashboardLayout"
                     icon: "space_dashboard"
                     label: qsTr("Dashboard layout")
-                    description: qsTr("How SUPER+D presents the dashboard")
+                    description: qsTr("Signal Spine shows live machine stats on the Dashboard tab. Classic shows cards and adds a Performance tab.")
 
                     RowLayout {
                         spacing: Tokens.spacing.small
 
                         Repeater {
                             model: [
-                                { id: "classic", label: qsTr("Classic") },
-                                { id: "spine", label: qsTr("Signal Spine") }
+                                { id: "spine", label: qsTr("Signal Spine") },
+                                { id: "classic", label: qsTr("Classic") }
                             ]
 
                             StyledRect {
