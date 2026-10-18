@@ -25,7 +25,8 @@ Singleton {
     readonly property string hostStorePath: `${Quickshell.env("HOME")}/.config/aphotic/engines.json`
 
     // The scan output, one record per file: {name, text}. The repo dir
-    // ships empty, so a fresh install reads an empty core list.
+    // ships the common OpenAI-compatible servers; each is asked only while
+    // its process runs.
     property var _core: []
     property var _dropIn: []
     property var _hosts: ({})
