@@ -6,7 +6,7 @@ Released: 2026-10-18
 
 - **Installer**: `install-tui.sh` walks you through profile, layers, theme and options before anything runs, then shows each stage and a live log (#320, #348). The run screen no longer spins after the installer exits (#365). Flatpak apps are a profile extension point (#319). The installer ships pipewire-pulse and skips packages that conflict with ones you have (#356). Icons render on first boot because the installer rebuilds the font cache, and `aphotic doctor` checks the icon font (#289).
 - **Signal design**: one spec and shared components, now on notifications and the OSD, Settings rows and panes, bar widgets, the cheatsheet, the launcher, the switcher, the workspace view, the wallpaper picker, and the lock card and greeter (#323, #333, #334, #336 to #341). Interact replaces the ripple (#324), with semantic colour roles (#328, #344), a numbered token scale (#330) and a motion law (#315). The notch meets the bar with no hairline gap in every style (#329, #331, #335).
-- **Dashboard**: Signal Spine is a second Dashboard tab layout. Pick it under Settings, Appearance, Dashboard layout. Classic stays the default (#362).
+- **Dashboard**: Signal Spine is a second Dashboard tab layout. Pick it under Settings, Appearance, Dashboard layout. It shows VRAM in use next to GPU load. Classic stays the default (#362).
 - **Plugins**: a `[keybind]` block binds keys while a plugin is enabled (#310). Plugin API v3 lets a plugin present its own overlay (#359). StateLayer is back for plugins (#332).
 - **Agents**: Pi and OMP register as harnesses (#305). Harness descriptors merge into one record that the agent gate reads (#339, #354, #355). A descriptor can name its global rules file (#361). The hook records the command, exit code and one scrubbed error line for a failed tool call (#360).
 - **AI and Flow**: an engine registry reads descriptors from core, plugins and drop-ins (#342). An engine can report through a stream, and each engine it names shows in Flow's AI plane under its own name (#364). One PID now holds VRAM once, and a contention warning fires once per episode (#352). Process RAM and CPU measurement is in place for engine adapters (#363).
@@ -19,7 +19,10 @@ Plugins repo, same day: Agent Memory draws its workspace again and learns rules 
 
 ## Verification
 
-VERIFY_PLACEHOLDER
+- Local CI on the release branch: bash-syntax, 81 bash test files, pytest and install-dry-run (profile packages resolve) pass.
+- `tests/test_install_tui.sh` ran 80 times with the run-screen fix and never hung (it hung 1 in 15 before).
+- Offscreen probes: Agent Memory workspace, Skills surfaces, the engine stream, and the Signal Spine with a measured VRAM readout.
+- Not run: the install on the dev VM. That needs a pass before tagging, because the installer changed.
 
 # Aphotic 2.0.8
 
