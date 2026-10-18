@@ -1,6 +1,12 @@
 {
-  "date": "2026-10-17",
-  "green": true,
-  "broken": [],
+  "date": "2026-10-18",
+  "green": false,
+  "broken": [
+    {
+      "package": "runs",
+      "source": "aur",
+      "error_tail": " -> No AUR package found for runs\n -> no package found for targets"
+    }
+  ],
   "last_green": "2026-10-17"
 }
