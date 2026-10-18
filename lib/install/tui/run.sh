@@ -114,14 +114,22 @@ tui_run_installer() {
   TUI_RUNNING=1
   local line status=0
   if (( TUI_INTERACTIVE )); then tui_render_run; fi
-  while kill -0 "$TUI_CHILD" 2>/dev/null; do
+  # Read until the installer closes its output. Polling `kill -0` instead
+  # spun forever when the exited child sat unreaped: read at EOF returns at
+  # once, and a zombie still answers kill -0.
+  local rc
+  while :; do
     if IFS= read -r -t 0.5 line <&3; then
       tui_handle_line "$line"
-    elif (( TUI_INTERACTIVE )); then
-      tui_render_run
+      continue
     fi
+    rc=$?
+    if (( rc <= 128 )); then
+      [[ -n "$line" ]] && tui_handle_line "$line"
+      break
+    fi
+    if (( TUI_INTERACTIVE )); then tui_render_run; fi
   done
-  while IFS= read -r line <&3; do tui_handle_line "$line"; done
   exec 3<&-
   wait "$TUI_CHILD" || status=$?
   TUI_CHILD=0
