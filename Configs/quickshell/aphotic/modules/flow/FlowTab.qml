@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
 import Quickshell
-import Quickshell.Services.UPower
 import qs.services
 import qs.services.profile
 import qs.services.ai
@@ -56,14 +55,10 @@ Item {
             }
             pending: ResourceEngine.pending
             projection: Model.projection(ResourceEngine.pending, ResourceEngine.claims)
+            // Live CPU, GPU, memory and network belong to the Dashboard tab;
+            // Flow keeps only what the resource engine knows.
             metrics: [
-                {label:"CPU", value:Math.round(SystemUsage.cpuPerc*100)+"%"},
-                {label:"GPU", value:SystemUsage.gpuStatsAvailable ? Math.round(SystemUsage.gpuPerc*100)+"%" : "Unavailable"},
-                {label:"VRAM CLAIMS", value:vramClaimed()},
-                {label:"MEMORY", value:Math.round(SystemUsage.memPerc*100)+"%"},
-                {label:"CPU TEMP", value:SystemUsage.cpuTemp > 0 ? Math.round(SystemUsage.cpuTemp)+"°C" : "Unavailable"},
-                {label:"BATTERY", value:UPower.displayDevice.isLaptopBattery ? Math.round(UPower.displayDevice.percentage*100)+"%" : "AC / no battery"},
-                {label:"NET ↓ / ↑ B/s", value:rate(NetworkUsage.downloadSpeed)+" / "+rate(NetworkUsage.uploadSpeed)}
+                {label:"VRAM CLAIMS", value:vramClaimed()}
             ]
             function vramClaimed(): string {
                 const spec = ResourceEngine.resources["gpu-vram"];
@@ -72,9 +67,6 @@ Item {
                     return "Undeclared";
                 const claimed = Model.amount(claims.reduce((sum,c) => sum+c.amount,0), spec.unit);
                 return spec.measured ? Model.amount(spec.measured.used, spec.unit) + " in use · " + claimed + " claimed" : claimed;
-            }
-            function rate(bytes: real): string {
-                return bytes >= 1048576 ? (bytes/1048576).toFixed(1)+"M" : Math.round(bytes/1024)+"K";
             }
             function record(message: string): void {
                 events = [Qt.formatTime(new Date(),"hh:mm:ss") + " · " + message].concat(events).slice(0,12);
@@ -117,8 +109,6 @@ Item {
                     Component.onDestruction: ShellUsage.release()
                 }
             }
-            SystemUsageWatch {}
-            NetworkUsageWatch {}
             Connections {
                 target: ProfileEngine
                 function onPhaseChanged(id: string, from: string, to: string): void {

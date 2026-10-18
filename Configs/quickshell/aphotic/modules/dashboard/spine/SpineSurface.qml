@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Bluetooth
+import Quickshell.Services.UPower
 import qs.config
 import qs.components
 import qs.services
@@ -44,6 +45,14 @@ Item {
         return (kib / 1048576).toFixed(1);
     }
 
+    function temp(celsius: real): string {
+        const f = Config.services.useFahrenheitPerformance;
+        return `${Math.round(f ? celsius * 1.8 + 32 : celsius)}°${f ? "F" : "C"}`;
+    }
+
+    property int diskIndex: 0
+    readonly property var disk: SystemUsage.disks.length > 0 ? SystemUsage.disks[root.diskIndex % SystemUsage.disks.length] : null
+
     component Leaf: Item {
         id: leaf
 
@@ -71,13 +80,12 @@ Item {
             opacity: leaf.alive ? 1 : 0
         }
 
-        StyledText {
+        SectionLabel {
             id: title
 
             anchors.horizontalCenter: root.portrait ? undefined : parent.horizontalCenter
-            text: leaf.label.toUpperCase()
-            color: leaf.alive ? Colours.ink : Colours.inkMuted
-            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.6).build()
+            label: leaf.label
+            alive: leaf.alive
         }
 
         Item {
@@ -166,7 +174,7 @@ Item {
                 }
 
                 ActivityProbe {
-                    name: "dashboard.concept.shimmer"
+                    name: "dashboard.spine.shimmer"
                     kind: "render"
                     timer: shimmerClock
                 }
@@ -185,80 +193,133 @@ Item {
                 font: Tokens.font.title.builders.small.weight(Font.Medium).letterSpacing(0.6).build()
             }
 
-            Grid {
+            component CycleReadout: Item {
+                id: cycle
+
+                required property string value
+                required property string label
+                property bool cycles: false
+                signal next
+
+                implicitWidth: cycleRow.implicitWidth
+                implicitHeight: cycleRow.implicitHeight
+
+                Row {
+                    id: cycleRow
+
+                    spacing: Tokens.spacing.extraSmall
+
+                    Readout {
+                        small: true
+                        value: cycle.value
+                        label: cycle.label
+                    }
+
+                    MaterialIcon {
+                        anchors.bottom: parent.bottom
+                        visible: cycle.cycles
+                        text: "swap_horiz"
+                        fontStyle: Tokens.font.icon.small
+                        color: Colours.inkMuted
+                    }
+                }
+
+                Interact {
+                    anchors.fill: parent
+                    anchors.margins: -Tokens.padding.small
+                    enabled: cycle.cycles
+                    radius: Tokens.rounding.small
+                    onClicked: cycle.next()
+                }
+            }
+
+            Column {
                 id: readouts
 
-                columns: root.portrait ? 2 : 4
-                columnSpacing: Tokens.spacing.extraLarge * 1.5
-                rowSpacing: Tokens.spacing.large
+                spacing: Tokens.spacing.large
                 anchors.right: root.portrait ? undefined : parent.right
                 anchors.rightMargin: root.margin
                 anchors.left: root.portrait ? parent.left : undefined
                 anchors.leftMargin: root.margin
-                y: root.portrait ? dateLine.y + dateLine.height + Tokens.spacing.extraLarge : dateLine.y + dateLine.height - readouts.height
+                y: root.portrait ? dateLine.y + dateLine.height + Tokens.spacing.extraLarge : Math.max(root.margin, dateLine.y + dateLine.height - readouts.height)
 
-                component Readout: Column {
-                    id: readout
+                Grid {
+                    anchors.right: root.portrait ? undefined : parent.right
+                    columns: root.portrait ? 2 : 4
+                    columnSpacing: Tokens.spacing.extraLarge * 1.5
+                    rowSpacing: Tokens.spacing.large
 
-                    required property string value
-                    property string total: ""
-                    required property string label
-
-                    spacing: Tokens.spacing.extraSmall
-
-                    Row {
-                        spacing: Tokens.spacing.extraSmall
-
-                        StyledText {
-                            text: readout.value
-                            color: Colours.ink
-                            font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
-                        }
-
-                        StyledText {
-                            anchors.baseline: parent.children[0].baseline
-                            visible: readout.total.length > 0
-                            text: readout.total
-                            color: Colours.inkMuted
-                            font: Tokens.font.body.builders.small.weight(Font.Medium).build()
-                        }
+                    Readout {
+                        value: `${Math.round(SystemUsage.cpuPerc * 100)}%`
+                        label: qsTr("CPU")
                     }
 
-                    StyledText {
-                        text: readout.label.toUpperCase()
-                        color: Colours.inkMuted
-                        font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.6).build()
+                    Readout {
+                        value: SystemUsage.gpuStatsAvailable ? `${Math.round(SystemUsage.gpuPerc * 100)}%` : qsTr("N/A")
+                        label: qsTr("GPU")
+                    }
+
+                    Readout {
+                        value: root.gib(SystemUsage.memUsed)
+                        total: qsTr("/ %1 GiB").arg(root.gib(SystemUsage.memTotal))
+                        label: qsTr("Memory")
+                    }
+
+                    Readout {
+                        value: root.rate(NetworkUsage.downloadSpeed)
+                        label: qsTr("Download")
                     }
                 }
 
-                Readout {
-                    value: `${Math.round(SystemUsage.cpuPerc * 100)}%`
-                    label: qsTr("CPU")
-                }
+                Row {
+                    id: details
 
-                Readout {
-                    value: SystemUsage.gpuStatsAvailable ? `${Math.round(SystemUsage.gpuPerc * 100)}%` : qsTr("N/A")
-                    label: qsTr("GPU")
-                }
+                    anchors.right: root.portrait ? undefined : parent.right
+                    layoutDirection: root.portrait ? Qt.LeftToRight : Qt.RightToLeft
+                    spacing: Tokens.spacing.extraLarge * 1.5
 
-                Readout {
-                    value: root.gib(SystemUsage.memUsed)
-                    total: qsTr("/ %1 GiB").arg(root.gib(SystemUsage.memTotal))
-                    label: qsTr("Memory")
-                }
+                    CycleReadout {
+                        visible: Config.dashboard.performance.showBattery && UPower.displayDevice.isLaptopBattery
+                        value: `${Math.round(UPower.displayDevice.percentage * 100)}%`
+                        label: qsTr("Battery")
+                    }
 
-                Readout {
-                    value: root.rate(NetworkUsage.downloadSpeed)
-                    label: qsTr("Network")
+                    CycleReadout {
+                        visible: Config.dashboard.performance.showNetwork
+                        value: root.rate(NetworkUsage.uploadSpeed)
+                        label: qsTr("Upload")
+                    }
+
+                    CycleReadout {
+                        visible: Config.dashboard.performance.showStorage && root.disk !== null
+                        value: root.disk ? `${Math.round(root.disk.perc * 100)}%` : ""
+                        label: root.disk ? qsTr("Storage %1").arg(root.disk.mount) : ""
+                        cycles: SystemUsage.disks.length > 1
+                        onNext: root.diskIndex = (root.diskIndex + 1) % SystemUsage.disks.length
+                    }
+
+                    CycleReadout {
+                        visible: Config.dashboard.performance.showGpu && SystemUsage.gpuDetected && SystemUsage.gpuTemp > 0
+                        value: root.temp(SystemUsage.gpuTemp)
+                        label: SystemUsage.gpus.length > 1 ? qsTr("GPU %1 temp").arg(SystemUsage.selectedGpuIndex + 1) : qsTr("GPU temp")
+                        cycles: SystemUsage.gpus.length > 1
+                        onNext: SystemUsage.selectGpu((SystemUsage.selectedGpuIndex + 1) % SystemUsage.gpus.length)
+                    }
+
+                    CycleReadout {
+                        visible: Config.dashboard.performance.showCpu && SystemUsage.cpuTemp > 0
+                        value: root.temp(SystemUsage.cpuTemp)
+                        label: qsTr("CPU temp")
+                    }
                 }
             }
 
-            PulseTerrain {
+            SpineTerrain {
                 id: terrain
 
                 anchors.left: parent.left
                 anchors.right: parent.right
-                y: (root.portrait ? readouts.y + readouts.height : dateLine.y + dateLine.height) + Tokens.spacing.extraLarge * 1.5
+                y: (root.portrait ? readouts.y + readouts.height : Math.max(readouts.y + readouts.height, dateLine.y + dateLine.height)) + Tokens.spacing.extraLarge * 1.5
                 height: {
                     if (root.portrait)
                         return Math.max(110, Math.min(180, stage.height * 0.14));
@@ -365,40 +426,13 @@ Item {
                 anchors.topMargin: Tokens.spacing.extraExtraLarge
                 spacing: Tokens.spacing.medium
 
-                StyledText {
+                SectionLabel {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: qsTr("Calendar").toUpperCase()
-                    color: Colours.ink
-                    font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.6).build()
+                    label: qsTr("Calendar")
+                    alive: true
                 }
 
                 DashCalendar {}
-            }
-
-            Row {
-                anchors.right: parent.right
-                anchors.rightMargin: root.margin
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: root.margin
-                spacing: Tokens.spacing.small
-
-                Repeater {
-                    model: CommandCenterTabs.list
-
-                    Rectangle {
-                        id: tabDot
-
-                        required property var modelData
-
-                        readonly property bool active: modelData.id === "dashboard"
-
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: active ? Tokens.spacing.large : Tokens.spacing.extraSmall
-                        height: Tokens.spacing.extraSmall
-                        radius: Tokens.rounding.full
-                        color: active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline
-                    }
-                }
             }
         }
     }

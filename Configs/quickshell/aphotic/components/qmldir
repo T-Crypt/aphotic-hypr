@@ -36,3 +36,6 @@ SurfaceReveal 1.0 SurfaceReveal.qml
 EchoTarget 1.0 EchoTarget.qml
 SignalLine 1.0 SignalLine.qml
 SignalSurface 1.0 SignalSurface.qml
+SectionLabel 1.0 SectionLabel.qml
+SignalCard 1.0 SignalCard.qml
+Readout 1.0 Readout.qml

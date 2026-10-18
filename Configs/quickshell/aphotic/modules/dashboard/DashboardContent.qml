@@ -4,7 +4,8 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.flow
-import "concept"
+import QtQuick.Window
+import "spine"
 
 ColumnLayout {
     id: root
@@ -69,7 +70,9 @@ ColumnLayout {
     // AiProviders drops those pills on its own -- so this tab stays, with
     // a shorter provider list. The plugin tabs appended below are the
     // genuinely layered ones, and stay gated.
-    readonly property var tabs: CommandCenterTabs.list.concat(root.pluginTabs.map(t => ({id:t.id,icon:t.icon,label:t.label})))
+    // The Spine already shows the machine live, so the Performance tab
+    // only exists for the Classic layout.
+    readonly property var tabs: CommandCenterTabs.list.filter(t => t.id !== "performance" || Settings.dashboardLayout !== "spine").concat(root.pluginTabs.map(t => ({id:t.id,icon:t.icon,label:t.label})))
 
     onTabsChanged: {
         if (!root.tabs.some(t => t.id === root.currentTab))
@@ -138,11 +141,6 @@ ColumnLayout {
         }
 
         Layout.alignment: Qt.AlignHCenter
-        // Both the outgoing and incoming loader report 0 while one unloads
-        // and the other builds async, which is every first switch to a
-        // plugin tab now that they load on demand. Holding the last real
-        // size across that gap is what stops the frame collapsing to bare
-        // padding.
         readonly property Item activeLoader: {
             const i = root.pluginTabs.findIndex(t => t.id === root.currentTab);
             if (i < 0 || i >= pluginTabRepeater.count)
@@ -153,45 +151,18 @@ ColumnLayout {
         readonly property real tabWidth: tabFrame.activeLoader.implicitWidth
         readonly property real tabHeight: tabFrame.activeLoader.implicitHeight
 
-        property real heldWidth: 0
-        property real heldHeight: 0
+        // One stage for every tab, so switching never resizes the frame.
+        // A tab larger than the stage still gets room, it just grows it.
+        readonly property real stageWidth: Math.min(1280, (Window.width || 1280) - Tokens.padding.extraLarge * 4)
+        readonly property real stageHeight: Math.min(760, (Window.height || 760) - Tokens.padding.extraLarge * 8)
 
-        onTabWidthChanged: if (tabFrame.tabWidth > 0) tabFrame.heldWidth = tabFrame.tabWidth
-        onTabHeightChanged: if (tabFrame.tabHeight > 0) tabFrame.heldHeight = tabFrame.tabHeight
-
-        // Signal: hold the largest size any tab has needed, so switching tabs
-        // never makes the frame jump; growth glides instead.
-        property real maxWidth: 0
-        property real maxHeight: 0
-        readonly property real shownWidth: tabFrame.tabWidth > 0 ? tabFrame.tabWidth : tabFrame.heldWidth
-        readonly property real shownHeight: tabFrame.tabHeight > 0 ? tabFrame.tabHeight : tabFrame.heldHeight
-        onShownWidthChanged: tabFrame.maxWidth = Math.max(tabFrame.maxWidth, tabFrame.shownWidth)
-        onShownHeightChanged: tabFrame.maxHeight = Math.max(tabFrame.maxHeight, tabFrame.shownHeight)
-
-        Connections {
-            target: root.screenState
-
-            // Start each opening from the real content size, so a size held
-            // from an earlier session or a startup layout never lingers.
-            function onDashboardChanged(): void {
-                if (root.screenState.dashboard) {
-                    tabFrame.maxWidth = tabFrame.shownWidth;
-                    tabFrame.maxHeight = tabFrame.shownHeight;
-                }
-            }
-        }
-
-        Layout.preferredWidth: Math.max(tabFrame.maxWidth, tabFrame.shownWidth) + Tokens.padding.extraLarge * 2
-        Layout.preferredHeight: Math.max(tabFrame.maxHeight, tabFrame.shownHeight) + Tokens.padding.extraLarge * 2
+        Layout.preferredWidth: Math.max(tabFrame.stageWidth, tabFrame.tabWidth) + Tokens.padding.extraLarge * 2
+        Layout.preferredHeight: Math.max(tabFrame.stageHeight, tabFrame.tabHeight) + Tokens.padding.extraLarge * 2
 
         Behavior on Layout.preferredWidth {
-            enabled: true
-
             Anim { type: Anim.Emphasized }
         }
         Behavior on Layout.preferredHeight {
-            enabled: true
-
             Anim { type: Anim.Emphasized }
         }
         radius: Tokens.rounding.large
@@ -289,16 +260,14 @@ ColumnLayout {
         id: dashboardComp
         DashboardTab {}
     }
-    // Signal Spine sits inside the same tab frame as every other tab, so
-    // it gets a fixed stage to fill rather than sizing the frame itself.
     Component {
         id: spineComp
 
         Item {
-            implicitWidth: 1280
-            implicitHeight: 760
+            implicitWidth: tabFrame.stageWidth
+            implicitHeight: tabFrame.stageHeight
 
-            ConceptPulse {
+            SpineSurface {
                 anchors.fill: parent
                 embedded: true
             }
