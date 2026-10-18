@@ -4,6 +4,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.flow
+import "concept"
 
 ColumnLayout {
     id: root
@@ -240,7 +241,7 @@ ColumnLayout {
                 case "aiChat":
                     return aiChatComp;
                 default:
-                    return dashboardComp;
+                    return Settings.dashboardLayout === "spine" ? spineComp : dashboardComp;
                 }
             }
 
@@ -287,6 +288,21 @@ ColumnLayout {
     Component {
         id: dashboardComp
         DashboardTab {}
+    }
+    // Signal Spine sits inside the same tab frame as every other tab, so
+    // it gets a fixed stage to fill rather than sizing the frame itself.
+    Component {
+        id: spineComp
+
+        Item {
+            implicitWidth: 1280
+            implicitHeight: 760
+
+            ConceptPulse {
+                anchors.fill: parent
+                embedded: true
+            }
+        }
     }
     Component {
         id: flowComp

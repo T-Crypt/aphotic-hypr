@@ -12,7 +12,7 @@ The recommended concept, "Signal Spine", lives here as a working prototype:
   config root at run time because `qs -p` resolves `qs.*` imports only
   from the config root.
 
-Nothing here is wired into the live dashboard. The leaves
+The Dashboard tab shows it when `dashboardLayout` is `"spine"` (Settings, Appearance, Dashboard layout); `"classic"` keeps the cards. The leaves
 (`DashMedia`, `DashPomodoro`, `DashQuickToggles`, `DashCalendar`) are the
 existing dashboard widgets, reused unmodified, so this concept rides
 along with any token or copy pass made to those files.

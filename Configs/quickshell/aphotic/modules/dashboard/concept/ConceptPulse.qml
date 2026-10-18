@@ -13,6 +13,12 @@ Item {
     readonly property real margin: Tokens.padding.extraExtraLarge
     readonly property bool portrait: stage.height > stage.width
 
+    // Inside the dashboard's own tab frame the surface draws no dark
+    // gradient of its own; the frame and the window's dim layer already
+    // carry that. Default false keeps the standalone probe's full
+    // composition unchanged.
+    property bool embedded: false
+
     property bool shown: true
 
     SystemUsageWatch {}
@@ -99,6 +105,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
+                visible: !root.embedded
                 gradient: Gradient {
                     GradientStop {
                         position: 0
