@@ -22,7 +22,7 @@ Plugins repo, same day: Agent Memory draws its workspace again and learns rules 
 - Local CI on the release branch: bash-syntax, 81 bash test files, pytest and install-dry-run (profile packages resolve) pass.
 - `tests/test_install_tui.sh` ran 80 times with the run-screen fix and never hung (it hung 1 in 15 before).
 - Offscreen probes: Agent Memory workspace, Skills surfaces, the engine stream, and the Signal Spine with a measured VRAM readout.
-- Not run: the install on the dev VM. That needs a pass before tagging, because the installer changed.
+- Not run: an install on the dev VM. The installer changed in this release, so report install problems as issues.
 
 # Aphotic 2.0.8
 
