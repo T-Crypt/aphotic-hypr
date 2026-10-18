@@ -148,13 +148,13 @@ ColumnLayout {
             return pluginTabRepeater.itemAt(i) ?? tabLoader;
         }
 
-        readonly property real tabWidth: tabFrame.activeLoader.implicitWidth
-        readonly property real tabHeight: tabFrame.activeLoader.implicitHeight
+        readonly property real tabWidth: tabFrame.activeLoader.item?.implicitWidth ?? 0
+        readonly property real tabHeight: tabFrame.activeLoader.item?.implicitHeight ?? 0
 
         // One stage for every tab, so switching never resizes the frame.
         // A tab larger than the stage still gets room, it just grows it.
-        readonly property real stageWidth: Math.min(1280, (Window.width || 1280) - Tokens.padding.extraLarge * 4)
-        readonly property real stageHeight: Math.min(760, (Window.height || 760) - Tokens.padding.extraLarge * 8)
+        readonly property real stageWidth: Math.min(1680, (Window.width || 1280) - Tokens.padding.extraLarge * 4)
+        readonly property real stageHeight: Math.min(940, (Window.height || 760) - Tokens.padding.extraLarge * 8)
 
         Layout.preferredWidth: Math.max(tabFrame.stageWidth, tabFrame.tabWidth) + Tokens.padding.extraLarge * 2
         Layout.preferredHeight: Math.max(tabFrame.stageHeight, tabFrame.tabHeight) + Tokens.padding.extraLarge * 2
@@ -185,7 +185,9 @@ ColumnLayout {
         Loader {
             id: tabLoader
 
-            anchors.centerIn: parent
+            // Every tab gets the whole stage, edge to edge.
+            anchors.fill: parent
+            anchors.margins: Tokens.padding.extraLarge
             opacity: 1
             active: true
 
@@ -242,7 +244,8 @@ ColumnLayout {
 
                 required property var modelData
 
-                anchors.centerIn: parent
+                anchors.fill: parent
+                anchors.margins: Tokens.padding.extraLarge
                 active: root._openedTabIds.includes(pluginTabLoader.modelData.id)
                 asynchronous: true
                 visible: pluginTabLoader.opacity > 0
@@ -264,9 +267,6 @@ ColumnLayout {
         id: spineComp
 
         Item {
-            implicitWidth: tabFrame.stageWidth
-            implicitHeight: tabFrame.stageHeight
-
             SpineSurface {
                 anchors.fill: parent
                 embedded: true

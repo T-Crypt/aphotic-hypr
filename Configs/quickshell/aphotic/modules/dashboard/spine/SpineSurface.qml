@@ -134,7 +134,9 @@ Item {
                 }
             }
 
-            SignalText {
+            // Plain, crisp text: the time is read at a glance, so it never
+            // resolves out of noise or carries an effect around its edges.
+            Text {
                 id: clock
 
                 x: root.margin
@@ -143,44 +145,21 @@ Item {
                     Time.minuteStr;
                     return Time.format(Settings.twelveHourClock ? "h:mm AP" : "HH:mm");
                 }
-                family: Tokens.font.headline.large.family
-                ink: Colours.ink
-                glow: Colours.signalStyle.accentLine
-                pixelSize: root.portrait ? 88 : Math.round(Math.max(72, Math.min(128, stage.height * 0.1)))
-                weight: Font.DemiBold
-                letterSpacing: 2
-                property real progress: 0
+                color: Colours.ink
+                renderType: Text.QtRendering
+                font.family: Tokens.font.headline.large.family
+                font.pixelSize: root.portrait ? 88 : Math.round(Math.max(72, Math.min(128, stage.height * 0.1)))
+                font.weight: Font.DemiBold
+                font.letterSpacing: 2
 
-                Component.onCompleted: {
-                    if (Motion.reducedMotion)
-                        clock.progress = 1;
-                }
-
-                Connections {
-                    target: Time
-
-                    function onMinuteStrChanged(): void {
-                        if (!Motion.reducedMotion)
-                            clock.progress = 0;
-                    }
-                }
-
-                Timer {
-                    id: shimmerClock
-
-                    interval: 84
-                    running: !Motion.reducedMotion && clock.progress < 1
-                    repeat: true
-                    onTriggered: {
-                        clock.time = (clock.time + 0.25) % 3600;
-                        clock.progress = Math.min(1, clock.progress + 0.08);
-                    }
-                }
-
-                ActivityProbe {
-                    name: "dashboard.spine.shimmer"
-                    kind: "render"
-                    timer: shimmerClock
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.top: parent.bottom
+                    anchors.topMargin: -Math.round(parent.font.pixelSize * 0.08)
+                    width: Math.round(parent.font.pixelSize * 0.6)
+                    height: 3
+                    radius: 1.5
+                    color: Colours.signalStyle.accentLine
                 }
             }
 
