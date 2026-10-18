@@ -95,10 +95,18 @@ BackendClaims {
     }
 
     property Timer _timer: Timer {
+        id: poll
+
         interval: 10000
         repeat: true
         triggeredOnStart: true
         running: root.enabled
         onTriggered: root._poll()
+    }
+
+    property ActivityProbe _probe: ActivityProbe {
+        name: "engines.http"
+        kind: "process"
+        timer: poll
     }
 }
