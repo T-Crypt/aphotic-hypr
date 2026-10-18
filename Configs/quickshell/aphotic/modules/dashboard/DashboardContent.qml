@@ -281,7 +281,7 @@ ColumnLayout {
         id: performanceComp
         Loader {
             active: Config.dashboard.enabled
-            sourceComponent: Dashboard {}
+            sourceComponent: PerformanceTab {}
         }
     }
     Component {

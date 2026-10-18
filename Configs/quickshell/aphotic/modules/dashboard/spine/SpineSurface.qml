@@ -204,24 +204,12 @@ Item {
                 implicitWidth: cycleRow.implicitWidth
                 implicitHeight: cycleRow.implicitHeight
 
-                Row {
+                Readout {
                     id: cycleRow
 
-                    spacing: Tokens.spacing.extraSmall
-
-                    Readout {
-                        small: true
-                        value: cycle.value
-                        label: cycle.label
-                    }
-
-                    MaterialIcon {
-                        anchors.bottom: parent.bottom
-                        visible: cycle.cycles
-                        text: "swap_horiz"
-                        fontStyle: Tokens.font.icon.small
-                        color: Colours.inkMuted
-                    }
+                    small: true
+                    value: cycle.value
+                    label: cycle.label
                 }
 
                 Interact {
@@ -293,7 +281,7 @@ Item {
                     CycleReadout {
                         visible: Config.dashboard.performance.showStorage && root.disk !== null
                         value: root.disk ? `${Math.round(root.disk.perc * 100)}%` : ""
-                        label: root.disk ? qsTr("Storage %1").arg(root.disk.mount) : ""
+                        label: !root.disk ? "" : SystemUsage.disks.length > 1 ? qsTr("Storage %1 %2/%3").arg(root.disk.mount).arg(root.diskIndex % SystemUsage.disks.length + 1).arg(SystemUsage.disks.length) : qsTr("Storage %1").arg(root.disk.mount)
                         cycles: SystemUsage.disks.length > 1
                         onNext: root.diskIndex = (root.diskIndex + 1) % SystemUsage.disks.length
                     }

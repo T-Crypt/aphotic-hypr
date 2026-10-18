@@ -126,12 +126,11 @@ ColumnLayout {
                     CAnim {}
                 }
 
-                StyledText {
+                SectionLabel {
                     id: pillLabel
                     anchors.centerIn: parent
-                    text: providerPill.modelData.label.toUpperCase()
-                    color: (providerPill.active ? Colours.ink : Colours.inkMuted)
-                    font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                    label: providerPill.modelData.label
+                    alive: providerPill.active
                 }
 
                 Interact {
@@ -309,29 +308,13 @@ ColumnLayout {
         font: Tokens.font.label.small
     }
 
-    StyledRect {
+    SignalCard {
         id: chatPanel
 
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.preferredWidth: 480
-        Layout.preferredHeight: 300
-        radius: Tokens.rounding.large
-        color: Colours.signalStyle.surface
-        border.width: 1
-        border.color: Colours.signalStyle.hairline
-
-        Elevation {
-            target: chatPanel
-            level: 1
-        }
-
-        Rectangle {
-            x: chatPanel.radius
-            width: chatPanel.width - chatPanel.radius * 2
-            height: 1
-            color: Colours.signalStyle.edgeLight
-        }
+        Layout.preferredWidth: 720
+        Layout.preferredHeight: 460
 
         ListView {
             id: list
@@ -384,7 +367,7 @@ ColumnLayout {
                         radius: Tokens.rounding.large
                         bottomRightRadius: bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
                         bottomLeftRadius: !bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
-                        color: (bubble.fromUser ? Qt.alpha(Colours.signal, 0.14) : Colours.signalStyle.raised)
+                        color: (bubble.fromUser ? Qt.alpha(Colours.signal, 0.14) : Colours.signalStyle.raisedHi)
                         border.width: 1
                         border.color: (bubble.fromUser ? Qt.alpha(Colours.signal, 0.4) : Colours.signalStyle.hairline)
 
@@ -434,7 +417,7 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Type below to start a conversation")
                     color: Colours.inkMuted
-                    font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                    font: Tokens.font.body.small
                 }
             }
         }

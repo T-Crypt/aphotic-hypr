@@ -60,19 +60,17 @@ ColumnLayout {
         ColumnLayout {
             spacing: Tokens.spacing.extraSmall
 
-            StyledText {
-                Layout.maximumWidth: 220
-                text: (root.themeInfo?.displayName ?? Themes.activeTheme).toUpperCase()
-                color: Colours.inkMuted
-                font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+            SectionLabel {
+                Layout.maximumWidth: root.width * 0.4
+                label: root.themeInfo?.displayName ?? Themes.activeTheme
                 elide: Text.ElideRight
             }
 
             StyledText {
-                Layout.maximumWidth: 220
+                Layout.maximumWidth: root.width * 0.4
                 text: Themes.activeWallpaper
-                color: Colours.inkMuted
-                font: Tokens.font.label.small
+                color: Colours.ink
+                font: Tokens.font.body.small
                 elide: Text.ElideRight
             }
         }

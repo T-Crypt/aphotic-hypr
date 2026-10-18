@@ -7,12 +7,13 @@ StyledRect {
 
     property string title: ""
     property int tintIndex: 0
+    property bool selected: false
     readonly property real headerHeight: card.title.length > 0 ? cardTitle.implicitHeight + Tokens.padding.medium : 0
 
     radius: Tokens.rounding.medium
-    color: Colours.signalStyle.raised
+    color: card.selected ? Qt.alpha(Colours.signal, 0.08) : Colours.signalStyle.raised
     border.width: 1
-    border.color: Colours.signalStyle.hairline
+    border.color: card.selected ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline
 
     Elevation {
         target: card
@@ -44,6 +45,7 @@ StyledRect {
 
         SectionLabel {
             label: card.title
+            alive: card.selected
         }
     }
 }
