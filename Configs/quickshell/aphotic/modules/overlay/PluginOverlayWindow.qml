@@ -67,7 +67,9 @@ PanelWindow {
     // and below every real shell surface, so a pet or a visualiser can
     // never cover the bar, the notch or a popout.
     WlrLayershell.layer: WlrLayer.Bottom
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // An overlay that holds a text field asks for focus while it is being
+    // typed in by setting `wantsKeyboard`; otherwise it never takes keys.
+    WlrLayershell.keyboardFocus: content.item?.wantsKeyboard === true ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     WlrLayershell.exclusionMode: ExclusionMode.Normal
     WlrLayershell.exclusiveZone: 0
     color: "transparent"
@@ -86,7 +88,14 @@ PanelWindow {
     implicitWidth: root.surface.width
     implicitHeight: root.surface.height
 
-    mask: Region {
+    // A plugin that draws several separate things (desktop widgets) hands
+    // over a `maskRegion` of its own, so the gaps between them stay the
+    // desktop's to click.
+    mask: content.item?.maskRegion ?? itemMask
+
+    Region {
+        id: itemMask
+
         item: content.item?.maskItem ?? content.item ?? null
     }
 
