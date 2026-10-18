@@ -205,6 +205,11 @@ Singleton {
     // is what the picker has always been, so it stays the default.
     readonly property var wallpaperPickerLayouts: ["coverflow", "grid", "dock"]
     property string wallpaperPickerLayout: "coverflow"
+    // Which surface the SUPER+D dashboard's Dashboard tab shows: "classic"
+    // widget cards or the "spine" Signal Spine layout. The classic cards
+    // are what the tab has always shown, so they stay the default.
+    readonly property var dashboardLayouts: ["classic", "spine"]
+    property string dashboardLayout: "classic"
     // Owned by the live-wallpaper plugin (see its [owns] table). Kept here
     // rather than in plugin state for the same reason agentGraph*'s keys
     // are: one settings file, one schema, one place a user's preferences
@@ -395,6 +400,7 @@ Singleton {
             wallpaperAutoCycleEnabled: root.wallpaperAutoCycleEnabled,
             wallpaperAutoCycleInterval: root.wallpaperAutoCycleInterval,
             wallpaperPickerLayout: root.wallpaperPickerLayout,
+            dashboardLayout: root.dashboardLayout,
             liveWallpaperPauseOnBattery: root.liveWallpaperPauseOnBattery,
             liveWallpaperPauseWhenOccluded: root.liveWallpaperPauseWhenOccluded,
             liveWallpaperMuted: root.liveWallpaperMuted,
@@ -682,6 +688,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onWallpaperAutoCycleEnabledChanged: root._saveState()
     onWallpaperAutoCycleIntervalChanged: root._saveState()
     onWallpaperPickerLayoutChanged: root._saveState()
+    onDashboardLayoutChanged: root._saveState()
     onLiveWallpaperPauseOnBatteryChanged: root._saveState()
     onLiveWallpaperPauseWhenOccludedChanged: root._saveState()
     onLiveWallpaperMutedChanged: root._saveState()
@@ -899,6 +906,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.wallpaperAutoCycleInterval = data.wallpaperAutoCycleInterval;
                 if (root.wallpaperPickerLayouts.includes(data.wallpaperPickerLayout))
                     root.wallpaperPickerLayout = data.wallpaperPickerLayout;
+                if (root.dashboardLayouts.includes(data.dashboardLayout))
+                    root.dashboardLayout = data.dashboardLayout;
                 if (typeof data.liveWallpaperPauseOnBattery === "boolean")
                     root.liveWallpaperPauseOnBattery = data.liveWallpaperPauseOnBattery;
                 if (typeof data.liveWallpaperPauseWhenOccluded === "boolean")
