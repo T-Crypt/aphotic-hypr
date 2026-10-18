@@ -85,8 +85,8 @@ APHOTIC_PLUGIN_ENGINE_CAPABILITIES="models claims stats progress chat start stop
 # the same commit as services/PluginApiCore.js; the test holds them
 # equal.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_API_VERSION=2
-APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish sonar.register"
+APHOTIC_PLUGIN_API_VERSION=3
+APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish sonar.register overlay.present"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
 # counts `-` as a word boundary, so `-w profile` matches "profile-hook"
@@ -1382,15 +1382,16 @@ _aphotic_plugin_install() {
         aphotic_log "its first call into the shell would fail, so this is a refusal rather than a warning -- 'aphotic update' first"
         return 1
     fi
-    if [[ "$wants_api" -lt 2 ]]; then
-        while IFS= read -r use; do
-            if [[ "$use" == "sonar.register" ]]; then
-                aphotic_err "'${name}': sonar.register requires plugin API v2, this manifest declares v${wants_api}"
-                aphotic_log "the runtime would silently deny the grant; declare [api] version = 2 instead"
-                return 1
-            fi
-        done < <(aphotic_toml_get_array "${src}/plugin.toml" api uses)
-    fi
+    local min use
+    while IFS= read -r use; do
+        [[ -n "$use" ]] || continue
+        min="$(_aphotic_plugin_api_min_version "$use")"
+        if [[ "$wants_api" -lt "$min" ]]; then
+            aphotic_err "'${name}': ${use} requires plugin API v${min}, this manifest declares v${wants_api}"
+            aphotic_log "the runtime would silently deny the grant; declare [api] version = ${min} instead"
+            return 1
+        fi
+    done < <(aphotic_toml_get_array "${src}/plugin.toml" api uses)
 
     case "$verdict" in
         inert:*)
@@ -1573,12 +1574,23 @@ _aphotic_plugin_remove() {
 _aphotic_plugin_api_describe() {
     case "$1" in
         sonar.register) echo "register bounded Sonar targets for this plugin (API v2)" ;;
+        overlay.present) echo "present this plugin's own manual fullscreen overlay (API v3)" ;;
         context.observe) echo "read the runtime context and its policy (reactive)" ;;
         context.request) echo "suggest a context switch; the user confirms from a notification" ;;
         resource.observe) echo "read the resource posture: level, resource, headline, surfaced (reactive)" ;;
         surface.declare) echo "give a plugin surface a role so it coexists with core surfaces" ;;
         notifications.publish) echo "post a notification under the plugin's name, subject to DND and context" ;;
         *) echo "" ;;
+    esac
+}
+
+# The API version a use first appeared in. PluginApiCore.js MIN_VERSION
+# holds the same table, and tests/test_plugin_api.sh keeps them equal.
+_aphotic_plugin_api_min_version() {
+    case "$1" in
+        sonar.register) echo 2 ;;
+        overlay.present) echo 3 ;;
+        *) echo 1 ;;
     esac
 }
 
@@ -1695,8 +1707,8 @@ _aphotic_plugin_validate() {
     fi
     while IFS= read -r use; do
         [[ -n "$use" ]] || continue
-        if [[ "$use" == "sonar.register" && "$api_version" =~ ^[0-9]+$ && "$api_version" -lt 2 ]]; then
-            aphotic_err "${name}: sonar.register requires plugin API v2"
+        if [[ "$api_version" =~ ^[0-9]+$ && "$api_version" -lt "$(_aphotic_plugin_api_min_version "$use")" ]]; then
+            aphotic_err "${name}: ${use} requires plugin API v$(_aphotic_plugin_api_min_version "$use")"
             fails=$((fails + 1))
         fi
         _aphotic_plugin_in_list "$use" "$APHOTIC_PLUGIN_API_USES" || {
