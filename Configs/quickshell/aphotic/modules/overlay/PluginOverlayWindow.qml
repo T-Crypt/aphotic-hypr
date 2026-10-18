@@ -61,6 +61,7 @@ PanelWindow {
     required property var surface
 
     screen: modelData
+    visible: !Surfaces.suppressed
 
     WlrLayershell.namespace: `aphotic-overlay-${root.surface.id}`
     // Bottom, not Top: an overlay is ambient. It sits above the wallpaper
