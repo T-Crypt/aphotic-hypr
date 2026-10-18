@@ -481,7 +481,7 @@ Item {
 
                         Repeater {
                             model: [
-                                { id: "spine", label: qsTr("Signal Spine") },
+                                { id: "spine", label: qsTr("Live tiles") },
                                 { id: "classic", label: qsTr("Classic") }
                             ]
 
