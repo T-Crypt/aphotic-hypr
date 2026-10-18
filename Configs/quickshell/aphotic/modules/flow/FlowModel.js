@@ -11,7 +11,7 @@ function amount(value, unit) {
 // ResourceEngine ids, never plugin ids: the gaming profile ships as a
 // plugin and still registers under the `gaming` owner the engine knows.
 var PLANES = [
-    {key:'ai', label:'AI', layer:'ai', owners:['ai','ollama'], focus:'gpu-vram', focusLabel:'resident',
+    {key:'ai', label:'AI', layer:'ai', owners:['ai','ollama'], ownersFrom:'engines', focus:'gpu-vram', focusLabel:'resident',
      verb:'Runtime', idle:'No resident model claims', absent:'No model runtime registered'},
     {key:'gaming', label:'Gaming', layer:'gaming', owners:['gaming'], focus:'gpu-vram', focusLabel:'reserved',
      verb:'Session', idle:'No game session detected', absent:'Gaming profile plugin not installed'},
@@ -42,13 +42,19 @@ function resourceNodes(claims, specs) {
     });
 }
 
-function planeNode(desc, claims, specs, states, profiles, layers, passports) {
+// A plane fed by engines also owns every engine a stream reports live.
+function ownersFor(desc, engines) {
+    return desc.ownersFrom === 'engines' ? desc.owners.concat(engines || []) : desc.owners;
+}
+
+function planeNode(desc, claims, specs, states, profiles, layers, passports, engines) {
     const installed = layers[desc.layer] !== false;
-    const owned = claims.filter(c => desc.owners.indexOf(c.owner) >= 0)
+    const ownerIds = ownersFor(desc, engines);
+    const owned = claims.filter(c => ownerIds.indexOf(c.owner) >= 0)
         .map(c => Object.assign({}, c, {unit:specs[c.resource] ? specs[c.resource].unit || '' : ''}));
-    const activeId = desc.owners.find(id => states[id] && states[id].phase !== 'idle');
+    const activeId = ownerIds.find(id => states[id] && states[id].phase !== 'idle');
     const state = activeId ? states[activeId] : null;
-    const registered = desc.owners.some(id => profiles[id]);
+    const registered = ownerIds.some(id => profiles[id]);
     const phase = !installed ? 'not installed'
         : state ? state.phase
         : owned.length ? 'claims active'
@@ -65,15 +71,15 @@ function planeNode(desc, claims, specs, states, profiles, layers, passports) {
         : owned.length ? owned.length + (owned.length === 1 ? ' claim held' : ' claims held') + focusCopy + workCopy
         : work.length ? workSummary(work)
         : registered ? desc.idle : desc.absent;
-    return {key:desc.key, label:desc.label, layer:desc.layer, owners:desc.owners,
+    return {key:desc.key, label:desc.label, layer:desc.layer, owners:ownerIds,
         installed:installed, registered:registered, phase:phase, detail:detail, claims:owned,
         work:work, stale:work.some(w => w.stale),
         active:installed && (!!state || owned.length > 0 || work.length > 0),
         summary:installed ? owned.length + (owned.length === 1 ? ' claim · ' : ' claims · ') + phase : 'Layer not installed'};
 }
 
-function planeNodes(claims, specs, states, profiles, layers, passports) {
-    return PLANES.map(desc => planeNode(desc, claims, specs, states, profiles, layers, passports));
+function planeNodes(claims, specs, states, profiles, layers, passports, engines) {
+    return PLANES.map(desc => planeNode(desc, claims, specs, states, profiles, layers, passports, engines));
 }
 
 // The value the view compares before repainting the map or replaying the
@@ -87,13 +93,13 @@ function signature(claims, resources, planes, passports, receipts) {
         + '#' + (receipts || []).map(r => r.id + '=' + r.status).sort().join('|');
 }
 
-function summarize(claims, specs, states, profiles, layers, passports, receipts) {
+function summarize(claims, specs, states, profiles, layers, passports, receipts, engines) {
     claims = claims || [];
     specs = specs || {};
     passports = passports || [];
     receipts = receipts || [];
     const resources = resourceNodes(claims, specs);
-    const planes = planeNodes(claims, specs, states || {}, profiles || {}, layers || {}, passports);
+    const planes = planeNodes(claims, specs, states || {}, profiles || {}, layers || {}, passports, engines);
     return {planes:planes, claimCount:claims.length,
         contentionCount:resources.filter(r => r.contended).length,
         activePlanes:planes.filter(p => p.active).length,
@@ -124,7 +130,7 @@ function shellNode(shell) {
             + (shell.gpuNote ? '\n' + shell.gpuNote : '')};
 }
 
-function build(claims, specs, states, profiles, layers, passports, receipts, shell) {
+function build(claims, specs, states, profiles, layers, passports, receipts, shell, engines) {
     claims = claims || [];
     specs = specs || {};
     states = states || {};
@@ -140,7 +146,7 @@ function build(claims, specs, states, profiles, layers, passports, receipts, she
         const held = claims.filter(c => c.owner === key).map(c => Object.assign({}, c, {unit:specs[c.resource] ? specs[c.resource].unit || '' : ''}));
         const state = states[key];
         const foreground = held.some(c => c.priority === 'foreground');
-        const plane = PLANES.find(p => p.owners.indexOf(key) >= 0);
+        const plane = PLANES.find(p => ownersFor(p, engines).indexOf(key) >= 0);
         const work = workFor(passports, key);
         const owned = receiptsFor(receipts, key);
         const workCopy = work.length ? '\n' + workSummary(work) : '';
@@ -165,7 +171,7 @@ function build(claims, specs, states, profiles, layers, passports, receipts, she
         if (w.claims.some(c => c.resource === r.key))
             edges.push({resource:ri, workload:wi, contended:r.contended, foreground:w.foreground});
     }));
-    const planes = planeNodes(claims, specs, states, profiles, layers, passports);
+    const planes = planeNodes(claims, specs, states, profiles, layers, passports, engines);
     return {resources:shownResources, workloads:shownWorkloads, edges:edges.slice(0,24), planes:planes,
         workloadCount:passports.length, staleCount:passports.filter(p => p.status === 'stale').length,
         pendingActions:receipts.filter(r => r.status === 'requested').length, receipts:receipts,

@@ -156,13 +156,24 @@ function normalize(raw, source, sourceName) {
         warnings.push("aphotic engine: '" + id + "' ignored host key '" + key + "', it is not a settings key name");
         key = "";
     }
+    // A stream is a command whose every stdout line is a full report, so an
+    // engine that reports through one needs neither an endpoint nor a host.
+    var stream = Array.isArray(raw.stream) ? raw.stream.map(String).filter(function (part) { return part.length > 0; }) : [];
+    if (stream.length > 0 && protocol !== "engine-report") {
+        warnings.push("aphotic engine: '" + id + "' ignored its stream, only engine-report speaks one");
+        stream = [];
+    }
+    if (stream.length > 0 && stream.some(hasShellSyntax)) {
+        warnings.push("aphotic engine: '" + id + "' skipped, its stream carries shell syntax");
+        return { descriptor: null, warnings: warnings };
+    }
     var endpoint = _trim(raw.endpoint);
-    if (endpoint.length === 0) {
+    if (endpoint.length === 0 && stream.length === 0) {
         warnings.push("aphotic engine: '" + id + "' skipped, no endpoint");
         return { descriptor: null, warnings: warnings };
     }
     var defaultHost = _trim(raw.default_host);
-    if (!/^https?:\/\//.test(endpoint) && hostKey.length === 0 && defaultHost.length === 0) {
+    if (stream.length === 0 && !/^https?:\/\//.test(endpoint) && hostKey.length === 0 && defaultHost.length === 0) {
         warnings.push("aphotic engine: '" + id + "' skipped, it has no host to ask");
         return { descriptor: null, warnings: warnings };
     }
@@ -256,6 +267,7 @@ function normalize(raw, source, sourceName) {
         process: process,
         portFlag: portFlag,
         manages: manages,
+        stream: stream,
         gateway: gateway,
         gatewayEntry: gatewayEntry,
         capabilities: capabilities,
