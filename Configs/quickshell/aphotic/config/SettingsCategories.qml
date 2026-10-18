@@ -92,6 +92,7 @@ QtObject {
         { category: "appearance", anchor: "communityThemes", icon: "public", label: qsTr("Community themes"), keywords: "download index" },
         { category: "appearance", anchor: "browseWallpapers", icon: "grid_view", label: qsTr("Browse all wallpapers"), keywords: "gallery every" },
         { category: "appearance", anchor: "wallpaperPickerLayout", icon: "view_carousel", label: qsTr("Launcher layout"), keywords: "coverflow grid dock" },
+        { category: "appearance", anchor: "dashboardLayout", icon: "space_dashboard", label: qsTr("Dashboard layout"), keywords: "dashboard layout spine signal super+d" },
         { category: "appearance", anchor: "autoCycleWallpaper", icon: "slideshow", label: qsTr("Auto-cycle wallpaper"), keywords: "slideshow rotate random" },
         { category: "appearance", anchor: "cycleInterval", icon: "timer", label: qsTr("Interval"), keywords: "frequency minutes timer" },
         { category: "launcher", anchor: "resultsStyle", icon: "grid_view", label: qsTr("Results style"), keywords: "app search results grid list" },

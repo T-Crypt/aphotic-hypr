@@ -469,6 +469,57 @@ Item {
                         }
                     }
                 }
+
+                SettingsRow {
+                    searchId: "dashboardLayout"
+                    icon: "space_dashboard"
+                    label: qsTr("Dashboard layout")
+                    description: qsTr("How SUPER+D presents the dashboard")
+
+                    RowLayout {
+                        spacing: Tokens.spacing.small
+
+                        Repeater {
+                            model: [
+                                { id: "classic", label: qsTr("Classic") },
+                                { id: "spine", label: qsTr("Signal Spine") }
+                            ]
+
+                            StyledRect {
+                                id: dashLayoutPill
+
+                                required property var modelData
+                                readonly property bool active: dashLayoutPill.modelData.id === Settings.dashboardLayout
+
+                                Layout.preferredHeight: 28
+                                Layout.preferredWidth: dashLayoutLabel.implicitWidth + Tokens.padding.medium * 2
+                                radius: Tokens.rounding.full
+                                color: (dashLayoutPill.active ? Qt.alpha(Colours.signal, 0.16) : Colours.signalStyle.raised)
+                                border.width: 1
+                                border.color: dashLayoutPill.active ? Colours.signal : Colours.signalStyle.hairline
+
+                                StyledText {
+                                    id: dashLayoutLabel
+                                    anchors.centerIn: parent
+                                    text: dashLayoutPill.modelData.label
+                                    color: (dashLayoutPill.active ? Colours.ink : Colours.inkMuted)
+                                    font: Tokens.font.label.small
+                                }
+
+                                Interact {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    showHoverBackground: !dashLayoutPill.active
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: Settings.dashboardLayout = dashLayoutPill.modelData.id
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             StyledText {

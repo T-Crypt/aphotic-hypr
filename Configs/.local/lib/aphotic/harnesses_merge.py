@@ -209,6 +209,15 @@ def _normalize(raw: dict, source: str, hid: str, emit) -> dict | None:
     if not isinstance(provider, str):
         provider = ""
 
+    instructions = raw.get("instructions", "")
+    if instructions and (not isinstance(instructions, str) or not _scan_ok(instructions)
+                         or any(c in instructions for c in "*?[]")):
+        emit(
+            f"aphotic harness: {source}: '{hid}' instructions '{instructions}' is not a "
+            "home-relative file -- ignored"
+        )
+        instructions = ""
+
     return {
         "id": hid,
         "source": source,
@@ -221,6 +230,7 @@ def _normalize(raw: dict, source: str, hid: str, emit) -> dict | None:
         "scan": scan if usage == "scan" else "",
         "context": context,
         "chat": chat,
+        "instructions": instructions,
     }
 
 
