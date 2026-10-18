@@ -72,6 +72,7 @@ def test_shipped_manifest_shapes_parse(tmp_path):
         "scan": ".claude/projects/*/*.jsonl",
         "context": "statusline",
         "chat": True,
+        "instructions": "",
     }
     codex = record["harnesses"][1]
     # label and icon were never declared: they fall back silently.
@@ -97,6 +98,7 @@ def test_shipped_manifest_shapes_parse(tmp_path):
         "scan": "",
         "context": "stream",
         "chat": False,
+        "instructions": "",
     }
 
 
@@ -132,6 +134,7 @@ def test_dropin_overrides_plugin_wholesale(tmp_path):
         "scan": "",
         "context": "stream",
         "chat": False,
+        "instructions": "",
     }
     assert warnings == [
         "aphotic harness: drop-in 'claude.toml' overrides the descriptor from claude-hooks"
@@ -278,3 +281,18 @@ def test_cli_main_uses_xdg_paths(tmp_path):
     assert record_file.is_file()
     written = json.loads(record_file.read_text(encoding="utf-8"))
     assert ids_of(written) == ["claude"]
+
+
+def test_instructions_is_a_home_relative_file(tmp_path):
+    config, plugins, state = setup_env(tmp_path)
+    dropins = config / harnesses_merge.DROPIN_DIR_NAME
+    (dropins / "good.toml").write_text('[harness.good]\ninstructions = ".codex/AGENTS.md"\n', encoding="utf-8")
+    for name, value in (("abs", "/etc/passwd"), ("up", "../x.md"), ("glob", ".x/*.md")):
+        (dropins / f"{name}.toml").write_text(f'[harness.{name}]\ninstructions = "{value}"\n', encoding="utf-8")
+    record, warnings = run_merge(config, plugins, state)
+    by_id = {h["id"]: h for h in record["harnesses"]}
+    assert by_id["good"]["instructions"] == ".codex/AGENTS.md"
+    assert all(by_id[n]["instructions"] == "" for n in ("abs", "up", "glob"))
+    assert "aphotic harness: drop-in:abs.toml: 'abs' instructions '/etc/passwd' is not a " \
+           "home-relative file -- ignored" in warnings
+    assert len(warnings) == 3
