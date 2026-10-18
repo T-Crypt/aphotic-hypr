@@ -16,3 +16,4 @@ LlamaSwapClaims 1.0 LlamaSwapClaims.qml
 LlamaCppClaims 1.0 LlamaCppClaims.qml
 LmStudioClaims 1.0 LmStudioClaims.qml
 BackendClaims 1.0 BackendClaims.qml
+EngineStream 1.0 EngineStream.qml

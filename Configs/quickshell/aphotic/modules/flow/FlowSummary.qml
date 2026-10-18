@@ -5,6 +5,7 @@ import qs.components
 import qs.config
 import qs.services
 import qs.services.profile
+import qs.services.ai
 import "FlowModel.js" as Model
 
 ColumnLayout {
@@ -16,7 +17,7 @@ ColumnLayout {
         gaming: InstallProfile.gamingEnabled,
         security: InstallProfile.securityEnabled,
         dev: InstallProfile.devEnabled
-    }), WorkloadPassports.live, ActionReceipts.all)
+    }), WorkloadPassports.live, ActionReceipts.all, EngineRegistry.liveIds)
     spacing: 8
     StyledText {
         text: qsTr("Aphotic Flow")

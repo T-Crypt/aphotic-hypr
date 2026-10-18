@@ -501,6 +501,19 @@ ShellRoot {
         enabled: InstallProfile.aiEnabled
     }
 
+    // Every engine descriptor that reports through a stream, a gateway
+    // included. Each engine its report names becomes its own claimant.
+    Instantiator {
+        model: InstallProfile.aiEnabled ? EngineRegistry.descriptors.filter(d => (d.stream ?? []).length > 0) : []
+
+        delegate: EngineStream {
+            required property var modelData
+
+            descriptor: modelData
+            gpuVram: gpuVramSource
+        }
+    }
+
     // Every enabled plugin that registers an `overlay` surface, one window
     // per screen. Nested rather than flattened because the two models are
     // independent: surfaces come and go as plugins are enabled, screens as
