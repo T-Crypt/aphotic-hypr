@@ -43,15 +43,10 @@ Singleton {
     readonly property bool anyWaiting: root.waitingSessions.length > 0
     readonly property bool anyRunning: root._sessions.some(s => s.status === "running")
 
-    // Most recently updated live session, which is what a one-line
-    // readout means by "the" harness. Null on a quiet desktop rather
-    // than the last-ended session: a finished run is not activity.
-    readonly property var activeSession: {
-        const live = root.liveSessions;
-        if (live.length === 0)
-            return null;
-        return live.reduce((newest, s) => s.updatedAt > newest.updatedAt ? s : newest, live[0]);
-    }
+    // The session a one-line readout means by "the" harness. Null on a
+    // quiet desktop rather than the last-ended session: a finished run is
+    // not activity. See Core.pickActive for why it is sticky.
+    readonly property var activeSession: root._sessions.find(s => s.id === root._activeId) ?? null
 
     readonly property string activeHarness: root.activeSession?.harness ?? ""
     readonly property string phase: root.activeSession?.status ?? "idle"
@@ -78,9 +73,18 @@ Singleton {
     readonly property int historyLines: 400
     readonly property string _stateDir: `${Quickshell.env("HOME")}/.local/state/aphotic`
 
+    readonly property int busyHoldMs: 15000
+    readonly property int repeatWindowMs: 250
+
     property var _holders: ({})
     property var _sessions: []
     property var _backlog: []
+    property string _activeId: ""
+    property var _lastBySession: ({})
+
+    function _pickActive(): void {
+        root._activeId = Core.pickActive(root._sessions, root._activeId, Date.now(), root.busyHoldMs);
+    }
 
     readonly property bool _wanted: Object.keys(root._holders).length > 0
 
@@ -96,7 +100,13 @@ Singleton {
 
         event = root.normalize(event);
 
+        const seen = Core.isRepeat(root._lastBySession, event, root.repeatWindowMs);
+        if (seen.repeat)
+            return;
+        root._lastBySession[event.sessionId] = { key: seen.key, at: seen.at };
+
         root._sessions = root.applyTo(root._sessions, event);
+        root._pickActive();
         root._backlog = Core.appendBacklog(root._backlog, event, root.historyLines);
         root.record(event);
     }
@@ -150,7 +160,14 @@ Singleton {
                 subagents: [],
                 startedAt: event.t ?? 0,
                 updatedAt: event.t ?? 0,
-                endedAt: 0
+                endedAt: 0,
+                statusSince: event.t ?? 0,
+                busySince: 0,
+                lastBusyAt: 0,
+                inputTokens: 0,
+                outputTokens: 0,
+                cost: 0,
+                steps: 0
             });
             index = sessions.length - 1;
         }
@@ -184,6 +201,21 @@ Singleton {
 
         if (event.tool)
             session.tool = event.tool;
+
+        const at = event.t ?? session.updatedAt;
+        if (session.status !== sessions[index].status)
+            session.statusSince = at;
+        if (session.status === "running" || session.status === "compacting") {
+            if (!(session.lastBusyAt > 0) || at - session.lastBusyAt > root.busyHoldMs)
+                session.busySince = at;
+            session.lastBusyAt = at;
+        }
+        if (event.event === "usage") {
+            session.inputTokens = (session.inputTokens ?? 0) + (event.inputTokens ?? 0);
+            session.outputTokens = (session.outputTokens ?? 0) + (event.outputTokens ?? 0);
+            session.cost = (session.cost ?? 0) + (Number(event.cost) || 0);
+            session.steps = (session.steps ?? 0) + 1;
+        }
 
         // Subagents as identity and count only, never parentage: an
         // event carrying `agentId` was written from inside a subagent,
@@ -223,6 +255,8 @@ Singleton {
         if (!root.tailing) {
             root._sessions = [];
             root._backlog = [];
+            root._activeId = "";
+            root._lastBySession = {};
         }
     }
 
@@ -249,6 +283,7 @@ Singleton {
             const kept = root._sessions.filter(s => s.status !== "ended" || s.endedAt > cutoff);
             if (kept.length !== root._sessions.length)
                 root._sessions = kept;
+            root._pickActive();
         }
     }
 
