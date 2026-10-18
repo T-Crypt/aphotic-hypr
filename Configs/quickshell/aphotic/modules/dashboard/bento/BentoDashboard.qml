@@ -117,7 +117,7 @@ Item {
                 Rectangle {
                     implicitWidth: 28
                     implicitHeight: 3
-                    radius: 1.5
+                    radius: Math.min(width, height) / 2
                     color: Colours.signal
                 }
 
@@ -216,13 +216,6 @@ Item {
                     sourceSize.height: 384
                 }
 
-                MaterialIcon {
-                    anchors.centerIn: parent
-                    visible: art.status !== Image.Ready
-                    text: "album"
-                    color: Colours.inkMuted
-                    font.pixelSize: parent.width * 0.4
-                }
             }
 
             ColumnLayout {
@@ -349,8 +342,8 @@ Item {
 
             Repeater {
                 model: [
-                    { icon: "south", value: NetworkUsage.downloadSpeed, colour: Colours.signal },
-                    { icon: "north", value: NetworkUsage.uploadSpeed, colour: Colours.signalSecondary }
+                    { icon: "\u2193", value: NetworkUsage.downloadSpeed, colour: Colours.signal },
+                    { icon: "\u2191", value: NetworkUsage.uploadSpeed, colour: Colours.signalSecondary }
                 ]
 
                 RowLayout {
@@ -360,10 +353,10 @@ Item {
 
                     spacing: Tokens.spacing.extraSmall
 
-                    MaterialIcon {
+                    StyledText {
                         text: netFigure.modelData.icon
                         color: netFigure.modelData.colour
-                        fontStyle: Tokens.font.icon.medium
+                        font: Tokens.font.title.medium
                     }
 
                     StyledText {
@@ -451,7 +444,7 @@ Item {
                         Rectangle {
                             implicitWidth: 7
                             implicitHeight: 7
-                            radius: 3.5
+                            radius: Math.min(width, height) / 2
                             color: session.waiting ? Colours.signal : session.busy ? Colours.signalOnSurface : Colours.outline
                         }
 
@@ -643,13 +636,13 @@ Item {
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 4
-                radius: 2
+                radius: Math.min(width, height) / 2
                 color: Colours.signalStyle.hairline
 
                 Rectangle {
                     width: parent.width * (1 - Pomodoro.remaining / Math.max(1, Pomodoro.isBreak ? Pomodoro.breakSeconds : Pomodoro.workSeconds))
                     height: parent.height
-                    radius: 2
+                    radius: Math.min(width, height) / 2
                     color: Pomodoro.isBreak ? Colours.signalTertiary : Colours.signal
 
                     Behavior on width {

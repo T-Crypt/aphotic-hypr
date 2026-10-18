@@ -76,7 +76,7 @@ Item {
             visible: root.live
             implicitWidth: 6
             implicitHeight: 6
-            radius: 3
+            radius: Math.min(width, height) / 2
             color: Colours.signal
 
             SequentialAnimation on opacity {

@@ -5,7 +5,6 @@ import qs.components
 import qs.services
 import qs.modules.flow
 import QtQuick.Window
-import "spine"
 import "bento"
 
 ColumnLayout {

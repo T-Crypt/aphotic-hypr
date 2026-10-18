@@ -49,7 +49,7 @@ Item {
         }
 
         ShapePath {
-            strokeColor: root.shown >= 0.9 ? Colours.palette.m3error : root.colour
+            strokeColor: root.shown >= 0.9 ? Colours.alert : root.colour
             strokeWidth: root.thickness
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap

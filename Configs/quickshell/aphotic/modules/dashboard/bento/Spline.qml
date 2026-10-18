@@ -87,14 +87,14 @@ Item {
         y: (at?.y ?? 0) - height / 2
         width: 7
         height: 7
-        radius: 3.5
+        radius: Math.min(width, height) / 2
         color: root.colour
 
         Rectangle {
             anchors.centerIn: parent
             width: 18
             height: 18
-            radius: 9
+            radius: Math.min(width, height) / 2
             color: Qt.alpha(root.colour, 0.18)
         }
     }

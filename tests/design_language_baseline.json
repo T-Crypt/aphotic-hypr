@@ -46,12 +46,13 @@
       "files": {}
     },
     "material_icon_uses": {
-      "total": 197,
+      "total": 201,
       "files": {
         "Configs/quickshell/aphotic/components/AppIcon.qml": 1,
         "Configs/quickshell/aphotic/components/ColorPickerField.qml": 4,
         "Configs/quickshell/aphotic/components/SettingsRow.qml": 1,
         "Configs/quickshell/aphotic/components/SettingsSection.qml": 2,
+        "Configs/quickshell/aphotic/components/SignalTile.qml": 1,
         "Configs/quickshell/aphotic/modules/background/DesktopContextMenu.qml": 1,
         "Configs/quickshell/aphotic/modules/background/Wallpaper.qml": 1,
         "Configs/quickshell/aphotic/modules/bar/MinimalIndicators.qml": 1,
@@ -99,6 +100,7 @@
         "Configs/quickshell/aphotic/modules/dashboard/DashWallpapersTab.qml": 1,
         "Configs/quickshell/aphotic/modules/dashboard/DashWeather.qml": 2,
         "Configs/quickshell/aphotic/modules/dashboard/PerformanceTab.qml": 8,
+        "Configs/quickshell/aphotic/modules/dashboard/bento/BentoDashboard.qml": 3,
         "Configs/quickshell/aphotic/modules/intelligence/IntelligenceHeader.qml": 2,
         "Configs/quickshell/aphotic/modules/intelligence/IntelligenceInput.qml": 1,
         "Configs/quickshell/aphotic/modules/intelligence/IntelligenceSessionList.qml": 1,
