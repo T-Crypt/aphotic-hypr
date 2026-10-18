@@ -1,0 +1,9 @@
+[engine]
+id = "lmdeploy"
+label = "LMDeploy"
+protocol = "openai-models"
+endpoint = "/v1/models"
+default_host = "http://127.0.0.1:23333"
+process = "lmdeploy serve api_server"
+port_flag = "--server-port"
+capabilities = ["models", "claims"]

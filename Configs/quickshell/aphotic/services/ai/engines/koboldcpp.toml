@@ -1,0 +1,9 @@
+[engine]
+id = "koboldcpp"
+label = "KoboldCpp"
+protocol = "openai-models"
+endpoint = "/v1/models"
+default_host = "http://127.0.0.1:5001"
+process = "koboldcpp"
+port_flag = "--port"
+capabilities = ["models", "claims"]
