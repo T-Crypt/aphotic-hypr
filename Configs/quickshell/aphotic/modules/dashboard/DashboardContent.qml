@@ -6,6 +6,7 @@ import qs.services
 import qs.modules.flow
 import QtQuick.Window
 import "spine"
+import "bento"
 
 ColumnLayout {
     id: root
@@ -266,12 +267,7 @@ ColumnLayout {
     Component {
         id: spineComp
 
-        Item {
-            SpineSurface {
-                anchors.fill: parent
-                embedded: true
-            }
-        }
+        BentoDashboard {}
     }
     Component {
         id: flowComp
