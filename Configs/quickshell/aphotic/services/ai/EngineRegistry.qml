@@ -15,8 +15,8 @@ import "EngineDescriptorCore.js" as Core
 // ~/.config/aphotic/engines/ for the operator's own engines, and an
 // [engine] block a plugin carries in plugins.json. The parser and the
 // precedence live in EngineDescriptorCore.js; this singleton owns the
-// scan, reads the host store, and exposes the resolved list. Nothing
-// consumes it yet, so no surface moves.
+// scan, reads the host store, and exposes the resolved list, plus the
+// engines that streaming descriptors report live.
 Singleton {
     id: root
 
@@ -56,6 +56,21 @@ Singleton {
         for (const file of root._core)
             add(Core.parse(file.text), "core", file.name);
         return { descriptors: descriptors, warnings: warnings };
+    }
+
+    // Engines a stream reports right now, keyed by the descriptor that
+    // reports them: [{id, label, state, cpuPercent, threads, gateway, models}].
+    property var _live: ({})
+    readonly property var liveEngines: Object.keys(root._live).sort().reduce((all, key) => all.concat(root._live[key]), [])
+    readonly property var liveIds: root.liveEngines.map(engine => engine.id)
+
+    function setLive(source: string, engines: var): void {
+        const next = Object.assign({}, root._live);
+        if (engines && engines.length > 0)
+            next[source] = engines;
+        else
+            delete next[source];
+        root._live = next;
     }
 
     function byId(id: string): var {

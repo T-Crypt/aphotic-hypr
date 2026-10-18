@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Services.UPower
 import qs.services
 import qs.services.profile
+import qs.services.ai
 import qs.components
 import "FlowModel.js" as Model
 
@@ -47,7 +48,7 @@ Item {
                 cores: ShellUsage.cores,
                 memoryMib: ShellUsage.memoryMib,
                 gpuNote: ShellUsage.gpuNote
-            }))
+            }), EngineRegistry.liveIds)
             shellActivity: Settings.flowShellActivity
             onShellActivityToggled: {
                 Settings.flowShellActivity = !Settings.flowShellActivity;

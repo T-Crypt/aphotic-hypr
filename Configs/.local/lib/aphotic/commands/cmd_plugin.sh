@@ -498,7 +498,7 @@ _aphotic_plugin_engine_progress_json() {
 }
 
 _aphotic_plugin_engine_json() {
-    local manifest="$1" id label protocol endpoint host_key default_host key process port_flag gateway gateway_entry manages caps
+    local manifest="$1" id label protocol endpoint host_key default_host key process port_flag gateway gateway_entry manages caps stream
     grep -q '^[[:space:]]*\[engine\][[:space:]]*$' "$manifest" 2>/dev/null || { echo 'null'; return 0; }
 
     id="$(aphotic_toml_get "$manifest" engine id)"
@@ -514,6 +514,7 @@ _aphotic_plugin_engine_json() {
     gateway_entry="$(aphotic_toml_get "$manifest" engine gateway_entry)"
     manages="$(aphotic_toml_get_array "$manifest" engine manages | jq -R . | jq -s .)"
     caps="$(aphotic_toml_get_array "$manifest" engine capabilities | jq -R . | jq -s .)"
+    stream="$(aphotic_toml_get_array "$manifest" engine stream | jq -R . | jq -s .)"
 
     jq -n \
         --arg id "$id" \
@@ -529,10 +530,11 @@ _aphotic_plugin_engine_json() {
         --arg gateway_entry "$gateway_entry" \
         --argjson manages "${manages:-[]}" \
         --argjson capabilities "${caps:-[]}" \
+        --argjson stream "${stream:-[]}" \
         --argjson control "$(_aphotic_plugin_engine_control_json "$manifest")" \
         --argjson stats "$(_aphotic_plugin_engine_stats_json "$manifest")" \
         --argjson progress "$(_aphotic_plugin_engine_progress_json "$manifest")" \
-        '{id: $id, label: $label, protocol: $protocol, endpoint: $endpoint, host_key: $host_key, default_host: $default_host, key: $key, process: $process, port_flag: $port_flag, gateway: $gateway, gateway_entry: $gateway_entry, manages: $manages, capabilities: $capabilities, control: $control, stats: $stats, progress: $progress}'
+        '{id: $id, label: $label, protocol: $protocol, endpoint: $endpoint, host_key: $host_key, default_host: $default_host, key: $key, process: $process, port_flag: $port_flag, gateway: $gateway, gateway_entry: $gateway_entry, manages: $manages, capabilities: $capabilities, stream: $stream, control: $control, stats: $stats, progress: $progress}'
 }
 
 # Every `[engine*]` section a manifest declares, by name. Validate needs to
