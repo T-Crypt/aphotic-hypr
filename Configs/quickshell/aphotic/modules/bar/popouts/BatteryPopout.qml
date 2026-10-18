@@ -28,7 +28,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: Icons.getBatteryIcon(UPower.displayDevice.percentage, root.charging)
-            color: !UPower.onBattery || UPower.displayDevice.percentage > 0.2 ? Colours.palette.m3onSurface : Colours.palette.m3error
+            color: !UPower.onBattery || UPower.displayDevice.percentage > 0.2 ? Colours.ink : Colours.alert
             fill: 1
         }
 
@@ -49,7 +49,7 @@ ColumnLayout {
                 const t = root.formatTime(UPower.displayDevice.timeToEmpty);
                 return t ? qsTr("%1 remaining").arg(t) : qsTr("On battery");
             }
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             horizontalAlignment: Text.AlignRight
         }
     }
@@ -57,12 +57,12 @@ ColumnLayout {
     StyledText {
         visible: !UPower.displayDevice.isLaptopBattery
         text: qsTr("No battery")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
     }
 
     StyledText {
         text: qsTr("Power profile").toUpperCase()
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
@@ -100,12 +100,12 @@ ColumnLayout {
                 Rectangle {
                     anchors.fill: parent
                     radius: Tokens.rounding.medium
-                    color: PowerProfiles.profile === profileBtn.modelData.profile ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
+                    color: PowerProfiles.profile === profileBtn.modelData.profile ? Qt.alpha(Colours.signal, 0.18) : Colours.signalStyle.raised
                     border.width: 1
-                    border.color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                    border.color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.signal : Colours.signalStyle.hairline
                 }
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.medium
                     color: Colours.signalStyle.hover
                     stateOpacity: (containsMouse ? 1 : 0)
@@ -121,13 +121,13 @@ ColumnLayout {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.icon
-                        color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant
+                        color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.signalOnSurface : Colours.inkMuted
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.label
-                        color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant
+                        color: PowerProfiles.profile === profileBtn.modelData.profile ? Colours.signalOnSurface : Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }

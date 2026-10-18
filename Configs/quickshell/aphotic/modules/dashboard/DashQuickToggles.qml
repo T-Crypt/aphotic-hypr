@@ -6,10 +6,10 @@ import qs.components
 import qs.services
 
 // Wi-Fi/Bluetooth/DND one-shot toggles -- deliberately not the deferred
-// Network/Bluetooth Settings pages (config-ownership conflicts, see
-// ROADMAP_FEATURES.md): these just flip current state via nmcli/the
-// native Bluetooth adapter/DoNotDisturb, they never own or persist any
-// config themselves. No airplane-mode tile -- there's no single reliable
+// Network/Bluetooth Settings pages: those pages own their config, and
+// these tiles just flip current state via nmcli/the native Bluetooth
+// adapter/DoNotDisturb, they never own or persist any config themselves.
+// No airplane-mode tile -- there's no single reliable
 // "is airplane mode on" concept to read back on a desktop (only wifi+bt
 // individually), and a tile that fakes combined state would drift out of
 // sync the moment either one changes independently, so it's dropped
@@ -41,16 +41,16 @@ Item {
             StyledRect {
                 anchors.fill: parent
                 radius: Tokens.rounding.medium
-                color: (tile.active ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.surface)
+                color: (tile.active ? Qt.alpha(Colours.signal, 0.18) : Colours.signalStyle.surface)
                 border.width: 1
-                border.color: tile.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                border.color: tile.active ? Colours.signal : Colours.signalStyle.hairline
 
                 Behavior on color {
                     CAnim {}
                 }
             }
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.medium
                 onClicked: tile.clicked()
             }
@@ -64,7 +64,7 @@ Item {
                 MaterialIcon {
                     Layout.alignment: Qt.AlignHCenter
                     text: tile.icon
-                    color: (tile.active ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (tile.active ? Colours.signalOnSurface : Colours.inkMuted)
                     fontStyle: Tokens.font.icon.medium
                     fill: tile.active ? 1 : 0
                 }
@@ -72,7 +72,7 @@ Item {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: tile.label
-                    color: (tile.active ? Colours.palette.m3primaryOnSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (tile.active ? Colours.signalOnSurface : Colours.inkMuted)
                     font: Tokens.font.label.small
                 }
             }

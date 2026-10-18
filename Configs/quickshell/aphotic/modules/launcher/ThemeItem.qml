@@ -21,7 +21,7 @@ Item {
         Themes.setTheme(modelData.name, "");
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();
@@ -43,7 +43,7 @@ Item {
             width: parent.height * 0.7
             height: width
             radius: Tokens.rounding.medium
-            color: Colours.palette.m3surfaceContainerHigh
+            color: Colours.raised
             clip: true
 
             Image {
@@ -75,7 +75,7 @@ Item {
                     text: "check_circle"
                     fill: 1
                     fontStyle: Tokens.font.icon.small
-                    color: Colours.palette.m3primary
+                    color: Colours.signal
                 }
             }
 
@@ -83,7 +83,7 @@ Item {
                 visible: text.length > 0
                 text: root.modelData.description || qsTr("%1 wallpapers").arg(root.modelData.wallpapers.length)
                 font: Tokens.font.label.medium
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
                 width: parent.width
             }

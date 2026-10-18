@@ -26,7 +26,7 @@ RowLayout {
         Layout.preferredHeight: root.segmentHeight
         Layout.alignment: Qt.AlignVCenter
 
-        color: seg.accent ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
+        color: seg.accent ? Colours.signal : Colours.raised
         opacity: seg.available ? 1 : 0.38
         scale: state_.pressed ? 0.94 : (state_.containsMouse && seg.available ? 1.05 : 1)
 
@@ -35,7 +35,7 @@ RowLayout {
             Anim { type: Anim.FastSpatial }
         }
 
-        StateLayer {
+        Interact {
             id: state_
 
             radius: seg.radius
@@ -47,7 +47,7 @@ RowLayout {
             anchors.centerIn: parent
             text: seg.glyph
             fill: 1
-            color: seg.accent ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
+            color: seg.accent ? Colours.onSignal : Colours.ink
             fontStyle: seg.accent ? Tokens.font.icon.large : Tokens.font.icon.medium
         }
     }

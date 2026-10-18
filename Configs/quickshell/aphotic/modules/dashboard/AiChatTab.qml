@@ -130,11 +130,11 @@ ColumnLayout {
                     id: pillLabel
                     anchors.centerIn: parent
                     text: providerPill.modelData.label.toUpperCase()
-                    color: (providerPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (providerPill.active ? Colours.ink : Colours.inkMuted)
                     font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: providerPill.available
@@ -142,8 +142,8 @@ ColumnLayout {
                     color: Colours.signalStyle.hover
                 }
 
-                // A StateLayer's own MouseArea goes `enabled: false` when
-                // disabled (so the hover/ripple visuals correctly turn
+                // An Interact's own MouseArea goes `enabled: false` when
+                // disabled (so the hover/press visuals correctly turn
                 // off), and a disabled MouseArea does not accept the
                 // click -- it falls through to whatever is behind it,
                 // which here is DashboardWindow's full-screen click-
@@ -182,11 +182,11 @@ ColumnLayout {
                               : qsTr("Set host…");
                     return t.toUpperCase();
                 }
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 stateOpacity: (containsMouse ? 1 : 0)
@@ -206,7 +206,7 @@ ColumnLayout {
                 padding: Tokens.padding.small
                 background: StyledRect {
                     radius: Tokens.rounding.medium
-                    color: Colours.tPalette.m3surfaceContainer
+                    color: Colours.surfaceLift
                 }
 
                 contentItem: ColumnLayout {
@@ -224,14 +224,14 @@ ColumnLayout {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 32
                             radius: Tokens.rounding.small
-                            color: Colours.palette.m3surfaceContainerHigh
+                            color: Colours.raised
 
                             TextInput {
                                 id: hostInput
                                 anchors.fill: parent
                                 anchors.margins: Tokens.padding.small
                                 font: Tokens.font.label.small
-                                color: Colours.palette.m3onSurface
+                                color: Colours.ink
                                 clip: true
 
                                 StyledText {
@@ -239,7 +239,7 @@ ColumnLayout {
                                     anchors.fill: parent
                                     verticalAlignment: Text.AlignVCenter
                                     text: qsTr("http://host:11434")
-                                    color: Colours.palette.m3onSurfaceVariant
+                                    color: Colours.inkMuted
                                     font: Tokens.font.label.small
                                 }
 
@@ -258,7 +258,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         text: qsTr("No models found on this host")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
 
@@ -273,7 +273,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 32
                             radius: Tokens.rounding.small
-                            color: modelOption.modelData === AiConfig.ollamaModel ? Colours.palette.m3primary : "transparent"
+                            color: modelOption.modelData === AiConfig.ollamaModel ? Colours.signal : "transparent"
 
                             StyledText {
                                 anchors.left: parent.left
@@ -282,7 +282,7 @@ ColumnLayout {
                                 anchors.verticalCenter: parent.verticalCenter
                                 elide: Text.ElideRight
                                 text: modelOption.modelData
-                                color: modelOption.modelData === AiConfig.ollamaModel ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface
+                                color: modelOption.modelData === AiConfig.ollamaModel ? Colours.contrastOn(Colours.signal) : Colours.ink
                                 font: Tokens.font.label.small
                             }
 
@@ -305,7 +305,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("⚠ No Ollama host configured. Click the pill above to set one, or set OLLAMA_BASE_URL.")
-        color: Colours.palette.m3error
+        color: Colours.alert
         font: Tokens.font.label.small
     }
 
@@ -366,7 +366,7 @@ ColumnLayout {
                         Layout.maximumWidth: bubbleBody.implicitWidth
                         elide: Text.ElideRight
                         text: root._senderLabel(bubble.modelData.role).toUpperCase()
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                     }
 
@@ -384,9 +384,9 @@ ColumnLayout {
                         radius: Tokens.rounding.large
                         bottomRightRadius: bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
                         bottomLeftRadius: !bubble.fromUser ? Tokens.rounding.small : bubbleBody.radius
-                        color: (bubble.fromUser ? Qt.alpha(Colours.palette.m3primary, 0.14) : Colours.signalStyle.raised)
+                        color: (bubble.fromUser ? Qt.alpha(Colours.signal, 0.14) : Colours.signalStyle.raised)
                         border.width: 1
-                        border.color: (bubble.fromUser ? Qt.alpha(Colours.palette.m3primary, 0.4) : Colours.signalStyle.hairline)
+                        border.color: (bubble.fromUser ? Qt.alpha(Colours.signal, 0.4) : Colours.signalStyle.hairline)
 
                         Rectangle {
                             visible: !bubble.fromUser
@@ -404,7 +404,7 @@ ColumnLayout {
                             anchors.verticalCenter: parent.verticalCenter
                             wrapMode: Text.Wrap
                             text: bubble.modelData.text
-                            color: Colours.palette.m3onSurface
+                            color: Colours.ink
                             font: Tokens.font.body.medium
                         }
                     }
@@ -419,21 +419,21 @@ ColumnLayout {
                 MaterialIcon {
                     Layout.alignment: Qt.AlignHCenter
                     text: "smart_toy"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.large
                 }
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Ask anything")
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
                 }
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: qsTr("Type below to start a conversation")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                 }
             }
@@ -449,7 +449,7 @@ ColumnLayout {
         color: Colours.signalStyle.raised
         border.width: 1
         border.color: (input.activeFocus || input.text.length > 0)
-                     ? Qt.alpha(Colours.palette.m3primary, 0.7)
+                     ? Qt.alpha(Colours.signal, 0.7)
                      : Colours.signalStyle.hairline
 
         Behavior on border.color {
@@ -469,7 +469,7 @@ ColumnLayout {
                 clip: true
                 enabled: !AiProviders.busy
                 font: Tokens.font.body.medium
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
 
                 Keys.onReturnPressed: root._send()
 
@@ -478,7 +478,7 @@ ColumnLayout {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: AiProviders.busy ? qsTr("Thinking…") : qsTr("Message…")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.medium
                 }
             }
@@ -489,20 +489,20 @@ ColumnLayout {
                 radius: Tokens.rounding.full
                 // Tinted at rest, solid only while a reply streams.
                 color: AiProviders.busy
-                       ? Colours.palette.m3primary
-                       : Qt.alpha(Colours.palette.m3primary, 0.18)
+                       ? Colours.signal
+                       : Qt.alpha(Colours.signal, 0.18)
                 opacity: AiProviders.busy ? 0.5 : 1
 
                 MaterialIcon {
                     anchors.centerIn: parent
                     text: "send"
                     color: AiProviders.busy
-                           ? Colours.contrastOn(Colours.palette.m3primary)
-                           : Colours.palette.m3primaryOnSurface
+                           ? Colours.contrastOn(Colours.signal)
+                           : Colours.signalOnSurface
                     fontStyle: Tokens.font.icon.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !AiProviders.busy

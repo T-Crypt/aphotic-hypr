@@ -46,13 +46,13 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 6
                 height: 6
-                radius: 3
+                radius: Tokens.rounding.full
                 color: Colours.signalStyle.tint(card.tintIndex)
             }
 
             StyledText {
                 text: card.title.toUpperCase()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
             }
         }

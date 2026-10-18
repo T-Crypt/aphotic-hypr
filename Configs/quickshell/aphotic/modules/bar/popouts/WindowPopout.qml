@@ -18,7 +18,7 @@ ColumnLayout {
         visible: !!Hypr.activeToplevel?.lastIpcObject.class
         Layout.maximumWidth: 320
         text: Hypr.activeToplevel?.lastIpcObject.class ?? ""
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
         elide: Text.ElideRight
     }

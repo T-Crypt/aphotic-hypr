@@ -4,6 +4,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.flow
+import "concept"
 
 ColumnLayout {
     id: root
@@ -59,15 +60,15 @@ ColumnLayout {
     // Installed, enabled, and its own declared gate satisfied -- all three
     // decided by PluginRegistry off the plugin's manifest. This file knows
     // that dashboard tabs exist; it does not know that any particular
-    // plugin does. See docs/PLUGIN_LAYER_MODEL.md.
+    // plugin does.
     readonly property var pluginTabs: PluginRegistry.surfacesFor("dashboard")
 
-    // AI Chat is core, not layered: Claude is a CLI session and Gemini and
-    // ChatGPT are raw HTTP APIs, none of which the `ai` layer installs, so
-    // a base shell still chats with all three. The layer only supplies the
-    // locally-hosted backends, and AiProviders drops those pills on its own
-    // -- so this tab stays, with a shorter provider list. The plugin tabs
-    // appended below are the genuinely layered ones, and stay gated.
+    // AI Chat is core, not layered: its remote backends are plain HTTP
+    // APIs the `ai` layer does not install, so a base shell still chats
+    // with them. The layer only supplies the locally-hosted backends, and
+    // AiProviders drops those pills on its own -- so this tab stays, with
+    // a shorter provider list. The plugin tabs appended below are the
+    // genuinely layered ones, and stay gated.
     readonly property var tabs: CommandCenterTabs.list.concat(root.pluginTabs.map(t => ({id:t.id,icon:t.icon,label:t.label})))
 
     onTabsChanged: {
@@ -207,7 +208,7 @@ ColumnLayout {
             anchors.fill: parent
             visible: false
             radius: parent.radius
-            baseColour: Colours.tPalette.m3surfaceContainer
+            baseColour: Colours.surfaceLift
         }
 
         Loader {
@@ -240,7 +241,7 @@ ColumnLayout {
                 case "aiChat":
                     return aiChatComp;
                 default:
-                    return dashboardComp;
+                    return Settings.dashboardLayout === "spine" ? spineComp : dashboardComp;
                 }
             }
 
@@ -287,6 +288,21 @@ ColumnLayout {
     Component {
         id: dashboardComp
         DashboardTab {}
+    }
+    // Signal Spine sits inside the same tab frame as every other tab, so
+    // it gets a fixed stage to fill rather than sizing the frame itself.
+    Component {
+        id: spineComp
+
+        Item {
+            implicitWidth: 1280
+            implicitHeight: 760
+
+            ConceptPulse {
+                anchors.fill: parent
+                embedded: true
+            }
+        }
     }
     Component {
         id: flowComp

@@ -89,7 +89,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Accent color")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -112,15 +112,15 @@ ColumnLayout {
                 implicitWidth: 40
                 implicitHeight: 40
                 radius: Tokens.rounding.full
-                color: swatch.isThemeDefault ? Colours.tPalette.m3surfaceContainer : swatch.modelData
+                color: swatch.isThemeDefault ? Colours.surfaceLift : swatch.modelData
                 border.width: swatch.active ? 3 : 1
-                border.color: swatch.active ? Colours.palette.m3onSurface : Colours.palette.m3outlineVariant
+                border.color: swatch.active ? Colours.ink : Colours.outline
 
                 MaterialIcon {
                     anchors.centerIn: parent
                     visible: swatch.isThemeDefault
                     text: "palette"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -132,14 +132,10 @@ ColumnLayout {
                     fontStyle: Tokens.font.icon.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !swatch.active
-                }
-
-                MouseArea {
-                    anchors.fill: parent
                     onClicked: Settings.accentColorOverride = swatch.modelData
                 }
             }
@@ -149,15 +145,15 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Depth effects")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Breathing glow and ambient particles layered on top of your theme. Subtle is a lighter tier for lower-end GPUs; Off returns to flat, static highlights everywhere.")
-        color: Colours.palette.m3onSurfaceVariant
+        text: qsTr("Breathing glow and ambient particles layered on top of your theme. Subtle is a lighter tier for lower-end GPUs. Off returns to flat, static highlights everywhere.")
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -165,6 +161,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsPresetRow {
+            searchId: "depthEffects"
             icon: "blur_on"
             label: qsTr("Depth effects")
             presets: root.depthEffectsPresets
@@ -176,7 +173,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Cursor")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -205,7 +202,7 @@ ColumnLayout {
     StyledText {
         visible: root.cursorThemes.length === 0
         text: qsTr("No cursor themes found under ~/.local/share/icons or /usr/share/icons")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -214,6 +211,7 @@ ColumnLayout {
         Layout.topMargin: Tokens.spacing.small
 
         SettingsRow {
+            searchId: "cursorSize"
             icon: "photo_size_select_small"
             label: qsTr("Cursor size")
             description: qsTr("%1px").arg(Settings.cursorSize)
@@ -223,10 +221,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "remove"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -236,10 +234,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "add"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -253,7 +251,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Icons")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -282,22 +280,22 @@ ColumnLayout {
     StyledText {
         visible: root.iconThemes.length === 0
         text: qsTr("No icon themes found under ~/.local/share/icons or /usr/share/icons")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Qt apps (qt5ct/qt6ct) follow this too, but only pick it up on next launch, not live.")
-        color: Colours.palette.m3onSurfaceVariant
+        text: qsTr("Qt apps (qt5ct/qt6ct) follow this too and pick it up on their next launch.")
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("App icons")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -305,7 +303,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("Point an app at a different icon when the desktop entry gets it wrong or gives none at all. The match is an app class or desktop-entry name; the icon is an absolute path, an icon-theme name, or a Material Symbols glyph.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -314,7 +312,7 @@ ColumnLayout {
         wrapMode: Text.Wrap
         visible: root.unresolvedApps.length > 0
         text: qsTr("These running apps have no icon of their own:")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -340,7 +338,7 @@ ColumnLayout {
                     radius: Tokens.rounding.full
                     color: "transparent"
                     border.width: 1
-                    border.color: Colours.palette.m3outlineVariant
+                    border.color: Colours.outline
 
                     StyledText {
                         id: unresolvedLabel
@@ -350,7 +348,7 @@ ColumnLayout {
                         font: Tokens.font.body.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                         onClicked: root.newIconPattern = unresolvedRow.modelData.appClass
@@ -366,7 +364,7 @@ ColumnLayout {
         wrapMode: Text.Wrap
         visible: Settings.customAppIcons.length === 0
         text: qsTr("No overrides yet.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -407,17 +405,17 @@ ColumnLayout {
                             anchors.centerIn: parent
                             visible: overrideRow.preview.kind === "glyph"
                             text: overrideRow.preview.kind === "glyph" ? overrideRow.preview.value : ""
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.medium
                         }
                     }
 
                     MaterialIcon {
                         text: "delete"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -433,6 +431,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "iconAppMatch"
             icon: "pattern"
             label: qsTr("App match")
             description: qsTr("An app class or desktop-entry name")
@@ -441,7 +440,7 @@ ColumnLayout {
                 implicitWidth: 220
                 implicitHeight: 32
                 radius: Tokens.rounding.small
-                color: Colours.palette.m3surfaceContainerHigh
+                color: Colours.raised
 
                 TextInput {
                     id: patternInput
@@ -449,7 +448,7 @@ ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.small
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     clip: true
                     text: root.newIconPattern
 
@@ -460,7 +459,7 @@ ColumnLayout {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         text: qsTr("org.gnome.Nautilus")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -468,6 +467,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "customIcon"
             icon: "image"
             label: qsTr("Icon")
             description: qsTr("Path, theme name, or glyph name")
@@ -476,7 +476,7 @@ ColumnLayout {
                 implicitWidth: 220
                 implicitHeight: 32
                 radius: Tokens.rounding.small
-                color: Colours.palette.m3surfaceContainerHigh
+                color: Colours.raised
 
                 TextInput {
                     id: iconValueInput
@@ -484,7 +484,7 @@ ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.small
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     clip: true
 
                     StyledText {
@@ -492,7 +492,7 @@ ColumnLayout {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         text: qsTr("firefox")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -500,6 +500,7 @@ ColumnLayout {
         }
 
         SettingsPresetRow {
+            searchId: "iconTreatAs"
             icon: "category"
             label: qsTr("Treat icon as")
             description: qsTr("Auto picks an image when the value resolves to one")
@@ -516,18 +517,18 @@ ColumnLayout {
         implicitWidth: addIconLabel.implicitWidth + Tokens.padding.large * 2
         implicitHeight: 40
         radius: Tokens.rounding.medium
-        color: canAdd ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+        color: canAdd ? Colours.signal : Colours.surfaceLift
 
         StyledText {
             id: addIconLabel
 
             anchors.centerIn: parent
             text: qsTr("Add override")
-            color: parent.canAdd ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+            color: parent.canAdd ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
             font: Tokens.font.body.medium
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: parent.radius
             disabled: !parent.canAdd
@@ -538,7 +539,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Window theme")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -567,22 +568,22 @@ ColumnLayout {
     StyledText {
         visible: root.gtkThemes.length === 0
         text: qsTr("No GTK themes found under ~/.local/share/themes or /usr/share/themes")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Status icon accents")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("These normally just inherit the bar's default icon colour. Override any of them independently, or leave on theme default.")
-        color: Colours.palette.m3onSurfaceVariant
+        text: qsTr("These normally inherit the bar's default icon colour. Override any of them, or leave them on theme default.")
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -590,6 +591,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "statusIconBluetooth"
             icon: "bluetooth"
             label: qsTr("Bluetooth")
 
@@ -600,6 +602,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconWifi"
             icon: "wifi"
             label: qsTr("Wi-Fi")
 
@@ -610,6 +613,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconPower"
             icon: "bolt"
             label: qsTr("Power profile")
 
@@ -620,6 +624,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconPerformance"
             icon: "monitoring"
             label: qsTr("Performance")
 
@@ -630,6 +635,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconHostInfo"
             icon: "lan"
             label: qsTr("Host info")
 
@@ -640,6 +646,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconPomodoro"
             icon: "timer"
             label: qsTr("Pomodoro")
 
@@ -650,6 +657,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "statusIconDnd"
             icon: "notifications_off"
             label: qsTr("Do Not Disturb")
 
@@ -674,25 +682,21 @@ ColumnLayout {
         implicitHeight: 32
         implicitWidth: pillLabel.implicitWidth + Tokens.padding.large * 2
         radius: Tokens.rounding.full
-        color: pill.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+        color: pill.active ? Colours.signal : Colours.surfaceLift
 
         StyledText {
             id: pillLabel
             anchors.centerIn: parent
             elide: Text.ElideMiddle
             text: pill.label
-            color: pill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+            color: pill.active ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
             font: Tokens.font.label.small
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: parent.radius
             showHoverBackground: !pill.active
-        }
-
-        MouseArea {
-            anchors.fill: parent
             onClicked: pill.clicked()
         }
     }

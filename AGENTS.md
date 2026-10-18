@@ -52,17 +52,17 @@ setup. On a machine that already has an NVIDIA driver, also pass `--nvidia-drive
   Hyprland breaks.
 
 ## Tickets
-The project tracks work on a public epiq board in the `__epiq_state__` branch. Browse it with
-`epiq gui` or the `epiq` TUI, or use GitHub issues if you don't run epiq.
+The project tracks work on a public OME board in the `__ome_state__` branch. Browse it with
+`ome gui` or the `ome` TUI, or use GitHub issues if you don't run OME.
 - Every commit subject starts with the ticket ref, read from the board (never invent one):
   `Q68MZ2B launcher: build the panel only while it is open`. No ticket: no ref.
-- With the `epiq_*` MCP tools: `epiq_sync` before reading and after writing. Find work with
-  `epiq_issue_list` (`brief: true`), read one with `epiq_issue_get <ref>`. Taking a ticket: move
+- With the `ome_*` MCP tools: `ome_sync` before reading and after writing. Find work with
+  `ome_issue_list` (`brief: true`), read one with `ome_issue_get <ref>`. Taking a ticket: move
   it to `In progress`, assign yourself (`self: true`), add tag `agent:<your-name>`.
 - New tickets go in `Todo`: small, one outcome, plain title. Never cite gitignored files such as
   `docs/` in one, because readers can't see them.
 - Progress, blockers and the PR link go in ticket comments. Close only after merge.
-- Never edit the `__epiq_state__` branch or `~/.epiq-global` by hand.
+- Never edit the `__ome_state__` branch or `~/.ome-global` by hand.
 
 ## Commits and PRs
 - No AI attribution: no "Generated with", no Co-Authored-By, no session links.

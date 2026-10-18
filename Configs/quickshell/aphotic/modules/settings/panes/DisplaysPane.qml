@@ -20,7 +20,7 @@ ColumnLayout {
     StyledText {
         visible: Hypr.monitors.values.length === 0
         text: qsTr("No monitors reported by Hyprland yet")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -57,7 +57,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: content.implicitHeight + Tokens.padding.large * 2
         radius: Tokens.rounding.large
-        color: Colours.tPalette.m3surfaceContainer
+        color: Colours.surfaceLift
 
         ColumnLayout {
             id: content
@@ -74,7 +74,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "monitor"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
 
@@ -90,7 +90,7 @@ ColumnLayout {
                     StyledText {
                         visible: (card.info.description ?? "").length > 0
                         text: card.info.description ?? ""
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                         elide: Text.ElideRight
                     }
@@ -99,7 +99,7 @@ ColumnLayout {
                 StyledText {
                     visible: card.modelData.focused ?? false
                     text: qsTr("Primary")
-                    color: Colours.palette.m3primaryOnSurface
+                    color: Colours.signalOnSurface
                     font: Tokens.font.label.small
                 }
             }
@@ -108,12 +108,14 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 SettingsRow {
+                    searchId: "displayResolution"
                     icon: "aspect_ratio"
                     label: qsTr("Resolution & refresh rate")
                     description: `${card.info.width ?? 0}x${card.info.height ?? 0}@${(card.info.refreshRate ?? 0).toFixed(2)}Hz`
                 }
 
                 SettingsRow {
+                    searchId: "displayScale"
                     icon: "zoom_in"
                     label: qsTr("Scale")
                     description: qsTr("%1x").arg((card.modelData.scale ?? 1).toFixed(2))

@@ -50,7 +50,7 @@ Flickable {
                         Layout.preferredWidth: 8
                         Layout.preferredHeight: 8
                         radius: Tokens.rounding.full
-                        color: row.modelData.status === "waiting" ? Colours.palette.m3tertiary : Colours.palette.m3primary
+                        color: row.modelData.status === "waiting" ? Colours.signalTertiary : Colours.signal
                     }
 
                     ColumnLayout {
@@ -68,7 +68,7 @@ Flickable {
                             Layout.fillWidth: true
                             text: row.modelData.status
                             elide: Text.ElideRight
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
                     }
@@ -82,7 +82,7 @@ Flickable {
             Layout.margins: Tokens.padding.small
             horizontalAlignment: Text.AlignHCenter
             text: qsTr("No live agent sessions")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
     }

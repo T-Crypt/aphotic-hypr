@@ -8,14 +8,12 @@ import qs.config
 import qs.components
 import qs.services
 
-// First increment of a standalone theme-creation flow, deliberately
-// separate from AppearancePane (which only *selects* an existing theme,
-// never define/edit one). Creates a *static* theme: a fixed colorscheme
-// under ~/.config/wallust/colorschemes/<slug>.json (pywal format) plus a
-// matching ~/.config/awww/<slug>/theme.toml that points [engine].colorscheme
-// at it -- see themes/THEME_SPEC.md's "Fixed colorschemes" section. This
-// is purely additive to ~/.config -- it never touches the git repo, so
-// there's nothing to commit here.
+// Creates a static theme: a fixed colorscheme under
+// ~/.config/wallust/colorschemes/<slug>.json (pywal format) plus a
+// ~/.config/awww/<slug>/theme.toml that points [engine].colorscheme at
+// it (themes/THEME_SPEC.md, "Fixed colorschemes"). Separate from
+// AppearancePane, which only selects an existing theme. Writes stay
+// under ~/.config and never touch the git repo.
 ColumnLayout {
     id: root
 
@@ -82,7 +80,7 @@ ColumnLayout {
         const themeToml = [
             "[theme]",
             `display_name = "${root.themeName.trim()}"`,
-            `description = "Static, hand-picked palette -- created via the Theme Creator."`,
+            `description = "Static, hand-picked palette, created with the Theme Creator."`,
             "",
             "[engine]",
             `colorscheme = "${root.themeSlug}"`,
@@ -149,8 +147,8 @@ ColumnLayout {
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Build a static theme with a fixed, hand-picked palette instead of one derived from a wallpaper. Creates a real theme folder under ~/.config/awww -- it shows up in Appearance's theme grid like any other once created.")
-        color: Colours.palette.m3onSurfaceVariant
+        text: qsTr("Build a static theme with a fixed, hand-picked palette instead of one derived from a wallpaper. It creates a real theme folder under ~/.config/awww and shows up in Appearance's theme grid like any other once created.")
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -158,6 +156,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "themeName"
             icon: "edit"
             label: qsTr("Theme name")
             description: root.themeSlug.length > 0 ? qsTr("Folder: ~/.config/awww/%1").arg(root.themeSlug) : qsTr("Used for both the display name and the folder")
@@ -166,14 +165,14 @@ ColumnLayout {
                 implicitWidth: 220
                 implicitHeight: 32
                 radius: Tokens.rounding.small
-                color: Colours.palette.m3surfaceContainerHigh
+                color: Colours.raised
 
                 TextInput {
                     id: nameInput
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.small
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     clip: true
                     text: root.themeName
                     onTextChanged: root.themeName = text
@@ -183,7 +182,7 @@ ColumnLayout {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         text: qsTr("My Theme")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -191,15 +190,16 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "themeFolder"
             icon: "folder_open"
             label: qsTr("Theme folder")
             description: root.created ? root.themeDir : qsTr("Available once created")
 
             MaterialIcon {
                 text: "folder_open"
-                color: root.created ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3outlineVariant
+                color: root.created ? Colours.inkMuted : Colours.outline
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full
@@ -213,7 +213,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Special")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -236,7 +236,7 @@ ColumnLayout {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     text: specialCol.modelData.label
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
@@ -253,7 +253,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Normal colours")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -277,7 +277,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Bright colours")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -306,17 +306,17 @@ ColumnLayout {
             implicitWidth: createLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 40
             radius: Tokens.rounding.medium
-            color: Colours.palette.m3primary
+            color: Colours.signal
 
             StyledText {
                 id: createLabel
                 anchors.centerIn: parent
                 text: qsTr("Create theme")
-                color: Colours.contrastOn(Colours.palette.m3primary)
+                color: Colours.contrastOn(Colours.signal)
                 font: Tokens.font.body.medium
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 onClicked: root.createTheme()
@@ -328,7 +328,7 @@ ColumnLayout {
             wrapMode: Text.Wrap
             visible: root.createStatus.length > 0
             text: root.createStatus
-            color: root.created ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3error
+            color: root.created ? Colours.inkMuted : Colours.alert
             font: Tokens.font.body.small
         }
     }
@@ -337,8 +337,8 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.bottomMargin: Tokens.spacing.medium
         wrapMode: Text.Wrap
-        text: qsTr("After creating, run \"aphotic theme list\" or reopen Appearance to switch to it -- switching themes and previewing swatch changes live is a follow-up increment.")
-        color: Colours.palette.m3onSurfaceVariant
+        text: qsTr("After creating, run \"aphotic theme list\" or reopen Appearance to switch to it. Switching from this pane and previewing swatch changes live are still to come.")
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 }

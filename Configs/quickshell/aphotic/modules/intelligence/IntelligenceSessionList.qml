@@ -41,7 +41,7 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.medium
-        color: Colours.tPalette.m3surfaceContainer
+        color: Colours.surfaceLift
 
         MouseArea {
             anchors.fill: parent
@@ -64,7 +64,7 @@ Item {
                 width: list.width
                 implicitHeight: 52
                 radius: Tokens.rounding.small
-                color: row.modelData.id === IntelligenceSessions.activeSessionId ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : "transparent"
+                color: row.modelData.id === IntelligenceSessions.activeSessionId ? Colours.layer(Colours.surfaceLift, 3) : "transparent"
 
                 RowLayout {
                     anchors.fill: parent
@@ -86,17 +86,17 @@ Item {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: `${row.modelData.provider} · ${root.relativeTime(row.modelData.updatedAt)}`
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
                     }
 
                     MaterialIcon {
                         text: "delete"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -117,7 +117,7 @@ Item {
                 visible: list.count === 0
                 anchors.centerIn: parent
                 text: qsTr("No conversations yet")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.medium
             }
         }

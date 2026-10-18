@@ -39,6 +39,7 @@ SHELL_BINARIES = {
     "cliphist": "cliphist",
     "wl-copy": "wl-clipboard",
     "swappy": "swappy",
+    "wf-recorder": "wf-recorder",
     "swaylock": "swaylock-effects",
     "xdg-open": "xdg-utils",
 }
@@ -110,7 +111,7 @@ OPTIONAL = {
 FULL_ONLY_APPS = {"firefox", "thunar", "code"}
 
 # Launchers and system tools that are not profile packages.
-NOT_PACKAGES = {"qs", "aphotic", "systemctl", "dbus-update-activation-environment"}
+NOT_PACKAGES = {"qs", "aphotic", "systemctl", "dbus-update-activation-environment", "pkill", "mkdir"}
 
 # Settings.qml default -> package that provides it.
 DEFAULT_THEMES = {
@@ -347,3 +348,19 @@ def test_qml_launches_only_shipped_programs():
         + ", ".join(f"{b} ({', '.join(fs)})" for b, fs in unknown.items())
         + "; map each to a profile package or allowlist it"
     )
+
+
+# A binary in SHELL_BINARIES that only works with a server running -> the
+# package that ships the server. pamixer speaks the Pulse protocol, so
+# without a Pulse server it prints "Connection error" and the volume
+# controls do nothing on a fresh install.
+RUNTIME_SERVERS = {
+    "pamixer": "pipewire-pulse",
+}
+
+
+def test_runtime_servers_ship_in_both_base_profiles():
+    for profile in ("full", "minimal"):
+        packages = _packages(profile)
+        for binary, server in RUNTIME_SERVERS.items():
+            assert server in packages, f"{profile}: {binary} needs {server}, which no base profile installs"

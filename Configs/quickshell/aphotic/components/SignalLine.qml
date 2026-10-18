@@ -60,7 +60,7 @@ Item {
         y: root.horizontal ? 0 : root.hoverStart
         width: root.horizontal ? root.hoverLength : 1
         height: root.horizontal ? 1 : root.hoverLength
-        color: Colours.palette.m3onSurface
+        color: Colours.ink
         opacity: root.hoverVisible ? 0.45 : 0
 
         Behavior on opacity {

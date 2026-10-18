@@ -76,7 +76,7 @@ Item {
     BioluminescentGlow {
         target: body
         radius: Tokens.rounding.large
-        glowColour: Colours.palette.m3primary
+        glowColour: Colours.signal
         glowBlur: 40
         glowSpread: 0.1
         intensity: root.active ? DepthFx.glowIntensity : 0
@@ -101,7 +101,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            color: Colours.tPalette.m3surfaceContainer
+            color: Colours.surfaceLift
         }
 
         Image {
@@ -157,7 +157,7 @@ Item {
     BevelPath {
         anchors.fill: parent
         fillColour: "transparent"
-        strokeColour: (root.active ? Colours.palette.m3primary : Colours.signalStyle.hairline)
+        strokeColour: (root.active ? Colours.signal : Colours.signalStyle.hairline)
         strokeWidth: 1.5
         opacity: 0.25 + 0.35 * root.closeness
         chamfer: root.chamfer

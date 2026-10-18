@@ -1,43 +1,73 @@
 pragma Singleton
 import QtQuick
+import qs.services
 
 // Values below match the reference QML plugin's own defaults where a
 // real default exists, so this hand-written singleton renders the same
 // out of the box. `rounding` (not `radius`) matches that reference
-// naming — confirmed via grep, nothing here uses "radius".
+// naming, confirmed via grep, nothing here uses "radius".
 QtObject {
+    id: root
+
+    // Aphotic's own numbered scale. The older scale names below alias
+    // onto these steps so existing call sites keep the same numbers.
+    readonly property int space1: 4
+    readonly property int space2: 8
+    readonly property int space3: 12
+    readonly property int space4: 16
+    readonly property int space5: 20
+    readonly property int space6: 28
+    readonly property int space7: 32
+    readonly property int space8: 48
+
     readonly property QtObject padding: QtObject {
-        readonly property int extraSmall: 4
-        readonly property int small: 8
-        readonly property int medium: 12
-        readonly property int large: 16
-        readonly property int largeIncreased: 20
-        readonly property int extraLarge: 28
-        readonly property int extraLargeIncreased: 32
-        readonly property int extraExtraLarge: 48
+        readonly property int extraSmall: root.space1
+        readonly property int small: root.space2
+        readonly property int medium: root.space3
+        readonly property int large: root.space4
+        readonly property int largeIncreased: root.space5
+        readonly property int extraLarge: root.space6
+        readonly property int extraLargeIncreased: root.space7
+        readonly property int extraExtraLarge: root.space8
     }
 
     readonly property QtObject spacing: QtObject {
-        readonly property int extraSmall: 4
-        readonly property int small: 8
-        readonly property int medium: 12
-        readonly property int large: 16
-        readonly property int largeIncreased: 20
-        readonly property int extraLarge: 28
-        readonly property int extraLargeIncreased: 32
-        readonly property int extraExtraLarge: 48
+        readonly property int extraSmall: root.space1
+        readonly property int small: root.space2
+        readonly property int medium: root.space3
+        readonly property int large: root.space4
+        readonly property int largeIncreased: root.space5
+        readonly property int extraLarge: root.space6
+        readonly property int extraLargeIncreased: root.space7
+        readonly property int extraExtraLarge: root.space8
     }
 
     readonly property QtObject rounding: QtObject {
-        readonly property int extraSmall: 4
-        readonly property int small: 8
-        readonly property int medium: 12
-        readonly property int large: 16
-        readonly property int largeIncreased: 20
-        readonly property int extraLarge: 28
-        readonly property int extraLargeIncreased: 32
-        readonly property int extraExtraLarge: 48
+        readonly property int extraSmall: root.space1
+        readonly property int small: root.space2
+        readonly property int medium: root.space3
+        readonly property int large: root.space4
+        readonly property int largeIncreased: root.space5
+        readonly property int extraLarge: root.space6
+        readonly property int extraLargeIncreased: root.space7
+        readonly property int extraExtraLarge: root.space8
         readonly property int full: 999999
+    }
+
+    // Resolve a corner radius through the bar corners preference: square
+    // for sharp, the requested radius for soft, and a pill for round.
+    // Qt clamps `full` to half the shorter side, which is what makes a
+    // round surface a pill without knowing its size.
+    function radiusFor(corners, px) {
+        if (corners === "soft")
+            return px;
+        if (corners === "round")
+            return root.rounding.full;
+        return 0;
+    }
+
+    function uiRadius(px) {
+        return root.radiusFor(Settings.barCorners, px);
     }
 
     readonly property QtObject sizes: QtObject {
@@ -104,6 +134,14 @@ QtObject {
             readonly property int expressiveFastEffects: 150
             readonly property int expressiveDefaultEffects: 200
             readonly property int expressiveSlowEffects: 300
+            readonly property int enter: 400
+            readonly property int exit: 200
+            readonly property int snap: 150
+            readonly property int resize: 300
+            readonly property int compactSmall: 100
+            readonly property int compactMedium: 200
+            readonly property int compactLarge: 400
+            readonly property int tooltip: 100
         }
 
         readonly property var emphasized: ({

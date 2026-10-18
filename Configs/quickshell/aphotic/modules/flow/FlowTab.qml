@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Services.UPower
 import qs.services
 import qs.services.profile
+import qs.services.ai
 import qs.components
 import "FlowModel.js" as Model
 
@@ -32,10 +33,10 @@ Item {
             id: scene
             background: Colours.signalStyle.surface
             surface: Colours.signalStyle.raised
-            accent: Colours.palette.m3primary
-            secondary: Colours.palette.m3tertiary
-            ink: Colours.palette.m3onSurface
-            muted: Colours.palette.m3onSurfaceVariant
+            accent: Colours.signal
+            secondary: Colours.signalTertiary
+            ink: Colours.ink
+            muted: Colours.inkMuted
             hairline: Colours.signalStyle.hairline
             edgeLight: Colours.signalStyle.edgeLight
             motion: root.motion
@@ -47,7 +48,7 @@ Item {
                 cores: ShellUsage.cores,
                 memoryMib: ShellUsage.memoryMib,
                 gpuNote: ShellUsage.gpuNote
-            }))
+            }), EngineRegistry.liveIds)
             shellActivity: Settings.flowShellActivity
             onShellActivityToggled: {
                 Settings.flowShellActivity = !Settings.flowShellActivity;

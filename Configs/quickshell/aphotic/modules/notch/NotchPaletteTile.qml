@@ -38,7 +38,7 @@ ColumnLayout {
         visible: root.rows.length === 0
         wrapMode: Text.WordWrap
         text: qsTr("No actions yet. Settings › Bar › Command palette picks what lands here.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.small
     }
 
@@ -66,9 +66,9 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: 32
             radius: Tokens.rounding.small
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Colours.layer(Colours.raised, 2)
 
-            StateLayer {
+            Interact {
                 radius: parent.radius
                 onClicked: {
                     Actions.invoke(actionRow.modelData.id, {
@@ -86,7 +86,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: actionRow.modelData.icon
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -103,7 +103,7 @@ ColumnLayout {
                 MaterialIcon {
                     visible: actionRow.modelData.plugin.length > 0
                     text: "extension"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
             }

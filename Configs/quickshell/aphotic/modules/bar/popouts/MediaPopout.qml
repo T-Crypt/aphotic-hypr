@@ -21,7 +21,7 @@ ColumnLayout {
             Layout.preferredWidth: 64
             Layout.preferredHeight: 64
             radius: Tokens.rounding.medium
-            color: Colours.palette.m3surfaceContainerHigh
+            color: Colours.raised
             clip: true
 
             Image {
@@ -39,13 +39,12 @@ ColumnLayout {
             MaterialIcon {
                 anchors.centerIn: parent
                 // Covers both "no art URL at all" and "URL given but the
-                // fetch failed" (a dead YouTube thumbnail, unreachable
-                // player-supplied trackArtUrl, etc.) -- without the status
-                // check this tile silently renders blank on a failed
-                // remote fetch instead of falling back to the note icon.
+                // fetch failed" -- without the status check this tile
+                // silently renders blank on a failed remote fetch instead
+                // of falling back to the note icon.
                 visible: !albumArt.visible
                 text: "music_note"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.large
             }
         }
@@ -65,7 +64,7 @@ ColumnLayout {
                 Layout.maximumWidth: 220
                 visible: text.length > 0
                 text: root.player?.trackArtist ?? ""
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.medium
                 elide: Text.ElideRight
             }
@@ -74,7 +73,7 @@ ColumnLayout {
                 Layout.maximumWidth: 220
                 visible: text.length > 0
                 text: Players.getIdentity(root.player)
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
                 elide: Text.ElideRight
             }
@@ -102,7 +101,7 @@ ColumnLayout {
             anchors.bottom: parent.bottom
             radius: Tokens.rounding.full
             width: root.player?.length > 0 ? parent.width * Math.min(1, root.player.position / root.player.length) : 0
-            color: Colours.palette.m3tertiary
+            color: Colours.signalTertiary
 
             Behavior on width {
                 enabled: !seekArea.pressed
@@ -137,7 +136,7 @@ ColumnLayout {
         StyledText {
             text: root.formatTime(root.player?.position ?? 0)
             font: Tokens.font.label.small
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
         }
 
         Item {
@@ -147,7 +146,7 @@ ColumnLayout {
         StyledText {
             text: root.formatTime(root.player?.length ?? 0)
             font: Tokens.font.label.small
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
         }
     }
 
@@ -166,7 +165,7 @@ ColumnLayout {
             implicitHeight: implicitWidth
             opacity: enabled_ ? 1 : 0.4
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 disabled: !btn.enabled_
                 onClicked: btn.clicked()
@@ -176,7 +175,7 @@ ColumnLayout {
                 id: icon_
                 anchors.centerIn: parent
                 text: btn.icon
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 fontStyle: Tokens.font.icon.medium
             }
         }
@@ -201,7 +200,7 @@ ColumnLayout {
     }
 
     // Player switcher -- only shown when more than one MPRIS source is
-    // active (e.g. Spotify + a browser tab).
+    // active (for example a desktop player beside a browser tab).
     RowLayout {
         Layout.alignment: Qt.AlignHCenter
         spacing: Tokens.spacing.small
@@ -218,10 +217,10 @@ ColumnLayout {
                 implicitWidth: 8
                 implicitHeight: 8
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: Tokens.rounding.full
-                    color: dot.modelData === root.player ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
+                    color: dot.modelData === root.player ? Colours.signal : Colours.outline
                     onClicked: Players.manualActive = dot.modelData
                 }
             }

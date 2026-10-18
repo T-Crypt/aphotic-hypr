@@ -23,7 +23,7 @@ Item {
         root.screenState.settings = true;
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();
@@ -44,7 +44,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: root.modelData.icon
             fontStyle: Tokens.font.icon.large
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
         }
 
         Column {
@@ -61,7 +61,7 @@ Item {
             StyledText {
                 text: root.modelData.description
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
                 width: parent.width
             }

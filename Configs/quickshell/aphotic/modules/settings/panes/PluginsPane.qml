@@ -8,19 +8,10 @@ import qs.config
 import qs.components
 import qs.services
 
-// One searchable list of every plugin, installed or not.
-//
-// The pane used to stack an "Installed" section above a "Browse
-// available" block, each with its own Repeater and the browse block with
-// its own nested scroll. A Repeater instantiates every delegate at once,
-// so the cost of opening this pane grew with the size of the catalogue,
-// and a plugin that was both installed and in the index appeared twice
-// in two places that looked like two different things.
-//
-// Now: one ListView over one merged model, where a plugin's state lives
-// on its own row. The list virtualizes, so a 2000-entry catalogue costs
-// the same as a 9-entry one, and search rather than scrolling is how you
-// find anything in it.
+// One searchable list of every plugin, installed or not: one ListView
+// over one merged model, a plugin's state on its own row. The list
+// virtualizes, so a 2000-entry catalogue costs the same as a 9-entry
+// one, and search rather than scrolling is how you find anything in it.
 //
 // Data comes from PluginRegistry (installed, watched reactively) and
 // ~/.local/state/aphotic/plugin-index.json (the catalogue, written and
@@ -222,9 +213,8 @@ ColumnLayout {
         return surface.icon || PluginSurfaces.iconFor(root.surfaceKind(surface));
     }
 
-    // The one line under a plugin's name, assembled here so the delegate
-    // holds text rather than a chip Repeater per row. The old row drew a
-    // chip per capability and a row per surface, ~35 objects each.
+    // The one line under a plugin's name, assembled here so the
+    // delegate holds text rather than a chip Repeater per row.
     function metaLine(row: var): string {
         const parts = [];
         if (row.version.length > 0)
@@ -422,11 +412,11 @@ ColumnLayout {
 
         MaterialIcon {
             text: "refresh"
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             fontStyle: Tokens.font.icon.small
             opacity: root.refreshing ? 0.4 : 1
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 anchors.margins: -Tokens.padding.small
                 radius: Tokens.rounding.full
@@ -438,7 +428,7 @@ ColumnLayout {
             implicitWidth: ghLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 32
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+            color: Colours.layer(Colours.surfaceLift, 2)
 
             RowLayout {
                 anchors.centerIn: parent
@@ -446,7 +436,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "code"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -454,19 +444,14 @@ ColumnLayout {
                     id: ghLabel
 
                     text: qsTr("aphotic-plugins on GitHub")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
                 onClicked: Qt.openUrlExternally(root.repoUrl)
             }
         }
@@ -475,8 +460,8 @@ ColumnLayout {
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Plugins add real functionality without touching this repo. Install one to add it, then use the toggle to turn it on or off.")
-        color: Colours.palette.m3onSurfaceVariant
+        text: qsTr("Plugins add real functionality without touching this repo. Install one, then use the toggle to turn it on or off.")
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -484,7 +469,7 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: 36
         radius: Tokens.rounding.full
-        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: Colours.layer(Colours.surfaceLift, 2)
 
         RowLayout {
             anchors.fill: parent
@@ -494,7 +479,7 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "search"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
@@ -504,7 +489,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 clip: true
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
 
                 Keys.onEscapePressed: searchInput.text = ""
                 // Debounced rather than bound straight to root.query:
@@ -518,7 +503,7 @@ ColumnLayout {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: qsTr("Search %1 plugins…").arg(root.visibleRows.length)
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                 }
             }
@@ -526,10 +511,10 @@ ColumnLayout {
             MaterialIcon {
                 visible: searchInput.text.length > 0
                 text: "close"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full
@@ -546,9 +531,8 @@ ColumnLayout {
         onTriggered: root.query = searchInput.text.trim().toLowerCase()
     }
 
-    // Scope and category are two filters, not a navigation rail. The rail
-    // this pane used to borrow cost 220px of width and read as a place to
-    // go rather than a way to narrow what is already here.
+    // Scope and category are two filters, not a navigation rail. They
+    // narrow what is already here rather than being places to go.
     RowLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.extraSmall
@@ -566,18 +550,18 @@ ColumnLayout {
                 implicitWidth: scopeLabel.implicitWidth + Tokens.padding.large * 2
                 implicitHeight: 30
                 radius: Tokens.rounding.full
-                color: scopeChip.current ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                color: scopeChip.current ? Colours.signal : Colours.layer(Colours.surfaceLift, 2)
 
                 StyledText {
                     id: scopeLabel
 
                     anchors.centerIn: parent
                     text: `${scopeChip.modelData.label}  ${scopeChip.modelData.count}`
-                    color: scopeChip.current ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                    color: scopeChip.current ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: root.scope = scopeChip.modelData.id
@@ -607,9 +591,9 @@ ColumnLayout {
                 implicitWidth: catRow.implicitWidth + Tokens.padding.medium * 2
                 implicitHeight: 28
                 radius: Tokens.rounding.full
-                color: catChip.current ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : "transparent"
+                color: catChip.current ? Colours.layer(Colours.surfaceLift, 3) : "transparent"
                 border.width: 1
-                border.color: catChip.current ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                border.color: catChip.current ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                 RowLayout {
                     id: catRow
@@ -619,18 +603,18 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: catChip.modelData.icon
-                        color: catChip.current ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: catChip.current ? Colours.signal : Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
 
                     StyledText {
                         text: catChip.modelData.label
-                        color: catChip.current ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: catChip.current ? Colours.signal : Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: root.category = catChip.modelData.id
@@ -647,7 +631,7 @@ ColumnLayout {
         visible: root.category === "security" && !root.catalogueTrusted
         implicitHeight: securityPromptCol.implicitHeight + Tokens.padding.large * 2
         radius: Tokens.rounding.medium
-        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: Colours.layer(Colours.surfaceLift, 2)
 
         ColumnLayout {
             id: securityPromptCol
@@ -663,7 +647,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "security"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
 
                 StyledText {
@@ -676,7 +660,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: qsTr("These come from a separate, less-vetted index and stay hidden until you trust it, the same way the exploit layer asks before it installs anything.")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
 
@@ -685,18 +669,18 @@ ColumnLayout {
                 implicitWidth: trustLabel.implicitWidth + Tokens.padding.large * 2
                 implicitHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.palette.m3primary
+                color: Colours.signal
 
                 StyledText {
                     id: trustLabel
 
                     anchors.centerIn: parent
                     text: qsTr("Trust the security plugin index")
-                    color: Colours.contrastOn(Colours.palette.m3primary)
+                    color: Colours.contrastOn(Colours.signal)
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: trustProc.running = true
@@ -722,7 +706,7 @@ ColumnLayout {
                 return qsTr("Couldn't reach the plugin index, and nothing is installed yet.");
             return qsTr("Nothing in this category.");
         }
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -804,7 +788,7 @@ ColumnLayout {
         width: ListView.view?.width ?? 0
         implicitHeight: rowCol.implicitHeight + Tokens.padding.medium * 2
 
-        color: pluginRow.expanded ? Colours.layer(Colours.tPalette.m3surfaceContainer, 3) : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: pluginRow.expanded ? Colours.layer(Colours.surfaceLift, 3) : Colours.layer(Colours.surfaceLift, 2)
 
         // Rounded as one card: the group's ends round, everything between
         // them stays square. SettingsGroup does this by stamping its static
@@ -830,7 +814,7 @@ ColumnLayout {
                 MaterialIcon {
                     Layout.alignment: Qt.AlignVCenter
                     text: "extension"
-                    color: pluginRow.modelData.installed ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: pluginRow.modelData.installed ? Colours.signal : Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
 
@@ -849,7 +833,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         text: root.metaLine(pluginRow.modelData)
                         elide: Text.ElideRight
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -861,7 +845,7 @@ ColumnLayout {
                     visible: pluginRow.warning.length > 0
                     Layout.alignment: Qt.AlignVCenter
                     text: pluginRow.modelData.unavailable || pluginRow.modelData.layerOff ? "error" : "warning"
-                    color: pluginRow.modelData.unavailable || pluginRow.modelData.layerOff ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                    color: pluginRow.modelData.unavailable || pluginRow.modelData.layerOff ? Colours.alert : Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                     fill: 1
                 }
@@ -871,10 +855,10 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     text: pluginRow.on ? "toggle_on" : "toggle_off"
                     fill: 1
-                    color: pluginRow.on ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: pluginRow.on ? Colours.signal : Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -895,18 +879,18 @@ ColumnLayout {
                     implicitWidth: installLabel.implicitWidth + Tokens.padding.large * 2
                     implicitHeight: 30
                     radius: Tokens.rounding.full
-                    color: pluginRow.actionable ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: pluginRow.actionable ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                     StyledText {
                         id: installLabel
 
                         anchors.centerIn: parent
                         text: pluginRow.modelData.unavailable ? qsTr("Unavailable") : qsTr("Install")
-                        color: pluginRow.actionable ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                        color: pluginRow.actionable ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                         font: Tokens.font.label.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                         disabled: !pluginRow.actionable
@@ -924,10 +908,10 @@ ColumnLayout {
                 MaterialIcon {
                     Layout.alignment: Qt.AlignVCenter
                     text: pluginRow.expanded ? "expand_less" : "expand_more"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -944,8 +928,7 @@ ColumnLayout {
             }
 
             // Inactive until the row is opened, so a collapsed row costs
-            // nothing for detail nobody is looking at. This is what the
-            // old row drew inline for every plugin at once.
+            // nothing for detail nobody is looking at.
             Loader {
                 Layout.fillWidth: true
                 active: pluginRow.expanded
@@ -971,7 +954,7 @@ ColumnLayout {
             visible: detail.row.description.length > 0
             text: detail.row.description
             wrapMode: Text.Wrap
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
 
@@ -980,7 +963,7 @@ ColumnLayout {
             visible: detail.warning.length > 0
             text: detail.warning
             wrapMode: Text.Wrap
-            color: detail.row.unavailable || detail.row.layerOff ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+            color: detail.row.unavailable || detail.row.layerOff ? Colours.alert : Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -997,7 +980,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: root.surfaceIcon(surfaceRow.modelData)
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -1005,7 +988,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: root.surfaceLabel(surfaceRow.modelData)
                     elide: Text.ElideRight
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
             }
@@ -1016,16 +999,16 @@ ColumnLayout {
             visible: detail.row.configKeys.length > 0
             text: qsTr("Uses settings: %1").arg(detail.row.configKeys.join(", "))
             wrapMode: Text.Wrap
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
 
         StyledText {
             Layout.fillWidth: true
             visible: detail.row.externalConfig.length > 0
-            text: qsTr("Wires: %1").arg(detail.row.externalConfig.join(", "))
+            text: qsTr("Configured in: %1").arg(detail.row.externalConfig.join(", "))
             wrapMode: Text.Wrap
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -1046,17 +1029,17 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: jump.modelData.icon
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
                         fontStyle: Tokens.font.icon.small
                     }
 
                     StyledText {
                         text: jump.modelData.label
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
                         font: Tokens.font.label.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -1072,10 +1055,10 @@ ColumnLayout {
             StyledText {
                 visible: detail.row.updatable
                 text: qsTr("Update")
-                color: Colours.palette.m3primary
+                color: Colours.signal
                 font: Tokens.font.label.small
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full
@@ -1086,10 +1069,10 @@ ColumnLayout {
             StyledText {
                 visible: detail.row.installed
                 text: qsTr("Remove")
-                color: Colours.palette.m3error
+                color: Colours.alert
                 font: Tokens.font.label.small
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.small
                     radius: Tokens.rounding.full

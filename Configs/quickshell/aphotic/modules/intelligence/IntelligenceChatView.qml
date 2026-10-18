@@ -13,10 +13,9 @@ Item {
     readonly property var activeSession: IntelligenceSessions.activeSession
     readonly property bool thisSessionBusy: AiProviders.busy && root.activeSession !== null && AiProviders.activeRequestId === root.activeSession.id
 
-    // Splits a message on fenced ```code``` blocks so the bubble delegate
-    // can render code in a monospace block instead of wrapping it as plain
-    // prose -- deliberately minimal (no inline-code spans, bold/italic,
-    // lists, headers): this is markdown-LITE, not a full renderer.
+    // Splits a message on fenced ```code``` blocks so the bubble can render
+    // code in a monospace block instead of wrapping it as prose. This is
+    // markdown-lite, not a full renderer: no inline spans, bold or lists.
     function segments(text: string): var {
         const parts = [];
         const re = /```[a-zA-Z0-9_+-]*\n([\s\S]*?)```/g;
@@ -36,7 +35,7 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.large
-        color: Colours.tPalette.m3surfaceContainer
+        color: Colours.surfaceLift
 
         MouseArea {
             anchors.fill: parent
@@ -62,7 +61,7 @@ Item {
                 width: list.width
                 implicitHeight: bubbleColumn.implicitHeight + Tokens.padding.medium * 2
                 radius: Tokens.rounding.medium
-                color: bubble.fromUser ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
+                color: bubble.fromUser ? Colours.signal : Colours.raised
 
                 ColumnLayout {
                     id: bubbleColumn
@@ -89,7 +88,7 @@ Item {
                                 Layout.fillWidth: true
                                 wrapMode: Text.Wrap
                                 text: seg.modelData.content
-                                color: bubble.fromUser ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurface
+                                color: bubble.fromUser ? Colours.contrastOn(Colours.signal) : Colours.ink
                                 font: Tokens.font.body.medium
                             }
 
@@ -98,7 +97,7 @@ Item {
                                 Layout.fillWidth: true
                                 implicitHeight: seg.modelData.code ? codeText.implicitHeight + Tokens.padding.small * 2 : 0
                                 radius: Tokens.rounding.small
-                                color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                                color: Colours.layer(Colours.surfaceLift, 3)
 
                                 StyledText {
                                     id: codeText
@@ -107,7 +106,7 @@ Item {
                                     anchors.margins: Tokens.padding.small
                                     wrapMode: Text.WrapAnywhere
                                     text: seg.modelData.content
-                                    color: Colours.palette.m3onSurface
+                                    color: Colours.ink
                                     font: Tokens.font.mono.small
                                 }
                             }
@@ -120,7 +119,7 @@ Item {
                 visible: list.count === 0
                 anchors.centerIn: parent
                 text: qsTr("Ask anything")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.medium
             }
 
@@ -129,7 +128,7 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 text: qsTr("Thinking…")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
         }

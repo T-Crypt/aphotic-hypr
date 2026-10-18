@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2023-2026 Trevin Tindall (T-Crypt) and Aphotic-Hypr contributors
 """aphotic agent hook worker -- see agent_hook.sh for why this is one
 process and why nothing in here is allowed to raise."""
-import json, os, re, sys, time
+import json, os, re, shlex, sys, time
 
 STATE = os.environ.get("APHOTIC_STATE_HOME", os.path.expanduser("~/.local/state/aphotic"))
 SESSIONS = os.path.join(STATE, "agent-sessions")
@@ -91,6 +91,137 @@ def sanitize_passthrough(record):
             value = record[field]
             if not isinstance(value, dict):
                 del record[field]
+    if "error" in record:
+        cleaned = clean_error(record["error"])
+        if cleaned:
+            record["error"] = cleaned
+        else:
+            del record["error"]
+
+
+# A failure is kept as a short summary, never the tool's output: the
+# command's first word, the exit code, and one error line with anything that
+# looks like a credential, an address or the home directory taken out.
+ERROR_HEAD_MAX = 160
+ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+EXIT_LINE = re.compile(r"^Exit code (-?\d+)\s*$")
+TRUNCATED = re.compile(r"\.\.\. \[\d+ characters truncated\] \.\.\.")
+ERROR_WORDS = re.compile(r"error|fatal|denied|refused|not found|no such|failed|cannot|can't|"
+                         r"invalid|unknown|timed out|permission|unable|missing|rejected", re.I)
+SECRETS = (
+    (re.compile(r"(?i)\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}"), r"\1 <redacted>"),
+    (re.compile(r"(?i)\b([A-Za-z_]*(?:token|secret|passw(?:or)?d|pwd|api[_-]?key|auth)[A-Za-z_]*)\s*[=:]\s*\S+"),
+     r"\1=<redacted>"),
+    (re.compile(r"\b(?:sk|pk|rk)-[A-Za-z0-9_-]{16,}"), "<redacted>"),
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}"), "<redacted>"),
+    (re.compile(r"\bxox[abposr]-[A-Za-z0-9-]{10,}"), "<redacted>"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "<redacted>"),
+    (re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]*"), "<redacted>"),
+    (re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"), "<email>"),
+    (re.compile(r"\b[0-9a-fA-F]{32,}\b"), "<hex>"),
+    (re.compile(r"\b(?=[A-Za-z0-9+/]*\d)(?=[A-Za-z0-9+/]*[A-Z])(?=[A-Za-z0-9+/]*[a-z])[A-Za-z0-9+/]{40,}={0,2}"),
+     "<redacted>"),
+)
+WRAPPERS = frozenset({"sudo", "env", "command", "exec", "nohup", "nice", "time", "doas"})
+SETUP = frozenset({"cd", "pushd", "export", "set", "source", ".", "true", "local"})
+
+
+def scrub(text):
+    text = ANSI.sub("", str(text))
+    home = os.path.expanduser("~")
+    if home and home != "/":
+        text = text.replace(home, "~")
+    for pattern, replacement in SECRETS:
+        text = pattern.sub(replacement, text)
+    text = " ".join(text.split())
+    return text[:ERROR_HEAD_MAX]
+
+
+def command_heads(command):
+    """The first word of each command in a chain, past wrappers and setup."""
+    heads = []
+    if not isinstance(command, str) or not command.strip():
+        return heads
+    for segment in re.split(r"&&|\|\||;|\||\n", command):
+        try:
+            words = shlex.split(segment, comments=True)
+        except ValueError:
+            words = segment.split()
+        while words:
+            word = words[0]
+            if word in WRAPPERS or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", word) or word.startswith("-"):
+                words.pop(0)
+            elif word == "timeout" and len(words) > 1:
+                words.pop(0)
+                while words and (words[0].startswith("-") or re.match(r"^\d+[smhd]?$", words[0])):
+                    words.pop(0)
+            else:
+                break
+        if words and words[0] not in SETUP:
+            heads.append(os.path.basename(words[0])[:40])
+    return heads
+
+
+def command_head(command, message=""):
+    """The command a failure belongs to: the one its error line names, else the first."""
+    heads = command_heads(command)
+    for head in heads:
+        if re.search(r"(?:^|[\s:])%s:" % re.escape(head), message):
+            return head
+    return heads[0] if heads else ""
+
+
+def error_head(text):
+    lines = []
+    for raw in ANSI.sub("", str(text)).splitlines():
+        line = raw.strip()
+        if not line or EXIT_LINE.match(line) or TRUNCATED.search(line):
+            continue
+        lines.append(line)
+    if not lines:
+        return ""
+    for line in lines:
+        if ERROR_WORDS.search(line):
+            return scrub(line)
+    return scrub(lines[-1])
+
+
+def failure_summary(payload):
+    message = payload.get("error")
+    summary = {}
+    tool_input = payload.get("tool_input")
+    if isinstance(tool_input, dict):
+        cmd = command_head(tool_input.get("command"), message if isinstance(message, str) else "")
+        if cmd:
+            summary["cmd"] = cmd
+    if isinstance(message, str) and message:
+        first = message.lstrip().splitlines()[0].strip() if message.strip() else ""
+        code = EXIT_LINE.match(first)
+        if code:
+            summary["exit"] = int(code.group(1))
+        head = error_head(message)
+        if head:
+            summary["head"] = head
+    if payload.get("is_interrupt") is True:
+        summary["interrupt"] = True
+    return summary or None
+
+
+def clean_error(value):
+    """An adapter's `error` object, held to the same shape and scrub as ours."""
+    out = {}
+    cmd = value.get("cmd")
+    if isinstance(cmd, str) and cmd:
+        out["cmd"] = scrub(cmd)[:40]
+    code = value.get("exit")
+    if isinstance(code, int) and not isinstance(code, bool):
+        out["exit"] = code
+    head = value.get("head")
+    if isinstance(head, str) and head:
+        out["head"] = scrub(head)
+    if value.get("interrupt") is True:
+        out["interrupt"] = True
+    return out
 
 
 def atomic_write(path, text):
@@ -302,6 +433,10 @@ def main():
         tool_status = TOOL_STATUS.get(raw_event)
         if tool_status:
             record["toolStatus"] = tool_status
+        if raw_event == "PostToolUseFailure":
+            summary = failure_summary(payload)
+            if summary:
+                record["error"] = summary
 
         harness = payload.get("harness") or "claude"
 

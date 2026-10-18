@@ -1053,3 +1053,83 @@ class TestV2Passthrough:
         ]
         for payload in nasty:
             _drive(tmp_path, payload, monkeypatch)
+
+
+class TestFailureCapture:
+    """A failed tool call carries a short scrubbed summary, never its output."""
+
+    def _fail(self, tmp_path, monkeypatch, **extra):
+        payload = {"session_id": "s1", "hook_event_name": "PostToolUseFailure",
+                   "tool_name": "Bash", "tool_use_id": "t1", "cwd": "/repo"}
+        payload.update(extra)
+        events = _drive(tmp_path, payload, monkeypatch)
+        assert len(events) == 1
+        return events[0]
+
+    def test_bash_failure_names_command_exit_and_line(self, tmp_path, monkeypatch):
+        record = self._fail(tmp_path, monkeypatch,
+                            tool_input={"command": "cd /x && ssh root@h 'pvesh get /nodes' | jq ."},
+                            error="Exit code 127\nbash: line 1: jq: command not found")
+        assert record["toolStatus"] == "errored"
+        assert record["error"] == {"cmd": "jq", "exit": 127, "head": "bash: line 1: jq: command not found"}
+
+    def test_wrappers_and_setup_are_skipped(self):
+        assert agent_hook.command_head("sudo -E env A=1 timeout -k 5 30s pct exec 101 -- ls") == "pct"
+        assert agent_hook.command_head("cd /tmp; export X=1; /usr/bin/git push") == "git"
+        assert agent_hook.command_head("") == ""
+        assert agent_hook.command_head("echo 'unterminated") == "echo"
+
+    def test_error_line_prefers_a_line_that_reads_as_an_error(self):
+        text = "Exit code 1\nTo github.com:x/y.git\n ! [rejected] main -> main (fetch first)\nhint: pull first"
+        assert agent_hook.error_head(text) == "! [rejected] main -> main (fetch first)"
+        assert agent_hook.error_head("Exit code 2\nsome output\nlast words") == "last words"
+        assert agent_hook.error_head("Exit code 1\n... [4000 characters truncated] ...\n") == ""
+
+    def test_secrets_addresses_and_home_are_scrubbed(self, monkeypatch):
+        monkeypatch.setenv("HOME", "/home/alice")
+        line = ("error: GH_TOKEN=ghp_abcdefghijklmnopqrstuvwxyz0123 auth for alice@example.com "
+                "Bearer abcdef0123456789 key sk-abcdefghijklmnopqrstu at /home/alice/repo "
+                "sha 0123456789abcdef0123456789abcdef")
+        out = agent_hook.scrub(line)
+        for leaked in ("ghp_", "alice@example.com", "abcdef0123456789", "sk-abc", "/home/alice", "0123456789abcdef0123"):
+            assert leaked not in out
+        assert "~/repo" in out
+        assert len(agent_hook.scrub("word " * 100)) == agent_hook.ERROR_HEAD_MAX
+        assert "orca/workspaces/aphotic/plugins/skills" in agent_hook.scrub(
+            "no such file orca/workspaces/aphotic/plugins/skills/cli")
+        assert "<redacted>" in agent_hook.scrub("key dGhpcyBpcyBhIHNlY3JldCB0b2tlbiB2YWx1ZQ9Xyz12345==")
+
+    def test_non_bash_failure_keeps_only_the_line(self, tmp_path, monkeypatch):
+        record = self._fail(tmp_path, monkeypatch, tool_name="Edit",
+                            tool_input={"file_path": "/a.qml"},
+                            error="String to replace not found in file.")
+        assert record["error"] == {"head": "String to replace not found in file."}
+
+    def test_interrupt_is_marked(self, tmp_path, monkeypatch):
+        record = self._fail(tmp_path, monkeypatch, tool_input={"command": "sleep 99"},
+                            error="Interrupted", is_interrupt=True)
+        assert record["error"]["interrupt"] is True
+
+    def test_odd_error_values_never_raise(self, tmp_path, monkeypatch):
+        for value in (None, 7, ["x"], {"a": 1}, ""):
+            record = self._fail(tmp_path / str(id(value)), monkeypatch,
+                                tool_input={"command": 5}, error=value)
+            assert "error" not in record
+
+    def test_success_records_carry_no_error(self, tmp_path, monkeypatch):
+        events = _drive(tmp_path, {"session_id": "s1", "hook_event_name": "PostToolUse",
+                                   "tool_name": "Bash", "tool_input": {"command": "ls"},
+                                   "error": "Exit code 1\nnope"}, monkeypatch)
+        assert "error" not in events[0]
+
+    def test_adapter_error_object_is_held_to_the_same_shape(self, tmp_path, monkeypatch):
+        events = _drive(tmp_path, {"v": 2, "sessionId": "c1", "event": "tool_call", "harness": "codex",
+                                   "toolStatus": "errored",
+                                   "error": {"cmd": "git", "exit": 1, "head": "token=hunter2hunter2 denied",
+                                             "stdout": "everything the tool printed"}}, monkeypatch)
+        assert events[0]["error"] == {"cmd": "git", "exit": 1, "head": "token=<redacted> denied"}
+
+    def test_adapter_error_with_nothing_usable_is_dropped(self, tmp_path, monkeypatch):
+        events = _drive(tmp_path, {"v": 2, "sessionId": "c1", "event": "tool_call",
+                                   "error": {"exit": "1", "head": 3}}, monkeypatch)
+        assert "error" not in events[0]

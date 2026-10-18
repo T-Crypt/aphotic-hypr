@@ -83,7 +83,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Command palette")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -91,7 +91,7 @@ ColumnLayout {
         Layout.fillWidth: true
         text: qsTr("What the notch's Commands tab offers, in this order. Drag the handle to reorder, or swap a slot for any other action. Installing a plugin adds its actions to the list to choose from.")
         wrapMode: Text.WordWrap
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.small
     }
 
@@ -125,10 +125,10 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: "swap_horiz"
-                        color: root.picking && root.pickIndex === slotRow.index ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: root.picking && root.pickIndex === slotRow.index ? Colours.signal : Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -138,10 +138,10 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: "close"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -152,10 +152,10 @@ ColumnLayout {
                     MaterialIcon {
                         text: slotRow.modelData.enabled ? "toggle_on" : "toggle_off"
                         fill: 1
-                        color: slotRow.modelData.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: slotRow.modelData.enabled ? Colours.signal : Colours.inkMuted
                         fontStyle: Tokens.font.icon.medium
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -169,7 +169,7 @@ ColumnLayout {
                     // list.
                     MaterialIcon {
                         text: "drag_indicator"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
                         MouseArea {
@@ -204,6 +204,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "paletteAddAction"
             icon: "add"
             label: qsTr("Add an action")
             description: root.available.length === 0 ? qsTr("Every action is already in the list") : ""
@@ -217,7 +218,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: root.picking
         text: root.pickIndex < 0 ? qsTr("Pick an action to add") : qsTr("Pick what this slot runs instead")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 

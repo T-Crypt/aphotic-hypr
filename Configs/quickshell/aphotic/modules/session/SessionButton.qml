@@ -19,7 +19,7 @@ Item {
 
     signal activated
 
-    readonly property color tint: root.destructive ? Colours.palette.m3error : Colours.signalStyle.tint(root.tintIndex)
+    readonly property color tint: root.destructive ? Colours.alert : Colours.signalStyle.tint(root.tintIndex)
     readonly property bool hot: root.activeFocus || state.containsMouse
 
     function exec(): void {
@@ -53,7 +53,7 @@ Item {
             Anim {}
         }
 
-        StateLayer {
+        Interact {
             id: state
 
             radius: bg.radius
@@ -90,6 +90,6 @@ Item {
 
         text: root.label.toUpperCase()
         font: Tokens.font.label.builders.small.letterSpacing(1).build()
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
     }
 }

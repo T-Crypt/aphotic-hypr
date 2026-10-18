@@ -17,7 +17,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: Icons.getVolumeIcon(Audio.volume, Audio.muted)
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
 
             MouseArea {
                 anchors.fill: parent
@@ -40,7 +40,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Output").toUpperCase()
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
@@ -55,9 +55,9 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: sinkLabel.implicitHeight + Tokens.padding.small * 2
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.medium
-                color: (sinkRow.modelData === Audio.sink ? Colours.palette.m3primary : Colours.signalStyle.hover)
+                color: (sinkRow.modelData === Audio.sink ? Colours.signal : Colours.signalStyle.hover)
                 stateOpacity: (sinkRow.modelData === Audio.sink ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))
                 onClicked: Audio.setAudioSink(sinkRow.modelData)
             }
@@ -79,7 +79,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: sinkRow.modelData === Audio.sink ? "radio_button_checked" : "radio_button_unchecked"
-                    color: sinkRow.modelData === Audio.sink ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: sinkRow.modelData === Audio.sink ? Colours.signal : Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 

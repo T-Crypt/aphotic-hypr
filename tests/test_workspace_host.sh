@@ -19,7 +19,9 @@ grep -qE 'property bool workspace' "$STATE" || fail "Workspace has no per-screen
 grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)' "$CONTENT" || fail "Workspace does not use generic registrations"
 grep -qE 'source: .*componentUrl' "$CONTENT" || fail "Workspace does not dynamically load plugin content"
 grep -qE 'surfaceActive' "$CONTENT" || fail "Workspace loads plugin content while hidden"
-grep -qE 'StateLayer \{' "$CONTENT" || fail "Workspace navigation has no per-item hover feedback"
+grep -qE 'PluginRegistry\.markSurfaceFailed\(root\.activeSurface, true\)' "$CONTENT" || fail "Workspace does not mark a surface failed when its loader errors"
+grep -qE 'PluginRegistry\.markSurfaceFailed\(root\.activeSurface, false\)' "$CONTENT" || fail "Workspace does not clear a failed surface mark when it loads"
+grep -qE 'Interact \{' "$CONTENT" || fail "Workspace navigation has no per-item hover feedback"
 grep -qE 'Anim \{ type: Anim\.DefaultSpatial \}' "$CONTENT" || fail "Workspace selection pill does not use the shared spatial curve"
 grep -qE 'color: Colours\.signalStyle\.glass' "$CONTENT" || fail "Workspace lacks the Signal glass surface"
 grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.length > 0' "$WINDOW" || fail "Workspace window does not disappear when no plugin is eligible"
@@ -36,7 +38,7 @@ grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)' "$ACTIONS" || fail "Worksp
 # exists while a plugin registers a ui.workspace.
 
 [[ -f "$KEYBIND" ]] || fail "Workspace keybind service is missing"
-grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.length > 0' "$KEYBIND" || fail "Workspace keybind is not gated on a registered surface"
+grep -qE 'PluginRegistry\.surfacesFor\("workspace"\)\.some\(surface => !PluginRegistry\.surfaceFailed\(surface\)\)' "$KEYBIND" || fail "Workspace keybind does not skip failed surfaces"
 grep -qE 'singleton WorkspaceKeybind 1\.0 WorkspaceKeybind\.qml' "$QMLDIR" || fail "Workspace keybind singleton is not exported"
 
 # A pragma Singleton nothing names is never constructed, and nothing
@@ -48,9 +50,18 @@ grep -qE '_residentSingletons:.*WorkspaceKeybind' "$SHELL" || fail "Workspace ke
 # hyprctl keyword is refused under the Lua parser, and hl.bind is not
 # available under the legacy one. Both paths have to exist.
 grep -qE 'hl\.bind\(' "$KEYBIND" || fail "Workspace keybind has no Lua-parser bind path"
-grep -qE 'hl\.unbind\(' "$KEYBIND" || fail "Workspace keybind has no Lua-parser unbind path"
-grep -qE 'keyword", "bindd' "$KEYBIND" || fail "Workspace keybind has no legacy-parser bind path"
-grep -qE 'keyword", "unbind' "$KEYBIND" || fail "Workspace keybind has no legacy-parser unbind path"
+grep -qE 'keyword bindd' "$KEYBIND" || fail "Workspace keybind has no legacy-parser bind path"
+
+# The assert clears both parser tables before it binds, through one shell.
+# Hyprland outlives the shell, so a bind the previous shell left behind
+# (its on-exit unbind can be lost when systemd stops it) otherwise stacks
+# a second binding on the same combo: two bindings both fire on one press,
+# so the plane toggles open and straight back closed and reads as not
+# opening. Clearing both tables is what makes the combo idempotent across
+# restarts, parser switches and a legacy-to-Lua upgrade.
+grep -qE 'sh", "-c"' "$KEYBIND" || fail "Workspace keybind does not assert through one shell"
+grep -qE 'hl\.unbind\(' "$KEYBIND" || fail "Workspace keybind no longer clears the Lua bind table"
+grep -qE 'keyword unbind' "$KEYBIND" || fail "Workspace keybind no longer clears the legacy bind table"
 
 # `wanted` and `Hypr.usingLua` settle independently. Reading the parser
 # once, whenever the registry happened to finish, emitted the refused

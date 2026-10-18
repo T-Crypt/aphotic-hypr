@@ -28,7 +28,7 @@ Item {
         level: 2
     }
 
-    StyledRect {
+    SignalSurface {
         id: card
 
         width: root.width
@@ -45,9 +45,7 @@ Item {
         scale: root.open ? 1 : 0.96
         transformOrigin: Item.Right
         radius: Tokens.rounding.large
-        color: Colours.signalStyle.glass
-        border.width: 1
-        border.color: Colours.signalStyle.hairline
+        tone: Colours.signalStyle.glass
 
         Behavior on x {
             Anim {
@@ -92,14 +90,14 @@ Item {
 
                 MaterialIcon {
                     text: "notifications"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
 
                 StyledText {
                     Layout.fillWidth: true
                     text: qsTr("Notifications")
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
                 }
 
@@ -118,15 +116,14 @@ Item {
                         anchors.centerIn: parent
                         spacing: Tokens.spacing.extraSmall
 
-                        // The pill reads as the small-caps count label.
                         StyledText {
                             text: `${NotificationHistory.unreadCount} NEW`
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                         }
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                         stateOpacity: (containsMouse ? 1 : 0)
@@ -174,7 +171,7 @@ Item {
                         border.color: Colours.signalStyle.hairline
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
                         stateOpacity: (containsMouse ? 1 : 0)
@@ -196,7 +193,7 @@ Item {
 
                         anchors.centerIn: parent
                         text: clearAll.armed ? "delete_forever" : "delete_sweep"
-                        color: clearAll.armed ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                        color: clearAll.armed ? Colours.alert : Colours.inkMuted
                         fill: clearAll.armed ? 1 : 0
                         fontStyle: Tokens.font.icon.small
                     }
@@ -213,7 +210,7 @@ Item {
                         border.color: Colours.signalStyle.hairline
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
                         stateOpacity: (containsMouse ? 1 : 0)
@@ -226,7 +223,7 @@ Item {
 
                         anchors.centerIn: parent
                         text: DoNotDisturb.enabled ? "notifications_off" : "notifications"
-                        color: DoNotDisturb.enabled ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: DoNotDisturb.enabled ? Colours.signal : Colours.inkMuted
                         fill: DoNotDisturb.enabled ? 1 : 0
                         fontStyle: Tokens.font.icon.small
                     }
@@ -243,7 +240,7 @@ Item {
                         border.color: Colours.signalStyle.hairline
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: Tokens.rounding.full
                         stateOpacity: (containsMouse ? 1 : 0)
@@ -256,7 +253,7 @@ Item {
 
                         anchors.centerIn: parent
                         text: "close"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
                 }
@@ -280,20 +277,20 @@ Item {
 
                     MaterialIcon {
                         text: Weather.conditionIcon
-                        color: Colours.palette.m3secondary
+                        color: Colours.signalSecondary
                         fontStyle: Tokens.font.icon.medium
                     }
 
                     StyledText {
                         text: `${Math.round(Weather.currentTemp)}°${Settings.weatherUnits === "fahrenheit" ? "F" : "C"}`
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                         font: Tokens.font.body.medium
                     }
 
                     StyledText {
                         Layout.fillWidth: true
                         text: Weather.conditionText
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.body.small
                         elide: Text.ElideRight
                     }
@@ -359,14 +356,14 @@ Item {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: "notifications_none"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.extraLarge
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: qsTr("No notifications yet")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.body.medium
                     }
                 }

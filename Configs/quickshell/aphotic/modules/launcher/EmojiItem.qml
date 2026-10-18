@@ -19,7 +19,7 @@ Item {
         Quickshell.execDetached(["sh", "-c", "printf '%s' \"$1\" | wl-copy", "_", root.modelData.emoji]);
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();
@@ -44,7 +44,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: root.modelData.name
             font: Tokens.font.body.medium
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             elide: Text.ElideRight
             width: parent.width - parent.spacing - Tokens.font.body.large.pointSize * 2
         }

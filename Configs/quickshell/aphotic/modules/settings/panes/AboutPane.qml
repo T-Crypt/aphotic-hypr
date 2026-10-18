@@ -12,7 +12,7 @@ ColumnLayout {
     readonly property string repoUrl: "https://github.com/T-Crypt/Aphotic-Hypr"
     readonly property string releasesUrl: "https://github.com/T-Crypt/Aphotic-Hypr/releases"
     readonly property string licenseUrl: "https://github.com/T-Crypt/Aphotic-Hypr/blob/main/LICENSE"
-    property string version: "…"
+    readonly property string version: InstallProfile.version || "…"
 
     // "idle" | "checking" | "current" | "available" | "error"
     property string updateState: "idle"
@@ -56,7 +56,7 @@ ColumnLayout {
         implicitWidth: content.implicitWidth + Tokens.padding.large * 4
         implicitHeight: content.implicitHeight + Tokens.padding.large * 3
         radius: Tokens.rounding.extraLarge
-        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: Colours.layer(Colours.surfaceLift, 2)
 
         DepthGradient {
             anchors.fill: parent
@@ -79,15 +79,15 @@ ColumnLayout {
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: -Tokens.spacing.extraSmall
-                text: "Aphotic-Hypr"
-                color: Colours.palette.m3onSurface
+                text: "Aphotic"
+                color: Colours.ink
                 font: Tokens.font.headline.large
             }
 
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Version %1").arg(root.version)
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.medium
             }
 
@@ -95,7 +95,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
                 textFormat: Text.RichText
                 text: `<a href="${root.repoUrl}">${root.repoUrl}</a>`
-                color: Colours.legibleAccent(Colours.palette.m3primary, Colours.tPalette.m3surfaceContainer)
+                color: Colours.legibleAccent(Colours.signal, Colours.surfaceLift)
                 font: Tokens.font.body.medium
                 onLinkActivated: link => Qt.openUrlExternally(link)
 
@@ -114,7 +114,7 @@ ColumnLayout {
                 StyledText {
                     textFormat: Text.RichText
                     text: `<a href="${root.releasesUrl}">${qsTr("Release notes")}</a>`
-                    color: Colours.legibleAccent(Colours.palette.m3primary, Colours.tPalette.m3surfaceContainer)
+                    color: Colours.legibleAccent(Colours.signal, Colours.surfaceLift)
                     font: Tokens.font.body.medium
                     onLinkActivated: link => Qt.openUrlExternally(link)
 
@@ -127,14 +127,14 @@ ColumnLayout {
 
                 StyledText {
                     text: "·"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.medium
                 }
 
                 StyledText {
                     textFormat: Text.RichText
                     text: `<a href="${root.licenseUrl}">${qsTr("GPL-3.0 license")}</a>`
-                    color: Colours.legibleAccent(Colours.palette.m3primary, Colours.tPalette.m3surfaceContainer)
+                    color: Colours.legibleAccent(Colours.signal, Colours.surfaceLift)
                     font: Tokens.font.body.medium
                     onLinkActivated: link => Qt.openUrlExternally(link)
 
@@ -183,18 +183,18 @@ ColumnLayout {
                         Layout.preferredHeight: 28
                         Layout.preferredWidth: checkLabel.implicitWidth + Tokens.padding.medium * 2
                         radius: Tokens.rounding.full
-                        color: Colours.tPalette.m3surfaceContainer
+                        color: Colours.surfaceLift
                         opacity: root.updateState === "checking" ? 0.5 : 1
 
                         StyledText {
                             id: checkLabel
                             anchors.centerIn: parent
                             text: root.updateState === "checking" ? qsTr("Checking…") : qsTr("Check for updates")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             disabled: root.updateState === "checking"
@@ -216,17 +216,17 @@ ColumnLayout {
                         Layout.preferredHeight: 28
                         Layout.preferredWidth: updateLabel.implicitWidth + Tokens.padding.medium * 2
                         radius: Tokens.rounding.full
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
 
                         StyledText {
                             id: updateLabel
                             anchors.centerIn: parent
                             text: qsTr("Sync update")
-                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            color: Colours.contrastOn(Colours.signal)
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                         }
@@ -252,7 +252,7 @@ ColumnLayout {
                             return qsTr("Update available: %1 (installed: %2). <a href=\"%3\">What changed</a>").arg(root.latestVersion).arg(root.version).arg(root.releaseUrl);
                         return qsTr("Couldn't check for updates -- see your network connection, or check manually: %1").arg(root.releasesUrl);
                     }
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                     onLinkActivated: link => Qt.openUrlExternally(link)
                 }
@@ -264,7 +264,7 @@ ColumnLayout {
                     wrapMode: Text.WordWrap
                     visible: root.outdatedPlugins.length > 0
                     text: qsTr("Plugin updates: %1").arg(root.outdatedPlugins.map(p => `${p.name} ${p.from} → ${p.to}`).join(", "))
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
@@ -275,7 +275,7 @@ ColumnLayout {
                     visible: root.missingPackages.length > 0
                     implicitHeight: missingCol.implicitHeight + Tokens.padding.medium * 2
                     radius: Tokens.rounding.medium
-                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     ColumnLayout {
                         id: missingCol
@@ -291,7 +291,7 @@ ColumnLayout {
 
                             MaterialIcon {
                                 text: "inventory_2"
-                                color: Colours.palette.m3error
+                                color: Colours.alert
                                 fontStyle: Tokens.font.icon.small
                             }
 
@@ -299,7 +299,7 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 text: qsTr("%1 package(s) this profile asks for are not installed").arg(root.missingPackages.length)
-                                color: Colours.palette.m3onSurface
+                                color: Colours.ink
                                 font: Tokens.font.label.medium
                             }
                         }
@@ -308,7 +308,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
                             text: root.missingPackages.join(", ")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
 
@@ -316,7 +316,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
                             text: qsTr("A sync deploys the config but installs nothing. Run ./install.sh from the Aphotic repo to add these.")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
                     }
@@ -329,7 +329,7 @@ ColumnLayout {
                     wrapMode: Text.WordWrap
                     visible: root.syncWorthwhile
                     text: qsTr("Syncing re-deploys the config and refreshes plugins. It restarts the shell, so the bar and every panel disappear for a moment.")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
@@ -341,7 +341,7 @@ ColumnLayout {
                     visible: root.lastSync !== null
                     implicitHeight: lastCol.implicitHeight + Tokens.padding.medium * 2
                     radius: Tokens.rounding.medium
-                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     ColumnLayout {
                         id: lastCol
@@ -357,7 +357,7 @@ ColumnLayout {
 
                             MaterialIcon {
                                 text: root.lastSync?.result === "ok" ? "check_circle" : "error"
-                                color: root.lastSync?.result === "ok" ? Colours.palette.m3primary : Colours.palette.m3error
+                                color: root.lastSync?.result === "ok" ? Colours.signal : Colours.alert
                                 fontStyle: Tokens.font.icon.small
                             }
 
@@ -365,7 +365,7 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
                                 text: root.lastSync?.result === "ok" ? qsTr("Last sync finished") : qsTr("Last sync did not finish")
-                                color: Colours.palette.m3onSurface
+                                color: Colours.ink
                                 font: Tokens.font.label.medium
                             }
                         }
@@ -374,7 +374,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
                             text: qsTr("Full output: ~/.local/state/aphotic/last-sync.log")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
                     }
@@ -385,17 +385,6 @@ ColumnLayout {
 
     Item {
         Layout.fillHeight: true
-    }
-
-    Process {
-        id: versionProc
-        command: ["cat", `${Quickshell.env("APHOTIC_DOTS_DIR") || `${Quickshell.env("HOME")}/Aphotic-Hypr`}/VERSION`]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.trim().length > 0)
-                    root.version = text.trim();
-            }
-        }
     }
 
     Process {
@@ -463,7 +452,6 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
-        versionProc.running = true;
         syncCheckProc.running = true;
     }
 }

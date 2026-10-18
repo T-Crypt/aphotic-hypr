@@ -24,7 +24,7 @@ StyledRect {
 
     required property ScreenState screenState
 
-    readonly property color colour: Colours.palette.m3tertiaryOnSurface
+    readonly property color colour: Colours.signalTertiaryOnSurface
     readonly property int padding: Config.bar.clock.background ? Tokens.padding.medium : Tokens.padding.extraSmall
     readonly property var font: Tokens.font.body.builders.small.scale(1.1)
 
@@ -34,7 +34,7 @@ StyledRect {
     color: "transparent"
     radius: Tokens.rounding.full
 
-    StateLayer {
+    Interact {
         radius: root.radius
         onClicked: root.screenState.dashboard = !root.screenState.dashboard
     }
@@ -63,7 +63,7 @@ StyledRect {
                 Layout.alignment: Qt.AlignVCenter
                 text: Time.format("ddd d")
                 font: Tokens.font.label.medium
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
 
             Loader {
@@ -93,7 +93,7 @@ StyledRect {
             StyledText {
                 text: `${Time.hourStr}:${Time.minuteStr}`
                 font: root.font.scale(1.15).weight(Font.DemiBold).build()
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
             }
 
             Loader {
@@ -140,7 +140,7 @@ StyledRect {
                 visible: active
 
                 sourceComponent: ColumnLayout {
-                    spacing: layout.spacing - 4
+                    spacing: layout.spacing - Tokens.spacing.extraSmall
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
@@ -160,10 +160,10 @@ StyledRect {
                         Layout.fillWidth: true
                         Layout.leftMargin: -Tokens.padding.extraSmall
                         Layout.rightMargin: -Tokens.padding.extraSmall
-                        Layout.topMargin: 4
+                        Layout.topMargin: Tokens.spacing.extraSmall
                         Layout.bottomMargin: Tokens.padding.extraSmall / 2
                         implicitHeight: 1
-                        color: Colours.palette.m3outlineVariant
+                        color: Colours.outline
                     }
                 }
             }
@@ -186,7 +186,7 @@ StyledRect {
             }
 
             StyledText {
-                Layout.topMargin: -parent.spacing - 4
+                Layout.topMargin: -parent.spacing - Tokens.spacing.extraSmall
                 Layout.alignment: Qt.AlignHCenter
                 text: Time.minuteStr
                 font: {
@@ -204,7 +204,7 @@ StyledRect {
             }
 
             Loader {
-                Layout.topMargin: -parent.spacing - 4
+                Layout.topMargin: -parent.spacing - Tokens.spacing.extraSmall
                 Layout.alignment: Qt.AlignHCenter
                 asynchronous: true
                 active: GlobalConfig.services.useTwelveHourClock

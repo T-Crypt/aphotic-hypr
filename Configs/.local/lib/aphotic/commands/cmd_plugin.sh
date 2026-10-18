@@ -54,7 +54,18 @@ _aphotic_plugin_root_value() {
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
 APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action edge_tab"
-APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action"
+APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine"
+
+APHOTIC_PLUGIN_KEYBIND_MODIFIERS="SHIFT CAPS CTRL CONTROL ALT MOD1 MOD2 MOD3 SUPER WIN LOGO MOD4 MOD5"
+
+# The built-in protocol names an [engine].protocol may name. The shell
+# speaks these parsers; anything else is refused at install, the same
+# direction the API version is refused. Each name replaces code that is in
+# core today.
+APHOTIC_PLUGIN_ENGINE_PROTOCOLS="ollama llama-swap lmstudio openai-models engine-report"
+# The capability tokens an [engine] may declare. Every token except `chat`
+# has to be backed by a verb, a stats endpoint or a progress source.
+APHOTIC_PLUGIN_ENGINE_CAPABILITIES="models claims stats progress chat start stop load unload switch"
 
 # ---------------------------------------------------------------------
 # The shell runtime API a plugin may call (manifest v3.9's [api]).
@@ -74,8 +85,8 @@ APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace
 # the same commit as services/PluginApiCore.js; the test holds them
 # equal.
 # ---------------------------------------------------------------------
-APHOTIC_PLUGIN_API_VERSION=2
-APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish sonar.register"
+APHOTIC_PLUGIN_API_VERSION=3
+APHOTIC_PLUGIN_API_USES="context.observe context.request resource.observe surface.declare notifications.publish sonar.register overlay.present"
 
 # Exact word match against a space-separated list. Not `grep -w`: grep
 # counts `-` as a word boundary, so `-w profile` matches "profile-hook"
@@ -429,6 +440,153 @@ _aphotic_plugin_chat_provider_json() {
         '{id: $id, label: $label, backend: $backend, state: $state, requires_layer: $requires_layer, requires_data: $requires_data}'
 }
 
+# The `engine` capability. A plugin declares one engine it serves, and the
+# shell mounts a descriptor-driven adapter for it rather than a hardcoded
+# per-engine file. One engine per plugin: [engine_2] is warned about and
+# ignored. The shared TOML reader is flat, so the section holds single-line
+# keys and one-line quoted arrays only; the nested `[engine.control]`,
+# `[engine.stats]` and `[engine.progress]` tables are read the same way.
+#
+# The registry entry keeps the manifest's own snake_case keys, because the
+# shell's EngineDescriptorCore.normalize() is the one parser that serves
+# this source and a drop-in alike -- a second shape here would be a second
+# answer to what a descriptor is.
+_aphotic_plugin_engine_control_json() {
+    local manifest="$1" start stop load unload switch
+    start="$(aphotic_toml_get "$manifest" engine.control start)"
+    stop="$(aphotic_toml_get "$manifest" engine.control stop)"
+    load="$(aphotic_toml_get "$manifest" engine.control load)"
+    unload="$(aphotic_toml_get "$manifest" engine.control unload)"
+    switch="$(aphotic_toml_get "$manifest" engine.control switch)"
+
+    jq -n \
+        --arg start "$start" \
+        --arg stop "$stop" \
+        --arg load "$load" \
+        --arg unload "$unload" \
+        --arg switch "$switch" \
+        '{start: $start, stop: $stop, load: $load, unload: $unload, switch: $switch}'
+}
+
+_aphotic_plugin_engine_stats_json() {
+    local manifest="$1" endpoint interval
+    grep -q '^[[:space:]]*\[engine\.stats\][[:space:]]*$' "$manifest" 2>/dev/null || { echo 'null'; return 0; }
+    endpoint="$(aphotic_toml_get "$manifest" engine.stats endpoint)"
+    interval="$(aphotic_toml_get "$manifest" engine.stats interval)"
+    if [[ "$interval" =~ ^[0-9]+$ ]]; then
+        jq -n --arg endpoint "$endpoint" --argjson interval "$interval" '{endpoint: $endpoint, interval: $interval}'
+    else
+        jq -n --arg endpoint "$endpoint" '{endpoint: $endpoint, interval: 0}'
+    fi
+}
+
+_aphotic_plugin_engine_progress_json() {
+    local manifest="$1" protocol file stale_after rate_unit
+    grep -q '^[[:space:]]*\[engine\.progress\][[:space:]]*$' "$manifest" 2>/dev/null || { echo 'null'; return 0; }
+    protocol="$(aphotic_toml_get "$manifest" engine.progress protocol)"
+    file="$(aphotic_toml_get "$manifest" engine.progress file)"
+    stale_after="$(aphotic_toml_get "$manifest" engine.progress stale_after)"
+    rate_unit="$(aphotic_toml_get "$manifest" engine.progress rate_unit)"
+    [[ "$stale_after" =~ ^[0-9]+$ ]] || stale_after=0
+
+    jq -n \
+        --arg protocol "$protocol" \
+        --arg file "$file" \
+        --argjson stale_after "$stale_after" \
+        --arg rate_unit "$rate_unit" \
+        '{protocol: $protocol, file: $file, stale_after: $stale_after, rate_unit: $rate_unit}'
+}
+
+_aphotic_plugin_engine_json() {
+    local manifest="$1" id label protocol endpoint host_key default_host key process port_flag gateway gateway_entry manages caps stream
+    grep -q '^[[:space:]]*\[engine\][[:space:]]*$' "$manifest" 2>/dev/null || { echo 'null'; return 0; }
+
+    id="$(aphotic_toml_get "$manifest" engine id)"
+    label="$(aphotic_toml_get "$manifest" engine label)"
+    protocol="$(aphotic_toml_get "$manifest" engine protocol)"
+    endpoint="$(aphotic_toml_get "$manifest" engine endpoint)"
+    host_key="$(aphotic_toml_get "$manifest" engine host_key)"
+    default_host="$(aphotic_toml_get "$manifest" engine default_host)"
+    key="$(aphotic_toml_get "$manifest" engine key)"
+    process="$(aphotic_toml_get "$manifest" engine process)"
+    port_flag="$(aphotic_toml_get "$manifest" engine port_flag)"
+    gateway="$(aphotic_toml_get "$manifest" engine gateway)"
+    gateway_entry="$(aphotic_toml_get "$manifest" engine gateway_entry)"
+    manages="$(aphotic_toml_get_array "$manifest" engine manages | jq -R . | jq -s .)"
+    caps="$(aphotic_toml_get_array "$manifest" engine capabilities | jq -R . | jq -s .)"
+    stream="$(aphotic_toml_get_array "$manifest" engine stream | jq -R . | jq -s .)"
+
+    jq -n \
+        --arg id "$id" \
+        --arg label "${label:-$id}" \
+        --arg protocol "$protocol" \
+        --arg endpoint "$endpoint" \
+        --arg host_key "$host_key" \
+        --arg default_host "$default_host" \
+        --arg key "$key" \
+        --arg process "$process" \
+        --arg port_flag "$port_flag" \
+        --arg gateway "$gateway" \
+        --arg gateway_entry "$gateway_entry" \
+        --argjson manages "${manages:-[]}" \
+        --argjson capabilities "${caps:-[]}" \
+        --argjson stream "${stream:-[]}" \
+        --argjson control "$(_aphotic_plugin_engine_control_json "$manifest")" \
+        --argjson stats "$(_aphotic_plugin_engine_stats_json "$manifest")" \
+        --argjson progress "$(_aphotic_plugin_engine_progress_json "$manifest")" \
+        '{id: $id, label: $label, protocol: $protocol, endpoint: $endpoint, host_key: $host_key, default_host: $default_host, key: $key, process: $process, port_flag: $port_flag, gateway: $gateway, gateway_entry: $gateway_entry, manages: $manages, capabilities: $capabilities, stream: $stream, control: $control, stats: $stats, progress: $progress}'
+}
+
+# Every `[engine*]` section a manifest declares, by name. Validate needs to
+# see [engine_2] to warn about it; the shell reads one engine per plugin.
+_aphotic_plugin_manifest_engine_sections() {
+    local manifest="$1"
+    [[ -f "$manifest" ]] || return 0
+    sed -n 's/^[[:space:]]*\(\[engine\(_[0-9]\+\)\?\]\)[[:space:]]*$/\1/p' "$manifest" | sort -u
+}
+
+# The characters a verb's command needs a shell to interpret. `{` and `}`
+# are left out on purpose: `{model}` is a placeholder, not syntax. The
+# adapter runs a `run` verb through Process with an argv array and never
+# sh -c, so a verb carrying any of these is refused rather than escaped.
+_aphotic_plugin_engine_has_shell_syntax() {
+    printf '%s' "$1" | LC_ALL=C grep -q '[;&|$`<>()]'
+}
+
+# Empty when a verb is either documented form, else the reason it is not.
+_aphotic_plugin_engine_verb_error() {
+    local value="$1" trimmed
+    trimmed="${value#"${value%%[![:space:]]*}"}"
+    trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+    if _aphotic_plugin_engine_has_shell_syntax "$trimmed"; then
+        echo "carries shell syntax"
+        return 0
+    fi
+    if [[ "$trimmed" =~ ^http[[:space:]]+[A-Z]+[[:space:]]+[^[:space:]]+$ ]]; then
+        echo ""
+        return 0
+    fi
+    if [[ "$trimmed" =~ ^run[[:space:]]+[^[:space:]] ]]; then
+        echo ""
+        return 0
+    fi
+    echo "is neither 'http <METHOD> <path>' nor 'run <command>'"
+}
+
+# Every token except `chat` has to be backed: a verb for the control
+# tokens, a stats endpoint for `stats`, a progress source for `progress`.
+# `models` and `claims` are backed by the protocol itself.
+_aphotic_plugin_engine_capability_backed() {
+    local manifest="$1" token="$2"
+    case "$token" in
+        chat|models|claims) return 0 ;;
+        stats) [[ -n "$(aphotic_toml_get "$manifest" engine.stats endpoint)" ]] ;;
+        progress) [[ -n "$(aphotic_toml_get "$manifest" engine.progress protocol)" && -n "$(aphotic_toml_get "$manifest" engine.progress file)" ]] ;;
+        start|stop|load|unload|switch) [[ -n "$(aphotic_toml_get "$manifest" engine.control "$token")" ]] ;;
+        *) return 1 ;;
+    esac
+}
+
 # The `action` capability (manifest v3.7, `ACT-01`). An action is a named
 # thing a user can ask for -- switch the pet, cycle the theme -- declared
 # once and reachable from every surface that offers actions, rather than
@@ -545,9 +703,11 @@ _aphotic_plugin_describe() {
         --argjson profile "$(_aphotic_plugin_profile_json "$manifest")" \
         --argjson cli "$(_aphotic_plugin_cli_json "$manifest")" \
         --argjson chat_provider "$(_aphotic_plugin_chat_provider_json "$manifest")" \
+        --argjson engine "$(_aphotic_plugin_engine_json "$manifest")" \
         --argjson actions "$(_aphotic_plugin_actions_json "$manifest")" \
+        --argjson keybinds "$(_aphotic_plugin_keybinds_json "$manifest")" \
         --argjson api "$(_aphotic_plugin_api_json "$manifest")" \
-        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, shelter: $shelter, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions, api: $api}')"
+        '{name: $name, display_name: $display_name, description: $description, version: $version, category: $category, shelter: $shelter, capabilities: $capabilities, enabled: $enabled, missing_binaries: $missing_binaries, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, engine: $engine, actions: $actions, keybinds: $keybinds, api: $api}')"
 
     # The registry entry the shell actually reads is written by
     # _aphotic_plugin_registry_sync out of these same four manifest
@@ -560,7 +720,7 @@ _aphotic_plugin_describe() {
     # second time is deliberate: a second description of that shape is the
     # class of bug the flag exists to catch.
     local stored expected drifted="false"
-    expected="$(jq -cS '{version, shelter, capabilities, owns, ui, profile, cli, chat_provider, actions, api}' <<<"$entry")"
+    expected="$(jq -cS '{version, shelter, capabilities, owns, ui, profile, cli, chat_provider, engine, actions, keybinds, api}' <<<"$entry")"
     # Missing keys are filled with the same null a fresh sync would write
     # BEFORE comparing. Without this, every entry on disk reports drift the
     # moment the registry schema grows a field -- one did (`profile`,
@@ -576,7 +736,7 @@ _aphotic_plugin_describe() {
     # drift. Drift means "this plugin's contract changed", and a
     # display string is not contract -- a manifest edit still refreshes
     # it on the next sync.
-    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({shelter: "", profile: null, cli: null, chat_provider: null, actions: null, api: null} + .) | {version, shelter, capabilities, owns, ui, profile, cli, chat_provider, actions, api} end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
+    stored="$(jq -cS --arg n "$name" '.installed[$n] // empty | if . == {} then empty else ({shelter: "", profile: null, cli: null, chat_provider: null, engine: null, actions: null, keybinds: null, api: null} + .) | {version, shelter, capabilities, owns, ui, profile, cli, chat_provider, engine, actions, keybinds, api} end' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)"
     [[ "$expected" != "$stored" ]] && drifted="true"
 
     jq --argjson drifted "$drifted" '. + {drifted: $drifted}' <<<"$entry"
@@ -959,7 +1119,7 @@ _aphotic_plugin_install_deps() {
 # don't touch it, since aphotic_plugin_is_enabled already layers on top
 # via the same file's "disabled" array.
 _aphotic_plugin_registry_sync() {
-    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider actions api tmp
+    local name="$1" dir manifest version caps shelter owns ui profile cli chat_provider engine actions api keybinds
     local display desc category binaries
     aphotic_require jq || return 1
     dir="$(_aphotic_plugin_dir "$name")"
@@ -985,12 +1145,14 @@ _aphotic_plugin_registry_sync() {
     profile="$(_aphotic_plugin_profile_json "$manifest")"
     cli="$(_aphotic_plugin_cli_json "$manifest")"
     chat_provider="$(_aphotic_plugin_chat_provider_json "$manifest")"
+    engine="$(_aphotic_plugin_engine_json "$manifest")"
     actions="$(_aphotic_plugin_actions_json "$manifest")"
+    keybinds="$(_aphotic_plugin_keybinds_json "$manifest")"
     api="$(_aphotic_plugin_api_json "$manifest")"
 
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
-    tmp="$(mktemp)"
-    jq --arg n "$name" \
+    aphotic_write_atomic "$APHOTIC_PLUGINS_STATE_FILE" \
+       jq --arg n "$name" \
        --arg version "${version:-0.0.0}" \
        --arg display_name "${display:-$name}" \
        --arg description "${desc:-}" \
@@ -1003,10 +1165,12 @@ _aphotic_plugin_registry_sync() {
        --argjson profile "$profile" \
        --argjson cli "$cli" \
        --argjson chat_provider "$chat_provider" \
+       --argjson engine "$engine" \
        --argjson actions "$actions" \
+       --argjson keybinds "$keybinds" \
        --argjson api "$api" \
-       '.installed = ((.installed // {}) + {($n): {version: $version, display_name: $display_name, description: $description, category: $category, shelter: $shelter, requires_binaries: $requires_binaries, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, actions: $actions, api: $api}})' \
-       "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+       '.installed = ((.installed // {}) + {($n): {version: $version, display_name: $display_name, description: $description, category: $category, shelter: $shelter, requires_binaries: $requires_binaries, capabilities: $capabilities, owns: $owns, ui: $ui, profile: $profile, cli: $cli, chat_provider: $chat_provider, engine: $engine, actions: $actions, keybinds: $keybinds, api: $api}})' \
+       "$APHOTIC_PLUGINS_STATE_FILE"
     # Every install and update funnels through here, so this is the one
     # place that has to record "a plugin's code changed" for recovery.
     aphotic_record_change "plugin-registered" "${name} ${version:-0.0.0}"
@@ -1018,12 +1182,12 @@ _aphotic_plugin_registry_sync() {
 # this same file, watched live via FileView) without the shell needing
 # to know anything else changed.
 _aphotic_plugin_registry_remove() {
-    local name="$1" tmp
+    local name="$1"
     aphotic_require jq || return 1
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || return 0
-    tmp="$(mktemp)"
-    jq --arg n "$name" 'if .installed then .installed |= del(.[$n]) else . end' \
-       "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+    aphotic_write_atomic "$APHOTIC_PLUGINS_STATE_FILE" \
+        jq --arg n "$name" 'if .installed then .installed |= del(.[$n]) else . end' \
+        "$APHOTIC_PLUGINS_STATE_FILE"
     aphotic_record_change "plugin-removed" "$name"
 }
 
@@ -1134,6 +1298,16 @@ _aphotic_plugin_unwire_harness() {
     _aphotic_plugin_run_harness_lifecycle_script "$1" unwire
 }
 
+# The merge runs after every moment plugins.json changes; drop-in edits
+# are picked up by `aphotic agent harnesses` or the next usage-update.
+# Best-effort, same as wire/unwire: a failed merge leaves harnesses.json
+# stale and says so, it never fails the plugin command.
+_aphotic_plugin_harness_merge() {
+    command -v python3 >/dev/null 2>&1 || return 0
+    python3 "$(_aphotic_plugin_lib_dir)/harnesses_merge.py" "$APHOTIC_STATE_HOME" \
+        || aphotic_warn "harness descriptor merge failed -- harnesses.json may be stale"
+}
+
 # Real, live-confirmed architecture gap (2026-08-30): install.sh's
 # `deploy_user_configs` does `rm -rf`/`cp -R` over the WHOLE of
 # `Configs/quickshell/aphotic` -> `~/.config/quickshell/aphotic` on
@@ -1149,9 +1323,29 @@ _aphotic_plugin_relink_all_ui_modules() {
     local name
     while IFS= read -r name; do
         [[ -z "$name" ]] && continue
-        aphotic_plugin_is_enabled "$name" || continue
-        _aphotic_plugin_link_ui_module "$name"
+        if aphotic_plugin_is_enabled "$name"; then
+            _aphotic_plugin_link_ui_module "$name"
+        else
+            _aphotic_plugin_unlink_ui_module "$name"
+        fi
     done < <(aphotic_plugin_names)
+
+    local link module_name installed_name installed
+    for link in "${QUICKSHELL_CONFIG_DIR}/modules/plugins"/*; do
+        [[ -L "$link" ]] || continue
+        module_name="$(basename "$link")"
+        installed=false
+        while IFS= read -r installed_name; do
+            [[ -z "$installed_name" ]] && continue
+            if [[ "$(_aphotic_plugin_ui_module_name "$installed_name")" == "$module_name" ]]; then
+                installed=true
+                break
+            fi
+        done < <(aphotic_plugin_names)
+        if [[ "$installed" != "true" ]]; then
+            rm -f "$link"
+        fi
+    done
 }
 
 _aphotic_plugin_install() {
@@ -1190,15 +1384,16 @@ _aphotic_plugin_install() {
         aphotic_log "its first call into the shell would fail, so this is a refusal rather than a warning -- 'aphotic update' first"
         return 1
     fi
-    if [[ "$wants_api" -lt 2 ]]; then
-        while IFS= read -r use; do
-            if [[ "$use" == "sonar.register" ]]; then
-                aphotic_err "'${name}': sonar.register requires plugin API v2, this manifest declares v${wants_api}"
-                aphotic_log "the runtime would silently deny the grant; declare [api] version = 2 instead"
-                return 1
-            fi
-        done < <(aphotic_toml_get_array "${src}/plugin.toml" api uses)
-    fi
+    local min use
+    while IFS= read -r use; do
+        [[ -n "$use" ]] || continue
+        min="$(_aphotic_plugin_api_min_version "$use")"
+        if [[ "$wants_api" -lt "$min" ]]; then
+            aphotic_err "'${name}': ${use} requires plugin API v${min}, this manifest declares v${wants_api}"
+            aphotic_log "the runtime would silently deny the grant; declare [api] version = ${min} instead"
+            return 1
+        fi
+    done < <(aphotic_toml_get_array "${src}/plugin.toml" api uses)
 
     case "$verdict" in
         inert:*)
@@ -1225,6 +1420,7 @@ _aphotic_plugin_install() {
     _aphotic_plugin_registry_sync "$name"
     _aphotic_plugin_link_ui_module "$name"
     _aphotic_plugin_wire_harness "$name" || true
+    _aphotic_plugin_harness_merge
 
     aphotic_ok "installed ${name}"
     echo "PLUGIN INSTALLED: ${name}"
@@ -1300,9 +1496,11 @@ _aphotic_plugin_update_one() {
 
     _aphotic_plugin_install_deps "$dest"
     _aphotic_plugin_registry_sync "$name"
-    _aphotic_plugin_link_ui_module "$name"
     if aphotic_plugin_is_enabled "$name"; then
+        _aphotic_plugin_link_ui_module "$name"
         _aphotic_plugin_wire_harness "$name" || true
+    else
+        _aphotic_plugin_unlink_ui_module "$name"
     fi
 
     if [[ "$from" == "$to" ]]; then
@@ -1320,8 +1518,9 @@ _aphotic_plugin_update() {
     _aphotic_plugin_sync_repo || return 1
 
     if [[ "$target" != "--all" ]]; then
-        _aphotic_plugin_update_one "$target"
-        return $?
+        _aphotic_plugin_update_one "$target" || rc=1
+        _aphotic_plugin_harness_merge
+        return "$rc"
     fi
 
     # A disabled plugin is skipped by --all rather than refreshed:
@@ -1343,6 +1542,7 @@ _aphotic_plugin_update() {
     if [[ ${#skipped[@]} -gt 0 ]]; then
         aphotic_log "skipped ${#skipped[@]} disabled plugin(s): ${skipped[*]} -- update by name to refresh anyway"
     fi
+    _aphotic_plugin_harness_merge
     return "$rc"
 }
 
@@ -1356,6 +1556,7 @@ _aphotic_plugin_remove() {
     rm -rf "$dest"
     aphotic_plugin_set_enabled "$name" true # clear any disabled-state entry
     _aphotic_plugin_registry_remove "$name"
+    _aphotic_plugin_harness_merge
     aphotic_ok "removed ${name}"
 }
 
@@ -1375,12 +1576,23 @@ _aphotic_plugin_remove() {
 _aphotic_plugin_api_describe() {
     case "$1" in
         sonar.register) echo "register bounded Sonar targets for this plugin (API v2)" ;;
+        overlay.present) echo "present this plugin's own manual fullscreen overlay (API v3)" ;;
         context.observe) echo "read the runtime context and its policy (reactive)" ;;
         context.request) echo "suggest a context switch; the user confirms from a notification" ;;
         resource.observe) echo "read the resource posture: level, resource, headline, surfaced (reactive)" ;;
         surface.declare) echo "give a plugin surface a role so it coexists with core surfaces" ;;
         notifications.publish) echo "post a notification under the plugin's name, subject to DND and context" ;;
         *) echo "" ;;
+    esac
+}
+
+# The API version a use first appeared in. PluginApiCore.js MIN_VERSION
+# holds the same table, and tests/test_plugin_api.sh keeps them equal.
+_aphotic_plugin_api_min_version() {
+    case "$1" in
+        sonar.register) echo 2 ;;
+        overlay.present) echo 3 ;;
+        *) echo 1 ;;
     esac
 }
 
@@ -1472,7 +1684,7 @@ _aphotic_plugin_validate() {
     # manifest built against a newer contract has to fail open here,
     # same as APHOTIC_PLUGIN_HOSTED_CAPABILITIES's own comment on why --
     # but it's usually a typo, so it's worth flagging.
-    local known_caps="theme-hook ui-surface project-hook workspace-hook harness-hook profile cli chat-provider action"
+    local known_caps="theme-hook ui-surface project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine"
     local cap
     while IFS= read -r cap; do
         [[ -n "$cap" ]] || continue
@@ -1497,8 +1709,8 @@ _aphotic_plugin_validate() {
     fi
     while IFS= read -r use; do
         [[ -n "$use" ]] || continue
-        if [[ "$use" == "sonar.register" && "$api_version" =~ ^[0-9]+$ && "$api_version" -lt 2 ]]; then
-            aphotic_err "${name}: sonar.register requires plugin API v2"
+        if [[ "$api_version" =~ ^[0-9]+$ && "$api_version" -lt "$(_aphotic_plugin_api_min_version "$use")" ]]; then
+            aphotic_err "${name}: ${use} requires plugin API v$(_aphotic_plugin_api_min_version "$use")"
             fails=$((fails + 1))
         fi
         _aphotic_plugin_in_list "$use" "$APHOTIC_PLUGIN_API_USES" || {
@@ -1521,6 +1733,220 @@ _aphotic_plugin_validate() {
     elif [[ -z "$surfaces" && "$has_ui_cap" == "true" ]]; then
         aphotic_err "${name}: capabilities includes 'ui-surface' but no [ui.*] section declares one"
         fails=$((fails + 1))
+    fi
+
+    # Every file a manifest section points at: must resolve inside the
+    # plugin's own directory (no leading '/', no '..' segment -- these
+    # get concatenated straight into a symlink target or a Loader
+    # source, never re-checked at load time) and must actually exist.
+    # hooks/harness scripts aren't required to be +x yet -- install
+    # chmods hooks/ after copying, and this runs before that ever
+    # happens.
+    local -a path_checks=(
+        "ui.dashboard_tab:component" "ui.notch_tile:component"
+        "ui.settings_pane:component" "ui.workspace:component" "ui.edge_tab:component"
+        "ui.overlay:component" "ui.fullscreen-overlay:component"
+        "ui.pet_action:component" "ui.pet_action_2:component" "ui.pet_action_3:component"
+        "profile:component"
+        "action:component" "action_2:component" "action_3:component" "action_4:component" "action_5:component"
+        "cli:script"
+        "hooks:on_theme_change" "hooks:on_project_open" "hooks:on_workspace_launch"
+        "harness:wire" "harness:unwire"
+    )
+    local check section key value
+    for check in "${path_checks[@]}"; do
+        section="${check%%:*}"
+        key="${check##*:}"
+        value="$(aphotic_toml_get "$manifest" "$section" "$key")"
+        [[ -n "$value" ]] || continue
+
+        if [[ "$value" == /* || "$value" == *..* ]]; then
+            aphotic_err "${name}: [${section}].${key} = '${value}' is not a safe relative path"
+            fails=$((fails + 1))
+            continue
+        fi
+        if [[ "$section" == "ui.edge_tab" ]]; then
+            if [[ "$value" == *%* || "$value" == *:* || "$value" == *\\* || "$value" == *\#* || "$value" == *\?* ]] || ! python3 - "$dir" "$value" <<'CHECK_PATH'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1]).resolve()
+try:
+    Path(root / sys.argv[2]).resolve().relative_to(root)
+except ValueError:
+    sys.exit(1)
+CHECK_PATH
+            then
+                aphotic_err "${name}: [ui.edge_tab].component is not a safe relative path"
+                fails=$((fails + 1))
+                continue
+            fi
+        fi
+        if [[ ! -f "${dir}/${value}" ]]; then
+            aphotic_err "${name}: [${section}].${key} points at '${value}', which doesn't exist"
+            fails=$((fails + 1))
+        fi
+    done
+
+    # Informational: aphotic_require's own pattern is warn-and-no-op,
+    # never a hard install-time block, so this stays a warning even
+    # though it means the plugin does nothing useful on this machine.
+    local bin
+    while IFS= read -r bin; do
+        [[ -z "$bin" ]] && continue
+        command -v "$bin" >/dev/null 2>&1 || {
+            aphotic_warn "${name}: requires.binaries lists '${bin}', not found on this machine"
+            warns=$((warns + 1))
+        }
+    done < <(aphotic_toml_get_array "$manifest" requires binaries)
+
+    # Whether this particular build can host what's declared. Same
+    # check install runs; surfaced here so it's visible before install
+    # ever touches the shell, not after.
+    local verdict
+    verdict="$(_aphotic_plugin_host_verdict "$caps" "$surfaces")"
+    case "$verdict" in
+        ok) ;;
+        partial:*)
+            aphotic_warn "${name}: partially hosted on this build -- ${verdict#partial:} unhosted"
+            warns=$((warns + 1))
+            ;;
+        inert:*)
+            aphotic_warn "${name}: nothing this build hosts -- ${verdict#inert:} unhosted (needs a newer Aphotic)"
+            warns=$((warns + 1))
+            ;;
+    esac
+
+    # keybind and [keybind*] have to agree from both directions, same as
+    # ui-surface above. A section with no capability tag is the unhosted
+    # case the gate exists to catch, so it is an error; a capability tag
+    # with no section installs to nothing, which is worth saying but not
+    # worth refusing an install over. Every `action` has to be an id this
+    # manifest itself declares: the shell namespaces it under the plugin,
+    # so a name from somewhere else binds a combo to nothing and swallows
+    # the key for as long as the plugin is enabled.
+    local keybind_sections keybind_entries
+    keybind_sections="$(_aphotic_plugin_manifest_keybind_sections "$manifest")"
+    keybind_entries="$(_aphotic_plugin_keybinds_json "$manifest")"
+    local has_keybind_cap="false"
+    _aphotic_plugin_in_list "keybind" "$caps" && has_keybind_cap="true"
+    if [[ -n "$keybind_sections" && "$has_keybind_cap" == "false" ]]; then
+        aphotic_err "${name}: [keybind*] section(s) present (${keybind_sections//$'\n'/, }) but capabilities doesn't include 'keybind'"
+        fails=$((fails + 1))
+    elif [[ -z "$keybind_sections" && "$has_keybind_cap" == "true" ]]; then
+        aphotic_warn "${name}: capabilities includes 'keybind' but no [keybind] section declares one -- the plugin binds nothing"
+        warns=$((warns + 1))
+    fi
+
+    if [[ "$keybind_entries" != "null" ]]; then
+        local declared_actions bind_action duplicate_combo combo_error bind_combo bind_description
+        declared_actions="$(_aphotic_plugin_actions_json "$manifest")"
+        while IFS= read -r bind_action; do
+            [[ -n "$bind_action" ]] || continue
+            if [[ "$declared_actions" == "null" ]] \
+                || ! jq -e --arg id "$bind_action" 'any(.[]; .id == $id)' <<<"$declared_actions" >/dev/null; then
+                aphotic_err "${name}: [keybind].action '${bind_action}' isn't an [action] id this manifest declares"
+                fails=$((fails + 1))
+            fi
+        done < <(jq -r '.[].action' <<<"$keybind_entries")
+
+        # A combo outside the shape the shell can derive both forms from is
+        # refused at bind time -- no key to check the live bind table with,
+        # and no legacy string Hyprland would accept -- so name it here,
+        # where an author sees it before installing.
+        while IFS= read -r bind_combo; do
+            [[ -n "$bind_combo" ]] || continue
+            combo_error="$(_aphotic_plugin_combo_error "$bind_combo")"
+            if [[ -n "$combo_error" ]]; then
+                aphotic_err "${name}: [keybind].combo '${bind_combo}' ${combo_error}, so nothing can be bound to it"
+                fails=$((fails + 1))
+            fi
+        done < <(jq -r '.[].combo' <<<"$keybind_entries")
+
+        # The description is the label, and it rides inside the bind line's
+        # own field syntax. A comma in it shifts every field after it and a
+        # control character ends the line, so the shell would bind with the
+        # label dropped rather than bind that: an error here, not a warning.
+        while IFS= read -r bind_description; do
+            [[ -n "$bind_description" ]] || continue
+            if [[ "$bind_description" == *","* ]] \
+                || printf '%s' "$bind_description" | LC_ALL=C grep -q '[[:cntrl:]]'; then
+                aphotic_err "${name}: [keybind].description '${bind_description}' has a comma or a control character, which the bind line reads as syntax"
+                fails=$((fails + 1))
+            fi
+        done < <(jq -r '.[].description' <<<"$keybind_entries")
+
+        # Two of the plugin's own sections on one combo: the second bind
+        # replaces the first, so one action silently never runs. Compared
+        # case-insensitively, the way the shell's own combo identity is.
+        while IFS= read -r duplicate_combo; do
+            [[ -n "$duplicate_combo" ]] || continue
+            aphotic_warn "${name}: [keybind] combo '${duplicate_combo}' is declared more than once -- only the first is bound"
+            warns=$((warns + 1))
+        done < <(jq -r '[.[].combo] | group_by(ascii_downcase) | map(select(length > 1)) | .[][0]' <<<"$keybind_entries")
+    fi
+
+    # engine and [engine] have to agree from both directions, same as
+    # keybind and ui-surface above. One engine per plugin: the flat reader
+    # can serve [engine_2]'s keys but the descriptor scanner reads one, so
+    # a second section is warned about rather than half-registered.
+    local engine_sections has_engine_cap="false"
+    engine_sections="$(_aphotic_plugin_manifest_engine_sections "$manifest")"
+    _aphotic_plugin_in_list "engine" "$caps" && has_engine_cap="true"
+    if [[ -n "$engine_sections" && "$has_engine_cap" == "false" ]]; then
+        aphotic_err "${name}: [engine] is declared but capabilities doesn't include 'engine'"
+        fails=$((fails + 1))
+    elif [[ -z "$engine_sections" && "$has_engine_cap" == "true" ]]; then
+        aphotic_warn "${name}: the 'engine' capability has no [engine] section declares one"
+        warns=$((warns + 1))
+    fi
+
+    local extra_engine
+    extra_engine="$(sed -n 's/^[[:space:]]*\(\[engine_[0-9]\+\]\)[[:space:]]*$/\1/p' "$manifest" | head -1)"
+    if [[ -n "$extra_engine" ]]; then
+        aphotic_warn "${name}: ${extra_engine} ignored, one engine per plugin"
+        warns=$((warns + 1))
+    fi
+
+    if [[ -n "$engine_sections" ]]; then
+        local e_id e_protocol control_verb control_value control_error engine_token
+        e_id="$(aphotic_toml_get "$manifest" engine id)"
+        e_protocol="$(aphotic_toml_get "$manifest" engine protocol)"
+        [[ -n "$e_id" ]] || { aphotic_err "${name}: [engine].id missing"; fails=$((fails + 1)); }
+        if [[ -z "$e_protocol" ]]; then
+            aphotic_err "${name}: [engine].protocol missing"
+            fails=$((fails + 1))
+        elif ! _aphotic_plugin_in_list "$e_protocol" "$APHOTIC_PLUGIN_ENGINE_PROTOCOLS"; then
+            aphotic_err "${name}: [engine].protocol '${e_protocol}' is not one this Aphotic speaks"
+            fails=$((fails + 1))
+        fi
+
+        for control_verb in start stop load unload switch; do
+            control_value="$(aphotic_toml_get "$manifest" engine.control "$control_verb")"
+            [[ -n "$control_value" ]] || continue
+            control_error="$(_aphotic_plugin_engine_verb_error "$control_value")"
+            if [[ -n "$control_error" ]]; then
+                aphotic_err "${name}: [engine.control].${control_verb} ${control_error}"
+                fails=$((fails + 1))
+                continue
+            fi
+            if [[ ( "$control_verb" == "start" || "$control_verb" == "stop" ) && "$control_value" == *"{model}"* ]]; then
+                aphotic_err "${name}: [engine.control].${control_verb} uses {model} where no model is in scope"
+                fails=$((fails + 1))
+            fi
+        done
+
+        while IFS= read -r engine_token; do
+            [[ -n "$engine_token" ]] || continue
+            if ! _aphotic_plugin_in_list "$engine_token" "$APHOTIC_PLUGIN_ENGINE_CAPABILITIES"; then
+                aphotic_warn "${name}: [engine].capabilities names '${engine_token}', which isn't a token this Aphotic speaks"
+                warns=$((warns + 1))
+                continue
+            fi
+            _aphotic_plugin_engine_capability_backed "$manifest" "$engine_token" || {
+                aphotic_err "${name}: [engine].capabilities names '${engine_token}', but the descriptor provides nothing for it"
+                fails=$((fails + 1))
+            }
+        done < <(aphotic_toml_get_array "$manifest" engine capabilities)
     fi
 
     # Every file a manifest section points at: must resolve inside the
@@ -1634,6 +2060,92 @@ _aphotic_plugin_registry_backfill() {
     done < <(jq -r '(.installed // {}) | keys[]' "$APHOTIC_PLUGINS_STATE_FILE" 2>/dev/null)
 }
 
+_aphotic_plugin_combo_error() {
+    local combo="$1" token i
+    local -a tokens=()
+
+    [[ -n "${combo//[[:space:]]/}" ]] || { echo "is empty"; return 0; }
+
+    IFS='+' read -r -a tokens <<<"$combo"
+    for ((i = 0; i < ${#tokens[@]}; i++)); do
+        token="${tokens[$i]}"
+        # Trim the spaces around a '+' -- anything else is the token's own
+        # character and fails the shape check below, the way
+        # PluginKeybindCore.js's TOKEN fails it.
+        token="${token#"${token%%[! ]*}"}"
+        token="${token%"${token##*[! ]}"}"
+        if [[ -z "$token" ]]; then
+            echo "has an empty token"
+            return 0
+        fi
+        if [[ ! "$token" =~ ^[A-Za-z0-9_:.-]+$ ]]; then
+            echo "has a token ('${token}') that isn't a key or a modifier name"
+            return 0
+        fi
+        if (( i < ${#tokens[@]} - 1 )) && ! _aphotic_plugin_in_list "${token^^}" "$APHOTIC_PLUGIN_KEYBIND_MODIFIERS"; then
+            echo "names '${token}', which isn't a modifier both Hyprland parsers know"
+            return 0
+        fi
+    done
+
+    echo ""
+}
+
+_aphotic_plugin_keybind_entry_json() {
+    local manifest="$1" section="$2" combo action description layer data
+    combo="$(aphotic_toml_get "$manifest" "$section" combo)"
+    action="$(aphotic_toml_get "$manifest" "$section" action)"
+    if [[ -z "$combo" ]] || [[ -z "$action" ]]; then
+        return 1
+    fi
+
+    description="$(aphotic_toml_get "$manifest" "$section" description)"
+    layer="$(aphotic_toml_get "$manifest" "$section" requires_layer)"
+    data="$(aphotic_toml_get "$manifest" "$section" requires_data)"
+
+    jq -n \
+        --arg action "$action" \
+        --arg combo "$combo" \
+        --arg description "${description:-}" \
+        --arg requires_layer "${layer:-}" \
+        --arg requires_data "${data:-}" \
+        '{action: $action, combo: $combo, description: $description, requires_layer: $requires_layer, requires_data: $requires_data}'
+}
+
+_aphotic_plugin_keybinds_json() {
+    local manifest="$1" entries=() entry section
+    for section in keybind keybind_2 keybind_3 keybind_4 keybind_5; do
+        if entry="$(_aphotic_plugin_keybind_entry_json "$manifest" "$section")"; then
+            entries+=("$entry")
+        fi
+    done
+
+    if [[ ${#entries[@]} -eq 0 ]]; then
+        echo 'null'
+        return 0
+    fi
+
+    printf '%s\n' "${entries[@]}" | jq -s .
+}
+
+# The [keybind*] sections a manifest declares, by name. Validate needs to
+# see a section that contributed nothing (no combo, no action) as present
+# anyway: that is exactly the declaration whose capability tag is missing.
+_aphotic_plugin_manifest_keybind_sections() {
+    local manifest="$1"
+    [[ -f "$manifest" ]] || return 0
+    sed -n 's/^[[:space:]]*\[\(keybind\(_[2-5]\)\?\)\][[:space:]]*$/\1/p' "$manifest" | sort -u
+}
+
+# The [harness.<id>] descriptor subtables a manifest declares, by id.
+# [harness] itself (wire/unwire) never matches, only the dotted ones.
+_aphotic_plugin_manifest_harness_sections() {
+    local manifest="$1"
+    [[ -f "$manifest" ]] || return 0
+    sed -n 's/^[[:space:]]*\[harness\.\([^]]*\)\][[:space:]]*$/\1/p' "$manifest" | sort -u
+}
+
+
 aphotic_cmd_plugin() {
     local sub="${1:-}"; shift || true
 
@@ -1703,12 +2215,16 @@ aphotic_cmd_plugin() {
         enable)
             [[ -n "${1:-}" ]] || { aphotic_err "usage: aphotic plugin enable <name>"; return 1; }
             aphotic_plugin_set_enabled "$1" true && aphotic_ok "enabled ${1}"
+            _aphotic_plugin_link_ui_module "$1"
             _aphotic_plugin_wire_harness "$1" || true
+            _aphotic_plugin_harness_merge
             ;;
         disable)
             [[ -n "${1:-}" ]] || { aphotic_err "usage: aphotic plugin disable <name>"; return 1; }
             aphotic_plugin_set_enabled "$1" false && aphotic_ok "disabled ${1}"
+            _aphotic_plugin_unlink_ui_module "$1"
             _aphotic_plugin_unwire_harness "$1" || true
+            _aphotic_plugin_harness_merge
             ;;
         update)
             _aphotic_plugin_update "${1:-}"

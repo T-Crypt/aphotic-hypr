@@ -28,7 +28,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Sonar")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -36,6 +36,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "sonarEnabled"
                 icon: "radar"
                 label: qsTr("Enable Sonar")
                 checked: Settings.sonarEnabled
@@ -43,6 +44,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "sonarGhosts"
                 icon: "visibility"
                 label: qsTr("Show disabled-feature ghosts")
                 checked: Settings.sonarGhosts
@@ -50,6 +52,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "sonarPingShortcut"
                 icon: "keyboard_command_key"
                 label: qsTr("Ping shortcut")
                 description: Sonar.conflictReason.length > 0
@@ -58,6 +61,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "sonarPreview"
                 icon: "play_arrow"
                 label: qsTr("Preview ping")
                 activatable: true
@@ -69,6 +73,7 @@ ColumnLayout {
     SettingsGroup {
         Layout.fillWidth: true
         SettingsRow {
+            searchId: "sonarLabels"
             icon: "label"
             label: qsTr("Labels from the last ping")
             activatable: true
@@ -87,6 +92,7 @@ ColumnLayout {
     SettingsGroup {
         Layout.fillWidth: true
         SettingsPresetRow {
+            searchId: "shelfOutput"
             icon: "monitor"
             label: qsTr("Shelf output")
             presets: root.outputChoices
@@ -110,16 +116,19 @@ ColumnLayout {
             SettingsGroup {
                 Layout.fillWidth: true
                 SettingsToggleRow {
+                    searchId: "shelfDockEnabled"
                     icon: "dock_to_left"; label: qsTr("Enable dock")
                     checked: edgeGroup.config.enabled
                     onToggled: state => Shelves.update(root.output,edgeGroup.modelData,{enabled:state})
                 }
                 SettingsToggleRow {
+                    searchId: "shelfAllOutputs"
                     icon: "monitor"; label: qsTr("Running apps from all outputs")
                     checked: edgeGroup.config.allOutputs
                     onToggled: state => Shelves.update(root.output,edgeGroup.modelData,{allOutputs:state})
                 }
                 SettingsToggleRow {
+                    searchId: "shelfMagnify"
                     icon: "zoom_in"; label: qsTr("Magnify icons")
                     checked: edgeGroup.config.magnify
                     onToggled: state => Shelves.update(root.output,edgeGroup.modelData,{magnify:state})
@@ -129,25 +138,28 @@ ColumnLayout {
                     description: edgeGroup.modelData === "left" ? ShelfKeybinds.leftReason : ShelfKeybinds.rightReason
                 }
                 SettingsRow {
+                    searchId: "shelfPinned"
                     icon: "apps"; label: qsTr("Pinned desktop IDs")
                     description: qsTr("Comma-separated desktop IDs; press Enter to save")
                     StyledRect {
                         implicitWidth: 180; implicitHeight: 32; radius: Tokens.rounding.full
-                        color: Colours.palette.m3surfaceContainerHigh
+                        color: Colours.raised
                         TextInput {
                             anchors.fill: parent; anchors.margins: Tokens.padding.small
-                            clip: true; color: Colours.palette.m3onSurface; font: Tokens.font.label.small
+                            clip: true; color: Colours.ink; font: Tokens.font.label.small
                             text: edgeGroup.config.pinned.join(", ")
                             onAccepted: Shelves.update(root.output,edgeGroup.modelData,{pinned:text.split(",").map(s => s.trim()).filter(Boolean)})
                         }
                     }
                 }
                 SettingsToggleRow {
+                    searchId: "shelfHandles"
                     icon: "touch_app"; label: qsTr("Visible handle")
                     checked: edgeGroup.config.handles
                     onToggled: state => Shelves.update(root.output,edgeGroup.modelData,{handles:state})
                 }
                 SettingsRow {
+                    searchId: "shelfToggle"
                     icon: "play_arrow"; label: qsTr("Toggle shelf"); activatable: edgeGroup.config.enabled
                     onActivated: Shelves.toggle(root.output,edgeGroup.modelData)
                 }
@@ -159,7 +171,7 @@ ColumnLayout {
                 StyledText {
                     Layout.leftMargin: Tokens.padding.small
                     text: qsTr("Tabs")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.medium
                 }
 
@@ -181,7 +193,7 @@ ColumnLayout {
                     Layout.leftMargin: Tokens.padding.small
                     Layout.rightMargin: Tokens.padding.small
                     text: qsTr("No tabs for this edge.")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                     wrapMode: Text.WordWrap
                 }
@@ -195,11 +207,12 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Shelf effects")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
         SettingsToggleRow {
+            searchId: "shelfLaunchEcho"
             icon: "bolt"
             label: qsTr("Launch echo")
             description: qsTr("Outline a dock icon when its launch opens a window")
@@ -208,6 +221,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "shelfTabAcknowledge"
             icon: "touch_app"
             label: qsTr("Tab acknowledgement")
             description: qsTr("Trace the selected tab handle when its panel opens")
@@ -220,6 +234,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
+            searchId: "shelfNotchTabs"
             icon: "expand_more"
             label: qsTr("Show registered shelf tabs in the notch")
             description: qsTr("Adds a notch tile per plugin tab that allows it")

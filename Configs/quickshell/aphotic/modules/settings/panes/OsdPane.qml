@@ -28,7 +28,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("On-screen display")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -36,6 +36,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "osdEnabled"
                 icon: "picture_in_picture"
                 label: qsTr("Show OSD")
                 checked: Settings.osdEnabled
@@ -43,6 +44,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "osdBrightness"
                 icon: "brightness_6"
                 label: qsTr("Brightness slider")
                 checked: Settings.osdEnableBrightness
@@ -50,6 +52,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "osdMicrophone"
                 icon: "mic"
                 label: qsTr("Microphone slider")
                 checked: Settings.osdEnableMicrophone
@@ -57,6 +60,7 @@ ColumnLayout {
             }
 
             SettingsPresetRow {
+                searchId: "osdHideDelay"
                 icon: "timer"
                 label: qsTr("OSD hide delay")
                 presets: root.timeoutPresets
@@ -73,7 +77,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Notifications")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -81,6 +85,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsPresetRow {
+                searchId: "notifTimeout"
                 icon: "notifications_active"
                 label: qsTr("Notification timeout")
                 presets: root.timeoutPresets

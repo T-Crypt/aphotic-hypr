@@ -51,9 +51,9 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.large
-        color: root.selected ? Colours.layer(Colours.tPalette.m3surfaceContainer, 2) : Colours.tPalette.m3surfaceContainer
+        color: root.selected ? Colours.layer(Colours.surfaceLift, 2) : Colours.surfaceLift
         border.width: root.selected ? 2 : 0
-        border.color: Colours.palette.m3primary
+        border.color: Colours.signal
 
         ColumnLayout {
             anchors.fill: parent
@@ -121,7 +121,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 text: root.label
                 font: Tokens.font.label.medium
-                color: root.selected ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                color: root.selected ? Colours.signal : Colours.inkMuted
             }
         }
 

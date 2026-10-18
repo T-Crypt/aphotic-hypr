@@ -20,6 +20,8 @@ Item {
     required property bool fullscreen
     required property real thickness
 
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
+
     implicitWidth: thickness
     implicitHeight: layout.implicitHeight + Tokens.padding.small * 2
 
@@ -162,7 +164,7 @@ Item {
                 height: width
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 onClicked: root.screenState.launcher = !root.screenState.launcher
@@ -205,7 +207,8 @@ Item {
         readonly property Item task: root.focusedTaskItem
 
         horizontal: Settings.barHorizontal
-        edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
+        edge: root.notchEdge
+        gapLength: root.screenState.notchSpan
         level: "active"
         activeStart: {
             // Read the task's x/y for the dependency: mapToItem alone
@@ -252,7 +255,7 @@ Item {
             appClass: item.group.appClass
             size: parent.width * 0.6
             fontStyle: Tokens.font.icon.large
-            colour: Colours.palette.m3onSurface
+            colour: Colours.ink
         }
 
         StyledRect {
@@ -260,7 +263,7 @@ Item {
             width: countLabel.implicitWidth + Tokens.padding.extraSmall * 2
             height: countLabel.implicitHeight
             radius: Tokens.rounding.full
-            color: Colours.palette.m3primary
+            color: Colours.signal
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             anchors.margins: -2
@@ -269,15 +272,15 @@ Item {
                 id: countLabel
                 anchors.centerIn: parent
                 text: item.group.windows.length
-                color: Colours.contrastOn(Colours.palette.m3primary)
+                color: Colours.contrastOn(Colours.signal)
                 font: Tokens.font.label.small
             }
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: parent.radius
-            // StateLayer is a MouseArea and takes LeftButton only by
+            // Interact is a MouseArea and takes LeftButton only by
             // default. Left-click walks the group's windows one at a
             // time; the list of them all moved to right-click, since a
             // popout on every click is in the way of the common case.

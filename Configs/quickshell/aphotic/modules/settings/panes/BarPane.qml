@@ -20,7 +20,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Style")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -70,7 +70,7 @@ ColumnLayout {
         visible: Settings.barStyle !== "full" && !Settings.barHorizontal
         implicitHeight: warningRow.implicitHeight + Tokens.padding.medium * 2
         radius: Tokens.rounding.medium
-        color: Colours.palette.m3error
+        color: Colours.alert
 
         RowLayout {
             id: warningRow
@@ -82,14 +82,14 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "warning"
-                color: Colours.palette.m3onError
+                color: Colours.onAlert
             }
 
             StyledText {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: qsTr("This style is designed for top/bottom placement -- side placement may look broken.")
-                color: Colours.palette.m3onError
+                color: Colours.onAlert
                 font: Tokens.font.body.small
             }
         }
@@ -97,7 +97,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Visibility")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -121,7 +121,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: visCol.implicitHeight + Tokens.padding.medium * 2
                 radius: Tokens.rounding.medium
-                color: visBtn.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+                color: visBtn.active ? Colours.signal : Colours.surfaceLift
 
                 ColumnLayout {
                     id: visCol
@@ -131,18 +131,18 @@ ColumnLayout {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: visBtn.modelData.icon
-                        color: visBtn.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: visBtn.active ? Colours.onSignal : Colours.inkMuted
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: visBtn.modelData.label
-                        color: visBtn.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: visBtn.active ? Colours.onSignal : Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !visBtn.active
@@ -156,6 +156,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
+            searchId: "dockBarRight"
             visible: !Settings.barHorizontal
             icon: "dock_to_right"
             label: qsTr("Dock bar to right edge")
@@ -164,6 +165,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "dockBarBottom"
             visible: Settings.barHorizontal
             icon: "vertical_align_bottom"
             label: qsTr("Dock bar to bottom edge")
@@ -172,6 +174,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "barCompact"
             icon: "density_small"
             label: qsTr("Compact bar")
             checked: Settings.barCompact
@@ -182,6 +185,7 @@ ColumnLayout {
         // dock, full width, entries flowing left-to-right) alongside the
         // left/right-docked, top-to-bottom mode above.
         SettingsToggleRow {
+            searchId: "barHorizontal"
             icon: "swap_horiz"
             label: qsTr("Horizontal orientation")
             checked: Settings.barHorizontal
@@ -189,6 +193,7 @@ ColumnLayout {
         }
 
         SettingsPresetRow {
+            searchId: "barCorners"
             icon: "rounded_corner"
             label: qsTr("Corners")
             presets: [
@@ -226,7 +231,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Dock")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -234,6 +239,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "dockAutoHide"
                 icon: "visibility_off"
                 label: qsTr("Auto-hide when a window is focused")
                 checked: Settings.dockAutoHide
@@ -241,6 +247,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "dockMagnification"
                 icon: "zoom_in"
                 label: qsTr("Icon magnification on hover")
                 checked: Settings.dockMagnification
@@ -250,7 +257,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Pinned apps")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -270,7 +277,7 @@ ColumnLayout {
                     implicitWidth: chipRow.implicitWidth + Tokens.padding.medium * 2
                     implicitHeight: chipRow.implicitHeight + Tokens.padding.small * 2
                     radius: Tokens.rounding.full
-                    color: Colours.tPalette.m3surfaceContainerHigh
+                    color: Colours.raised
 
                     RowLayout {
                         id: chipRow
@@ -286,7 +293,7 @@ ColumnLayout {
                             text: "close"
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.extraSmall
                                 radius: Tokens.rounding.full
@@ -307,7 +314,7 @@ ColumnLayout {
                 radius: Tokens.rounding.full
                 color: "transparent"
                 border.width: 1
-                border.color: Colours.palette.m3outlineVariant
+                border.color: Colours.outline
 
                 StyledText {
                     id: addLabel
@@ -316,7 +323,7 @@ ColumnLayout {
                     font: Tokens.font.body.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     onClicked: addChip.expanded = !addChip.expanded
@@ -331,7 +338,7 @@ ColumnLayout {
 
             sourceComponent: StyledRect {
                 radius: Tokens.rounding.medium
-                color: Colours.tPalette.m3surfaceContainer
+                color: Colours.surfaceLift
 
                 ListView {
                     anchors.fill: parent
@@ -356,7 +363,7 @@ ColumnLayout {
                             elide: Text.ElideRight
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             onClicked: {
                                 Settings.dockPinnedApps = [...Settings.dockPinnedApps, parent.modelData.id];
@@ -376,7 +383,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Taskbar")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -384,6 +391,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "taskbarGrouping"
                 icon: "layers"
                 label: qsTr("Group windows by app")
                 checked: Settings.taskbarGrouping
@@ -399,7 +407,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Minimal")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -407,6 +415,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "minimalDnd"
                 icon: "do_not_disturb_on"
                 label: qsTr("Show Do Not Disturb indicator")
                 checked: Settings.minimalShowDnd
@@ -422,7 +431,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Capsule")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -430,6 +439,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "capsuleMedia"
                 icon: "music_note"
                 label: qsTr("Show media in the capsule")
                 checked: Settings.capsuleMedia
@@ -437,6 +447,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "capsuleExpand"
                 icon: "pan_zoom"
                 label: qsTr("Expand on hover")
                 checked: Settings.capsuleExpandOnHover
@@ -444,6 +455,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "capsuleShapedArt"
                 icon: "shapes"
                 label: qsTr("Animated album artwork shape")
                 checked: Settings.capsuleShapedArt
@@ -451,6 +463,7 @@ ColumnLayout {
             }
 
             SettingsToggleRow {
+                searchId: "capsuleAnimations"
                 icon: "animation"
                 label: qsTr("Animate transitions")
                 checked: Settings.capsuleAnimations

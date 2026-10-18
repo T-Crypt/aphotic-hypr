@@ -16,9 +16,9 @@ Item {
     // Overridable so this reads correctly on a solid-accent background
     // (MinimalBar's single-accent-color strip) as well as the neutral
     // surface Dock uses by default.
-    property color activeColour: Colours.palette.m3primary
-    property color occupiedColour: Colours.palette.m3onSurfaceVariant
-    property color emptyColour: Colours.palette.m3outlineVariant
+    property color activeColour: Colours.signal
+    property color occupiedColour: Colours.inkMuted
+    property color emptyColour: Colours.outline
 
     property Item hoveredEntry: null
 

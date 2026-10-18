@@ -63,7 +63,7 @@ ColumnLayout {
             radius: Tokens.rounding.medium
             color: "transparent"
 
-            StateLayer {
+            Interact {
                 radius: parent.radius
                 disabled: !root.expanded || !root.switchable
                 onClicked: root.cycled()
@@ -78,12 +78,12 @@ ColumnLayout {
                     implicitWidth: 28
                     implicitHeight: 28
                     radius: Tokens.rounding.small
-                    color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+                    color: Colours.layer(Colours.raised, 2)
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         text: root.activeTile?.icon ?? "monitoring"
-                        color: Colours.palette.m3primaryOnSurface
+                        color: Colours.signalOnSurface
                         fontStyle: Tokens.font.icon.medium
                         fill: 1
                     }
@@ -112,9 +112,9 @@ ColumnLayout {
             implicitWidth: 28
             implicitHeight: 28
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+            color: Colours.layer(Colours.raised, 2)
 
-            StateLayer {
+            Interact {
                 radius: parent.radius
                 disabled: !root.expanded
                 onClicked: root.dismissed()
@@ -123,7 +123,7 @@ ColumnLayout {
             MaterialIcon {
                 anchors.centerIn: parent
                 text: "close"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
         }
@@ -157,6 +157,8 @@ ColumnLayout {
                 return processTileLoader;
             if (root.shownTileId === "palette")
                 return paletteTileLoader;
+            if (root.shownTileId === "phone")
+                return phoneTileLoader;
             const count = pluginRepeater.count;
             const i = root.pluginTiles.findIndex(t => t.id === root.shownTileId);
             if (i >= 0 && i < count)
@@ -187,6 +189,17 @@ ColumnLayout {
             visible: paletteTileLoader.active
 
             sourceComponent: paletteComp
+        }
+
+        Loader {
+            id: phoneTileLoader
+
+            width: tileHost.width
+            y: (1 - tileHost.enterT) * Tokens.spacing.medium
+            active: root.shownTileId === "phone"
+            visible: phoneTileLoader.active
+
+            sourceComponent: phoneComp
         }
 
         // Every gated-in plugin tile is built, not just the shown one: a
@@ -288,5 +301,10 @@ ColumnLayout {
             // covering the answer.
             onInvoked: root.dismissed()
         }
+    }
+
+    Component {
+        id: phoneComp
+        NotchPhoneTile {}
     }
 }

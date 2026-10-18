@@ -136,7 +136,7 @@ Singleton {
     // list is unchanged whatever is installed.
     property bool shelfNotchTabs: false
 
-    property string agentSelectedProvider: "claude"
+    property string agentSelectedProvider: ""
     property bool agentGraphEnabled: true
     // Node budget and layout tick rate for the agent graph surface, never
     // its visual treatment -- every tier renders the same look. "auto"
@@ -205,6 +205,11 @@ Singleton {
     // is what the picker has always been, so it stays the default.
     readonly property var wallpaperPickerLayouts: ["coverflow", "grid", "dock"]
     property string wallpaperPickerLayout: "coverflow"
+    // Which surface the SUPER+D dashboard's Dashboard tab shows: "classic"
+    // widget cards or the "spine" Signal Spine layout. The classic cards
+    // are what the tab has always shown, so they stay the default.
+    readonly property var dashboardLayouts: ["classic", "spine"]
+    property string dashboardLayout: "classic"
     // Owned by the live-wallpaper plugin (see its [owns] table). Kept here
     // rather than in plugin state for the same reason agentGraph*'s keys
     // are: one settings file, one schema, one place a user's preferences
@@ -224,6 +229,20 @@ Singleton {
     property int osdHideDelay: Config.osd.hideDelay
     property bool osdEnableBrightness: Config.osd.enableBrightness
     property bool osdEnableMicrophone: Config.osd.enableMicrophone
+
+    // The phone stack. All nine off, and only `phoneBridge` does anything
+    // yet: it is the flag the device bridge reads before it looks for a
+    // phone, and the gate both the shelf tab and the notch tile read
+    // through services/Phone.qml.
+    property bool phoneBridge: Config.phone.bridge
+    property bool phoneMirror: Config.phone.mirror
+    property bool phoneCalls: Config.phone.calls
+    property bool phoneAlarms: Config.phone.alarms
+    property bool phoneIcons: Config.phone.icons
+    property bool phoneCamera: Config.phone.camera
+    property bool phoneMic: Config.phone.mic
+    property bool phoneLocalSend: Config.phone.localSend
+    property bool phoneMessages: Config.phone.messages
 
     property real notifExpireTimeout: GlobalConfig.notifs.defaultExpireTimeout
 
@@ -381,6 +400,7 @@ Singleton {
             wallpaperAutoCycleEnabled: root.wallpaperAutoCycleEnabled,
             wallpaperAutoCycleInterval: root.wallpaperAutoCycleInterval,
             wallpaperPickerLayout: root.wallpaperPickerLayout,
+            dashboardLayout: root.dashboardLayout,
             liveWallpaperPauseOnBattery: root.liveWallpaperPauseOnBattery,
             liveWallpaperPauseWhenOccluded: root.liveWallpaperPauseWhenOccluded,
             liveWallpaperMuted: root.liveWallpaperMuted,
@@ -390,6 +410,15 @@ Singleton {
             osdHideDelay: root.osdHideDelay,
             osdEnableBrightness: root.osdEnableBrightness,
             osdEnableMicrophone: root.osdEnableMicrophone,
+            phoneBridge: root.phoneBridge,
+            phoneMirror: root.phoneMirror,
+            phoneCalls: root.phoneCalls,
+            phoneAlarms: root.phoneAlarms,
+            phoneIcons: root.phoneIcons,
+            phoneCamera: root.phoneCamera,
+            phoneMic: root.phoneMic,
+            phoneLocalSend: root.phoneLocalSend,
+            phoneMessages: root.phoneMessages,
             notifExpireTimeout: root.notifExpireTimeout,
             accentColorOverride: root.accentColorOverride,
             statusIconBluetoothColor: root.statusIconBluetoothColor,
@@ -659,6 +688,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onWallpaperAutoCycleEnabledChanged: root._saveState()
     onWallpaperAutoCycleIntervalChanged: root._saveState()
     onWallpaperPickerLayoutChanged: root._saveState()
+    onDashboardLayoutChanged: root._saveState()
     onLiveWallpaperPauseOnBatteryChanged: root._saveState()
     onLiveWallpaperPauseWhenOccludedChanged: root._saveState()
     onLiveWallpaperMutedChanged: root._saveState()
@@ -668,6 +698,15 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
     onOsdHideDelayChanged: root._saveState()
     onOsdEnableBrightnessChanged: root._saveState()
     onOsdEnableMicrophoneChanged: root._saveState()
+    onPhoneBridgeChanged: root._saveState()
+    onPhoneMirrorChanged: root._saveState()
+    onPhoneCallsChanged: root._saveState()
+    onPhoneAlarmsChanged: root._saveState()
+    onPhoneIconsChanged: root._saveState()
+    onPhoneCameraChanged: root._saveState()
+    onPhoneMicChanged: root._saveState()
+    onPhoneLocalSendChanged: root._saveState()
+    onPhoneMessagesChanged: root._saveState()
     onNotifExpireTimeoutChanged: root._saveState()
     onAccentColorOverrideChanged: root._saveState()
     onStatusIconBluetoothColorChanged: root._saveState()
@@ -843,7 +882,7 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.capsuleAnimations = data.capsuleAnimations;
                 if (typeof data.flowShellActivity === "boolean")
                     root.flowShellActivity = data.flowShellActivity;
-                if (typeof data.agentSelectedProvider === "string" && ["claude", "codex", "opencode"].includes(data.agentSelectedProvider))
+                if (typeof data.agentSelectedProvider === "string" && data.agentSelectedProvider.length > 0)
                     root.agentSelectedProvider = data.agentSelectedProvider;
                 if (typeof data.agentGraphEnabled === "boolean")
                     root.agentGraphEnabled = data.agentGraphEnabled;
@@ -867,6 +906,8 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.wallpaperAutoCycleInterval = data.wallpaperAutoCycleInterval;
                 if (root.wallpaperPickerLayouts.includes(data.wallpaperPickerLayout))
                     root.wallpaperPickerLayout = data.wallpaperPickerLayout;
+                if (root.dashboardLayouts.includes(data.dashboardLayout))
+                    root.dashboardLayout = data.dashboardLayout;
                 if (typeof data.liveWallpaperPauseOnBattery === "boolean")
                     root.liveWallpaperPauseOnBattery = data.liveWallpaperPauseOnBattery;
                 if (typeof data.liveWallpaperPauseWhenOccluded === "boolean")
@@ -885,6 +926,24 @@ hyprctl switchxkblayout all 0 >/dev/null 2>&1`;
                     root.osdEnableBrightness = data.osdEnableBrightness;
                 if (typeof data.osdEnableMicrophone === "boolean")
                     root.osdEnableMicrophone = data.osdEnableMicrophone;
+                if (typeof data.phoneBridge === "boolean")
+                    root.phoneBridge = data.phoneBridge;
+                if (typeof data.phoneMirror === "boolean")
+                    root.phoneMirror = data.phoneMirror;
+                if (typeof data.phoneCalls === "boolean")
+                    root.phoneCalls = data.phoneCalls;
+                if (typeof data.phoneAlarms === "boolean")
+                    root.phoneAlarms = data.phoneAlarms;
+                if (typeof data.phoneIcons === "boolean")
+                    root.phoneIcons = data.phoneIcons;
+                if (typeof data.phoneCamera === "boolean")
+                    root.phoneCamera = data.phoneCamera;
+                if (typeof data.phoneMic === "boolean")
+                    root.phoneMic = data.phoneMic;
+                if (typeof data.phoneLocalSend === "boolean")
+                    root.phoneLocalSend = data.phoneLocalSend;
+                if (typeof data.phoneMessages === "boolean")
+                    root.phoneMessages = data.phoneMessages;
                 if (typeof data.notifExpireTimeout === "number")
                     root.notifExpireTimeout = data.notifExpireTimeout;
                 if (typeof data.accentColorOverride === "string")

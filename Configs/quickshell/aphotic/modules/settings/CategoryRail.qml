@@ -22,16 +22,12 @@ ColumnLayout {
 
     // PluginsPane.qml reuses this component for its own much-shorter
     // category filter (7 fixed categories, no reason to search) rather
-    // than duplicating the pill-list styling -- but the search box's
-    // placeholder ("Search settings…") is real navigation-rail-specific
-    // copy, and its ~48px pushed every category pill down by that much
-    // with nothing equivalent on the neighboring "Browse available"
-    // column, reading as visibly off-center between the two. Off by
-    // default would break the main Settings rail's own search, so this
-    // defaults true and only PluginsPane opts out.
+    // than duplicating the pill-list styling. The search box's
+    // placeholder and its height are rail-specific, so PluginsPane opts
+    // out of them; default true keeps the main Settings rail's search.
     property bool showSearch: true
 
-    signal categorySelected(id: string, sectionId: string)
+    signal categorySelected(id: string, sectionId: string, rowId: string)
 
     readonly property var groupOrder: [...new Set(root.categories.map(c => c.group ?? ""))]
 
@@ -45,14 +41,15 @@ ColumnLayout {
         sectionId: ""
     }))
 
-    // Sections only ever appear as results, never at rest -- a rail that
-    // listed them unprompted would be the long rail this design removes.
+    // Sections and rows only ever appear as results, never at rest -- a
+    // rail that listed them unprompted would be the long rail this design
+    // removes.
     readonly property var filteredCategories: {
         const q = searchInput.text.trim().toLowerCase();
         if (q.length === 0)
             return root._categoryEntries;
         const pool = root.searchIndex.length > 0 ? root.searchIndex : root._categoryEntries;
-        return pool.filter(e => e.label.toLowerCase().includes(q) || (e.description ?? "").toLowerCase().includes(q));
+        return pool.filter(e => (e.searchKey ?? `${e.label} ${e.description ?? ""}`.toLowerCase()).includes(q));
     }
 
     spacing: Tokens.spacing.medium
@@ -64,7 +61,7 @@ ColumnLayout {
         Layout.preferredHeight: 36
         visible: root.showSearch
         radius: Tokens.rounding.full
-        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+        color: Colours.layer(Colours.surfaceLift, 2)
 
         GradedOutline {
             radius: searchBox.radius
@@ -86,7 +83,7 @@ ColumnLayout {
 
             MaterialIcon {
                 text: "search"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
@@ -96,14 +93,14 @@ ColumnLayout {
                 Layout.fillWidth: true
                 clip: true
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
 
                 Keys.onEscapePressed: searchInput.text = ""
                 // Enter opens the top match, so search works without the mouse.
                 Keys.onReturnPressed: {
                     const hit = root.filteredCategories[0];
                     if (hit)
-                        root.categorySelected(hit.categoryId, hit.sectionId ?? "");
+                        root.categorySelected(hit.categoryId, hit.sectionId ?? "", hit.rowId ?? "");
                 }
 
                 StyledText {
@@ -111,7 +108,7 @@ ColumnLayout {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     text: qsTr("Search settings…")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                 }
             }
@@ -119,10 +116,10 @@ ColumnLayout {
             MaterialIcon {
                 visible: searchInput.text.length > 0
                 text: "close"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     anchors.margins: -Tokens.padding.extraSmall
                     radius: Tokens.rounding.full
@@ -165,7 +162,8 @@ ColumnLayout {
                         required property int index
 
                         readonly property bool isSection: (categoryButton.modelData.sectionId ?? "").length > 0
-                        readonly property bool active: !categoryButton.isSection && categoryButton.modelData.categoryId === root.currentCategory
+                        readonly property bool isRow: (categoryButton.modelData.rowId ?? "").length > 0
+                        readonly property bool active: !categoryButton.isSection && !categoryButton.isRow && categoryButton.modelData.categoryId === root.currentCategory
                         readonly property bool isFirst: categoryButton.index === 0
                         readonly property bool isLast: categoryButton.index === root.filteredCategories.length - 1
                         readonly property color tint: Colours.signalStyle.tint(root.groupOrder.indexOf(categoryButton.modelData.group ?? ""))
@@ -174,17 +172,12 @@ ColumnLayout {
 
                         Layout.fillWidth: true
                         // Inset on all sides while active, not just a color
-                        // swap -- the active fill (m3secondaryContainer) is a
-                        // genuinely different, much lighter color family than
-                        // the near-black panel/row backdrop (tPalette.
-                        // m3surfaceContainer and its layer(2) variant), so a
-                        // full-bleed pill fully rounded to extraLarge cut away
-                        // a big corner triangle that only ever revealed that
-                        // mismatched dark backdrop -- reading as a black notch
-                        // at each corner. Insetting means the reveal is even
-                        // on every side, an intentional "floating pill" look
-                        // instead of an accidental corner-only artifact.
-                        Layout.leftMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.isSection ? Tokens.spacing.large : 0)
+                        // swap: the active fill is a much lighter color
+                        // family than the near-black panel backdrop, so a
+                        // full-bleed pill revealed a dark corner notch at
+                        // each rounded corner. Insetting reveals evenly on
+                        // every side.
+                        Layout.leftMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.isSection || categoryButton.isRow ? Tokens.spacing.large : 0)
                         Layout.rightMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
                         Layout.topMargin: (categoryButton.active ? Tokens.padding.extraSmall : 0) + (categoryButton.groupStart ? groupHeader.implicitHeight + Tokens.spacing.large - (categoryButton.index === 0 ? Tokens.spacing.medium : 0) : 0)
                         Layout.bottomMargin: categoryButton.active ? Tokens.padding.extraSmall : 0
@@ -243,7 +236,7 @@ ColumnLayout {
                             x: Tokens.padding.medium
                             y: -implicitHeight - Tokens.spacing.small
                             text: (categoryButton.modelData.group ?? "").toUpperCase()
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             opacity: 0.75
                             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
                         }
@@ -305,7 +298,7 @@ ColumnLayout {
                                 StyledText {
                                     Layout.fillWidth: true
                                     text: categoryButton.modelData.label
-                                    color: !categoryButton.active ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
+                                    color: !categoryButton.active ? Colours.inkMuted : Colours.ink
                                     font: categoryButton.active ? Tokens.font.body.builders.medium.weight(Font.DemiBold).build() : Tokens.font.body.medium
                                     elide: Text.ElideRight
                                 }
@@ -314,14 +307,14 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     visible: (categoryButton.modelData.description ?? "").length > 0
                                     text: categoryButton.modelData.description ?? ""
-                                    color: Colours.palette.m3onSurfaceVariant
+                                    color: Colours.inkMuted
                                     font: Tokens.font.label.small
                                     elide: Text.ElideRight
                                 }
                             }
                         }
 
-                        StateLayer {
+                        Interact {
                             id: stateLayer
 
                             anchors.fill: parent
@@ -331,7 +324,7 @@ ColumnLayout {
                             bottomRightRadius: categoryButton.bottomRightRadius
                             showHoverBackground: !categoryButton.active
 
-                            onClicked: root.categorySelected(categoryButton.modelData.categoryId, categoryButton.modelData.sectionId ?? "")
+                            onClicked: root.categorySelected(categoryButton.modelData.categoryId, categoryButton.modelData.sectionId ?? "", categoryButton.modelData.rowId ?? "")
                         }
                     }
                 }
@@ -347,7 +340,7 @@ ColumnLayout {
             width: 3
             height: Math.max(24, listFlick.visibleArea.heightRatio * listFlick.height)
             radius: Tokens.rounding.full
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             opacity: 0.35
         }
     }
@@ -359,7 +352,7 @@ ColumnLayout {
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
         text: qsTr("No matches")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 }

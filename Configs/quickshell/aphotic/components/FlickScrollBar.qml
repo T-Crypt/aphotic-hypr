@@ -32,7 +32,7 @@ Item {
         width: root.thumbWidth
         height: Math.max(root.minThumbHeight, root.flickable.visibleArea.heightRatio * root.height)
         radius: Tokens.rounding.full
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         opacity: dragArea.pressed ? 0.7 : dragArea.containsMouse ? 0.55 : 0.35
 
         Behavior on opacity {

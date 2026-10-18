@@ -16,9 +16,9 @@ StyledClippingRect {
     implicitWidth: 120
     implicitHeight: 120
     radius: Tokens.rounding.largeIncreased
-    color: Colours.tPalette.m3surfaceContainer
+    color: Colours.surfaceLift
     border.width: root.active ? 3 : 0
-    border.color: Colours.palette.m3primary
+    border.color: Colours.signal
 
     Image {
         id: thumb
@@ -49,12 +49,12 @@ StyledClippingRect {
     StyledRect {
         anchors.fill: parent
         visible: thumb.status !== Image.Ready
-        color: Colours.tPalette.m3surfaceContainer
+        color: Colours.surfaceLift
 
         MaterialIcon {
             anchors.centerIn: parent
             text: "image"
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             fontStyle: Tokens.font.icon.large
         }
     }
@@ -66,7 +66,7 @@ StyledClippingRect {
         anchors.bottom: parent.bottom
         anchors.right: parent.right
         height: label.implicitHeight + Tokens.padding.small * 2
-        color: Qt.alpha(Colours.palette.m3shadow, 0.55)
+        color: Qt.alpha(Colours.shadow, 0.55)
 
         StyledText {
             id: label
@@ -90,14 +90,14 @@ StyledClippingRect {
         implicitWidth: videoBadge.implicitWidth + Tokens.padding.small * 2
         implicitHeight: videoBadge.implicitHeight + Tokens.padding.extraSmall
         radius: Tokens.rounding.full
-        color: Qt.alpha(Colours.palette.m3shadow, 0.65)
+        color: Qt.alpha(Colours.shadow, 0.65)
 
         MaterialIcon {
             id: videoBadge
             anchors.centerIn: parent
             text: "movie"
             fill: 1
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             fontStyle: Tokens.font.icon.small
         }
     }
@@ -109,7 +109,7 @@ StyledClippingRect {
         anchors.margins: Tokens.padding.small
         text: "check_circle"
         fill: 1
-        color: Colours.palette.m3primary
+        color: Colours.signal
         fontStyle: Tokens.font.icon.small
 
         StyledRect {
@@ -118,11 +118,11 @@ StyledClippingRect {
             width: parent.implicitWidth + 4
             height: parent.implicitHeight + 4
             radius: Tokens.rounding.full
-            color: Colours.contrastOn(Colours.palette.m3primary)
+            color: Colours.contrastOn(Colours.signal)
         }
     }
 
-    StateLayer {
+    Interact {
         anchors.fill: parent
         radius: root.radius
     }

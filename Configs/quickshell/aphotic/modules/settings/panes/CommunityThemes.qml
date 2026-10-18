@@ -29,16 +29,16 @@ ColumnLayout {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+            color: Colours.layer(Colours.surfaceLift, 2)
 
             MaterialIcon {
                 anchors.centerIn: parent
                 text: "arrow_back"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
             }
@@ -51,7 +51,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("Community themes")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
         }
     }
@@ -61,7 +61,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("Nothing to download. Either every published theme is already installed, or the aphotic-themes index couldn't be reached.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -90,7 +90,7 @@ ColumnLayout {
                     width: 220
                     implicitHeight: communityCol.implicitHeight + Tokens.padding.large * 2
                     radius: Tokens.rounding.medium
-                    color: Colours.tPalette.m3surfaceContainer
+                    color: Colours.surfaceLift
 
                     ColumnLayout {
                         id: communityCol
@@ -114,14 +114,14 @@ ColumnLayout {
                             maximumLineCount: 2
                             elide: Text.ElideRight
                             text: communityCard.modelData.description ?? ""
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
 
                         StyledText {
                             Layout.topMargin: Tokens.spacing.extraSmall
                             text: qsTr("%1 wallpapers · %2").arg(communityCard.modelData.wallpaper_count ?? 0).arg(ModelStorage.formatBytes(communityCard.modelData.approx_size_bytes ?? 0))
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
 
@@ -131,17 +131,17 @@ ColumnLayout {
                             implicitWidth: downloadLabel.implicitWidth + Tokens.padding.large * 2
                             implicitHeight: 28
                             radius: Tokens.rounding.full
-                            color: Colours.palette.m3primary
+                            color: Colours.signal
 
                             StyledText {
                                 id: downloadLabel
                                 anchors.centerIn: parent
                                 text: qsTr("Download")
-                                color: Colours.contrastOn(Colours.palette.m3primary)
+                                color: Colours.contrastOn(Colours.signal)
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }

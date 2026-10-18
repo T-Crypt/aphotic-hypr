@@ -33,8 +33,16 @@ Item {
     // than a literal couple-of-pixels sliver.
     readonly property alias hoverTarget: content
 
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
+
     readonly property int padding: Math.max(Tokens.padding.small, Config.border.thickness)
-    readonly property int contentWidth: Settings.barInnerWidth + padding * 2
+    // Integer thickness. The bar's exclusive zone (barWrapper.exclusiveZone) and
+    // its rendered fill (background/content) must agree down to a pixel, or the
+    // notch -- pinned to the zone's bottom by the compositor -- lands a hairline
+    // off the bar's drawn edge. Rounding here (not truncating) keeps them
+    // bit-identical and lets a fractional setting such as the full style's
+    // 0.78 multiplier resolve to a whole device pixel.
+    readonly property int contentWidth: Math.round(Settings.barInnerWidth + padding * 2)
     // "hidden" reserves no desktop space at all, matching a fully disabled
     // bar; "autohide" still reserves the thin sliver so windows don't tile
     // into the space the reveal-on-hover strip occupies.
@@ -136,7 +144,7 @@ Item {
     // that purpose, leaving Bar.qml sized down to a couple of px instead
     // of its real content. Plain width/height bindings have no such
     // ambiguity.
-    StyledRect {
+    SignalSurface {
         id: background
 
         width: Settings.barHorizontal ? root.width : root.implicitWidth
@@ -148,9 +156,11 @@ Item {
         // draw their own full-bleed background internally (TaskbarBar.qml/
         // MinimalBar.qml) instead of inheriting Full's strip treatment.
         radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? height : width)
-        color: Colours.signalStyle.bar
-        border.width: 0
-        border.color: Colours.palette.m3outlineVariant
+        tone: Colours.signalStyle.bar
+        horizontal: Settings.barHorizontal
+        // The notch-facing edge is the SignalLine's to draw below, with the
+        // gap the notch span opens in it.
+        openEdge: root.notchEdge
         visible: root.shouldBeVisible && Settings.barStyle === "full"
 
         Behavior on radius {
@@ -170,8 +180,8 @@ Item {
                 : 0
 
             horizontal: Settings.barHorizontal
-            edge: (Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"
-            gapLength: root.screenState?.notchSpan ?? 0
+            edge: root.notchEdge
+            gapLength: root.screenState.notchSpan
             activeStart: (signalLine.win?.signalActiveStart ?? 0) - signalLine.origin
             activeLength: signalLine.win?.signalActiveLength ?? 0
             hoverStart: (signalLine.win?.signalHoverStart ?? 0) - signalLine.origin

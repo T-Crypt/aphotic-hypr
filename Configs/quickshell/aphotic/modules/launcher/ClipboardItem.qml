@@ -22,7 +22,7 @@ Item {
         Quickshell.execDetached(["sh", "-c", "printf '%s' \"$1\" | cliphist decode | wl-copy", "_", root.modelData.raw]);
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();
@@ -49,7 +49,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: "push_pin"
         fill: PinnedSnippets.isPinned(root.modelData.raw) ? 1 : 0
-        color: PinnedSnippets.isPinned(root.modelData.raw) ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+        color: PinnedSnippets.isPinned(root.modelData.raw) ? Colours.signal : Colours.inkMuted
         fontStyle: Tokens.font.icon.small
         opacity: PinnedSnippets.isPinned(root.modelData.raw) ? 1 : 0.5
 

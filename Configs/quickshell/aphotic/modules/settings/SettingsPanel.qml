@@ -31,19 +31,84 @@ RowLayout {
     readonly property var categories: SettingsCategories.list
 
     // currentCategory is an address, not just a category id: a search hit
-    // on a plugin's section arrives as "<category>/<section>", which is
-    // also the id searchIndex hands the launcher, so the same string
-    // survives the ScreenState.settingsCategory handoff untouched.
+    // on a plugin's section arrives as "<category>/<section>", a hit on a
+    // setting row as "<category>/<section>/<row>" (the section empty for a
+    // core pane row), which is also the id searchIndex hands the launcher,
+    // so the same string survives the ScreenState.settingsCategory handoff
+    // untouched.
     readonly property string currentCategoryId: root.currentCategory.split("/")[0]
     property string requestedSection: ""
+    property string requestedRow: ""
+    property var _highlightedRow: null
+    property int _rowAttempts: 0
 
     readonly property var sections: SettingsCategories.sectionsFor(root.currentCategoryId)
 
     onCurrentCategoryChanged: {
         const parts = root.currentCategory.split("/");
         root.requestedSection = parts.length > 1 ? parts[1] : "";
-        if (root.requestedSection !== "")
+        root.requestedRow = parts.length > 2 ? parts[2] : "";
+        root._clearHighlight();
+        root._rowAttempts = 0;
+        if (root.requestedSection !== "" || root.requestedRow !== "")
             revealTimer.restart();
+    }
+
+    // A search hit can name a row instead of a section. The row components
+    // carry the address as `searchId` (components/SettingsRow.qml), so the
+    // pane is found by walking the loaded tree rather than every pane
+    // wiring its own registry. A row inside a collapsed inline section has
+    // no instance yet; opening the sections and retrying is the one case
+    // that needs a second pass.
+    function _findRow(item: var, rowId: string): var {
+        if (!item || !item.children)
+            return null;
+        for (const child of item.children) {
+            if (child.searchId !== undefined && child.searchId === rowId)
+                return child;
+            const found = root._findRow(child, rowId);
+            if (found)
+                return found;
+        }
+        return null;
+    }
+
+    function _expandSections(item: var): void {
+        if (!item || !item.children)
+            return;
+        for (const child of item.children) {
+            if (typeof child.expanded === "boolean" && child.content !== undefined && !child.expanded)
+                child.expanded = true;
+            root._expandSections(child);
+        }
+    }
+
+    // The panel owns the one mark a search hit leaves. Clearing it here,
+    // before the reference drops, keeps a row from a previous hit marked
+    // when the next hit lands in the same category (whose address change
+    // never rebuilds the pane, so the old row survives to be seen).
+    function _clearHighlight(): void {
+        if (root._highlightedRow && root._highlightedRow.highlighted !== undefined)
+            root._highlightedRow.highlighted = false;
+        root._highlightedRow = null;
+    }
+
+    function _revealRow(): void {
+        root._clearHighlight();
+        if (root.requestedRow === "" || !paneLoader.item)
+            return;
+        const row = root._findRow(paneLoader.item, root.requestedRow);
+        if (!row) {
+            if (root._rowAttempts < 2) {
+                root._rowAttempts += 1;
+                root._expandSections(paneLoader.item);
+                rowRetryTimer.restart();
+            }
+            return;
+        }
+        root._highlightedRow = row;
+        row.highlighted = true;
+        paneFlick.revealItem(row);
     }
 
     onCategoriesChanged: {
@@ -51,13 +116,9 @@ RowLayout {
             root.currentCategory = "appearance";
     }
 
-    // Was 980x560 -- fixed since this panel first shipped with 5-6
-    // categories; 14 exist now (SettingsCategories.list) and several
-    // panes (AI, Network, Personalization) have grown dense enough that
-    // the old size left everything visibly cramped. Bumped, still a
-    // fixed size rather than screen-relative -- comfortably fits inside
-    // even this repo's smallest documented target (1920x1080) with
-    // margin, without needing per-screen sizing logic.
+    // Fixed size, not screen-relative: 14 categories and several dense
+    // panes need the room, and it still fits the smallest supported
+    // target (1920x1080) with margin.
     width: 1180
     height: 720
     spacing: 0
@@ -98,7 +159,14 @@ RowLayout {
             currentCategory: root.currentCategoryId
             categories: root.categories
             searchIndex: SettingsCategories.searchIndex
-            onCategorySelected: (id, sectionId) => root.currentCategory = sectionId.length > 0 ? `${id}/${sectionId}` : id
+            onCategorySelected: (id, sectionId, rowId) => {
+                const parts = [id];
+                if (sectionId.length > 0 || rowId.length > 0)
+                    parts.push(sectionId);
+                if (rowId.length > 0)
+                    parts.push(rowId);
+                root.currentCategory = parts.join("/");
+            }
         }
     }
 
@@ -156,11 +224,11 @@ RowLayout {
             gradient: Gradient {
                 GradientStop {
                     position: 0
-                    color: Qt.alpha(Colours.palette.m3primary, 0.1)
+                    color: Qt.alpha(Colours.signal, 0.1)
                 }
                 GradientStop {
                     position: 1
-                    color: Qt.alpha(Colours.palette.m3primary, 0)
+                    color: Qt.alpha(Colours.signal, 0)
                 }
             }
         }
@@ -175,13 +243,17 @@ RowLayout {
             boundsBehavior: Flickable.StopAtBounds
             clip: true
 
+            function revealItem(item: Item): void {
+                const limit = Math.max(0, paneFlick.contentHeight - paneFlick.height);
+                paneFlick.contentY = Math.min(limit, Math.max(0, item.mapToItem(paneColumn, 0, 0).y));
+            }
+
             function revealSection(sectionId: string): void {
                 for (let i = 0; i < sectionRepeater.count; i++) {
                     const item = sectionRepeater.itemAt(i);
                     if (item?.modelData?.id !== sectionId)
                         continue;
-                    const limit = Math.max(0, paneFlick.contentHeight - paneFlick.height);
-                    paneFlick.contentY = Math.min(limit, Math.max(0, item.mapToItem(paneColumn, 0, 0).y));
+                    paneFlick.revealItem(item);
                     return;
                 }
             }
@@ -267,7 +339,7 @@ RowLayout {
                     Layout.topMargin: Tokens.spacing.large
                     Layout.leftMargin: Tokens.padding.small
                     text: qsTr("Plugins")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
                 }
 
@@ -318,11 +390,11 @@ RowLayout {
             gradient: Gradient {
                 GradientStop {
                     position: 0
-                    color: Qt.alpha(Colours.palette.m3shadow, 0.35)
+                    color: Qt.alpha(Colours.shadow, 0.35)
                 }
                 GradientStop {
                     position: 1
-                    color: Qt.alpha(Colours.palette.m3shadow, 0)
+                    color: Qt.alpha(Colours.shadow, 0)
                 }
             }
 
@@ -347,19 +419,25 @@ RowLayout {
             id: revealTimer
 
             interval: 32
-            onTriggered: paneFlick.revealSection(root.requestedSection)
+            onTriggered: {
+                paneFlick.revealSection(root.requestedSection);
+                root._revealRow();
+            }
+        }
+
+        Timer {
+            id: rowRetryTimer
+
+            interval: 32
+            onTriggered: root._revealRow()
         }
 
         StyledRect {
             id: scrollThumb
 
-            // Was 4px with no MouseArea at all -- just a scroll-position
-            // indicator, not actually grabbable. Widened to a real click
-            // target and made draggable (real ask: "hard to grab... and
-            // use it without my scroll wheel"). Drag math sets
-            // paneFlick.contentY directly from the mouse delta rather
-            // than binding drag.target to this item -- QML's drag
-            // mechanics overwrite a bound `y` with a plain value on
+            // Drag math sets paneFlick.contentY directly from the mouse
+            // delta rather than binding drag.target to this item -- QML's
+            // drag mechanics overwrite a bound `y` with a plain value on
             // press, which would have permanently broken the one-way
             // binding below after the first drag.
             visible: paneFlick.contentHeight > paneFlick.height
@@ -368,7 +446,7 @@ RowLayout {
             width: 8
             height: Math.max(24, paneFlick.visibleArea.heightRatio * paneFlick.height)
             radius: Tokens.rounding.full
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             opacity: dragArea.pressed ? 0.7 : dragArea.containsMouse ? 0.55 : 0.35
 
             Behavior on opacity {
@@ -379,7 +457,7 @@ RowLayout {
                 id: dragArea
 
                 anchors.fill: parent
-                anchors.margins: -4
+                anchors.margins: -Tokens.padding.extraSmall
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 preventStealing: true

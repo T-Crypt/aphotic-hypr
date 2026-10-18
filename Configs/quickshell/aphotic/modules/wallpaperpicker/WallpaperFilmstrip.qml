@@ -12,7 +12,7 @@ Item {
 
     readonly property int cellHeight: Math.max(120, Math.round(root.height * 0.219))
     readonly property int cellWidth: Math.round(cellHeight * 16 / 9)
-    readonly property int cellSpacing: Math.max(8, Math.round(root.width * 0.007))
+    readonly property int cellSpacing: Math.max(Tokens.spacing.small, Math.round(root.width * 0.007))
     readonly property int slotPitch: cellWidth + cellSpacing
     readonly property real centerScale: 1.35
     readonly property int visibleSlots: 5
@@ -390,7 +390,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root._fileFor(strip.currentIndex)
                 font: Tokens.font.title.builders.large.weight(Font.DemiBold).build()
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 animate: true
             }
 
@@ -428,7 +428,7 @@ Item {
                             implicitWidth: dot.current ? 9 : 6
                             implicitHeight: implicitWidth
                             radius: implicitWidth / 2
-                            color: dot.current ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                            color: dot.current ? Colours.signal : Colours.ink
                             opacity: dot.current ? 0.55 + 0.45 * DepthFx.pulse : 0.4 - 0.09 * Math.abs(dot.offset)
 
                             Behavior on implicitWidth {

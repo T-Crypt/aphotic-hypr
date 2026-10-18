@@ -3,7 +3,21 @@ name = "gaming"
 description = "Performance profile + launcher polish"
 
 [packages]
-main = ["gamemode", "lib32-gamemode", "mangohud", "lib32-mangohud", "steam"]
+main = ["gamemode", "lib32-gamemode", "mangohud", "lib32-mangohud", "steam", "gamescope"]
+
+# Storefronts and compatibility shims ship as Flatpaks rather than AUR
+# packages: the Flatpak builds keep their own runtime and don't need the
+# multi-lib toolchain to compile, and updates arrive outside of pacman.
+# With the gaming layer these install alongside steam.
+[flatpak]
+apps = [
+  "com.heroicgameslauncher.hgl",
+  "net.lutris.Lutris",
+  "page.kramo.Cartridges",
+  "com.usebottles.bottles",
+  "com.vysp3r.ProtonPlus",
+  "org.libretro.RetroArch",
+]
 
 [layer]
 requires_multilib = true

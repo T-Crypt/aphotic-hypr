@@ -21,7 +21,21 @@ APHOTIC_RECOVERY_STATE_FILE="${APHOTIC_STATE_HOME}/recovery.json"
 APHOTIC_CHANGE_LOG="${APHOTIC_STATE_HOME}/changes.log"
 
 # Where the Aphotic-Hypr dots repo lives. Overridable via env for dev/CI.
-APHOTIC_DOTS_DIR="${APHOTIC_DOTS_DIR:-$HOME/Aphotic-Hypr}"
+# Otherwise it's the checkout this script runs from, so a clone under any
+# name or letter case works.
+if [[ -z "${APHOTIC_DOTS_DIR:-}" ]]; then
+    _aphotic_self_root="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../../../.." 2>/dev/null && pwd)"
+    if [[ -n "$_aphotic_self_root" && -f "$_aphotic_self_root/VERSION" ]]; then
+        APHOTIC_DOTS_DIR="$_aphotic_self_root"
+    else
+        APHOTIC_DOTS_DIR="$HOME/Aphotic-Hypr"
+    fi
+    unset _aphotic_self_root
+fi
+
+# The shell and helper scripts can't see where the CLI lives, so they read
+# the repo through this link. Kept current on every run.
+APHOTIC_DOTS_LINK="${XDG_DATA_HOME:-$HOME/.local/share}/aphotic/dots"
 
 # Read from the repo's VERSION file so `aphotic doctor` reflects the
 # actual checked-out commit's version, not a string that drifts from it.
@@ -75,6 +89,13 @@ fi
 mkdir -p "$APHOTIC_CONFIG_HOME" "$APHOTIC_STATE_HOME" "$APHOTIC_DATA_HOME" \
          "$APHOTIC_RUNTIME_DIR" "$APHOTIC_BACKUP_DIR" "$APHOTIC_PLUGINS_DIR"
 
+# Only the installed CLI moves the link, so running a second checkout (or its
+# tests) leaves the live shell alone.
+if [[ "$(readlink -f "$HOME/.local/bin/aphotic" 2>/dev/null)" == "$APHOTIC_DOTS_DIR/"* \
+      && "$(readlink "$APHOTIC_DOTS_LINK" 2>/dev/null)" != "$APHOTIC_DOTS_DIR" ]]; then
+    ln -sfn "$APHOTIC_DOTS_DIR" "$APHOTIC_DOTS_LINK" 2>/dev/null || true
+fi
+
 export APHOTIC_VERSION APHOTIC_CONFIG_HOME APHOTIC_STATE_HOME APHOTIC_DATA_HOME \
        APHOTIC_RUNTIME_DIR APHOTIC_CONFIG_FILE APHOTIC_BACKUP_DIR APHOTIC_DOTS_DIR \
        APHOTIC_SAFE_MODE_FILE APHOTIC_RECOVERY_STATE_FILE APHOTIC_CHANGE_LOG \
@@ -105,6 +126,28 @@ aphotic_require() {
     command -v "$1" >/dev/null 2>&1 || { aphotic_err "missing dependency: $1"; return 1; }
 }
 
+# The one way a state file gets rewritten. mktemp's default $TMPDIR (/tmp,
+# a tmpfs) is a different filesystem from ~/.local/state, so `mv` from
+# there is a copy followed by an unlink -- another process can read the
+# file mid-copy. The shell watches plugins.json, theme.json and
+# safe-mode.json with a FileView and has nothing to fall back on when a
+# read lands halfway, so a rewrite must land as a rename: stage the new
+# content in the target's own directory. `$@` is the writer, whose stdout
+# becomes the new content; the target is replaced only if it succeeds.
+#   aphotic_write_atomic "$APHOTIC_PLUGINS_STATE_FILE" jq --arg n "$name" '...' "$APHOTIC_PLUGINS_STATE_FILE"
+aphotic_write_atomic() {
+    local target="$1"; shift
+    local dir tmp
+    dir="$(dirname "$target")"
+    tmp="$(mktemp "${dir}/.$(basename "$target").XXXXXX")" || return 1
+    if "$@" > "$tmp"; then
+        mv "$tmp" "$target"
+    else
+        rm -f "$tmp"
+        return 1
+    fi
+}
+
 # JSON getter/setter helpers around APHOTIC_CONFIG_FILE, used by
 # cmd_config.sh. Requires jq. Kept here so every command can reuse them.
 aphotic_json_get() {
@@ -114,12 +157,12 @@ aphotic_json_get() {
 }
 
 aphotic_json_set() {
-    local key="$1" value="$2" tmp
+    local key="$1" value="$2"
     aphotic_require jq || return 1
     [[ -f "$APHOTIC_CONFIG_FILE" ]] || echo '{}' > "$APHOTIC_CONFIG_FILE"
-    tmp="$(mktemp)"
-    jq --arg k "$key" --arg v "$value" 'setpath($k | split("."); $v)' \
-        "$APHOTIC_CONFIG_FILE" > "$tmp" && mv "$tmp" "$APHOTIC_CONFIG_FILE"
+    aphotic_write_atomic "$APHOTIC_CONFIG_FILE" \
+        jq --arg k "$key" --arg v "$value" 'setpath($k | split("."); $v)' \
+        "$APHOTIC_CONFIG_FILE"
 }
 
 # ---- minimal TOML reader -------------------------------------------------
@@ -259,12 +302,11 @@ aphotic_safe_mode_active() {
 }
 
 aphotic_safe_mode_set() {
-    local active="$1" reason="${2:-}" tmp
+    local active="$1" reason="${2:-}"
     aphotic_require jq || return 1
-    tmp="$(mktemp)"
-    jq -n --argjson active "$active" --arg reason "$reason" --arg since "$(date -Iseconds)" \
-        '{active: $active, reason: $reason, since: $since}' > "$tmp" \
-        && mv "$tmp" "$APHOTIC_SAFE_MODE_FILE"
+    aphotic_write_atomic "$APHOTIC_SAFE_MODE_FILE" \
+        jq -n --argjson active "$active" --arg reason "$reason" --arg since "$(date -Iseconds)" \
+        '{active: $active, reason: $reason, since: $since}'
 }
 
 aphotic_safe_mode_reason() {
@@ -277,12 +319,11 @@ aphotic_safe_mode_reason() {
 # stopped starting right after a plugin went in is the common case, and
 # nothing else on the machine records that ordering.
 aphotic_record_change() {
-    local kind="$1" detail="${2:-}" tmp
+    local kind="$1" detail="${2:-}"
     printf '%s\t%s\t%s\n' "$(date -Iseconds)" "$kind" "$detail" >> "$APHOTIC_CHANGE_LOG" 2>/dev/null || return 0
     # Bounded: this is a breadcrumb trail, not an audit log.
     if [[ "$(wc -l < "$APHOTIC_CHANGE_LOG" 2>/dev/null || echo 0)" -gt 400 ]]; then
-        tmp="$(mktemp)"
-        tail -n 200 "$APHOTIC_CHANGE_LOG" > "$tmp" && mv "$tmp" "$APHOTIC_CHANGE_LOG"
+        aphotic_write_atomic "$APHOTIC_CHANGE_LOG" tail -n 200 "$APHOTIC_CHANGE_LOG"
     fi
     return 0
 }
@@ -410,16 +451,16 @@ aphotic_plugin_cli_help() {
 }
 
 aphotic_plugin_set_enabled() {
-    local name="$1" enabled="$2" tmp
+    local name="$1" enabled="$2"
     aphotic_require jq || return 1
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
-    tmp="$(mktemp)"
     if [[ "$enabled" == "true" ]]; then
-        jq --arg n "$name" '.disabled = ((.disabled // []) - [$n])' "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp"
+        aphotic_write_atomic "$APHOTIC_PLUGINS_STATE_FILE" \
+            jq --arg n "$name" '.disabled = ((.disabled // []) - [$n])' "$APHOTIC_PLUGINS_STATE_FILE"
     else
-        jq --arg n "$name" '.disabled = ((.disabled // []) + [$n] | unique)' "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp"
+        aphotic_write_atomic "$APHOTIC_PLUGINS_STATE_FILE" \
+            jq --arg n "$name" '.disabled = ((.disabled // []) + [$n] | unique)' "$APHOTIC_PLUGINS_STATE_FILE"
     fi
-    mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
     aphotic_record_change "plugin-$([[ "$enabled" == "true" ]] && echo enabled || echo disabled)" "$name"
 }
 
@@ -434,10 +475,9 @@ aphotic_plugins_security_index_trusted() {
 }
 
 aphotic_plugins_set_security_index_trusted() {
-    local trusted="$1" tmp
+    local trusted="$1"
     aphotic_require jq || return 1
     [[ -f "$APHOTIC_PLUGINS_STATE_FILE" ]] || echo '{"disabled": []}' > "$APHOTIC_PLUGINS_STATE_FILE"
-    tmp="$(mktemp)"
-    jq --argjson t "$trusted" '.security_index_trusted = $t' "$APHOTIC_PLUGINS_STATE_FILE" > "$tmp"
-    mv "$tmp" "$APHOTIC_PLUGINS_STATE_FILE"
+    aphotic_write_atomic "$APHOTIC_PLUGINS_STATE_FILE" \
+        jq --argjson t "$trusted" '.security_index_trusted = $t' "$APHOTIC_PLUGINS_STATE_FILE"
 }

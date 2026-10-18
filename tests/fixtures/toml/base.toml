@@ -4,3 +4,6 @@ name = "fixture-base"
 [packages]
 prep = ["alpha", "beta"]
 main = ["hyprland", "waybar"]
+
+[flatpak]
+apps = ["org.example.Base"]

@@ -128,7 +128,7 @@ Item {
 
             StyledText {
                 text: qsTr("Theme").toUpperCase()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
             }
 
@@ -157,7 +157,7 @@ Item {
                         radius: Tokens.rounding.medium
                         color: Colours.signalStyle.raised
                         border.width: themeCard.active ? 2 : 1
-                        border.color: themeCard.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                        border.color: themeCard.active ? Colours.signal : Colours.signalStyle.hairline
 
                         readonly property string preview: themeCard.modelData.defaultWallpaper ? WallpaperThumbs.thumbFor(`${Themes.awwwDir}/${themeCard.modelData.name}/${themeCard.modelData.defaultWallpaper}`) : ""
 
@@ -208,7 +208,7 @@ Item {
                             anchors.margins: Tokens.padding.small
                             text: "check_circle"
                             fill: 1
-                            color: Colours.palette.m3primary
+                            color: Colours.signal
                             fontStyle: Tokens.font.icon.small
                         }
 
@@ -219,7 +219,7 @@ Item {
                             anchors.margins: Tokens.padding.medium
                             elide: Text.ElideRight
                             text: themeCard.modelData.displayName
-                            color: Colours.palette.m3onSurface
+                            color: Colours.ink
                             font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
                         }
 
@@ -231,7 +231,7 @@ Item {
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
                             text: themeCard.modelData.displayName
-                            color: themeCard.active ? Colours.legibleAccent(Colours.palette.m3primary, themeCard.color) : Colours.palette.m3onSurface
+                            color: themeCard.active ? Colours.legibleAccent(Colours.signal, themeCard.color) : Colours.ink
                             font: Tokens.font.body.medium
                         }
 
@@ -243,7 +243,7 @@ Item {
                             anchors.right: parent.right
                             anchors.margins: Tokens.padding.small
                             text: "public"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
 
                             ToolTip.visible: badgeHover.hovered
@@ -255,7 +255,7 @@ Item {
                             }
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             showHoverBackground: !themeCard.active
@@ -283,18 +283,19 @@ Item {
                     id: communityRowContent
                     anchors.left: parent.left
                     anchors.right: parent.right
+                    searchId: "communityThemes"
                     icon: "public"
                     label: qsTr("Community themes")
                     description: root.communityFiltered.length > 0 ? qsTr("%n available to download", "", root.communityFiltered.length) : qsTr("Nothing new to download right now")
 
                     MaterialIcon {
                         text: "chevron_right"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: Tokens.rounding.extraLarge
                 }
@@ -309,7 +310,7 @@ Item {
                 visible: Themes.wallpapersInActiveTheme.length > 1
                 Layout.topMargin: Tokens.spacing.small
                 text: qsTr("Wallpaper").toUpperCase()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
             }
 
@@ -345,9 +346,9 @@ Item {
                         height: 32
                         width: Math.min(wallpaperLabel.implicitWidth + Tokens.padding.large * 2, 160)
                         radius: Tokens.rounding.full
-                        color: (wallpaperPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Colours.signalStyle.raised)
+                        color: (wallpaperPill.active ? Qt.alpha(Colours.signal, 0.16) : Colours.signalStyle.raised)
                         border.width: 1
-                        border.color: wallpaperPill.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                        border.color: wallpaperPill.active ? Colours.signal : Colours.signalStyle.hairline
 
                         StyledText {
                             id: wallpaperLabel
@@ -355,11 +356,11 @@ Item {
                             width: wallpaperPill.width - Tokens.padding.large * 2
                             elide: Text.ElideMiddle
                             text: wallpaperPill.modelData
-                            color: (wallpaperPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                            color: (wallpaperPill.active ? Colours.ink : Colours.inkMuted)
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             showHoverBackground: !wallpaperPill.active
@@ -384,18 +385,19 @@ Item {
                     id: rowContent
                     anchors.left: parent.left
                     anchors.right: parent.right
+                    searchId: "browseWallpapers"
                     icon: "grid_view"
                     label: qsTr("Browse all wallpapers")
                     description: qsTr("View every wallpaper across all themes")
 
                     MaterialIcon {
                         text: "chevron_right"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: Tokens.rounding.extraLarge
                 }
@@ -409,7 +411,7 @@ Item {
             StyledText {
                 Layout.topMargin: Tokens.spacing.small
                 text: qsTr("Wallpaper Picker")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.medium
             }
 
@@ -417,6 +419,7 @@ Item {
                 Layout.fillWidth: true
 
                 SettingsRow {
+                    searchId: "wallpaperPickerLayout"
                     icon: "view_carousel"
                     label: qsTr("Launcher layout")
                     description: qsTr("How SUPER+W presents your wallpapers")
@@ -440,19 +443,19 @@ Item {
                                 Layout.preferredHeight: 28
                                 Layout.preferredWidth: layoutLabel.implicitWidth + Tokens.padding.medium * 2
                                 radius: Tokens.rounding.full
-                                color: (layoutPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Colours.signalStyle.raised)
+                                color: (layoutPill.active ? Qt.alpha(Colours.signal, 0.16) : Colours.signalStyle.raised)
                                 border.width: 1
-                                border.color: layoutPill.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                                border.color: layoutPill.active ? Colours.signal : Colours.signalStyle.hairline
 
                                 StyledText {
                                     id: layoutLabel
                                     anchors.centerIn: parent
                                     text: layoutPill.modelData.label
-                                    color: (layoutPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                                    color: (layoutPill.active ? Colours.ink : Colours.inkMuted)
                                     font: Tokens.font.label.small
                                 }
 
-                                StateLayer {
+                                Interact {
                                     anchors.fill: parent
                                     radius: parent.radius
                                     showHoverBackground: !layoutPill.active
@@ -466,12 +469,63 @@ Item {
                         }
                     }
                 }
+
+                SettingsRow {
+                    searchId: "dashboardLayout"
+                    icon: "space_dashboard"
+                    label: qsTr("Dashboard layout")
+                    description: qsTr("How SUPER+D presents the dashboard")
+
+                    RowLayout {
+                        spacing: Tokens.spacing.small
+
+                        Repeater {
+                            model: [
+                                { id: "classic", label: qsTr("Classic") },
+                                { id: "spine", label: qsTr("Signal Spine") }
+                            ]
+
+                            StyledRect {
+                                id: dashLayoutPill
+
+                                required property var modelData
+                                readonly property bool active: dashLayoutPill.modelData.id === Settings.dashboardLayout
+
+                                Layout.preferredHeight: 28
+                                Layout.preferredWidth: dashLayoutLabel.implicitWidth + Tokens.padding.medium * 2
+                                radius: Tokens.rounding.full
+                                color: (dashLayoutPill.active ? Qt.alpha(Colours.signal, 0.16) : Colours.signalStyle.raised)
+                                border.width: 1
+                                border.color: dashLayoutPill.active ? Colours.signal : Colours.signalStyle.hairline
+
+                                StyledText {
+                                    id: dashLayoutLabel
+                                    anchors.centerIn: parent
+                                    text: dashLayoutPill.modelData.label
+                                    color: (dashLayoutPill.active ? Colours.ink : Colours.inkMuted)
+                                    font: Tokens.font.label.small
+                                }
+
+                                Interact {
+                                    anchors.fill: parent
+                                    radius: parent.radius
+                                    showHoverBackground: !dashLayoutPill.active
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: Settings.dashboardLayout = dashLayoutPill.modelData.id
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             StyledText {
                 Layout.topMargin: Tokens.spacing.small
                 text: qsTr("Wallpaper Slideshow")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.medium
             }
 
@@ -479,6 +533,7 @@ Item {
                 Layout.fillWidth: true
 
                 SettingsToggleRow {
+                    searchId: "autoCycleWallpaper"
                     icon: "slideshow"
                     label: qsTr("Auto-cycle wallpaper")
                     description: qsTr("Randomly advances within the active theme's wallpapers")
@@ -487,6 +542,7 @@ Item {
                 }
 
                 SettingsRow {
+                    searchId: "cycleInterval"
                     icon: "timer"
                     label: qsTr("Interval")
                     description: qsTr("Every %1 minutes").arg(Settings.wallpaperAutoCycleInterval)
@@ -506,19 +562,19 @@ Item {
                                 Layout.preferredHeight: 28
                                 Layout.preferredWidth: intervalLabel.implicitWidth + Tokens.padding.medium * 2
                                 radius: Tokens.rounding.full
-                                color: (intervalPill.active ? Qt.alpha(Colours.palette.m3primary, 0.16) : Colours.signalStyle.raised)
+                                color: (intervalPill.active ? Qt.alpha(Colours.signal, 0.16) : Colours.signalStyle.raised)
                                 border.width: 1
-                                border.color: intervalPill.active ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                                border.color: intervalPill.active ? Colours.signal : Colours.signalStyle.hairline
 
                                 StyledText {
                                     id: intervalLabel
                                     anchors.centerIn: parent
                                     text: qsTr("%1m").arg(intervalPill.modelData)
-                                    color: (intervalPill.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                                    color: (intervalPill.active ? Colours.ink : Colours.inkMuted)
                                     font: Tokens.font.label.small
                                 }
 
-                                StateLayer {
+                                Interact {
                                     anchors.fill: parent
                                     radius: parent.radius
                                     showHoverBackground: !intervalPill.active

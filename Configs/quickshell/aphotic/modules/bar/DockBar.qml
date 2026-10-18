@@ -16,6 +16,8 @@ Item {
     required property ShellScreen screen
     required property ScreenState screenState
 
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
+
     readonly property var dockItems: WindowList.dockItems(Settings.dockPinnedApps,"",true)
 
     // Icon-proximity magnification falloff (macOS-style), quadratic so it
@@ -80,6 +82,8 @@ Item {
         implicitHeight: Settings.barHorizontal ? Settings.barInnerWidth + Tokens.padding.small * 2 : layout.implicitHeight + Tokens.padding.medium * 2
 
         radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? pill.implicitHeight : pill.implicitWidth)
+        horizontal: Settings.barHorizontal
+        openEdge: root.notchEdge
 
         opacity: root.shouldShow ? 1 : 0
         // Behaviors go on the Translate's own x/y, not on `transform`
@@ -146,7 +150,7 @@ Item {
                 // on" by growing it, and a highlight gliding under icons
                 // that are themselves swelling reads as two effects
                 // fighting -- so the dock shows one or the other, never
-                // both. DockAppIcon's own StateLayer hover takes over
+                // both. DockAppIcon's own Interact hover takes over
                 // whenever this pill is off.
                 HoverPill {
                     container: iconGrid
@@ -224,11 +228,12 @@ Item {
             }
         }
 
-        // The screen-facing edge of the dock: the edge the window docks to
-        // is the pill's start edge (top or left) or end edge (bottom or
-        // right), so the line mirrors which one that is. The accent
-        // segments span the focused app's icon, read out of the grid (the
-        // Repeater keeps one child per dock item, in model order).
+        // The notch-facing edge of the dock: the edge away from the screen
+        // edge the window docks to (the notch is pinned to the exclusive
+        // zone's inner edge), so the line and its accent read from the
+        // desktop side and open across the notch span. The accent segments
+        // span the focused app's icon, read out of the grid (the Repeater
+        // keeps one child per dock item, in model order).
         SignalLine {
             id: dockSignalLine
 
@@ -236,7 +241,8 @@ Item {
             readonly property Item focusedIcon: idx >= 0 && idx < iconGrid.children.length ? iconGrid.children[idx] : null
 
             horizontal: Settings.barHorizontal
-            edge: (Settings.barHorizontal ? !Settings.barPositionBottom : !Settings.barPositionRight) ? "start" : "end"
+            edge: root.notchEdge
+            gapLength: root.screenState.notchSpan
             level: "active"
             activeStart: {
                 // Read icon.x/icon.y for the dependency: mapToItem alone

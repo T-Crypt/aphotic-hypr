@@ -19,7 +19,7 @@ Item {
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: Pomodoro.isBreak ? qsTr("Break") : qsTr("Focus")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.medium
         }
 
@@ -27,7 +27,7 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: Pomodoro.formatTime(Pomodoro.remaining)
             // Signal: the accent only while a pomodoro is actually running.
-            color: (Pomodoro.running ? Colours.palette.m3primary : Colours.palette.m3onSurface)
+            color: (Pomodoro.running ? Colours.signal : Colours.ink)
             font: Tokens.font.headline.builders.large.scale(1.3).weight(Font.DemiBold).build()
         }
 
@@ -45,7 +45,7 @@ Item {
                 implicitWidth: icon_.implicitHeight + Tokens.padding.small * 2
                 implicitHeight: implicitWidth
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     onClicked: btn.clicked()
                 }
@@ -54,7 +54,7 @@ Item {
                     id: icon_
                     anchors.centerIn: parent
                     text: btn.icon
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     fontStyle: Tokens.font.icon.medium
                 }
             }

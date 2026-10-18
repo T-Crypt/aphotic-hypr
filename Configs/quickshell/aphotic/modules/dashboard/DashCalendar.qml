@@ -49,7 +49,7 @@ Item {
                 implicitWidth: prevIcon.implicitHeight
                 implicitHeight: prevIcon.implicitHeight
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     onClicked: root.viewDate = new Date(root.viewYear, root.viewMonth - 1, 1)
                 }
@@ -58,7 +58,7 @@ Item {
                     id: prevIcon
                     anchors.centerIn: parent
                     text: "chevron_left"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
 
@@ -67,14 +67,14 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 text: root.viewDate.toLocaleDateString(Qt.locale(), "MMMM yyyy")
                 font: Tokens.font.body.large
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
             }
 
             Item {
                 implicitWidth: nextIcon.implicitHeight
                 implicitHeight: nextIcon.implicitHeight
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     onClicked: root.viewDate = new Date(root.viewYear, root.viewMonth + 1, 1)
                 }
@@ -83,7 +83,7 @@ Item {
                     id: nextIcon
                     anchors.centerIn: parent
                     text: "chevron_right"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
         }
@@ -100,7 +100,7 @@ Item {
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     text: modelData
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                 }
             }
@@ -133,7 +133,7 @@ Item {
                             height: 28
                             radius: Tokens.rounding.full
                             // Signal: today is a 1px accent ring, not a filled disc.
-                            color: cell.isToday ? "transparent" : "transparent"
+                            color: "transparent"
                             border.width: cell.isToday ? 1 : 0
                             border.color: Colours.signalStyle.accentLine
                             visible: cell.modelData !== 0
@@ -141,7 +141,7 @@ Item {
                             StyledText {
                                 anchors.centerIn: parent
                                 text: cell.modelData
-                                color: cell.isToday ? Colours.palette.m3onSurface : Colours.palette.m3onSurface
+                                color: Colours.ink
                                 font: Tokens.font.body.small
                             }
                         }

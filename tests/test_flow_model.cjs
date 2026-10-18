@@ -192,3 +192,16 @@ assert.equal(many.hiddenWorkloads, 22);
 
 console.log('Flow passports, receipts and projection: 22 assertions passed');
 console.log('Flow shell-activity layer: 20 assertions passed');
+
+{
+    const claims = [{id:'expert-proc-1', owner:'expert', resource:'gpu-vram', amount:24000, priority:'foreground'}];
+    const specs = {'gpu-vram': {unit:'MiB', capacity:24564}};
+    const without = ctx.build(claims, specs, {}, {}, {ai:true}, [], [], null);
+    const withEngine = ctx.build(claims, specs, {}, {}, {ai:true}, [], [], null, ['expert']);
+    const ai = model => model.planes.find(p => p.key === 'ai');
+    assert.equal(ai(without).claims.length, 0);
+    assert.equal(ai(withEngine).claims.length, 1);
+    assert.ok(ai(withEngine).owners.includes('expert'));
+    assert.equal(ctx.summarize(claims, specs, {}, {}, {ai:true}, [], [], ['expert']).planes.find(p => p.key === 'ai').claims.length, 1);
+    console.log('Flow live engines: AI plane owns a reported engine');
+}

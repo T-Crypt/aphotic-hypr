@@ -21,7 +21,7 @@ Item {
         WindowList.focus(root.modelData.address);
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();
@@ -60,7 +60,7 @@ Item {
             StyledText {
                 text: root.modelData.workspace?.name ?? ""
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
                 width: parent.width
             }

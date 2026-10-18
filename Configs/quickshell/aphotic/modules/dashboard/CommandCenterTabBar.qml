@@ -26,18 +26,18 @@ RowLayout {
         StyledRect {
             id: tabButton
 
-    property QtObject _sonarTarget: Loader {
-        active: Settings.sonarEnabled
-        sourceComponent: EchoTarget {
-            target: tabButton
-            targetId: "core:dashboard/tab-" + tabButton.modelData.id
-            label: tabButton.modelData.label
-            action: ""
-            bindDescription: ""
-            plugin: ""
-            eligible: true
-        }
-    }
+            property QtObject _sonarTarget: Loader {
+                active: Settings.sonarEnabled
+                sourceComponent: EchoTarget {
+                    target: tabButton
+                    targetId: "core:dashboard/tab-" + tabButton.modelData.id
+                    label: tabButton.modelData.label
+                    action: ""
+                    bindDescription: ""
+                    plugin: ""
+                    eligible: true
+                }
+            }
 
             required property var modelData
             readonly property bool active: tabButton.modelData.id === root.currentTab
@@ -59,7 +59,7 @@ RowLayout {
                 MaterialIcon {
                     id: icon
                     text: tabButton.modelData.icon
-                    color: (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (tabButton.active ? Colours.ink : Colours.inkMuted)
                     fontStyle: Tokens.font.icon.small
                     fill: tabButton.active ? 1 : 0
                 }
@@ -67,12 +67,12 @@ RowLayout {
                 StyledText {
                     id: label
                     text: tabButton.modelData.label
-                    color: (tabButton.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                    color: (tabButton.active ? Colours.ink : Colours.inkMuted)
                     font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
                 }
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 // Signal: the hover tone lands at full strength; the active

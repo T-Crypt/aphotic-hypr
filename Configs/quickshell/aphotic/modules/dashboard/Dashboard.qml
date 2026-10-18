@@ -11,11 +11,9 @@ import qs.services
 Item {
     id: root
 
-    // Main dashboard container
     implicitWidth: content.implicitWidth
     implicitHeight: content.implicitHeight
 
-    // Dashboard content
     RowLayout {
         id: content
 
@@ -24,20 +22,17 @@ Item {
         spacing: Tokens.spacing.medium
         visible: !placeholder.visible
 
-        // Main column for performance metrics
         ColumnLayout {
             id: mainColumn
 
             Layout.fillWidth: true
             spacing: Tokens.spacing.medium
 
-            // CPU and GPU row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
                 visible: cpuCard.active || gpuCard.active
 
-                // CPU Card
                 Loader {
                     id: cpuCard
 
@@ -53,7 +48,7 @@ Item {
                         secondaryLabel: qsTr("Temp")
                         usage: SystemUsage.cpuPerc
                         temperature: SystemUsage.cpuTemp
-                        accentColor: Colours.palette.m3primary
+                        accentColor: Colours.signal
                     }
                 }
 
@@ -76,7 +71,7 @@ Item {
                         secondaryLabel: qsTr("Temp")
                         usage: SystemUsage.gpuStatsAvailable ? SystemUsage.gpuPerc : 0
                         temperature: SystemUsage.gpuStatsAvailable ? SystemUsage.gpuTemp : 0
-                        accentColor: Colours.palette.m3secondary
+                        accentColor: Colours.signalSecondary
                         // Only shown when more than one GPU was detected
                         // (e.g. an Intel/AMD iGPU alongside a discrete
                         // NVIDIA/AMD card) -- a single-GPU machine never
@@ -92,13 +87,11 @@ Item {
                 }
             }
 
-            // Memory, Storage and Network row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
                 visible: memoryCard.active || storageCard.active || networkCard.active
 
-                // Memory Card
                 Loader {
                     id: memoryCard
 
@@ -113,11 +106,10 @@ Item {
                             const totalFmt = SystemUsage.formatKib(SystemUsage.memTotal);
                             return `${usedFmt.value.toFixed(1)} / ${Math.floor(totalFmt.value)} ${totalFmt.unit}`;
                         }
-                        accentColor: Colours.palette.m3tertiary
+                        accentColor: Colours.signalTertiary
                     }
                 }
 
-                // Storage Card
                 Loader {
                     id: storageCard
 
@@ -126,7 +118,6 @@ Item {
                     sourceComponent: StorageGaugeCard {}
                 }
 
-                // Network Card
                 Loader {
                     id: networkCard
 
@@ -137,7 +128,6 @@ Item {
             }
         }
 
-        // Battery Tank (if applicable)
         Loader {
             Layout.fillWidth: false
             active: UPower.displayDevice.isLaptopBattery && Config.dashboard.performance.showBattery
@@ -145,7 +135,6 @@ Item {
         }
     }
 
-    // Placeholder when no widgets are enabled
     StyledRect {
         id: placeholder
 
@@ -171,26 +160,25 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 text: "tune"
                 fontStyle: Tokens.font.icon.builders.extraLarge.scale(2).build()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
 
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 text: qsTr("No widgets enabled")
                 font.pointSize: Tokens.fontSize.large
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
             }
 
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Enable widgets in dashboard settings")
                 font.pointSize: Tokens.fontSize.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
         }
     }
 
-    // Function to display temperature with proper unit conversion
     function displayTemp(temp: real): string {
         return `${Math.ceil(Config.services.useFahrenheitPerformance ? temp * 1.8 + 32 : temp)}°${Config.services.useFahrenheitPerformance ? "F" : "C"}`;
     }
@@ -204,7 +192,6 @@ Item {
         return name.replace(/\(R\)|\(TM\)|\(C\)/g, "").replace(/\s*@\s*[\d.]+\s*[GM]Hz/i, "").replace(/\s+/g, " ").trim();
     }
 
-    // Components for dashboard cards
     component BatteryTank: StyledClippingRect {
         id: batteryTank
 
@@ -213,7 +200,7 @@ Item {
 
         property real percentage: UPower.displayDevice.percentage
         property bool isCharging: UPower.displayDevice.state === UPowerDeviceState.Charging
-        property color accentColor: Colours.palette.m3primary
+        property color accentColor: Colours.signal
         property real animatedPercentage: 0
 
         color: Colours.signalStyle.raised
@@ -223,7 +210,6 @@ Item {
         Component.onCompleted: animatedPercentage = percentage
         onPercentageChanged: animatedPercentage = percentage
 
-        // Background Fill
         StyledRect {
             anchors.left: parent.left
             anchors.right: parent.right
@@ -237,7 +223,6 @@ Item {
             anchors.margins: Tokens.padding.large
             spacing: Tokens.spacing.small
 
-            // Header Section
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.small
@@ -275,7 +260,7 @@ Item {
                     Layout.fillWidth: true
                     text: qsTr("Battery")
                     font.pointSize: Tokens.fontSize.normal
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                 }
             }
 
@@ -283,7 +268,6 @@ Item {
                 Layout.fillHeight: true
             }
 
-            // Bottom Info Section
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: -4
@@ -317,7 +301,7 @@ Item {
                         return `${min}m`;
                     }
                     font.pointSize: Tokens.fontSize.smaller
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
         }
@@ -334,7 +318,7 @@ Item {
 
         property string icon
         property string title
-        property color accentColor: Colours.palette.m3primary
+        property color accentColor: Colours.signal
         // Optional trailing control (e.g. the GPU card's device-cycle
         // button) -- most cards leave this unset.
         property Item trailingItem
@@ -379,10 +363,10 @@ Item {
             anchors.centerIn: parent
             text: "swap_horiz"
             fontStyle: Tokens.font.icon.small
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
         }
 
-        StateLayer {
+        Interact {
             anchors.fill: parent
             radius: cycleButton.radius
             onClicked: {
@@ -397,8 +381,8 @@ Item {
         id: progressBar
 
         property real value: 0
-        property color fgColor: Colours.palette.m3primary
-        property color bgColor: Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+        property color fgColor: Colours.signal
+        property color bgColor: Colours.layer(Colours.raised, 2)
         property real animatedValue: 0
 
         color: bgColor
@@ -436,7 +420,7 @@ Item {
         property string secondaryLabel
         property real usage: 0
         property real temperature: 0
-        property color accentColor: Colours.palette.m3primary
+        property color accentColor: Colours.signal
         // Passthrough to the internal CardHeader -- lets a specific card
         // (the GPU one, for a device-cycle button) add a trailing control
         // without every other HeroCard user needing to know about it.
@@ -504,7 +488,7 @@ Item {
                         StyledText {
                             text: heroCard.secondaryLabel
                             font.pointSize: Tokens.fontSize.small
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             anchors.baseline: parent.children[0].baseline
                         }
                     }
@@ -528,7 +512,7 @@ Item {
             id: mainStatColumn
 
             anchors.right: parent.right
-            anchors.rightMargin: 32
+            anchors.rightMargin: Tokens.padding.extraLargeIncreased
             y: statRow.mapToItem(heroCard, 0, statRow.height / 2).y - height / 2
             spacing: 0
 
@@ -536,7 +520,7 @@ Item {
                 anchors.right: parent.right
                 text: heroCard.mainLabel
                 font.pointSize: Tokens.fontSize.normal
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
 
             StyledText {
@@ -571,7 +555,7 @@ Item {
         property string title
         property real percentage: 0
         property string subtitle
-        property color accentColor: Colours.palette.m3primary
+        property color accentColor: Colours.signal
         readonly property real arcStartAngle: 0.75 * Math.PI
         readonly property real arcSweep: 1.5 * Math.PI
         property real animatedPercentage: 0
@@ -616,7 +600,7 @@ Item {
                         ctx.arc(cx, cy, radius, gaugeCard.arcStartAngle, gaugeCard.arcStartAngle + gaugeCard.arcSweep);
                         ctx.lineWidth = lineWidth;
                         ctx.lineCap = "round";
-                        ctx.strokeStyle = Colours.layer(Colours.palette.m3surfaceContainerHigh, 2);
+                        ctx.strokeStyle = Colours.layer(Colours.raised, 2);
                         ctx.stroke();
                         if (gaugeCard.animatedPercentage > 0) {
                             ctx.beginPath();
@@ -659,7 +643,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 text: gaugeCard.subtitle
                 font.pointSize: Tokens.fontSize.smaller
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
         }
 
@@ -682,7 +666,7 @@ Item {
         readonly property real arcStartAngle: 0.75 * Math.PI
         readonly property real arcSweep: 1.5 * Math.PI
         property real animatedPercentage: 0
-        property color accentColor: Colours.palette.m3secondary
+        property color accentColor: Colours.signalSecondary
 
         color: Colours.signalStyle.raised
         radius: Tokens.rounding.medium
@@ -699,7 +683,6 @@ Item {
                 animatedPercentage = currentDisk.perc;
         }
 
-        // Update diskCount and animatedPercentage when disks data changes
         Connections {
             function onDisksChanged() {
                 if (SystemUsage.disks.length !== storageGaugeCard.diskCount)
@@ -740,10 +723,9 @@ Item {
                 }
                 accentColor: storageGaugeCard.accentColor
 
-                // Scroll hint icon
                 MaterialIcon {
                     text: "unfold_more"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                     visible: storageGaugeCard.diskCount > 1
                     opacity: 0.7
@@ -778,7 +760,7 @@ Item {
                         ctx.arc(cx, cy, radius, storageGaugeCard.arcStartAngle, storageGaugeCard.arcStartAngle + storageGaugeCard.arcSweep);
                         ctx.lineWidth = lineWidth;
                         ctx.lineCap = "round";
-                        ctx.strokeStyle = Colours.layer(Colours.palette.m3surfaceContainerHigh, 2);
+                        ctx.strokeStyle = Colours.layer(Colours.raised, 2);
                         ctx.stroke();
                         if (storageGaugeCard.animatedPercentage > 0) {
                             ctx.beginPath();
@@ -828,7 +810,7 @@ Item {
                     return `${usedFmt.value.toFixed(1)} / ${Math.floor(totalFmt.value)} ${totalFmt.unit}`;
                 }
                 font.pointSize: Tokens.fontSize.smaller
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
         }
 
@@ -845,7 +827,7 @@ Item {
         implicitWidth: 220
         implicitHeight: 200
 
-        property color accentColor: Colours.palette.m3primary
+        property color accentColor: Colours.signal
 
         color: Colours.signalStyle.raised
         radius: Tokens.rounding.medium
@@ -866,7 +848,6 @@ Item {
                 accentColor: networkCard.accentColor
             }
 
-            // Sparkline graph
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -947,8 +928,8 @@ Item {
                             ctx.fill();
                         };
 
-                        drawLine(upHist, Colours.palette.m3secondary.toString(), 0.15);
-                        drawLine(downHist, Colours.palette.m3tertiary.toString(), 0.2);
+                        drawLine(upHist, Colours.signalSecondary.toString(), 0.15);
+                        drawLine(downHist, Colours.signalTertiary.toString(), 0.2);
                     }
 
                     Component.onCompleted: updateMax()
@@ -991,32 +972,30 @@ Item {
                     }
                 }
 
-                // "No data" placeholder
                 StyledText {
                     anchors.centerIn: parent
                     text: qsTr("Collecting data...")
                     font.pointSize: Tokens.fontSize.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     visible: NetworkUsage.downloadBuffer.values.length < 2
                     opacity: 0.6
                 }
             }
 
-            // Download row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
 
                 MaterialIcon {
                     text: "download"
-                    color: Colours.palette.m3tertiary
+                    color: Colours.signalTertiary
                     fontStyle: Tokens.font.icon.medium
                 }
 
                 StyledText {
                     text: qsTr("Download")
                     font.pointSize: Tokens.fontSize.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
 
                 Item {
@@ -1033,25 +1012,24 @@ Item {
                     }
                     font.pointSize: Tokens.fontSize.normal
                     font.weight: Font.Medium
-                    color: Colours.palette.m3tertiary
+                    color: Colours.signalTertiary
                 }
             }
 
-            // Upload row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
 
                 MaterialIcon {
                     text: "upload"
-                    color: Colours.palette.m3secondary
+                    color: Colours.signalSecondary
                     fontStyle: Tokens.font.icon.medium
                 }
 
                 StyledText {
                     text: qsTr("Upload")
                     font.pointSize: Tokens.fontSize.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
 
                 Item {
@@ -1068,25 +1046,24 @@ Item {
                     }
                     font.pointSize: Tokens.fontSize.normal
                     font.weight: Font.Medium
-                    color: Colours.palette.m3secondary
+                    color: Colours.signalSecondary
                 }
             }
 
-            // Session totals
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.medium
 
                 MaterialIcon {
                     text: "history"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
 
                 StyledText {
                     text: qsTr("Total")
                     font.pointSize: Tokens.fontSize.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
 
                 Item {
@@ -1103,7 +1080,7 @@ Item {
                         return (down && up) ? `↓${down.value.toFixed(1)}${down.unit} ↑${up.value.toFixed(1)}${up.unit}` : "↓0.0B ↑0.0B";
                     }
                     font.pointSize: Tokens.fontSize.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
         }

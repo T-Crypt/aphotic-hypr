@@ -10,7 +10,7 @@ import qs.components
 import qs.services
 import qs.utils
 
-StyledRect {
+SignalSurface {
     id: root
 
     required property var modelData
@@ -31,29 +31,16 @@ StyledRect {
         return Qt.formatDate(new Date(ms), "MMM d");
     }
 
-    color: Colours.signalStyle.raised
-    border.width: 1
-    border.color: Colours.signalStyle.hairline
+    tone: Colours.signalStyle.raised
     radius: Tokens.rounding.medium
     implicitHeight: inner.implicitHeight + Tokens.padding.medium * 2
 
-    Rectangle {
-        x: root.radius
-        width: root.width - root.radius * 2
-        height: 1
-        color: Colours.signalStyle.edgeLight
-    }
-
-    // Signal: critical reads as an edge line, not a red-filled card.
-    Rectangle {
-        visible: root.modelData.urgency === NotificationUrgency.Critical
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.topMargin: root.radius
-        anchors.bottomMargin: root.radius
-        width: 2
-        color: Colours.palette.m3error
+    // Critical urgency rides the signal line: idle for a normal entry,
+    // warn for a critical one.
+    SignalLine {
+        horizontal: false
+        edge: "start"
+        level: root.modelData.urgency === NotificationUrgency.Critical ? "warn" : "idle"
     }
 
     RowLayout {
@@ -66,12 +53,12 @@ StyledRect {
         spacing: Tokens.spacing.medium
 
         Rectangle {
-            Layout.preferredWidth: 8
-            Layout.preferredHeight: 8
+            Layout.preferredWidth: Tokens.spacing.small
+            Layout.preferredHeight: Tokens.spacing.small
             Layout.alignment: Qt.AlignVCenter
             visible: !root.modelData.read
-            radius: 4
-            color: Colours.palette.m3primary
+            radius: Tokens.rounding.full
+            color: Colours.signal
         }
 
         Rectangle {
@@ -81,7 +68,7 @@ StyledRect {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: Tokens.rounding.full
-            color: Qt.alpha(Colours.palette.m3primary, 0.14)
+            color: Qt.alpha(Colours.signal, 0.14)
 
             AppIcon {
                 anchors.centerIn: parent
@@ -90,7 +77,7 @@ StyledRect {
                 fallbackGlyph: Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
                 size: 20
                 fontStyle: Tokens.font.icon.medium
-                colour: Colours.palette.m3primary
+                colour: Colours.signal
             }
         }
 
@@ -103,7 +90,7 @@ StyledRect {
                 Layout.fillWidth: true
                 text: (root.modelData.appName || root.modelData.summary).toUpperCase()
                 font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
             }
 
@@ -112,11 +99,10 @@ StyledRect {
                 visible: false
                 text: `${root.modelData.summary} · ${root.relativeTime(root.modelData.timestamp)}`
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
             }
 
-            // Signal: summary leads the line DemiBold, time sits muted at the right.
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Tokens.spacing.small
@@ -125,14 +111,14 @@ StyledRect {
                     Layout.fillWidth: true
                     text: root.modelData.summary
                     font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     elide: Text.ElideRight
                 }
 
                 StyledText {
                     text: root.relativeTime(root.modelData.timestamp)
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
 
@@ -141,7 +127,7 @@ StyledRect {
                 text: root.modelData.body
                 visible: text.length > 0
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
         }
@@ -152,7 +138,7 @@ StyledRect {
             implicitHeight: markReadIcon.implicitHeight
             visible: !root.modelData.read
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 onClicked: NotificationHistory.markRead(root.modelData.id)
             }
@@ -161,7 +147,7 @@ StyledRect {
                 id: markReadIcon
                 anchors.centerIn: parent
                 text: "close"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
         }
@@ -172,7 +158,7 @@ StyledRect {
             implicitHeight: deleteIcon.implicitHeight
             opacity: 0.5
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
                 onClicked: NotificationHistory.deleteEntry(root.modelData.id)
             }
@@ -181,7 +167,7 @@ StyledRect {
                 id: deleteIcon
                 anchors.centerIn: parent
                 text: "delete"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
         }

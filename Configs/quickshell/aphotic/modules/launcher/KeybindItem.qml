@@ -26,7 +26,7 @@ Item {
         Toaster.toast(qsTr("Copied"), root.modelData.combo, "content_copy");
     }
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             root.execute();
@@ -47,7 +47,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: "keyboard"
             fontStyle: Tokens.font.icon.large
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
         }
 
         StyledText {
@@ -67,7 +67,7 @@ Item {
             implicitWidth: comboText.implicitWidth + Tokens.padding.medium * 2
             implicitHeight: comboText.implicitHeight + Tokens.padding.extraSmall * 2
             radius: Tokens.rounding.small
-            color: Colours.palette.m3surfaceContainer
+            color: Colours.surface
 
             StyledText {
                 id: comboText
@@ -75,7 +75,7 @@ Item {
                 anchors.centerIn: parent
                 text: root.modelData.combo
                 font: Tokens.font.mono.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
             }
         }
     }

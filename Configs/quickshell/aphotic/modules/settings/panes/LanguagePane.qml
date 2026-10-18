@@ -73,7 +73,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("Your keyboard layout, in xkb codes. The pills are the common ones -- any other code works too, typed by hand. Everything here is written to ~/.config/hypr/keyboard.lua and applied to the running session immediately.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -84,7 +84,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Primary layout")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -92,6 +92,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsPresetRow {
+                searchId: "kbLayout"
                 icon: "keyboard"
                 label: qsTr("Layout")
                 presets: root.layoutPresets
@@ -100,6 +101,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "kbCustomCode"
                 icon: "edit"
                 label: qsTr("Custom code")
                 description: qsTr("Any xkb code not listed above -- press Enter to apply")
@@ -112,6 +114,7 @@ ColumnLayout {
             }
 
             SettingsPresetRow {
+                searchId: "kbVariant"
                 icon: "tune"
                 label: qsTr("Variant")
                 description: qsTr("Applies to the primary layout only")
@@ -129,7 +132,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Additional layouts")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -137,6 +140,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsRow {
+                searchId: "kbAddLayout"
                 icon: "add"
                 label: qsTr("Add a layout")
                 description: qsTr("Press Enter to add it to the switch order below")
@@ -170,11 +174,11 @@ ColumnLayout {
 
                         MaterialIcon {
                             text: "arrow_upward"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
                             visible: layoutRow.index > 0
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -184,11 +188,11 @@ ColumnLayout {
 
                         MaterialIcon {
                             text: "arrow_downward"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
                             visible: layoutRow.index < Settings.additionalKbLayouts.length - 1
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -198,10 +202,10 @@ ColumnLayout {
 
                         MaterialIcon {
                             text: "delete"
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -219,7 +223,7 @@ ColumnLayout {
             wrapMode: Text.Wrap
             visible: Settings.additionalKbLayouts.length === 0
             text: qsTr("No additional layouts yet -- add one to enable layout switching.")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.body.small
         }
     }
@@ -232,7 +236,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Switching")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -240,6 +244,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsPresetRow {
+                searchId: "kbSwitchKey"
                 icon: "swap_horiz"
                 label: qsTr("Switch key")
                 description: qsTr("Cycles through %1 in order").arg([Settings.kbLayout || "us", ...Settings.additionalKbLayouts].join(", "))
@@ -264,7 +269,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: qsTr("The rest of the xkb keyboard description, for hardware the defaults get wrong. Leave these empty unless you know you need them -- they are written to ~/.config/hypr/keyboard.lua alongside the layout above.")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
 
@@ -272,6 +277,7 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 SettingsRow {
+                    searchId: "kbModel"
                     icon: "keyboard_alt"
                     label: qsTr("Keyboard model")
                     description: qsTr("Empty uses the system default")
@@ -284,6 +290,7 @@ ColumnLayout {
                 }
 
                 SettingsRow {
+                    searchId: "kbRules"
                     icon: "rule"
                     label: qsTr("XKB rules")
                     description: qsTr("Empty uses the system default")

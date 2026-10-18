@@ -99,14 +99,14 @@ Item {
 
         anchors.fill: parent
         radius: Tokens.rounding.full
-        color: Colours.palette.m3primary
+        color: Colours.signal
 
         Colouriser {
             id: colouriser
 
             source: root.mask
-            sourceColor: Colours.palette.m3onSurface
-            colorizationColor: Colours.palette.m3onPrimary
+            sourceColor: Colours.ink
+            colorizationColor: Colours.onSignal
 
             x: Settings.barHorizontal ? -root.offset : 0
             y: Settings.barHorizontal ? 0 : -root.offset

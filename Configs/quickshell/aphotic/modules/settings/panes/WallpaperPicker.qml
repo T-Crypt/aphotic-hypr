@@ -32,16 +32,16 @@ ColumnLayout {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: Tokens.rounding.full
-            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+            color: Colours.layer(Colours.surfaceLift, 2)
 
             MaterialIcon {
                 anchors.centerIn: parent
                 text: "arrow_back"
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 fontStyle: Tokens.font.icon.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
             }
@@ -54,7 +54,7 @@ ColumnLayout {
 
         StyledText {
             text: qsTr("All wallpapers")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.builders.medium.weight(Font.Medium).build()
         }
     }

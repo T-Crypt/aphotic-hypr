@@ -44,10 +44,10 @@ Item {
         Anim { type: Anim.StandardSmall }
     }
 
-    StateLayer {
+    Interact {
         anchors.fill: parent
         radius: Tokens.rounding.full
-        stateOpacity: root.showHover && containsMouse ? 0.08 : 0
+        stateOpacity: root.showHover && containsMouse ? 1 : 0
         onClicked: {
             if (root.item.windows.length > 0) {
                 WindowList.cycleWindows(root.item.windows);
@@ -64,7 +64,7 @@ Item {
         appClass: root.item.iconKeys
         size: parent.width * 0.6
         fontStyle: Tokens.font.icon.large
-        colour: Colours.palette.m3onSurface
+        colour: Colours.ink
     }
 
     Rectangle {
@@ -72,7 +72,7 @@ Item {
         width: 5
         height: 5
         radius: 2.5
-        color: Colours.palette.m3primary
+        color: Colours.signal
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 2

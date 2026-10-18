@@ -1,6 +1,6 @@
-# Contributing to Aphotic-Hypr
+# Contributing to Aphotic
 
-Aphotic-Hypr is a full custom Quickshell desktop environment for Hyprland,
+Aphotic is a full custom Quickshell desktop environment for Hyprland,
 built in the same weight class as `end-4/dots-hyprland` — everything is
 first-party (bar, launcher, notifications, OSD, lock, session menu,
 dashboard, area picker), not a wrapper around third-party tools.

@@ -16,7 +16,7 @@ Item {
     width: ListView.view?.width ?? 0
     implicitHeight: Tokens.sizes.launcher.itemHeight
 
-    StateLayer {
+    Interact {
         radius: Tokens.rounding.large
         onClicked: {
             LauncherUsage.recordLaunch(root.modelData.id);
@@ -57,7 +57,7 @@ Item {
             StyledText {
                 text: root.modelData?.comment || root.modelData?.genericName || ""
                 font: Tokens.font.body.small
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 elide: Text.ElideRight
                 width: parent.width
             }

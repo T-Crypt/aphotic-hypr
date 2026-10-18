@@ -12,6 +12,7 @@ Item {
     readonly property var activeSurface: root.workspace.find(surface => surface.id === root.activeId) ?? null
     property string activeId: ""
     property bool surfaceActive: false
+    property string failedLabel: ""
 
     function _ensureActive(): void {
         if (root.workspace.some(surface => surface.id === root.activeId))
@@ -50,7 +51,7 @@ Item {
             anchors.fill: parent
             anchors.margins: 1
             radius: Math.max(0, parent.radius - 1)
-            color: Colours.palette.m3surfaceContainer
+            color: Colours.surface
         }
     }
 
@@ -77,39 +78,45 @@ Item {
                     width: parent.width
                     height: 58
 
-                    StyledRect {
-                        width: 32
-                        height: 32
+                    Row {
                         anchors.verticalCenter: parent.verticalCenter
-                        radius: Tokens.rounding.medium
-                        color: Qt.alpha(Colours.signalStyle.tint(0), 0.3)
+                        width: parent.width
+                        spacing: Tokens.spacing.medium
 
-                        MaterialIcon {
-                            anchors.centerIn: parent
-                            text: "space_dashboard"
-                            color: Colours.legibleAccent(Colours.signalStyle.tint(0), Colours.signalStyle.base)
-                            fontStyle: Tokens.font.icon.medium
-                            fill: 1
-                        }
-                    }
+                        StyledRect {
+                            id: headerChip
 
-                    Column {
-                        anchors.left: parent.left
-                        anchors.leftMargin: 44
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 44
-                        spacing: 1
+                            width: 32
+                            height: 32
+                            anchors.verticalCenter: parent.verticalCenter
+                            radius: Tokens.rounding.medium
+                            color: Qt.alpha(Colours.signalStyle.tint(0), 0.3)
 
-                        StyledText {
-                            text: qsTr("Workspace")
-                            font: Tokens.font.headline.builders.medium.weight(Font.DemiBold).build()
-                            color: Colours.palette.m3onSurface
+                            MaterialIcon {
+                                anchors.centerIn: parent
+                                text: "space_dashboard"
+                                color: Colours.legibleAccent(Colours.signalStyle.tint(0), Colours.signalStyle.base)
+                                fontStyle: Tokens.font.icon.medium
+                                fill: 1
+                            }
                         }
 
-                        StyledText {
-                            text: qsTr("Plugin tools").toUpperCase()
-                            font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                            color: Colours.palette.m3onSurfaceVariant
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - headerChip.width - parent.spacing
+                            spacing: Tokens.spacing.extraSmall
+
+                            StyledText {
+                                text: qsTr("Workspace")
+                                font: Tokens.font.headline.builders.medium.weight(Font.DemiBold).build()
+                                color: Colours.ink
+                            }
+
+                            StyledText {
+                                text: qsTr("Plugin tools").toUpperCase()
+                                font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
+                                color: Colours.inkMuted
+                            }
                         }
                     }
                 }
@@ -120,7 +127,7 @@ Item {
                     bottomPadding: Tokens.spacing.extraSmall
                     text: qsTr("AVAILABLE")
                     font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
 
                 Item {
@@ -145,7 +152,7 @@ Item {
                         StyledRect {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 3
+                            width: 2
                             height: parent.height - Tokens.spacing.large
                             radius: Tokens.rounding.full
                             color: Colours.signalStyle.tint(navigationList.activeIndex)
@@ -169,7 +176,7 @@ Item {
                             width: navigationList.width
                             height: Tokens.sizes.workspace.itemHeight
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: Tokens.rounding.medium
                                 onClicked: root.activeId = navItem.modelData.id
@@ -209,7 +216,7 @@ Item {
                                     elide: Text.ElideRight
                                     text: navItem.modelData.label
                                     font: navItem.active ? Tokens.font.label.builders.medium.weight(Font.DemiBold).build() : Tokens.font.label.builders.medium.weight(navItem.active ? Font.Medium : Font.Normal).build()
-                                    color: (navItem.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant)
+                                    color: (navItem.active ? Colours.ink : Colours.inkMuted)
                                 }
                             }
                         }
@@ -236,11 +243,11 @@ Item {
                 gradient: Gradient {
                     GradientStop {
                         position: 0
-                        color: Qt.alpha(Colours.palette.m3primary, 0.1)
+                        color: Qt.alpha(Colours.signal, 0.1)
                     }
                     GradientStop {
                         position: 1
-                        color: Qt.alpha(Colours.palette.m3primary, 0)
+                        color: Qt.alpha(Colours.signal, 0)
                     }
                 }
             }
@@ -259,8 +266,14 @@ Item {
                 source: root.activeSurface?.componentUrl ?? ""
 
                 onStatusChanged: {
-                    if (paneLoader.status === Loader.Ready)
+                    if (paneLoader.status === Loader.Ready) {
+                        root.failedLabel = "";
+                        PluginRegistry.markSurfaceFailed(root.activeSurface, false);
                         root._revealPane();
+                    } else if (paneLoader.status === Loader.Error) {
+                        root.failedLabel = root.activeSurface?.label ?? root.activeId;
+                        PluginRegistry.markSurfaceFailed(root.activeSurface, true);
+                    }
                 }
             }
 
@@ -293,15 +306,17 @@ Item {
 
                 MaterialIcon {
                     text: "widgets"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     opacity: 0.5
                     fontStyle: Tokens.font.icon.large
                 }
 
                 StyledText {
-                    text: qsTr("No plugin surfaces")
+                    text: root.failedLabel.length > 0
+                          ? qsTr("Failed to load %1").arg(root.failedLabel)
+                          : qsTr("No plugin surfaces")
                     font: Tokens.font.label.medium
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
         }

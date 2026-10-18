@@ -31,7 +31,7 @@ StyledClippingRect {
     }
 
     radius: Tokens.rounding.large
-    color: (root.active ? Qt.alpha(Colours.palette.m3primary, 0.08) : Colours.signalStyle.raised)
+    color: (root.active ? Qt.alpha(Colours.signal, 0.08) : Colours.signalStyle.raised)
     border.width: 1
     border.color: (root.active ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline)
 
@@ -67,14 +67,14 @@ StyledClippingRect {
         implicitHeight: keyLabel.implicitHeight + Tokens.padding.extraSmall
         radius: Tokens.rounding.small
         visible: root.card.key.length > 0
-        color: root.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+        color: root.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
         StyledText {
             id: keyLabel
 
             anchors.centerIn: parent
             text: `${root.card.key.toUpperCase()}  ·  ${root.card.id}`
-            color: root.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+            color: root.active ? Colours.onSignal : Colours.inkMuted
             font: Tokens.font.label.small
         }
     }
@@ -83,7 +83,7 @@ StyledClippingRect {
         anchors.centerIn: parent
         visible: root.card.windows.length === 0
         text: qsTr("empty")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -96,20 +96,20 @@ StyledClippingRect {
             anchors.verticalCenter: parent.verticalCenter
             width: 6
             height: 6
-            radius: 3
+            radius: Tokens.rounding.full
             color: Colours.signalStyle.tint(root.tintIndex)
         }
 
         StyledText {
             text: qsTr("WORKSPACE %1").arg(root.card.id)
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
         }
     }
 
     // Selecting the card itself is what picks an empty desktop; on a
     // populated one the tiles above take the click first.
-    MouseArea {
+    Interact {
         anchors.fill: parent
         z: -1
         onClicked: Switcher.selectWorkspace(root.card.id)

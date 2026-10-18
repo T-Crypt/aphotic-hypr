@@ -16,6 +16,8 @@ Item {
     required property ShellScreen screen
     required property ScreenState screenState
 
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
+
     readonly property bool horizontal: Settings.barHorizontal
     // Which way the popout grows: away from the screen edge the bar is
     // docked against, so it never covers the pill.
@@ -36,7 +38,7 @@ Item {
     // what cut the status icons off. Same floor-not-cap rule the row
     // itself uses along its length.
     readonly property real rowCross: root.horizontal ? collapsedRow.implicitHeight : collapsedRow.implicitWidth
-    readonly property int rowThickness: Math.max(Settings.barInnerWidth, root.rowCross) + Tokens.padding.extraSmall * 2
+    readonly property int rowThickness: Math.round(Math.max(Settings.barInnerWidth, root.rowCross) + Tokens.padding.extraSmall * 2)
     readonly property real rowExtent: root.horizontal ? collapsedRow.implicitWidth : collapsedRow.implicitHeight
     readonly property real alongExtent: Math.max(rowExtent + Tokens.padding.medium * 2, Config.bar.capsule.minLength)
 
@@ -115,6 +117,8 @@ Item {
         height: root.horizontal ? root.rowThickness : root.alongExtent
 
         radius: BarLayout.cornerRadius(Settings.barCorners, root.rowThickness)
+        horizontal: root.horizontal
+        openEdge: root.notchEdge
         // Hard guarantee, not decoration: this window masks input to the
         // bar's own bounds, so anything a child renders outside them is
         // both visually loose and completely dead to the pointer. Clipping
@@ -199,8 +203,9 @@ Item {
             }
         }
 
-        // The screen-facing edge line, shortened by the corner radius at
-        // both ends so the hairline never runs off the rounded corners.
+        // The notch-facing edge line, shortened by the corner radius at both
+        // ends so the hairline never runs off the rounded corners. It opens
+        // across the notch span.
         Item {
             x: root.horizontal ? parent.radius : 0
             y: root.horizontal ? 0 : parent.radius
@@ -209,7 +214,8 @@ Item {
 
             SignalLine {
                 horizontal: root.horizontal
-                edge: (root.horizontal ? !Settings.barPositionBottom : !Settings.barPositionRight) ? "start" : "end"
+                edge: root.notchEdge
+                gapLength: root.screenState.notchSpan
             }
         }
     }

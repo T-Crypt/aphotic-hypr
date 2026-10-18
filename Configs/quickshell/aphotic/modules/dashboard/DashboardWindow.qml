@@ -33,7 +33,7 @@ PanelWindow {
     // desktop behind the dashboard.
     Rectangle {
         anchors.fill: parent
-        color: Colours.palette.m3shadow
+        color: Colours.shadow
         opacity: reveal.visibleProgress * 0.35
     }
 

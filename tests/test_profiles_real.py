@@ -87,7 +87,16 @@ def test_gaming_layer_adds_packages():
         str(ROOT / "profiles/base/full.toml"),
         [str(ROOT / "profiles/layers/gaming.toml")],
     )
-    for pkg in ["gamemode", "mangohud", "steam"]:
+    for pkg in ["gamemode", "mangohud", "steam", "gamescope"]:
+        assert pkg in result["main"]
+
+
+def test_dev_layer_adds_packages():
+    result = merge_packages(
+        str(ROOT / "profiles/base/full.toml"),
+        [str(ROOT / "profiles/layers/dev.toml")],
+    )
+    for pkg in ["neovim", "docker", "docker-compose", "npm"]:
         assert pkg in result["main"]
 
 
@@ -125,9 +134,12 @@ def test_multiple_layers_and_custom_apps_all_merge():
             str(ROOT / "profiles/layers/ai.toml"),
         ],
         custom_apps_path=str(ROOT / "profiles/custom_apps.lst"),
+        custom_flatpaks_path=str(ROOT / "profiles/custom_flatpaks.lst"),
     )
-    for pkg in ["gamemode", "neovim", "ollama", "spotify", "youtube-app-bin"]:
+    for pkg in ["gamemode", "neovim", "ollama"]:
         assert pkg in result["main"]
+    for fid in ["com.spotify.Client", "io.freetubeapp.FreeTube", "com.heroicgameslauncher.hgl"]:
+        assert fid in result["flatpak"]
 
 
 if __name__ == "__main__":

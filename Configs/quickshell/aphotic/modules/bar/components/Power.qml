@@ -24,7 +24,7 @@ Item {
     implicitWidth: Settings.barHorizontal ? icon.implicitHeight : icon.implicitHeight + Tokens.padding.small
     implicitHeight: Settings.barHorizontal ? icon.implicitHeight + Tokens.padding.small : icon.implicitHeight
 
-    StateLayer {
+    Interact {
         // Cursed workaround to make the height larger than the parent
         anchors.fill: undefined
         anchors.centerIn: parent
@@ -40,7 +40,7 @@ Item {
         anchors.centerIn: parent
 
         text: "power_settings_new"
-        color: Colours.palette.m3error
+        color: Colours.alert
         fontStyle: Tokens.font.icon.builders.small.weight(Font.Bold).build()
     }
 }

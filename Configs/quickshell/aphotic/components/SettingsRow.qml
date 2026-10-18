@@ -12,8 +12,16 @@ StyledRect {
     required property string label
     property string description: ""
 
+    // Search addressing. `searchId` is the anchor a settings-search hit
+    // matches (see config/SettingsCategories.qml), and `highlighted` marks
+    // the row once a hit lands on it, so a deep search opens the right pane
+    // with the right row shown instead of a scroll position that has to be
+    // guessed.
+    property string searchId: ""
+    property bool highlighted: false
+
     // A row whose subject has a real mark of its own rather than a
-    // Material glyph fills this instead of `icon`, and gets the same
+    // glyph name fills this instead of `icon`, and gets the same
     // rounded plate around it.
     property Component iconItem: null
 
@@ -39,7 +47,9 @@ StyledRect {
     Layout.preferredHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
     implicitHeight: rowLayout.implicitHeight + Tokens.padding.medium * 2
 
-    color: Colours.signalStyle.raised
+    // A search hit marks the row it landed on: tinted fill plus the accent
+    // rim, the same pair SettingsSection uses for a matched section.
+    color: root.highlighted ? Qt.tint(Colours.signalStyle.raised, Colours.signalStyle.hover) : Colours.signalStyle.raised
     topLeftRadius: root.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
     topRightRadius: root.first ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
     bottomLeftRadius: root.last ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
@@ -57,18 +67,22 @@ StyledRect {
     Behavior on bottomRightRadius {
         Anim { type: Anim.DefaultEffects }
     }
+    Behavior on color {
+        CAnim {}
+    }
 
     GradedOutline {
         topLeftRadius: root.topLeftRadius
         topRightRadius: root.topRightRadius
         bottomLeftRadius: root.bottomLeftRadius
         bottomRightRadius: root.bottomRightRadius
+        accent: root.highlighted
         hovered: root.activatable && rowState.containsMouse
     }
 
-    // Under the content, so a trailing control's own StateLayer still
+    // Under the content, so a trailing control's own Interact still
     // takes its clicks first rather than the row swallowing them.
-    StateLayer {
+    Interact {
         id: rowState
 
         anchors.fill: parent
@@ -94,7 +108,7 @@ StyledRect {
             Layout.preferredWidth: 36
             Layout.preferredHeight: 36
             radius: Tokens.rounding.medium
-            color: Qt.alpha(Colours.palette.m3onSurface, 0.05)
+            color: Qt.alpha(Colours.ink, 0.05)
 
             Loader {
                 anchors.centerIn: parent
@@ -106,7 +120,7 @@ StyledRect {
 
                 MaterialIcon {
                     text: root.icon
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.medium
                 }
             }
@@ -128,7 +142,7 @@ StyledRect {
                 Layout.fillWidth: true
                 text: root.description
                 elide: Text.ElideRight
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
         }

@@ -15,13 +15,11 @@ Item {
     required property ScreenState screenState
     property SurfaceReveal reveal: null
 
-    // Prefix sigils in the search box switch mode, matching the existing
-    // convention of one script per Rofi mode (rofi-combi/-clipboard/-emoji/
-    // -wallpaper.sh) collapsed into a single searchbox instead of separate
-    // launches.
-    // "~" alone browses theme folders; "~<theme>/" drills into that
-    // theme's own wallpapers -- matching directory-per-theme awww layout
-    // (themes/THEME_SPEC.md) instead of a single flat wallpaper list.
+    // Prefix sigils in the search box switch mode, replacing the old
+    // one-script-per-mode launchers with a single box. "~" alone browses
+    // theme folders, and "~<theme>/" drills into that theme's own
+    // wallpapers, matching the directory-per-theme layout
+    // (themes/THEME_SPEC.md) instead of one flat wallpaper list.
     readonly property string wallpaperThemeSlash: {
         const t = search.text;
         if (!t.startsWith("~"))
@@ -161,9 +159,8 @@ Item {
         return mode === "apps" ? t.trim().toLowerCase() : t.slice(1).trim().toLowerCase();
     }
 
-    // Rofi-drun-style icon grid, app-search mode only (Settings.launcherStyle
-    // === "grid") -- every other prefix mode always renders as the list
-    // below regardless of this setting.
+    // Icon grid, app-search mode only (Settings.launcherStyle === "grid").
+    // Every other prefix mode always renders as the list below.
     readonly property bool useGrid: mode === "apps" && Settings.launcherStyle === "grid"
     readonly property int gridMaxShown: Tokens.sizes.launcher.gridColumns * Tokens.sizes.launcher.gridRows
     readonly property var appResults: {
@@ -178,10 +175,9 @@ Item {
         return filtered.sort((a, b) => (LauncherUsage.countFor(b.id) - LauncherUsage.countFor(a.id)) || a.name.localeCompare(b.name));
     }
 
-    // Rofi-parity sizing: the wallpaper preview strip behind the search
-    // bar (matching style.rasi's `inputbar { background-image: url(...) }`)
-    // is its own fixed-height band above the results panel, not blended
-    // into the same surface.
+    // The wallpaper preview strip behind the search box is its own
+    // fixed-height band above the results panel, not blended into the
+    // same surface.
     readonly property int previewHeight: 140
 
     implicitWidth: Tokens.sizes.launcher.width
@@ -228,7 +224,7 @@ Item {
         radius: Tokens.rounding.extraLarge
         color: Colours.signalStyle.surface
         border.width: 0
-        border.color: Colours.palette.m3outlineVariant
+        border.color: Colours.outline
 
         // Signal: a sheet off the bottom edge -- square on the attached
         // side, panel radius on top.
@@ -239,11 +235,9 @@ Item {
 
         Column {
             anchors.fill: parent
-            spacing: 0
 
-            // Wallpaper preview strip -- a real live crop of the current
-            // desktop wallpaper (~/.config/awww/current-wallpaper via the
-            // Wallpapers service).
+            // Wallpaper preview strip: a live crop of the current desktop
+            // wallpaper via the Wallpapers service.
             Item {
                 id: previewStrip
 
@@ -261,7 +255,7 @@ Item {
 
                 StyledRect {
                     anchors.fill: parent
-                    color: Colours.palette.m3shadow
+                    color: Colours.shadow
                     opacity: 0.25
                 }
 
@@ -289,7 +283,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "search"
                                 fontStyle: Tokens.font.icon.medium
-                                color: Colours.palette.m3onSurfaceVariant
+                                color: Colours.inkMuted
                             }
 
                             Item {
@@ -304,7 +298,7 @@ Item {
                                     clip: true
 
                                     font: Tokens.font.body.large
-                                    color: Colours.palette.m3onSurface
+                                    color: Colours.ink
 
                                     // Grid style (Settings.launcherStyle === "grid",
                                     // apps mode only) swaps the visible results view
@@ -371,7 +365,7 @@ Item {
                                         }
                                     }
                                     font: search.font
-                                    color: Colours.palette.m3onSurfaceVariant
+                                    color: Colours.inkMuted
                                     visible: search.text.length === 0
                                 }
                             }
@@ -436,10 +430,11 @@ Item {
                         // searchIndex, not list: a plugin's settings pane is a
                         // section inside another category's pane rather than a
                         // category of its own, and its entry id
-                        // ("<category>/<section>") is the address
+                        // ("<category>/<section>", or "<category>/<section>/
+                        // <row>" for a setting row) is the address
                         // SettingsPanel.qml resolves on the way in.
                         const all = SettingsCategories.searchIndex;
-                        return root.query.length === 0 ? all : all.filter(c => c.label.toLowerCase().includes(root.query) || c.description.toLowerCase().includes(root.query));
+                        return root.query.length === 0 ? all : all.filter(c => (c.searchKey ?? "").includes(root.query));
                     }
                     case "keybinds": {
                         const all = HyprKeybinds.entries;
@@ -466,16 +461,15 @@ Item {
             highlight: Item {
                 StyledRect {
                     anchors.fill: parent
-                    radius: 0
                     color: Colours.signalStyle.hover
-                    opacity: 1
                 }
-                // Signal: no filled pill; a 2px accent edge marks the row.
+                // Signal: no filled pill; a rounded 2px accent edge marks the row.
                 Rectangle {
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     width: 2
+                    radius: Tokens.rounding.full
                     color: Colours.signalStyle.accentLine
                 }
             }
@@ -634,16 +628,15 @@ Item {
             highlight: Item {
                 StyledRect {
                     anchors.fill: parent
-                    radius: 0
                     color: Colours.signalStyle.hover
-                    opacity: 1
                 }
-                // Signal: no filled pill; a 2px accent edge marks the cell.
+                // Signal: no filled pill; a rounded 2px accent edge marks the cell.
                 Rectangle {
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     width: 2
+                    radius: Tokens.rounding.full
                     color: Colours.signalStyle.accentLine
                 }
             }

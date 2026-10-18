@@ -56,10 +56,13 @@ StyledRect {
         tab: t
     }))
 
-    // The base shell's own tiles. Both are core: the notch ships with the
-    // base layer and every install has them, which is what makes the
-    // palette a settings question (which actions are in it) rather than an
-    // install one (whether it exists at all).
+    // The base shell's own tiles. Processes and the palette are core: the
+    // notch ships with the base layer and every install has them, which is
+    // what makes the palette a settings question (which actions are in it)
+    // rather than an install one (whether it exists at all). The phone tile
+    // is core too, and absent while the bridge has nothing in reach, so an
+    // install that never turned the phone stack on has the two tiles it
+    // always had.
     readonly property var tiles: [
         {
             plugin: "",
@@ -74,7 +77,14 @@ StyledRect {
             icon: "bolt",
             label: qsTr("Commands"),
             componentUrl: ""
-        }
+        },
+        ...(Phone.available ? [{
+            plugin: "",
+            id: "phone",
+            icon: "smartphone",
+            label: qsTr("Phone"),
+            componentUrl: ""
+        }] : [])
     ].concat(root.pluginTiles).concat(root.shelfTiles)
 
     // Kept as a condition rather than assumed: core ships two tiles
@@ -202,7 +212,7 @@ StyledRect {
     // identically) until the last few frames, then drops through the whole
     // visible range at once.
     radius: root.collapsedThick / 2 + (Tokens.rounding.extraLarge - root.collapsedThick / 2) * root.alongT
-    color: root.joined ? Colours.signalStyle.bar : Colours.tPalette.m3surfaceContainer
+    color: root.joined ? Colours.signalStyle.bar : Colours.surfaceLift
 
     // Signal skin: the notch hangs from the bar as one piece, so the corners
     // on the bar side go square and fillets carry the bar edge into its sides.
@@ -261,10 +271,10 @@ StyledRect {
     }
 
     // Faded rather than flipped straight to invisible: the click that
-    // opens the notch starts a ripple that runs 600ms, longer than the
-    // open, so hiding this the instant `expanded` flips cut the ripple off
-    // mid-sweep and read as a flash under the growing surface.
-    StateLayer {
+    // opens the notch leaves its press treatment running past the flip,
+    // so hiding this the instant `expanded` flips cut that off mid-sweep
+    // and read as a flash under the growing surface.
+    Interact {
         radius: root.radius
         disabled: root.expanded
         visible: opacity > 0
@@ -354,7 +364,7 @@ StyledRect {
             radius: root.radius
             color: "transparent"
             border.width: 1
-            border.color: Colours.palette.m3outlineVariant
+            border.color: Colours.outline
         }
     }
 }

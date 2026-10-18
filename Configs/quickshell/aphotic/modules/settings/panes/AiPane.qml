@@ -28,7 +28,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Provider")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -36,6 +36,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsRow {
+                searchId: "aiActive"
                 icon: "smart_toy"
                 label: qsTr("Active")
                 description: qsTr("Used when AI Chat opens")
@@ -57,7 +58,7 @@ ColumnLayout {
                             Layout.preferredWidth: pillLabel.implicitWidth + Tokens.padding.medium * 2
                             radius: Tokens.rounding.full
                             opacity: providerPill.available ? 1 : 0.4
-                            color: providerPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                            color: providerPill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                             Behavior on color {
                                 CAnim {}
@@ -67,17 +68,17 @@ ColumnLayout {
                                 id: pillLabel
                                 anchors.centerIn: parent
                                 text: providerPill.modelData.label
-                                color: providerPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                color: providerPill.active ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                                 showHoverBackground: providerPill.available
                             }
 
-                            // A disabled StateLayer's own MouseArea stops
+                            // A disabled Interact's own MouseArea stops
                             // accepting clicks, letting them fall through
                             // to whatever is behind it -- the dashboard's
                             // click-outside-to-dismiss MouseArea, in this
@@ -112,7 +113,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Ollama")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -128,7 +129,7 @@ ColumnLayout {
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     TextInput {
                         id: hostInput
@@ -139,7 +140,7 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         clip: true
                         font: Tokens.font.label.small
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                         text: AiConfig.ollamaHost
 
                         Keys.onReturnPressed: {
@@ -155,7 +156,7 @@ ColumnLayout {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("http://host:11434")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
                     }
@@ -189,17 +190,17 @@ ColumnLayout {
                         radius: Tokens.rounding.full
                         visible: !AiProviders.ollamaReachable
                         opacity: AiProviders.startingOllama ? 0.5 : 1
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
 
                         StyledText {
                             id: startLabel
                             anchors.centerIn: parent
                             text: AiProviders.startingOllama ? qsTr("Starting…") : qsTr("Start Ollama")
-                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            color: Colours.contrastOn(Colours.signal)
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             disabled: AiProviders.startingOllama
@@ -218,17 +219,17 @@ ColumnLayout {
                         radius: Tokens.rounding.full
                         visible: AiProviders.ollamaReachable
                         opacity: AiProviders.stoppingOllama ? 0.5 : 1
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         StyledText {
                             id: stopLabel
                             anchors.centerIn: parent
                             text: AiProviders.stoppingOllama ? qsTr("Stopping…") : qsTr("Stop Ollama")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             disabled: AiProviders.stoppingOllama
@@ -244,6 +245,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiModel"
                 icon: "memory"
                 label: qsTr("Model")
                 description: AiConfig.ollamaModel.length > 0 ? AiConfig.ollamaModel : qsTr("None selected")
@@ -252,16 +254,16 @@ ColumnLayout {
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 28
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     MaterialIcon {
                         anchors.centerIn: parent
                         text: "refresh"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                     }
@@ -292,17 +294,17 @@ ColumnLayout {
                     implicitHeight: 28
                     implicitWidth: modelLabel.implicitWidth + Tokens.padding.medium * 2
                     radius: Tokens.rounding.full
-                    color: modelPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 2)
+                    color: modelPill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 2)
 
                     StyledText {
                         id: modelLabel
                         anchors.centerIn: parent
                         text: modelPill.modelData
-                        color: modelPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                        color: modelPill.active ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                         font: Tokens.font.label.small
                     }
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         radius: parent.radius
                         showHoverBackground: !modelPill.active
@@ -327,7 +329,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("llama-swap")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -343,7 +345,7 @@ ColumnLayout {
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     TextInput {
                         id: llamaSwapHostInput
@@ -354,7 +356,7 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         clip: true
                         font: Tokens.font.label.small
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                         text: AiConfig.llamaSwapHost
 
                         // Empty clears the host, which stops the poll.
@@ -365,7 +367,7 @@ ColumnLayout {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("http://host:9090")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
                     }
@@ -385,6 +387,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiInferenceMode"
                 icon: InferenceMode.active ? "speed" : "memory"
                 label: qsTr("Inference mode")
                 description: {
@@ -411,17 +414,17 @@ ColumnLayout {
                             Layout.preferredHeight: 28
                             Layout.preferredWidth: inferenceLabel.implicitWidth + Tokens.padding.medium * 2
                             radius: Tokens.rounding.full
-                            color: inferencePill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                            color: inferencePill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                             StyledText {
                                 id: inferenceLabel
                                 anchors.centerIn: parent
                                 text: inferencePill.modelData.label
-                                color: inferencePill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                color: inferencePill.active ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -445,7 +448,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("LM Studio")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -461,7 +464,7 @@ ColumnLayout {
                     Layout.preferredWidth: 200
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     TextInput {
                         id: lmStudioHostInput
@@ -472,7 +475,7 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         clip: true
                         font: Tokens.font.label.small
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                         text: AiConfig.lmStudioHost
 
                         Keys.onReturnPressed: AiConfig.lmStudioHost = lmStudioHostInput.text.trim()
@@ -482,7 +485,7 @@ ColumnLayout {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("http://host:1234")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
                     }
@@ -543,7 +546,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Ollama Models")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -571,10 +574,10 @@ ColumnLayout {
                         MaterialIcon {
                             text: "check_circle"
                             fill: modelRow.active ? 1 : 0
-                            color: modelRow.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                            color: modelRow.active ? Colours.signal : Colours.inkMuted
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -584,10 +587,10 @@ ColumnLayout {
 
                         MaterialIcon {
                             text: "delete"
-                            color: Colours.palette.m3error
+                            color: Colours.alert
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -603,6 +606,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsRow {
+                searchId: "aiPullModel"
                 icon: "download"
                 label: qsTr("Pull new model")
                 description: qsTr("Downloads a model onto the Ollama host")
@@ -614,7 +618,7 @@ ColumnLayout {
                         Layout.preferredWidth: 160
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         TextInput {
                             id: pullInput
@@ -626,7 +630,7 @@ ColumnLayout {
                             clip: true
                             enabled: !AiProviders.pulling
                             font: Tokens.font.label.small
-                            color: Colours.palette.m3onSurface
+                            color: Colours.ink
 
                             Keys.onReturnPressed: {
                                 if (pullInput.text.trim().length > 0) {
@@ -640,7 +644,7 @@ ColumnLayout {
                                 anchors.left: parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: qsTr("llama3.2")
-                                color: Colours.palette.m3onSurfaceVariant
+                                color: Colours.inkMuted
                                 font: Tokens.font.label.small
                             }
                         }
@@ -651,17 +655,17 @@ ColumnLayout {
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
                         opacity: AiProviders.pulling ? 0.5 : 1
-                        color: Colours.palette.m3primary
+                        color: Colours.signal
 
                         StyledText {
                             id: pullLabel
                             anchors.centerIn: parent
                             text: AiProviders.pulling ? qsTr("Pulling…") : qsTr("Pull")
-                            color: Colours.contrastOn(Colours.palette.m3primary)
+                            color: Colours.contrastOn(Colours.signal)
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             showHoverBackground: !AiProviders.pulling
@@ -690,7 +694,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("API Keys")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -698,6 +702,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             ApiKeyRow {
+                searchId: "apiKeyClaude"
                 icon: "key"
                 label: qsTr("Claude (Anthropic)")
                 hasKey: AiKeys.hasAnthropicKey
@@ -706,6 +711,7 @@ ColumnLayout {
             }
 
             ApiKeyRow {
+                searchId: "apiKeyGemini"
                 icon: "key"
                 label: qsTr("Gemini")
                 hasKey: AiKeys.hasGeminiKey
@@ -714,6 +720,7 @@ ColumnLayout {
             }
 
             ApiKeyRow {
+                searchId: "apiKeyChatgpt"
                 icon: "key"
                 label: qsTr("ChatGPT")
                 hasKey: AiKeys.hasOpenaiKey
@@ -737,6 +744,7 @@ ColumnLayout {
                 Layout.fillWidth: true
 
                 SettingsRow {
+                    searchId: "aiOllamaModels"
                     icon: "folder"
                     label: qsTr("Ollama models")
                     description: ModelStorage.ollamaDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ollamaDir).arg(ModelStorage.ollamaDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ollamaDir)
@@ -749,17 +757,17 @@ ColumnLayout {
                             Layout.preferredWidth: createOllamaLabel.implicitWidth + Tokens.padding.large * 2
                             Layout.preferredHeight: 32
                             radius: Tokens.rounding.full
-                            color: Colours.palette.m3primary
+                            color: Colours.signal
 
                             StyledText {
                                 id: createOllamaLabel
                                 anchors.centerIn: parent
                                 text: qsTr("Create")
-                                color: Colours.contrastOn(Colours.palette.m3primary)
+                                color: Colours.contrastOn(Colours.signal)
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -774,16 +782,16 @@ ColumnLayout {
                             Layout.preferredWidth: 28
                             Layout.preferredHeight: 28
                             radius: Tokens.rounding.full
-                            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                            color: Colours.layer(Colours.surfaceLift, 3)
 
                             MaterialIcon {
                                 anchors.centerIn: parent
                                 text: "refresh"
-                                color: Colours.palette.m3onSurfaceVariant
+                                color: Colours.inkMuted
                                 fontStyle: Tokens.font.icon.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -797,6 +805,7 @@ ColumnLayout {
                 }
 
                 SettingsRow {
+                    searchId: "aiGgufDir"
                     icon: "folder_open"
                     label: qsTr("GGUF directory")
                     description: ModelStorage.ggufDirExists ? qsTr("%1 -- %2 used").arg(ModelStorage.ggufDir).arg(ModelStorage.ggufDirSize) : qsTr("%1 -- not created yet").arg(ModelStorage.ggufDir)
@@ -808,7 +817,7 @@ ColumnLayout {
                             Layout.preferredWidth: 200
                             Layout.preferredHeight: 32
                             radius: Tokens.rounding.full
-                            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                            color: Colours.layer(Colours.surfaceLift, 3)
 
                             TextInput {
                                 id: ggufDirInput
@@ -819,7 +828,7 @@ ColumnLayout {
                                 verticalAlignment: TextInput.AlignVCenter
                                 clip: true
                                 font: Tokens.font.label.small
-                                color: Colours.palette.m3onSurface
+                                color: Colours.ink
                                 text: Settings.ggufModelsDir
 
                                 Component.onCompleted: ggufDirInput.cursorPosition = 0
@@ -837,17 +846,17 @@ ColumnLayout {
                             Layout.preferredWidth: createGgufLabel.implicitWidth + Tokens.padding.large * 2
                             Layout.preferredHeight: 32
                             radius: Tokens.rounding.full
-                            color: Colours.palette.m3primary
+                            color: Colours.signal
 
                             StyledText {
                                 id: createGgufLabel
                                 anchors.centerIn: parent
                                 text: qsTr("Create")
-                                color: Colours.contrastOn(Colours.palette.m3primary)
+                                color: Colours.contrastOn(Colours.signal)
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -863,16 +872,16 @@ ColumnLayout {
                             Layout.preferredWidth: 28
                             Layout.preferredHeight: 28
                             radius: Tokens.rounding.full
-                            color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                            color: Colours.layer(Colours.surfaceLift, 3)
 
                             MaterialIcon {
                                 anchors.centerIn: parent
                                 text: "refresh"
-                                color: Colours.palette.m3onSurfaceVariant
+                                color: Colours.inkMuted
                                 fontStyle: Tokens.font.icon.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -891,7 +900,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: qsTr("No .gguf files in this directory yet.")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
 
@@ -913,10 +922,10 @@ ColumnLayout {
 
                         MaterialIcon {
                             text: "delete"
-                            color: Colours.palette.m3error
+                            color: Colours.alert
                             fontStyle: Tokens.font.icon.small
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 anchors.margins: -Tokens.padding.small
                                 radius: Tokens.rounding.full
@@ -936,7 +945,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Intelligence")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -944,6 +953,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsToggleRow {
+                searchId: "aiQuickChat"
                 label: qsTr("Quick-chat popout")
                 description: qsTr("SUPER+Shift+A — a fast overlay separate from the AI Chat tab above")
                 checked: Settings.intelligenceEnabled
@@ -951,6 +961,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiDefaultProvider"
                 icon: "smart_toy"
                 label: qsTr("Default provider")
                 description: qsTr("Used for new Intelligence sessions — blank follows Active above")
@@ -970,17 +981,17 @@ ColumnLayout {
                             Layout.preferredHeight: 28
                             Layout.preferredWidth: defaultProviderLabel.implicitWidth + Tokens.padding.medium * 2
                             radius: Tokens.rounding.full
-                            color: defaultProviderPill.active ? Colours.palette.m3primary : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                            color: defaultProviderPill.active ? Colours.signal : Colours.layer(Colours.surfaceLift, 3)
 
                             StyledText {
                                 id: defaultProviderLabel
                                 anchors.centerIn: parent
                                 text: defaultProviderPill.modelData.label
-                                color: defaultProviderPill.active ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                                color: defaultProviderPill.active ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                                 font: Tokens.font.label.small
                             }
 
-                            StateLayer {
+                            Interact {
                                 anchors.fill: parent
                                 radius: parent.radius
                             }
@@ -995,6 +1006,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiDefaultModel"
                 icon: "memory"
                 label: qsTr("Default model")
                 description: qsTr("Ollama-only — blank follows the Active model above")
@@ -1003,7 +1015,7 @@ ColumnLayout {
                     Layout.preferredWidth: 160
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.full
-                    color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                    color: Colours.layer(Colours.surfaceLift, 3)
 
                     TextInput {
                         id: defaultModelInput
@@ -1014,7 +1026,7 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         clip: true
                         font: Tokens.font.label.small
-                        color: Colours.palette.m3onSurface
+                        color: Colours.ink
                         text: Settings.intelligenceDefaultModel
 
                         Keys.onReturnPressed: Settings.intelligenceDefaultModel = defaultModelInput.text.trim()
@@ -1024,7 +1036,7 @@ ColumnLayout {
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
                             text: qsTr("Same as Active")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
                     }
@@ -1032,6 +1044,7 @@ ColumnLayout {
             }
 
             SettingsRow {
+                searchId: "aiSessionLimits"
                 icon: "auto_delete"
                 label: qsTr("Session limits")
                 description: qsTr("Older or excess sessions are pruned automatically — 0 disables a limit")
@@ -1043,7 +1056,7 @@ ColumnLayout {
                         Layout.preferredWidth: 60
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         TextInput {
                             id: maxSessionsInput
@@ -1056,7 +1069,7 @@ ColumnLayout {
                                 top: 999
                             }
                             font: Tokens.font.label.small
-                            color: Colours.palette.m3onSurface
+                            color: Colours.ink
                             text: Settings.intelligenceMaxSessions.toString()
 
                             Keys.onReturnPressed: {
@@ -1069,7 +1082,7 @@ ColumnLayout {
 
                     StyledText {
                         text: qsTr("max sessions")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
 
@@ -1077,7 +1090,7 @@ ColumnLayout {
                         Layout.preferredWidth: 60
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         TextInput {
                             id: autoPruneInput
@@ -1090,7 +1103,7 @@ ColumnLayout {
                                 top: 999
                             }
                             font: Tokens.font.label.small
-                            color: Colours.palette.m3onSurface
+                            color: Colours.ink
                             text: Settings.intelligenceAutoPruneDays.toString()
 
                             Keys.onReturnPressed: {
@@ -1103,7 +1116,7 @@ ColumnLayout {
 
                     StyledText {
                         text: qsTr("days old")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -1119,7 +1132,7 @@ ColumnLayout {
         StyledText {
             Layout.leftMargin: Tokens.padding.small
             text: qsTr("Aphotic Assistant")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
@@ -1127,6 +1140,7 @@ ColumnLayout {
             Layout.fillWidth: true
 
             SettingsRow {
+                searchId: "aiInstalledModel"
                 icon: "smart_toy"
                 label: qsTr("Installed model")
                 description: AiConfig.assistantModel.length > 0 ? AiConfig.assistantModel : qsTr("Unknown")
@@ -1139,17 +1153,17 @@ ColumnLayout {
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
                         opacity: AiProviders.pulling ? 0.5 : 1
-                        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                        color: Colours.layer(Colours.surfaceLift, 3)
 
                         StyledText {
                             id: reinstallLabel
                             anchors.centerIn: parent
                             text: AiProviders.pulling ? qsTr("Pulling…") : qsTr("Reinstall")
-                            color: Colours.palette.m3onSurfaceVariant
+                            color: Colours.inkMuted
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                             showHoverBackground: !AiProviders.pulling
@@ -1170,7 +1184,7 @@ ColumnLayout {
                         Layout.preferredWidth: uninstallLabel.implicitWidth + Tokens.padding.large * 2
                         Layout.preferredHeight: 32
                         radius: Tokens.rounding.full
-                        color: uninstallButton.confirming ? Colours.palette.m3error : Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                        color: uninstallButton.confirming ? Colours.alert : Colours.layer(Colours.surfaceLift, 3)
 
                         Behavior on color {
                             CAnim {}
@@ -1180,11 +1194,11 @@ ColumnLayout {
                             id: uninstallLabel
                             anchors.centerIn: parent
                             text: uninstallButton.confirming ? qsTr("Confirm remove?") : qsTr("Uninstall")
-                            color: uninstallButton.confirming ? Colours.contrastOn(Colours.palette.m3error) : Colours.palette.m3onSurfaceVariant
+                            color: uninstallButton.confirming ? Colours.contrastOn(Colours.alert) : Colours.inkMuted
                             font: Tokens.font.label.small
                         }
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             radius: parent.radius
                         }
@@ -1236,7 +1250,7 @@ ColumnLayout {
                 Layout.preferredWidth: 170
                 Layout.preferredHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                color: Colours.layer(Colours.surfaceLift, 3)
 
                 TextInput {
                     id: keyInput
@@ -1248,7 +1262,7 @@ ColumnLayout {
                     clip: true
                     echoMode: TextInput.Password
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
 
                     Keys.onReturnPressed: {
                         const value = keyInput.text.trim();
@@ -1263,7 +1277,7 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         text: qsTr("Paste key, Enter")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -1274,17 +1288,17 @@ ColumnLayout {
                 Layout.preferredWidth: clearLabel.implicitWidth + Tokens.padding.large * 2
                 Layout.preferredHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                color: Colours.layer(Colours.surfaceLift, 3)
 
                 StyledText {
                     id: clearLabel
                     anchors.centerIn: parent
                     text: qsTr("Clear")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                 }

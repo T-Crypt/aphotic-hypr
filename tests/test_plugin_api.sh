@@ -31,6 +31,11 @@ js_uses="$(sed -n "s/^var USES = \[\(.*\)\];/\1/p" "$CORE" | tr -d "' " | tr ','
 js_version="$(sed -n 's/^var VERSION = \([0-9]*\);/\1/p' "$CORE")"
 [[ "$js_version" == "$APHOTIC_PLUGIN_API_VERSION" ]] || fail "API version differs: js $js_version, cli $APHOTIC_PLUGIN_API_VERSION"
 for use in $APHOTIC_PLUGIN_API_USES; do
+    js_min="$(sed -n "s/^var MIN_VERSION = {\(.*\)};/\1/p" "$CORE" | tr ',' '\n' | sed -n "s/^ *'${use}': *\([0-9]*\)$/\1/p")"
+    [[ "${js_min:-1}" == "$(_aphotic_plugin_api_min_version "$use")" ]] \
+        || fail "${use}: PluginApiCore.js MIN_VERSION (${js_min:-1}) != _aphotic_plugin_api_min_version ($(_aphotic_plugin_api_min_version "$use"))"
+done
+for use in $APHOTIC_PLUGIN_API_USES; do
     [[ -n "$(_aphotic_plugin_api_describe "$use")" ]] || fail "no description for $use"
 done
 
@@ -71,9 +76,9 @@ out="$(_aphotic_plugin_validate "$SRC/scratch-api" 2>&1)" || fail "valid api plu
 
 make_plugin "$SRC/typo-api" $'\n[api]\nversion = 1\nuses = ["context.observ"]'
 out="$(_aphotic_plugin_validate "$SRC/typo-api" 2>&1)" || fail "unknown use should warn, not fail: $out"
-grep -q "uses 'context.observ' isn't part of plugin API v2" <<<"$out" || fail "expected an unknown-use warning: $out"
+grep -q "uses 'context.observ' isn't part of plugin API v3" <<<"$out" || fail "expected an unknown-use warning: $out"
 
-make_plugin "$SRC/future-api" $'\n[api]\nversion = 3\nuses = ["context.observe"]'
+make_plugin "$SRC/future-api" $'\n[api]\nversion = 4\nuses = ["context.observe"]'
 out="$(_aphotic_plugin_validate "$SRC/future-api" 2>&1)" && fail "API v3 should fail validate: $out"
 grep -q "newer than this build's plugin API" <<<"$out" || fail "expected a version error: $out"
 
@@ -92,9 +97,12 @@ export APHOTIC_PLUGINS_REPO="$SRC"
 git -C "$SRC" init -q 2>/dev/null || true
 mkdir -p "$APHOTIC_PLUGINS_DIR"
 out="$(aphotic_cmd_plugin install future-api 2>&1)" && fail "API v3 install should be refused: $out"
-grep -q "plugin API v3, this shell speaks v2" <<<"$out" || fail "expected the version refusal: $out"
+grep -q "plugin API v4, this shell speaks v3" <<<"$out" || fail "expected the version refusal: $out"
 [[ -e "$APHOTIC_PLUGINS_DIR/future-api" ]] && fail "refused install must not copy files"
 
+make_plugin "$SRC/overlay-v2" $'\n[api]\nversion = 2\nuses = ["overlay.present"]'
+out="$(_aphotic_plugin_validate "$SRC/overlay-v2" 2>&1)" && fail "v2 + overlay.present should fail validate: $out"
+grep -q "overlay.present requires plugin API v3" <<<"$out" || fail "expected the overlay grant version error: $out"
 out="$(aphotic_cmd_plugin install sonar-v1 2>&1)" && fail "v1 + sonar.register install should be refused: $out"
 grep -q "sonar.register requires plugin API v2" <<<"$out" || fail "expected the grant refusal: $out"
 [[ -e "$APHOTIC_PLUGINS_DIR/sonar-v1" ]] && fail "refused install must not copy files"
@@ -115,12 +123,12 @@ aphotic_cmd_plugin install no-api >/dev/null 2>&1 || fail "no-api install failed
 
 # --- aphotic plugin api -------------------------------------------------
 out="$(aphotic_cmd_plugin api)"
-grep -q "^Plugin API v2" <<<"$out" || fail "api listing header missing: $out"
+grep -q "^Plugin API v3" <<<"$out" || fail "api listing header missing: $out"
 for use in $APHOTIC_PLUGIN_API_USES; do
     grep -q "  $use " <<<"$out" || fail "api listing missing $use"
 done
 json="$(aphotic_cmd_plugin api --json)"
-[[ "$(jq -r .version <<<"$json")" == "2" ]] || fail "api --json version: $json"
+[[ "$(jq -r .version <<<"$json")" == "3" ]] || fail "api --json version: $json"
 [[ "$(jq -r '[.uses[].id] | join(" ")' <<<"$json")" == "$APHOTIC_PLUGIN_API_USES" ]] || fail "api --json uses: $json"
 
 echo "PASS: plugin API manifest, gate, registry and listing"

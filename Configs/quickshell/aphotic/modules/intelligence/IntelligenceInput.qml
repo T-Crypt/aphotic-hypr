@@ -33,7 +33,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("⚠ No Ollama host configured. Set one in Settings → AI, or set OLLAMA_BASE_URL.")
-        color: Colours.palette.m3error
+        color: Colours.alert
         font: Tokens.font.label.small
     }
 
@@ -42,7 +42,7 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: `⚠ ${AiProviders.unavailableReason(root.effectiveProvider)}`
-        color: Colours.palette.m3error
+        color: Colours.alert
         font: Tokens.font.label.small
     }
 
@@ -50,7 +50,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(Math.max(48, inputFlick.contentHeight + Tokens.padding.medium * 2), 160)
         radius: Tokens.rounding.large
-        color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+        color: Colours.layer(Colours.surfaceLift, 3)
 
         RowLayout {
             anchors.fill: parent
@@ -77,7 +77,7 @@ ColumnLayout {
                     enabled: !AiProviders.busy
                     wrapMode: TextEdit.Wrap
                     font: Tokens.font.body.medium
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     selectByMouse: true
 
                     Keys.onPressed: event => {
@@ -92,7 +92,7 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.top: parent.top
                         text: AiProviders.busy ? qsTr("Thinking…") : qsTr("Message…")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.body.medium
                     }
                 }
@@ -103,24 +103,20 @@ ColumnLayout {
                 Layout.preferredHeight: 32
                 Layout.alignment: Qt.AlignBottom
                 radius: Tokens.rounding.full
-                color: Colours.palette.m3primary
+                color: Colours.signal
                 opacity: AiProviders.busy ? 0.5 : 1
 
                 MaterialIcon {
                     anchors.centerIn: parent
                     text: "send"
-                    color: Colours.contrastOn(Colours.palette.m3primary)
+                    color: Colours.contrastOn(Colours.signal)
                     fontStyle: Tokens.font.icon.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !AiProviders.busy
-                }
-
-                MouseArea {
-                    anchors.fill: parent
                     onClicked: root.send()
                 }
             }

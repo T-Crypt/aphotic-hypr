@@ -62,7 +62,10 @@ PanelWindow {
     // reclaiming the space outright (see BarWrapper.qml's exclusiveZone
     // comment) -- consistent behavior across every bar style, not a new
     // Dock-specific rule.
-    readonly property int reservedThickness: (Settings.barHorizontal ? dockBar.implicitHeight : dockBar.implicitWidth) + edgeMargin
+    // Integer, derived from the same implicit size that paints the dock, so
+    // the zone and the rendered pill agree down to a pixel (see BarWrapper's
+    // contentWidth comment for the notch seam rationale).
+    readonly property int reservedThickness: Math.round((Settings.barHorizontal ? dockBar.implicitHeight : dockBar.implicitWidth) + edgeMargin)
 
     readonly property bool dockedTop: Settings.barHorizontal && !Settings.barPositionBottom
     readonly property bool dockedBottom: Settings.barHorizontal && Settings.barPositionBottom

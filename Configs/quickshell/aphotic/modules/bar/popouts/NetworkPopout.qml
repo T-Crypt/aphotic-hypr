@@ -19,7 +19,7 @@ ColumnLayout {
 
         MaterialIcon {
             text: Nmcli.wifiEnabled ? "wifi" : "wifi_off"
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
         }
 
         StyledText {
@@ -35,14 +35,14 @@ ColumnLayout {
             Rectangle {
                 anchors.fill: parent
                 radius: Tokens.rounding.full
-                color: Nmcli.wifiEnabled ? Qt.alpha(Colours.palette.m3primary, 0.18) : Colours.signalStyle.raised
+                color: Nmcli.wifiEnabled ? Qt.alpha(Colours.signal, 0.18) : Colours.signalStyle.raised
                 border.width: 1
-                border.color: Nmcli.wifiEnabled ? Colours.palette.m3primary : Colours.signalStyle.hairline
+                border.color: Nmcli.wifiEnabled ? Colours.signal : Colours.signalStyle.hairline
             }
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.full
-                color: Nmcli.wifiEnabled ? Colours.palette.m3primary : Colours.palette.m3surfaceContainerHigh
+                color: Nmcli.wifiEnabled ? Colours.signal : Colours.raised
                 onClicked: Nmcli.toggleWifi(() => {})
             }
         }
@@ -51,17 +51,15 @@ ColumnLayout {
     StyledText {
         visible: Nmcli.hasAvailableEthernet
         text: Nmcli.activeEthernet?.connected ? qsTr("Ethernet connected (%1)").arg(Nmcli.activeEthernet.iface) : qsTr("Ethernet available")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
     Repeater {
-        // Wrapped in ScriptModel (rather than binding model: directly to a
-        // freshly sorted/sliced array) so unchanged entries keep their
-        // delegate identity across re-evaluations -- a plain array binding
-        // reads as a full model reset to Repeater, destroying and
-        // recreating every delegate (losing hover/press state) on every
-        // network-list change instead of diffing just what moved.
+        // ScriptModel (not a plain array binding) so unchanged entries keep
+        // delegate identity: a plain array binding reads as a full model
+        // reset to Repeater, which destroys and recreates every delegate
+        // (losing hover/press state) on every network-list change.
         model: ScriptModel {
             values: {
                 const list = Nmcli.networks.slice();
@@ -78,9 +76,9 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: netLabel.implicitHeight + Tokens.padding.small * 2
 
-            StateLayer {
+            Interact {
                 radius: Tokens.rounding.medium
-                color: (netRow.modelData.active ? Colours.palette.m3primary : Colours.signalStyle.hover)
+                color: (netRow.modelData.active ? Colours.signal : Colours.signalStyle.hover)
                 stateOpacity: (netRow.modelData.active ? (containsMouse ? 0.22 : 0.14) : (containsMouse ? 1 : 0))
                 onClicked: {
                     if (netRow.modelData.active)
@@ -109,7 +107,7 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: Icons.getNetworkIcon(netRow.modelData.strength, netRow.modelData.isSecure)
-                    color: netRow.modelData.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                    color: netRow.modelData.active ? Colours.signal : Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
                 }
 
@@ -117,7 +115,7 @@ ColumnLayout {
                     id: netLabel
                     Layout.fillWidth: true
                     text: netRow.modelData.ssid
-                    color: netRow.modelData.active ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
+                    color: netRow.modelData.active ? Colours.ink : Colours.inkMuted
                     elide: Text.ElideRight
                 }
 
@@ -125,7 +123,7 @@ ColumnLayout {
                     visible: netRow.modelData.isSecure
                     text: "lock"
                     fontStyle: Tokens.font.icon.small
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                 }
             }
         }

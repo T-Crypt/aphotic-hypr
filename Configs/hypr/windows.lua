@@ -18,6 +18,19 @@ hl.window_rule({ name = "opacity-telegram",  match = { class = "^(org.telegram.d
 hl.window_rule({ name = "opacity-weather",   match = { title = "^(Weather)$" },               opacity = "0.80 0.80" })
 hl.window_rule({ name = "opacity-sysmon",    match = { title = "^(System Monitor)$" },        opacity = "0.80 0.80" })
 
+-- Opacity toggle for any tiled window. SUPER + CTRL + P tags the focused
+-- window. Without a class filter, the rule applies regardless of app; the
+-- float = false guard keeps it off floating and full-screen surfaces. The
+-- tag check (rather than only float) is what makes it runtime-toggleable:
+-- the rule only matches once the tag is present. "override" is required,
+-- since a plain opacity multiplies with the global decoration.active_opacity
+-- (0.70) and the window would still look translucent.
+hl.window_rule({
+    name    = "opacity-tiled-toggle",
+    match   = { float = false, tag = "opaque" },
+    opacity = "1.0 override 1.0 override 1.0 override",
+})
+
 -- Position / floating
 hl.window_rule({ name = "float-lutris",       match = { class = "^(lutris)$" },        float = true })
 hl.window_rule({ name = "center-lutris",      match = { class = "^(lutris)$" },        move  = "50% 50%" })

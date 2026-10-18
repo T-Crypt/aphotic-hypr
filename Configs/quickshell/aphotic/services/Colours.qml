@@ -260,6 +260,33 @@ Singleton {
         readonly property color m3surfaceContainer: root.layer(root.palette.m3surfaceContainer, 1)
     }
 
+    // Semantic colour roles. These are the only names callers use now; the
+    // m3* names below stay internal to this file because the palette
+    // generator emits them. Exact values here, no visual change.
+    readonly property color ink: root.palette.m3onSurface
+    readonly property color inkMuted: root.palette.m3onSurfaceVariant
+    readonly property color surface: root.palette.m3surfaceContainer
+    readonly property color raised: root.palette.m3surfaceContainerHigh
+    readonly property color glass: root.signalStyle.glass
+    readonly property color hairline: root.signalStyle.hairline
+    readonly property color edgeLight: root.signalStyle.edgeLight
+    readonly property color signal: root.signalStyle.accentLine
+    readonly property color warn: root.status.warning
+    readonly property color alert: root.palette.m3error
+    readonly property color onSignal: root.palette.m3onPrimary
+    readonly property color signalOnSurface: root.palette.m3primaryOnSurface
+    readonly property color signalSecondary: root.palette.m3secondary
+    readonly property color signalSecondaryOnSurface: root.palette.m3secondaryOnSurface
+    readonly property color signalTertiary: root.palette.m3tertiary
+    readonly property color signalTertiaryOnSurface: root.palette.m3tertiaryOnSurface
+    readonly property color onSignalTertiary: root.palette.m3onTertiary
+    readonly property color onAlert: root.palette.m3onError
+    readonly property color chip: root.palette.m3secondaryContainer
+    readonly property color chipInk: root.palette.m3onSecondaryContainer
+    readonly property color outline: root.palette.m3outlineVariant
+    readonly property color shadow: root.palette.m3shadow
+    readonly property color surfaceLift: root.tPalette.m3surfaceContainer
+
     // Real M3-style elevation: blend a small amount of the primary accent
     // into the base surface color, more at higher layerIndex. Previously a
     // no-op (`return c`) — the bar's surfaces all rendered at the exact

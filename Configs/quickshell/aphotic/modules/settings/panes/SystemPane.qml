@@ -9,7 +9,7 @@ import qs.services
 ColumnLayout {
     id: root
 
-    readonly property string dotsDir: `${Quickshell.env("HOME")}/Aphotic-Hypr`
+    readonly property string dotsDir: InstallProfile.dotsDir
 
     property string doctorOutput: qsTr("Running aphotic doctor…")
     property string packageCheckOutput: ""
@@ -89,17 +89,17 @@ ColumnLayout {
             Layout.preferredHeight: 28
             Layout.preferredWidth: refreshLabel.implicitWidth + Tokens.padding.medium * 2
             radius: Tokens.rounding.full
-            color: Colours.tPalette.m3surfaceContainer
+            color: Colours.surfaceLift
 
             StyledText {
                 id: refreshLabel
                 anchors.centerIn: parent
                 text: qsTr("Refresh")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
             }
@@ -134,17 +134,17 @@ ColumnLayout {
                 Layout.preferredHeight: 32
                 Layout.preferredWidth: leaveSafeModeLabel.implicitWidth + Tokens.padding.large * 2
                 radius: Tokens.rounding.full
-                color: Colours.palette.m3secondaryContainer
+                color: Colours.chip
 
                 StyledText {
                     id: leaveSafeModeLabel
                     anchors.centerIn: parent
                     text: qsTr("Leave safe mode")
-                    color: Colours.palette.m3onSecondaryContainer
+                    color: Colours.chipInk
                     font: Tokens.font.label.medium
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                 }
@@ -159,7 +159,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Overview")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -200,7 +200,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Hardware")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -213,7 +213,7 @@ ColumnLayout {
             description: SystemUsage.cpuName
             StyledText {
                 text: qsTr("%1% · %2").arg(Math.round(SystemUsage.cpuPerc * 100)).arg(root.displayTemp(SystemUsage.cpuTemp))
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
         }
@@ -225,7 +225,7 @@ ColumnLayout {
             StyledText {
                 visible: SystemUsage.gpuDetected
                 text: SystemUsage.gpuStatsAvailable ? qsTr("%1% · %2").arg(Math.round(SystemUsage.gpuPerc * 100)).arg(root.displayTemp(SystemUsage.gpuTemp)) : qsTr("N/A")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
         }
@@ -240,7 +240,7 @@ ColumnLayout {
             }
             StyledText {
                 text: qsTr("%1%").arg(Math.round(SystemUsage.memPerc * 100))
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.body.small
             }
         }
@@ -265,7 +265,7 @@ ColumnLayout {
 
                 StyledText {
                     text: qsTr("%1%").arg(Math.round(diskRow.modelData.perc * 100))
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.body.small
                 }
             }
@@ -275,7 +275,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Doctor")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -287,7 +287,7 @@ ColumnLayout {
         // to be exactly as tall as its content, not a guessed constant.
         Layout.preferredHeight: doctorText.implicitHeight + Tokens.padding.medium * 2
         radius: Tokens.rounding.large
-        color: Colours.tPalette.m3surfaceContainer
+        color: Colours.surfaceLift
 
         StyledText {
             id: doctorText
@@ -297,7 +297,7 @@ ColumnLayout {
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
             font: Tokens.font.mono.small
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             text: root.doctorOutput
         }
     }
@@ -324,14 +324,14 @@ ColumnLayout {
         StyledText {
             Layout.fillWidth: true
             text: qsTr("Package check")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.medium
         }
 
         StyledText {
             visible: root.packageCheckRunning
             text: qsTr("Checking against Arch + AUR… this can take a minute or two")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -339,18 +339,18 @@ ColumnLayout {
             Layout.preferredHeight: 28
             Layout.preferredWidth: checkLabel.implicitWidth + Tokens.padding.medium * 2
             radius: Tokens.rounding.full
-            color: Colours.tPalette.m3surfaceContainer
+            color: Colours.surfaceLift
             opacity: root.packageCheckRunning ? 0.5 : 1
 
             StyledText {
                 id: checkLabel
                 anchors.centerIn: parent
                 text: root.packageCheckRunning ? qsTr("Running…") : qsTr("Check packages")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 disabled: root.packageCheckRunning
@@ -374,7 +374,7 @@ ColumnLayout {
         wrapMode: Text.Wrap
         textFormat: Text.PlainText
         font: Tokens.font.mono.small
-        color: Colours.palette.m3onSurface
+        color: Colours.ink
         text: root.packageCheckOutput
     }
 
@@ -391,6 +391,7 @@ ColumnLayout {
         Layout.topMargin: Tokens.spacing.medium
 
         SettingsPresetRow {
+            searchId: "updateCheck"
             icon: "update"
             label: qsTr("Pending update check")
             presets: [{
@@ -415,7 +416,7 @@ ColumnLayout {
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             text: qsTr("Notifies (Hyprland banner) when official or AUR updates are pending -- never installs them. \"Check now\" below runs the same check immediately, printed here instead of as a notification.")
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
             font: Tokens.font.label.small
         }
 
@@ -428,7 +429,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 visible: root.pendingUpdatesRunning
                 text: qsTr("Checking…")
-                color: Colours.palette.m3onSurfaceVariant
+                color: Colours.inkMuted
                 font: Tokens.font.label.small
             }
 
@@ -436,18 +437,18 @@ ColumnLayout {
                 Layout.preferredHeight: 28
                 Layout.preferredWidth: pendingCheckLabel.implicitWidth + Tokens.padding.medium * 2
                 radius: Tokens.rounding.full
-                color: Colours.tPalette.m3surfaceContainer
+                color: Colours.surfaceLift
                 opacity: root.pendingUpdatesRunning ? 0.5 : 1
 
                 StyledText {
                     id: pendingCheckLabel
                     anchors.centerIn: parent
                     text: qsTr("Check now")
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     disabled: root.pendingUpdatesRunning
@@ -471,7 +472,7 @@ ColumnLayout {
             wrapMode: Text.Wrap
             textFormat: Text.PlainText
             font: Tokens.font.mono.small
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             text: root.pendingUpdatesOutput
         }
     }

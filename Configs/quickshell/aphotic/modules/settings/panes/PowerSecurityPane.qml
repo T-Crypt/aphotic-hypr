@@ -24,7 +24,7 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Power profile")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -60,7 +60,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 implicitHeight: profileCol.implicitHeight + Tokens.padding.medium * 2
                 radius: Tokens.rounding.medium
-                color: profileBtn.active ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+                color: profileBtn.active ? Colours.signal : Colours.surfaceLift
 
                 ColumnLayout {
                     id: profileCol
@@ -70,18 +70,18 @@ ColumnLayout {
                     MaterialIcon {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.icon
-                        color: profileBtn.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: profileBtn.active ? Colours.onSignal : Colours.inkMuted
                     }
 
                     StyledText {
                         Layout.alignment: Qt.AlignHCenter
                         text: profileBtn.modelData.label
-                        color: profileBtn.active ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                        color: profileBtn.active ? Colours.onSignal : Colours.inkMuted
                         font: Tokens.font.label.medium
                     }
                 }
 
-                StateLayer {
+                Interact {
                     anchors.fill: parent
                     radius: parent.radius
                     showHoverBackground: !profileBtn.active
@@ -95,7 +95,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Idle & lock")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -103,14 +103,16 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
+            searchId: "screensaverIdle"
             icon: "screenshot_monitor"
             label: qsTr("Screensaver when idle")
-            description: Settings.idleLockEnabled && Settings.screensaverTimeout >= Settings.idleLockTimeout ? qsTr("Never shows: the screen locks first") : root.formatMinutes(Settings.screensaverTimeout)
+            description: Settings.idleLockEnabled && Settings.screensaverTimeout >= Settings.idleLockTimeout ? qsTr("The screen locks first, so this never shows") : root.formatMinutes(Settings.screensaverTimeout)
             checked: Settings.screensaverEnabled
             onToggled: state => Settings.screensaverEnabled = state
         }
 
         SettingsRow {
+            searchId: "screensaverAfter"
             icon: "timer"
             label: qsTr("Screensaver after")
             description: root.formatMinutes(Settings.screensaverTimeout)
@@ -122,10 +124,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "remove"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -135,10 +137,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "add"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -149,6 +151,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "lockIdle"
             icon: "lock_clock"
             label: qsTr("Lock when idle")
             description: root.formatMinutes(Settings.idleLockTimeout)
@@ -157,6 +160,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "lockAfter"
             icon: "timer"
             label: qsTr("Lock after")
             description: root.formatMinutes(Settings.idleLockTimeout)
@@ -168,10 +172,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "remove"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -181,10 +185,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "add"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -195,6 +199,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "suspendIdle"
             icon: "bedtime"
             label: qsTr("Suspend when idle")
             description: root.formatMinutes(Settings.idleSuspendTimeout)
@@ -203,6 +208,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "suspendAfter"
             icon: "timer"
             label: qsTr("Suspend after")
             description: root.formatMinutes(Settings.idleSuspendTimeout)
@@ -214,10 +220,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "remove"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -227,10 +233,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "add"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -244,15 +250,15 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("Lockout")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
     StyledText {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
-        text: qsTr("Failed unlock attempts are handled by your system's PAM/faillock policy, the same as any other login prompt — Aphotic doesn't layer its own attempt counter on top of it.")
-        color: Colours.palette.m3onSurfaceVariant
+        text: qsTr("Failed unlock attempts are handled by your system's PAM/faillock policy, the same as any other login prompt. Aphotic adds no attempt counter of its own.")
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 }

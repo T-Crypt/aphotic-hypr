@@ -26,24 +26,22 @@ Item {
         x: (1 - root.reveal) * Tokens.spacing.large
     }
 
-    StyledRect {
+    SignalSurface {
         anchors.fill: parent
         radius: height / 2
-        border.width: 1
-        border.color: Colours.signalStyle.hairline
-        color: Colours.signalStyle.glass
+        tone: Colours.signalStyle.glass
     }
 
     StyledRect {
         anchors.left: parent.left
-        anchors.leftMargin: 3
+        anchors.leftMargin: Tokens.padding.extraSmall
         anchors.top: parent.top
-        anchors.topMargin: 3
+        anchors.topMargin: Tokens.padding.extraSmall
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 3
+        anchors.bottomMargin: Tokens.padding.extraSmall
         radius: height / 2
-        width: Math.max(height, (parent.width - 6) * root.fraction)
-        color: Colours.palette.m3primary
+        width: Math.max(height, (parent.width - Tokens.padding.extraSmall * 2) * root.fraction)
+        color: Colours.signal
 
         Behavior on width {
             Anim {
@@ -52,7 +50,6 @@ Item {
         }
     }
 
-    // Signal: 32px icon chip at the leading end, above the fill.
     StyledRect {
         id: iconChip
 
@@ -61,7 +58,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         width: 32
         height: 32
-        radius: 16
+        radius: Tokens.rounding.full
         color: Qt.alpha(root.tint, 0.18)
     }
 
@@ -95,7 +92,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: Math.round(root.value * 100) + "%"
         font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
-        color: root.fraction > 0.85 ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
+        color: root.fraction > 0.85 ? Colours.onSignal : Colours.ink
     }
 
     MouseArea {

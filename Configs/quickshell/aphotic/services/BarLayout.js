@@ -58,6 +58,15 @@ function cornerRadius(corners, thickness) {
     return 0;
 }
 
+// The edge of the bar the notch joins: the edge away from the screen edge the
+// bar docks to. "start" is the top or left edge, "end" the bottom or right.
+// Each bar style feeds this to the SignalSurface it opens (openEdge) and to
+// the SignalLine that draws that edge, so the rule lives here once.
+function notchEdge(horizontal, positionBottom, positionRight) {
+    var dockedToEnd = horizontal ? positionBottom : positionRight;
+    return dockedToEnd ? "start" : "end";
+}
+
 // Next layout in LAYOUTS order, wrapping; unknown input starts at the
 // beginning of the list.
 function next(layout) {

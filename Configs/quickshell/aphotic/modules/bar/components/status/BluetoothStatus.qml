@@ -36,7 +36,6 @@ Item {
         rowSpacing: Tokens.spacing.medium / 2
         columnSpacing: Tokens.spacing.medium / 2
 
-        // Bluetooth icon
         MaterialIcon {
             animate: true
             text: {
@@ -49,7 +48,6 @@ Item {
             color: root.colour
         }
 
-        // Connected bluetooth devices
         Repeater {
             model: ScriptModel {
                 values: Bluetooth.devices.values.filter(d => d.state !== BluetoothDeviceState.Disconnected) // qmllint disable unresolved-type

@@ -16,7 +16,7 @@ ColumnLayout {
         Layout.bottomMargin: -Tokens.spacing.small
         Layout.leftMargin: Tokens.padding.small
         text: qsTr("Clock")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
     }
 
@@ -24,6 +24,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsToggleRow {
+            searchId: "twelveHourClock"
             icon: "schedule"
             label: qsTr("12-hour clock")
             checked: Settings.twelveHourClock
@@ -31,6 +32,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "barClockDate"
             icon: "calendar_month"
             label: qsTr("Show date in bar clock")
             checked: Settings.showClockDate
@@ -38,6 +40,7 @@ ColumnLayout {
         }
 
         SettingsToggleRow {
+            searchId: "desktopClock"
             icon: "nest_clock_farsight_analog"
             label: qsTr("Desktop clock")
             checked: Settings.desktopClockEnabled
@@ -50,7 +53,7 @@ ColumnLayout {
         Layout.bottomMargin: -Tokens.spacing.small
         Layout.leftMargin: Tokens.padding.small
         text: qsTr("Weather")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.medium.weight(Font.DemiBold).build()
     }
 
@@ -58,6 +61,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "weatherLocation"
             icon: "location_on"
             label: qsTr("Location")
             description: Weather.resolvedLocationName.length > 0 ? Weather.resolvedLocationName : qsTr("Auto-detected from IP address")
@@ -66,7 +70,7 @@ ColumnLayout {
                 Layout.preferredWidth: 200
                 Layout.preferredHeight: 32
                 radius: Tokens.rounding.full
-                color: Colours.layer(Colours.tPalette.m3surfaceContainer, 3)
+                color: Colours.layer(Colours.surfaceLift, 3)
 
                 TextInput {
                     id: locationInput
@@ -77,7 +81,7 @@ ColumnLayout {
                     verticalAlignment: TextInput.AlignVCenter
                     clip: true
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     text: Settings.weatherLocation
 
                     Keys.onReturnPressed: Settings.weatherLocation = locationInput.text.trim()
@@ -87,7 +91,7 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         text: qsTr("City name, or blank for auto")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -95,6 +99,7 @@ ColumnLayout {
         }
 
         SettingsPresetRow {
+            searchId: "weatherUnits"
             icon: "thermostat"
             label: qsTr("Units")
             presets: [{

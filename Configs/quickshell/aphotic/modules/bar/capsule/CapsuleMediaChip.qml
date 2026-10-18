@@ -40,9 +40,9 @@ Item {
     StyledRect {
         anchors.fill: parent
         radius: Tokens.rounding.full
-        color: root.active ? Colours.palette.m3secondaryContainer : "transparent"
+        color: root.active ? Colours.chip : "transparent"
 
-        StateLayer {
+        Interact {
             radius: parent.radius
             onClicked: root.toggled()
         }
@@ -70,7 +70,7 @@ Item {
             Layout.maximumWidth: 132
             visible: Settings.barHorizontal
             text: root.player?.trackTitle ?? ""
-            color: Colours.palette.m3onSurface
+            color: Colours.ink
             font: Tokens.font.label.medium
             elide: Text.ElideRight
         }
@@ -78,7 +78,7 @@ Item {
         MaterialIcon {
             Layout.alignment: Qt.AlignCenter
             text: root.player?.isPlaying ? "graphic_eq" : "pause"
-            color: Colours.palette.m3primaryOnSurface
+            color: Colours.signalOnSurface
             fontStyle: Tokens.font.icon.small
             fill: 1
         }

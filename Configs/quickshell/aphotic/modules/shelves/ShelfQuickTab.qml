@@ -46,10 +46,10 @@ Flickable {
                 StyledRect {
                     anchors.fill: parent
                     radius: Tokens.rounding.full
-                    color: tile.modelData.active ? Colours.layer(Colours.palette.m3primary, 0.18) : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+                    color: tile.modelData.active ? Colours.layer(Colours.signal, 0.18) : Colours.layer(Colours.raised, 2)
                 }
 
-                StateLayer {
+                Interact {
                     radius: Tokens.rounding.full
                     onClicked: tile.modelData.toggle()
                 }
@@ -65,14 +65,14 @@ Flickable {
                         text: tile.modelData.icon
                         fontStyle: Tokens.font.icon.medium
                         fill: tile.modelData.active ? 1 : 0
-                        color: tile.modelData.active ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        color: tile.modelData.active ? Colours.signal : Colours.inkMuted
                     }
 
                     StyledText {
                         Layout.fillWidth: true
                         text: tile.modelData.label
                         elide: Text.ElideRight
-                        color: tile.modelData.active ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                        color: tile.modelData.active ? Colours.signal : Colours.ink
                         font: Tokens.font.label.small
                     }
                 }

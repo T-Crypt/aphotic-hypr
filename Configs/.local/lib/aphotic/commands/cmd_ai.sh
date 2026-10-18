@@ -62,16 +62,16 @@ aphotic_cmd_ai() {
                     ;;
             esac
 
-            local conf="${APHOTIC_CONFIG_HOME}/ai-config.json" tmp
+            local conf="${APHOTIC_CONFIG_HOME}/ai-config.json"
             mkdir -p "$APHOTIC_CONFIG_HOME"
             [[ -f "$conf" ]] || echo '{}' > "$conf"
-            tmp="$(mktemp)"
             if [[ -n "$model" && "$provider" == "ollama" ]]; then
-                jq --arg p "$provider" --arg m "$model" '.activeProvider = $p | .ollamaModel = $m' "$conf" > "$tmp"
+                aphotic_write_atomic "$conf" \
+                    jq --arg p "$provider" --arg m "$model" '.activeProvider = $p | .ollamaModel = $m' "$conf"
             else
-                jq --arg p "$provider" '.activeProvider = $p' "$conf" > "$tmp"
+                aphotic_write_atomic "$conf" \
+                    jq --arg p "$provider" '.activeProvider = $p' "$conf"
             fi
-            mv "$tmp" "$conf"
 
             if [[ -n "$model" && "$provider" != "ollama" ]]; then
                 aphotic_warn "':${model}' is ignored -- only the ollama profile has a model to set"

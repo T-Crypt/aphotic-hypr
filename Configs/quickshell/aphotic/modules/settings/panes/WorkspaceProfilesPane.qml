@@ -70,14 +70,14 @@ ColumnLayout {
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: qsTr("A profile is a saved list of apps and the workspace each one should open on -- one click launches all of them via hyprctl. This replays a fixed list, it doesn't snapshot whatever windows happened to be open.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
     StyledText {
         visible: Settings.workspaceProfiles.length === 0
         text: qsTr("No profiles yet -- build one below.")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.body.small
     }
 
@@ -103,10 +103,10 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: "play_arrow"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -116,10 +116,10 @@ ColumnLayout {
 
                     MaterialIcon {
                         text: "delete"
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         fontStyle: Tokens.font.icon.small
 
-                        StateLayer {
+                        Interact {
                             anchors.fill: parent
                             anchors.margins: -Tokens.padding.small
                             radius: Tokens.rounding.full
@@ -134,7 +134,7 @@ ColumnLayout {
     StyledText {
         Layout.topMargin: Tokens.spacing.small
         text: qsTr("New profile")
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.medium
     }
 
@@ -142,6 +142,7 @@ ColumnLayout {
         Layout.fillWidth: true
 
         SettingsRow {
+            searchId: "profileName"
             icon: "edit"
             label: qsTr("Profile name")
 
@@ -149,14 +150,14 @@ ColumnLayout {
                 implicitWidth: 220
                 implicitHeight: 32
                 radius: Tokens.rounding.small
-                color: Colours.palette.m3surfaceContainerHigh
+                color: Colours.raised
 
                 TextInput {
                     id: nameInput
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.small
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     clip: true
 
                     StyledText {
@@ -164,7 +165,7 @@ ColumnLayout {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         text: qsTr("Coding session")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -172,6 +173,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "profileCommand"
             icon: "terminal"
             label: qsTr("Command")
             description: qsTr("Launched with hyprctl dispatch exec")
@@ -180,14 +182,14 @@ ColumnLayout {
                 implicitWidth: 220
                 implicitHeight: 32
                 radius: Tokens.rounding.small
-                color: Colours.palette.m3surfaceContainerHigh
+                color: Colours.raised
 
                 TextInput {
                     id: commandInput
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.small
                     font: Tokens.font.label.small
-                    color: Colours.palette.m3onSurface
+                    color: Colours.ink
                     clip: true
 
                     StyledText {
@@ -195,7 +197,7 @@ ColumnLayout {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         text: qsTr("kitty")
-                        color: Colours.palette.m3onSurfaceVariant
+                        color: Colours.inkMuted
                         font: Tokens.font.label.small
                     }
                 }
@@ -203,6 +205,7 @@ ColumnLayout {
         }
 
         SettingsRow {
+            searchId: "profileWorkspace"
             icon: "dashboard"
             label: qsTr("Workspace")
             description: qsTr("Opens on workspace %1").arg(root.newEntryWorkspace)
@@ -212,10 +215,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "remove"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -225,10 +228,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "add"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -246,17 +249,17 @@ ColumnLayout {
             implicitWidth: addEntryLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 36
             radius: Tokens.rounding.medium
-            color: Colours.tPalette.m3surfaceContainer
+            color: Colours.surfaceLift
 
             StyledText {
                 id: addEntryLabel
                 anchors.centerIn: parent
                 text: qsTr("Add entry")
-                color: Colours.palette.m3onSurface
+                color: Colours.ink
                 font: Tokens.font.body.medium
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 onClicked: root.addEntry()
@@ -283,10 +286,10 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: "close"
-                    color: Colours.palette.m3onSurfaceVariant
+                    color: Colours.inkMuted
                     fontStyle: Tokens.font.icon.small
 
-                    StateLayer {
+                    Interact {
                         anchors.fill: parent
                         anchors.margins: -Tokens.padding.small
                         radius: Tokens.rounding.full
@@ -308,17 +311,17 @@ ColumnLayout {
             implicitWidth: saveLabel.implicitWidth + Tokens.padding.large * 2
             implicitHeight: 40
             radius: Tokens.rounding.medium
-            color: canSave ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
+            color: canSave ? Colours.signal : Colours.surfaceLift
 
             StyledText {
                 id: saveLabel
                 anchors.centerIn: parent
                 text: qsTr("Save profile")
-                color: parent.canSave ? Colours.contrastOn(Colours.palette.m3primary) : Colours.palette.m3onSurfaceVariant
+                color: parent.canSave ? Colours.contrastOn(Colours.signal) : Colours.inkMuted
                 font: Tokens.font.body.medium
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 disabled: !parent.canSave

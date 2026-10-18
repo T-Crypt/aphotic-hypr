@@ -5,6 +5,7 @@ import qs.components
 import qs.config
 import qs.services
 import qs.services.profile
+import qs.services.ai
 import "FlowModel.js" as Model
 
 ColumnLayout {
@@ -16,11 +17,11 @@ ColumnLayout {
         gaming: InstallProfile.gamingEnabled,
         security: InstallProfile.securityEnabled,
         dev: InstallProfile.devEnabled
-    }), WorkloadPassports.live, ActionReceipts.all)
+    }), WorkloadPassports.live, ActionReceipts.all, EngineRegistry.liveIds)
     spacing: 8
     StyledText {
         text: qsTr("Aphotic Flow")
-        color: Colours.palette.m3primary
+        color: Colours.signal
         font: Tokens.font.title.medium
     }
     RowLayout {
@@ -35,7 +36,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     implicitHeight: 3
                     radius: 2
-                    color: plane.modelData.phase === "negotiate" ? "#f4bd72" : plane.modelData.active ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
+                    color: plane.modelData.phase === "negotiate" ? "#f4bd72" : plane.modelData.active ? Colours.signal : Colours.outline
                 }
                 StyledText {
                     text: plane.modelData.label
@@ -52,7 +53,7 @@ ColumnLayout {
             : root.flow.staleCount
                 ? qsTr("%1 claims · %2 contended · %3 stale · SUPER+D → Flow").arg(root.flow.claimCount).arg(root.flow.contentionCount).arg(root.flow.staleCount)
                 : qsTr("%1 claims · %2 contended · SUPER+D → Flow").arg(root.flow.claimCount).arg(root.flow.contentionCount)
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.small
         wrapMode: Text.WordWrap
     }

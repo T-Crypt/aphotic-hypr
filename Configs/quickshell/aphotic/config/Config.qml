@@ -166,6 +166,22 @@ QtObject {
         readonly property bool enableMicrophone: false
     }
 
+    // The phone stack, every flag off. One flag per capability rather than
+    // a master switch plus eight, because two ways to turn one thing off
+    // is one way too many. Only `bridge` is read today; the rest are the
+    // switch each later capability arrives behind.
+    readonly property QtObject phone: QtObject {
+        readonly property bool bridge: false
+        readonly property bool mirror: false
+        readonly property bool calls: false
+        readonly property bool alarms: false
+        readonly property bool icons: false
+        readonly property bool camera: false
+        readonly property bool mic: false
+        readonly property bool localSend: false
+        readonly property bool messages: false
+    }
+
     // Merged from the standalone BackgroundConfig.qml/DashboardConfig.qml
     // (Quickshell.Io JsonObject files) into this repo's one real config
     // singleton, so there's a single config surface instead of two.
@@ -241,7 +257,8 @@ QtObject {
         // compositor clips the bounce and the shadow instead of the shell.
         readonly property int surfaceMargin: 40
         // How far the strip sits off the edge it docks against.
-        readonly property int edgeGap: 4
+        // 0 = flush against the bar (no see-through strip). Default 0.
+        readonly property int edgeGap: 0
 
         readonly property int processUpdateInterval: 1500
         readonly property int gpuUpdateInterval: 3000

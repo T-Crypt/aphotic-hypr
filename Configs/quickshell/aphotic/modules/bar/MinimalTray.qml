@@ -50,7 +50,7 @@ Item {
             visible: root.trayValues.length > 0
             text: "expand_less"
             rotation: root.expanded ? 180 : 0
-            color: Colours.palette.m3onSurfaceVariant
+            color: Colours.inkMuted
 
             Behavior on rotation {
                 Anim {
@@ -58,7 +58,7 @@ Item {
                 }
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 anchors.margins: -Tokens.padding.extraSmall
                 radius: Tokens.rounding.full

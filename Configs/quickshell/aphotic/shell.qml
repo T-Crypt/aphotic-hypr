@@ -501,6 +501,19 @@ ShellRoot {
         enabled: InstallProfile.aiEnabled
     }
 
+    // Every engine descriptor that reports through a stream, a gateway
+    // included. Each engine its report names becomes its own claimant.
+    Instantiator {
+        model: InstallProfile.aiEnabled ? EngineRegistry.descriptors.filter(d => (d.stream ?? []).length > 0) : []
+
+        delegate: EngineStream {
+            required property var modelData
+
+            descriptor: modelData
+            gpuVram: gpuVramSource
+        }
+    }
+
     // Every enabled plugin that registers an `overlay` surface, one window
     // per screen. Nested rather than flattened because the two models are
     // independent: surfaces come and go as plugins are enabled, screens as
@@ -626,7 +639,7 @@ ShellRoot {
     // services/ that runs on its own rather than answering a reader
     // belongs in this list, and tests/test_singleton_reachability.py
     // fails the build if it does not.
-    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, Switcher, InferenceMode, ResourcePosture, Sonar, Shelves, ShelfKeybinds]
+    readonly property var _residentSingletons: [SecurityProfile, WallpaperCycle, DevDrift, SafeMode, WorkspaceKeybind, PluginKeybinds, Switcher, InferenceMode, EngineRegistry, ResourcePosture, Sonar, Shelves, ShelfKeybinds, Phone, PhoneMessages]
 
     // The profile substrate's inspection/drive surface (Phase 0 --
     // docs/APHOTIC_UNIFIED_VISION.md section 3.5). Lives here rather than

@@ -14,7 +14,7 @@ ColumnLayout {
     StyledText {
         Layout.maximumWidth: 260
         text: (root.group?.appClass ?? "").toUpperCase()
-        color: Colours.palette.m3onSurfaceVariant
+        color: Colours.inkMuted
         font: Tokens.font.label.builders.small.weight(Font.DemiBold).letterSpacing(1.4).build()
     }
 
@@ -30,7 +30,7 @@ ColumnLayout {
             Layout.preferredWidth: 260
             implicitHeight: label.implicitHeight + Tokens.padding.small * 2
             radius: Tokens.rounding.medium
-            color: (row.modelData.focused ? Qt.alpha(Colours.palette.m3primary, 0.14) : "transparent")
+            color: (row.modelData.focused ? Qt.alpha(Colours.signal, 0.14) : "transparent")
 
             Rectangle {
                 visible: row.modelData.focused
@@ -49,11 +49,11 @@ ColumnLayout {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.margins: Tokens.padding.small
                 text: row.modelData.title || root.group?.appClass || qsTr("Window")
-                color: row.modelData.focused ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
+                color: row.modelData.focused ? Colours.ink : Colours.inkMuted
                 elide: Text.ElideRight
             }
 
-            StateLayer {
+            Interact {
                 anchors.fill: parent
                 radius: parent.radius
                 color: Colours.signalStyle.hover
