@@ -1,0 +1,9 @@
+[engine]
+id = "vllm"
+label = "vLLM"
+protocol = "openai-models"
+endpoint = "/v1/models"
+default_host = "http://127.0.0.1:8000"
+process = "vllm serve|vllm[.]entrypoints[.]openai"
+port_flag = "--port"
+capabilities = ["models", "claims"]

@@ -1,0 +1,9 @@
+[engine]
+id = "tgi"
+label = "Text Generation Inference"
+protocol = "openai-models"
+endpoint = "/v1/models"
+default_host = "http://127.0.0.1:3000"
+process = "text-generation-launcher"
+port_flag = "--port"
+capabilities = ["models", "claims"]

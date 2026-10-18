@@ -1,0 +1,9 @@
+[engine]
+id = "sglang"
+label = "SGLang"
+protocol = "openai-models"
+endpoint = "/v1/models"
+default_host = "http://127.0.0.1:30000"
+process = "sglang[.]launch_server|sglang serve"
+port_flag = "--port"
+capabilities = ["models", "claims"]
