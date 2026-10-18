@@ -5,6 +5,7 @@ import Quickshell.Bluetooth
 import qs.config
 import qs.components
 import qs.services
+import qs.services.profile
 import qs.modules.dashboard
 
 Item {
@@ -39,6 +40,9 @@ Item {
             return qsTr("%1 MiB/s").arg((bytes / 1048576).toFixed(1));
         return qsTr("%1 KiB/s").arg(Math.round(bytes / 1024));
     }
+
+    // Measured card memory in MiB, from the same source Flow draws.
+    readonly property var vram: ResourceEngine.resourceSpec("gpu-vram")?.measured ?? null
 
     function gib(kib: real): string {
         return (kib / 1048576).toFixed(1);
@@ -237,8 +241,15 @@ Item {
                 }
 
                 Readout {
+                    visible: (root.vram?.total ?? 0) > 0
+                    value: ((root.vram?.used ?? 0) / 1024).toFixed(1)
+                    total: qsTr("/ %1 GiB").arg(((root.vram?.total ?? 0) / 1024).toFixed(1))
+                    label: qsTr("VRAM")
+                }
+
+                Readout {
                     value: SystemUsage.gpuStatsAvailable ? `${Math.round(SystemUsage.gpuPerc * 100)}%` : qsTr("N/A")
-                    label: qsTr("GPU")
+                    label: qsTr("GPU load")
                 }
 
                 Readout {
