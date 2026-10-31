@@ -37,11 +37,13 @@ Item {
         }
     }
 
-    RowLayout {
+    GridLayout {
         id: icons
 
         anchors.centerIn: parent
-        spacing: Tokens.spacing.small
+        flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
+        rowSpacing: Tokens.spacing.small
+        columnSpacing: Tokens.spacing.small
 
         // Toggle-type indicators only (things a user turns on/off) -- not
         // continuous status readouts like wifi/battery, those stay in the
