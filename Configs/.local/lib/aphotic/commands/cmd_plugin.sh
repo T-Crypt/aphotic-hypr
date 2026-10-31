@@ -54,7 +54,7 @@ _aphotic_plugin_root_value() {
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
 APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action edge_tab"
-APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine"
+APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine wallpaper-pack"
 
 APHOTIC_PLUGIN_KEYBIND_MODIFIERS="SHIFT CAPS CTRL CONTROL ALT MOD1 MOD2 MOD3 SUPER WIN LOGO MOD4 MOD5"
 
@@ -1684,7 +1684,7 @@ _aphotic_plugin_validate() {
     # manifest built against a newer contract has to fail open here,
     # same as APHOTIC_PLUGIN_HOSTED_CAPABILITIES's own comment on why --
     # but it's usually a typo, so it's worth flagging.
-    local known_caps="theme-hook ui-surface project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine"
+    local known_caps="theme-hook ui-surface project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine wallpaper-pack"
     local cap
     while IFS= read -r cap; do
         [[ -n "$cap" ]] || continue
@@ -1883,6 +1883,22 @@ CHECK_PATH
             aphotic_warn "${name}: [keybind] combo '${duplicate_combo}' is declared more than once -- only the first is bound"
             warns=$((warns + 1))
         done < <(jq -r '[.[].combo] | group_by(ascii_downcase) | map(select(length > 1)) | .[][0]' <<<"$keybind_entries")
+    fi
+
+    # wallpaper-pack and [wallpapers] agree both ways, and every pack it
+    # lists has to load: a pack that fails here fetches nothing later.
+    local has_wallpapers_section="false" has_wallpaper_cap="false"
+    grep -q '^[[:space:]]*\[wallpapers\][[:space:]]*$' "$manifest" && has_wallpapers_section="true"
+    _aphotic_plugin_in_list "wallpaper-pack" "$caps" && has_wallpaper_cap="true"
+    if [[ "$has_wallpapers_section" == "true" && "$has_wallpaper_cap" == "false" ]]; then
+        aphotic_err "${name}: [wallpapers] is declared but capabilities doesn't include 'wallpaper-pack'"
+        fails=$((fails + 1))
+    elif [[ "$has_wallpaper_cap" == "true" ]]; then
+        local pack_report
+        if ! pack_report="$(python3 "${APHOTIC_DOTS_DIR}/Configs/.local/lib/aphotic/wallpaper_packs.py" check "$(dirname "$manifest")" 2>&1)"; then
+            aphotic_err "${name}: ${pack_report}"
+            fails=$((fails + 1))
+        fi
     fi
 
     # engine and [engine] have to agree from both directions, same as

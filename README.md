@@ -72,6 +72,8 @@
 
 Eight themes ship with Aphotic, and `aphotic theme download` adds community ones. Switch with <kbd>Super</kbd> + <kbd>,</kbd> / <kbd>.</kbd>,
 or build your own from any wallpaper in **Settings > Theme Creator**.
+Each theme ships one wallpaper. The `wallpaper-packs` plugin adds theme-matched collections, downloaded with
+`aphotic wallpaper fetch` and checked against each file's hash. On a 21:9 screen, Aphotic picks ultrawide images first.
 
 <details>
 <summary><b>Every theme, same desktop</b></summary>

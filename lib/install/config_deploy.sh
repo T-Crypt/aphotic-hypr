@@ -62,6 +62,17 @@ build_shell_shaders() {
 # wallpapers are warmed, not every theme's -- that is what the picker
 # opens on, and doing all of them on a large collection would spend real
 # time on images the user may never look at.
+# Records every theme wallpaper's size so an ultrawide screen can prefer
+# ultrawide images. Header reads only; a failure costs the preference,
+# never the install.
+index_wallpaper_sizes() {
+  local script="${APHOTIC_DOTS_DIR:-$ROOT_DIR}/Configs/.local/lib/aphotic/wallpaper_packs.py"
+  [[ -f "$script" ]] && command -v python3 &>/dev/null || return 0
+  python3 "$script" index >/dev/null 2>&1 || true
+  echo -e "$CNT - More wallpapers per theme: install the wallpaper-packs plugin, then run 'aphotic wallpaper fetch'."
+  return 0
+}
+
 build_wallpaper_thumbs() {
   local script="${APHOTIC_DOTS_DIR:-$ROOT_DIR}/Configs/.local/lib/aphotic/wallpaper_thumbs.py"
   local awww_dir="$HOME/.config/awww"
@@ -250,6 +261,7 @@ deploy_user_configs() {
   "$HOME/.local/bin/aphotic" plugin relink-ui-modules &>> "$INSTLOG" || true
 
   build_shell_shaders
+  index_wallpaper_sizes
   build_wallpaper_thumbs
 
   if [[ "${APHOTIC_CONTAINER:-0}" == "1" ]]; then
