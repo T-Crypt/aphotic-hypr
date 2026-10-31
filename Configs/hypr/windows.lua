@@ -55,7 +55,7 @@ hl.window_rule({ name = "float-filerroller",  match = { class = "file-roller" },
 -- keeps the fully transparent parts of full-screen layers unblurred.
 hl.layer_rule({
   name         = "blur-aphotic-panels",
-  match        = { namespace = "^aphotic-(bar|notch|capsule|dock|dashboard|settings|launcher|notificationcenter|notifications|osd|session|switcher|keybinds|workspace|intelligence|negotiation|pkginstall)$" },
+  match        = { namespace = "^aphotic-(bar|notch|capsule|dock|dashboard|settings|launcher|notificationcenter|notifications|osd|session|switcher|keybinds|workspace|intelligence|negotiation|pkginstall|glass-.+)$" },
   blur         = true,
   ignore_alpha = 0.2,
 })
