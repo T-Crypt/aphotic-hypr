@@ -86,3 +86,23 @@ def test_canary_list_mode_writes_nothing():
     existed = out.exists()
     canary_packages()
     assert out.exists() == existed
+
+
+def test_canary_root_reads_another_checkouts_package_lists(tmp_path: Path):
+    (tmp_path / "profiles/base").mkdir(parents=True)
+    (tmp_path / "lib/install").mkdir(parents=True)
+    for name in ("full.toml", "minimal.toml"):
+        (tmp_path / "profiles/base" / name).write_text('[packages]\nmain = ["alpha"]\n')
+    (tmp_path / "install.sh").write_text("install_software beta\n# install_software prose\n")
+    (tmp_path / "lib/install/x.sh").write_text("")
+
+    result = subprocess.run(
+        ["bash", str(CANARY), "--list"],
+        text=True,
+        capture_output=True,
+        check=False,
+        env={"PATH": "/usr/bin:/bin", "CANARY_ROOT": str(tmp_path)},
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.split() == ["alpha", "beta"]
