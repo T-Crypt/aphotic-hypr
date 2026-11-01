@@ -138,6 +138,10 @@ hl.animation({ leaf = "workspaces",  enabled = true, speed = 5,  bezier = "wind"
 -- only exists once that pane has written it.
 pcall(require, "keyboard")
 
+-- Window opacity as chosen in Settings → Appearance. pcall for the same
+-- reason as keyboard: the file only exists once that pane has written it.
+pcall(require, "appearance")
+
 -- Loaded last so it can override anything above. install.sh never
 -- overwrites the real ~/.config/hypr/custom.lua once it exists.
 require("custom")
