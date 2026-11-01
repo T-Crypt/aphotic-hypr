@@ -63,7 +63,7 @@ PanelWindow {
     screen: modelData
     visible: !Surfaces.suppressed
 
-    WlrLayershell.namespace: `aphotic-overlay-${root.surface.id}`
+    WlrLayershell.namespace: root.surface.glass ? `aphotic-glass-${root.surface.id}` : `aphotic-overlay-${root.surface.id}`
     // Bottom, not Top: an overlay is ambient. It sits above the wallpaper
     // and below every real shell surface, so a pet or a visualiser can
     // never cover the bar, the notch or a popout.

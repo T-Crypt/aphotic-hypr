@@ -463,6 +463,8 @@ Singleton {
             // closed on a token this build does not know, so the default
             // has to be a token it does.
             trigger: s.trigger || "idle",
+            // Overlay only. Blur behind the surface's translucent pixels.
+            glass: s.glass === true,
             componentUrl: `file://${encodeURI(root.pluginsDir + "/" + name + "/" + s.component)}`
         }));
     }

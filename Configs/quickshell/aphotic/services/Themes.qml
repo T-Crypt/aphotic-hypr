@@ -34,7 +34,24 @@ Singleton {
     property string activeTheme: ""
     property string activeWallpaper: ""
     readonly property var activeThemeInfo: themes.find(t => t.name === activeTheme) ?? null
-    readonly property list<string> wallpapersInActiveTheme: activeThemeInfo?.wallpapers ?? []
+    readonly property list<string> wallpapersInActiveTheme: root._preferredFirst(activeThemeInfo)
+
+    // An ultrawide screen gets ultrawide images first. Sizes come from the
+    // `.wallpapers.json` sidecar `aphotic wallpaper index` writes; a theme
+    // without one keeps its plain order.
+    readonly property real ultrawideRatio: 2.2
+    readonly property bool ultrawideScreen: Quickshell.screens.some(s => s.height > 0 && s.width / s.height >= root.ultrawideRatio)
+
+    function _preferredFirst(info: var): var {
+        const all = info?.wallpapers ?? [];
+        if (!root.ultrawideScreen || !(info?.ultrawide?.length))
+            return all;
+        return info.ultrawide.concat(all.filter(f => !info.ultrawide.includes(f)));
+    }
+
+    function _preferredPool(info: var): var {
+        return root.ultrawideScreen && info?.ultrawide?.length ? info.ultrawide : (info?.wallpapers ?? []);
+    }
     readonly property bool ready: _scanned && _stateLoaded
 
     // Kept in step with wallpaper_thumbs.py's own list and with scanProc's
@@ -133,7 +150,9 @@ Singleton {
         if (!info || info.wallpapers.length === 0)
             return;
 
-        const file = wallpaperFile && info.wallpapers.includes(wallpaperFile) ? wallpaperFile : (info.defaultWallpaper ?? info.wallpapers[0]);
+        const pool = root._preferredPool(info);
+        const fallback = pool.includes(info.defaultWallpaper) ? info.defaultWallpaper : pool[0];
+        const file = wallpaperFile && info.wallpapers.includes(wallpaperFile) ? wallpaperFile : fallback;
         root.activeTheme = themeName;
         root.activeWallpaper = file;
         root._saveState();
@@ -206,7 +225,7 @@ Singleton {
     }
 
     function _stepWallpaper(direction: int): void {
-        const wallpapers = root.wallpapersInActiveTheme;
+        const wallpapers = root._preferredPool(root.activeThemeInfo);
         if (wallpapers.length === 0)
             return;
         const idx = wallpapers.indexOf(root.activeWallpaper);
@@ -223,7 +242,7 @@ Singleton {
     }
 
     function randomWallpaper(): void {
-        const wallpapers = root.wallpapersInActiveTheme;
+        const wallpapers = root._preferredPool(root.activeThemeInfo);
         if (wallpapers.length === 0)
             return;
         const idx = Math.floor(Math.random() * wallpapers.length);
@@ -326,7 +345,7 @@ Singleton {
     Process {
         id: scanProc
 
-        command: ["sh", "-c", `for d in "${root.awwwDir}"/*/; do name=$(basename "$d"); printf 'THEME\\t%s\\n' "$name"; find "$d" -maxdepth 1 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.mkv' -o -iname '*.m4v' \\) -printf 'WALL\\t%f\\n'; if [ -f "$d/theme.toml" ]; then printf 'TOML_BEGIN\\n'; cat "$d/theme.toml"; printf 'TOML_END\\n'; fi; done`]
+        command: ["sh", "-c", `for d in "${root.awwwDir}"/*/; do name=$(basename "$d"); printf 'THEME\\t%s\\n' "$name"; find "$d" -maxdepth 1 -type f \\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mov' -o -iname '*.mkv' -o -iname '*.m4v' \\) -printf 'WALL\\t%f\\n'; if [ -f "$d/.wallpapers.json" ]; then printf 'SIZES\\t'; cat "$d/.wallpapers.json"; printf '\\n'; fi; if [ -f "$d/theme.toml" ]; then printf 'TOML_BEGIN\\n'; cat "$d/theme.toml"; printf 'TOML_END\\n'; fi; done`]
         stdout: StdioCollector {
             onStreamFinished: {
                 const themeList = [];
@@ -360,11 +379,16 @@ Singleton {
                         current = {
                             name: value,
                             wallpapers: [],
-                            _tomlText: ""
+                            _tomlText: "",
+                            _sizes: {}
                         };
                         themeList.push(current);
                     } else if (tag === "WALL" && current) {
                         current.wallpapers.push(value);
+                    } else if (tag === "SIZES" && current) {
+                        try {
+                            current._sizes = JSON.parse(value).sizes ?? {};
+                        } catch (e) {}
                     }
                 }
 
@@ -390,7 +414,11 @@ Singleton {
                         cursorTheme: toml.icons?.cursor_theme ?? "",
                         gtkTheme: toml.gtk?.theme ?? "",
                         defaultWallpaper: toml.wallpaper?.default ?? (t.wallpapers[0] ?? ""),
-                        wallpapers: t.wallpapers.sort()
+                        wallpapers: t.wallpapers.sort(),
+                        ultrawide: t.wallpapers.filter(f => {
+                            const size = t._sizes[f];
+                            return size && size[1] > 0 && size[0] / size[1] >= root.ultrawideRatio;
+                        })
                     };
                 }).filter(t => t.wallpapers.length > 0).sort((a, b) => a.name.localeCompare(b.name));
 
