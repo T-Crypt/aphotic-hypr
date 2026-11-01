@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# CANARY_ROOT points the current canary at another checkout, so a
+# release is checked with today's tool against its own package lists.
+ROOT_DIR="${CANARY_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 OUT_DIR="$ROOT_DIR/canary-out"
 CANARY_DATE="$(date -u +%F)"
 BUILD_USER="${CANARY_BUILD_USER:-}"
