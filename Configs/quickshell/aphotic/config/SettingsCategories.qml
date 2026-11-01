@@ -172,6 +172,7 @@ QtObject {
         { category: "sonar", anchor: "shelfTabAcknowledge", icon: "touch_app", label: qsTr("Tab acknowledgement"), keywords: "tab acknowledgement trace" },
         { category: "sonar", anchor: "shelfNotchTabs", icon: "expand_more", label: qsTr("Show registered shelf tabs in the notch"), keywords: "notch tabs shelf plugins" },
         { category: "system", anchor: "updateCheck", icon: "update", label: qsTr("Pending update check"), keywords: "updates frequency daily weekly packages pacman" },
+        { category: "ai", anchor: "aiHarnesses", icon: "terminal", label: qsTr("Coding agents"), keywords: "coding agents harness order default hidden rescan drop-in" },
         { category: "ai", anchor: "aiActive", icon: "smart_toy", label: qsTr("Active"), keywords: "provider active chat model" },
         { category: "ai", anchor: "aiModel", icon: "memory", label: qsTr("Model"), keywords: "ollama model selected" },
         { category: "ai", anchor: "aiInferenceMode", icon: "memory", label: qsTr("Inference mode"), keywords: "yield gpu idle inference" },
