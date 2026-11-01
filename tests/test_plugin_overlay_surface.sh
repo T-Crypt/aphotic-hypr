@@ -102,6 +102,21 @@ TOML
 f="$(_aphotic_plugin_ui_json "$TESTHOME/free.toml" | jq -c '.surfaces[0]')"
 [[ "$(jq -r '.anchor' <<<"$f")" == "free" ]] || fail "free anchor not passed through: $f"
 
+[[ "$(jq -r '.glass' <<<"$f")" == "false" ]] || fail "an overlay without glass should read glass false: $f"
+
+# --- glass = true opts the overlay into compositor blur ----------------
+cat > "$TESTHOME/glass.toml" <<'TOML'
+[plugin]
+name = "x"
+[ui.overlay]
+id = "y"
+component = "qml/Y.qml"
+anchor = "free"
+glass = true
+TOML
+gl="$(_aphotic_plugin_ui_json "$TESTHOME/glass.toml" | jq -c '.surfaces[0]')"
+[[ "$(jq -r '.glass' <<<"$gl")" == "true" ]] || fail "glass = true not passed through: $gl"
+
 # --- a component-less declaration contributes no surface ---------------
 printf '[plugin]\nname = "x"\n\n[ui.overlay]\nid = "y"\n' > "$TESTHOME/partial.toml"
 [[ "$(_aphotic_plugin_ui_json "$TESTHOME/partial.toml")" == "null" ]] \
