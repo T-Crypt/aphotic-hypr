@@ -9,6 +9,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.settings
+import qs.modules.osd
 
 Item {
     id: root
@@ -410,6 +411,33 @@ Item {
 
             StyledText {
                 Layout.topMargin: Tokens.spacing.small
+                text: qsTr("Windows")
+                color: Colours.inkMuted
+                font: Tokens.font.label.medium
+            }
+
+            SettingsGroup {
+                Layout.fillWidth: true
+
+                SettingsRow {
+                    searchId: "windowOpacity"
+                    icon: "opacity"
+                    label: qsTr("Window opacity")
+                    description: qsTr("How see-through every window is. Apps with their own rule stay relatively more transparent.")
+
+                    OsdSlider {
+                        Layout.preferredWidth: 220
+                        icon: "opacity"
+                        value: Settings.windowOpacity
+                        onMoved: v => Settings.windowOpacity = Math.max(Settings.windowOpacityMin, Math.round(v * 20) / 20)
+                        onWheelUp: Settings.windowOpacity = Math.min(1, Math.round(Settings.windowOpacity * 20 + 1) / 20)
+                        onWheelDown: Settings.windowOpacity = Math.max(Settings.windowOpacityMin, Math.round(Settings.windowOpacity * 20 - 1) / 20)
+                    }
+                }
+            }
+
+            StyledText {
+                Layout.topMargin: Tokens.spacing.small
                 text: qsTr("Wallpaper Picker")
                 color: Colours.inkMuted
                 font: Tokens.font.label.medium
@@ -474,15 +502,15 @@ Item {
                     searchId: "dashboardLayout"
                     icon: "space_dashboard"
                     label: qsTr("Dashboard layout")
-                    description: qsTr("How SUPER+D presents the dashboard")
+                    description: qsTr("Signal Spine shows live machine stats on the Dashboard tab. Classic shows cards and adds a Performance tab.")
 
                     RowLayout {
                         spacing: Tokens.spacing.small
 
                         Repeater {
                             model: [
-                                { id: "classic", label: qsTr("Classic") },
-                                { id: "spine", label: qsTr("Signal Spine") }
+                                { id: "spine", label: qsTr("Live tiles") },
+                                { id: "classic", label: qsTr("Classic") }
                             ]
 
                             StyledRect {

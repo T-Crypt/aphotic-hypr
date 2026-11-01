@@ -1,3 +1,28 @@
+# Aphotic 2.0.10
+
+Released: 2026-11-01
+
+## Changes since v2.0.9
+
+- **Dashboard**: the Dashboard tab is a grid of live tiles that fills the window, with processor and network curves, memory and graphics rings, media, weather, calendar and agents, and a click focuses what a tile shows (#372).
+- **Agents**: the Agents tile holds one session in its headline while several agents run, and a repeated event no longer counts its tokens twice (#369). Plugin and drop-in harnesses get their own bar tab (#376), and a drop-in harness that names its transcript files gets today's token counts (#382). Settings, AI, Coding agents picks which harnesses show and in what order, and the first one is the default the bar selects and projects open in (#383, #384). The bar popout shows each session as running, waiting on you, compacting or idle, and closes a session whose agent exited without saying so (#385). It also shows today's cost and usage limits when a harness reports them (#386).
+- **Engines**: vLLM, SGLang, KoboldCpp, LocalAI, any other OpenAI-compatible server and one you started by hand show their models and GPU memory (#370).
+- **Overlays and plugins**: a plugin overlay masks several regions and takes the keyboard on demand, so widgets keep their clicks and the desktop its menu (#371). An overlay can ask for compositor blur (#379).
+- **Wallpapers**: core ships one wallpaper per theme. The rest moved to the wallpaper-packs plugin, and `aphotic wallpaper fetch` downloads a pack and checks each file's hash (#378). Existing installs keep their wallpapers, and a 21:9 screen picks ultrawide images.
+- **Appearance**: Settings, Appearance, Windows has a Window opacity slider, 30% to 100%, that applies as you drag and survives a restart (#381).
+- **Bar**: docking the bar left or right no longer clips the taskbar and minimal styles, and the minimal clock stacks hours over minutes on a side bar (#377).
+- **Installer**: a flag-driven install with no terminal, such as `./install.sh --profile full` from a script, copies Aphotic's configs instead of leaving bare Hyprland, and `--no-configs` installs packages only (#388).
+- **Reliability**: the nightly install canary stopped reading a comment as a package name and checks releases again (#375, #380).
+
+Plugins repo, same window: each live agent session gets a chip with its own model and cost (#58), the AI tile lists every engine and marks the one in use (#59), and security, games and Docker arrive as notch tiles (#61, #62, #63). Desktop Widgets adds 44 blurred-glass widgets you move and resize in edit mode (#60, #66). Wallpaper packs hold the 86 images core used to ship plus 134 theme-matched ones (#64), and fixes cover the Agent Memory and Skills pane layouts and an icon name the font lacks (#67, #68).
+
+## Verification
+
+- On the release branch: bash-syntax and all 84 bash test files pass, and pytest passes with 426 tests (2 skipped).
+- Dev VM, fresh Arch: a full-profile install of v2.0.9, then the release branch over it, both exit 0. A config sync from v2.0.9 to 2.0.10 kept all 102 wallpapers and one added by hand, and added the new ones. `aphotic --version` reads 2.0.10 and every `aphotic doctor` check is ok.
+- Dev VM, fresh Arch, the installer fix (#388): `./install.sh --profile full --no-assistant </dev/null` reports "Configs copied: yes", and every `aphotic doctor` check is ok.
+- Not run: the guided installer on the VM, and a look at the new surfaces on a live desktop.
+
 # Aphotic 2.0.9
 
 Released: 2026-10-18
@@ -22,7 +47,7 @@ Plugins repo, same day: Agent Memory draws its workspace again and learns rules 
 - Local CI on the release branch: bash-syntax, 81 bash test files, pytest and install-dry-run (profile packages resolve) pass.
 - `tests/test_install_tui.sh` ran 80 times with the run-screen fix and never hung (it hung 1 in 15 before).
 - Offscreen probes: Agent Memory workspace, Skills surfaces, the engine stream, and the Signal Spine with a measured VRAM readout.
-- Not run: the install on the dev VM. That needs a pass before tagging, because the installer changed.
+- Not run: an install on the dev VM. The installer changed in this release, so report install problems as issues.
 
 # Aphotic 2.0.8
 

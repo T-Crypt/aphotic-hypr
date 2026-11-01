@@ -17,10 +17,12 @@ from agent_statusline import (
     maybe_emit_quota_event,
     merge,
     should_emit_quota,
+    statusline_owner,
     window,
 )
 
 NOW = 1788700000.0
+OWNER = ("claude", "anthropic")
 
 # The field names below are Claude Code's, not ours: the statusLine
 # command's stdin payload nests the windows under `rate_limits` with a
@@ -143,11 +145,37 @@ class TestBareWindows:
         assert bare_windows({}) == {}
 
 
+class TestStatuslineOwner:
+
+    def test_the_statusline_descriptor_owns_the_slot(self):
+        harnesses = [
+            {"id": "codex", "provider": "openai", "context": "stream"},
+            {"id": "cc", "provider": "anthropic", "context": "statusline"},
+        ]
+        assert statusline_owner(harnesses) == ("cc", "anthropic")
+
+    def test_no_record_falls_back_with_no_provider(self):
+        assert statusline_owner([]) == ("claude", "")
+
+    def test_main_tags_the_quota_file_and_event_with_the_owner(self, tmp_path, monkeypatch):
+        state = _isolate_state(tmp_path, monkeypatch)
+        (state / "harnesses.json").write_text(json.dumps({
+            "schemaVersion": 1,
+            "harnesses": [{"id": "cc", "provider": "anthropic", "context": "statusline"}],
+        }))
+        monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"session_id": "s1", **PAYLOAD})))
+        assert main() == 0
+        quota = json.loads((state / "agent-quota.json").read_text())
+        assert list(quota["providers"]) == ["cc"]
+        [event] = _events(state)
+        assert (event["harness"], event["provider"]) == ("cc", "anthropic")
+
+
 class TestBuildQuotaEvent:
 
     def test_matches_the_v2_quota_schema(self):
         windows = collect_windows(PAYLOAD)
-        event = build_quota_event({"session_id": "s1", **PAYLOAD}, windows, NOW)
+        event = build_quota_event({"session_id": "s1", **PAYLOAD}, windows, NOW, ("claude", "anthropic"))
         assert event["v"] == 2
         assert event["harness"] == "claude"
         assert event["sessionId"] == "s1"
@@ -189,13 +217,13 @@ class TestMaybeEmitQuotaEvent:
 
     def test_no_windows_writes_nothing(self, tmp_path, monkeypatch):
         state = _isolate_state(tmp_path, monkeypatch)
-        maybe_emit_quota_event({"session_id": "s1"}, {}, NOW)
+        maybe_emit_quota_event({"session_id": "s1"}, {}, NOW, OWNER)
         assert _events(state) == []
 
     def test_first_call_appends_a_quota_line(self, tmp_path, monkeypatch):
         state = _isolate_state(tmp_path, monkeypatch)
         payload = {"session_id": "s1", **PAYLOAD}
-        maybe_emit_quota_event(payload, collect_windows(payload), NOW)
+        maybe_emit_quota_event(payload, collect_windows(payload), NOW, OWNER)
         events = _events(state)
         assert len(events) == 1
         assert events[0]["event"] == "quota"
@@ -204,20 +232,20 @@ class TestMaybeEmitQuotaEvent:
         state = _isolate_state(tmp_path, monkeypatch)
         payload = {"session_id": "s1", **PAYLOAD}
         windows = collect_windows(payload)
-        maybe_emit_quota_event(payload, windows, NOW)
-        maybe_emit_quota_event(payload, windows, NOW + 5)
+        maybe_emit_quota_event(payload, windows, NOW, OWNER)
+        maybe_emit_quota_event(payload, windows, NOW + 5, OWNER)
         assert len(_events(state)) == 1
 
     def test_changed_values_within_throttle_appends_a_second_line(self, tmp_path, monkeypatch):
         state = _isolate_state(tmp_path, monkeypatch)
         payload = {"session_id": "s1", **PAYLOAD}
-        maybe_emit_quota_event(payload, collect_windows(payload), NOW)
+        maybe_emit_quota_event(payload, collect_windows(payload), NOW, OWNER)
 
         changed = dict(PAYLOAD)
         changed["rate_limits"] = dict(PAYLOAD["rate_limits"])
         changed["rate_limits"]["five_hour"] = {"used_percentage": 90, "resets_at": 1788710000}
         payload2 = {"session_id": "s1", **changed}
-        maybe_emit_quota_event(payload2, collect_windows(payload2), NOW + 5)
+        maybe_emit_quota_event(payload2, collect_windows(payload2), NOW + 5, OWNER)
 
         events = _events(state)
         assert len(events) == 2
@@ -226,8 +254,8 @@ class TestMaybeEmitQuotaEvent:
     def test_two_sessions_throttle_independently(self, tmp_path, monkeypatch):
         state = _isolate_state(tmp_path, monkeypatch)
         windows = collect_windows(PAYLOAD)
-        maybe_emit_quota_event({"session_id": "s1", **PAYLOAD}, windows, NOW)
-        maybe_emit_quota_event({"session_id": "s2", **PAYLOAD}, windows, NOW)
+        maybe_emit_quota_event({"session_id": "s1", **PAYLOAD}, windows, NOW, OWNER)
+        maybe_emit_quota_event({"session_id": "s2", **PAYLOAD}, windows, NOW, OWNER)
         events = _events(state)
         assert {e["sessionId"] for e in events} == {"s1", "s2"}
 

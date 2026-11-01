@@ -14,8 +14,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import harness_record
+
 SCHEMA_VERSION = 1
-PROVIDER_IDS = ("claude", "codex", "opencode")
 
 
 def _sum_transcript(path: Path, today: str) -> tuple[int, dict[str, int]]:
@@ -69,19 +70,15 @@ def build_usage_record(now: datetime, sources: dict[str, Path | list[Path]]) -> 
     Parameters:
     - now: current datetime used to determine "today" (UTC-aware datetime
       is recommended to match transcript timestamps).
-    - sources: mapping from provider id (keys from PROVIDER_IDS) to either a
-      Path or an iterable of Paths pointing at transcript jsonl files.
+    - sources: mapping from harness id to either a Path or an iterable of
+      Paths pointing at transcript jsonl files. Only these ids get a key.
 
     Returns a dict suitable for writing to disk which summarizes per-provider
     availability, today's token total, and a ranked tokens-by-model list.
     """
     today = now.strftime("%Y-%m-%d")
     providers: dict[str, dict] = {}
-    for provider_id in PROVIDER_IDS:
-        source = sources.get(provider_id)
-        if source is None:
-            providers[provider_id] = {"availability": "unavailable", "todayTokens": 0, "tokensByModel": []}
-            continue
+    for provider_id, source in sources.items():
         # A single Path (every existing test, and any future caller with
         # just one transcript to check) is normalized to a one-element
         # list -- real usage (main() below) needs a *list*, because a
@@ -137,9 +134,9 @@ def main(argv: list[str]) -> int:
     """CLI entrypoint.
 
     Expects a single argument: the directory where the generated
-    `agent-usage.json` will be written. Scans well-known transcript paths in
-    the user's home directory for supported providers and writes the
-    aggregated record.
+    `agent-usage.json` will be written. Scans the transcript glob of every
+    harness descriptor with usage = "scan", relative to $HOME, and writes
+    the aggregated record.
     """
     if len(argv) != 1:
         print("usage: agent_usage.py <state-dir>", file=sys.stderr)
@@ -147,8 +144,9 @@ def main(argv: list[str]) -> int:
     state_dir = Path(argv[0])
     home = Path(os.environ.get("HOME", str(Path.home())))
     sources = {
-        "claude": list(home.glob(".claude/projects/*/*.jsonl")),
-        "codex": list(home.glob(".codex/sessions/*.jsonl")),
+        h["id"]: list(home.glob(h["scan"]))
+        for h in harness_record.load(state_dir)
+        if h.get("usage") == "scan" and h.get("scan")
     }
     record = build_usage_record(datetime.now(timezone.utc), sources)
     write_record_atomically(state_dir / "agent-usage.json", record)

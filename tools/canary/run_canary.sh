@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# CANARY_ROOT points the current canary at another checkout, so a
+# release is checked with today's tool against its own package lists.
+ROOT_DIR="${CANARY_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 OUT_DIR="$ROOT_DIR/canary-out"
 CANARY_DATE="$(date -u +%F)"
 BUILD_USER="${CANARY_BUILD_USER:-}"
@@ -18,9 +20,6 @@ cleanup() {
   rm -rf -- "$TEMP_DIR"
 }
 trap cleanup EXIT
-
-mkdir -p "$OUT_DIR"
-rm -f -- "$OUT_DIR/known-good.lock" "$OUT_DIR/status.json"
 
 if [[ $EUID -eq 0 ]]; then
   if [[ -z "$BUILD_USER" || "$BUILD_USER" == "root" ]] || ! id "$BUILD_USER" &>/dev/null; then
@@ -106,10 +105,12 @@ write_status() {
 }
 
 # The installer also installs Hyprland and the GPU stacks by name outside
-# the profiles; read those from its own install_software calls.
+# the profiles; read those from its own install_software calls. A comment
+# that mentions install_software is prose, not a package.
 installer_packages() {
-  grep -rhoE 'install_software [a-z0-9][a-z0-9._+-]*' \
+  grep -rhE '^[^#]*install_software [a-z0-9]' \
     "$ROOT_DIR/install.sh" "$ROOT_DIR"/lib/install/*.sh \
+    | grep -oE 'install_software [a-z0-9][a-z0-9._+-]*' \
     | awk '{print $2}'
 }
 
@@ -121,6 +122,14 @@ mapfile -t packages < <(
     installer_packages
   } | LC_ALL=C sort -u
 )
+
+if [[ ${1:-} == --list ]]; then
+  printf '%s\n' "${packages[@]}"
+  exit 0
+fi
+
+mkdir -p "$OUT_DIR"
+rm -f -- "$OUT_DIR/known-good.lock" "$OUT_DIR/status.json"
 
 repo_packages=()
 aur_packages=()

@@ -173,7 +173,9 @@ function normalize(raw, source, sourceName) {
         return { descriptor: null, warnings: warnings };
     }
     var defaultHost = _trim(raw.default_host);
-    if (stream.length === 0 && !/^https?:\/\//.test(endpoint) && hostKey.length === 0 && defaultHost.length === 0) {
+    // A process with a port flag names its own host: the port it was started on.
+    var hostFromProcess = _trim(raw.process).length > 0 && _trim(raw.port_flag).length > 0;
+    if (stream.length === 0 && !/^https?:\/\//.test(endpoint) && hostKey.length === 0 && defaultHost.length === 0 && !hostFromProcess) {
         warnings.push("aphotic engine: '" + id + "' skipped, it has no host to ask");
         return { descriptor: null, warnings: warnings };
     }

@@ -54,7 +54,7 @@ _aphotic_plugin_root_value() {
 # surface silently dropped is the failure this exists to catch.
 # ---------------------------------------------------------------------
 APHOTIC_PLUGIN_HOSTED_SURFACES="dashboard notch settings workspace overlay fullscreen-overlay background pet_action edge_tab"
-APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine"
+APHOTIC_PLUGIN_HOSTED_CAPABILITIES="ui-surface theme-hook project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine wallpaper-pack"
 
 APHOTIC_PLUGIN_KEYBIND_MODIFIERS="SHIFT CAPS CTRL CONTROL ALT MOD1 MOD2 MOD3 SUPER WIN LOGO MOD4 MOD5"
 
@@ -213,7 +213,7 @@ _aphotic_plugin_owns_json() {
 }
 
 _aphotic_plugin_surface_json() {
-    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent anchor width height trigger
+    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent anchor width height trigger glass
     component="$(aphotic_toml_get "$manifest" "$section" component)"
     [[ -n "$component" ]] || return 1
 
@@ -232,6 +232,9 @@ _aphotic_plugin_surface_json() {
     # Fullscreen-overlay only -- what puts the surface on screen. Empty
     # for every other kind; the registry defaults it and evaluates it.
     trigger="$(aphotic_toml_get "$manifest" "$section" trigger)"
+    # Overlay only -- ask the compositor to blur what sits behind the
+    # surface's translucent pixels.
+    glass="$(aphotic_toml_get "$manifest" "$section" glass)"
 
     jq -n \
         --arg surface "$surface" \
@@ -246,7 +249,8 @@ _aphotic_plugin_surface_json() {
         --argjson width "${width:-0}" \
         --argjson height "${height:-0}" \
         --argjson trigger "$(jq -n --arg t "${trigger:-}" '$t')" \
-        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height, trigger: $trigger}'
+        --argjson glass "$([[ "$glass" == "true" ]] && echo true || echo false)" \
+        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height, trigger: $trigger, glass: $glass}'
 }
 
 # [ui.edge_tab] (manifest v3.10) -- a tab a shelf edge can host. The base
@@ -1684,7 +1688,7 @@ _aphotic_plugin_validate() {
     # manifest built against a newer contract has to fail open here,
     # same as APHOTIC_PLUGIN_HOSTED_CAPABILITIES's own comment on why --
     # but it's usually a typo, so it's worth flagging.
-    local known_caps="theme-hook ui-surface project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine"
+    local known_caps="theme-hook ui-surface project-hook workspace-hook harness-hook profile cli chat-provider action keybind engine wallpaper-pack"
     local cap
     while IFS= read -r cap; do
         [[ -n "$cap" ]] || continue
@@ -1883,6 +1887,22 @@ CHECK_PATH
             aphotic_warn "${name}: [keybind] combo '${duplicate_combo}' is declared more than once -- only the first is bound"
             warns=$((warns + 1))
         done < <(jq -r '[.[].combo] | group_by(ascii_downcase) | map(select(length > 1)) | .[][0]' <<<"$keybind_entries")
+    fi
+
+    # wallpaper-pack and [wallpapers] agree both ways, and every pack it
+    # lists has to load: a pack that fails here fetches nothing later.
+    local has_wallpapers_section="false" has_wallpaper_cap="false"
+    grep -q '^[[:space:]]*\[wallpapers\][[:space:]]*$' "$manifest" && has_wallpapers_section="true"
+    _aphotic_plugin_in_list "wallpaper-pack" "$caps" && has_wallpaper_cap="true"
+    if [[ "$has_wallpapers_section" == "true" && "$has_wallpaper_cap" == "false" ]]; then
+        aphotic_err "${name}: [wallpapers] is declared but capabilities doesn't include 'wallpaper-pack'"
+        fails=$((fails + 1))
+    elif [[ "$has_wallpaper_cap" == "true" ]]; then
+        local pack_report
+        if ! pack_report="$(python3 "${APHOTIC_DOTS_DIR}/Configs/.local/lib/aphotic/wallpaper_packs.py" check "$(dirname "$manifest")" 2>&1)"; then
+            aphotic_err "${name}: ${pack_report}"
+            fails=$((fails + 1))
+        fi
     fi
 
     # engine and [engine] have to agree from both directions, same as

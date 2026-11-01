@@ -102,21 +102,32 @@ ColumnLayout {
 
         readonly property int index: AgentProviders.selectedIndex
         readonly property var stat: AgentProviders.stats[index] ?? ({})
+        readonly property string harnessId: AgentProviders.providers[index]?.id ?? ""
+        readonly property var sessions: AgentProviders.liveSessionsOf(detail.harnessId)
+        readonly property var usage: AgentProviders.usageOf(detail.harnessId)
+        readonly property var quota: AgentProviders.quotaOf(detail.harnessId)
+        readonly property var quotaParts: [["fiveHour", qsTr("5h")], ["sevenDay", qsTr("7d")], ["context", qsTr("context")]]
+            .filter(([key]) => detail.quota[key]?.usedPercent !== undefined)
+            .map(([key, label]) => `${label} ${Math.round(detail.quota[key].usedPercent)}%`)
+
+        function costText(amount: real, currency: string): string {
+            if (currency === "USD" || currency === "")
+                return amount < 0.01 ? qsTr("under $0.01") : `$${amount.toFixed(2)}`;
+            return `${amount.toFixed(2)} ${currency}`;
+        }
 
         Layout.fillWidth: true
         spacing: Tokens.spacing.small / 2
 
         StyledText {
-            text: qsTr("%1 session(s) running").arg(detail.stat.sessionCount ?? 0)
+            text: qsTr("%1 session(s) open").arg(AgentProviders.sessionCountOf(detail.harnessId))
             font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
         }
 
-        // Live per-session activity, sourced from AgentProviders'
-        // `agent-events.jsonl` tail. `event` is that log's own normalized
-        // name (pre_tool_use/post_tool_use/notification/...). One row per
-        // currently-open session.
+        // One row per open session, labelled by the status AgentEvents
+        // tracks for it, not by the name of its last event.
         Repeater {
-            model: detail.stat.liveSessions ?? []
+            model: detail.sessions
 
             RowLayout {
                 required property var modelData
@@ -127,27 +138,33 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: {
-                        switch (parent.modelData.event) {
-                        case "pre_tool_use": return "sync";
-                        case "post_tool_use": return "check_circle";
-                        case "post_tool_use_failure": return "error";
-                        case "notification": return "notifications";
+                        switch (parent.modelData.status) {
+                        case "running": return "sync";
+                        case "waiting": return "notifications";
+                        case "compacting": return "compress";
                         default: return "circle";
                         }
                     }
                     fontStyle: Tokens.font.icon.small
-                    color: parent.modelData.event === "pre_tool_use" ? Colours.signal : Colours.inkMuted
+                    color: parent.modelData.status === "idle" ? Colours.inkMuted : Colours.signal
                 }
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: parent.modelData.tool || parent.modelData.event || qsTr("Session %1").arg(parent.modelData.id.slice(0, 8))
+                    text: parent.modelData.tool || parent.modelData.model || qsTr("Session %1").arg(parent.modelData.id.slice(0, 8))
                     font: Tokens.font.label.medium
                     elide: Text.ElideRight
                 }
 
                 StyledText {
-                    text: parent.modelData.event === "pre_tool_use" ? qsTr("running") : qsTr("idle")
+                    text: {
+                        switch (parent.modelData.status) {
+                        case "running": return qsTr("running");
+                        case "waiting": return qsTr("waiting on you");
+                        case "compacting": return qsTr("compacting");
+                        default: return qsTr("idle");
+                        }
+                    }
                     color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
@@ -170,7 +187,16 @@ ColumnLayout {
 
         StyledText {
             visible: detail.stat.availability === "available"
-            text: qsTr("Today: %1 tokens").arg(detail.stat.todayTokens ?? 0)
+            text: detail.usage.todayCost === null
+                ? qsTr("Today: %1 tokens").arg(detail.stat.todayTokens ?? 0)
+                : qsTr("Today: %1 tokens, %2").arg(detail.stat.todayTokens ?? 0).arg(detail.costText(detail.usage.todayCost, detail.usage.currency))
+            color: Colours.inkMuted
+            font: Tokens.font.body.small
+        }
+
+        StyledText {
+            visible: detail.quotaParts.length > 0
+            text: qsTr("Limits used: %1").arg(detail.quotaParts.join(" · "))
             color: Colours.inkMuted
             font: Tokens.font.body.small
         }
