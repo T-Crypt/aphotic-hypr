@@ -9,6 +9,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.settings
+import qs.modules.osd
 
 Item {
     id: root
@@ -405,6 +406,33 @@ Item {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: root.showWallpaperPicker = true
+                }
+            }
+
+            StyledText {
+                Layout.topMargin: Tokens.spacing.small
+                text: qsTr("Windows")
+                color: Colours.inkMuted
+                font: Tokens.font.label.medium
+            }
+
+            SettingsGroup {
+                Layout.fillWidth: true
+
+                SettingsRow {
+                    searchId: "windowOpacity"
+                    icon: "opacity"
+                    label: qsTr("Window opacity")
+                    description: qsTr("How see-through every window is. Apps with their own rule stay relatively more transparent.")
+
+                    OsdSlider {
+                        Layout.preferredWidth: 220
+                        icon: "opacity"
+                        value: Settings.windowOpacity
+                        onMoved: v => Settings.windowOpacity = Math.max(Settings.windowOpacityMin, Math.round(v * 20) / 20)
+                        onWheelUp: Settings.windowOpacity = Math.min(1, Math.round(Settings.windowOpacity * 20 + 1) / 20)
+                        onWheelDown: Settings.windowOpacity = Math.max(Settings.windowOpacityMin, Math.round(Settings.windowOpacity * 20 - 1) / 20)
+                    }
                 }
             }
 
