@@ -34,7 +34,7 @@ Item {
     // even while this item is invisible.
     readonly property var provider: AgentProviders.providers[AgentProviders.selectedIndex] ?? AgentProviders.providers[0] ?? ({})
     readonly property var stat: AgentProviders.stats[AgentProviders.selectedIndex] ?? AgentProviders.stats[0] ?? ({})
-    readonly property int badgeCount: root.stat.sessionCount ?? 0
+    readonly property int badgeCount: AgentProviders.sessionCountOf(root.provider.id ?? "")
 
     // Absent, not hidden, when the installer's `ai` layer is off, or when
     // the `ai` layer is on but zero harness-hook plugins are installed+
