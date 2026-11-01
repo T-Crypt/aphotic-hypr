@@ -55,7 +55,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument("event", choices=EVENTS, help="v2 event kind")
     parser.add_argument("--session", required=True, help="the harness's own session id")
-    parser.add_argument("--harness", required=True, help="harness id, e.g. codex or your own name")
+    parser.add_argument("--harness", required=True, help="harness id, as named by its descriptor")
     parser.add_argument("--model", help="model id the harness reports")
     parser.add_argument("--provider", help="inference provider id, e.g. ollama")
     parser.add_argument("--cwd", help="session working directory")
