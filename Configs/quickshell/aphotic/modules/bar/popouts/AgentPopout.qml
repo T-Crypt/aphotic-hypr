@@ -102,21 +102,21 @@ ColumnLayout {
 
         readonly property int index: AgentProviders.selectedIndex
         readonly property var stat: AgentProviders.stats[index] ?? ({})
+        readonly property string harnessId: AgentProviders.providers[index]?.id ?? ""
+        readonly property var sessions: AgentProviders.liveSessionsOf(detail.harnessId)
 
         Layout.fillWidth: true
         spacing: Tokens.spacing.small / 2
 
         StyledText {
-            text: qsTr("%1 session(s) running").arg(detail.stat.sessionCount ?? 0)
+            text: qsTr("%1 session(s) open").arg(AgentProviders.sessionCountOf(detail.harnessId))
             font: Tokens.font.title.builders.medium.weight(Font.DemiBold).build()
         }
 
-        // Live per-session activity, sourced from AgentProviders'
-        // `agent-events.jsonl` tail. `event` is that log's own normalized
-        // name (pre_tool_use/post_tool_use/notification/...). One row per
-        // currently-open session.
+        // One row per open session, labelled by the status AgentEvents
+        // tracks for it, not by the name of its last event.
         Repeater {
-            model: detail.stat.liveSessions ?? []
+            model: detail.sessions
 
             RowLayout {
                 required property var modelData
@@ -127,27 +127,33 @@ ColumnLayout {
 
                 MaterialIcon {
                     text: {
-                        switch (parent.modelData.event) {
-                        case "pre_tool_use": return "sync";
-                        case "post_tool_use": return "check_circle";
-                        case "post_tool_use_failure": return "error";
-                        case "notification": return "notifications";
+                        switch (parent.modelData.status) {
+                        case "running": return "sync";
+                        case "waiting": return "notifications";
+                        case "compacting": return "compress";
                         default: return "circle";
                         }
                     }
                     fontStyle: Tokens.font.icon.small
-                    color: parent.modelData.event === "pre_tool_use" ? Colours.signal : Colours.inkMuted
+                    color: parent.modelData.status === "idle" ? Colours.inkMuted : Colours.signal
                 }
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: parent.modelData.tool || parent.modelData.event || qsTr("Session %1").arg(parent.modelData.id.slice(0, 8))
+                    text: parent.modelData.tool || parent.modelData.model || qsTr("Session %1").arg(parent.modelData.id.slice(0, 8))
                     font: Tokens.font.label.medium
                     elide: Text.ElideRight
                 }
 
                 StyledText {
-                    text: parent.modelData.event === "pre_tool_use" ? qsTr("running") : qsTr("idle")
+                    text: {
+                        switch (parent.modelData.status) {
+                        case "running": return qsTr("running");
+                        case "waiting": return qsTr("waiting on you");
+                        case "compacting": return qsTr("compacting");
+                        default: return qsTr("idle");
+                        }
+                    }
                     color: Colours.inkMuted
                     font: Tokens.font.label.small
                 }
