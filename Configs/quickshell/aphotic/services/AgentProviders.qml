@@ -215,9 +215,14 @@ Singleton {
         return root.stats[root._findIndex(providerId)]?.sessionCount ?? 0;
     }
 
-    // Session ids a process_exit end was already sent for, so the next
-    // sample doesn't send it again before the feed catches up.
+    // "id@updatedAt" keys a process_exit end was already sent for, so the
+    // next sample doesn't repeat it, while a session that resumes and goes
+    // quiet again can still be ended.
     property var _endSent: ({})
+    // A session must also be this quiet before a zero process count ends
+    // it. A descriptor whose match never fits its process (a wrapper, a
+    // typo) then can't end a session that is still writing events.
+    readonly property int orphanQuietMs: 120000
 
     function _reconcilePgrepCount(providerId: string, n: int): void {
         if (!root._hasEvents(providerId)) {
@@ -229,13 +234,16 @@ Singleton {
         // to the log so every reader, replay included, sees it.
         if (n !== 0)
             return;
-        const ids = root.liveSessionsOf(providerId).map(s => s.id).filter(id => !root._endSent[id]);
-        if (ids.length === 0)
+        const now = Date.now();
+        const quiet = root.liveSessionsOf(providerId)
+            .filter(s => now - (s.updatedAt ?? 0) >= root.orphanQuietMs && !root._endSent[`${s.id}@${s.updatedAt}`]);
+        if (quiet.length === 0)
             return;
         const sent = Object.assign({}, root._endSent);
-        for (const id of ids)
-            sent[id] = true;
+        for (const s of quiet)
+            sent[`${s.id}@${s.updatedAt}`] = true;
         root._endSent = sent;
+        const ids = quiet.map(s => s.id);
         // One process for the batch: a backlog can hold many old sessions.
         Quickshell.execDetached(["sh", "-c",
             'h="$1"; shift; for id; do aphotic agent emit session_end --harness "$h" --session "$id" --end-reason process_exit; done',
