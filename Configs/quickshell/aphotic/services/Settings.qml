@@ -137,6 +137,9 @@ Singleton {
     property bool shelfNotchTabs: false
 
     property string agentSelectedProvider: ""
+    // Harness order and visibility, [{ id, enabled }] like barEntries. A
+    // harness with a descriptor but no entry here shows, after these.
+    property var harnessEntries: []
     property bool agentGraphEnabled: true
     // Node budget and layout tick rate for the agent graph surface, never
     // its visual treatment -- every tier renders the same look. "auto"
@@ -393,6 +396,7 @@ Singleton {
             capsuleAnimations: root.capsuleAnimations,
             flowShellActivity: root.flowShellActivity,
             agentSelectedProvider: root.agentSelectedProvider,
+            harnessEntries: root.harnessEntries,
             agentGraphEnabled: root.agentGraphEnabled,
             agentGraphQuality: root.agentGraphQuality,
             agentGraphAccent: root.agentGraphAccent,
@@ -798,6 +802,7 @@ hyprctl eval '${lua}' >/dev/null 2>&1`;
     onLauncherStyleChanged: root._saveState()
     onWorkspaceProfilesChanged: root._saveState()
     onBarEntriesChanged: root._saveState()
+    onHarnessEntriesChanged: root._saveState()
     onBarStatusIconsChanged: root._saveState()
     onPaletteEntriesChanged: root._saveState()
     onVpnConfigPathChanged: root._saveState()
@@ -917,6 +922,8 @@ hyprctl eval '${lua}' >/dev/null 2>&1`;
                     root.flowShellActivity = data.flowShellActivity;
                 if (typeof data.agentSelectedProvider === "string" && data.agentSelectedProvider.length > 0)
                     root.agentSelectedProvider = data.agentSelectedProvider;
+                if (Array.isArray(data.harnessEntries))
+                    root.harnessEntries = data.harnessEntries.filter(e => e && typeof e.id === "string" && typeof e.enabled === "boolean");
                 if (typeof data.agentGraphEnabled === "boolean")
                     root.agentGraphEnabled = data.agentGraphEnabled;
                 if (typeof data.agentGraphQuality === "string" && ["auto", "lite", "standard", "full"].includes(data.agentGraphQuality))

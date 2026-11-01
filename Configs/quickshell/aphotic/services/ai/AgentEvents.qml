@@ -167,6 +167,7 @@ Singleton {
                 inputTokens: 0,
                 outputTokens: 0,
                 cost: 0,
+                currency: "",
                 steps: 0
             });
             index = sessions.length - 1;
@@ -213,7 +214,12 @@ Singleton {
         if (event.event === "usage") {
             session.inputTokens = (session.inputTokens ?? 0) + (event.inputTokens ?? 0);
             session.outputTokens = (session.outputTokens ?? 0) + (event.outputTokens ?? 0);
-            session.cost = (session.cost ?? 0) + (Number(event.cost) || 0);
+            // v2 cost is { amount, currency }; a bare number is accepted too.
+            const cost = typeof event.cost === "number" ? event.cost : Number(event.cost?.amount);
+            if (cost > 0) {
+                session.cost = (session.cost ?? 0) + cost;
+                session.currency = event.cost?.currency ?? session.currency ?? "";
+            }
             session.steps = (session.steps ?? 0) + 1;
         }
 

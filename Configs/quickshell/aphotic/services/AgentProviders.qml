@@ -38,8 +38,7 @@ Singleton {
         sessionCount: 0,
         todayTokens: 0,
         tokensByModel: [],
-        availability: "unavailable",
-        liveSessions: []
+        availability: "unavailable"
     }))
 
     // Ollama's loaded-model state, tracked independently of the harness
@@ -51,15 +50,6 @@ Singleton {
     // it needed the ollama binary in PATH to say anything at all.
     readonly property var ollamaLoadedModels: AiProviders.ollamaRunningModels.map(m => m.name)
     readonly property var llamaSwapLoadedModels: AiProviders.llamaSwapRunningModels.map(m => m.name)
-
-    // { harnessId: { sessionId: {id, event, tool, updatedAt} } }, built
-    // entirely from the event tail below -- one entry per still-open
-    // session, removed on that session's `session_end`.
-    property var _liveByHarness: ({})
-    // { harnessId: true } once that harness's hook has written at least
-    // one event -- gates the pgrep reconcile timer below out of ever
-    // overwriting a harness the tail is already authoritative for.
-    property var _hasLiveEvents: ({})
 
     readonly property string selected: Settings.agentSelectedProvider
     readonly property int selectedIndex: providers.findIndex(p => p.id === root.selected)
@@ -92,20 +82,23 @@ Singleton {
     property var _streamUsage: ({})
     property string _streamUsageDay: ""
 
+    // todayCost is null until the harness reports a cost: a transcript
+    // scan has none, and a missing number is not zero.
     function usageOf(providerId: string): var {
         const usage = root._usageById[providerId];
         const stream = root._streamUsage[providerId];
-        if (!(usage?.availability === "available") && stream)
-            return {
+        const cost = { todayCost: stream?.todayCost ?? null, currency: stream?.currency ?? "" };
+        if (!(usage?.availability === "available") && stream?.tokensSeen)
+            return Object.assign({
                 availability: "available",
                 todayTokens: stream.todayTokens,
                 tokensByModel: stream.tokensByModel
-            };
-        return {
+            }, cost);
+        return Object.assign({
             availability: usage?.availability ?? "unavailable",
             todayTokens: usage?.todayTokens ?? 0,
             tokensByModel: usage?.tokensByModel ?? []
-        };
+        }, cost);
     }
 
     // One usage record = one step's token delta. Summed the same way the
@@ -116,15 +109,24 @@ Singleton {
         const harness = record.harness || "";
         if (!harness)
             return;
-        const scanned = root._usageById[harness];
-        if (scanned?.availability === "available")
-            return;
         const today = new Date().toDateString();
         if (today !== root._streamUsageDay) {
             root._streamUsageDay = today;
             root._streamUsage = {};
         }
-        const entry = Object.assign({}, root._streamUsage[harness] ?? { todayTokens: 0, tokensByModel: [] });
+        const entry = Object.assign({}, root._streamUsage[harness] ?? { todayTokens: 0, tokensByModel: [], tokensSeen: false, todayCost: null, currency: "" });
+        // Cost comes only from the stream, so it counts even when a
+        // transcript scan answers for the tokens.
+        const cost = typeof record.cost === "number" ? record.cost : Number(record.cost?.amount);
+        if (cost > 0) {
+            entry.todayCost = (entry.todayCost ?? 0) + cost;
+            entry.currency = record.cost?.currency ?? entry.currency;
+        }
+        if (root._usageById[harness]?.availability === "available") {
+            root._streamUsage = Object.assign({}, root._streamUsage, { [harness]: entry });
+            return;
+        }
+        entry.tokensSeen = true;
         const delta = (record.inputTokens ?? 0) + (record.outputTokens ?? 0);
         entry.todayTokens += delta;
         if (record.model && delta > 0) {
@@ -194,7 +196,7 @@ Singleton {
     }
 
     // One record off AgentEvents' shared feed in,
-    // `stats[harness].{sessionCount, liveSessions}` out. Replaces both
+    // `stats[harness]` usage and quota out. Replaces both
     // the old `ls`+`cat` directory poll (AGF-08) and, for any harness
     // that reaches here at least once, the pgrep poll below (AGF-07).
     // Harnesses without a statusLine slot (Codex, OpenCode) report their
@@ -205,33 +207,59 @@ Singleton {
             root._noteStreamUsage(record);
         else if (record.event === "quota")
             root._noteStreamQuota(record);
-        if (!root._hasLiveEvents[harness])
-            root._hasLiveEvents = Object.assign({}, root._hasLiveEvents, { [harness]: true });
 
-        const sessions = Object.assign({}, root._liveByHarness[harness] ?? {});
-        if (record.event === "session_end") {
-            delete sessions[record.sessionId];
-        } else {
-            sessions[record.sessionId] = {
-                id: record.sessionId,
-                event: record.event,
-                tool: record.tool ?? "",
-                updatedAt: record.timestamp ?? ""
-            };
-        }
-        root._liveByHarness = Object.assign({}, root._liveByHarness, { [harness]: sessions });
-
-        const list = Object.values(sessions);
-        root._setStat(root._findIndex(harness), { liveSessions: list, sessionCount: list.length });
     }
 
+    // A harness's open sessions, from AgentEvents' fold of the same feed.
+    function liveSessionsOf(providerId: string): var {
+        return AgentEvents.liveSessions.filter(s => s.harness === providerId);
+    }
+
+    // A harness with sessions in the event log is counted from them;
+    // one whose hook never fired has only the pgrep sample.
+    function _hasEvents(providerId: string): bool {
+        return AgentEvents.sessionsOf(providerId).length > 0;
+    }
+
+    function sessionCountOf(providerId: string): int {
+        if (root._hasEvents(providerId))
+            return root.liveSessionsOf(providerId).length;
+        return root.stats[root._findIndex(providerId)]?.sessionCount ?? 0;
+    }
+
+    // "id@updatedAt" keys a process_exit end was already sent for, so the
+    // next sample doesn't repeat it, while a session that resumes and goes
+    // quiet again can still be ended.
+    property var _endSent: ({})
+    // A session must also be this quiet before a zero process count ends
+    // it. A descriptor whose match never fits its process (a wrapper, a
+    // typo) then can't end a session that is still writing events.
+    readonly property int orphanQuietMs: 120000
+
     function _reconcilePgrepCount(providerId: string, n: int): void {
-        // The event tail is authoritative the moment a harness's hook has
-        // fired once -- never let a slow, coarser pgrep sample stomp a
-        // real-time count with a stale one.
-        if (root._hasLiveEvents[providerId])
+        if (!root._hasEvents(providerId)) {
+            root._setStat(root._findIndex(providerId), { sessionCount: isNaN(n) ? 0 : n });
             return;
-        root._setStat(root._findIndex(providerId), { sessionCount: isNaN(n) ? 0 : n });
+        }
+        // No process left but sessions still open: the harness exited
+        // without a session_end (a closed terminal, a kill). Write the end
+        // to the log so every reader, replay included, sees it.
+        if (n !== 0)
+            return;
+        const now = Date.now();
+        const quiet = root.liveSessionsOf(providerId)
+            .filter(s => now - (s.updatedAt ?? 0) >= root.orphanQuietMs && !root._endSent[`${s.id}@${s.updatedAt}`]);
+        if (quiet.length === 0)
+            return;
+        const sent = Object.assign({}, root._endSent);
+        for (const s of quiet)
+            sent[`${s.id}@${s.updatedAt}`] = true;
+        root._endSent = sent;
+        const ids = quiet.map(s => s.id);
+        // One process for the batch: a backlog can hold many old sessions.
+        Quickshell.execDetached(["sh", "-c",
+            'h="$1"; shift; for id; do aphotic agent emit session_end --harness "$h" --session "$id" --end-reason process_exit; done',
+            "sh", providerId, ...ids]);
     }
 
     // Process names the reconcile can count. A descriptor with no `match`
@@ -331,7 +359,7 @@ Singleton {
                     // A scan that says unavailable would stomp live stream
                     // numbers with zeros every reload; the stream keeps
                     // the stat until the scan has real data.
-                    if (root._streamUsage[p.id] && usage.availability !== "available")
+                    if (root._streamUsage[p.id]?.tokensSeen && usage.availability !== "available")
                         continue;
                     root._setStat(root._findIndex(p.id), {
                         availability: usage.availability ?? "unavailable",
