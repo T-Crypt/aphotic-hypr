@@ -22,8 +22,8 @@ Item {
 
     readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
 
-    implicitWidth: thickness
-    implicitHeight: layout.implicitHeight + Tokens.padding.small * 2
+    implicitWidth: Settings.barHorizontal ? layout.implicitWidth + Tokens.padding.medium * 2 : thickness
+    implicitHeight: Settings.barHorizontal ? thickness : layout.implicitHeight + Tokens.padding.medium * 2
 
     // The one task pill holding a focused window, if any -- the strip's
     // Signal line puts its accent segment under it.
@@ -34,7 +34,16 @@ Item {
     }
 
     function centerAlong(item: Item): real {
-        return item.mapToItem(root, item.implicitWidth / 2, 0).x;
+        return Settings.barHorizontal ? item.mapToItem(root, item.implicitWidth / 2, 0).x : item.mapToItem(root, 0, item.implicitHeight / 2).y;
+    }
+
+    // `pos` along the bar's axis, mapped from layout into `target`.
+    function alongIn(target: Item, pos: real): real {
+        return Settings.barHorizontal ? layout.mapToItem(target, pos, 0).x : layout.mapToItem(target, 0, pos).y;
+    }
+
+    function pointAt(pos: real): point {
+        return Settings.barHorizontal ? Qt.point(pos, 0) : Qt.point(0, pos);
     }
 
     // Same region-hysteresis lock as Bar.qml's checkPopout -- see that
@@ -52,17 +61,15 @@ Item {
     function withinLockedRegion(localPos: real): bool {
         if (!_lockedChild)
             return false;
-        return localPos >= _lockedChild.x - regionHysteresisMargin && localPos <= _lockedChild.x + _lockedChild.width + regionHysteresisMargin;
+        const start = Settings.barHorizontal ? _lockedChild.x : _lockedChild.y;
+        const size = Settings.barHorizontal ? _lockedChild.width : _lockedChild.height;
+        return localPos >= start - regionHysteresisMargin && localPos <= start + size + regionHysteresisMargin;
     }
 
     function checkPopout(pos: real): void {
-        // pos arrives in root's coordinate space (same convention Bar.qml
-        // uses), but layout is inset from root by its own leftMargin --
-        // unlike Bar.qml's zero-margin Loader, so pos has to be converted
-        // into layout-local space before comparing against any of
-        // layout's children (including tray/statusIcons's own local
-        // geometry) or every hit-test below is off by that margin.
-        const localPos = pos - layout.x;
+        // pos arrives in root's space; layout is inset by its margin, so
+        // convert before testing against layout's children.
+        const localPos = pos - (Settings.barHorizontal ? layout.x : layout.y);
         const child = (root.popouts.hasCurrent && withinLockedRegion(localPos)) ? _lockedChild : BarHit.nearestAlong(layout, localPos);
         _lockedChild = child;
 
@@ -83,13 +90,12 @@ Item {
         if (child === statusIcons && Config.bar.popouts.statusIcons) {
             // Same group-aware, tightly-scoped hit-testing as Bar.qml --
             // find which pill localPos actually falls within first, only
-            // then search icons inside it. Horizontal-only here (x axis),
-            // matching this component's own single RowLayout.
+            // then search icons inside it.
             const groups = statusIcons.groupContainers;
             let matched = null;
             for (const g of groups) {
-                const local = layout.mapToItem(g.pill, localPos, 0).x;
-                if (local >= 0 && local <= g.pill.width) {
+                const local = root.alongIn(g.pill, localPos);
+                if (local >= 0 && local <= (Settings.barHorizontal ? g.pill.width : g.pill.height)) {
                     matched = g;
                     break;
                 }
@@ -98,7 +104,7 @@ Item {
             // from the pill's separately-maintained hoveredEntry -- see
             // Bar.qml's matching comment for why reading the pill's own
             // state introduced a worse first-entry race than it fixed.
-            const icon = matched ? BarHit.nearestAlong(matched.icons, layout.mapToItem(matched.icons, localPos, 0).x) : null;
+            const icon = matched ? BarHit.nearestAlong(matched.icons, root.alongIn(matched.icons, localPos)) : null;
             if (icon) {
                 root.popouts.currentName = icon.name;
                 root.popouts.currentCenter = Qt.binding(() => root.centerAlong(icon));
@@ -107,10 +113,11 @@ Item {
                 root.popouts.hasCurrent = false;
             }
         } else if (child === tray && Config.bar.popouts.tray) {
-            const hoveringExpandIcon = tray.expandIcon.contains(layout.mapToItem(tray.expandIcon, localPos, 0));
+            const hoveringExpandIcon = tray.expandIcon.contains(layout.mapToItem(tray.expandIcon, root.pointAt(localPos)));
             if (!Config.bar.tray.compact || (tray.expanded && !hoveringExpandIcon)) {
-                const trayExtent = tray.layout.implicitWidth;
-                const index = Math.floor(((localPos - tray.x - tray.padding * 2 + tray.spacing) / trayExtent) * tray.items.count);
+                const trayExtent = Settings.barHorizontal ? tray.layout.implicitWidth : tray.layout.implicitHeight;
+                const trayStart = Settings.barHorizontal ? tray.x : tray.y;
+                const index = Math.floor(((localPos - trayStart - tray.padding * 2 + tray.spacing) / trayExtent) * tray.items.count);
                 const trayItem = tray.items.itemAt(index);
                 if (trayItem) {
                     root.popouts.currentName = `traymenu${index}`;
@@ -142,16 +149,25 @@ Item {
         border.width: 0
     }
 
-    RowLayout {
+    // One column when docked to a side, so nothing runs past the strip.
+    GridLayout {
         id: layout
 
+        readonly property int crossAlign: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
+
         anchors.fill: parent
-        anchors.leftMargin: Tokens.padding.medium
-        anchors.rightMargin: Tokens.padding.medium
-        spacing: Tokens.spacing.small
+        anchors.leftMargin: Settings.barHorizontal ? Tokens.padding.medium : 0
+        anchors.rightMargin: Settings.barHorizontal ? Tokens.padding.medium : 0
+        anchors.topMargin: Settings.barHorizontal ? 0 : Tokens.padding.medium
+        anchors.bottomMargin: Settings.barHorizontal ? 0 : Tokens.padding.medium
+        flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
+        rowSpacing: Tokens.spacing.small
+        columnSpacing: Tokens.spacing.small
 
         StyledRect {
             id: startButton
+
+            Layout.alignment: layout.crossAlign
 
             Layout.preferredWidth: Settings.barInnerWidth
             Layout.preferredHeight: Settings.barInnerWidth
@@ -184,19 +200,25 @@ Item {
         }
 
         Item {
-            Layout.fillWidth: true
+            Layout.fillWidth: Settings.barHorizontal
+            Layout.fillHeight: !Settings.barHorizontal
         }
 
         Tray {
             id: tray
+
+            Layout.alignment: layout.crossAlign
         }
 
         StatusIcons {
             id: statusIcons
+
+            Layout.alignment: layout.crossAlign
             screenState: root.screenState
         }
 
         Clock {
+            Layout.alignment: layout.crossAlign
             screenState: root.screenState
         }
     }
@@ -245,6 +267,7 @@ Item {
 
         Layout.preferredWidth: Settings.barInnerWidth
         Layout.preferredHeight: Settings.barInnerWidth
+        Layout.alignment: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
         radius: Tokens.rounding.full
         // No fill at all: the strip's Signal line marks the focused task
         // with its accent segment (see the SignalLine below the row).
