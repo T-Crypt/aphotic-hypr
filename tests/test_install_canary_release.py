@@ -57,3 +57,32 @@ def test_canary_release_resolver_skips_only_tagged_head(tmp_path: Path):
     commit(repo, "main change")
 
     assert resolve(repo)["run"] == "true"
+
+
+CANARY = ROOT / "tools/canary/run_canary.sh"
+
+
+def canary_packages() -> list[str]:
+    result = subprocess.run(
+        ["bash", str(CANARY), "--list"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    return result.stdout.split()
+
+
+def test_canary_ignores_install_software_in_comments():
+    packages = canary_packages()
+
+    assert "runs" not in packages
+    assert "hyprland" in packages
+    assert "quickshell" in packages
+
+
+def test_canary_list_mode_writes_nothing():
+    out = ROOT / "canary-out"
+    existed = out.exists()
+    canary_packages()
+    assert out.exists() == existed
