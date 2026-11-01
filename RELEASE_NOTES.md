@@ -12,6 +12,10 @@ anything longer just clips off-screen. For the full history see the
 README's Roadmap section; for granular day-to-day change tracking see the
 maintainer-local (gitignored) `docs/CHANGELOG.md`.
 
+## 2.0.10
+
+Live tiles fill the Dashboard, widgets land on the desktop, and security, games and Docker get their own tiles, with wallpapers on request.
+
 ## 2.0.9
 
 A guided installer, Signal surfaces across the shell, plugin keybinds and overlays, and a Signal Spine dashboard layout.
