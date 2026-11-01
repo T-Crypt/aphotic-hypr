@@ -33,7 +33,7 @@ CATEGORY_FILES = {
     "sonar": ["SonarPane.qml"],
     "language": ["LanguagePane.qml"],
     "workspaceProfiles": ["WorkspaceProfilesPane.qml"],
-    "ai": ["AiPane.qml"],
+    "ai": ["AiPane.qml", "HarnessesSection.qml"],
     "network": ["NetworkPane.qml"],
     "power": ["PowerSecurityPane.qml"],
     "plugins": ["PluginsPane.qml"],

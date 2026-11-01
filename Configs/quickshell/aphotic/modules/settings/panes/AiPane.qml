@@ -6,6 +6,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.services.ai
+import qs.modules.settings
 
 ColumnLayout {
     id: root
@@ -98,6 +99,11 @@ ColumnLayout {
                 }
             }
         }
+    }
+
+    HarnessesSection {
+        Layout.fillWidth: true
+        visible: InstallProfile.aiEnabled
     }
 
     // Everything locally-hosted below is installed by the `ai` layer --
