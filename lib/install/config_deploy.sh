@@ -45,12 +45,24 @@ build_shell_shaders() {
   return 0
 }
 
-# Everything a config refresh needs: the Configs/ copy, the symlinks that
-# must track repo edits, the user systemd units, the Claude Code hook
-# wiring, and PATH. Deliberately stops short of anything needing sudo
-# (SDDM theme, wayland-sessions) so --config-only never asks for a
-# password -- extracted rather than duplicated so the sync path and the
-# full install can never drift apart.
+# Records every theme wallpaper's size so an ultrawide screen can prefer
+# ultrawide images. Header reads only; a failure costs the preference,
+# never the install. The pack hint only shows while every theme folder
+# still holds a single image: an upgrade keeps the collection a user
+# already has, and they don't need telling to fetch it again.
+index_wallpaper_sizes() {
+  local script="${APHOTIC_DOTS_DIR:-$ROOT_DIR}/Configs/.local/lib/aphotic/wallpaper_packs.py"
+  local theme_dir
+  [[ -f "$script" ]] && command -v python3 &>/dev/null || return 0
+  python3 "$script" index >/dev/null 2>&1 || true
+  for theme_dir in "$HOME/.config/awww"/*/; do
+    [[ -d "$theme_dir" ]] || continue
+    [[ "$(find "$theme_dir" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.gif' \) | head -2 | wc -l)" -gt 1 ]] && return 0
+  done
+  echo -e "$CNT - More wallpapers per theme: install the wallpaper-packs plugin, then run 'aphotic wallpaper fetch'."
+  return 0
+}
+
 # Pre-generate the wallpaper picker's thumbnail cache so the first
 # SUPER+W is warm. Without this, opening the picker on a fresh install
 # spawns ffmpeg for every wallpaper in the theme and fills the cards in
@@ -62,17 +74,6 @@ build_shell_shaders() {
 # wallpapers are warmed, not every theme's -- that is what the picker
 # opens on, and doing all of them on a large collection would spend real
 # time on images the user may never look at.
-# Records every theme wallpaper's size so an ultrawide screen can prefer
-# ultrawide images. Header reads only; a failure costs the preference,
-# never the install.
-index_wallpaper_sizes() {
-  local script="${APHOTIC_DOTS_DIR:-$ROOT_DIR}/Configs/.local/lib/aphotic/wallpaper_packs.py"
-  [[ -f "$script" ]] && command -v python3 &>/dev/null || return 0
-  python3 "$script" index >/dev/null 2>&1 || true
-  echo -e "$CNT - More wallpapers per theme: install the wallpaper-packs plugin, then run 'aphotic wallpaper fetch'."
-  return 0
-}
-
 build_wallpaper_thumbs() {
   local script="${APHOTIC_DOTS_DIR:-$ROOT_DIR}/Configs/.local/lib/aphotic/wallpaper_thumbs.py"
   local awww_dir="$HOME/.config/awww"
@@ -101,6 +102,12 @@ build_wallpaper_thumbs() {
   return 0
 }
 
+# Everything a config refresh needs: the Configs/ copy, the symlinks that
+# must track repo edits, the user systemd units, the Claude Code hook
+# wiring, and PATH. Deliberately stops short of anything needing sudo
+# (SDDM theme, wayland-sessions) so --config-only never asks for a
+# password -- extracted rather than duplicated so the sync path and the
+# full install can never drift apart.
 deploy_user_configs() {
   if [[ "$(git -C "$ROOT_DIR" rev-parse --git-dir 2>/dev/null)" != "$(git -C "$ROOT_DIR" rev-parse --git-common-dir 2>/dev/null)" ]]; then
     echo -e "$CWR - $ROOT_DIR is a git worktree. Your live configs will link into it, and removing"
