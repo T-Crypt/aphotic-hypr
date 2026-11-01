@@ -23,6 +23,8 @@ import os
 import sys
 import time
 
+import harness_record
+
 SCHEMA_VERSION = 1
 STATE = os.environ.get("APHOTIC_STATE_HOME", os.path.expanduser("~/.local/state/aphotic"))
 QUOTA = os.path.join(STATE, "agent-quota.json")
@@ -34,8 +36,17 @@ EVENTS_MAX_BYTES = 512 * 1024
 EVENTS_KEEP_LINES = 1000
 QUOTA_THROTTLE = os.path.join(STATE, "agent-quota-throttle.json")
 QUOTA_THROTTLE_SECONDS = 60
-# Only Claude Code's statusLine slot writes here.
-PROVIDER_BY_HARNESS = {"claude": "anthropic"}
+# The statusLine slot is Claude Code's. The descriptor with
+# context = "statusline" names it; this covers a missing record.
+FALLBACK_HARNESS = "claude"
+
+
+def statusline_owner(harnesses: list[dict]) -> tuple[str, str]:
+    """(harness id, provider) of the descriptor that owns the slot."""
+    for h in harnesses:
+        if h.get("context") == "statusline":
+            return h["id"], h.get("provider") or ""
+    return FALLBACK_HARNESS, ""
 
 
 def atomic_write(path: str, text: str) -> None:
@@ -106,7 +117,7 @@ def collect_windows(payload: dict) -> dict:
     return windows
 
 
-def build_record(payload: dict, now: float) -> dict:
+def build_record(payload: dict, now: float, harness: str = FALLBACK_HARNESS) -> dict:
     """Build the quota record for one statusline invocation."""
     windows = collect_windows(payload)
 
@@ -117,7 +128,7 @@ def build_record(payload: dict, now: float) -> dict:
         "schemaVersion": SCHEMA_VERSION,
         "capturedAt": int(now),
         "providers": {
-            "claude": {
+            harness: {
                 "model": model.get("display_name") or model.get("id") or "",
                 "windows": windows,
             }
@@ -151,7 +162,7 @@ def format_line(record: dict) -> str:
     whichever windows the payload actually reported. A window the harness
     said nothing about is left out rather than shown as zero.
     """
-    provider = record["providers"]["claude"]
+    provider = next(iter(record["providers"].values()))
     parts = []
     if provider["model"]:
         parts.append(provider["model"])
@@ -171,9 +182,10 @@ def bare_windows(windows: dict) -> dict:
     return {name: {"usedPercent": w["usedPercent"], "resetsAt": w["resetsAt"]} for name, w in windows.items()}
 
 
-def build_quota_event(payload: dict, windows: dict, now: float) -> dict:
-    """A `quota` line for the event stream."""
-    harness = payload.get("harness") or "claude"
+def build_quota_event(payload: dict, windows: dict, now: float,
+                      owner: tuple[str, str] = (FALLBACK_HARNESS, "")) -> dict:
+    """A `quota` line for the event stream, tagged with the slot's owner."""
+    harness, provider = owner
     record = {
         "v": 2,
         "harness": harness,
@@ -184,7 +196,6 @@ def build_quota_event(payload: dict, windows: dict, now: float) -> dict:
         "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
         "quota": bare_windows(windows),
     }
-    provider = PROVIDER_BY_HARNESS.get(harness)
     if provider:
         record["provider"] = provider
     return record
@@ -230,7 +241,7 @@ def should_emit_quota(state: dict, session_id: str, windows: dict, now: float) -
     return prev.get("windows") != windows
 
 
-def maybe_emit_quota_event(payload: dict, windows: dict, now: float) -> None:
+def maybe_emit_quota_event(payload: dict, windows: dict, now: float, owner: tuple[str, str]) -> None:
     """Append a `quota` line, throttled per session (see should_emit_quota).
 
     A payload with no window writes nothing.
@@ -243,7 +254,7 @@ def maybe_emit_quota_event(payload: dict, windows: dict, now: float) -> None:
         return
 
     os.makedirs(STATE, exist_ok=True)
-    append_event_line(build_quota_event(payload, windows, now))
+    append_event_line(build_quota_event(payload, windows, now, owner))
 
     state[session_id] = {"t": now, "windows": windows}
     atomic_write(QUOTA_THROTTLE, json.dumps(state, separators=(",", ":")))
@@ -258,7 +269,8 @@ def main() -> int:
         return 0
 
     now = time.time()
-    record = build_record(payload, now)
+    owner = statusline_owner(harness_record.load(STATE))
+    record = build_record(payload, now, owner[0])
 
     try:
         os.makedirs(STATE, exist_ok=True)
@@ -273,7 +285,7 @@ def main() -> int:
         pass
 
     try:
-        maybe_emit_quota_event(payload, collect_windows(payload), now)
+        maybe_emit_quota_event(payload, collect_windows(payload), now, owner)
     except OSError:
         pass
 
