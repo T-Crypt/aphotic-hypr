@@ -167,6 +167,8 @@ Usage: ./install.sh [options]
                                 asking, even interactively.
   --dry-run                     Print planned actions, change nothing
   --no-backup                   Skip backing up existing configs
+  --no-configs                  Install packages only; leave ~/.config
+                                without Aphotic's config files
   --keep-backups <N>             Backups to retain (default: 5)
   -h, --help                     Show this help
   -v, --version                  Print the installed Aphotic version
@@ -198,6 +200,7 @@ while [[ $# -gt 0 ]]; do
     --keep-conflicts) STRIP_CONFLICTS="0"; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
     --no-backup) NO_BACKUP=1; shift ;;
+    --no-configs) COPY_CONFIGS=0; shift ;;
     --keep-backups) [[ -n "${2:-}" ]] || { echo -e "$CER - Missing value for $1"; exit 1; }; KEEP_BACKUPS="$2"; shift 2 ;;
     *) echo -e "$CER - Unknown option: $1"; print_help; exit 1 ;;
   esac
@@ -532,21 +535,10 @@ main() {
   enable_core_services
 
   print_stage 6 "Deploying configs"
-  # COPY_CONFIGS is "" (nobody has decided -- ask) or 1/0. The guided flow
-  # sets it to 1 rather than asking: a desktop with none of its configs
-  # deployed isn't a working install, so it belongs in the summary, not in
-  # a prompt whose default was "no".
   CFG_COPIED=0
+  resolve_copy_configs
   local want_configs=0
-  if [[ -n "$COPY_CONFIGS" ]]; then
-    [[ "$COPY_CONFIGS" == "1" ]] && want_configs=1
-  else
-    echo -e "$CNT - Without Aphotic's config files you get Hyprland with none of Aphotic's desktop."
-    echo -e "$CNT   Whatever is in ~/.config now was backed up in the previous step."
-    if confirm "Install Aphotic's config files into ~/.config?" n; then
-      want_configs=1
-    fi
-  fi
+  [[ "$COPY_CONFIGS" == "1" ]] && want_configs=1
 
   write_aphotic_toml "$APHOTIC_TOML" "$PROFILE" "$LAYERS" "$THEME" "$ISNVIDIA" "$AUR_HELPER" "$(date -Iseconds)" "$ISAMD"
 

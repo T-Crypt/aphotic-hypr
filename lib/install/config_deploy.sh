@@ -102,6 +102,24 @@ build_wallpaper_thumbs() {
   return 0
 }
 
+# Decides COPY_CONFIGS when no flag or guided answer did. With no terminal
+# nobody can answer the prompt, and its default of "no" leaves bare
+# Hyprland, so the whole desktop is copied. A terminal gets asked.
+resolve_copy_configs() {
+  [[ -n "$COPY_CONFIGS" ]] && return 0
+  if [[ ! -t 0 ]]; then
+    COPY_CONFIGS=1
+    return 0
+  fi
+  echo -e "$CNT - Without Aphotic's config files you get Hyprland with none of Aphotic's desktop."
+  echo -e "$CNT   Whatever is in ~/.config now was backed up in the previous step."
+  if confirm "Install Aphotic's config files into ~/.config?" n; then
+    COPY_CONFIGS=1
+  else
+    COPY_CONFIGS=0
+  fi
+}
+
 # Everything a config refresh needs: the Configs/ copy, the symlinks that
 # must track repo edits, the user systemd units, the Claude Code hook
 # wiring, and PATH. Deliberately stops short of anything needing sudo
