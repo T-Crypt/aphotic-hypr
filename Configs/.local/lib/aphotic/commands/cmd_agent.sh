@@ -3,7 +3,7 @@
 # @cmd: agent
 # @cmd.desc: Track AI coding-agent usage and feed the agent event stream
 # @cmd.group: CORE
-# @cmd.opt: usage-update  | Parse local Claude/Codex transcripts and write agent-usage.json
+# @cmd.opt: usage-update  | Parse the transcripts of every scan harness and write agent-usage.json
 # @cmd.opt: harnesses  | Merge harness descriptors from plugins and drop-ins into harnesses.json
 # @cmd.opt: emit <event>  | Write one validated v2 agent event through the hook writer
 # @cmd.opt: run --harness NAME -- <command...>  | Wrap a command with session_start and session_end
@@ -78,7 +78,8 @@ Usage: aphotic agent harnesses
                [--reasoning-tokens N]
        aphotic agent run --harness NAME -- <command...>
 
-  usage-update   Parse local Claude/Codex transcripts and write
+  usage-update   Parse the transcripts of every harness descriptor with
+                 usage = "scan" and write
                  \$APHOTIC_STATE_HOME/agent-usage.json (aggregate token
                  counts only -- never prompts, responses, or credentials)
 
