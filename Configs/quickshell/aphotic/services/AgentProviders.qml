@@ -82,20 +82,23 @@ Singleton {
     property var _streamUsage: ({})
     property string _streamUsageDay: ""
 
+    // todayCost is null until the harness reports a cost: a transcript
+    // scan has none, and a missing number is not zero.
     function usageOf(providerId: string): var {
         const usage = root._usageById[providerId];
         const stream = root._streamUsage[providerId];
-        if (!(usage?.availability === "available") && stream)
-            return {
+        const cost = { todayCost: stream?.todayCost ?? null, currency: stream?.currency ?? "" };
+        if (!(usage?.availability === "available") && stream?.tokensSeen)
+            return Object.assign({
                 availability: "available",
                 todayTokens: stream.todayTokens,
                 tokensByModel: stream.tokensByModel
-            };
-        return {
+            }, cost);
+        return Object.assign({
             availability: usage?.availability ?? "unavailable",
             todayTokens: usage?.todayTokens ?? 0,
             tokensByModel: usage?.tokensByModel ?? []
-        };
+        }, cost);
     }
 
     // One usage record = one step's token delta. Summed the same way the
@@ -106,15 +109,24 @@ Singleton {
         const harness = record.harness || "";
         if (!harness)
             return;
-        const scanned = root._usageById[harness];
-        if (scanned?.availability === "available")
-            return;
         const today = new Date().toDateString();
         if (today !== root._streamUsageDay) {
             root._streamUsageDay = today;
             root._streamUsage = {};
         }
-        const entry = Object.assign({}, root._streamUsage[harness] ?? { todayTokens: 0, tokensByModel: [] });
+        const entry = Object.assign({}, root._streamUsage[harness] ?? { todayTokens: 0, tokensByModel: [], tokensSeen: false, todayCost: null, currency: "" });
+        // Cost comes only from the stream, so it counts even when a
+        // transcript scan answers for the tokens.
+        const cost = typeof record.cost === "number" ? record.cost : Number(record.cost?.amount);
+        if (cost > 0) {
+            entry.todayCost = (entry.todayCost ?? 0) + cost;
+            entry.currency = record.cost?.currency ?? entry.currency;
+        }
+        if (root._usageById[harness]?.availability === "available") {
+            root._streamUsage = Object.assign({}, root._streamUsage, { [harness]: entry });
+            return;
+        }
+        entry.tokensSeen = true;
         const delta = (record.inputTokens ?? 0) + (record.outputTokens ?? 0);
         entry.todayTokens += delta;
         if (record.model && delta > 0) {
@@ -347,7 +359,7 @@ Singleton {
                     // A scan that says unavailable would stomp live stream
                     // numbers with zeros every reload; the stream keeps
                     // the stat until the scan has real data.
-                    if (root._streamUsage[p.id] && usage.availability !== "available")
+                    if (root._streamUsage[p.id]?.tokensSeen && usage.availability !== "available")
                         continue;
                     root._setStat(root._findIndex(p.id), {
                         availability: usage.availability ?? "unavailable",
