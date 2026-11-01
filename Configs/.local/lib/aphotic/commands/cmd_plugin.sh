@@ -213,7 +213,7 @@ _aphotic_plugin_owns_json() {
 }
 
 _aphotic_plugin_surface_json() {
-    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent anchor width height trigger
+    local manifest="$1" section="$2" surface="$3" id icon label component layer data parent anchor width height trigger glass
     component="$(aphotic_toml_get "$manifest" "$section" component)"
     [[ -n "$component" ]] || return 1
 
@@ -232,6 +232,9 @@ _aphotic_plugin_surface_json() {
     # Fullscreen-overlay only -- what puts the surface on screen. Empty
     # for every other kind; the registry defaults it and evaluates it.
     trigger="$(aphotic_toml_get "$manifest" "$section" trigger)"
+    # Overlay only -- ask the compositor to blur what sits behind the
+    # surface's translucent pixels.
+    glass="$(aphotic_toml_get "$manifest" "$section" glass)"
 
     jq -n \
         --arg surface "$surface" \
@@ -246,7 +249,8 @@ _aphotic_plugin_surface_json() {
         --argjson width "${width:-0}" \
         --argjson height "${height:-0}" \
         --argjson trigger "$(jq -n --arg t "${trigger:-}" '$t')" \
-        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height, trigger: $trigger}'
+        --argjson glass "$([[ "$glass" == "true" ]] && echo true || echo false)" \
+        '{surface: $surface, id: $id, icon: $icon, label: $label, component: $component, requires_layer: $requires_layer, requires_data: $requires_data, parent: $parent, anchor: $anchor, width: $width, height: $height, trigger: $trigger, glass: $glass}'
 }
 
 # [ui.edge_tab] (manifest v3.10) -- a tab a shelf edge can host. The base
