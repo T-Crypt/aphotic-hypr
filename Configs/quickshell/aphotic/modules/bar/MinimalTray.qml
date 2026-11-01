@@ -40,11 +40,13 @@ Item {
         }
     }
 
-    RowLayout {
+    GridLayout {
         id: row
 
         anchors.centerIn: parent
-        spacing: Tokens.spacing.extraSmall
+        flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
+        rowSpacing: Tokens.spacing.extraSmall
+        columnSpacing: Tokens.spacing.extraSmall
 
         MaterialIcon {
             visible: root.trayValues.length > 0
