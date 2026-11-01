@@ -28,9 +28,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from agent_usage import write_record_atomically
+from harness_record import RECORD_NAME, SCHEMA_VERSION
 
-SCHEMA_VERSION = 1
-RECORD_NAME = "harnesses.json"
 PLUGINS_STATE_NAME = "plugins.json"
 DROPIN_DIR_NAME = "harnesses"
 DROPIN_SUFFIX = ".toml"
