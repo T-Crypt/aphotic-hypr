@@ -21,8 +21,8 @@ Item {
 
     readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
 
-    implicitWidth: Settings.barHorizontal ? thickness : layout.implicitWidth + Tokens.padding.small * 2
-    implicitHeight: Settings.barHorizontal ? layout.implicitHeight + Tokens.padding.small * 2 : thickness
+    implicitWidth: Settings.barHorizontal ? layout.implicitWidth + Tokens.padding.small * 2 : thickness
+    implicitHeight: Settings.barHorizontal ? thickness : layout.implicitHeight + Tokens.padding.small * 2
 
     function closeTray(): void {
         tray.expanded = false;
@@ -53,35 +53,54 @@ Item {
         level: "idle"
     }
 
-    RowLayout {
+    // One column when docked to a side: a row would run past the strip's
+    // width and the wrapper clips whatever overflows.
+    GridLayout {
         id: layout
+
+        readonly property int crossAlign: Settings.barHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
 
         anchors.fill: parent
         anchors.margins: Tokens.padding.small
-        spacing: Tokens.spacing.medium
+        flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
+        rowSpacing: Tokens.spacing.medium
+        columnSpacing: Tokens.spacing.medium
         layoutDirection: Qt.LeftToRight
 
         DockWorkspaces {
+            Layout.alignment: layout.crossAlign
             screen: root.screen
         }
 
-        MinimalIndicators {}
+        MinimalIndicators {
+            Layout.alignment: layout.crossAlign
+        }
 
         Item {
-            Layout.fillWidth: true
+            Layout.fillWidth: Settings.barHorizontal
+            Layout.fillHeight: !Settings.barHorizontal
         }
 
         AgentIndicator {
+            Layout.alignment: layout.crossAlign
             screenState: root.screenState
             showBackground: false
         }
 
         MinimalTray {
             id: tray
+
+            Layout.alignment: layout.crossAlign
         }
 
         StyledText {
-            text: Settings.twelveHourClock ? `${Time.hourStr}:${Time.minuteStr} ${Time.amPmStr.toLowerCase()}` : `${Time.hourStr}:${Time.minuteStr}`
+            Layout.alignment: layout.crossAlign
+            horizontalAlignment: Text.AlignHCenter
+            text: {
+                const sep = Settings.barHorizontal ? ":" : "\n";
+                const clock = `${Time.hourStr}${sep}${Time.minuteStr}`;
+                return Settings.twelveHourClock && Settings.barHorizontal ? `${clock} ${Time.amPmStr.toLowerCase()}` : clock;
+            }
             color: Colours.signalSecondaryOnSurface
             font: Tokens.font.body.small
         }

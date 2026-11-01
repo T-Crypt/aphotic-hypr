@@ -60,41 +60,6 @@ ColumnLayout {
         }
     }
 
-    // None of the three new styles have a real vertical/side-dock layout
-    // (Dock's pill, Taskbar's task list, and Minimal's strip are all
-    // built horizontal-first) -- a side placement isn't blocked, but per
-    // the spec, a combination that's likely to look broken gets flagged
-    // rather than silently allowed with no warning.
-    StyledRect {
-        Layout.fillWidth: true
-        visible: Settings.barStyle !== "full" && !Settings.barHorizontal
-        implicitHeight: warningRow.implicitHeight + Tokens.padding.medium * 2
-        radius: Tokens.rounding.medium
-        color: Colours.alert
-
-        RowLayout {
-            id: warningRow
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.margins: Tokens.padding.medium
-            spacing: Tokens.spacing.small
-
-            MaterialIcon {
-                text: "warning"
-                color: Colours.onAlert
-            }
-
-            StyledText {
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: qsTr("This style is designed for top/bottom placement -- side placement may look broken.")
-                color: Colours.onAlert
-                font: Tokens.font.body.small
-            }
-        }
-    }
-
     StyledText {
         text: qsTr("Visibility")
         color: Colours.inkMuted

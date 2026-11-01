@@ -90,6 +90,30 @@ def list_wallpapers(theme):
     )
 
 
+ULTRAWIDE_RATIO = 2.2
+
+
+def ultrawide_screen():
+    """True when any connected monitor is 21:9 or wider."""
+    try:
+        out = subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True, timeout=3).stdout
+        return any(m.get("height") and m["width"] / m["height"] >= ULTRAWIDE_RATIO for m in json.loads(out))
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return False
+
+
+def preferred_pool(theme, wallpapers):
+    """The ultrawide subset on an ultrawide screen, when the theme's
+    `.wallpapers.json` sizes name any; otherwise every wallpaper."""
+    try:
+        with open(os.path.join(awww_dir, theme, ".wallpapers.json")) as f:
+            sizes = json.load(f).get("sizes", {})
+    except (OSError, ValueError):
+        return wallpapers
+    wide = [w for w in wallpapers if w in sizes and sizes[w][1] and sizes[w][0] / sizes[w][1] >= ULTRAWIDE_RATIO]
+    return wide if wide and ultrawide_screen() else wallpapers
+
+
 def read_state():
     """Read the persisted theme state JSON and return (theme, wallpaper).
 
@@ -452,6 +476,7 @@ def main():
     if not wallpapers:
         print(f"No wallpapers found in theme '{current_theme}'")
         return
+    wallpapers = preferred_pool(current_theme, wallpapers)
 
     # --next used to just be an alias for random (themes shipped too few
     # wallpapers each for order to matter) -- now that every theme ships

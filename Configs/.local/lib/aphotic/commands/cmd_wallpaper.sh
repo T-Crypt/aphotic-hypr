@@ -6,6 +6,9 @@
 # @cmd.opt: -f, --file <path> | Set a specific wallpaper (must live under a theme folder)
 # @cmd.opt: --random          | Pick a random wallpaper from the active theme
 # @cmd.opt: --next            | Advance to the next wallpaper in the active theme, in order
+# @cmd.opt: fetch [theme..] [--all] [--dry-run] | Download a theme's wallpapers from installed packs
+# @cmd.opt: packs             | List installed wallpaper packs and what they cover
+# @cmd.opt: index [theme..]   | Record image sizes so ultrawide screens get ultrawide images
 #
 # Wallpapers now live inside theme folders (APHOTIC_AWWW_DIR/<theme>/),
 # see `aphotic theme`. --random/--next delegate to wallswitcher.py, the
@@ -15,6 +18,7 @@
 
 APHOTIC_AWWW_DIR="${APHOTIC_AWWW_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/awww}"
 APHOTIC_WALLSWITCHER="${APHOTIC_DOTS_DIR}/Configs/hypr/scripts/wallswitcher.py"
+APHOTIC_WALLPAPER_PACKS="${APHOTIC_DOTS_DIR}/Configs/.local/lib/aphotic/wallpaper_packs.py"
 
 _aphotic_wallpaper_run_switcher() {
     # $1 = "next" for a real ordered advance through the active theme's
@@ -65,15 +69,27 @@ aphotic_cmd_wallpaper() {
         --next)
             _aphotic_wallpaper_run_switcher next
             ;;
+        fetch|packs|index)
+            aphotic_require python3 || return 1
+            APHOTIC_AWWW_DIR="$APHOTIC_AWWW_DIR" python3 "$APHOTIC_WALLPAPER_PACKS" "$@"
+            ;;
         ""|-h|--help)
             cat <<HELP
-Usage: aphotic wallpaper -f <path> | --random | --next
+Usage: aphotic wallpaper -f <path> | --random | --next | fetch | packs | index
 
   -f, --file <path>   Set a specific wallpaper (must be under ${APHOTIC_AWWW_DIR}/<theme>/)
   --random            Pick another wallpaper within the active theme
   --next              Advance to the next wallpaper in the theme's own
                        list (alphabetical, wraps at the end) -- a real
                        deterministic cycle, not a second random pick
+  fetch [theme..]     Download wallpapers for the active theme (or the
+                       named ones) from installed wallpaper packs. Each
+                       file is checked against the pack's sha256 first.
+                       --all covers every installed theme; --dry-run
+                       lists what would download.
+  packs               List installed packs and the themes they cover
+  index [theme..]     Record image sizes so an ultrawide screen prefers
+                       ultrawide images
 HELP
             ;;
         *)
