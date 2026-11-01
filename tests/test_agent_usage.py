@@ -89,3 +89,50 @@ def test_write_record_atomically_leaves_no_temp_file(tmp_path):
     write_record_atomically(target, {"schemaVersion": 1})
     leftovers = [p for p in tmp_path.iterdir() if p != target]
     assert leftovers == []
+
+
+def test_only_the_given_ids_get_a_key():
+    record = build_usage_record(NOW, {"amp": FIXTURES / "does_not_exist.jsonl"})
+    assert list(record["providers"]) == ["amp"]
+
+
+def test_a_dropin_scan_harness_gets_real_token_counts(tmp_path, monkeypatch):
+    import harnesses_merge
+    from agent_usage import main
+
+    home = tmp_path / "home"
+    config = tmp_path / "config"
+    state = tmp_path / "state"
+    (config / "harnesses").mkdir(parents=True)
+    state.mkdir()
+    (state / "plugins.json").write_text('{"installed": {}, "disabled": []}')
+    (config / "harnesses" / "amp.toml").write_text(
+        '[harness.amp]\nlabel = "Amp"\nusage = "scan"\nscan = ".amp/threads/*.jsonl"\n'
+    )
+    (config / "harnesses" / "zed.toml").write_text('[harness.zed]\nlabel = "Zed"\nusage = "stream"\n')
+    harnesses_merge.merge(config, tmp_path / "plugins", state, emit=lambda _: None)
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    transcript = home / ".amp" / "threads" / "t1.jsonl"
+    transcript.parent.mkdir(parents=True)
+    transcript.write_text(
+        json.dumps({"timestamp": f"{today}T01:00:00Z", "model": "amp-1",
+                    "usage": {"input_tokens": 30, "output_tokens": 12}}) + "\n"
+    )
+    monkeypatch.setenv("HOME", str(home))
+
+    assert main([str(state)]) == 0
+    record = json.loads((state / "agent-usage.json").read_text())
+    assert record["providers"] == {
+        "amp": {"availability": "available", "todayTokens": 42,
+                "tokensByModel": [{"model": "amp-1", "tokens": 42}]},
+    }
+
+
+def test_no_harness_record_scans_nothing(tmp_path, monkeypatch):
+    from agent_usage import main
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert main([str(tmp_path / "state")]) == 0
+    record = json.loads((tmp_path / "state" / "agent-usage.json").read_text())
+    assert record["providers"] == {}

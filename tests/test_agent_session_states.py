@@ -4,10 +4,12 @@ Sessions come from AgentEvents' fold of the event log, so a turn waiting
 on the user reads "waiting", a compaction reads "compacting", and an
 ended session drops out. When a harness's process is gone but sessions
 are still open, AgentProviders writes a session_end with end reason
-process_exit for each, once.
+process_exit for each one quiet for two minutes, once. A session still
+writing events is left alone, in case the process match is wrong.
 """
 import json
 import os
+import time
 import shutil
 from pathlib import Path
 
@@ -30,7 +32,7 @@ ShellRoot {
         interval: 100; running: true; repeat: true
         onTriggered: {
             root.ticks++;
-            if (AgentEvents.sessions.length < 4 && root.ticks < 40)
+            if (AgentEvents.sessions.length < 5 && root.ticks < 40)
                 return;
             poll.stop();
             const live = AgentProviders.liveSessionsOf("claude");
@@ -41,7 +43,7 @@ ShellRoot {
             root.result.sentWhileRunning = Object.keys(AgentProviders._endSent).length;
             AgentProviders._reconcilePgrepCount("claude", 0);
             AgentProviders._reconcilePgrepCount("claude", 0);
-            root.result.sent = Object.keys(AgentProviders._endSent).sort();
+            root.result.sent = Object.keys(AgentProviders._endSent).map(k => k.split("@")[0]).sort();
             exitWait.start();
         }
     }
@@ -73,6 +75,7 @@ def test_popout_states_and_process_exit_end(tmp_path):
         _event("s-compact", "turn", "compacting", 1002),
         _event("s-done", "turn", "running", 1003),
         _event("s-done", "session_end", "idle", 1004),
+        _event("s-fresh", "turn", "running", int(time.time() * 1000)),
     ]
     (state / "agent-events.jsonl").write_text("\n".join(lines) + "\n")
 
@@ -86,9 +89,9 @@ def test_popout_states_and_process_exit_end(tmp_path):
     out = run_probe(tmp_path, PROBE, marker="AGENT_STATES", prefix="_agent_states_",
                     extra_env={"PATH": f"{bin_dir}:{os.environ['PATH']}"})
 
-    assert out["live"] == [["s-compact", "compacting"], ["s-run", "running"],
-                           ["s-wait", "waiting"]], out
-    assert out["count"] == 3, out
+    assert out["live"] == [["s-compact", "compacting"], ["s-fresh", "running"],
+                           ["s-run", "running"], ["s-wait", "waiting"]], out
+    assert out["count"] == 4, out
     assert out["ampCount"] == 0, out
     assert out["sentWhileRunning"] == 0, out
     assert out["sent"] == ["s-compact", "s-run", "s-wait"], out

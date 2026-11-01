@@ -784,6 +784,18 @@ class TestCachedSession:
         assert agent_hook.cached_session(str(p)) == {}
 
 
+def _write_harness_record(tmp_path):
+    state = tmp_path / "state"
+    state.mkdir(parents=True, exist_ok=True)
+    (state / "harnesses.json").write_text(json.dumps({
+        "schemaVersion": 1,
+        "harnesses": [
+            {"id": "claude", "provider": "anthropic", "context": "statusline"},
+            {"id": "amp", "provider": "ampcorp", "context": "stream"},
+        ],
+    }))
+
+
 def _drive(tmp_path, payload, monkeypatch):
     """Run main() against an isolated state dir and return its raw events.
 
@@ -994,18 +1006,38 @@ class TestV2Passthrough:
         records = _drive(tmp_path, payload, monkeypatch)
         assert records and records[0]["status"] == "idle"
 
-    def test_v2_harness_default_and_provider_mapping(self, tmp_path, monkeypatch):
+    def test_v2_untagged_record_is_unknown_with_no_provider(self, tmp_path, monkeypatch):
+        _write_harness_record(tmp_path)
         bare = {"v": 2, "sessionId": "s3", "event": "turn", "status": "running"}
         records = _drive(tmp_path, bare, monkeypatch)
-        assert records[0]["harness"] == "claude"
-        assert records[0]["provider"] == "anthropic"
+        assert records[0]["harness"] == "unknown"
+        assert "provider" not in records[0]
+
+    def test_v2_provider_comes_from_the_descriptor(self, tmp_path, monkeypatch):
+        _write_harness_record(tmp_path)
+        bare = {"v": 2, "sessionId": "s3", "event": "turn", "status": "running"}
+        records = _drive(tmp_path, dict(bare, harness="amp"), monkeypatch)
+        assert records[0]["provider"] == "ampcorp"
 
         # _drive appends to the same events file, so the carried record
         # lands second.
-        carried = dict(bare, harness="opencode", provider="z")
+        carried = dict(bare, harness="amp", provider="z")
         records = _drive(tmp_path, carried, monkeypatch)
         assert len(records) == 2
         assert records[1]["provider"] == "z"
+
+    def test_v2_without_a_record_still_writes(self, tmp_path, monkeypatch):
+        bare = {"v": 2, "harness": "amp", "sessionId": "s3", "event": "turn"}
+        records = _drive(tmp_path, bare, monkeypatch)
+        assert records[0]["harness"] == "amp"
+        assert "provider" not in records[0]
+
+    def test_raw_hook_payload_is_tagged_and_annotated(self, tmp_path, monkeypatch):
+        _write_harness_record(tmp_path)
+        raw = {"session_id": "s5", "hook_event_name": "UserPromptSubmit"}
+        records = _drive(tmp_path, raw, monkeypatch)
+        assert records[0]["harness"] == "claude"
+        assert records[0]["provider"] == "anthropic"
 
     def test_v2_off_type_fields_are_dropped(self, tmp_path, monkeypatch):
         payload = {

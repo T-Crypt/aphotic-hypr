@@ -5,6 +5,8 @@
 process and why nothing in here is allowed to raise."""
 import json, os, re, shlex, sys, time
 
+import harness_record
+
 STATE = os.environ.get("APHOTIC_STATE_HOME", os.path.expanduser("~/.local/state/aphotic"))
 SESSIONS = os.path.join(STATE, "agent-sessions")
 EVENTS = os.path.join(STATE, "agent-events.jsonl")
@@ -57,9 +59,11 @@ TOOL_STATUS = {
     "PostToolUse": "completed",
     "PostToolUseFailure": "errored",
 }
-# Codex's hook adapter and `agent emit` state the real provider from the
-# session log when they can; this covers the records that cannot.
-PROVIDER_BY_HARNESS = {"claude": "anthropic", "codex": "openai"}
+# A raw hook payload in Claude Code's own format with no `harness` field
+# is Claude Code talking: other harnesses' adapters always name themselves.
+RAW_HOOK_HARNESS = "claude"
+# A v2 record that names no harness is counted under this, never guessed.
+UNTAGGED_HARNESS = "unknown"
 CACHE_READ_KEYS = ("cache_read_input_tokens", "cache_read_tokens")
 CACHE_WRITE_KEYS = ("cache_creation_input_tokens", "cache_write_tokens")
 
@@ -400,9 +404,9 @@ def main():
             record["ts"] = stamp
         if not isinstance(record.get("status"), str) or not record["status"]:
             record["status"] = "idle"
-        harness = str(record.get("harness") or "claude")
+        harness = str(record.get("harness") or UNTAGGED_HARNESS)
         record["harness"] = harness
-        provider = record.get("provider") or PROVIDER_BY_HARNESS.get(harness)
+        provider = record.get("provider") or harness_record.provider_of(harness_record.load(STATE), harness)
         if provider:
             record["provider"] = provider
         raw_event = event
@@ -438,7 +442,7 @@ def main():
             if summary:
                 record["error"] = summary
 
-        harness = payload.get("harness") or "claude"
+        harness = payload.get("harness") or RAW_HOOK_HARNESS
 
         # The default has to reach the record, not just the session file below.
         # Claude Code sends no `harness` of its own (the adapters for other
@@ -446,7 +450,7 @@ def main():
         # reader cannot tell "this is Claude" from "nobody said".
         record["harness"] = harness
 
-        provider = PROVIDER_BY_HARNESS.get(harness)
+        provider = harness_record.provider_of(harness_record.load(STATE), harness)
         if provider:
             record["provider"] = provider
 
