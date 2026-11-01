@@ -104,6 +104,17 @@ ColumnLayout {
         readonly property var stat: AgentProviders.stats[index] ?? ({})
         readonly property string harnessId: AgentProviders.providers[index]?.id ?? ""
         readonly property var sessions: AgentProviders.liveSessionsOf(detail.harnessId)
+        readonly property var usage: AgentProviders.usageOf(detail.harnessId)
+        readonly property var quota: AgentProviders.quotaOf(detail.harnessId)
+        readonly property var quotaParts: [["fiveHour", qsTr("5h")], ["sevenDay", qsTr("7d")], ["context", qsTr("context")]]
+            .filter(([key]) => detail.quota[key]?.usedPercent !== undefined)
+            .map(([key, label]) => `${label} ${Math.round(detail.quota[key].usedPercent)}%`)
+
+        function costText(amount: real, currency: string): string {
+            if (currency === "USD" || currency === "")
+                return amount < 0.01 ? qsTr("under $0.01") : `$${amount.toFixed(2)}`;
+            return `${amount.toFixed(2)} ${currency}`;
+        }
 
         Layout.fillWidth: true
         spacing: Tokens.spacing.small / 2
@@ -176,7 +187,16 @@ ColumnLayout {
 
         StyledText {
             visible: detail.stat.availability === "available"
-            text: qsTr("Today: %1 tokens").arg(detail.stat.todayTokens ?? 0)
+            text: detail.usage.todayCost === null
+                ? qsTr("Today: %1 tokens").arg(detail.stat.todayTokens ?? 0)
+                : qsTr("Today: %1 tokens, %2").arg(detail.stat.todayTokens ?? 0).arg(detail.costText(detail.usage.todayCost, detail.usage.currency))
+            color: Colours.inkMuted
+            font: Tokens.font.body.small
+        }
+
+        StyledText {
+            visible: detail.quotaParts.length > 0
+            text: qsTr("Limits used: %1").arg(detail.quotaParts.join(" · "))
             color: Colours.inkMuted
             font: Tokens.font.body.small
         }
