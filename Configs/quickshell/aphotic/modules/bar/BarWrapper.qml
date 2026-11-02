@@ -77,6 +77,34 @@ Item {
     }
 
     clip: true
+
+    // Moving the bar to another edge re-anchors its window at once. The
+    // strip then slides in from the new edge, a transform only, so the
+    // window geometry never animates.
+    readonly property string dockEdge: BarLayout.dockEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
+    property real entryOffset: 0
+
+    onDockEdgeChanged: {
+        if (Settings._loaded && root.shouldBeVisible)
+            edgeEntry.restart();
+    }
+
+    Anim {
+        id: edgeEntry
+
+        target: root
+        property: "entryOffset"
+        from: 1
+        to: 0
+        type: Anim.Enter
+    }
+
+    readonly property var entryShift: BarLayout.entryShift(root.dockEdge, root.contentWidth, root.entryOffset)
+
+    transform: Translate {
+        x: root.entryShift.x
+        y: root.entryShift.y
+    }
     // Anchor pairs decide which axis is actually screen-edge-driven (see
     // BarWindow.qml's own dual implicitWidth/implicitHeight comment) -- the
     // other axis is this collapsible thickness, whichever one that is.

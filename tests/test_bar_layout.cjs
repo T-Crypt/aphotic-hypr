@@ -78,4 +78,17 @@ assert.equal(bar.notchEdge(true, true, false), 'start');  // docked bottom
 assert.equal(bar.notchEdge(false, false, false), 'end');  // docked left
 assert.equal(bar.notchEdge(false, false, true), 'start'); // docked right
 
+
+// The bar slides in from the edge it moved to, one thickness out at the
+// start and at rest at the end.
+assert.equal(bar.dockEdge(true, false, false), 'top');
+assert.equal(bar.dockEdge(true, true, false), 'bottom');
+assert.equal(bar.dockEdge(false, false, false), 'left');
+assert.equal(bar.dockEdge(false, false, true), 'right');
+assert.deepEqual(plain(bar.entryShift('left', 40, 1)), { x: -40, y: 0 });
+assert.deepEqual(plain(bar.entryShift('right', 40, 0.5)), { x: 20, y: 0 });
+assert.deepEqual(plain(bar.entryShift('top', 40, 1)), { x: 0, y: -40 });
+assert.deepEqual(plain(bar.entryShift('bottom', 40, 0.25)), { x: 0, y: 10 });
+assert.deepEqual(plain(bar.entryShift('bottom', 40, 0)), { x: 0, y: 0 });
+
 console.log('BarLayout migration and corner rules passed');
