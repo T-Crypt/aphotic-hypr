@@ -5,6 +5,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.settings
+import "../../../services/BarLayout.js" as BarLayout
 
 ColumnLayout {
     id: root
@@ -57,6 +58,11 @@ ColumnLayout {
             Layout.fillWidth: true
             styleName: "minimal"
             label: qsTr("Minimal")
+        }
+        BarStylePreviewCard {
+            Layout.fillWidth: true
+            styleName: "hull"
+            label: qsTr("Hull")
         }
     }
 
@@ -176,7 +182,7 @@ ColumnLayout {
     // the list would sit there doing nothing under any of them.
     BarWidgetsSection {
         Layout.fillWidth: true
-        visible: Settings.barStyle === "full"
+        visible: BarLayout.fullStrip(Settings.barStyle)
         screenState: root.screenState
     }
 
@@ -191,7 +197,7 @@ ColumnLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
-        visible: Settings.barStyle === "dock"
+        visible: BarLayout.drawsDock(Settings.barStyle)
         spacing: Tokens.spacing.small
 
         StyledText {

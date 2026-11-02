@@ -1,0 +1,3 @@
+module qs.modules.bar.hull
+HullCorner 1.0 HullCorner.qml
+HullSweep 1.0 HullSweep.qml

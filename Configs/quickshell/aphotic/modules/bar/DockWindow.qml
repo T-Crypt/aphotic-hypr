@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.config
 import qs.components
 import qs.services
+import "../../services/BarLayout.js" as BarLayout
 
 PanelWindow {
     id: root
@@ -47,8 +48,10 @@ PanelWindow {
     WlrLayershell.exclusiveZone: Settings._loaded ? root.reservedThickness : 0
     color: "transparent"
 
-    anchors.top: Settings.barHorizontal ? !Settings.barPositionBottom : true
-    anchors.bottom: Settings.barHorizontal ? Settings.barPositionBottom : true
+    readonly property bool atBottom: BarLayout.dockAtBottom(Settings.barStyle, Settings.barPositionBottom)
+
+    anchors.top: Settings.barHorizontal ? !root.atBottom : true
+    anchors.bottom: Settings.barHorizontal ? root.atBottom : true
     anchors.left: Settings.barHorizontal ? true : !Settings.barPositionRight
     anchors.right: Settings.barHorizontal ? true : Settings.barPositionRight
 
@@ -67,15 +70,15 @@ PanelWindow {
     // contentWidth comment for the notch seam rationale).
     readonly property int reservedThickness: Math.round((Settings.barHorizontal ? dockBar.implicitHeight : dockBar.implicitWidth) + edgeMargin)
 
-    readonly property bool dockedTop: Settings.barHorizontal && !Settings.barPositionBottom
-    readonly property bool dockedBottom: Settings.barHorizontal && Settings.barPositionBottom
+    readonly property bool dockedTop: Settings.barHorizontal && !root.atBottom
+    readonly property bool dockedBottom: Settings.barHorizontal && root.atBottom
     readonly property bool dockedLeft: !Settings.barHorizontal && !Settings.barPositionRight
     readonly property bool dockedRight: !Settings.barHorizontal && Settings.barPositionRight
 
     implicitWidth: Settings.barHorizontal ? screen.width : reservedThickness
     implicitHeight: Settings.barHorizontal ? reservedThickness : screen.height
 
-    visible: Settings.barStyle === "dock"
+    visible: BarLayout.drawsDock(Settings.barStyle)
 
     mask: Region {
         item: dockBar
@@ -86,6 +89,8 @@ PanelWindow {
 
         screen: root.screen
         screenState: root.screenState
+        atBottom: root.atBottom
+        hostsNotch: !BarLayout.drawsStrip(Settings.barStyle)
 
         // Plain x/y/width/height, NOT anchors -- the same pattern (and for
         // the same reason) BarWindow.qml already uses for barWrapper.

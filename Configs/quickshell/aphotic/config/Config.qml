@@ -152,6 +152,16 @@ QtObject {
         }
     }
 
+    readonly property QtObject hull: QtObject {
+        readonly property int ring: GlobalConfig.hull.ring
+        readonly property int edgeReach: GlobalConfig.hull.edgeReach
+        readonly property int cornerZone: GlobalConfig.hull.cornerZone
+        readonly property int cornerDwell: GlobalConfig.hull.cornerDwell
+        readonly property bool shelfRails: GlobalConfig.hull.shelfRails
+        readonly property bool overFullscreen: GlobalConfig.hull.overFullscreen
+        readonly property bool sweep: GlobalConfig.hull.sweep
+    }
+
     readonly property QtObject services: QtObject {
         readonly property real brightnessIncrement: GlobalConfig.services.brightnessIncrement
         readonly property bool useTwelveHourClock: GlobalConfig.services.useTwelveHourClock

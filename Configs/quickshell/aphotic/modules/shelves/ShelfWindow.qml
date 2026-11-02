@@ -6,6 +6,7 @@ import qs.services
 import qs.components
 import qs.config
 import qs.modules.shelves
+import "../../services/BarLayout.js" as BarLayout
 PanelWindow {
     id: root
     required property var modelData
@@ -58,6 +59,7 @@ PanelWindow {
         height: 72
         visible: Shelves.config(root.modelData.name).left.enabled
             && Shelves.config(root.modelData.name).left.handles
+            && !BarLayout.framesEdges(Settings.barStyle)
             && !Shelves.isOpen(root.modelData.name,"left")
 
         ShelfHandle {
@@ -78,6 +80,7 @@ PanelWindow {
         height: 72
         visible: Shelves.config(root.modelData.name).right.enabled
             && Shelves.config(root.modelData.name).right.handles
+            && !BarLayout.framesEdges(Settings.barStyle)
             && !Shelves.isOpen(root.modelData.name,"right")
 
         ShelfHandle {
@@ -90,7 +93,7 @@ PanelWindow {
     SurfaceReveal {
         id: leftReveal
         anchors.left: parent.left
-        anchors.leftMargin: Tokens.padding.small + (!Settings.barHorizontal && !Settings.barPositionRight ? Settings.barInnerWidth + Tokens.padding.medium * 2 : 0)
+        anchors.leftMargin: Tokens.padding.small + (BarLayout.framesEdges(Settings.barStyle) ? Config.hull.edgeReach : 0) + (!Settings.barHorizontal && !Settings.barPositionRight ? Settings.barInnerWidth + Tokens.padding.medium * 2 : 0)
         anchors.verticalCenter: parent.verticalCenter
         width: Math.min(root.width - Tokens.padding.large * 2, Shelves.tabFor(root.modelData.name,"left") !== null ? 360 : Settings.barInnerWidth + Tokens.padding.medium * 2)
         height: Math.max(1,Math.min(640,root.height - Tokens.padding.large * 2))
@@ -106,7 +109,7 @@ PanelWindow {
     SurfaceReveal {
         id: rightReveal
         anchors.right: parent.right
-        anchors.rightMargin: Tokens.padding.small + (!Settings.barHorizontal && Settings.barPositionRight ? Settings.barInnerWidth + Tokens.padding.medium * 2 : 0)
+        anchors.rightMargin: Tokens.padding.small + (BarLayout.framesEdges(Settings.barStyle) ? Config.hull.edgeReach : 0) + (!Settings.barHorizontal && Settings.barPositionRight ? Settings.barInnerWidth + Tokens.padding.medium * 2 : 0)
         anchors.verticalCenter: parent.verticalCenter
         width: Math.min(root.width - Tokens.padding.large * 2, Shelves.tabFor(root.modelData.name,"right") !== null ? 360 : Settings.barInnerWidth + Tokens.padding.medium * 2)
         height: Math.max(1,Math.min(640,root.height - Tokens.padding.large * 2))

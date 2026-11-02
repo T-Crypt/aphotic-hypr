@@ -7,6 +7,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.bar.popouts as BarPopouts
+import "../../services/BarLayout.js" as BarLayout
 
 PanelWindow {
     id: root
@@ -17,6 +18,8 @@ PanelWindow {
     required property ScreenState screenState
     readonly property BarPopouts.Wrapper popouts: popouts
 
+    // Hull's corner zones own the two ends of the top edge.
+    readonly property int inset: BarLayout.framesEdges(Settings.barStyle) ? Config.hull.cornerZone : 0
     readonly property int barWidth: Settings.barInnerWidth + Math.max(Tokens.padding.small, Config.border.thickness) * 2
 
     // Signal-line skin: bar items publish where the active workspace and the
@@ -144,9 +147,9 @@ PanelWindow {
         // entirely; self-referencing implicitWidth/implicitHeight as the
         // "not this axis" fallback is safe here since BarWrapper is a
         // plain Item, not a Layout fighting an external size.
-        x: !Settings.barHorizontal && Settings.barPositionRight ? root.width - width : 0
+        x: !Settings.barHorizontal && Settings.barPositionRight ? root.width - width : root.inset
         y: Settings.barHorizontal && Settings.barPositionBottom ? root.height - height : 0
-        width: Settings.barHorizontal ? root.width : implicitWidth
+        width: Settings.barHorizontal ? root.width - root.inset * 2 : implicitWidth
         height: Settings.barHorizontal ? implicitHeight : root.height
     }
 }

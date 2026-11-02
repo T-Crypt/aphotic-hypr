@@ -113,6 +113,9 @@ Singleton {
             } else if (name === "capsule") {
                 root.barHorizontal = true;
                 root.barPositionBottom = false;
+            } else if (name === "hull") {
+                root.barHorizontal = true;
+                root.barPositionBottom = false;
             }
         }
 
@@ -357,7 +360,7 @@ Singleton {
     property bool vpnAutoConnect: false
 
     // The full layout keeps the narrower Signal width it always had under Signal.
-    readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1) * (barStyle === "full" ? 0.78 : 1)
+    readonly property real barInnerWidth: barStyle === "minimal" ? Tokens.sizes.bar.minimalInnerWidth : Tokens.sizes.bar.innerWidth * (barCompact ? 0.85 : 1) * (BarLayout.fullStrip(barStyle) ? 0.78 : 1)
 
     property bool _loaded: false
     property bool _writePending: false

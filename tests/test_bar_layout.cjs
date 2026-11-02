@@ -24,7 +24,7 @@ function migrated(data) {
     return plain(bar.migrate(data));
 }
 
-assert.deepEqual(plain(bar.LAYOUTS), ['full', 'capsule', 'dock', 'taskbar', 'minimal']);
+assert.deepEqual(plain(bar.LAYOUTS), ['full', 'capsule', 'dock', 'taskbar', 'minimal', 'hull']);
 assert.deepEqual(plain(bar.CORNERS), ['sharp', 'soft', 'round']);
 
 // Every legacy barSkin value migrates onto the layout/corners it meant.
@@ -68,8 +68,19 @@ assert.equal(bar.next('full'), 'capsule');
 assert.equal(bar.next('capsule'), 'dock');
 assert.equal(bar.next('dock'), 'taskbar');
 assert.equal(bar.next('taskbar'), 'minimal');
-assert.equal(bar.next('minimal'), 'full');
+assert.equal(bar.next('minimal'), 'hull');
+assert.equal(bar.next('hull'), 'full');
 assert.equal(bar.next('bogus'), 'full');
+
+// Hull frames the screen with the regular strip on top and the dock pinned
+// to the bottom; no other layout claims the side edges.
+assert.deepEqual(plain(bar.LAYOUTS.filter(bar.drawsStrip)), ['full', 'taskbar', 'minimal', 'hull']);
+assert.deepEqual(plain(bar.LAYOUTS.filter(bar.fullStrip)), ['full', 'hull']);
+assert.deepEqual(plain(bar.LAYOUTS.filter(bar.drawsDock)), ['dock', 'hull']);
+assert.deepEqual(plain(bar.LAYOUTS.filter(bar.framesEdges)), ['hull']);
+assert.equal(bar.dockAtBottom('hull', false), true);
+assert.equal(bar.dockAtBottom('dock', false), false);
+assert.equal(bar.dockAtBottom('dock', true), true);
 
 // The notch edge is the edge away from the docked screen edge: "start" (top
 // or left) on a bottom/right bar, "end" (bottom or right) on a top/left bar.
