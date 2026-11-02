@@ -16,7 +16,7 @@ PanelWindow {
     required property ScreenState screenState
 
     readonly property int edgeMargin: Config.bar.capsule.edgeMargin
-    readonly property int collapsedThickness: Settings.barInnerWidth + Tokens.padding.extraSmall * 2
+    readonly property int collapsedThickness: capsuleBar.rowThickness
     // The zone reserves the COLLAPSED band only. Expansion is transient
     // and must never renegotiate the layer surface, so the window is
     // sized once to the largest state the capsule can reach and only the

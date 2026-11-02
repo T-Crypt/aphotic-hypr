@@ -81,40 +81,11 @@ Item {
     GridLayout {
         id: groupLayout
 
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
+        anchors.fill: parent
 
         flow: Settings.barHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
         rowSpacing: root.groupSpacing
         columnSpacing: root.groupSpacing
-
-        // Only `anchors.right` is active along-axis here (no opposing pair), so
-        // QtQuick leaves `width` un-derived from anchors, and GridLayout does
-        // not follow its own implicitWidth in that state: `width` stayed
-        // frozen at a stale early value while the real content had long
-        // since grown, so `anchors.right`'s position math placed the pill
-        // short of where its content actually needed to start (reported
-        // live as the rightmost status pill rendering outside the Dock
-        // style's outer pill). Explicit `width: implicitWidth` keeps it
-        // live-tracking. The default state doesn't need this: left and
-        // right anchors together derive width correctly.
-        states: State {
-            name: "vertical"
-            when: Settings.barHorizontal
-
-            AnchorChanges {
-                target: groupLayout
-                anchors.left: undefined
-                anchors.top: root.top
-                anchors.bottom: root.bottom
-                anchors.right: root.right
-            }
-
-            PropertyChanges {
-                groupLayout.width: groupLayout.implicitWidth
-            }
-        }
 
         Repeater {
             id: groupRepeater
