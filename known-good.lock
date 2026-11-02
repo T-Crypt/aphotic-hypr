@@ -1,4 +1,4 @@
-# canary 2026-11-01
+# canary 2026-11-02
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -13,7 +13,7 @@ alsa-topology-conf 1.2.5.1-4
 alsa-ucm-conf 1.2.16.1-1
 aom 3.15.3-1
 appstream 1.2.2-1
-aquamarine 0.15.1-1
+aquamarine 0.16.0-1
 archlinux-keyring 20260909-1
 at-spi2-core 2.62.1-1
 attr 2.6.0-1
@@ -60,7 +60,7 @@ dbus-broker 37-3
 dbus-broker-units 37-3
 dbus-units 37-3
 dconf 51.0-1
-debugedit 5.3-2
+debugedit 5.4-1
 default-cursors 3-1
 desktop-file-utils 0.28-1
 device-mapper 2.03.44-1
@@ -162,12 +162,12 @@ highway 1.4.0-1
 hwdata 0.412-1
 hwloc 2.15.0-1
 hyprcursor 0.1.13-7
-hyprgraphics 0.5.1-4
+hyprgraphics 0.6.0-1
 hypridle 0.1.8-2
-hyprland 0.57.0-1
-hyprland-guiutils 0.2.2-4
+hyprland 0.57.0-3
+hyprland-guiutils 0.2.2-6
 hyprlang 0.6.8-5
-hyprtoolkit 0.6.0-1
+hyprtoolkit 0.6.0-3
 hyprutils 0.14.3-1
 hyprwire 0.3.1-3
 iana-etc 20260617-1
@@ -514,14 +514,14 @@ nvidia-open-dkms 615.78.08-1
 nvidia-utils 615.78.08-1
 nwg-look 1.2.1-1
 ocl-icd 2.3.5-1
-oh-my-zsh-git r8001.17a2b4c3a-1
+oh-my-zsh-git r8003.b509b1c6e-1
 onetbb 2023.2.0-1
 oniguruma 6.9.10-3
 openal 1.25.2-2
 opencore-amr 0.1.6-2
-openexr 3.5.3-1
+openexr 3.5.3-3
 openjpeg2 2.5.4-1
-openjph 0.32.0-1
+openjph 0.33.0-1
 openssh 10.6p1-2
 openssl 3.6.5-1
 openvpn 2.7.8-1
@@ -594,7 +594,7 @@ qt5-wayland 5.15.19+kde+r55-1
 qt5-x11extras 5.15.19-1
 qt5ct 1.9-2
 qt6-base 6.12.0-3
-qt6-declarative 6.12.0-3
+qt6-declarative 6.12.0-4
 qt6-imageformats 6.12.0-1
 qt6-multimedia 6.12.0-1
 qt6-multimedia-ffmpeg 6.12.0-1
@@ -631,7 +631,7 @@ spandsp 0.0.6-7
 speex 1.2.1-3
 speexdsp 1.2.1-3
 spirv-tools 1:1.4.363.0-1
-sqlite 3.54.0-1
+sqlite 3.54.1-1
 sratom 0.6.22-1
 srt 1.5.7-2
 starship 1.27.0-1
@@ -656,7 +656,7 @@ tslib 1.24-1
 ttf-jetbrains-mono-nerd 3.5.1-2
 ttf-material-symbols-variable 2.874-1
 tumbler 4.20.2-2
-tzdata 2026e-1
+tzdata 2026f-1
 uchardet 0.0.8-4
 udisks2 2.11.2-1
 util-linux 2.42.4-1
@@ -698,7 +698,7 @@ xdg-utils 1.2.1-2
 xf86-input-libinput 1.5.0-1
 xfce4-settings 4.20.5-1
 xfconf 4.20.0-2
-xkeyboard-config 2.48-1
+xkeyboard-config 2.49-1
 xorg-fonts-encodings 1.1.0-2
 xorg-server 21.1.25-2
 xorg-server-common 21.1.25-2
