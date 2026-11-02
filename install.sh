@@ -9,6 +9,7 @@
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/lib/install/ui.sh"
+source "$ROOT_DIR/lib/install/channel.sh"
 source "$ROOT_DIR/lib/install/python.sh"
 source "$ROOT_DIR/lib/install/aur.sh"
 source "$ROOT_DIR/lib/install/multilib.sh"
@@ -64,7 +65,7 @@ STRIP_CONFLICTS=""
 COPY_CONFIGS=""
 ACTIVATE_STARSHIP=""
 ACTIVATE_ZSH=""
-CHANNEL="stable"
+CHANNEL=""
 ORIG_ARGS=("$@")
 
 # The guided path (lib/install/guided.sh) is what a first-time user gets:
@@ -108,9 +109,10 @@ Usage: ./install.sh [options]
   before (no options + no terminal, e.g. CI or a piped install, still
   installs the zero-prompt daily-driver default).
 
-  --channel <stable|edge>      stable installs the newest release tag
-                                (default), edge keeps the development
-                                branch (dev)
+  --channel <stable|edge>      stable installs the newest release tag,
+                                edge keeps the development branch (dev).
+                                Default: the channel the last install
+                                used, else stable
   --profile <minimal|full>     Select base profile (skips wizard prompt)
   --with <layer,layer,...>     Comma-separated layers: gaming,dev,ai,exploit
                                 ("exploit" is a convenience bundle of
@@ -215,39 +217,13 @@ if ! [[ "$KEEP_BACKUPS" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+resolve_channel
 if [[ "$CHANNEL" != "stable" && "$CHANNEL" != "edge" ]]; then
   echo -e "$CER - --channel requires stable or edge, got: $CHANNEL"
   exit 1
 fi
 
-# The resolved marker is an environment variable, not a flag: an older
-# install.sh at the tag would reject an unknown flag, and any flag would
-# skip the guided first-run path.
-if [[ "${APHOTIC_CHANNEL_RESOLVED:-0}" != "1" && "$DRY_RUN" != "1" ]]; then
-  STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/aphotic"
-  mkdir -p "$STATE_DIR"
-  echo "$CHANNEL" > "$STATE_DIR/channel"
-
-  if [[ -d "$ROOT_DIR/.git" ]]; then
-    if [[ "$CHANNEL" == "edge" ]]; then
-      echo -e "$CNT - Installing the development branch (current checkout, channel edge)."
-    else
-      git -C "$ROOT_DIR" fetch --tags --quiet || { echo -e "$CWR - Could not fetch tags; installing the current tree."; }
-      tag="$(git -C "$ROOT_DIR" tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)"
-      if [[ -z "$tag" ]]; then
-        echo -e "$CWR - No release tags found; installing the current tree."
-      elif [[ "$(git -C "$ROOT_DIR" rev-parse HEAD)" == "$(git -C "$ROOT_DIR" rev-parse "$tag" 2>/dev/null || true)" ]]; then
-        echo -e "$CNT - Installing ${tag} (up to date)."
-      elif ! git -C "$ROOT_DIR" diff --quiet || ! git -C "$ROOT_DIR" diff --cached --quiet; then
-        echo -e "$CWR - Local changes in the checkout; not switching to ${tag}. Installing the current tree."
-      else
-        echo -e "$CNT - Installing ${tag}."
-        git -C "$ROOT_DIR" checkout --quiet "$tag"
-        APHOTIC_CHANNEL_RESOLVED=1 exec "$ROOT_DIR/install.sh" "${ORIG_ARGS[@]}"
-      fi
-    fi
-  fi
-fi
+apply_channel
 
 export DRY_RUN
 

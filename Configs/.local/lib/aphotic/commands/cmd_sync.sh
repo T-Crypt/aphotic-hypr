@@ -132,7 +132,7 @@ HELP
     done
 
     local dots="${APHOTIC_DOTS_DIR}"
-    if [[ ! -d "${dots}/.git" ]]; then
+    if [[ ! -e "${dots}/.git" ]]; then
         aphotic_err "${dots} is not a git repo"
         return 1
     fi
@@ -226,11 +226,18 @@ _aphotic_sync_run() {
     local missing
     missing="$(_aphotic_sync_missing_packages "$dots")"
 
-    aphotic_log "deploying config (install.sh --config-only)..."
-    if ! (cd "$dots" && ./install.sh --config-only); then
+    # install.sh on its own would also fall back to the saved channel, but
+    # an older install.sh at a release tag does not, so it is passed here.
+    local channel
+    channel="$(head -n1 "${XDG_STATE_HOME:-$HOME/.local/state}/aphotic/channel" 2>/dev/null || true)"
+    [[ "$channel" == "edge" ]] || channel="stable"
+
+    aphotic_log "deploying config on the ${channel} channel (install.sh --config-only)..."
+    if ! (cd "$dots" && ./install.sh --config-only --channel "$channel"); then
         aphotic_err "config sync failed"
         return 1
     fi
+    aphotic_log "deployed $(git -C "$dots" describe --tags --always 2>/dev/null) ($(git -C "$dots" rev-parse --short HEAD 2>/dev/null))"
 
     aphotic_log "refreshing plugins..."
     source "${COMMANDS_DIR}/cmd_plugin.sh"
