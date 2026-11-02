@@ -42,6 +42,9 @@ Singleton {
     property var barStyleDefaultsApplied: ["capsule"]
 
     readonly property string barStyle: barLayout
+    // Hull frames the screen around a horizontal top bar, so it has one
+    // placement and any write that would move the bar is put back.
+    readonly property bool barPlacementFixed: BarLayout.framesEdges(barLayout)
 
     // Which built-in bar widgets render, and in what order: an ordered
     // [{ id, enabled }] array, same shape as Config.qml's own defaults.
@@ -111,9 +114,6 @@ Singleton {
                 root.barHorizontal = true;
                 root.barPositionBottom = true;
             } else if (name === "capsule") {
-                root.barHorizontal = true;
-                root.barPositionBottom = false;
-            } else if (name === "hull") {
                 root.barHorizontal = true;
                 root.barPositionBottom = false;
             }
@@ -703,9 +703,29 @@ hyprctl eval '${lua}' >/dev/null 2>&1`;
     onDesktopClockEnabledChanged: root._saveState()
     onBarPositionRightChanged: root._saveState()
     onBarCompactChanged: root._saveState()
-    onBarHorizontalChanged: root._saveState()
-    onBarPositionBottomChanged: root._saveState()
-    onBarLayoutChanged: root._saveState()
+    onBarHorizontalChanged: {
+        Qt.callLater(root._holdPlacement);
+        root._saveState();
+    }
+    onBarPositionBottomChanged: {
+        Qt.callLater(root._holdPlacement);
+        root._saveState();
+    }
+    onBarLayoutChanged: {
+        Qt.callLater(root._holdPlacement);
+        root._saveState();
+    }
+
+    // Deferred: a write to barHorizontal from inside its own change handler
+    // does not stick.
+    function _holdPlacement(): void {
+        if (!root.barPlacementFixed)
+            return;
+        if (!root.barHorizontal)
+            root.barHorizontal = true;
+        if (root.barPositionBottom)
+            root.barPositionBottom = false;
+    }
     onBarCornersChanged: root._saveState()
     onBarStyleDefaultsAppliedChanged: root._saveState()
     onDockAutoHideChanged: root._saveState()

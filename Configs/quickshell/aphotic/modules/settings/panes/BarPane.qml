@@ -128,7 +128,7 @@ ColumnLayout {
 
         SettingsToggleRow {
             searchId: "dockBarRight"
-            visible: !Settings.barHorizontal
+            visible: !Settings.barHorizontal && !Settings.barPlacementFixed
             icon: "dock_to_right"
             label: qsTr("Dock bar to right edge")
             checked: Settings.barPositionRight
@@ -137,7 +137,7 @@ ColumnLayout {
 
         SettingsToggleRow {
             searchId: "dockBarBottom"
-            visible: Settings.barHorizontal
+            visible: Settings.barHorizontal && !Settings.barPlacementFixed
             icon: "vertical_align_bottom"
             label: qsTr("Dock bar to bottom edge")
             checked: Settings.barPositionBottom
@@ -157,6 +157,7 @@ ColumnLayout {
         // left/right-docked, top-to-bottom mode above.
         SettingsToggleRow {
             searchId: "barHorizontal"
+            visible: !Settings.barPlacementFixed
             icon: "swap_horiz"
             label: qsTr("Horizontal orientation")
             checked: Settings.barHorizontal
