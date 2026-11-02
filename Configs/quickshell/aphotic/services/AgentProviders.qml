@@ -36,6 +36,7 @@ Singleton {
 
     property var stats: providers.map(() => ({
         sessionCount: 0,
+        processCount: 0,
         todayTokens: 0,
         tokensByModel: [],
         availability: "unavailable"
@@ -221,6 +222,11 @@ Singleton {
         return AgentEvents.sessionsOf(providerId).length > 0;
     }
 
+    // Harnesses whose process runs with no live session: open, no turn.
+    // From the minute process sample, so one opened or closed a moment ago
+    // shows on the next sample.
+    readonly property var openIdle: root.providers.filter((p, i) => (root.stats[i]?.processCount ?? 0) > 0 && root.liveSessionsOf(p.id).length === 0)
+
     function sessionCountOf(providerId: string): int {
         if (root._hasEvents(providerId))
             return root.liveSessionsOf(providerId).length;
@@ -237,10 +243,12 @@ Singleton {
     readonly property int orphanQuietMs: 120000
 
     function _reconcilePgrepCount(providerId: string, n: int): void {
+        const count = isNaN(n) ? 0 : n;
         if (!root._hasEvents(providerId)) {
-            root._setStat(root._findIndex(providerId), { sessionCount: isNaN(n) ? 0 : n });
+            root._setStat(root._findIndex(providerId), { sessionCount: count, processCount: count });
             return;
         }
+        root._setStat(root._findIndex(providerId), { processCount: count });
         // No process left but sessions still open: the harness exited
         // without a session_end (a closed terminal, a kill). Write the end
         // to the log so every reader, replay included, sees it.
