@@ -5,6 +5,7 @@ import qs.config
 import qs.components
 import qs.services
 import qs.modules.settings
+import "../../../services/BarLayout.js" as BarLayout
 
 ColumnLayout {
     id: root
@@ -57,6 +58,11 @@ ColumnLayout {
             Layout.fillWidth: true
             styleName: "minimal"
             label: qsTr("Minimal")
+        }
+        BarStylePreviewCard {
+            Layout.fillWidth: true
+            styleName: "hull"
+            label: qsTr("Hull")
         }
     }
 
@@ -122,7 +128,7 @@ ColumnLayout {
 
         SettingsToggleRow {
             searchId: "dockBarRight"
-            visible: !Settings.barHorizontal
+            visible: !Settings.barHorizontal && !Settings.barPlacementFixed
             icon: "dock_to_right"
             label: qsTr("Dock bar to right edge")
             checked: Settings.barPositionRight
@@ -131,7 +137,7 @@ ColumnLayout {
 
         SettingsToggleRow {
             searchId: "dockBarBottom"
-            visible: Settings.barHorizontal
+            visible: Settings.barHorizontal && !Settings.barPlacementFixed
             icon: "vertical_align_bottom"
             label: qsTr("Dock bar to bottom edge")
             checked: Settings.barPositionBottom
@@ -151,6 +157,7 @@ ColumnLayout {
         // left/right-docked, top-to-bottom mode above.
         SettingsToggleRow {
             searchId: "barHorizontal"
+            visible: !Settings.barPlacementFixed
             icon: "swap_horiz"
             label: qsTr("Horizontal orientation")
             checked: Settings.barHorizontal
@@ -176,7 +183,7 @@ ColumnLayout {
     // the list would sit there doing nothing under any of them.
     BarWidgetsSection {
         Layout.fillWidth: true
-        visible: Settings.barStyle === "full"
+        visible: BarLayout.fullStrip(Settings.barStyle)
         screenState: root.screenState
     }
 
@@ -191,7 +198,7 @@ ColumnLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
-        visible: Settings.barStyle === "dock"
+        visible: BarLayout.drawsDock(Settings.barStyle)
         spacing: Tokens.spacing.small
 
         StyledText {

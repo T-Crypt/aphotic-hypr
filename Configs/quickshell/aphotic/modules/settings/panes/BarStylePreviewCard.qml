@@ -84,7 +84,85 @@ Item {
                 // edge, always fits the visible frame at the same 0.32
                 // scale, regardless of card size.
                 Item {
+                    id: hullPreview
+
+                    readonly property int band: 2
+                    readonly property int strip: 10
+
+                    anchors.fill: parent
+                    visible: root.styleName === "hull"
+
+                    Rectangle {
+                        width: parent.width
+                        height: hullPreview.strip
+                        color: Colours.signalStyle.bar
+
+                        Rectangle {
+                            y: parent.height - 1
+                            width: parent.width
+                            height: 1
+                            color: Colours.signalStyle.hairline
+                        }
+                    }
+
+                    Rectangle {
+                        y: hullPreview.strip
+                        width: hullPreview.band
+                        height: parent.height - hullPreview.strip
+                        color: Colours.signalStyle.bar
+
+                        Rectangle {
+                            y: parent.height * 0.35
+                            width: parent.width
+                            height: parent.height * 0.3
+                            color: Colours.signalStyle.accentLine
+                        }
+                    }
+
+                    Rectangle {
+                        x: parent.width - width
+                        y: hullPreview.strip
+                        width: hullPreview.band
+                        height: parent.height - hullPreview.strip
+                        color: Colours.signalStyle.bar
+                    }
+
+                    Rectangle {
+                        y: parent.height - height
+                        width: parent.width
+                        height: hullPreview.band
+                        color: Colours.signalStyle.bar
+                    }
+
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        y: parent.height - hullPreview.band - height - 2
+                        width: parent.width * 0.38
+                        height: 9
+                        radius: height / 2
+                        color: Colours.signalStyle.bar
+                    }
+
+                    Repeater {
+                        model: 4
+
+                        Rectangle {
+                            required property int index
+
+                            x: index % 2 === 0 ? 3 : hullPreview.width - width - 3
+                            y: index < 2 ? (hullPreview.strip - height) / 2 : hullPreview.height - height - 3
+                            width: 4
+                            height: 4
+                            radius: width / 2
+                            color: index === 1 ? Colours.signalStyle.accentLine : Colours.signalStyle.hairline
+                        }
+                    }
+                }
+
+                Item {
                     id: previewContent
+
+                    visible: root.styleName !== "hull"
 
                     readonly property real previewScale: 0.32
 
@@ -97,6 +175,7 @@ Item {
 
                     Loader {
                         id: loader
+                        active: root.styleName !== "hull"
                         anchors.fill: root.floats ? undefined : parent
 
                         sourceComponent: {

@@ -2,7 +2,7 @@
 // The bar's structural layout plus the corner treatment applied on top of
 // it. Plain functions so tests/test_bar_layout.cjs runs them under node.
 
-var LAYOUTS = ["full", "capsule", "dock", "taskbar", "minimal"];
+var LAYOUTS = ["full", "capsule", "dock", "taskbar", "minimal", "hull"];
 var CORNERS = ["sharp", "soft", "round"];
 
 // The legacy full-layout skins and the corners each maps to; anything
@@ -65,6 +65,28 @@ function cornerRadius(corners, thickness) {
 function notchEdge(horizontal, positionBottom, positionRight) {
     var dockedToEnd = horizontal ? positionBottom : positionRight;
     return dockedToEnd ? "start" : "end";
+}
+
+// Which windows draw a layout. Hull frames the screen with the regular
+// strip on top and the regular dock pinned to the bottom.
+function drawsStrip(layout) {
+    return ["full", "taskbar", "minimal", "hull"].indexOf(layout) !== -1;
+}
+
+function fullStrip(layout) {
+    return layout === "full" || layout === "hull";
+}
+
+function drawsDock(layout) {
+    return layout === "dock" || layout === "hull";
+}
+
+function dockAtBottom(layout, positionBottom) {
+    return layout === "hull" || positionBottom;
+}
+
+function framesEdges(layout) {
+    return layout === "hull";
 }
 
 // Next layout in LAYOUTS order, wrapping; unknown input starts at the

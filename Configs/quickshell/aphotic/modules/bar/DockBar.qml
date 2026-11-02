@@ -16,7 +16,9 @@ Item {
     required property ShellScreen screen
     required property ScreenState screenState
 
-    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, Settings.barPositionBottom, Settings.barPositionRight)
+    property bool atBottom: Settings.barPositionBottom
+    property bool hostsNotch: true
+    readonly property string notchEdge: BarLayout.notchEdge(Settings.barHorizontal, root.atBottom, Settings.barPositionRight)
 
     readonly property var dockItems: WindowList.dockItems(Settings.dockPinnedApps,"",true)
 
@@ -98,7 +100,7 @@ Item {
         // literal "SNAP-to" behavior reported, and inconsistent with every
         // other bar style's Emphasized-eased motion.
         transform: Translate {
-            y: Settings.barHorizontal && !root.shouldShow ? (Settings.barPositionBottom ? pill.height : -pill.height) : 0
+            y: Settings.barHorizontal && !root.shouldShow ? (root.atBottom ? pill.height : -pill.height) : 0
             x: !Settings.barHorizontal && !root.shouldShow ? (Settings.barPositionRight ? pill.width : -pill.width) : 0
 
             Behavior on y {
@@ -181,7 +183,7 @@ Item {
                             }
                             required property var modelData
                             item: modelData
-                            growOrigin: !Settings.barHorizontal ? Item.Center : (Settings.barPositionBottom ? Item.Bottom : Item.Top)
+                            growOrigin: !Settings.barHorizontal ? Item.Center : (root.atBottom ? Item.Bottom : Item.Top)
                             magnifyScale: iconRow.magnifying ? root.magnifyFalloff(dockIcon.x + dockIcon.width / 2) : 1
                             showHover: iconRow.magnifies
                         }
@@ -242,7 +244,7 @@ Item {
 
             horizontal: Settings.barHorizontal
             edge: root.notchEdge
-            gapLength: root.screenState.notchSpan
+            gapLength: root.hostsNotch ? root.screenState.notchSpan : 0
             level: "active"
             activeStart: {
                 // Read icon.x/icon.y for the dependency: mapToItem alone

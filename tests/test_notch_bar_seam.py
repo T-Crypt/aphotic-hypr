@@ -32,13 +32,15 @@ NOT_BAR_EDGE = {
     ("capsule", "popoutSurface"): "the expanded media popout, not the bar edge",
 }
 
-GAP = re.compile(r"gapLength:\s*root\.screenState\.notchSpan")
+# The dock also draws hull's bottom lane, where the notch sits on the top
+# strip instead, so it may guard the gap and take its edge from atBottom.
+GAP = re.compile(r"gapLength:\s*(root\.hostsNotch\s*\?\s*)?root\.screenState\.notchSpan")
 EDGE = re.compile(r"edge:\s*root\.notchEdge")
 # The one place the notch edge is decided, the BarLayout.js function every
 # style binds through.
 NOTCH_EDGE = re.compile(
     r"notchEdge:\s*BarLayout\.notchEdge\(\s*Settings\.barHorizontal,\s*"
-    r"Settings\.barPositionBottom,\s*Settings\.barPositionRight\s*\)"
+    r"(Settings\.barPositionBottom|root\.atBottom),\s*Settings\.barPositionRight\s*\)"
 )
 INLINE_NOTCH_EDGE = (
     '(Settings.barHorizontal ? Settings.barPositionBottom : Settings.barPositionRight) ? "start" : "end"'

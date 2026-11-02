@@ -21,6 +21,16 @@ QtObject {
         }
     }
 
+    readonly property QtObject hull: QtObject {
+        readonly property int ring: 3
+        readonly property int edgeReach: 6
+        readonly property int cornerZone: 14
+        readonly property int cornerDwell: 160
+        readonly property bool shelfRails: true
+        readonly property bool overFullscreen: false
+        readonly property bool sweep: true
+    }
+
     readonly property QtObject notifs: QtObject {
         readonly property real defaultExpireTimeout: 5000
     }

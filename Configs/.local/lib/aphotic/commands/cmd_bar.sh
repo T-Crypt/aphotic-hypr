@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # aphotic bar — quick-swap the bar layout or corners without opening Settings.
 # @cmd: bar
-# @cmd.desc: Set or cycle the bar layout, or set its corner style (full/capsule/dock/taskbar/minimal)
+# @cmd.desc: Set or cycle the bar layout, or set its corner style (full/capsule/dock/taskbar/minimal/hull)
 # @cmd.group: CONFIG
-# @cmd.opt: style <full|capsule|dock|taskbar|minimal>  | Set the bar layout
+# @cmd.opt: style <full|capsule|dock|taskbar|minimal|hull>  | Set the bar layout
 # @cmd.opt: corners <sharp|soft|round>                 | Set the bar corner style
 # @cmd.opt: cycle                              | Cycle to the next layout
 #
@@ -15,10 +15,10 @@
 
 _aphotic_bar_style() {
     local name="${1:-}"
-    local valid=("full" "capsule" "dock" "taskbar" "minimal")
+    local valid=("full" "capsule" "dock" "taskbar" "minimal" "hull")
 
     if [[ -z "$name" ]]; then
-        aphotic_err "usage: aphotic bar style <full|capsule|dock|taskbar|minimal>"
+        aphotic_err "usage: aphotic bar style <full|capsule|dock|taskbar|minimal|hull>"
         return 1
     fi
 
@@ -90,9 +90,9 @@ aphotic_cmd_bar() {
             cat <<EOF
 Usage: aphotic bar <style|corners|cycle> [args]
 
-  style <full|capsule|dock|taskbar|minimal>   Set the bar layout
-  corners <sharp|soft|round>                  Set the bar corner style
-  cycle                                       Cycle to the next layout
+  style <full|capsule|dock|taskbar|minimal|hull>   Set the bar layout
+  corners <sharp|soft|round>                       Set the bar corner style
+  cycle                                            Cycle to the next layout
 EOF
             ;;
         *)

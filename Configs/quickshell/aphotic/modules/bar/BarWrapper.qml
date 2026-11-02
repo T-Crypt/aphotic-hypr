@@ -23,7 +23,7 @@ Item {
     // (DockWindow.qml / CapsuleWindow.qml) -- this edge-docked strip has
     // nothing to render and must reserve no space while either style is
     // active.
-    readonly property bool hiddenMode: Settings.barVisibility === "hidden" || Settings.barStyle === "dock" || Settings.barStyle === "capsule"
+    readonly property bool hiddenMode: Settings.barVisibility === "hidden" || !BarLayout.drawsStrip(Settings.barStyle)
     // BarWindow.qml's input mask needs a wider hover target than root's
     // own (collapsed, in autohide mode) bounds -- content is already
     // always sized to the full contentWidth/height regardless of
@@ -183,13 +183,13 @@ Item {
         // Only the "full" layout's own backdrop -- taskbar and minimal
         // draw their own full-bleed background internally (TaskbarBar.qml/
         // MinimalBar.qml) instead of inheriting Full's strip treatment.
-        radius: BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? height : width)
+        radius: BarLayout.framesEdges(Settings.barStyle) ? 0 : BarLayout.cornerRadius(Settings.barCorners, Settings.barHorizontal ? height : width)
         tone: Colours.signalStyle.bar
         horizontal: Settings.barHorizontal
         // The notch-facing edge is the SignalLine's to draw below, with the
         // gap the notch span opens in it.
         openEdge: root.notchEdge
-        visible: root.shouldBeVisible && Settings.barStyle === "full"
+        visible: root.shouldBeVisible && BarLayout.fullStrip(Settings.barStyle)
 
         Behavior on radius {
             Anim { type: Anim.DefaultEffects }
