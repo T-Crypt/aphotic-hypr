@@ -75,3 +75,20 @@ function next(layout) {
         return LAYOUTS[0];
     return LAYOUTS[(idx + 1) % LAYOUTS.length];
 }
+
+// The screen edge the bar docks to.
+function dockEdge(horizontal, positionBottom, positionRight) {
+    if (horizontal)
+        return positionBottom ? "bottom" : "top";
+    return positionRight ? "right" : "left";
+}
+
+// The shift that puts the bar `amount` of its thickness past the screen
+// edge it docks to: 1 is just out of view, 0 is at rest.
+function entryShift(edge, thickness, amount) {
+    var d = thickness * amount;
+    return {
+        x: edge === "left" ? -d : (edge === "right" ? d : 0),
+        y: edge === "top" ? -d : (edge === "bottom" ? d : 0)
+    };
+}
