@@ -1,4 +1,4 @@
-# canary 2026-11-02
+# canary 2026-11-03
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -77,9 +77,9 @@ eglexternalplatform 1.2.1-1
 elementary-icon-theme 9.0.0-1
 elfutils 0.197-1
 exo 4.20.0-2
-expat 2.9.0-1
+expat 2.10.0-1
 eza 0.23.5-2
-fakeroot 1:1.37.2-3
+fakeroot 1:2.1.4-1
 ffmpeg 2:9.0.2-2
 ffmpegthumbnailer 2.3.1-1
 fftw 3.3.11-1
@@ -206,7 +206,7 @@ lib32-brotli 1.2.1-1
 lib32-bzip2 1.0.8-4
 lib32-curl 8.23.0-1
 lib32-e2fsprogs 1.47.4-1
-lib32-expat 2.9.0-1
+lib32-expat 2.10.0-1
 lib32-gcc-libs 16.2.1+r23+gd564253eb6c8-1
 lib32-glibc 2.44+r50+g1848099f063e-1
 lib32-gmp 6.3.0-2
@@ -224,15 +224,15 @@ lib32-libglvnd 1.7.0-1
 lib32-libgpg-error 1.61-1
 lib32-libidn2 2.3.8-1
 lib32-libldap 2.7.2-1
-lib32-libnghttp2 1.70.0-1
-lib32-libnghttp3 1.18.0-1
-lib32-libngtcp2 1.25.0-1
+lib32-libnghttp2 1.71.0-1
+lib32-libnghttp3 1.19.0-1
+lib32-libngtcp2 1.26.0-1
 lib32-libpciaccess 0.19-1
 lib32-libpsl 0.21.5-1
 lib32-libssh2 1.11.1-5
 lib32-libtasn1 4.21.0-1
 lib32-libunistring 1.4.2-1
-lib32-libx11 1.8.13-1
+lib32-libx11 1.8.14-1
 lib32-libxau 1.0.12-1
 lib32-libxcb 1.17.0-1
 lib32-libxcrypt 4.5.2-1
@@ -362,12 +362,12 @@ libnetfilter_conntrack 1.1.1-1
 libnewt 0.52.25-2
 libnfnetlink 1.0.2-2
 libnftnl 1.3.2-1
-libnghttp2 1.70.0-1
-libnghttp3 1.18.0-1
-libngtcp2 1.25.0-1
+libnghttp2 1.71.0-1
+libnghttp3 1.19.0-1
+libngtcp2 1.26.0-1
 libnice 0.1.24-1
 libnl 3.12.0-1
-libnm 1.58.1-2
+libnm 1.58.1-3
 libnma 1.10.6-3
 libnma-common 1.10.6-3
 libnotify 0.8.9-1
@@ -375,7 +375,7 @@ libnsl 2.0.1-2
 libnvme 1.16.2-2
 libobjc 16.2.1+r23+gd564253eb6c8-1
 libogg 1.3.6-1
-libopenmpt 0.8.9-1
+libopenmpt 0.8.10-1
 libp11-kit 0.26.5-1
 libpcap 1.11.0-1
 libpciaccess 0.19-1
@@ -495,14 +495,14 @@ mobile-broadband-provider-info 20251101-1
 mpdecimal 4.0.1-3
 mpfr 4.2.2-1
 mpg123 1.33.7-1
-mpv 1:0.41.0-6
+mpv 1:0.41.0-7
 mtdev 1.1.7-1
 mujs 1.3.11-1
 muparser 2.3.5-2
 ncurses 6.6-2
 nettle 4.0-1
 network-manager-applet 1.36.0-2
-networkmanager 1.58.1-2
+networkmanager 1.58.1-3
 nftables 1:1.1.7-3
 nm-connection-editor 1.36.0-2
 noto-fonts-emoji 1:20260924-1
@@ -527,7 +527,7 @@ openssl 3.6.5-1
 openvpn 2.7.8-1
 opus 1.6.1-1
 orc 0.4.44-1
-ostree 2026.4-1
+ostree 2026.6-1
 p11-kit 0.26.5-1
 pacman 7.1.0.r9.g54d9411-3
 pacman-contrib 1.13.1-1
@@ -664,7 +664,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 81-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.144.0-1
+visual-studio-code-bin 1.144.1-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
