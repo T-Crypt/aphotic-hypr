@@ -1,4 +1,4 @@
-# canary 2026-11-03
+# canary 2026-11-04
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -87,7 +87,7 @@ file 5.48-1
 file-roller 44.7-1
 filesystem 2025.10.12-1
 findutils 4.11.0-1
-firefox 159.0-1
+firefox 159.0.1-1
 flac 1.5.0-1
 flatpak 1:1.18.4-2
 flex 2.6.4-6
@@ -117,7 +117,7 @@ glibc 2.44+r50+g1848099f063e-1
 glibmm-2.68 2.90.0-1
 glslang 1:1.4.363.0-1
 glu 9.0.3-3
-glycin 2.2.5-1
+glycin 2.2.6-1
 gmp 6.3.0-3
 gnome-themes-extra 1:3.28-1
 gnu-free-fonts 20120503-9
@@ -164,7 +164,7 @@ hwloc 2.15.0-1
 hyprcursor 0.1.13-7
 hyprgraphics 0.6.0-1
 hypridle 0.1.8-2
-hyprland 0.57.0-3
+hyprland 0.57.1-1
 hyprland-guiutils 0.2.2-6
 hyprlang 0.6.8-5
 hyprtoolkit 0.6.0-3
@@ -664,7 +664,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 81-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.144.1-1
+visual-studio-code-bin 1.145.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
@@ -693,7 +693,7 @@ xcur2png 0.7.1-9
 xdg-dbus-proxy 0.1.9-1
 xdg-desktop-portal 1.22.1-2
 xdg-desktop-portal-gtk 1.15.3-2
-xdg-desktop-portal-hyprland 1.4.1-2
+xdg-desktop-portal-hyprland 1.5.0-1
 xdg-utils 1.2.1-2
 xf86-input-libinput 1.5.0-1
 xfce4-settings 4.20.5-1
@@ -722,6 +722,6 @@ zlib-ng 2.3.3-1
 zsh 5.9.2-1
 zsh-autosuggestions 0.7.1-1
 zsh-syntax-highlighting 0.8.0-2
-zsh-theme-powerlevel10k-git r4330.d05a1b00-1
-zsh-theme-powerlevel10k-git-debug r4330.d05a1b00-1
+zsh-theme-powerlevel10k-git r4333.7ddd1b27-1
+zsh-theme-powerlevel10k-git-debug r4333.7ddd1b27-1
 zstd 1.5.7-3
