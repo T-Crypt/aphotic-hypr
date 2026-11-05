@@ -1,4 +1,4 @@
-# canary 2026-11-04
+# canary 2026-11-05
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -39,7 +39,7 @@ btop 1.4.7-1
 bubblewrap 0.13.1-1
 bzip2 1.0.8-6
 ca-certificates 20240618-1
-ca-certificates-mozilla 3.132-1
+ca-certificates-mozilla 3.133-1
 ca-certificates-utils 20240618-1
 cairo 1.18.6-1
 cairomm-1.16 1.18.1-1
@@ -154,7 +154,7 @@ gupnp 1:1.6.10-1
 gupnp-igd 1.6.0-2
 gvfs 1.62.0-3
 gzip 1.15-1
-harfbuzz 15.0.0-1
+harfbuzz 15.1.0-1
 hdf5 2.2.0-1
 hicolor-icon-theme 0.18-1
 hidapi 0.15.0-1
@@ -292,7 +292,7 @@ libcap-ng 0.9.6-1
 libcdio 2.4.0-1
 libcdio-paranoia 10.2+2.0.2-3
 libcgif 0.5.4-1
-libcloudproviders 0.4.1-1
+libcloudproviders 0.4.2-1
 libcolord 1.4.8-2
 libcups 2:2.4.20-1
 libdaemon 0.14-6
@@ -481,7 +481,7 @@ lua54 5.4.9-1
 luajit 2.1.1793383622+ea9eb7e-1
 lv2 1.18.10-2
 lxappearance 0.6.4-3
-lz4 1:1.10.0-2
+lz4 1:1.11.0-1
 lzo 2.10-5
 m4 1.4.21-2
 mailcap 2.1.54-3
@@ -508,7 +508,7 @@ nm-connection-editor 1.36.0-2
 noto-fonts-emoji 1:20260924-1
 npth 1.8-1
 nspr 4.40-1
-nss 3.132-1
+nss 3.133-1
 numactl 2.0.19-1
 nvidia-open-dkms 615.78.08-1
 nvidia-utils 615.78.08-1
