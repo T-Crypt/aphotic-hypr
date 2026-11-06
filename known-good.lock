@@ -1,4 +1,4 @@
-# canary 2026-11-05
+# canary 2026-11-06
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -110,7 +110,7 @@ gdk-pixbuf2 2.44.8-1
 gettext 1.0-2
 giflib 6.1.3-2
 git 2.56.0-1
-github-cli 2.102.1-1
+github-cli 2.103.3-1
 glib-networking 1:2.90.1-1
 glib2 2.90.1-1
 glibc 2.44+r50+g1848099f063e-1
@@ -514,7 +514,7 @@ nvidia-open-dkms 615.78.08-1
 nvidia-utils 615.78.08-1
 nwg-look 1.2.1-1
 ocl-icd 2.3.5-1
-oh-my-zsh-git r8003.b509b1c6e-1
+oh-my-zsh-git r8005.cca3bdfbe-1
 onetbb 2023.2.0-1
 oniguruma 6.9.10-3
 openal 1.25.2-2
@@ -664,7 +664,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 81-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.145.0-1
+visual-studio-code-bin 1.145.1-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
