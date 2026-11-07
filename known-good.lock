@@ -1,4 +1,4 @@
-# canary 2026-11-06
+# canary 2026-11-07
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -664,7 +664,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 81-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.145.1-1
+visual-studio-code-bin 1.145.2-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
