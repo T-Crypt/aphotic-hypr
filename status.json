@@ -1,12 +1,6 @@
 {
-  "date": "2026-11-11",
-  "green": false,
-  "broken": [
-    {
-      "package": "papirus-folders",
-      "source": "aur",
-      "error_tail": "==> \n==> Making package: papirus-folders 1.14.0-1 (Wed Nov 11 14:28:17 2026)\n==> Retrieving sources...\n  -> Cloning papirus-folders git repo...\nCloning into bare repository '/home/canary/.cache/yay/papirus-folders/papirus-folders'...\n  -> Found papirus-folders.hook\n==> WARNING: Skipping verification of source file PGP signatures.\n==> Validating source files with sha256sums...\n    papirus-folders ... Passed\n    papirus-folders.hook ... Passed\n:: (1/1) Parsing SRCINFO: papirus-folders\ngpg: directory '/home/canary/.gnupg' created\ngpg: /home/canary/.gnupg/trustdb.gpg: trustdb created\ngpg: error reading key: No public key\n\n :: PGP keys need importing:\n -> 1BA35B1B2207A266F6E0AD2AF0EC91A29D2E78EC, required by: papirus-folders\n:: Importing keys with gpg...\ngpg: keyserver receive failed: Server indicated a failure\n -> problem importing keys"
-    }
-  ],
-  "last_green": "2026-11-10"
+  "date": "2026-11-12",
+  "green": true,
+  "broken": [],
+  "last_green": "2026-11-12"
 }
