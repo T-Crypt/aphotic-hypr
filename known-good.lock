@@ -1,4 +1,4 @@
-# canary 2026-11-16
+# canary 2026-11-17
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -218,7 +218,7 @@ lib32-krb5 1.22.2-2
 lib32-libdisplay-info 0.3.0-1
 lib32-libdrm 2.4.134-1
 lib32-libelf 0.197-1
-lib32-libffi 3.8.0-1
+lib32-libffi 3.8.1-1
 lib32-libgcrypt 1.12.4-1
 lib32-libglvnd 1.7.0-1
 lib32-libgpg-error 1.61-1
@@ -316,7 +316,7 @@ libevdev 1.14.0-1
 libevent 2.1.13-3
 libexif 0.6.26-1
 libfdk-aac 3.0.0-1
-libffi 3.8.0-1
+libffi 3.8.1-1
 libfontenc 1.1.9-1
 libfreeaptx 0.2.2-1
 libfyaml 0.9.6-3
@@ -558,7 +558,7 @@ pipewire-audio 1:1.6.11-1
 pipewire-pulse 1:1.6.11-1
 pixman 0.46.4-1
 pkcs11-helper 1.31.0-2
-pkgconf 3.0.10-1
+pkgconf 3.0.11-1
 playerctl 2.4.1-5
 polkit 128-1
 polkit-gnome 0.105-12
@@ -638,7 +638,7 @@ srt 1.5.7-3
 starship 1.27.0-1
 startup-notification 0.12-9
 sudo 1.9.17.p2-7
-svt-av1 4.2.0-1
+svt-av1 4.3.0-1
 swappy 1.8.0-1
 swaylock-effects 1.7.0.0-4
 swaylock-effects-debug 1.7.0.0-4
@@ -652,7 +652,7 @@ thunar 4.20.10-1
 thunar-archive-plugin 0.6.0-1
 tinysparql 3.12.0-1
 tomlplusplus 3.4.0-3
-tpm2-tss 4.2.1-2
+tpm2-tss 4.2.2s-1
 tslib 1.24-1
 ttf-jetbrains-mono-nerd 3.5.1-2
 ttf-material-symbols-variable 2.874-1
