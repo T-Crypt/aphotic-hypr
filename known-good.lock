@@ -1,4 +1,4 @@
-# canary 2026-11-18
+# canary 2026-11-19
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -53,7 +53,7 @@ cpio 2.15-3
 cpptrace 1.0.4-2
 cryptsetup 2.8.8-2
 curl 8.23.0-2
-dav1d 1.5.4-1
+dav1d 1.5.5-1
 db5.3 5.3.28-7
 dbus 1.16.4-1
 dbus-broker 37-3
@@ -91,7 +91,7 @@ firefox 160.0.1-1
 flac 1.5.0-1
 flatpak 1:1.18.4-2
 flex 2.6.15-1
-fontconfig 2:2.18.3-2
+fontconfig 2:2.18.4-1
 freeglut 3.8.0-1
 freetype2 2.15.0-1
 fribidi 1.0.18-1
@@ -243,7 +243,7 @@ lib32-libxshmfence 1.3.3-1
 lib32-libxxf86vm 1.1.7-1
 lib32-llvm-libs 1:23.1.5-1
 lib32-lm_sensors 1:3.6.2-2
-lib32-mesa 1:26.2.7-1
+lib32-mesa 1:26.3.1-1
 lib32-ncurses 6.6-2
 lib32-nettle 4.0-2
 lib32-openssl 1:4.1.0-2
@@ -251,8 +251,8 @@ lib32-p11-kit 0.26.6-1
 lib32-spirv-tools 1:1.4.363.0-1
 lib32-systemd 262.2-1
 lib32-vulkan-icd-loader 1.4.363.0-1
-lib32-vulkan-mesa-implicit-layers 1:26.2.7-1
-lib32-vulkan-radeon 1:26.2.7-1
+lib32-vulkan-mesa-implicit-layers 1:26.3.1-1
+lib32-vulkan-radeon 1:26.3.1-1
 lib32-wayland 1.26.0-1
 lib32-xcb-util-keysyms 0.4.1-2
 lib32-xz 5.8.4-1
@@ -489,7 +489,7 @@ make 4.4.1-3
 matugen 4.2.0-1
 md4c 0.6.0-2
 mdadm 4.6-2
-mesa 1:26.2.7-1
+mesa 1:26.3.1-1
 ministream 0.99.1-1
 mobile-broadband-provider-info 20261111-1
 mpdecimal 4.0.1-3
@@ -507,11 +507,11 @@ nftables 1:1.1.7-3
 nm-connection-editor 1.36.0-2
 noto-fonts-emoji 1:20260924-1
 npth 1.8-1
-nspr 4.40-1
+nspr 4.41-1
 nss 3.133-1
 numactl 2.0.19-1
-nvidia-open-dkms 620.70.06-1
-nvidia-utils 620.70.06-1
+nvidia-open-dkms 620.73.04-1
+nvidia-utils 620.73.04-1
 nwg-look 1.2.1-1
 ocl-icd 2.3.5-1
 oh-my-zsh-git r8013.c0140703a-1
@@ -665,12 +665,12 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 81-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.146.0-1
+visual-studio-code-bin 1.147.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
-vulkan-mesa-implicit-layers 1:26.2.7-1
-vulkan-radeon 1:26.2.7-1
+vulkan-mesa-implicit-layers 1:26.3.1-1
+vulkan-radeon 1:26.3.1-1
 wayland 1.26.0-1
 wayland-protocols 1.50-1
 webp-pixbuf-loader 0.2.7-2
@@ -723,6 +723,6 @@ zlib-ng 2.3.3-1
 zsh 5.9.2-1
 zsh-autosuggestions 0.7.1-1
 zsh-syntax-highlighting 0.8.0-2
-zsh-theme-powerlevel10k-git r4339.64df5961-1
-zsh-theme-powerlevel10k-git-debug r4339.64df5961-1
+zsh-theme-powerlevel10k-git r4340.50a35cc8-1
+zsh-theme-powerlevel10k-git-debug r4340.50a35cc8-1
 zstd 1.5.7-3
