@@ -1,4 +1,4 @@
-# canary 2026-11-20
+# canary 2026-11-21
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -123,7 +123,7 @@ gnome-themes-extra 1:3.28-1
 gnu-free-fonts 20120503-9
 gnulib-l10n 20241231-1
 gnupg 2.4.9-4
-gnutls 3.8.13-3
+gnutls 3.8.14-1
 go 2:1.27.4-1
 gobject-introspection-runtime 1.86.0-2
 gperftools 2.19.3-1
@@ -210,7 +210,7 @@ lib32-expat 2.10.0-1
 lib32-gcc-libs 16.2.1+r23+gd564253eb6c8-1
 lib32-glibc 2.44+r78+gfcfb867c58ab-1
 lib32-gmp 6.3.0-2
-lib32-gnutls 3.8.13-3
+lib32-gnutls 3.8.14-1
 lib32-icu 78.3-1
 lib32-json-c 0.19-1
 lib32-keyutils 1.6.3-4
