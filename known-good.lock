@@ -1,4 +1,4 @@
-# canary 2026-11-21
+# canary 2026-11-22
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -127,7 +127,7 @@ gnutls 3.8.14-1
 go 2:1.27.4-1
 gobject-introspection-runtime 1.86.0-2
 gperftools 2.19.3-1
-gpgme 2.2.0-1
+gpgme 2.3.1-1
 gpgmepp 2.2.0-1
 gpm 1.20.7.r38.ge82d1a6-7
 graphene 1.10.8-2
@@ -154,7 +154,7 @@ gupnp 1:1.6.10-1
 gupnp-igd 1.6.0-2
 gvfs 1.62.0-3
 gzip 1.15-1
-harfbuzz 15.1.0-1
+harfbuzz 15.2.0-1
 hdf5 2.2.0-1
 hicolor-icon-theme 0.18-1
 hidapi 0.15.0-1
