@@ -1,4 +1,4 @@
-# canary 2026-11-22
+# canary 2026-11-23
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -15,7 +15,7 @@ aom 3.15.3-1
 appstream 1.2.3-1
 aquamarine 0.16.0-1
 archlinux-keyring 20260909-1
-at-spi2-core 2.62.1-1
+at-spi2-core 2.62.2-1
 attr 2.6.0-1
 audit 4.2.1-1
 autoconf 2.73-1
@@ -160,7 +160,7 @@ hicolor-icon-theme 0.18-1
 hidapi 0.15.0-1
 highway 1.4.0-1
 hwdata 0.412-1
-hwloc 2.15.0-1
+hwloc 2.16.0-1
 hyprcursor 0.1.14-1
 hyprgraphics 0.6.0-2
 hypridle 0.1.8-2
@@ -190,9 +190,9 @@ json-c 0.19-1
 json-glib 1.10.8-1
 kbd 2.10.0-1
 keyutils 1.6.3-4
-kitty 0.51.0-1
-kitty-shell-integration 0.51.0-1
-kitty-terminfo 0.51.0-1
+kitty 0.51.1-1
+kitty-shell-integration 0.51.1-1
+kitty-terminfo 0.51.1-1
 kmod 34.3-2
 krb5 1.22.2-2
 kvantum 1.1.9-1
@@ -243,7 +243,7 @@ lib32-libxshmfence 1.3.3-1
 lib32-libxxf86vm 1.1.7-1
 lib32-llvm-libs 1:23.1.5-1
 lib32-lm_sensors 1:3.6.2-2
-lib32-mesa 1:26.3.1-2
+lib32-mesa 1:26.3.1-3
 lib32-ncurses 6.6-2
 lib32-nettle 4.0-2
 lib32-openssl 1:4.1.0-2
@@ -251,8 +251,8 @@ lib32-p11-kit 0.26.6-1
 lib32-spirv-tools 1:1.4.363.0-1
 lib32-systemd 262.2-1
 lib32-vulkan-icd-loader 1.4.363.0-1
-lib32-vulkan-mesa-implicit-layers 1:26.3.1-2
-lib32-vulkan-radeon 1:26.3.1-2
+lib32-vulkan-mesa-implicit-layers 1:26.3.1-3
+lib32-vulkan-radeon 1:26.3.1-3
 lib32-wayland 1.26.0-1
 lib32-xcb-util-keysyms 0.4.1-2
 lib32-xz 5.8.4-1
@@ -395,7 +395,7 @@ librsvg 2:2.63.4-1
 librsync 1:2.3.4-2
 libsamplerate 0.2.2-3
 libsasl 2.1.28-6
-libseccomp 2.6.0-1
+libseccomp 2.6.2-1
 libsecret 0.21.8.2-1
 libsigc++-3.0 3.8.1-1
 libsixel 1.10.5-1
@@ -489,7 +489,7 @@ make 4.4.1-3
 matugen 4.2.0-1
 md4c 0.6.0-2
 mdadm 4.6-2
-mesa 1:26.3.1-2
+mesa 1:26.3.1-3
 ministream 0.99.1-1
 mobile-broadband-provider-info 20261111-1
 mpdecimal 4.0.1-3
@@ -514,12 +514,12 @@ nvidia-open-dkms 620.73.04-1
 nvidia-utils 620.73.04-1
 nwg-look 1.2.1-1
 ocl-icd 2.3.5-1
-oh-my-zsh-git r8013.c0140703a-1
+oh-my-zsh-git r8018.87aa1a9b8-1
 onetbb 2023.2.0-1
 oniguruma 6.9.10-3
 openal 1.25.2-2
 opencore-amr 0.1.6-2
-openexr 3.5.4-1
+openexr 3.5.5-1
 openjpeg2 2.5.4-1
 openjph 0.33.0-1
 openssh 10.6p2-1
@@ -651,7 +651,7 @@ texinfo 7.3-3
 thunar 4.20.10-1
 thunar-archive-plugin 0.6.0-1
 tinysparql 3.12.0-1
-tomlplusplus 3.4.0-3
+tomlplusplus 3.5.1-1
 tpm2-tss 4.2.2s-1
 tslib 1.24-1
 ttf-jetbrains-mono-nerd 3.5.1-2
@@ -669,8 +669,8 @@ visual-studio-code-bin 1.147.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
-vulkan-mesa-implicit-layers 1:26.3.1-2
-vulkan-radeon 1:26.3.1-2
+vulkan-mesa-implicit-layers 1:26.3.1-3
+vulkan-radeon 1:26.3.1-3
 wayland 1.26.0-1
 wayland-protocols 1.50-1
 webp-pixbuf-loader 0.2.7-2
