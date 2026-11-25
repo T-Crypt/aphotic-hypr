@@ -1,4 +1,4 @@
-# canary 2026-11-24
+# canary 2026-11-25
 abseil-cpp 20260817.0-2
 accountsservice 26.27.3-1
 acl 2.4.0-1
@@ -51,7 +51,7 @@ composefs 1.0.8-2
 coreutils 9.12-3
 cpio 2.15-3
 cpptrace 1.0.4-2
-cryptsetup 2.8.8-2
+cryptsetup 2.8.9-1
 curl 8.23.0-2
 dav1d 1.5.5-1
 db5.3 5.3.28-7
@@ -87,9 +87,9 @@ file 5.48-1
 file-roller 44.8-1
 filesystem 2025.10.12-1
 findutils 4.11.0-1
-firefox 160.0.1-1
+firefox 161.0-1
 flac 1.5.0-1
-flatpak 1:1.18.4-2
+flatpak 1:1.18.6-1
 flex 2.7.6-1
 fontconfig 2:2.18.4-1
 freeglut 3.8.0-1
@@ -145,9 +145,9 @@ gst-plugins-bad-libs 1.28.9-3
 gst-plugins-base-libs 1.28.9-3
 gstreamer 1.28.9-3
 gtest 1.18.0-1
-gtk-update-icon-cache 1:4.24.1-1
+gtk-update-icon-cache 1:4.24.2-1
 gtk3 1:3.24.52-2
-gtk4 1:4.24.1-1
+gtk4 1:4.24.2-1
 gtkmm-4.0 4.24.0-1
 guile 3.0.11-1
 gupnp 1:1.6.10-1
@@ -162,12 +162,12 @@ highway 1.4.0-1
 hwdata 0.412-1
 hwloc 2.16.0-1
 hyprcursor 0.1.14-1
-hyprgraphics 0.6.0-2
+hyprgraphics 0.7.0-1
 hypridle 0.1.8-2
-hyprland 0.57.2-1
-hyprland-guiutils 0.2.2-6
+hyprland 0.57.2-2
+hyprland-guiutils 0.2.2-7
 hyprlang 0.6.8-5
-hyprtoolkit 0.6.0-3
+hyprtoolkit 0.7.0-1
 hyprutils 0.14.4-1
 hyprwire 0.3.1-3
 iana-etc 20260617-1
@@ -193,7 +193,7 @@ keyutils 1.6.3-4
 kitty 0.51.1-1
 kitty-shell-integration 0.51.1-1
 kitty-terminfo 0.51.1-1
-kmod 34.3-2
+kmod 34.4-1
 krb5 1.22.2-2
 kvantum 1.1.9-1
 kvantum-qt5 1.1.9-1
@@ -514,7 +514,7 @@ nvidia-open-dkms 620.73.04-1
 nvidia-utils 620.73.04-1
 nwg-look 1.2.1-1
 ocl-icd 2.3.5-1
-oh-my-zsh-git r8023.93b87c9c9-1
+oh-my-zsh-git r8042.1eebae3a3-1
 onetbb 2023.2.0-1
 oniguruma 6.9.10-3
 openal 1.25.2-2
@@ -594,16 +594,16 @@ qt5-translations 5.15.19-1
 qt5-wayland 5.15.19+kde+r55-1
 qt5-x11extras 5.15.19-1
 qt5ct 1.9-2
-qt6-base 6.12.0-5
-qt6-declarative 6.12.0-4
-qt6-imageformats 6.12.0-1
-qt6-multimedia 6.12.0-1
-qt6-multimedia-ffmpeg 6.12.0-1
-qt6-shadertools 6.12.0-1
-qt6-svg 6.12.0-1
-qt6-translations 6.12.0-1
-qt6-wayland 6.12.0-1
-qt6ct 0.11-9
+qt6-base 6.12.1-1
+qt6-declarative 6.12.1-1
+qt6-imageformats 6.12.1-1
+qt6-multimedia 6.12.1-1
+qt6-multimedia-ffmpeg 6.12.1-1
+qt6-shadertools 6.12.1-1
+qt6-svg 6.12.1-1
+qt6-translations 6.12.1-1
+qt6-wayland 6.12.1-1
+qt6ct 0.11-10
 quickshell 0.3.2-1
 radeontop 1.4-3
 rav1e 0.8.1-3
@@ -652,7 +652,7 @@ thunar 4.20.10-1
 thunar-archive-plugin 0.6.0-1
 tinysparql 3.12.0-1
 tomlplusplus 3.5.1-1
-tpm2-tss 4.2.2s-1
+tpm2-tss 4.2.2s-2
 tslib 1.24-1
 ttf-jetbrains-mono-nerd 3.5.1-2
 ttf-material-symbols-variable 2.874-1
@@ -665,7 +665,7 @@ util-linux-libs 2.42.4-1
 v4l-utils 1.32.0-2
 vapoursynth 81-1
 vid.stab 1.1.2-1
-visual-studio-code-bin 1.147.0-1
+visual-studio-code-bin 1.148.0-1
 vmaf 3.2.1-1
 volume_key 0.3.12-12
 vulkan-icd-loader 1.4.363.0-1
@@ -694,7 +694,7 @@ xcur2png 0.7.1-9
 xdg-dbus-proxy 0.1.9-1
 xdg-desktop-portal 1.22.1-2
 xdg-desktop-portal-gtk 1.15.3-2
-xdg-desktop-portal-hyprland 1.5.0-1
+xdg-desktop-portal-hyprland 1.5.0-2
 xdg-utils 1.2.1-2
 xf86-input-libinput 1.5.0-1
 xfce4-settings 4.20.5-1
